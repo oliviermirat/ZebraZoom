@@ -32,9 +32,9 @@ LARGE_FONT= ("Verdana", 12)
 
 def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo):
     if globalVariables["mac"]:
-        tk.videoName =  filedialog.askopenfilename(initialdir = "../videos/",title = "Select file")
+        tk.videoName =  filedialog.askopenfilename(initialdir = "./",title = "Select file")
     else:
-        tk.videoName =  filedialog.askopenfilename(initialdir = "../videos/",title = "Select file",filetypes = (("video","*.*"),("all files","*.*")))
+        tk.videoName =  filedialog.askopenfilename(initialdir = "./",title = "Select file",filetypes = (("video","*.*"),("all files","*.*")))
     tk.folderName = ''
     tk.headEmbedded = 0
     
@@ -44,14 +44,14 @@ def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo):
     self.show_frame("ConfigFilePromp")
 
 def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo):
-    tk.folderName =  filedialog.askdirectory(initialdir = "../",title = "Select folder")
+    tk.folderName =  filedialog.askdirectory(initialdir = "./",title = "Select folder")
     tk.headEmbedded = 0
     tk.justExtractParams = int(justExtractParams)
     tk.noValidationVideo = int(noValidationVideo)
     self.show_frame("ConfigFilePromp")
     
 def chooseFolderForTailExtremityHE(self):
-    tk.folderName =  filedialog.askdirectory(initialdir = "../",title = "Select folder")
+    tk.folderName =  filedialog.askdirectory(initialdir = "./",title = "Select folder")
     tk.headEmbedded = 1
     self.show_frame("ConfigFilePromp")
 
@@ -111,7 +111,7 @@ def showValidationVideo(self, numWell, zoom, deb):
        # videoPath = fp.readline()
     # videoPath = videoPath[:len(videoPath)-1]
     
-    filepath = '../ZZoutput/'+self.currentResultFolder+'/pathToVideo.txt'
+    filepath = './ZZoutput/'+self.currentResultFolder+'/pathToVideo.txt'
     if os.path.exists(filepath):
         with open(filepath) as fp:
            videoPath = fp.readline()
@@ -183,7 +183,7 @@ def flagMove(self, numWell, numPoiss, numMouv):
 
     name = self.currentResultFolder
 
-    reference = '../ZZoutput/'+name+'/results_'+name+'.txt'
+    reference = './ZZoutput/'+name+'/results_'+name+'.txt'
 
     dataRef = self.dataRef
     
@@ -204,7 +204,7 @@ def saveSuperStruct(self, numWell, numPoiss, numMouv):
     name = self.currentResultFolder
     dataRef = self.dataRef
     
-    reference = '../ZZoutput/'+name+'/results_'+name+'.txt'
+    reference = './ZZoutput/'+name+'/results_'+name+'.txt'
     
     with open(reference,'w') as out:
        json.dump(dataRef, out)

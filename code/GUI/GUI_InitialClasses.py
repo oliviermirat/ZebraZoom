@@ -208,8 +208,11 @@ class ResultsVisualization(tk.Frame):
         # label.pack(side="top", fill="x", pady=10)
         label.grid(row=0,column=0)
         
-        os.walk('../ZZoutput/')
-        for x in sorted(next(os.walk('../ZZoutput'))[1]):
+        if not(os.path.exists('./ZZoutput/')):
+          os.mkdir('./ZZoutput/')
+        
+        os.walk('./ZZoutput/')
+        for x in sorted(next(os.walk('./ZZoutput'))[1]):
           tk.Button(self, text=x, command=lambda currentResultFolder=x : controller.exploreResultFolder(currentResultFolder)).grid(row=curLine,column=curCol)
           if (curLine > nbLines):
             curLine = 1
@@ -231,7 +234,7 @@ class ViewParameters(tk.Frame):
         name = self.controller.currentResultFolder
         
         if name != "abc":
-          reference = '../ZZoutput/'+name+'/results_'+name+'.txt'
+          reference = './ZZoutput/'+name+'/results_'+name+'.txt'
           
           if controller.justEnteredViewParameter == 1:
             with open(reference) as ff:

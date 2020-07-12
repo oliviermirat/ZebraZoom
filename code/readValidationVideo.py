@@ -19,7 +19,7 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, st
   cv2.moveWindow("press q to quit", 0, 0)
   cv2.resizeWindow("press q to quit", horizontal, vertical)
   
-  s1  = "../ZZoutput/"
+  s1  = "./ZZoutput/"
   s2  = folderName
   s3  = "/"
   s3b = "/results_"

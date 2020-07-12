@@ -34,7 +34,7 @@
   "multipleAnimalTrackingAdvanceAlgorithmDist2" : 400,
   "findHeadPositionByUserInput" : 0,
   "accentuateFrameForManualTailExtremityFind" : 1,
-  "outputFolder" : "../ZZoutput/",
+  "outputFolder" : "./ZZoutput/",
   "onlyTrackThisOneWell" : -1,
   "noWellDetection" : 0,
   "oneWellManuallyChosenTopLeft" : [],
