@@ -1,15 +1,15 @@
-__pycache__/
-code/GUI/__pycache__/
-code/__pycache__/
-code/getImage/__pycache__/
-code/tracking/__pycache__/
-code/tracking/headTrackingHeadingCalculation/__pycache__/
-code/tracking/tailTracking/__pycache__/
-code/tracking/tailTracking/tailTrackingExtremityDetect/__pycache__/
-code/tracking/tailTracking/tailTrackingExtremityDetect/findTailExtremete/__pycache__/
-code/vars/__pycache__/
+zebrazoom/__pycache__/
+zebrazoom/code/GUI/__pycache__/
+zebrazoom/code/__pycache__/
+zebrazoom/code/getImage/__pycache__/
+zebrazoom/code/tracking/__pycache__/
+zebrazoom/code/tracking/headTrackingHeadingCalculation/__pycache__/
+zebrazoom/code/tracking/tailTracking/__pycache__/
+zebrazoom/code/tracking/tailTracking/tailTrackingExtremityDetect/__pycache__/
+zebrazoom/code/tracking/tailTracking/tailTrackingExtremityDetect/findTailExtremete/__pycache__/
+zebrazoom/code/vars/__pycache__/
 
-newhyperparameters
-trace.txt
+zebrazoom/newhyperparameters
+zebrazoom/trace.txt
 
-ZZoutput/
+zebrazoom/ZZoutput/
