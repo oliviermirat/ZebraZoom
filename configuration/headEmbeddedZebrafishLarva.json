@@ -1,0 +1,23 @@
+{
+  "automaticallySetSomeOfTheHeadEmbededHyperparameters" : 1,
+  "headEmbededAutoSet_ExtendedDescentSearchOption" : 0,
+  "headEmbededAutoSet_BackgroundExtractionOption"  : 0,
+  "findHeadPositionByUserInput" : 1,
+  
+  "thresForDetectMovementWithRawVideo" : 18,
+  "minNbPixelForDetectMovementWithRawVideo" : 15,
+
+  "detectBoutMinDist" : -1,
+  "detectBoutMinNbFrames"  : 5,
+  "detectBoutMinAngleDiff" : 0.01,
+  "minDiffBetweenSubsequentBendAmp" : 0.01,
+  "windowForLocalBendMinMaxFind" : 3,
+  
+  "fillGapFrameNb" : 5,
+  "tailAngleMedianFilter" : 5,
+  
+  "nbWells" : 1,
+  "nbList"  : 20,
+  "headEmbeded" : 1,
+  "headingCalculationMethod" : "calculatedWithMedianTailTip"
+}

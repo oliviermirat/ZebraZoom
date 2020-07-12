@@ -1,0 +1,20 @@
+{
+"extractAdvanceZebraParameters": 0,
+"freeSwimmingTailTrackingMethod": "none",
+"oneWellManuallyChosenTopLeft" : [400, 200],
+"oneWellManuallyChosenBottomRight" : [950, 450],
+"nbWells": 1,
+"minArea": 100,
+"maxArea": 2000,
+"minAreaBody": 100,
+"maxAreaBody": 2000,
+"headSize": 10,
+"noBoutsDetection": 1,
+"noChecksForBoutSelectionInExtractParams" : 1,
+"minPixelDiffForBackExtract" : 40,
+"thresholdForBlobImg" : 250,
+"nbAnimalsPerWell" : 30,
+"trackingPointSizeDisplay" : 4,
+"validationVideoPlotHeading" : 0,
+"multipleAnimalTrackingAdvanceAlgorithm" : 1
+}
