@@ -16,10 +16,10 @@
 For more information visit <a href="https://zebrazoom.org/" target="_blank">zebrazoom.org</a> or email us info@zebrazoom.org.<br/>
 Examples of videos tracked with ZebraZoom:<br/><br/>
 <p align="center">
-<img src="https://zebrazoom.org/videos/gif/output1.gif" height="160">
-<img src="https://zebrazoom.org/videos/gif/output2.gif" height="160">
-<img src="https://zebrazoom.org/videos/gif/output3.gif" height="160">
-<img src="https://zebrazoom.org/videos/gif/output4.gif" height="160">
+<img src="https://zebrazoom.org/videos/gif/output1.gif" height="250">
+<img src="https://zebrazoom.org/videos/gif/output2.gif" height="250">
+<img src="https://zebrazoom.org/videos/gif/output3.gif" height="250">
+<img src="https://zebrazoom.org/videos/gif/output4.gif" height="250">
 <img src="https://zebrazoom.org/videos/gif/ER.gif" height="160">
 </p>
 
