@@ -15,6 +15,7 @@ from getForegroundImage import getForegroundImage
 import cvui
 from vars import getGlobalVariables
 import json
+import os
 globalVariables = getGlobalVariables()
 
 def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
@@ -28,9 +29,9 @@ def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
       self.configFile = json.load(f)
 
   if globalVariables["mac"]:
-    self.videoToCreateConfigFileFor = filedialog.askopenfilename(initialdir = "./",title = "Select video to create config file for")
+    self.videoToCreateConfigFileFor = filedialog.askopenfilename(initialdir = os.path.expanduser("~"),title = "Select video to create config file for")
   else:
-    self.videoToCreateConfigFileFor = filedialog.askopenfilename(initialdir = "./",title = "Select video to create config file for",filetypes = (("video","*.*"),("all files","*.*")))
+    self.videoToCreateConfigFileFor = filedialog.askopenfilename(initialdir = os.path.expanduser("~"),title = "Select video to create config file for",filetypes = (("video","*.*"),("all files","*.*")))
   controller.show_frame("ChooseGeneralExperiment")
 
 def chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other):

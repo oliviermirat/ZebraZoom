@@ -78,7 +78,14 @@ class StartPage(tk.Frame):
 
         tk.Label(self, text="", font=controller.title_font).pack()
         button2.pack()
-
+        
+        tk.Label(self, text="", font=controller.title_font).pack()
+        tk.Button(self, text="Open configuration file folder", command=lambda: controller.openConfigurationFileFolder(controller.homeDirectory)).pack()
+        
+        tk.Label(self, text="", font=controller.title_font).pack()
+        tk.Button(self, text="Open ZebraZoom's output folder", command=lambda: controller.openZZOutputFolder(controller.homeDirectory)).pack()
+        
+        
 
 class SeveralVideos(tk.Frame):
 

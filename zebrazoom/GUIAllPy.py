@@ -38,7 +38,8 @@ class SampleApp(tk.Tk):
     def __init__(self, *args, **kwargs):
         tk.Tk.__init__(self, *args, **kwargs)
         self.title("ZebraZoom")
-        self.currentResultFolder="abc"
+        self.currentResultFolder = "abc"
+        self.homeDirectory = os.path.dirname(os.path.realpath(__file__))
         
         self.configFile = {}
         self.videoToCreateConfigFileFor = ''
@@ -132,6 +133,12 @@ class SampleApp(tk.Tk):
 
     def saveSuperStruct(self, numWell, numPoiss, numMouv):
         GUI_InitialFunctions.saveSuperStruct(self, numWell, numPoiss, numMouv)
+        
+    def openConfigurationFileFolder(self, homeDirectory):
+        GUI_InitialFunctions.openConfigurationFileFolder(self, homeDirectory)
+        
+    def openZZOutputFolder(self, homeDirectory):
+        GUI_InitialFunctions.openZZOutputFolder(self, homeDirectory)
         
     # Config File preparation functions
     

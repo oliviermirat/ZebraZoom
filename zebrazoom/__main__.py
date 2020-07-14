@@ -1,14 +1,18 @@
+import os
+dir_path = os.path.dirname(os.path.realpath(__file__))
+os.chdir(dir_path)
+print("The data produced by ZebraZoom can be found in the folder: " + os.path.join(dir_path,'ZZoutput'))
+
 import sys
 sys.path.insert(1, './')
 sys.path.insert(1, './code/')
 sys.path.insert(1, './code/GUI/')
 sys.path.insert(1, './code/getImage/')
-sys.path.insert(1, './code/vars/')
-sys.path.insert(1, './code/tracking/')
-sys.path.insert(1, './code/tracking/headTrackingHeadingCalculation/')
-sys.path.insert(1, './code/tracking/tailTracking/')
-sys.path.insert(1, './code/tracking/tailTracking/tailTrackingExtremityDetect/')
-sys.path.insert(1, './code/tracking/tailTracking/tailTrackingExtremityDetect/findTailExtremete/')
+sys.path.insert(1, './code/trackingFolder/')
+sys.path.insert(1, './code/trackingFolder/headTrackingHeadingCalculationFolder/')
+sys.path.insert(1, './code/trackingFolder/tailTrackingFunctionsFolder/')
+sys.path.insert(1, './code/trackingFolder/tailTrackingFunctionsFolder/tailTrackingExtremityDetectFolder/')
+sys.path.insert(1, './code/trackingFolder/tailTrackingFunctionsFolder/tailTrackingExtremityDetectFolder/findTailExtremeteFolder/')
 
 from vars import getGlobalVariables
 globalVariables = getGlobalVariables()

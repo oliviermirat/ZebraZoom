@@ -31,10 +31,11 @@ import popUpAlgoFollow
 LARGE_FONT= ("Verdana", 12)
 
 def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo):
+    
     if globalVariables["mac"]:
-        tk.videoName =  filedialog.askopenfilename(initialdir = "./",title = "Select file")
+        tk.videoName =  filedialog.askopenfilename(initialdir = os.path.expanduser("~"),title = "Select file")
     else:
-        tk.videoName =  filedialog.askopenfilename(initialdir = "./",title = "Select file",filetypes = (("video","*.*"),("all files","*.*")))
+        tk.videoName =  filedialog.askopenfilename(initialdir = os.path.expanduser("~"),title = "Select file",filetypes = (("video","*.*"),("all files","*.*")))
     tk.folderName = ''
     tk.headEmbedded = 0
     
@@ -44,14 +45,14 @@ def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo):
     self.show_frame("ConfigFilePromp")
 
 def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo):
-    tk.folderName =  filedialog.askdirectory(initialdir = "./",title = "Select folder")
+    tk.folderName =  filedialog.askdirectory(initialdir = os.path.expanduser("~"),title = "Select folder")
     tk.headEmbedded = 0
     tk.justExtractParams = int(justExtractParams)
     tk.noValidationVideo = int(noValidationVideo)
     self.show_frame("ConfigFilePromp")
     
 def chooseFolderForTailExtremityHE(self):
-    tk.folderName =  filedialog.askdirectory(initialdir = "./",title = "Select folder")
+    tk.folderName =  filedialog.askdirectory(initialdir = os.path.expanduser("~"),title = "Select folder")
     tk.headEmbedded = 1
     self.show_frame("ConfigFilePromp")
 
@@ -225,3 +226,23 @@ def saveSuperStruct(self, numWell, numPoiss, numMouv):
     self.dataRef = dataRef
     
     self.printSomeResults(numWell, numPoiss, numMouv)
+
+
+def openConfigurationFileFolder(self, homeDirectory):
+  # dir_path = os.path.dirname(os.path.realpath(__file__))
+  dir_path = os.path.join(homeDirectory,'configuration')
+  if sys.platform == "win32":
+    os.startfile(dir_path)
+  else:
+    opener ="open" if sys.platform == "darwin" else "xdg-open"
+    subprocess.call([opener, dir_path])
+
+
+def openZZOutputFolder(self, homeDirectory):
+  # dir_path = os.path.dirname(os.path.realpath(__file__))
+  dir_path = os.path.join(homeDirectory,'ZZoutput')
+  if sys.platform == "win32":
+    os.startfile(dir_path)
+  else:
+    opener ="open" if sys.platform == "darwin" else "xdg-open"
+    subprocess.call([opener, dir_path])  

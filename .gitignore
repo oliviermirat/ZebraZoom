@@ -2,14 +2,18 @@ zebrazoom/__pycache__/
 zebrazoom/code/GUI/__pycache__/
 zebrazoom/code/__pycache__/
 zebrazoom/code/getImage/__pycache__/
-zebrazoom/code/tracking/__pycache__/
-zebrazoom/code/tracking/headTrackingHeadingCalculation/__pycache__/
-zebrazoom/code/tracking/tailTracking/__pycache__/
-zebrazoom/code/tracking/tailTracking/tailTrackingExtremityDetect/__pycache__/
-zebrazoom/code/tracking/tailTracking/tailTrackingExtremityDetect/findTailExtremete/__pycache__/
+zebrazoom/code/trackingFolder/__pycache__/
+zebrazoom/code/trackingFolder/headTrackingHeadingCalculationFolder/__pycache__/
+zebrazoom/code/trackingFolder/tailTrackingFunctionsFolder/__pycache__/
+zebrazoom/code/trackingFolder/tailTrackingFunctionsFolder/tailTrackingExtremityDetectFolder/__pycache__/
+zebrazoom/code/trackingFolder/tailTrackingFunctionsFolder/tailTrackingExtremityDetectFolder/findTailExtremeteFolder/__pycache__/
 zebrazoom/code/vars/__pycache__/
 
 zebrazoom/newhyperparameters
 zebrazoom/trace.txt
 
 zebrazoom/ZZoutput/
+
+MANIFEST
+dist/
+zebrazoom.egg-info/
