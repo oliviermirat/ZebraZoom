@@ -12,7 +12,7 @@ sys.path.insert(1, './code/trackingFolder/tailTrackingFunctionsFolder/tailTracki
 from vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
-if len(sys.argv) == 1 or globalVariables["limitedVersion"] == 1:
+if len(sys.argv) == 1:
 
   from GUIAllPy import SampleApp
   if __name__ == "__main__":

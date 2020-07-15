@@ -10,6 +10,7 @@
 [Testing the installation and using ZebraZoom](#testanduse)<br/>
 [Adjusting ZebraZoom's hyperparameters](#hyperparameters)<br/>
 [Further analyzing ZebraZoom's output with Python](#pythonanalysis)<br/>
+[Cite us](#citeus)<br/>
 
 <a name="introduction"/>
 <H2 CLASS="western"> Introduction:</H2>
@@ -45,6 +46,7 @@ To start ZebraZoom, you can now open the Anaconda Prompt or a terminal and type:
 <H4 CLASS="western">Very easy installation for Window 10:</H4>
 If you are using Windows 10 (64 bits), there is an even easier method to install ZebraZoom!<br/>
 Just <a href="https://drive.google.com/open?id=1XY9-qOHoGnaL_wIR4o0YMU3SQEPxniZF" target="_blank">download this file</a> and unzip it. Open the folder ZebraZoomWinExe, then double click on “doubleClickHereToStart”: the ZebraZoom graphical interface should start.<br/>
+<b>Warning:</b> this installation method is a good way to easily test ZebraZoom. However, if you use the installation method described above instead, ZebraZoom's tracking will run faster.<br/>
 
 <H4 CLASS="western">Further recommendations for installation with the general method:</H4>
 If and only if you are going to use Anaconda extensively to install packages other than ZebraZoom, it can be a good idea to create an Anaconda Environment just for ZebraZoom.<br/>
@@ -71,7 +73,8 @@ Or, if you have installed ZebraZoom following the "Very easy installation for Wi
 <a name="testanduse"/>
 <H2 CLASS="western">Testing the installation and using ZebraZoom:</H2>
 To be able to track animals in videos you need to create a configuration file for each “type” of video you want to track. A “type” of video is defined by light intensity, number and shape of wells, number of animals per well, number of pixels per animal, the type of animal in your video, etc...<br/><br/>
-Start by testing that ZebraZoom is working on your machine. To do that, <a href="https://zebrazoom.org/testVideos.html" target="_blank">download the test videos</a> and try to run the tracking on those: in the GUI's main menu, click on “Run ZebraZoom on a video”, choose the video you want to track and then the configuration file which will have the same name as the video you want to track. Once the tracking is done, go back to the main menu and click on “Visualize ZebraZoom's output”, then on the video you just tracked. If the tracking worked well, you should be able to visualize the output produced by ZebraZoom (by clicking on “View video for well 0” for example).<br/>
+Start by testing that ZebraZoom is working on your machine. To do that, <a href="https://zebrazoom.org/testVideos.html" target="_blank">download the test videos</a> and try to run the tracking on those: in the GUI's main menu, click on “Run ZebraZoom on a video”, choose the video you want to track and then the configuration file which will have the same name as the video you want to track. Once the tracking is done, go back to the main menu and click on “Visualize ZebraZoom's output”, then on the video you just tracked. If the tracking worked well, you should be able to visualize the output produced by ZebraZoom (by clicking on “View video for well 0” for example).<br/><br/>
+You can also watch the <a href="https://www.youtube.com/playlist?list=PLuWZiRK2HkeVo8zIPixdBj-hBk-cbsQZr" style="color:blue" target="_blank">tutorial videos on how to use ZebraZoom</a> for more guidance about how to create configuration files, launch ZebraZoom on videos and visualize the outputs.<br/>
 
 <a name="hyperparameters"/>
 <H2 CLASS="western">Adjusting ZebraZoom's hyperparameters:</H2>
@@ -162,3 +165,12 @@ You can then, for example, plot the tail angle with the following command:
 <I>import matplotlib.pyplot as plt</I><br/>
 <I>plt.plot(supstruct['wellPoissMouv'][2][0][0]["TailAngle_smoothed"])</I><br/>
 <I>plt.show()</I><br/>
+
+
+<a name="citeus"/>
+<H2 CLASS="western">Cite us:</H2>
+
+<p>In all your publications that make use of ZebraZoom:</p>
+<p>First and foremost, please acknowledge <a href="https://wyartlab.org/" style="color:blue" target="_blank">Claire Wyart's lab</a> that has been supporting the development of ZebraZoom for many years.</p>
+<p>Please also cite the original <a href="https://www.frontiersin.org/articles/10.3389/fncir.2013.00107/full" style="color:blue" target="_blank">ZebraZoom paper</a>.</p>
+<p>If possible, please also consider mentioning <a href="https://zebrazoom.org/" style="color:blue" target="_blank">zebrazoom.org</a>.</p>
