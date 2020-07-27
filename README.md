@@ -22,6 +22,7 @@ Examples of videos tracked with ZebraZoom:<br/><br/>
 <img src="https://zebrazoom.org/videos/gif/output3.gif" height="250">
 <img src="https://zebrazoom.org/videos/gif/output4.gif" height="250">
 <img src="https://zebrazoom.org/videos/gif/ER.gif" height="250">
+<img src="https://zebrazoom.org/videos/gif/mouse.gif" height="250">
 </p>
 
 <a name="installation"/>
