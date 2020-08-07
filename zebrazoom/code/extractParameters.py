@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 import math
 import json
+import os
 import sys
 import popUpAlgoFollow
 
@@ -12,6 +13,7 @@ from filterpy.common import Q_discrete_white_noise
 
 # from calculateCurvature import calculateCurvature
 from detectMovementWithRawVideo import detectMovementWithRawVideo
+from getTailTipManual import getHeadPositionByFileSaved, getTailTipByFileSaved
 
 import pdb
 
@@ -60,6 +62,8 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
 
   trackingTailAllAnimals = trackingData[0]
   trackingHeadingAllAnimals = trackingData[1]
+  headPosition = trackingData[2]
+  tailTip = trackingData[3]
   
   data = []
   
@@ -193,7 +197,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
             if angleVariation[i] > thresAngleBoutDetect:
               auDessus[i] = 1
         else:
-          auDessus = detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumber, wellPositions, head)
+          auDessus = detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumber, wellPositions, head, headPosition, tailTip)
     
     if (hyperparameters["freqAlgoPosFollow"] != 0):
       print("Extract Param Middle: wellNumber:",wellNumber," ; frame:",i)

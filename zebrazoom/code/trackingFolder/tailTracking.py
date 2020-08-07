@@ -7,6 +7,7 @@ from centerOfMassTailTracking import centerOfMassTailTracking
 from tailTrackingExtremityDetect import tailTrackingExtremityDetect
 from tailTrackingBlobDescent import tailTrackingBlobDescent
 from getTailTipManual import findHeadPositionByUserInput
+from headEmbededTailTrackingTeresaNicolson import headEmbededTailTrackingTeresaNicolson
 
 def tailTracking(animalId, i, firstFrame, heading, videoPath, x, y, headPosition, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, output, lastFirstTheta, maxDepth, tailTip):
   
@@ -25,6 +26,7 @@ def tailTracking(animalId, i, firstFrame, heading, videoPath, x, y, headPosition
     
     if len(outputI[0]) == len(output[animalId, i-firstFrame]):
       output[animalId, i-firstFrame] = outputI
+
   else:
     if hyperparameters["freeSwimmingTailTrackingMethod"] == "tailExtremityDetect":
       # through the tail extremity descent method (original C++ method)

@@ -58,7 +58,13 @@ def headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1
         output[0, i-firstFrame][0][0] = headPosition[0]
         output[0, i-firstFrame][0][1] = headPosition[1]
         outputHeading[0, i-firstFrame] = heading
-      
+        
+      else:
+        
+        # This is for the head-embedeed: at this point, this is set again in the tail tracking (the heading is set in the tail tracking as well)
+        output[0, i-firstFrame][0][0] = headPosition[0]
+        output[0, i-firstFrame][0][1] = headPosition[1]
+        
     else:
       # If head embeded, heading and head position stay the same for all frames
       outputHeading[0, i-firstFrame] = outputHeading[0, i-firstFrame-1]

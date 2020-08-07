@@ -79,7 +79,7 @@ def findHeadPositionByUserInput(frame):
   cv2.destroyWindow(WINDOW_NAME)
   return [cursor.x, cursor.y]
 
-def getTailTipByFileSaved(frame,hyperparameters,videoPath):
+def getTailTipByFileSaved(hyperparameters,videoPath):
   ix = -1
   iy = -1
   with open(videoPath+'.csv') as csv_file:

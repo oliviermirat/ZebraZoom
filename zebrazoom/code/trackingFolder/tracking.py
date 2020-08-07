@@ -70,9 +70,10 @@ def tracking(videoPath,background,wellNumber,wellPositions,hyperparameters,video
         headPosition = findHeadPositionByUserInput(frame)
       else:
         [frame, gray, thresh1, blur, thresh2, frame2] = getImages(hyperparameters, cap, videoPath, firstFrame, background, wellNumber, wellPositions)
+        cap.set(1, firstFrame)
         [outputHeading, output, heading, headPosition, x, y, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, firstFrame, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, outputHeading, output, headPosition, wellPositions[wellNumber]["lengthX"])
     if os.path.exists(videoPath+'.csv'):
-      tailTip  = getTailTipByFileSaved(frame,hyperparameters,videoPath)
+      tailTip  = getTailTipByFileSaved(hyperparameters,videoPath)
     else:
       tailTip  = findTailTipByUserInput(frame,hyperparameters)
     if hyperparameters["automaticallySetSomeOfTheHeadEmbededHyperparameters"] == 1:
@@ -133,4 +134,4 @@ def tracking(videoPath,background,wellNumber,wellPositions,hyperparameters,video
   if hyperparameters["popUpAlgoFollow"]:
     popUpAlgoFollow.prepend("Tracking done for well "+ str(wellNumber))
   
-  return [output, outputHeading]
+  return [output, outputHeading, headPosition, tailTip]

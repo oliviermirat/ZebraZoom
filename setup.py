@@ -2,7 +2,7 @@ import setuptools
 from distutils.core import setup
 setup(
   name = 'zebrazoom',
-  version = '0.3',
+  version = '0.5',
   license='AGPL-3.0',
   description = 'Track and analyze zebrafish and animal behavior',
   author = 'Olivier Mirat',
@@ -11,6 +11,7 @@ setup(
   download_url = 'https://github.com/oliviermirat/ZebraZoom/archive/v1.0.tar.gz',
   keywords = ['Animal', 'Behavior', 'Tracking', 'Zebrafish'],
   install_requires=[
+    "scikit-learn",
     "h5py",
     "numpy",
     "matplotlib",

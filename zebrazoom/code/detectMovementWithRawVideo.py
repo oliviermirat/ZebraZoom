@@ -1,10 +1,22 @@
 import numpy as np
 import cv2
+import math
 from getImageSequential import getImageSequential
 from getImage import getImage
 from adjustHyperparameters import initializeAdjustHyperparametersWindows, adjustHyperparameters, getDetectMouvRawVideosParamsForHyperParamAdjusts
 
-def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparision, wellNumber, wellPositions, hyperparameters, firstFrame, lenX, lenY, thresForDetectMovementWithRawVideo):
+def putTabIntoBoundaries(img, tab):
+  if tab[0] < 0:
+    tab[0] = 0
+  if tab[1] < 0:
+    tab[1] = 0
+  if tab[0] > len(img[0]) - 1:
+    tab[0] = len(img[0]) - 1
+  if tab[1] > len(img) - 1:
+    tab[1] = len(img) - 1
+  return tab
+
+def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparision, wellNumber, wellPositions, hyperparameters, firstFrame, lenX, lenY, thresForDetectMovementWithRawVideo, headPosition, tailTip):
   headX = head[l-firstFrame][0]
   headY = head[l-firstFrame][1]
   xmin = headX - rayon
@@ -73,6 +85,31 @@ def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparisi
   
   res = cv2.absdiff(img22, imgFuture22)
   
+  if len(headPosition) and len(tailTip):
+    # Setting to black everything outside of a rectangle centered on the tail
+    stencil = np.zeros(res.shape).astype(res.dtype)
+    dist = (math.sqrt((headPosition[0] - tailTip[0])**2 + (headPosition[1] - tailTip[1])**2))*1.2
+    center      = [(headPosition[0] + tailTip[0])/2, (headPosition[1] + tailTip[1])/2]
+    topLeft     = [int(center[0] - dist/2) , int(center[1] - dist/2)]
+    bottomRight = [int(center[0] + dist/2) , int(center[1] + dist/2)]
+    topLeft     = putTabIntoBoundaries(res, topLeft)
+    bottomRight = putTabIntoBoundaries(res, bottomRight)
+    contours = [np.array([topLeft, [topLeft[0], bottomRight[1]], bottomRight, [bottomRight[0], topLeft[1]]])]
+    color = [255, 255, 255]
+    cv2.fillPoly(stencil, contours, color)
+    res = cv2.bitwise_and(res, stencil)
+    # Setting to black a polygon around the head of the animal
+    pol1 = np.array(headPosition) + np.array([headPosition[1] - tailTip[1], tailTip[0] - headPosition[0]])
+    pol2 = np.array(headPosition) + np.array([tailTip[1] - headPosition[1], headPosition[0] - tailTip[0]])
+    pol3 = pol1 + np.array(headPosition) - np.array(tailTip)
+    pol4 = pol2 + np.array(headPosition) - np.array(tailTip)
+    pol1 = putTabIntoBoundaries(res, pol1.tolist())
+    pol2 = putTabIntoBoundaries(res, pol2.tolist())
+    pol3 = putTabIntoBoundaries(res, pol3.tolist())
+    pol4 = putTabIntoBoundaries(res, pol4.tolist())
+    pts = np.array([pol1,pol2,pol4,pol3], np.int32)
+    cv2.fillPoly(res, [pts], (0,0,0))
+  
   ret, res = cv2.threshold(res,thresForDetectMovementWithRawVideo,255,cv2.THRESH_BINARY)
   
   totDiff = cv2.countNonZero(res)
@@ -80,7 +117,7 @@ def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparisi
   return [img[ymin:ymax, xmin:xmax], res, totDiff, cap1, cap2]
 
   
-def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumber, wellPositions, head):
+def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumber, wellPositions, head, headPosition, tailTip):
   
   if hyperparameters["adjustDetectMovWithRawVideo"]:
     initializeAdjustHyperparametersWindows("Bouts Detection")
@@ -122,7 +159,7 @@ def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumbe
       if l > hyperparameters["lastFrame"]:
         l = hyperparameters["lastFrame"]
       
-      [img, res, totDiff, cap1, cap2] = getImagesAndTotDiff(head, hyperparameters["halfDiameterRoiBoutDetect"], cap1, cap2, videoPath, l, hyperparameters["frameGapComparision"], wellNumber, wellPositions, hyperparameters, firstFrame, lenX, lenY, hyperparameters["thresForDetectMovementWithRawVideo"])
+      [img, res, totDiff, cap1, cap2] = getImagesAndTotDiff(head, hyperparameters["halfDiameterRoiBoutDetect"], cap1, cap2, videoPath, l, hyperparameters["frameGapComparision"], wellNumber, wellPositions, hyperparameters, firstFrame, lenX, lenY, hyperparameters["thresForDetectMovementWithRawVideo"], headPosition, tailTip)
       
       if hyperparameters["debugDetectMovWithRawVideo"]:
         print("frame:",l," ; number of different pixel in subsequent frames:",totDiff," ; bout detection threshold:",hyperparameters["minNbPixelForDetectMovementWithRawVideo"])

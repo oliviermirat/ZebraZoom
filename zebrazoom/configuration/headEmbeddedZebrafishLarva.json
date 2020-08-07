@@ -5,7 +5,7 @@
   "findHeadPositionByUserInput" : 1,
   
   "thresForDetectMovementWithRawVideo" : 18,
-  "minNbPixelForDetectMovementWithRawVideo" : 15,
+  "minNbPixelForDetectMovementWithRawVideo" : 5,
 
   "detectBoutMinDist" : -1,
   "detectBoutMinNbFrames"  : 5,
