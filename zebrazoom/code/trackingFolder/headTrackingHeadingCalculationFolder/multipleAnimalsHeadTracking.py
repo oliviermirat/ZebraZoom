@@ -43,8 +43,13 @@ def multipleAnimalsHeadTracking(outputHeading, output, hyperparameters, gray, i,
             y = 0
           if not([x, y] in headCoordinatesOptions):
             headCoordinatesOptions.append([x, y])
-      minAreaCur = minAreaCur - int(hyperparameters["minArea"]/10)
-      maxAreaCur = maxAreaCur + int(hyperparameters["minArea"]/10)
+      
+      if int(hyperparameters["minArea"]/10):
+        minAreaCur = minAreaCur - int(hyperparameters["minArea"]/10)
+        maxAreaCur = maxAreaCur + int(hyperparameters["minArea"]/10)
+      else:
+        minAreaCur = minAreaCur - 1
+        maxAreaCur = maxAreaCur + 1   
   else:
     contours, hierarchy = cv2.findContours(thresh2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     for contour in contours:
