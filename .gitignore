@@ -22,3 +22,10 @@ zebrazoom/configuration/
 !zebrazoom/configuration/4wellsZebrafishLarvaeEscapeResponses.json
 !zebrazoom/configuration/fliesInTube.json
 !zebrazoom/configuration/headEmbeddedZebrafishLarva.json
+
+zebrazoom/dataAnalysis/classifiers/*
+zebrazoom/dataAnalysis/data/*
+zebrazoom/dataAnalysis/experimentOrganizationExcel/*
+zebrazoom/dataAnalysis/resultsClustering/*
+zebrazoom/dataAnalysis/resultsKinematic/*
+
