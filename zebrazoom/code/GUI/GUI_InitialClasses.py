@@ -85,6 +85,8 @@ class StartPage(tk.Frame):
         tk.Label(self, text="", font=controller.title_font).pack()
         tk.Button(self, text="Open ZebraZoom's output folder", command=lambda: controller.openZZOutputFolder(controller.homeDirectory)).pack()
         
+        tk.Label(self, text="", font=controller.title_font).pack()
+        tk.Button(self, text="Analyze ZebraZoom's outputs", command=lambda: controller.show_frame("CreateExperimentOrganizationExcel")).pack()
         
 
 class SeveralVideos(tk.Frame):

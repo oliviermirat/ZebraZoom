@@ -14,14 +14,15 @@ dataframeOptions = {
   'resFolder'                         : './data/',
   'nameOfFile'                        : 'example',
   'smoothingFactorDynaParam'          : 0,   # 0.001
-  'nbFramesTakenIntoAccount'          : 28,
+  'nbFramesTakenIntoAccount'          : -1, #28,
   'numberOfBendsIncludedForMaxDetect' : -1,
   'minNbBendForBoutDetect'            : 3,
+  'defaultZZoutputFolderPath'         : '../ZZoutput/',
   'computeTailAngleParamForCluster'   : True,
   'computeMassCenterParamForCluster'  : True
 }
 
-createDataFrame(dataframeOptions)
+[conditions, genotypes, nbFramesTakenIntoAccount] = createDataFrame(dataframeOptions)
 
 
 # Applying the clustering on this dataframe
@@ -31,7 +32,7 @@ clusteringOptions = {
   'pathToVideos' : '../ZZoutput/',
   'nbCluster' : 3,
   #'nbPcaComponents' : 30,
-  'nbFramesTakenIntoAccount' : 28,
+  'nbFramesTakenIntoAccount' : nbFramesTakenIntoAccount,
   'scaleGraphs' : True,
   'showFigures' : False,
   'useFreqAmpAsym' : False,
@@ -51,10 +52,10 @@ clusteringOptions = {
 
 
 # Applies the clustering for the first time
-[allBouts, classifier] = applyClustering(clusteringOptions, 0)
+[allBouts, classifier] = applyClustering(clusteringOptions, 0, './resultsClustering/')
 
 
 # Saves the classifier
 outfile = open('classifiers/classifier_' + clusteringOptions['nameOfFile'] + '.txt','wb')
-pickle.dump(classifier,outfile)
+pickle.dump([classifier, nbFramesTakenIntoAccount],outfile)
 outfile.close()

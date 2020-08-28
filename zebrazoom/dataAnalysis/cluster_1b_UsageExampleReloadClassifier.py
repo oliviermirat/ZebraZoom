@@ -3,7 +3,6 @@ sys.path.insert(1, './dataanalysis/')
 import pickle
 from applyClustering import applyClustering
 
-
 # Applying the clustering on this dataframe
 
 clusteringOptions = {
@@ -11,7 +10,6 @@ clusteringOptions = {
   'pathToVideos' : '../ZZoutput/',
   'nbCluster' : 3,
   #'nbPcaComponents' : 30,
-  'nbFramesTakenIntoAccount' : 28,
   'scaleGraphs' : True,
   'showFigures' : False,
   'useFreqAmpAsym' : False,
@@ -29,11 +27,12 @@ clusteringOptions = {
   'nameOfFile' : 'example'
 }
 
-# Reloads the classifier previously created
+# Reloads the classifier previously created and get the nbFramesTakenIntoAccount value
 infile = open('classifiers/classifier_'+clusteringOptions['nameOfFile']+'.txt','rb')
-classifier = pickle.load(infile)
+[classifier, nbFramesTakenIntoAccount] = pickle.load(infile)
 infile.close()
+clusteringOptions['nbFramesTakenIntoAccount'] = nbFramesTakenIntoAccount
 
 # Classifies bouts based on the clustering previously obtained
-[allBouts, c] = applyClustering(clusteringOptions, classifier)
+[allBouts, c] = applyClustering(clusteringOptions, classifier, './resultsClustering/')
 

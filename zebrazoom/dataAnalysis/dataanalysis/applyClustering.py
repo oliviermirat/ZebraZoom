@@ -15,7 +15,7 @@ import shutil
 import pickle
 
 
-def applyClustering(clusteringOptions, classifier):
+def applyClustering(clusteringOptions, classifier, outputFolder):
 
   pca = 0
   kme = 0
@@ -72,9 +72,9 @@ def applyClustering(clusteringOptions, classifier):
   possibleColors = ['b', 'r', 'g', 'k']
   possibleColorsNames = ['blue', 'red', 'green', 'black']
 
-  if os.path.exists('resultsClustering/'+nameOfFile):
-    shutil.rmtree('resultsClustering/'+nameOfFile)
-  os.mkdir('resultsClustering/'+nameOfFile)
+  if os.path.exists(outputFolder + nameOfFile):
+    shutil.rmtree(outputFolder + nameOfFile)
+  os.mkdir(outputFolder + nameOfFile)
 
   infile = open(resFolder + nameOfFile,'rb')
   dfParam = pickle.load(infile)
@@ -153,12 +153,12 @@ def applyClustering(clusteringOptions, classifier):
   for i in range(0, nbConditions):
     proportions[i, :] = proportions[i, :] / sum(proportions[i, :])
     
-  outF = open('resultsClustering/'+nameOfFile+'/proportions.txt', "w")
+  outF = open(outputFolder+nameOfFile+'/proportions.txt', "w")
   labelX = ""
   for i in range(0, nbCluster):
     labelX = labelX + "Cluster " + str(i+1) + " : \n"
-    for j in range(0, nbConditions):
-      labelX = labelX + "class" + str(j+1) + ": " + str(round(proportions[j,i]*100*100)/100) + "%, "
+    for j, cond in enumerate(np.unique(dfParam['Condition'].values)):
+      labelX = labelX + cond + ": " + str(round(proportions[j,i]*100*100)/100) + "%, "
       labelX = labelX + "\n"
     labelX = labelX + "\n"
   outF.write(labelX)
@@ -213,7 +213,7 @@ def applyClustering(clusteringOptions, classifier):
     for j, condName in enumerate(np.unique(dfParam['Condition'].values)):
       labelX = labelX + "for " + condName + " :  " + str(round(proportions[j,i]*100*100)/100) + "%\n"
     tabAx[3, i].set_xlabel(labelX)
-  plt.savefig('resultsClustering/'+nameOfFile+'/medianValuesUsedForClusteringForEachClusterAndCondition.png')
+  plt.savefig(outputFolder+nameOfFile+'/medianValuesUsedForClusteringForEachClusterAndCondition.png')
   if showFigures:
     plt.show()
 
@@ -247,7 +247,7 @@ def applyClustering(clusteringOptions, classifier):
     for j, condName in enumerate(np.unique(dfParam['Condition'].values)):
       labelX = labelX + "for " + condName + " (in " + possibleColorsNames[j] + ")\n"
     tabAx2[3, i].set_xlabel(labelX)
-  plt.savefig('resultsClustering/'+nameOfFile+'/mostRepresentativeBoutForEachClusterAndCondition.png')
+  plt.savefig(outputFolder+nameOfFile+'/mostRepresentativeBoutForEachClusterAndCondition.png')
   if showFigures:
     plt.show()
 
@@ -286,7 +286,7 @@ def applyClustering(clusteringOptions, classifier):
   for i in range(0,len(proportions[0])):
     tabAx3[i].set_ylabel('Cluster '+str(i+1))
   tabAx3[len(proportions[0])-1].set_xlabel("Tail angle over time for the\n"+str(nbOfMostRepresentativeBoutsToPlot)+' most representative bouts for each cluster')
-  plt.savefig('resultsClustering/'+nameOfFile+'/'+str(nbOfMostRepresentativeBoutsToPlot)+'mostRepresentativeBoutsForEachCluster.png')
+  plt.savefig(outputFolder+nameOfFile+'/'+str(nbOfMostRepresentativeBoutsToPlot)+'mostRepresentativeBoutsForEachCluster.png')
   if showFigures:
     plt.show()
 
@@ -295,7 +295,7 @@ def applyClustering(clusteringOptions, classifier):
     length = 150
     for boutCategory in range(0, nbCluster):
       print("boutCategory:",boutCategory)
-      out = cv2.VideoWriter('resultsClustering/'+nameOfFile+'/'+'cluster'+str(boutCategory)+'.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (length,length))
+      out = cv2.VideoWriter(outputFolder+nameOfFile+'/'+'cluster'+str(boutCategory)+'.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (length,length))
       indices = sortedRepresentativeBouts[boutCategory].index
       print("total:",len(indices))
       r = [i for i in range(0, 10)] + [i for i in range(int(len(indices)/2)-10, int(len(indices)/2))] + [i for i in range(len(indices)-10, len(indices))]
@@ -313,7 +313,7 @@ def applyClustering(clusteringOptions, classifier):
     length = 150
     for boutCategory in range(0, nbCluster):
       print("boutCategory:",boutCategory+1)
-      out = cv2.VideoWriter('resultsClustering/'+nameOfFile+'/'+'cluster'+str(boutCategory+1)+'.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (length,length))
+      out = cv2.VideoWriter(outputFolder+nameOfFile+'/'+'cluster'+str(boutCategory+1)+'.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (length,length))
       indices = sortedRepresentativeBouts[boutCategory].index
       nbTemp = len(indices)
       if nbTemp < nbVideosToSave:
@@ -341,12 +341,12 @@ def applyClustering(clusteringOptions, classifier):
         concatenatedValues.append(values)
       tabAx[int(idx/3), idx%3].set_title(parameter)
       tabAx[int(idx/3), idx%3].boxplot(concatenatedValues)
-    plt.savefig('resultsClustering/'+nameOfFile+'/globalParametersforEachCluster.png')
+    plt.savefig(outputFolder+nameOfFile+'/globalParametersforEachCluster.png')
     if showFigures:
       plt.plot()
       plt.show()
   
   # Saves classifications
-  dfParam[['Trial_ID','Well_ID','NumBout','classification']].to_csv('resultsClustering/'+clusteringOptions['nameOfFile']+'/classifications.txt')
+  dfParam[['Trial_ID','Well_ID','NumBout','classification']].to_csv(outputFolder+clusteringOptions['nameOfFile']+'/classifications.txt')
   
   return [dfParam, [pca, km]]

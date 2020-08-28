@@ -15,11 +15,12 @@ dataframeOptions = {
   'nbFramesTakenIntoAccount'          : 28,
   'numberOfBendsIncludedForMaxDetect' : -1,
   'minNbBendForBoutDetect'            : 3,
+  'defaultZZoutputFolderPath'         : '../ZZoutput/',
   'computeTailAngleParamForCluster'   : False,
   'computeMassCenterParamForCluster'  : False
 }
 
-[conditions, genotypes] = createDataFrame(dataframeOptions)
+[conditions, genotypes, nbFramesTakenIntoAccount] = createDataFrame(dataframeOptions)
 
 
 # Plotting for the different conditions
@@ -27,5 +28,5 @@ nameOfFile = dataframeOptions['nameOfFile']
 resFolder  = dataframeOptions['resFolder']
 globParam = ['BoutDuration', 'TotalDistance', 'Speed', 'NumberOfOscillations', 'meanTBF', 'maxAmplitude']
 
-populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes)
+populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, 'resultsKinematic/')
 

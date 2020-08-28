@@ -8,6 +8,8 @@ zebrazoom/code/trackingFolder/tailTrackingFunctionsFolder/__pycache__/
 zebrazoom/code/trackingFolder/tailTrackingFunctionsFolder/tailTrackingExtremityDetectFolder/__pycache__/
 zebrazoom/code/trackingFolder/tailTrackingFunctionsFolder/tailTrackingExtremityDetectFolder/findTailExtremeteFolder/__pycache__/
 zebrazoom/code/vars/__pycache__/
+zebrazoom/dataAnalysis/dataanalysis/__pycache__/
+zebrazoom/dataAnalysis/datasetcreation/__pycache__/
 
 zebrazoom/newhyperparameters
 zebrazoom/trace.txt

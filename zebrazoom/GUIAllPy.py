@@ -23,10 +23,13 @@ import configFilePrepareFunctions
 import GUI_InitialFunctions
 import configFileZebrafishFunctions
 import adjustParameterInsideAlgoFunctions
+import dataAnalysisFunctions
 from GUI_InitialClasses import FullScreenApp, StartPage, SeveralVideos, VideoToAnalyze, FolderToAnalyze, TailExtremityHE, ConfigFilePromp, Patience, ZZoutro, ResultsVisualization, ViewParameters
 from configFilePrepare import ChooseVideoToCreateConfigFileFor, ChooseGeneralExperiment, WellOrganisation, CircularWells, NumberOfAnimals, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings
 from configFileZebrafish import HeadEmbeded
 from adjustParameterInsideAlgo import AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim
+from dataAnalysis import CreateExperimentOrganizationExcel, ChooseExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderPopulation, AnalysisOutputFolderClustering
+
 
 LARGE_FONT= ("Verdana", 12)
 
@@ -63,7 +66,7 @@ class SampleApp(tk.Tk):
         container.grid_columnconfigure(0, weight=1) 
         self.container = container
         self.frames = {}
-        for F in (StartPage, SeveralVideos, VideoToAnalyze, ChooseVideoToCreateConfigFileFor, ChooseGeneralExperiment, WellOrganisation, CircularWells, NumberOfAnimals, IdentifyHeadCenter, IdentifyBodyExtremity, ChooseCircularWellsLeft, ChooseCircularWellsRight, FinishConfig, FolderToAnalyze, TailExtremityHE, ConfigFilePromp, Patience, ZZoutro, ResultsVisualization, ViewParameters, HeadEmbeded, AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim, GoToAdvanceSettings):
+        for F in (StartPage, SeveralVideos, VideoToAnalyze, ChooseVideoToCreateConfigFileFor, ChooseGeneralExperiment, WellOrganisation, CircularWells, NumberOfAnimals, IdentifyHeadCenter, IdentifyBodyExtremity, ChooseCircularWellsLeft, ChooseCircularWellsRight, FinishConfig, FolderToAnalyze, TailExtremityHE, ConfigFilePromp, Patience, ZZoutro, ResultsVisualization, ViewParameters, HeadEmbeded, AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim, GoToAdvanceSettings, CreateExperimentOrganizationExcel, ChooseExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderPopulation, AnalysisOutputFolderClustering):
             page_name = F.__name__
             frame = F(parent=container, controller=self)
             self.frames[page_name] = frame
@@ -199,3 +202,22 @@ optionBackgroundExtractionOption):
 
     def goToAdvanceSettings(self, controller, yes, no):
       configFilePrepareFunctions.goToAdvanceSettings(self, controller, yes, no)
+      
+    def openExperimentOrganizationExcelFolder(self, homeDirectory):
+      dataAnalysisFunctions.openExperimentOrganizationExcelFolder(self, homeDirectory)
+    
+    def chooseExperimentOrganizationExcel(self, controller):
+      dataAnalysisFunctions.chooseExperimentOrganizationExcel(self, controller)
+  
+    def populationComparison(self, controller, BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude):
+      dataAnalysisFunctions.populationComparison(self, controller, BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude)
+      
+    def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded):
+      dataAnalysisFunctions.boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded)
+    
+    def openPopulationAnalysisFolder(self, homeDirectory):
+      dataAnalysisFunctions.openPopulationAnalysisFolder(self, homeDirectory)
+    
+    def openClusteringAnalysisFolder(self, homeDirectory):
+      dataAnalysisFunctions.openClusteringAnalysisFolder(self, homeDirectory)    
+

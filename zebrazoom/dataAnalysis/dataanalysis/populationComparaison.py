@@ -4,11 +4,11 @@ import shutil
 import matplotlib.pyplot as plt
 import pickle
 
-def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes):
+def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder):
 
-  if os.path.exists('resultsKinematic/'+nameOfFile):
-    shutil.rmtree('resultsKinematic/'+nameOfFile)
-  os.mkdir('resultsKinematic/'+nameOfFile)
+  if os.path.exists(outputFolder+nameOfFile):
+    shutil.rmtree(outputFolder+nameOfFile)
+  os.mkdir(outputFolder+nameOfFile)
 
   infile = open(resFolder + nameOfFile,'rb')
   dfParam = pickle.load(infile)
@@ -31,4 +31,4 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
     tabAx[int(idx/3), idx%3].set_title(parameter)
     tabAx[int(idx/3), idx%3].boxplot(concatenatedValues)
     tabAx[int(idx/3), idx%3].set_xticklabels(labels)  
-  plt.savefig('resultsKinematic/'+nameOfFile+'/globalParametersInsideCategories.png')
+  plt.savefig(outputFolder+nameOfFile+'/globalParametersInsideCategories.png')

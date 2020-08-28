@@ -20,14 +20,42 @@ def createDataFrame(dataframeOptions):
   nameOfFile                        = dataframeOptions['nameOfFile']
   fileExtension                     = dataframeOptions['fileExtension']
   smoothingFactor                   = dataframeOptions['smoothingFactorDynaParam']
-  nbFramesTakenIntoAccount          = dataframeOptions['nbFramesTakenIntoAccount']
   resFolder                         = dataframeOptions['resFolder']
   numberOfBendsIncludedForMaxDetect = dataframeOptions['numberOfBendsIncludedForMaxDetect']
   minNbBendForBoutDetect            = dataframeOptions['minNbBendForBoutDetect']
   computeTailAngleParamForCluster   = dataframeOptions['computeTailAngleParamForCluster']
   computeMassCenterParamForCluster  = dataframeOptions['computeMassCenterParamForCluster']
+  if 'defaultZZoutputFolderPath' in dataframeOptions:
+    defaultZZoutputFolderPath       = dataframeOptions['defaultZZoutputFolderPath']
+  else:
+    defaultZZoutputFolderPath       = ''
   
+  nbFramesTakenIntoAccount          = dataframeOptions['nbFramesTakenIntoAccount']
   excelFile = pd.read_excel(pathToExcelFile + nameOfFile + fileExtension)
+  if nbFramesTakenIntoAccount == -1:
+    boutNbFrames = []
+    boutTakenIntoAcccount = 0
+    videoId = 0
+    if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder":
+      path    = defaultZZoutputFolderPath + excelFile.loc[videoId, 'trial_id'] + '/'
+    else:
+      path    = excelFile.loc[videoId, 'path'] + excelFile.loc[videoId, 'trial_id'] + '/'
+    trial_id  = excelFile.loc[videoId, 'trial_id']
+    include   = excelFile.loc[videoId, 'include']
+    include = eval('[' + include + ']')
+    include = include[0]
+    with open(path+'results_'+trial_id+'.txt') as f:
+      supstruct = json.load(f)
+    for Well_ID, Cond in enumerate(include):
+      if include[Well_ID]:
+        for NumBout, dataForBout in enumerate(supstruct["wellPoissMouv"][Well_ID][0]):
+          boutNbFrames.append(len(dataForBout["HeadX"]))
+          boutTakenIntoAcccount = boutTakenIntoAcccount + 1
+          if boutTakenIntoAcccount > 100:
+            break;
+      if boutTakenIntoAcccount > 100:
+        break;
+    nbFramesTakenIntoAccount = int(np.median(boutNbFrames))
   
   genotypes  = []
   conditions = []
@@ -66,7 +94,7 @@ def createDataFrame(dataframeOptions):
   print("Calculating and storing all parameters:")
   for videoId in range(0, len(excelFile)):
     if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder":
-      path    = '../ZZoutput/' + excelFile.loc[videoId, 'trial_id'] + '/'
+      path    = defaultZZoutputFolderPath + excelFile.loc[videoId, 'trial_id'] + '/'
     else:
       path    = excelFile.loc[videoId, 'path'] + excelFile.loc[videoId, 'trial_id'] + '/'
     trial_id  = excelFile.loc[videoId, 'trial_id']
@@ -135,4 +163,4 @@ def createDataFrame(dataframeOptions):
   pickle.dump(dfParam,outfile)
   outfile.close()
   
-  return [conditions, genotypes]
+  return [conditions, genotypes, nbFramesTakenIntoAccount]
