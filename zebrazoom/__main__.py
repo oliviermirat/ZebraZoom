@@ -13,6 +13,10 @@ sys.path.insert(1, './code/trackingFolder/headTrackingHeadingCalculationFolder/'
 sys.path.insert(1, './code/trackingFolder/tailTrackingFunctionsFolder/')
 sys.path.insert(1, './code/trackingFolder/tailTrackingFunctionsFolder/tailTrackingExtremityDetectFolder/')
 sys.path.insert(1, './code/trackingFolder/tailTrackingFunctionsFolder/tailTrackingExtremityDetectFolder/findTailExtremeteFolder/')
+sys.path.insert(1, './dataAnalysis/')
+sys.path.insert(1, './dataAnalysis/dataanalysis/')
+sys.path.insert(1, './dataAnalysis/datasetcreation/')
+
 
 from vars import getGlobalVariables
 globalVariables = getGlobalVariables()

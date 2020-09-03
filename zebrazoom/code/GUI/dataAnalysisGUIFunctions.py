@@ -50,9 +50,9 @@ def openClusteringAnalysisFolder(self, homeDirectory):
 
 def chooseExperimentOrganizationExcel(self, controller):
   if globalVariables["mac"]:
-    self.experimentOrganizationExcel = filedialog.askopenfilename(initialdir = "./dataAnalysis/experimentOrganizationExcel/", title = "Select video to create config file for")
+    self.experimentOrganizationExcel = filedialog.askopenfilename(initialdir = "./dataAnalysis/experimentOrganizationExcel/", title = "Select the excel file describing your experiments")
   else:
-    self.experimentOrganizationExcel = filedialog.askopenfilename(initialdir = "./dataAnalysis/experimentOrganizationExcel/", title = "Select video to create config file for",filetypes = (("video","*.*"),("all files","*.*")))
+    self.experimentOrganizationExcel = filedialog.askopenfilename(initialdir = "./dataAnalysis/experimentOrganizationExcel/", title = "Select the excel file describing your experiments",filetypes = (("video","*.*"),("all files","*.*")))
   controller.show_frame("ChooseDataAnalysisMethod")
 
 

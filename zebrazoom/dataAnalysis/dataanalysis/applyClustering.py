@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
-from readValidationVideo import readValidationVideo
+from readValidationVideoDataAnalysis import readValidationVideoDataAnalysis
 from outputValidationVideo import outputValidationVideo
 import cv2
 import os

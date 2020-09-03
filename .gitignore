@@ -31,3 +31,4 @@ zebrazoom/dataAnalysis/experimentOrganizationExcel/*
 zebrazoom/dataAnalysis/resultsClustering/*
 zebrazoom/dataAnalysis/resultsKinematic/*
 
+prepRepo.sh

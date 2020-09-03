@@ -5,7 +5,7 @@ import numpy as np
 import sys
 import tkinter as tk
 
-def readValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, start, boutEnd):
+def readValidationVideoDataAnalysis(videoPath, folderName, configFilePath, numWell, zoom, start, boutEnd):
 
   print("configFilePath:",configFilePath)
 
