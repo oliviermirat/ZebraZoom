@@ -88,6 +88,9 @@ class StartPage(tk.Frame):
         tk.Label(self, text="", font=controller.title_font).pack()
         tk.Button(self, text="Analyze ZebraZoom's outputs", command=lambda: controller.show_frame("CreateExperimentOrganizationExcel")).pack()
         
+        tk.Label(self, text="", font=controller.title_font).pack()
+        tk.Button(self, text="Troubleshoot", command=lambda: controller.show_frame("ChooseVideoToTroubleshootSplitVideo")).pack()
+        
 
 class SeveralVideos(tk.Frame):
 

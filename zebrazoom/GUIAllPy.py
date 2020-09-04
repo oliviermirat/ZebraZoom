@@ -24,11 +24,13 @@ import GUI_InitialFunctions
 import configFileZebrafishFunctions
 import adjustParameterInsideAlgoFunctions
 import dataAnalysisGUIFunctions
+import troubleshootingFunction
 from GUI_InitialClasses import FullScreenApp, StartPage, SeveralVideos, VideoToAnalyze, FolderToAnalyze, TailExtremityHE, ConfigFilePromp, Patience, ZZoutro, ResultsVisualization, ViewParameters
 from configFilePrepare import ChooseVideoToCreateConfigFileFor, ChooseGeneralExperiment, WellOrganisation, CircularWells, NumberOfAnimals, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings
 from configFileZebrafish import HeadEmbeded
 from adjustParameterInsideAlgo import AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim
 from dataAnalysisGUI import CreateExperimentOrganizationExcel, ChooseExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderPopulation, AnalysisOutputFolderClustering
+from troubleshooting import ChooseVideoToTroubleshootSplitVideo, VideoToTroubleshootSplitVideo
 
 
 LARGE_FONT= ("Verdana", 12)
@@ -66,7 +68,7 @@ class SampleApp(tk.Tk):
         container.grid_columnconfigure(0, weight=1) 
         self.container = container
         self.frames = {}
-        for F in (StartPage, SeveralVideos, VideoToAnalyze, ChooseVideoToCreateConfigFileFor, ChooseGeneralExperiment, WellOrganisation, CircularWells, NumberOfAnimals, IdentifyHeadCenter, IdentifyBodyExtremity, ChooseCircularWellsLeft, ChooseCircularWellsRight, FinishConfig, FolderToAnalyze, TailExtremityHE, ConfigFilePromp, Patience, ZZoutro, ResultsVisualization, ViewParameters, HeadEmbeded, AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim, GoToAdvanceSettings, CreateExperimentOrganizationExcel, ChooseExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderPopulation, AnalysisOutputFolderClustering):
+        for F in (StartPage, SeveralVideos, VideoToAnalyze, ChooseVideoToCreateConfigFileFor, ChooseGeneralExperiment, WellOrganisation, CircularWells, NumberOfAnimals, IdentifyHeadCenter, IdentifyBodyExtremity, ChooseCircularWellsLeft, ChooseCircularWellsRight, FinishConfig, FolderToAnalyze, TailExtremityHE, ConfigFilePromp, Patience, ZZoutro, ResultsVisualization, ViewParameters, HeadEmbeded, AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim, GoToAdvanceSettings, CreateExperimentOrganizationExcel, ChooseExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderPopulation, AnalysisOutputFolderClustering, ChooseVideoToTroubleshootSplitVideo, VideoToTroubleshootSplitVideo):
             page_name = F.__name__
             frame = F(parent=container, controller=self)
             self.frames[page_name] = frame
@@ -220,4 +222,6 @@ optionBackgroundExtractionOption):
     
     def openClusteringAnalysisFolder(self, homeDirectory):
       dataAnalysisGUIFunctions.openClusteringAnalysisFolder(self, homeDirectory)    
-
+    
+    def chooseVideoToTroubleshootSplitVideo(self, controller):
+      troubleshootingFunction.chooseVideoToTroubleshootSplitVideo(self, controller)
