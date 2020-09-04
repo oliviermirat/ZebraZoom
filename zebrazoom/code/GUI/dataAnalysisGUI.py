@@ -20,6 +20,7 @@ class CreateExperimentOrganizationExcel(tk.Frame):
     tk.Label(self, text="To further analyze the outputs of ZebraZoom you must create an excel file to describe how you organized your experiments.").pack()
     tk.Label(self, text="Click on the button below to open the folder where you should store that excel file.").pack()
     tk.Label(self, text="In this folder you will also find an file named 'example' showing an example of such an excel file.").pack()
+    tk.Label(self, text="In these excel files, set the columns as explained below:").pack()
     tk.Label(self, text="If you haven't moved the output folders of ZebraZoom, leave defaultZZoutputFolder as the value for path.").pack()
     tk.Label(self, text="fq needs to be set to the frequency of acquisition of your video and pixelSize needs to be set to the number microns in each pixel of your video.").pack()
     tk.Label(self, text="condition and genotype need to be set to arrays for which each element represents a well and is set the condition/genotype of that well.").pack()

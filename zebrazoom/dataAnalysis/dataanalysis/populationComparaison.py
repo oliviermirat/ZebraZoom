@@ -28,7 +28,12 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
         values  = dfParam.loc[indices, parameter].values
         concatenatedValues.append(values)
         labels.append(str(condition) + '\n' + str(genotype))
-    tabAx[int(idx/3), idx%3].set_title(parameter)
-    tabAx[int(idx/3), idx%3].boxplot(concatenatedValues)
-    tabAx[int(idx/3), idx%3].set_xticklabels(labels)  
+    if nbLines == 1:
+      tabAx[idx%nbColumns].set_title(parameter)
+      tabAx[idx%nbColumns].boxplot(concatenatedValues)
+      tabAx[idx%nbColumns].set_xticklabels(labels)    
+    else:
+      tabAx[int(idx/nbColumns), idx%nbColumns].set_title(parameter)
+      tabAx[int(idx/nbColumns), idx%nbColumns].boxplot(concatenatedValues)
+      tabAx[int(idx/nbColumns), idx%nbColumns].set_xticklabels(labels)
   plt.savefig(outputFolder+nameOfFile+'/globalParametersInsideCategories.png')
