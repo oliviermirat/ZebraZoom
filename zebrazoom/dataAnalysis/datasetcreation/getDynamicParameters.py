@@ -44,12 +44,8 @@ def getDynamicParameters(curbout, smoothingFactor, nbFramesTakenIntoAccount, num
       argmax               = np.argmax(np.abs(Bend_Amplitude_Array))
     
     maxAbsBendValue = Bend_Amplitude[argmax]
-    tailAngle = 0
     if maxAbsBendValue < 0:
-      tailAngle = (-np.array(curbout["TailAngle_smoothed"])).tolist()
       instMean  = (-np.array(instMean)).tolist()
-    else:
-      tailAngle = curbout["TailAngle_smoothed"]
   
     x = np.linspace(1, fin, fin)
     s = UnivariateSpline(instAbs, instFreq, s=smoothingFactor)
@@ -64,19 +60,16 @@ def getDynamicParameters(curbout, smoothingFactor, nbFramesTakenIntoAccount, num
     instFreq2 = [0]*fin
     instAmp2  = [0]*fin
     instMean2 = [0]*fin
-    tailAngle = [0]*fin
     
   instFreq3  = [0]*nbFramesTakenIntoAccount
   instAmp3   = [0]*nbFramesTakenIntoAccount
   instMean3  = [0]*nbFramesTakenIntoAccount
-  tailAngle3 = [0]*nbFramesTakenIntoAccount
   
   sizeTabNotZero = min(fin, nbFramesTakenIntoAccount)
   instFreq3[0:sizeTabNotZero] = instFreq2[0:sizeTabNotZero]
   instAmp3[0:sizeTabNotZero]  = instAmp2[0:sizeTabNotZero]
   instMean3[0:sizeTabNotZero] = instMean2[0:sizeTabNotZero]
-  tailAngle3[0:sizeTabNotZero]  = tailAngle[0:sizeTabNotZero]
 
-  dynamicParameters = instFreq3 + instAmp3 + instMean3 + tailAngle3
+  dynamicParameters = instFreq3 + instAmp3 + instMean3
 
   return dynamicParameters

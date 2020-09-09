@@ -23,4 +23,8 @@ def getGlobalParameters(curbout, fps, pixelSize):
   
   maxAmplitude = max([abs(ta) for ta in curbout["TailAngle_smoothed"]])
   
-  return [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, posY[0], posY[len(posY)-1], np.mean(posY)]
+  firstBendTime = curbout["Bend_Timing"][0]
+  
+  firstBendAmplitude = abs(curbout["Bend_Amplitude"][0])
+  
+  return [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, posY[0], posY[len(posY)-1], np.mean(posY), firstBendTime, firstBendAmplitude]
