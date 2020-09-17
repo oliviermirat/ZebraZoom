@@ -1,20 +1,5 @@
 <H1 CLASS="western" style="text-align:center;">ZebraZoom</H1>
 
-<p align="center">
-    <a href="https://zebrazoom.org/" target="_blank">zebrazoom.org</a>
-</p>
-
-[Introduction](#introduction)<br/>
-[Installation](#installation)<br/>
-[Starting the GUI](#starting)<br/>
-[Testing the installation and using ZebraZoom](#testanduse)<br/>
-[Adjusting ZebraZoom's hyperparameters](#hyperparameters)<br/>
-[Further analyzing ZebraZoom's output with Python](#pythonanalysis)<br/>
-[Cite us](#citeus)<br/>
-
-<a name="introduction"/>
-<H2 CLASS="western"> Introduction:</H2>
-For more information visit <a href="https://zebrazoom.org/" target="_blank">zebrazoom.org</a> or email us info@zebrazoom.org.<br/>
 Examples of videos tracked with ZebraZoom:<br/><br/>
 <p align="center">
 <img src="https://zebrazoom.org/videos/gif/output1.gif" height="250">
@@ -25,7 +10,37 @@ Examples of videos tracked with ZebraZoom:<br/><br/>
 <img src="https://zebrazoom.org/videos/gif/mouse.gif" height="250">
 </p>
 
+<p>
+ZebraZoom can be used to track the head and tail of freely swimming and of head-embedded larval and adult zebrafish. It can also be used to track the center of mass of other animal species, such as mice or drosophila. The software operates through an intuitive graphical user interface, making it very simple to use for people with no programming background.
+
+View the <a href="https://www.youtube.com/playlist?list=PLuWZiRK2HkeVo8zIPixdBj-hBk-cbsQZr" target="_blank">tutorial videos</a> of how to use ZebraZoom:
+- <a href="https://www.youtube.com/watch?v=uyhCoIlBwsM&list=PLuWZiRK2HkeVo8zIPixdBj-hBk-cbsQZr&index=2" target="_blank">Launching the tracking on a video </a>
+- <a href="https://www.youtube.com/watch?v=6CJzV81Rdp8&list=PLuWZiRK2HkeVo8zIPixdBj-hBk-cbsQZr&index=2" target="_blank">Creating a configuration file to track a specific kind of video</a>
+- <a href="https://www.youtube.com/watch?v=7GoCSNDqvak&list=PLuWZiRK2HkeVo8zIPixdBj-hBk-cbsQZr&index=4" target="_blank">Visualizing an output produced by ZebraZoom's tracking</a>
+- <a href="https://www.youtube.com/watch?v=uqLhUKWHPE8&list=PLuWZiRK2HkeVo8zIPixdBj-hBk-cbsQZr&index=5" target="_blank">Comparing different populations of animals with kinematic parameters</a>
+
+The Graphical user interface of ZebraZoom also offers options to launch the tracking on multiple videos all at once and to cluster bouts of movements into distinct behaviors with unsupervised machine learning. A troubleshooting option is also intergrated inside the graphical user interface.
+
+</p>
+
+
+For more information visit <a href="https://zebrazoom.org/" target="_blank">zebrazoom.org</a> or email us info@zebrazoom.org<br/>
+
+<a name="tableofcontent"/>
+<H2 CLASS="western">Table of content:</H2>
+
+[Installation](#installation)<br/>
+[Starting the GUI](#starting)<br/>
+[Testing the installation and using ZebraZoom](#testanduse)<br/>
+[Adjusting ZebraZoom's hyperparameters](#hyperparameters)<br/>
+[Further analyzing ZebraZoom's output through the Graphical User Interface](#GUIanalysis)<br/>
+[Further analyzing ZebraZoom's output with Python](#pythonanalysis)<br/>
+[Troubleshooting ZebraZoom's tracking](#troubleshoot)<br/>
+[Cite us](#citeus)<br/>
+
 <a name="installation"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
 <H2 CLASS="western"> Installation:</H2>
 
 <H4 CLASS="western">General method:</H4>
@@ -62,6 +77,8 @@ To start ZebraZoom, you can now open the Anaconda Prompt or a terminal and type:
 <a href="https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html" target="_blank">Read this for more information on Anaconda environments</a><br/>
 
 <a name="starting"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
 <H2 CLASS="western">Starting the GUI:</H2>
 As written in the previous section, to launch ZebraZoom, simply open the Anaconda Prompt / terminal and type:<br/><br/>
 <I>python -m zebrazoom</I><br/>
@@ -72,12 +89,16 @@ if you have installed ZebraZoom following the "further recommendations".<br/><br
 Or, if you have installed ZebraZoom following the "Very easy installation for Window 10" method: open the folder ZebraZoomWinExe, then double click on “doubleClickHereToStart”.<br/>
 
 <a name="testanduse"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
 <H2 CLASS="western">Testing the installation and using ZebraZoom:</H2>
 To be able to track animals in videos you need to create a configuration file for each “type” of video you want to track. A “type” of video is defined by light intensity, number and shape of wells, number of animals per well, number of pixels per animal, the type of animal in your video, etc...<br/><br/>
 Start by testing that ZebraZoom is working on your machine. To do that, <a href="https://zebrazoom.org/testVideos.html" target="_blank">download the test videos</a> and try to run the tracking on those: in the GUI's main menu, click on “Run ZebraZoom on a video”, choose the video you want to track and then the configuration file which will have the same name as the video you want to track. Once the tracking is done, go back to the main menu and click on “Visualize ZebraZoom's output”, then on the video you just tracked. If the tracking worked well, you should be able to visualize the output produced by ZebraZoom (by clicking on “View video for well 0” for example).<br/><br/>
 You can also watch the <a href="https://www.youtube.com/playlist?list=PLuWZiRK2HkeVo8zIPixdBj-hBk-cbsQZr" style="color:blue" target="_blank">tutorial videos on how to use ZebraZoom</a> for more guidance about how to create configuration files, launch ZebraZoom on videos and visualize the outputs.<br/>
 
 <a name="hyperparameters"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
 <H2 CLASS="western">Adjusting ZebraZoom's hyperparameters:</H2>
 <H4 CLASS="western">Adjusting hyperparameters through the GUI:</H4>
 In order to track videos other than the ones provided on ZebraZoom's website, you might need to create your own configuration files. In order to do that, you can click on “Prepare configuration file for tracking” and follow the steps described to create a configuration file adapted to the videos you want to track. Please note that this procedure isn't complete and may not work on all videos. If you don't manage to create a configuration file on your own, you can contact us at info@zebrazoom.org and we will try to make one for you.<br/>
@@ -144,7 +165,15 @@ if removeFirstSmallBend is different than 0 (so not by default), then removes th
 abs(TailAngle_smoothed[firstBend]) < abs(TailAngle_smoothed[secondBend]) / hyperparameters["removeFirstSmallBend"]
 </p>
 
+<a name="GUIanalysis"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Further analyzing ZebraZoom's output through the Graphical User Interface:</H2>
+Click on "Analyze ZebraZoom's outputs" in the main menu. Then you can choose to either compare different populations of animals with kinematic parameters or to cluster bouts of movements.
+
 <a name="pythonanalysis"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
 <H2 CLASS="western">Further analyzing ZebraZoom's output with Python:</H2>
 
 A result folder will be created for each video you launch ZebraZoom on inside the ZZoutput folder.
@@ -167,8 +196,15 @@ You can then, for example, plot the tail angle with the following command:
 <I>plt.plot(supstruct['wellPoissMouv'][2][0][0]["TailAngle_smoothed"])</I><br/>
 <I>plt.show()</I><br/>
 
+<a name="troubleshoot"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Troubleshooting tracking issues:</H2>
+If you are having trouble tracking animals in a video, you can click on the button "Troubleshoot" in the main menu to create a smaller sub-video out of the video you are trying to track. Once this sub-video is created, you can send it to info@zebrazoom.org and we can try to help.
 
 <a name="citeus"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
 <H2 CLASS="western">Cite us:</H2>
 
 <p>In all your publications that make use of ZebraZoom:</p>
