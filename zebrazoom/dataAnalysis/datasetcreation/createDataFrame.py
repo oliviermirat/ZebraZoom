@@ -196,6 +196,7 @@ def createDataFrame(dataframeOptions):
         dfParam = pd.concat([dfParam, dfParamSub])
   
   # Saving the dataframe
+  dfParam = dfParam.reset_index()
   dfParam['Trial_ID'][:] = trialidstab
   outfile = open(resFolder + nameOfFile,'wb')
   pickle.dump(dfParam,outfile)

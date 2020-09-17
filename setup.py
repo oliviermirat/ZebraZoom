@@ -2,7 +2,7 @@ import setuptools
 from distutils.core import setup
 setup(
   name = 'zebrazoom',
-  version = '0.15',
+  version = '0.18',
   license='AGPL-3.0',
   description = 'Track and analyze zebrafish and animal behavior',
   author = 'Olivier Mirat',
@@ -19,7 +19,8 @@ setup(
     "pandas",
     "filterpy",
     "cvui",
-    "opencv-python>=4.2.0.32"
+    "opencv-python>=4.2.0.32",
+    "xlrd"
   ],
   packages=setuptools.find_packages(),
   data_files=[
