@@ -9,6 +9,7 @@ clusteringOptions = {
   'analyzeAllWellsAtTheSameTime' : 0, # put this to 1 for head-embedded videos, and to 0 for multi-well videos
   'pathToVideos' : '../ZZoutput/',
   'nbCluster' : 3,
+  'modelUsedForClustering' : 'KMeans', # put either 'KMeans' or 'GaussianMixture' here
   #'nbPcaComponents' : 30,
   'scaleGraphs' : True,
   'showFigures' : False,

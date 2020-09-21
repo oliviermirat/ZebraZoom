@@ -6,13 +6,13 @@ from sklearn.preprocessing import StandardScaler
 import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
+from sklearn.mixture import GaussianMixture
 from readValidationVideoDataAnalysis import readValidationVideoDataAnalysis
 from outputValidationVideo import outputValidationVideo
 import cv2
 import os
 import shutil
 import pickle
-
 
 def applyClustering(clusteringOptions, classifier, outputFolder):
 
@@ -21,7 +21,7 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
   if classifier:
     print("reloading classifier")
     pca = classifier[0]
-    km  = classifier[1]
+    model  = classifier[1]
 
   analyzeAllWellsAtTheSameTime   = clusteringOptions['analyzeAllWellsAtTheSameTime']
   pathToVideos                   = clusteringOptions['pathToVideos']
@@ -46,7 +46,11 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
   resFolder                      = clusteringOptions['resFolder']
   nameOfFile                     = clusteringOptions['nameOfFile']
   globalParametersCalculations   = clusteringOptions['globalParametersCalculations']
-
+  
+  if 'modelUsedForClustering' in clusteringOptions:
+    modelUsedForClustering = clusteringOptions['modelUsedForClustering']
+  else:
+    modelUsedForClustering = 'KMeans'
 
   instaTBF   = ['instaTBF'+str(i)  for i in range(1,nbFramesTakenIntoAccount+1)]
   instaAmp   = ['instaAmp'+str(i)  for i in range(1,nbFramesTakenIntoAccount+1)]
@@ -126,9 +130,17 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
     
   # KMean clustering
   if classifier == 0:
-    km = KMeans(n_clusters = nbCluster)
-    km.fit(pca_result)
-  labels = km.predict(pca_result)
+    if modelUsedForClustering == 'KMeans':
+      model = KMeans(n_clusters = nbCluster)
+    elif modelUsedForClustering == 'GaussianMixture':
+      model = GaussianMixture(n_components = nbCluster)
+    else:
+      model = KMeans(n_clusters = nbCluster)
+    model.fit(pca_result)
+    
+  labels = model.predict(pca_result)
+  if modelUsedForClustering == 'GaussianMixture':
+    predictedProbas = model.predict_proba(pca_result)
 
   # Sorting labels
   nbLabels       = clusteringOptions['nbCluster'] # len(np.unique(labels))
@@ -140,6 +152,11 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
   for i in range(0, len(labels)):
     labels2[i] = np.where(sortedIndices==labels[i])[0][0]
   dfParam['classification'] = labels2
+  
+  if modelUsedForClustering == 'GaussianMixture':
+    for j in range(0, nbLabels):
+      probasClassJ = predictedProbas[:, sortedIndices[j]]
+      dfParam['classProba' + str(j)] = probasClassJ
 
   # Calculating proportions of each conditions in each class
 
@@ -348,4 +365,4 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
   # Saves classifications
   dfParam[['Trial_ID','Well_ID','NumBout','classification']].to_csv(outputFolder+clusteringOptions['nameOfFile']+'/classifications.txt')
   
-  return [dfParam, [pca, km]]
+  return [dfParam, [pca, model]]
