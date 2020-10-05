@@ -51,9 +51,14 @@ def openClusteringAnalysisFolder(self, homeDirectory):
 
 def chooseExperimentOrganizationExcel(self, controller):
   if globalVariables["mac"]:
-    self.experimentOrganizationExcel = filedialog.askopenfilename(initialdir = "./dataAnalysis/experimentOrganizationExcel/", title = "Select the excel file describing your experiments")
+    experimentOrganizationExcel = filedialog.askopenfilename(initialdir = "./dataAnalysis/experimentOrganizationExcel/", title = "Select the excel file describing your experiments")
   else:
-    self.experimentOrganizationExcel = filedialog.askopenfilename(initialdir = "./dataAnalysis/experimentOrganizationExcel/", title = "Select the excel file describing your experiments",filetypes = (("video","*.*"),("all files","*.*")))
+    experimentOrganizationExcel = filedialog.askopenfilename(initialdir = "./dataAnalysis/experimentOrganizationExcel/", title = "Select the excel file describing your experiments",filetypes = (("video","*.*"),("all files","*.*")))
+  
+  array = os.path.split(experimentOrganizationExcel)
+  
+  self.experimentOrganizationExcel = array[len(array)-1]
+  
   controller.show_frame("ChooseDataAnalysisMethod")
 
 
@@ -63,9 +68,9 @@ def populationComparison(self, controller, BoutDuration, TotalDistance, Speed, N
 
   dataframeOptions = {
     'pathToExcelFile'                   : './dataAnalysis/experimentOrganizationExcel/',
-    'fileExtension'                     : '.xls',
+    'fileExtension'                     : '.' + self.experimentOrganizationExcel.split(".")[1],
     'resFolder'                         : './dataAnalysis/data/',
-    'nameOfFile'                        : 'example',
+    'nameOfFile'                        : self.experimentOrganizationExcel.split(".")[0],
     'smoothingFactorDynaParam'          : 0,   # 0.001
     'nbFramesTakenIntoAccount'          : 28,
     'numberOfBendsIncludedForMaxDetect' : -1,
@@ -104,9 +109,9 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
   # Creating the dataframe on which the clustering will be applied
   dataframeOptions = {
     'pathToExcelFile'                   : './dataAnalysis/experimentOrganizationExcel/',
-    'fileExtension'                     : '.xls',
+    'fileExtension'                     : '.' + self.experimentOrganizationExcel.split(".")[1],
     'resFolder'                         : './dataAnalysis/data/',
-    'nameOfFile'                        : 'example',
+    'nameOfFile'                        : self.experimentOrganizationExcel.split(".")[0],
     'smoothingFactorDynaParam'          : 0,   # 0.001
     'nbFramesTakenIntoAccount'          : -1, #28,
     'numberOfBendsIncludedForMaxDetect' : -1,
