@@ -11,12 +11,13 @@ import cvui
 from vars import getGlobalVariables
 import json
 import os
+import subprocess
 globalVariables = getGlobalVariables()
 
 import sys
-sys.path.insert(1, './dataanalysis/datasetcreation/')
-sys.path.insert(1, './dataanalysis/')
-sys.path.insert(1, './dataanalysis/dataanalysis/')
+sys.path.insert(1, './dataAnalysis/datasetcreation/')
+sys.path.insert(1, './dataAnalysis/')
+sys.path.insert(1, './dataAnalysis/dataanalysis/')
 from createDataFrame import createDataFrame
 from populationComparaison import populationComparaison
 from applyClustering import applyClustering
@@ -61,9 +62,9 @@ def populationComparison(self, controller, BoutDuration, TotalDistance, Speed, N
   # Creating the dataframe
 
   dataframeOptions = {
-    'pathToExcelFile'                   : './dataanalysis/experimentOrganizationExcel/',
+    'pathToExcelFile'                   : './dataAnalysis/experimentOrganizationExcel/',
     'fileExtension'                     : '.xls',
-    'resFolder'                         : './dataanalysis/data/',
+    'resFolder'                         : './dataAnalysis/data/',
     'nameOfFile'                        : 'example',
     'smoothingFactorDynaParam'          : 0,   # 0.001
     'nbFramesTakenIntoAccount'          : 28,
@@ -102,9 +103,9 @@ def populationComparison(self, controller, BoutDuration, TotalDistance, Speed, N
 def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded):
   # Creating the dataframe on which the clustering will be applied
   dataframeOptions = {
-    'pathToExcelFile'                   : './dataanalysis/experimentOrganizationExcel/',
+    'pathToExcelFile'                   : './dataAnalysis/experimentOrganizationExcel/',
     'fileExtension'                     : '.xls',
-    'resFolder'                         : './dataanalysis/data/',
+    'resFolder'                         : './dataAnalysis/data/',
     'nameOfFile'                        : 'example',
     'smoothingFactorDynaParam'          : 0,   # 0.001
     'nbFramesTakenIntoAccount'          : -1, #28,
@@ -138,7 +139,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
     'videoSaveFirstTenBouts' : False,
     'globalParametersCalculations' : True,
     'nbVideosToSave' : 10,
-    'resFolder' : './dataanalysis/data/',
+    'resFolder' : './dataAnalysis/data/',
     'nameOfFile' : 'example'
   }
   if int(FreelySwimming):
