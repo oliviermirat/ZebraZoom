@@ -106,6 +106,7 @@ def populationComparison(self, controller, BoutDuration, TotalDistance, Speed, N
 
 
 def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded):
+
   # Creating the dataframe on which the clustering will be applied
   dataframeOptions = {
     'pathToExcelFile'                   : './dataAnalysis/experimentOrganizationExcel/',
@@ -145,7 +146,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
     'globalParametersCalculations' : True,
     'nbVideosToSave' : 10,
     'resFolder' : './dataAnalysis/data/',
-    'nameOfFile' : 'example'
+    'nameOfFile' : self.experimentOrganizationExcel.split(".")[0]
   }
   if int(FreelySwimming):
     clusteringOptions['useAnglesSpeedHeading'] = True
