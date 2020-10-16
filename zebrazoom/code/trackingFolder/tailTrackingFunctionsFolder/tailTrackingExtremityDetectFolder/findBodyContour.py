@@ -43,8 +43,8 @@ def findBodyContour(headPosition, hyperparameters, thresh1):
             cxNew = int(M['m10']/M['m00'])
             cyNew = int(M['m01']/M['m00'])
           else:
-            cx = 0
-            cy = 0
+            cxNew = 0
+            cyNew = 0
           distToCenterNew = math.sqrt((cxNew-x)**2 + (cyNew-y)**2)
           distToCenter    = math.sqrt((cx-x)**2    + (cy-y)**2)
           if distToCenterNew < distToCenter:
