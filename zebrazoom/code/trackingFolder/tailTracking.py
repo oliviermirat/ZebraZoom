@@ -9,7 +9,7 @@ from tailTrackingBlobDescent import tailTrackingBlobDescent
 from getTailTipManual import findHeadPositionByUserInput
 from headEmbededTailTrackingTeresaNicolson import headEmbededTailTrackingTeresaNicolson
 
-def tailTracking(animalId, i, firstFrame, heading, videoPath, x, y, headPosition, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, output, lastFirstTheta, maxDepth, tailTip):
+def tailTracking(animalId, i, firstFrame, heading, videoPath, headPosition, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, output, lastFirstTheta, maxDepth, tailTip):
   
   if (hyperparameters["headEmbeded"] == 1):
     # through the "head embeded" method, either through "segment descent" or "center of mass descent"
@@ -34,7 +34,7 @@ def tailTracking(animalId, i, firstFrame, heading, videoPath, x, y, headPosition
       output[animalId, i-firstFrame] = outputI
     elif hyperparameters["freeSwimmingTailTrackingMethod"] == "blobDescent":
       # through the "blob descent" method
-      outputI = tailTrackingBlobDescent(headPosition,nbTailPoints,i,x,y,thresh1,frame,lastFirstTheta,hyperparameters["debugTrackingPtExtreme"],thetaDiffAccept,hyperparameters)
+      outputI = tailTrackingBlobDescent(headPosition, nbTailPoints, i, headPosition[0], headPosition[1], thresh1, frame, lastFirstTheta, hyperparameters["debugTrackingPtExtreme"], thetaDiffAccept, hyperparameters)
       output[animalId, i-firstFrame] = outputI
     else: # hyperparameters["freeSwimmingTailTrackingMethod"] == "none"
       # only tracking the head, not the tail

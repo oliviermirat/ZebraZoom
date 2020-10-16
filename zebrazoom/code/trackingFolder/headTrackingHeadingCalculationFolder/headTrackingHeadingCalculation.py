@@ -22,7 +22,7 @@ def headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1
       [outputHeading, output] = multipleAnimalsHeadTrackingAdvance(outputHeading, output, hyperparameters, gray, i, firstFrame, thresh1, thresh2, lengthX)
     
     heading = 0
-    headPosition = []
+    headPosition = [0, 0]
     x = 0
     y = 0
     lastFirstTheta = 0
@@ -70,4 +70,4 @@ def headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1
       outputHeading[0, i-firstFrame] = outputHeading[0, i-firstFrame-1]
       output[0, i-firstFrame]        = output[0, i-firstFrame-1]
     
-  return [outputHeading, output, heading, headPosition, x, y, lastFirstTheta]
+  return [outputHeading, output, heading, headPosition, lastFirstTheta]

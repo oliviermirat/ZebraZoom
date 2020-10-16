@@ -71,7 +71,7 @@ def tracking(videoPath,background,wellNumber,wellPositions,hyperparameters,video
       else:
         [frame, gray, thresh1, blur, thresh2, frame2] = getImages(hyperparameters, cap, videoPath, firstFrame, background, wellNumber, wellPositions)
         cap.set(1, firstFrame)
-        [outputHeading, output, heading, headPosition, x, y, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, firstFrame, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, outputHeading, output, headPosition, wellPositions[wellNumber]["lengthX"])
+        [outputHeading, output, heading, headPosition, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, firstFrame, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, outputHeading, output, headPosition, wellPositions[wellNumber]["lengthX"])
     if os.path.exists(videoPath+'.csv'):
       tailTip  = getTailTipByFileSaved(hyperparameters,videoPath)
     else:
@@ -104,24 +104,24 @@ def tracking(videoPath,background,wellNumber,wellPositions,hyperparameters,video
     # Get images for frame i
     [frame, gray, thresh1, blur, thresh2, frame2] = getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPositions)
     # Head tracking and heading calculation
-    [outputHeading, output, heading, headPosition, x, y, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, outputHeading, output, headPosition, wellPositions[wellNumber]["lengthX"])
+    [outputHeading, output, heading, headPosition, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, outputHeading, output, headPosition, wellPositions[wellNumber]["lengthX"])
     # Tail tracking for frame i
     if hyperparameters["nbAnimalsPerWell"] == 1 and hyperparameters["trackTail"] == 1 :
       animalId = 0
       
-      [output, maxDepth, tailTip, headPosition] = tailTracking(animalId, i, firstFrame, heading, videoPath, x, y, headPosition, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, output, lastFirstTheta, maxDepth, tailTip)
+      [output, maxDepth, tailTip, headPosition] = tailTracking(animalId, i, firstFrame, heading, videoPath, headPosition, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, output, lastFirstTheta, maxDepth, tailTip)
     
     # Debug functions
-    debugTracking(nbTailPoints, i, firstFrame, x, y, output, outputHeading, frame2, hyperparameters)
+    debugTracking(nbTailPoints, i, firstFrame, headPosition[0], headPosition[1], output, outputHeading, frame2, hyperparameters)
     
     if hyperparameters["adjustHeadEmbededTracking"] == 1:
-      [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getHeadEmbededTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, x, y, output, outputHeading, frame, frame2, hyperparameters)
+      [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getHeadEmbededTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, headPosition[0], headPosition[1], output, outputHeading, frame, frame2, hyperparameters)
       if len(organizationTabCur) == 0:
         organizationTabCur = organizationTab
       [i, hyperparameters, organizationTabCur] = adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTabCur)
       hyperparameters = adjustHeadEmbededHyperparameters(hyperparameters, frame, headPosition, tailTip)
     elif hyperparameters["adjustFreelySwimTracking"] == 1:
-      [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getFreelySwimTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, x, y, output, outputHeading, frame, frame2, hyperparameters)
+      [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getFreelySwimTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, headPosition[0], headPosition[1], output, outputHeading, frame, frame2, hyperparameters)
       if len(organizationTabCur) == 0:
         organizationTabCur = organizationTab
       [i, hyperparameters, organizationTabCur] = adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTabCur)
