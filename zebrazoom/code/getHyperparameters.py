@@ -257,6 +257,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["initialTailPortionMaxSegmentDiffAngleCutOffPos"] = getConfig(config, "initialTailPortionMaxSegmentDiffAngleCutOffPos", videoPath)
   hyperparameters["initialTailPortionMaxSegmentDiffAngleValue"] = getConfig(config, "initialTailPortionMaxSegmentDiffAngleValue", videoPath)
   
+  hyperparameters["windowForBoutDetectWithAngle"] = getConfig(config, "windowForBoutDetectWithAngle", videoPath)
+  
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5

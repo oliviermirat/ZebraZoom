@@ -111,6 +111,7 @@
   "headingCalculationMethod" : "calculatedWithHead",
   
   "thresAngleBoutDetect" : -1,
+  "windowForBoutDetectWithAngle" : 10,
   "thresForDetectMovementWithRawVideo" : 0,
   "minNbPixelForDetectMovementWithRawVideo" : 0,
   "frameGapComparision" : 1,
