@@ -307,6 +307,117 @@ def printStuffOnCtrlImg(frameCtrl, frameNum, x, y, l, minn, maxx, name):
   cvui.trackbar(frameCtrl, x,      y+10, l, frameNum, minn, maxx)
   cvui.counter(frameCtrl,  x+l+10, y+20,    frameNum)
 
+def identifyMultipleHead(self, controller, nbanimals):
+  tempConfig = self.configFile
+  
+  horizontal = self.winfo_screenwidth()
+  vertical   = self.winfo_screenheight()
+  
+  # Wait image
+  WINDOW_NAME = "Please Wait"
+  cvui.init(WINDOW_NAME)
+  cv2.moveWindow(WINDOW_NAME, 0,0)
+  # Getting hyperparameters, wellPositions, and background
+  hyperparameters = getHyperparametersSimple(tempConfig)
+  wellPositions = findWells(self.videoToCreateConfigFileFor, hyperparameters)
+  background    = getBackground(self.videoToCreateConfigFileFor, hyperparameters)
+  
+  tab = [1]
+  img = cv2.imread('./code/GUI/no1.png')
+  img = cv2.resize(img,(int(horizontal*0.95),int(vertical*0.8)))
+  buttonclicked = False
+  while not(buttonclicked):
+    buttonclicked = cvui.button(img, 10, 10, "Ok, I understand!")
+    cvui.imshow(WINDOW_NAME, img)
+    cv2.waitKey(20)
+  img = cv2.imread('./code/GUI/no2.png')
+  img = cv2.resize(img,(int(horizontal*0.95),int(vertical*0.8)))
+  buttonclicked = False
+  while not(buttonclicked):
+    buttonclicked = cvui.button(img, 10, 10, "Ok, I understand!")
+    cvui.imshow(WINDOW_NAME, img)
+    cv2.waitKey(20)
+  img = cv2.imread('./code/GUI/ok1.png')
+  img = cv2.resize(img,(int(horizontal*0.95),int(vertical*0.8)))
+  buttonclicked = False
+  while not(buttonclicked):
+    buttonclicked = cvui.button(img, 10, 10, "Ok, I understand!")
+    cvui.imshow(WINDOW_NAME, img)
+    cv2.waitKey(20)
+  
+  WINDOW_NAME = "Adjust Parameters: As much as possible, you must see red points on and only on animals on the right image."
+  WINDOW_NAME_CTRL = "Adjust Parameters."
+  cv2.destroyAllWindows()
+  # Manual parameters adjustements
+  cap        = cv2.VideoCapture(self.videoToCreateConfigFileFor)
+  nx         = int(cap.get(3))
+  ny         = int(cap.get(4))
+  max_l      = int(cap.get(7))
+  
+  hyperparameters["minArea"] = 10
+  hyperparameters["maxArea"] = 800
+
+  [frame, maxAreaBlobs] = getImageForMultipleAnimalGUI(1, vertical, horizontal, nx, ny, max_l, self.videoToCreateConfigFileFor, background, wellPositions, hyperparameters)
+  frameCtrl = np.full((200, 1100), 100).astype('uint8')
+  
+  cvui.init(WINDOW_NAME)
+  cv2.moveWindow(WINDOW_NAME, 0, 0)
+  cvui.imshow(WINDOW_NAME, frame)
+  
+  cvui.init(WINDOW_NAME_CTRL)
+  cv2.moveWindow(WINDOW_NAME_CTRL, 0, vertical-290)
+  cvui.imshow(WINDOW_NAME_CTRL, frameCtrl)
+  
+  frameNum = [hyperparameters["firstFrame"]] if "firstFrame" in hyperparameters else [ 1 ]
+  curFrameNum = frameNum[0] + 1
+  minPixelDiffForBackExtract = [hyperparameters["minPixelDiffForBackExtract"]]
+  thresholdForBlobImg        = [hyperparameters["thresholdForBlobImg"]]
+  dilateIter                 = [hyperparameters["dilateIter"]]
+  minArea                    = [hyperparameters["minArea"]]
+  maxArea                    = [hyperparameters["maxArea"]]
+  firstFrame = hyperparameters["firstFrame"] if "firstFrame" in hyperparameters else 1
+  lastFrame  = hyperparameters["lastFrame"]-1 if "lastFrame" in hyperparameters else max_l - 10
+  
+  buttonclicked = False
+  while not(buttonclicked):
+    if curFrameNum != frameNum[0] or hyperparameters["minPixelDiffForBackExtract"] != minPixelDiffForBackExtract[0] or hyperparameters["thresholdForBlobImg"] != thresholdForBlobImg[0] or hyperparameters["dilateIter"] != dilateIter[0] or hyperparameters["minArea"] != minArea[0] or hyperparameters["maxArea"] != maxArea[0]:
+      
+      curFrameNum = frameNum[0]
+      hyperparameters["minPixelDiffForBackExtract"] = int(minPixelDiffForBackExtract[0])
+      hyperparameters["thresholdForBlobImg"] = int(thresholdForBlobImg[0])
+      hyperparameters["dilateIter"] = int(dilateIter[0])
+      hyperparameters["minArea"] = int(minArea[0])
+      hyperparameters["maxArea"] = int(maxArea[0])
+      
+      [frame, maxAreaBlobs] = getImageForMultipleAnimalGUI(curFrameNum, vertical, horizontal, nx, ny, max_l, self.videoToCreateConfigFileFor, background, wellPositions, hyperparameters)
+      
+    frameCtrl = np.full((200, 1100), 100).astype('uint8')
+    
+    printStuffOnCtrlImg(frameCtrl, frameNum,                     1, 5,  350,  firstFrame, lastFrame, "Frame number")
+    printStuffOnCtrlImg(frameCtrl, minPixelDiffForBackExtract, 470, 5,  350,  0, 255, "Threshold left image")
+    printStuffOnCtrlImg(frameCtrl, thresholdForBlobImg,          1, 71,  350, 0, 255, "Threshold right image")
+    printStuffOnCtrlImg(frameCtrl, dilateIter,                 470, 71,  350, 0, 15, "Area dilatation")
+    printStuffOnCtrlImg(frameCtrl, minArea,                      1, 137, 350, 0, maxAreaBlobs, "Minimum area")
+    printStuffOnCtrlImg(frameCtrl, maxArea,                    470, 137, 350, 0, maxAreaBlobs, "Maximum area")
+    
+    buttonclicked = cvui.button(frameCtrl, 940, 10, "Ok, done!")
+    
+    cvui.imshow(WINDOW_NAME, frame)
+    cvui.imshow(WINDOW_NAME_CTRL, frameCtrl)
+    
+    if cv2.waitKey(20) == 27:
+        break
+  cv2.destroyAllWindows()
+  
+  self.configFile["minPixelDiffForBackExtract"] = int(hyperparameters["minPixelDiffForBackExtract"])
+  self.configFile["thresholdForBlobImg"]        = int(hyperparameters["thresholdForBlobImg"])
+  self.configFile["dilateIter"]                 = int(hyperparameters["dilateIter"])
+  self.configFile["minArea"]                    = int(hyperparameters["minArea"])
+  self.configFile["maxArea"]                    = int(hyperparameters["maxArea"])
+  self.configFile["minAreaBody"]                = int(hyperparameters["minArea"])
+  self.configFile["maxAreaBody"]                = int(hyperparameters["maxArea"])
+  self.configFile["headSize"]        = math.sqrt((int(hyperparameters["minArea"]) + int(hyperparameters["maxArea"])) / 2)
+
 
 def numberOfAnimals(self, controller, nbanimals, yes, noo):
 
@@ -328,118 +439,8 @@ def numberOfAnimals(self, controller, nbanimals, yes, noo):
   if self.organism == 'zebrafish':
     controller.show_frame("IdentifyHeadCenter")
   else:
-    tempConfig = self.configFile
-    
-    horizontal = self.winfo_screenwidth()
-    vertical   = self.winfo_screenheight()
-    
-    # Wait image
-    WINDOW_NAME = "Please Wait"
-    cvui.init(WINDOW_NAME)
-    cv2.moveWindow(WINDOW_NAME, 0,0)
-    # Getting hyperparameters, wellPositions, and background
-    hyperparameters = getHyperparametersSimple(tempConfig)
-    wellPositions = findWells(self.videoToCreateConfigFileFor, hyperparameters)
-    background    = getBackground(self.videoToCreateConfigFileFor, hyperparameters)
-    
-    tab = [1]
-    img = cv2.imread('./code/GUI/no1.png')
-    img = cv2.resize(img,(int(horizontal*0.95),int(vertical*0.8)))
-    buttonclicked = False
-    while not(buttonclicked):
-      buttonclicked = cvui.button(img, 10, 10, "Ok, I understand!")
-      cvui.imshow(WINDOW_NAME, img)
-      cv2.waitKey(20)
-    img = cv2.imread('./code/GUI/no2.png')
-    img = cv2.resize(img,(int(horizontal*0.95),int(vertical*0.8)))
-    buttonclicked = False
-    while not(buttonclicked):
-      buttonclicked = cvui.button(img, 10, 10, "Ok, I understand!")
-      cvui.imshow(WINDOW_NAME, img)
-      cv2.waitKey(20)
-    img = cv2.imread('./code/GUI/ok1.png')
-    img = cv2.resize(img,(int(horizontal*0.95),int(vertical*0.8)))
-    buttonclicked = False
-    while not(buttonclicked):
-      buttonclicked = cvui.button(img, 10, 10, "Ok, I understand!")
-      cvui.imshow(WINDOW_NAME, img)
-      cv2.waitKey(20)
-    
-    WINDOW_NAME = "Adjust Parameters: As much as possible, you must see red points on and only on animals on the right image."
-    WINDOW_NAME_CTRL = "Adjust Parameters."
-    cv2.destroyAllWindows()
-    # Manual parameters adjustements
-    cap        = cv2.VideoCapture(self.videoToCreateConfigFileFor)
-    nx         = int(cap.get(3))
-    ny         = int(cap.get(4))
-    max_l      = int(cap.get(7))
-    
-    hyperparameters["minArea"] = 10
-    hyperparameters["maxArea"] = 800
-
-    [frame, maxAreaBlobs] = getImageForMultipleAnimalGUI(1, vertical, horizontal, nx, ny, max_l, self.videoToCreateConfigFileFor, background, wellPositions, hyperparameters)
-    frameCtrl = np.full((200, 1100), 100).astype('uint8')
-    
-    cvui.init(WINDOW_NAME)
-    cv2.moveWindow(WINDOW_NAME, 0, 0)
-    cvui.imshow(WINDOW_NAME, frame)
-    
-    cvui.init(WINDOW_NAME_CTRL)
-    cv2.moveWindow(WINDOW_NAME_CTRL, 0, vertical-290)
-    cvui.imshow(WINDOW_NAME_CTRL, frameCtrl)
-    
-    frameNum = [hyperparameters["firstFrame"]] if "firstFrame" in hyperparameters else [ 1 ]
-    curFrameNum = frameNum[0] + 1
-    minPixelDiffForBackExtract = [hyperparameters["minPixelDiffForBackExtract"]]
-    thresholdForBlobImg        = [hyperparameters["thresholdForBlobImg"]]
-    dilateIter                 = [hyperparameters["dilateIter"]]
-    minArea                    = [hyperparameters["minArea"]]
-    maxArea                    = [hyperparameters["maxArea"]]
-    firstFrame = hyperparameters["firstFrame"] if "firstFrame" in hyperparameters else 1
-    lastFrame  = hyperparameters["lastFrame"]-1 if "lastFrame" in hyperparameters else max_l - 10
-    
-    buttonclicked = False
-    while not(buttonclicked):
-      if curFrameNum != frameNum[0] or hyperparameters["minPixelDiffForBackExtract"] != minPixelDiffForBackExtract[0] or hyperparameters["thresholdForBlobImg"] != thresholdForBlobImg[0] or hyperparameters["dilateIter"] != dilateIter[0] or hyperparameters["minArea"] != minArea[0] or hyperparameters["maxArea"] != maxArea[0]:
-        
-        curFrameNum = frameNum[0]
-        hyperparameters["minPixelDiffForBackExtract"] = int(minPixelDiffForBackExtract[0])
-        hyperparameters["thresholdForBlobImg"] = int(thresholdForBlobImg[0])
-        hyperparameters["dilateIter"] = int(dilateIter[0])
-        hyperparameters["minArea"] = int(minArea[0])
-        hyperparameters["maxArea"] = int(maxArea[0])
-        
-        [frame, maxAreaBlobs] = getImageForMultipleAnimalGUI(curFrameNum, vertical, horizontal, nx, ny, max_l, self.videoToCreateConfigFileFor, background, wellPositions, hyperparameters)
-        
-      frameCtrl = np.full((200, 1100), 100).astype('uint8')
-      
-      printStuffOnCtrlImg(frameCtrl, frameNum,                     1, 5,  350,  firstFrame, lastFrame, "Frame number")
-      printStuffOnCtrlImg(frameCtrl, minPixelDiffForBackExtract, 470, 5,  350,  0, 255, "Threshold left image")
-      printStuffOnCtrlImg(frameCtrl, thresholdForBlobImg,          1, 71,  350, 0, 255, "Threshold right image")
-      printStuffOnCtrlImg(frameCtrl, dilateIter,                 470, 71,  350, 0, 15, "Area dilatation")
-      printStuffOnCtrlImg(frameCtrl, minArea,                      1, 137, 350, 0, maxAreaBlobs, "Minimum area")
-      printStuffOnCtrlImg(frameCtrl, maxArea,                    470, 137, 350, 0, maxAreaBlobs, "Maximum area")
-      
-      buttonclicked = cvui.button(frameCtrl, 940, 10, "Ok, done!")
-      
-      cvui.imshow(WINDOW_NAME, frame)
-      cvui.imshow(WINDOW_NAME_CTRL, frameCtrl)
-      
-      if cv2.waitKey(20) == 27:
-          break
-    cv2.destroyAllWindows()
-    
-    self.configFile["minPixelDiffForBackExtract"] = int(hyperparameters["minPixelDiffForBackExtract"])
-    self.configFile["thresholdForBlobImg"]        = int(hyperparameters["thresholdForBlobImg"])
-    self.configFile["dilateIter"]                 = int(hyperparameters["dilateIter"])
-    self.configFile["minArea"]                    = int(hyperparameters["minArea"])
-    self.configFile["maxArea"]                    = int(hyperparameters["maxArea"])
-    self.configFile["minAreaBody"]                = int(hyperparameters["minArea"])
-    self.configFile["maxAreaBody"]                = int(hyperparameters["maxArea"])
-    self.configFile["headSize"]        = math.sqrt((int(hyperparameters["minArea"]) + int(hyperparameters["maxArea"])) / 2)
-    
+    identifyMultipleHead(self, controller, nbanimals)
     controller.show_frame("FinishConfig")
-
 
 def chooseHeadCenter(self, controller):
   cap = cv2.VideoCapture(self.videoToCreateConfigFileFor)
@@ -480,6 +481,9 @@ def chooseBodyExtremity(self, controller):
   
   self.configFile["noBoutsDetection"] = 1
   
+  if int(self.configFile["nbAnimalsPerWell"]) > 1:
+    identifyMultipleHead(self, controller, int(self.configFile["nbAnimalsPerWell"]))
+    
   controller.show_frame("GoToAdvanceSettings")
 
 

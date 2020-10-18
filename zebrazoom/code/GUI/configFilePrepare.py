@@ -45,8 +45,8 @@ class ChooseGeneralExperiment(tk.Frame):
     tk.Label(self, text="Choose only one of the options below:", font=("Helvetica", 12)).pack(side="top", fill="x", pady=10)
     
     freeZebra = IntVar()
-    Checkbutton(self, text="Track heads and tails of freely swimming zebrafish.", variable=freeZebra).pack()
-    tk.Label(self, text="The zebrafish must be in one well of any shape or in several circular wells. Several zebrafish can be tracked but with only one zebrafish per well.").pack()
+    Checkbutton(self, text="Track heads and tails of freely swimming fish.", variable=freeZebra).pack()
+    tk.Label(self, text="The fish must be in one well of any shape or in several circular wells. Each well should contain the same number of fish.").pack()
     tk.Label(self, text="").pack()
     
     headEmbZebra = IntVar()
