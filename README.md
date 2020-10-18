@@ -163,6 +163,23 @@ bend(n-1) < bend(n) and bend(n) > bend(n+1)
 <font color="blue">removeFirstSmallBend</font> : default: 0:
 if removeFirstSmallBend is different than 0 (so not by default), then removes the first bend if:
 abs(TailAngle_smoothed[firstBend]) < abs(TailAngle_smoothed[secondBend]) / hyperparameters["removeFirstSmallBend"]
+
+<H4 CLASS="western">Detection of bout through tail angle variation instead of subsequent frames pixel differences:</H4>
+The configuration files provided for the example files as well as the configuration files created through the GUI are set to make ZebraZoom detect bouts of movements by looking at the number of pixels that have a different intensity between subsequent frames of the video. It can sometimes be useful to instead detect the bouts by detecting variations in the tail angles. To do this, you must set the parameters in the configuration file as follow:<br/>
+<font color="blue">"noBoutsDetection"</font>: 0,<br/>
+<font color="blue">"thresForDetectMovementWithRawVideo"</font>: 0,<br/>
+You must then choose the threshold for bout detection using the angle variation (in radians):<br/>
+<font color="blue">"thresAngleBoutDetect"</font>: 0.1,<br/>
+By default, the tail angle variation will be calculated on a period of 10 frames. To adjust this window you can adjust the following parameter:<br/>
+<font color="blue">"windowForBoutDetectWithAngle":</font> 10,<br/>
+
+<H4 CLASS="western">Other useful parameters that can be changed:</H4>
+<font color="blue">"plotOnlyOneTailPointForVisu" : 0,</font> if set to 1, it will only plot the tip of the tail on the validation video <br/>
+<font color="blue">"trackingPointSizeDisplay": 1,</font> size of points displayed on the validation video <br/>
+<font color="blue">"fillGapFrameNb" : 5,</font> try to decrease this if the bouts detected are too long, try increasing if the bouts detected are too short or if they are "cut" into several different pieces.<br/>
+
+
+
 </p>
 
 <a name="GUIanalysis"/>
