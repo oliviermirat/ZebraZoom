@@ -86,7 +86,6 @@ if you have installed ZebraZoom through the "general method".<br/><br/>
 <I>conda activate zebrazoom</I><br/>
 <I>python -m zebrazoom</I><br/>
 if you have installed ZebraZoom following the "further recommendations".<br/><br/>
-Or, if you have installed ZebraZoom following the "Very easy installation for Window 10" method: open the folder ZebraZoomWinExe, then double click on “doubleClickHereToStart”.<br/>
 
 <a name="testanduse"/>
 
