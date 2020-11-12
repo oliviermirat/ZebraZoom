@@ -162,6 +162,9 @@ def chooseVideoToTroubleshootSplitVideo(self, controller):
     ret, frame = cap.read()
     if ret == True:
       frame2 = frame[ymin:ymax,xmin:xmax]
+      if False:
+        frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
+        frame2 = cv2.cvtColor(frame2, cv2.COLOR_GRAY2BGR)
       out.write(frame2)
     else: 
       break

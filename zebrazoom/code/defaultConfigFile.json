@@ -83,6 +83,7 @@
   "tailExtremityMaxJugeDecreaseCoeff" : 0.15,
   "midlineIsInBlobTrackingOptimization" : 1,
   "nbTailPoints" : 10,
+  "forceBlobMethodForHeadTracking" : 0,
   
   "backCalculationStep" : -1,
   "step" : -1,

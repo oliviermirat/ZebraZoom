@@ -12,6 +12,12 @@ from scipy.interpolate import UnivariateSpline
 from numpy import linspace
 
 def findBodyContour(headPosition, hyperparameters, thresh1):
+
+  thresh1[:,0] = 255
+  thresh1[0,:] = 255
+  thresh1[:, len(thresh1[0])-1] = 255
+  thresh1[len(thresh1)-1, :]    = 255
+
   x = headPosition[0]
   y = headPosition[1]
   cx = 0

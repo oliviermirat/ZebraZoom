@@ -259,6 +259,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["windowForBoutDetectWithAngle"] = getConfig(config, "windowForBoutDetectWithAngle", videoPath)
   
+  hyperparameters["forceBlobMethodForHeadTracking"] = getConfig(config, "forceBlobMethodForHeadTracking", videoPath)
+  
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5

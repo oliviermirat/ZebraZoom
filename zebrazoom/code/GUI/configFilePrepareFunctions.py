@@ -414,12 +414,10 @@ def identifyMultipleHead(self, controller, nbanimals):
   self.configFile["dilateIter"]                 = int(hyperparameters["dilateIter"])
   self.configFile["minArea"]                    = int(hyperparameters["minArea"])
   self.configFile["maxArea"]                    = int(hyperparameters["maxArea"])
-  self.configFile["minAreaBody"]                = int(hyperparameters["minArea"])
-  self.configFile["maxAreaBody"]                = int(hyperparameters["maxArea"])
   self.configFile["headSize"]        = math.sqrt((int(hyperparameters["minArea"]) + int(hyperparameters["maxArea"])) / 2)
 
 
-def numberOfAnimals(self, controller, nbanimals, yes, noo):
+def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHeadTracking):
 
   self.configFile["noBoutsDetection"] = 1
   self.configFile["noChecksForBoutSelectionInExtractParams"] = 1
@@ -435,6 +433,10 @@ def numberOfAnimals(self, controller, nbanimals, yes, noo):
       self.configFile["multipleHeadTrackingIterativelyRelaxAreaCriteria"] = 0
     else:
       self.configFile["multipleHeadTrackingIterativelyRelaxAreaCriteria"] = 1
+      
+  self.forceBlobMethodForHeadTracking = int(forceBlobMethodForHeadTracking)
+  if self.forceBlobMethodForHeadTracking:
+    self.configFile["forceBlobMethodForHeadTracking"] = self.forceBlobMethodForHeadTracking
   
   if self.organism == 'zebrafish':
     controller.show_frame("IdentifyHeadCenter")
@@ -468,6 +470,7 @@ def chooseBodyExtremity(self, controller):
     self.configFile["headSize"]    = int(dist * 0.3)
     self.configFile["minTailSize"] = int(dist * 0.05)
     self.configFile["maxTailSize"] = int(dist * 2)
+    self.configFile["paramGaussianBlur"] = int(int(dist*(31/52))/2)*2 + 1
   else:
     minArea = int(((2 * dist) * (2 * dist)) * 0.2)
     maxArea = int(((2 * dist) * (2 * dist)) * 1.5)
@@ -481,7 +484,7 @@ def chooseBodyExtremity(self, controller):
   
   self.configFile["noBoutsDetection"] = 1
   
-  if int(self.configFile["nbAnimalsPerWell"]) > 1:
+  if int(self.configFile["nbAnimalsPerWell"]) > 1 or self.forceBlobMethodForHeadTracking:
     identifyMultipleHead(self, controller, int(self.configFile["nbAnimalsPerWell"]))
     
   controller.show_frame("GoToAdvanceSettings")

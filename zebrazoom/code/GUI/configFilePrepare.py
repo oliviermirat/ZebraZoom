@@ -186,7 +186,13 @@ class NumberOfAnimals(tk.Frame):
     Checkbutton(self, text="No", variable=noo).pack()
     
     tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    tk.Button(self, text="Next", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get())).pack()
+    forceBlobMethodForHeadTracking = IntVar()
+    Checkbutton(self, text="Blob method for head tracking of fish", variable=forceBlobMethodForHeadTracking).pack()
+    tk.Label(self, text="Only click the box above if you tried the tracking without this option and the head tracking was suboptimal (an eye was detected instead of the head for example).", font=("Helvetica", 10)).pack(side="top", fill="x")
+    
+    
+    tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    tk.Button(self, text="Next", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), forceBlobMethodForHeadTracking.get())).pack()
     tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
     tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
 

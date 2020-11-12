@@ -14,7 +14,7 @@ def headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1
   y = 0
   lastFirstTheta = 0
   
-  if hyperparameters["nbAnimalsPerWell"] > 1:
+  if hyperparameters["nbAnimalsPerWell"] > 1 or hyperparameters["forceBlobMethodForHeadTracking"]:
     
     if hyperparameters["multipleAnimalTrackingAdvanceAlgorithm"] == 0:
       [outputHeading, output] = multipleAnimalsHeadTracking(outputHeading, output, hyperparameters, gray, i, firstFrame, thresh1, thresh2)
