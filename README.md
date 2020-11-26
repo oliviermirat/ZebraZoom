@@ -44,7 +44,7 @@ For more information visit <a href="https://zebrazoom.org/" target="_blank">zebr
 <H2 CLASS="western"> Installation:</H2>
 
 <H4 CLASS="western">General method:</H4>
-Download and install <a href="https://www.anaconda.com/products/individual" target="_blank">Anaconda with Python 3.7</a> (scroll down to the bottom of that web page or click on the "Download button" on the top of that page). You may skip this step if you already have python 3.6 or higher installed on your computer.<br/>
+Download and install <a href="https://www.anaconda.com/products/individual" target="_blank">Anaconda</a> (scroll down to the bottom of that web page or click on the "Download button" on the top of that page). You may skip this step if you already have python 3.6 or higher installed on your computer.<br/>
 Restart your computer.<br/>
 Open the "Anaconda Prompt" or any other terminal.<br/>
 Type:<br/>

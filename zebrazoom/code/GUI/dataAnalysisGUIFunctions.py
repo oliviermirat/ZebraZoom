@@ -116,7 +116,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
     'smoothingFactorDynaParam'          : 0,   # 0.001
     'nbFramesTakenIntoAccount'          : -1, #28,
     'numberOfBendsIncludedForMaxDetect' : -1,
-    'minNbBendForBoutDetect'            : 3,
+    'minNbBendForBoutDetect'            : 3, # THIS NEEDS TO BE CHANGED IF FPS IS LOW (default: 3)
     'defaultZZoutputFolderPath'         : './ZZoutput/',
     'computeTailAngleParamForCluster'   : True,
     'computeMassCenterParamForCluster'  : False
@@ -129,7 +129,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
   clusteringOptions = {
     'analyzeAllWellsAtTheSameTime' : 0, # put this to 1 for head-embedded videos, and to 0 for multi-well videos
     'pathToVideos' : './ZZoutput/',
-    'nbCluster' : 3,
+    'nbCluster' : int(nbClustersToFind),
     #'nbPcaComponents' : 30,
     'nbFramesTakenIntoAccount' : nbFramesTakenIntoAccount,
     'scaleGraphs' : True,

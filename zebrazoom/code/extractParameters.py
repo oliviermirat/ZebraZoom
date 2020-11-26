@@ -201,7 +201,8 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
               print("Extract Param Middle: wellNumber:",wellNumber," ; frame:",i)
             min = 10000
             max = -10000
-            for j in range(i-hyperparameters["windowForBoutDetectWithAngle"], i+1):
+            # for j in range(i-hyperparameters["windowForBoutDetectWithAngle"], i+1):
+            for j in range(i-int(hyperparameters["windowForBoutDetectWithAngle"]/2), i+int(hyperparameters["windowForBoutDetectWithAngle"]/2)):
               if (j >= 0) and (j<nbFrames):
                 if angle_median[j] > max:
                   max = angle_median[j]
@@ -253,7 +254,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       if (position == 1) and ((auDessus2[i] == 0) or (i == nbFrames-1)):
         curBout[0][2] = i-1
         position = 0
-        if curBout[0][2] - curBout[0][1] >= hyperparameters["detectBoutMinNbFrames"] or hyperparameters["noChecksForBoutSelectionInExtractParams"]:
+        if curBout[0][2] - curBout[0][1] >= hyperparameters["detectBoutMinNbFrames"] or (hyperparameters["noChecksForBoutSelectionInExtractParams"] and curBout[0][2] - curBout[0][1] >= 1):
           debMouv = int(curBout[0][1])
           endMouv = int(curBout[0][2])
           dist = math.sqrt( (head[debMouv,0]-head[endMouv,0])**2 + (head[debMouv,1]-head[endMouv,1])**2 )

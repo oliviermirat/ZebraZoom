@@ -233,12 +233,12 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
   if showFigures:
     plt.show()
 
-  # Plot most representative bouts
+  # Plot most representative bout for each cluster
   fig, tabAx2 = plt.subplots(4, len(proportions[0]), figsize=(22.9, 8.8))
   for cond in range(0, len(proportions)):
     for classed in range(0, len(proportions[0])):
       idMinDist = mostRepresentativeBout[cond, classed]
-      if idMinDist != -1:
+      if idMinDist != -1 and not(np.isnan(idMinDist)):
         instaTBFtab   = dfParam.loc[idMinDist, instaTBF]
         instaAmptab   = dfParam.loc[idMinDist, instaAmp]
         instaAsymtab  = dfParam.loc[idMinDist, instaAsym]
@@ -303,6 +303,26 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
     tabAx3[i].set_ylabel('Cluster '+str(i+1))
   tabAx3[len(proportions[0])-1].set_xlabel("Tail angle over time for the\n"+str(nbOfMostRepresentativeBoutsToPlot)+' most representative bouts for each cluster')
   plt.savefig(outputFolder+nameOfFile+'/'+str(nbOfMostRepresentativeBoutsToPlot)+'mostRepresentativeBoutsForEachCluster.png')
+  if showFigures:
+    plt.show()
+
+  # Plot most representative bouts - second plot
+  fig, tabAx3 = plt.subplots(len(proportions[0]),1, figsize=(22.9, 8.8))
+  for classed in range(0, len(proportions[0])):
+    nbOfMostRepresentativeBoutsToPlot = 10000000000000
+    nbOfMostRepresentativeBoutsToPlot = len(sortedRepresentativeBouts[classed].index)
+    if nbOfMostRepresentativeBoutsToPlot > 100:
+      nbOfMostRepresentativeBoutsToPlot = 100
+    indices = sortedRepresentativeBouts[classed].index
+    for j in range(0, nbOfMostRepresentativeBoutsToPlot):
+      tailAnglestab = sortedRepresentativeBouts[classed].loc[indices[j]].values
+      color = 'b'
+      tabAx3[classed].plot(tailAnglestab, color)
+      
+  for i in range(0,len(proportions[0])):
+    tabAx3[i].set_ylabel('Cluster '+str(i+1))
+  tabAx3[len(proportions[0])-1].set_xlabel("Tail angle over time for the most representative bouts for each cluster")
+  plt.savefig(outputFolder+nameOfFile+'/mostRepresentativeBoutsForEachCluster.png')
   if showFigures:
     plt.show()
 
