@@ -67,7 +67,7 @@ def headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1
         
     else:
       # If head embeded, heading and head position stay the same for all frames
-      trackingHeadingAllAnimals[0, i-firstFrame]  = trackingHeadingAllAnimals[0, i-firstFrame-1]
-      trackingHeadTailAllAnimals[0, i-firstFrame] = trackingHeadTailAllAnimals[0, i-firstFrame-1]
+      trackingHeadingAllAnimals[0, i-firstFrame]  = trackingHeadingAllAnimals[0, 0]
+      trackingHeadTailAllAnimals[0, i-firstFrame] = trackingHeadTailAllAnimals[0, 0]
     
   return [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, heading, lastFirstTheta]
