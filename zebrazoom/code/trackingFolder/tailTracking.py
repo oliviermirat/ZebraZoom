@@ -9,36 +9,36 @@ from tailTrackingBlobDescent import tailTrackingBlobDescent
 from getTailTipManual import findHeadPositionByUserInput
 from headEmbededTailTrackingTeresaNicolson import headEmbededTailTrackingTeresaNicolson
 
-def tailTracking(animalId, i, firstFrame, heading, videoPath, headPosition, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, output, lastFirstTheta, maxDepth, tailTip):
+def tailTracking(animalId, i, firstFrame, heading, videoPath, headPosition, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, trackingHeadTailAllAnimals, lastFirstTheta, maxDepth, tailTip):
   
   if (hyperparameters["headEmbeded"] == 1):
     # through the "head embeded" method, either through "segment descent" or "center of mass descent"
     
     if hyperparameters["headEmbededTeresaNicolson"] == 1:
       oppHeading = (heading + math.pi) % (2 * math.pi)
-      outputI = headEmbededTailTrackingTeresaNicolson(headPosition,nbTailPoints,i,thresh1,frame,hyperparameters,oppHeading,maxDepth,tailTip,threshForBlackFrames)
+      trackingHeadTailAllAnimalsI = headEmbededTailTrackingTeresaNicolson(headPosition,nbTailPoints,i,thresh1,frame,hyperparameters,oppHeading,maxDepth,tailTip,threshForBlackFrames)
     else:
       oppHeading = (heading + math.pi) % (2 * math.pi) # INSERTED FOR THE REFACTORING
       if hyperparameters["centerOfMassTailTracking"] == 0:
-        outputI = headEmbededTailTracking(headPosition,nbTailPoints,i,thresh1,frame,hyperparameters,oppHeading,maxDepth,tailTip)
+        trackingHeadTailAllAnimalsI = headEmbededTailTracking(headPosition,nbTailPoints,i,thresh1,frame,hyperparameters,oppHeading,maxDepth,tailTip)
       else:
-        outputI = centerOfMassTailTracking(headPosition,nbTailPoints,i,thresh1,frame,hyperparameters,oppHeading,maxDepth)
+        trackingHeadTailAllAnimalsI = centerOfMassTailTracking(headPosition,nbTailPoints,i,thresh1,frame,hyperparameters,oppHeading,maxDepth)
     
-    if len(outputI[0]) == len(output[animalId, i-firstFrame]):
-      output[animalId, i-firstFrame] = outputI
+    if len(trackingHeadTailAllAnimalsI[0]) == len(trackingHeadTailAllAnimals[animalId, i-firstFrame]):
+      trackingHeadTailAllAnimals[animalId, i-firstFrame] = trackingHeadTailAllAnimalsI
 
   else:
     if hyperparameters["freeSwimmingTailTrackingMethod"] == "tailExtremityDetect":
       # through the tail extremity descent method (original C++ method)
-      outputI = tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,hyperparameters["debugTrackingPtExtreme"],heading,hyperparameters)
-      output[animalId, i-firstFrame] = outputI
+      trackingHeadTailAllAnimalsI = tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,hyperparameters["debugTrackingPtExtreme"],heading,hyperparameters)
+      trackingHeadTailAllAnimals[animalId, i-firstFrame] = trackingHeadTailAllAnimalsI
     elif hyperparameters["freeSwimmingTailTrackingMethod"] == "blobDescent":
       # through the "blob descent" method
-      outputI = tailTrackingBlobDescent(headPosition, nbTailPoints, i, headPosition[0], headPosition[1], thresh1, frame, lastFirstTheta, hyperparameters["debugTrackingPtExtreme"], thetaDiffAccept, hyperparameters)
-      output[animalId, i-firstFrame] = outputI
+      trackingHeadTailAllAnimalsI = tailTrackingBlobDescent(headPosition, nbTailPoints, i, headPosition[0], headPosition[1], thresh1, frame, lastFirstTheta, hyperparameters["debugTrackingPtExtreme"], thetaDiffAccept, hyperparameters)
+      trackingHeadTailAllAnimals[animalId, i-firstFrame] = trackingHeadTailAllAnimalsI
     else: # hyperparameters["freeSwimmingTailTrackingMethod"] == "none"
       # only tracking the head, not the tail
-      output[animalId, i-firstFrame][0][0] = headPosition[0]
-      output[animalId, i-firstFrame][0][1] = headPosition[1]
+      trackingHeadTailAllAnimals[animalId, i-firstFrame][0][0] = headPosition[0]
+      trackingHeadTailAllAnimals[animalId, i-firstFrame][0][1] = headPosition[1]
       
-  return [output, maxDepth, tailTip, headPosition]
+  return [trackingHeadTailAllAnimals, maxDepth]

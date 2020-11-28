@@ -22,7 +22,7 @@ from headEmbededTailTracking import headEmbededTailTrackFindMaxDepth
 from headEmbededTailTrackingTeresaNicolson import headEmbededTailTrackFindMaxDepthTeresaNicolson, headEmbededTailTrackingTeresaNicolson
 from centerOfMassTailTracking import centerOfMassTailTrackFindMaxDepth
 
-def tracking(videoPath,background,wellNumber,wellPositions,hyperparameters,videoName):
+def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, videoName):
 
   firstFrame = hyperparameters["firstFrame"]
   if hyperparameters["firstFrameForTracking"] != -1:
@@ -35,8 +35,8 @@ def tracking(videoPath,background,wellNumber,wellPositions,hyperparameters,video
   nbTailPoints = hyperparameters["nbTailPoints"]
   thetaDiffAccept = 1.2 # 0.5 for the head embedded maybe
   maxDepth = 0
-  headPosition = []
-  tailTip = []
+  headPositionFirstFrame = []
+  tailTipFirstFrame = []
   
   cap = cv2.VideoCapture(videoPath)
   if (cap.isOpened()== False): 
@@ -48,12 +48,13 @@ def tracking(videoPath,background,wellNumber,wellPositions,hyperparameters,video
   if hyperparameters["headEmbeded"]:
     heading = 0.7
     
-  output = np.zeros((hyperparameters["nbAnimalsPerWell"], lastFrame-firstFrame+1, nbTailPoints, 2))
-  outputHeading = np.zeros((hyperparameters["nbAnimalsPerWell"], lastFrame-firstFrame+1))
+  trackingHeadTailAllAnimals = np.zeros((hyperparameters["nbAnimalsPerWell"], lastFrame-firstFrame+1, nbTailPoints, 2))
+  trackingHeadingAllAnimals = np.zeros((hyperparameters["nbAnimalsPerWell"], lastFrame-firstFrame+1))
   
   threshForBlackFrames = getThresForBlackFrame(hyperparameters, videoPath) # For headEmbededTeresaNicolson 
   cap.set(1, firstFrame)
   
+  # Using the first frame of the video to calculate parameters that will be used afterwards for the tracking
   if (hyperparameters["headEmbeded"] == 1):
     # Getting images
     if hyperparameters["headEmbededRemoveBack"] == 0:
@@ -62,30 +63,30 @@ def tracking(videoPath,background,wellNumber,wellPositions,hyperparameters,video
       [frame, thresh1] = headEmbededFrameBackExtract(videoPath, background, hyperparameters, firstFrame)
     gray = frame.copy()
     oppHeading = (heading + math.pi) % (2 * math.pi)
-    # Getting head and tailtip positions
+    # Getting headPositionFirstFrame and tailTipFirstFrame positions
     if os.path.exists(videoPath+'HP.csv'):
-      headPosition = getHeadPositionByFileSaved(videoPath)
+      headPositionFirstFrame = getHeadPositionByFileSaved(videoPath)
     else:
       if hyperparameters["findHeadPositionByUserInput"]:
-        headPosition = findHeadPositionByUserInput(frame)
+        headPositionFirstFrame = findHeadPositionByUserInput(frame)
       else:
         [frame, gray, thresh1, blur, thresh2, frame2] = getImages(hyperparameters, cap, videoPath, firstFrame, background, wellNumber, wellPositions)
         cap.set(1, firstFrame)
-        [outputHeading, output, heading, headPosition, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, firstFrame, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, outputHeading, output, headPosition, wellPositions[wellNumber]["lengthX"])
+        [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, heading, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, firstFrame, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, headPositionFirstFrame, wellPositions[wellNumber]["lengthX"])
     if os.path.exists(videoPath+'.csv'):
-      tailTip  = getTailTipByFileSaved(hyperparameters,videoPath)
+      tailTipFirstFrame  = getTailTipByFileSaved(hyperparameters,videoPath)
     else:
-      tailTip  = findTailTipByUserInput(frame,hyperparameters)
+      tailTipFirstFrame  = findTailTipByUserInput(frame,hyperparameters)
     if hyperparameters["automaticallySetSomeOfTheHeadEmbededHyperparameters"] == 1:
-      hyperparameters = adjustHeadEmbededHyperparameters(hyperparameters, frame, headPosition, tailTip)
+      hyperparameters = adjustHeadEmbededHyperparameters(hyperparameters, frame, headPositionFirstFrame, tailTipFirstFrame)
     # Getting max depth
     if hyperparameters["headEmbededTeresaNicolson"] == 1:
-      maxDepth = headEmbededTailTrackFindMaxDepthTeresaNicolson(headPosition,nbTailPoints,firstFrame,headPosition[0],headPosition[1],thresh1,frame,hyperparameters,oppHeading,tailTip)
+      maxDepth = headEmbededTailTrackFindMaxDepthTeresaNicolson(headPositionFirstFrame,nbTailPoints,firstFrame,headPositionFirstFrame[0],headPositionFirstFrame[1],thresh1,frame,hyperparameters,oppHeading,tailTipFirstFrame)
     else:
       if hyperparameters["centerOfMassTailTracking"] == 0:
-        maxDepth = headEmbededTailTrackFindMaxDepth(headPosition,nbTailPoints,firstFrame,headPosition[0],headPosition[1],thresh1,frame,hyperparameters,oppHeading,tailTip)
+        maxDepth = headEmbededTailTrackFindMaxDepth(headPositionFirstFrame,nbTailPoints,firstFrame,headPositionFirstFrame[0],headPositionFirstFrame[1],thresh1,frame,hyperparameters,oppHeading,tailTipFirstFrame)
       else:
-        maxDepth = centerOfMassTailTrackFindMaxDepth(headPosition,nbTailPoints,firstFrame,headPosition[0],headPosition[1],thresh1,frame,hyperparameters,oppHeading,tailTip)
+        maxDepth = centerOfMassTailTrackFindMaxDepth(headPositionFirstFrame,nbTailPoints,firstFrame,headPositionFirstFrame[0],headPositionFirstFrame[1],thresh1,frame,hyperparameters,oppHeading,tailTipFirstFrame)
   
   if hyperparameters["adjustHeadEmbededTracking"] == 1 or hyperparameters["adjustFreelySwimTracking"] == 1:
     initializeAdjustHyperparametersWindows("Tracking")
@@ -104,34 +105,34 @@ def tracking(videoPath,background,wellNumber,wellPositions,hyperparameters,video
     # Get images for frame i
     [frame, gray, thresh1, blur, thresh2, frame2] = getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPositions)
     # Head tracking and heading calculation
-    [outputHeading, output, heading, headPosition, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, outputHeading, output, headPosition, wellPositions[wellNumber]["lengthX"])
+    [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, heading, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, headPositionFirstFrame, wellPositions[wellNumber]["lengthX"])
     # Tail tracking for frame i
     if hyperparameters["trackTail"] == 1 :
       for animalId in range(0, hyperparameters["nbAnimalsPerWell"]):
-        headPosition = [output[animalId, i-firstFrame][0][0], output[animalId, i-firstFrame][0][1]]
-        [output, maxDepth, tailTip, headPosition] = tailTracking(animalId, i, firstFrame, heading, videoPath, headPosition, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, output, lastFirstTheta, maxDepth, tailTip)
+        headPosition = [trackingHeadTailAllAnimals[animalId, i-firstFrame][0][0], trackingHeadTailAllAnimals[animalId, i-firstFrame][0][1]]
+        [trackingHeadTailAllAnimals, maxDepth] = tailTracking(animalId, i, firstFrame, heading, videoPath, headPosition, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, trackingHeadTailAllAnimals, lastFirstTheta, maxDepth, tailTipFirstFrame)
     
     # Debug functions
-    debugTracking(nbTailPoints, i, firstFrame, headPosition[0], headPosition[1], output, outputHeading, frame2, hyperparameters)
+    debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame2, hyperparameters)
     
     if hyperparameters["adjustHeadEmbededTracking"] == 1:
-      [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getHeadEmbededTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, headPosition[0], headPosition[1], output, outputHeading, frame, frame2, hyperparameters)
+      [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getHeadEmbededTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters)
       if len(organizationTabCur) == 0:
         organizationTabCur = organizationTab
       [i, hyperparameters, organizationTabCur] = adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTabCur)
-      hyperparameters = adjustHeadEmbededHyperparameters(hyperparameters, frame, headPosition, tailTip)
+      hyperparameters = adjustHeadEmbededHyperparameters(hyperparameters, frame, headPositionFirstFrame, tailTipFirstFrame)
     elif hyperparameters["adjustFreelySwimTracking"] == 1:
-      [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getFreelySwimTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, headPosition[0], headPosition[1], output, outputHeading, frame, frame2, hyperparameters)
+      [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getFreelySwimTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters)
       if len(organizationTabCur) == 0:
         organizationTabCur = organizationTab
       [i, hyperparameters, organizationTabCur] = adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTabCur)
     else:
       i = i + 1
   
-  savingBlackFrames(hyperparameters, videoName, output)
+  savingBlackFrames(hyperparameters, videoName, trackingHeadTailAllAnimals)
   
   print("Tracking done for well", wellNumber)
   if hyperparameters["popUpAlgoFollow"]:
     popUpAlgoFollow.prepend("Tracking done for well "+ str(wellNumber))
   
-  return [output, outputHeading, headPosition, tailTip]
+  return [trackingHeadTailAllAnimals, trackingHeadingAllAnimals, headPositionFirstFrame, tailTipFirstFrame]

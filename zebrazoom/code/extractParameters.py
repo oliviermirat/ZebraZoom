@@ -61,16 +61,16 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
   thresAngleBoutDetect = hyperparameters["thresAngleBoutDetect"]
   debugExtractParams = hyperparameters["debugExtractParams"]
 
-  trackingTailAllAnimals = trackingData[0]
+  trackingHeadTailAllAnimals = trackingData[0]
   trackingHeadingAllAnimals = trackingData[1]
-  headPosition = trackingData[2]
-  tailTip = trackingData[3]
+  headPositionFirstFrame = trackingData[2]
+  tailTipFirstFrame = trackingData[3]
   
   data = []
   
-  for animalId in range(0, len(trackingTailAllAnimals)):
+  for animalId in range(0, len(trackingHeadTailAllAnimals)):
     
-    trackingTail    = trackingTailAllAnimals[animalId]
+    trackingTail    = trackingHeadTailAllAnimals[animalId]
     trackingHeading = trackingHeadingAllAnimals[animalId]
     
     n = len(trackingTail[0])
@@ -215,7 +215,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
               auDessus[i] = 1
           
         else:
-          auDessus = detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumber, wellPositions, head, headPosition, tailTip)
+          auDessus = detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumber, wellPositions, head, headPositionFirstFrame, tailTipFirstFrame)
     
     if (hyperparameters["freqAlgoPosFollow"] != 0):
       print("Extract Param Middle: wellNumber:",wellNumber," ; frame:",i)

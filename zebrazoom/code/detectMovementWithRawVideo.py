@@ -117,7 +117,7 @@ def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparisi
   return [img[ymin:ymax, xmin:xmax], res, totDiff, cap1, cap2]
 
   
-def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumber, wellPositions, head, headPosition, tailTip):
+def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumber, wellPositions, head, headPositionFirstFrame, tailTipFirstFrame):
   
   if hyperparameters["adjustDetectMovWithRawVideo"]:
     initializeAdjustHyperparametersWindows("Bouts Detection")
@@ -159,7 +159,7 @@ def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumbe
       if l > hyperparameters["lastFrame"]:
         l = hyperparameters["lastFrame"]
       
-      [img, res, totDiff, cap1, cap2] = getImagesAndTotDiff(head, hyperparameters["halfDiameterRoiBoutDetect"], cap1, cap2, videoPath, l, hyperparameters["frameGapComparision"], wellNumber, wellPositions, hyperparameters, firstFrame, lenX, lenY, hyperparameters["thresForDetectMovementWithRawVideo"], headPosition, tailTip)
+      [img, res, totDiff, cap1, cap2] = getImagesAndTotDiff(head, hyperparameters["halfDiameterRoiBoutDetect"], cap1, cap2, videoPath, l, hyperparameters["frameGapComparision"], wellNumber, wellPositions, hyperparameters, firstFrame, lenX, lenY, hyperparameters["thresForDetectMovementWithRawVideo"], headPositionFirstFrame, tailTipFirstFrame)
       
       if hyperparameters["debugDetectMovWithRawVideo"]:
         print("frame:",l," ; number of different pixel in subsequent frames:",totDiff," ; bout detection threshold:",hyperparameters["minNbPixelForDetectMovementWithRawVideo"])

@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 from calculateHeading import calculateHeadingSimple
 
-def multipleAnimalsHeadTracking(outputHeading, output, hyperparameters, gray, i, firstFrame, thresh1, thresh3):
+def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, hyperparameters, gray, i, firstFrame, thresh1, thresh3):
   
   headCoordinatesOptions = []
   x = 0
@@ -71,10 +71,10 @@ def multipleAnimalsHeadTracking(outputHeading, output, hyperparameters, gray, i,
     while animalNotPutOrEjectedBecausePositionAlreadyTaken:
       animalNotPutOrEjectedBecausePositionAlreadyTaken = 0
       for animal_Id in range(0, hyperparameters["nbAnimalsPerWell"]):
-        x_prevFrame_animal_Id = output[animal_Id, i-firstFrame-1][0][0]
-        y_prevFrame_animal_Id = output[animal_Id, i-firstFrame-1][0][1]
-        x_curFrame_animal_Id  = output[animal_Id, i-firstFrame][0][0]
-        y_curFrame_animal_Id  = output[animal_Id, i-firstFrame][0][1]
+        x_prevFrame_animal_Id = trackingHeadTailAllAnimals[animal_Id, i-firstFrame-1][0][0]
+        y_prevFrame_animal_Id = trackingHeadTailAllAnimals[animal_Id, i-firstFrame-1][0][1]
+        x_curFrame_animal_Id  = trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][0]
+        y_curFrame_animal_Id  = trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][1]
         if ((x_prevFrame_animal_Id != 0) and (y_prevFrame_animal_Id != 0) and (x_curFrame_animal_Id == 0) and (y_curFrame_animal_Id == 0)):
           min_dist  = 10000000000000000000000
           index_min = -1
@@ -92,8 +92,8 @@ def multipleAnimalsHeadTracking(outputHeading, output, hyperparameters, gray, i,
           if index_min >= 0:
             if (headCoordinatesOptionsAlreadyTakenDist[index_min] == -1):
               # Save position of animal for frame i-firstFrame
-              output[animal_Id, i-firstFrame][0][0] = headCoordinatesOptions[index_min][0]
-              output[animal_Id, i-firstFrame][0][1] = headCoordinatesOptions[index_min][1]     
+              trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][0] = headCoordinatesOptions[index_min][0]
+              trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][1] = headCoordinatesOptions[index_min][1]     
               headCoordinatesOptionsAlreadyTakenDist[index_min]     = min_dist
               headCoordinatesOptionsAlreadyTakenAnimalId[index_min] = animal_Id
             else:
@@ -101,11 +101,11 @@ def multipleAnimalsHeadTracking(outputHeading, output, hyperparameters, gray, i,
               if min_dist < headCoordinatesOptionsAlreadyTakenDist[index_min]:
                 # "Ejecting" previously saved position of animal for frame i-firstFrame
                 animal_Id_Eject = headCoordinatesOptionsAlreadyTakenAnimalId[index_min]
-                output[animal_Id_Eject, i-firstFrame][0][0] = 0
-                output[animal_Id_Eject, i-firstFrame][0][1] = 0          
+                trackingHeadTailAllAnimals[animal_Id_Eject, i-firstFrame][0][0] = 0
+                trackingHeadTailAllAnimals[animal_Id_Eject, i-firstFrame][0][1] = 0          
                 # Replace position of animal for frame i-firstFrame
-                output[animal_Id, i-firstFrame][0][0] = headCoordinatesOptions[index_min][0]
-                output[animal_Id, i-firstFrame][0][1] = headCoordinatesOptions[index_min][1]  
+                trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][0] = headCoordinatesOptions[index_min][0]
+                trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][1] = headCoordinatesOptions[index_min][1]  
                 headCoordinatesOptionsAlreadyTakenDist[index_min]     = min_dist
                 headCoordinatesOptionsAlreadyTakenAnimalId[index_min] = animal_Id               
   
@@ -114,15 +114,15 @@ def multipleAnimalsHeadTracking(outputHeading, output, hyperparameters, gray, i,
   
   for idxCoordinateOption, [idx_x_Option, idx_y_Option] in enumerate(headCoordinatesOptions):
     for animal_Id in range(0, hyperparameters["nbAnimalsPerWell"]):
-      if (output[animal_Id, i-firstFrame][0][0] == 0) and (output[animal_Id, i-firstFrame][0][1] == 0):
+      if (trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][0] == 0) and (trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][1] == 0):
         if i == firstFrame:
-          output[animal_Id, i-firstFrame][0][0] = idx_x_Option
-          output[animal_Id, i-firstFrame][0][1] = idx_y_Option
+          trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][0] = idx_x_Option
+          trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][1] = idx_y_Option
           break
         else:
-          if (output[animal_Id, i-firstFrame-1][0][0] == 0) and (output[animal_Id, i-firstFrame-1][0][1] == 0): # NEW !!!!
-            output[animal_Id, i-firstFrame][0][0] = idx_x_Option
-            output[animal_Id, i-firstFrame][0][1] = idx_y_Option
+          if (trackingHeadTailAllAnimals[animal_Id, i-firstFrame-1][0][0] == 0) and (trackingHeadTailAllAnimals[animal_Id, i-firstFrame-1][0][1] == 0): # NEW !!!!
+            trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][0] = idx_x_Option
+            trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][1] = idx_y_Option
             break
 
   
@@ -133,12 +133,12 @@ def multipleAnimalsHeadTracking(outputHeading, output, hyperparameters, gray, i,
     # maxdepth_min_animal_Id = 0
     # index_animal_Id_alwaysBeenAt0 = -1
     # for animal_Id in range(0, hyperparameters["nbAnimalsPerWell"]):
-      # if (output[animal_Id, i-firstFrame][0][0] == 0) and (output[animal_Id, i-firstFrame][0][1] == 0):
+      # if (trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][0] == 0) and (trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][1] == 0):
         # depth = 1
-        # while (i - firstFrame - depth >= 0) and (depth < 20) and (output[animal_Id, i-firstFrame-depth][0][0] == 0) and (output[animal_Id, i-firstFrame-depth][0][1] == 0):
+        # while (i - firstFrame - depth >= 0) and (depth < 20) and (trackingHeadTailAllAnimals[animal_Id, i-firstFrame-depth][0][0] == 0) and (trackingHeadTailAllAnimals[animal_Id, i-firstFrame-depth][0][1] == 0):
           # depth = depth + 1
-        # xPast_animal_Id = output[animal_Id, i-firstFrame-depth][0][0]
-        # yPast_animal_Id = output[animal_Id, i-firstFrame-depth][0][1]
+        # xPast_animal_Id = trackingHeadTailAllAnimals[animal_Id, i-firstFrame-depth][0][0]
+        # yPast_animal_Id = trackingHeadTailAllAnimals[animal_Id, i-firstFrame-depth][0][1]
         # if (xPast_animal_Id != 0) or (yPast_animal_Id != 0):
           # print("animal_Id:", animal_Id, "; (xPast_animal_Id, yPast_animal_Id):", xPast_animal_Id, yPast_animal_Id)
           # dist = math.sqrt((idx_x_Option - xPast_animal_Id)**2 + (idx_y_Option - yPast_animal_Id)**2)
@@ -154,29 +154,29 @@ def multipleAnimalsHeadTracking(outputHeading, output, hyperparameters, gray, i,
             # index_animal_Id_alwaysBeenAt0 = animal_Id
     # print("index_min_animal_Id:", index_min_animal_Id)
     # if index_min_animal_Id >= 0:
-      # output[index_min_animal_Id, i-firstFrame][0][0] = idx_x_Option
-      # output[index_min_animal_Id, i-firstFrame][0][1] = idx_y_Option
-      # x_maxPast_animal_Id = output[index_min_animal_Id, i-firstFrame-maxdepth_min_animal_Id][0][0]
-      # y_maxPast_animal_Id = output[index_min_animal_Id, i-firstFrame-maxdepth_min_animal_Id][0][1]
+      # trackingHeadTailAllAnimals[index_min_animal_Id, i-firstFrame][0][0] = idx_x_Option
+      # trackingHeadTailAllAnimals[index_min_animal_Id, i-firstFrame][0][1] = idx_y_Option
+      # x_maxPast_animal_Id = trackingHeadTailAllAnimals[index_min_animal_Id, i-firstFrame-maxdepth_min_animal_Id][0][0]
+      # y_maxPast_animal_Id = trackingHeadTailAllAnimals[index_min_animal_Id, i-firstFrame-maxdepth_min_animal_Id][0][1]
       # print("x_maxPast_animal_Id, y_maxPast_animal_Id:", x_maxPast_animal_Id, y_maxPast_animal_Id)
       # print("maxdepth_min_animal_Id", maxdepth_min_animal_Id)
       # x_step = (idx_x_Option - x_maxPast_animal_Id) / maxdepth_min_animal_Id
       # y_step = (idx_y_Option - y_maxPast_animal_Id) / maxdepth_min_animal_Id
       # for blankSpace in range(1, maxdepth_min_animal_Id):
-        # output[index_min_animal_Id, i-firstFrame-maxdepth_min_animal_Id+blankSpace][0][0] = x_maxPast_animal_Id + blankSpace * x_step
-        # output[index_min_animal_Id, i-firstFrame-maxdepth_min_animal_Id+blankSpace][0][1] = y_maxPast_animal_Id + blankSpace * y_step
+        # trackingHeadTailAllAnimals[index_min_animal_Id, i-firstFrame-maxdepth_min_animal_Id+blankSpace][0][0] = x_maxPast_animal_Id + blankSpace * x_step
+        # trackingHeadTailAllAnimals[index_min_animal_Id, i-firstFrame-maxdepth_min_animal_Id+blankSpace][0][1] = y_maxPast_animal_Id + blankSpace * y_step
     # else:
       # if index_animal_Id_alwaysBeenAt0 != -1:
-        # output[index_animal_Id_alwaysBeenAt0, i-firstFrame][0][0] = idx_x_Option
-        # output[index_animal_Id_alwaysBeenAt0, i-firstFrame][0][1] = idx_y_Option
+        # trackingHeadTailAllAnimals[index_animal_Id_alwaysBeenAt0, i-firstFrame][0][0] = idx_x_Option
+        # trackingHeadTailAllAnimals[index_animal_Id_alwaysBeenAt0, i-firstFrame][0][1] = idx_y_Option
   
   for animal_Id in range(0, hyperparameters["nbAnimalsPerWell"]):
-    x_curFrame_animal_Id  = output[animal_Id, i-firstFrame][0][0]
-    y_curFrame_animal_Id  = output[animal_Id, i-firstFrame][0][1]
+    x_curFrame_animal_Id  = trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][0]
+    y_curFrame_animal_Id  = trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][1]
     if x_curFrame_animal_Id != 0 and y_curFrame_animal_Id != 0:
       x_curFrame_animal_Id = int(x_curFrame_animal_Id)
       y_curFrame_animal_Id = int(y_curFrame_animal_Id)
       heading = calculateHeadingSimple(x_curFrame_animal_Id, y_curFrame_animal_Id, thresh2, hyperparameters)
-      outputHeading[animal_Id, i-firstFrame] = heading
+      trackingHeadingAllAnimals[animal_Id, i-firstFrame] = heading
   
-  return [outputHeading, output]
+  return [trackingHeadingAllAnimals, trackingHeadTailAllAnimals]

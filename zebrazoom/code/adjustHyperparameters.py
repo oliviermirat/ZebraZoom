@@ -91,7 +91,7 @@ def getDetectMouvRawVideosParamsForHyperParamAdjusts(img, res, l, totDiff, hyper
   return [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab]
 
 
-def getHeadEmbededTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, x, y, output, outputHeading, frame, frame2, hyperparameters):
+def getHeadEmbededTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, output, outputHeading, frame, frame2, hyperparameters):
   
   # hyperparametersListNames = ["headEmbededAutoSet_BackgroundExtractionOption", "overwriteFirstStepValue", "overwriteLastStepValue", "overwriteNbOfStepValues", "headEmbededParamTailDescentPixThreshStopOverwrite", "authorizedRelativeLengthTailEnd"]
   hyperparametersListNames = ["headEmbededAutoSet_BackgroundExtractionOption", "overwriteFirstStepValue", "overwriteLastStepValue", "headEmbededParamTailDescentPixThreshStopOverwrite", "authorizedRelativeLengthTailEnd"]
@@ -123,7 +123,7 @@ def getHeadEmbededTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame
   return [hyperparametersListNames, frame2, WINDOW_NAME, organizationTab]
 
 
-def getFreelySwimTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, x, y, output, outputHeading, frame, frame2, hyperparameters):
+def getFreelySwimTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, output, outputHeading, frame, frame2, hyperparameters):
   
   hyperparametersListNames = ["minPixelDiffForBackExtract", "maxAreaBody", "minTailSize", "maxTailSize"]
   marginX = 30

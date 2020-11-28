@@ -1,7 +1,7 @@
 import cv2
 import math
 
-def debugTracking(nbTailPoints, i, firstFrame, x, y, output, outputHeading, frame2, hyperparameters):
+def debugTracking(nbTailPoints, i, firstFrame, output, outputHeading, frame2, hyperparameters):
   if hyperparameters["debugTracking"]:
     frame2 = cv2.cvtColor(frame2,cv2.COLOR_GRAY2RGB)
     for k in range(0, hyperparameters["nbAnimalsPerWell"]):
