@@ -117,6 +117,10 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
   if useFreqAmpAsymSpeedHeadingDisp:
     allInstaValues = dfParam[allInstas + instaSpeed + instaHeadingDiff + instaHorizDispl].values
 
+  if modelUsedForClustering == 'KMeans':
+    scaler = StandardScaler()
+    allInstaValues = scaler.fit_transform(allInstaValues)
+
   if classifier == 0:
     print("creating pca transform and applying it on the data")
     pca_result = pca.fit_transform(allInstaValues)
