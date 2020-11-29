@@ -9,7 +9,10 @@ from tailTrackingBlobDescent import tailTrackingBlobDescent
 from getTailTipManual import findHeadPositionByUserInput
 from headEmbededTailTrackingTeresaNicolson import headEmbededTailTrackingTeresaNicolson
 
-def tailTracking(animalId, i, firstFrame, heading, videoPath, headPosition, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, trackingHeadTailAllAnimals, lastFirstTheta, maxDepth, tailTip):
+def tailTracking(animalId, i, firstFrame, videoPath, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, lastFirstTheta, maxDepth, tailTip):
+
+  headPosition = [trackingHeadTailAllAnimals[animalId, i-firstFrame][0][0], trackingHeadTailAllAnimals[animalId, i-firstFrame][0][1]]
+  heading      = trackingHeadingAllAnimals[animalId, i-firstFrame]
   
   if (hyperparameters["headEmbeded"] == 1):
     # through the "head embeded" method, either through "segment descent" or "center of mass descent"
@@ -41,4 +44,4 @@ def tailTracking(animalId, i, firstFrame, heading, videoPath, headPosition, fram
       trackingHeadTailAllAnimals[animalId, i-firstFrame][0][0] = headPosition[0]
       trackingHeadTailAllAnimals[animalId, i-firstFrame][0][1] = headPosition[1]
       
-  return [trackingHeadTailAllAnimals, maxDepth]
+  return trackingHeadTailAllAnimals
