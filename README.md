@@ -32,6 +32,7 @@ For more information visit <a href="https://zebrazoom.org/" target="_blank">zebr
 [Installation](#installation)<br/>
 [Starting the GUI](#starting)<br/>
 [Testing the installation and using ZebraZoom](#testanduse)<br/>
+[Using ZebraZoom through the command line](#commandlinezebrazoom)<br/>
 [Adjusting ZebraZoom's hyperparameters](#hyperparameters)<br/>
 [Further analyzing ZebraZoom's output through the Graphical User Interface](#GUIanalysis)<br/>
 [Further analyzing ZebraZoom's output with Python](#pythonanalysis)<br/>
@@ -58,11 +59,6 @@ If you want to upgrade to the latest release of ZebraZoom later on, you can type
 
 To start ZebraZoom, you can now open the Anaconda Prompt or a terminal and type:<br/>
 <I>python -m zebrazoom</I><br/>
-
-<H4 CLASS="western">Very easy installation for Window 10:</H4>
-If you are using Windows 10 (64 bits), there is an even easier method to install ZebraZoom!<br/>
-Just <a href="https://drive.google.com/open?id=1XY9-qOHoGnaL_wIR4o0YMU3SQEPxniZF" target="_blank">download this file</a> and unzip it. Open the folder ZebraZoomWinExe, then double click on “doubleClickHereToStart”: the ZebraZoom graphical interface should start.<br/>
-<b>Warning:</b> this installation method is a good way to easily test ZebraZoom. However, if you use the installation method described above instead, ZebraZoom's tracking will run faster.<br/>
 
 <H4 CLASS="western">Further recommendations for installation with the general method:</H4>
 If and only if you are going to use Anaconda extensively to install packages other than ZebraZoom, it can be a good idea to create an Anaconda Environment just for ZebraZoom.<br/>
@@ -94,6 +90,20 @@ if you have installed ZebraZoom following the "further recommendations".<br/><br
 To be able to track animals in videos you need to create a configuration file for each “type” of video you want to track. A “type” of video is defined by light intensity, number and shape of wells, number of animals per well, number of pixels per animal, the type of animal in your video, etc...<br/><br/>
 Start by testing that ZebraZoom is working on your machine. To do that, <a href="https://zebrazoom.org/testVideos.html" target="_blank">download the test videos</a> and try to run the tracking on those: in the GUI's main menu, click on “Run ZebraZoom on a video”, choose the video you want to track and then the configuration file which will have the same name as the video you want to track. Once the tracking is done, go back to the main menu and click on “Visualize ZebraZoom's output”, then on the video you just tracked. If the tracking worked well, you should be able to visualize the output produced by ZebraZoom (by clicking on “View video for well 0” for example).<br/><br/>
 You can also watch the <a href="https://www.youtube.com/playlist?list=PLuWZiRK2HkeVo8zIPixdBj-hBk-cbsQZr" style="color:blue" target="_blank">tutorial videos on how to use ZebraZoom</a> for more guidance about how to create configuration files, launch ZebraZoom on videos and visualize the outputs.<br/>
+
+<a name="commandlinezebrazoom"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Using ZebraZoom through the command line:</H2>
+You can also use ZebraZoom through the command line. To do this, you will have to open Anaconda Prompt or a terminal, navigate to the directory where ZebraZoom is installed (when you type "python -m zebrazoom" in your terminal, you will see a "The data produced by ZebraZoom can be found in the folder: #" message and this will give you an indication of where that directory is). Then, type:<br/><br/>
+<I>python ZebraZoom.py pathToVideo nameOfVideo extensionOfVideo pathToConfigFile</I><br/><br/>
+For example, you could type:<br/><br/>
+<I>python ZebraZoom.py trackingVideos\ experiment1 avi openZZ\ZebraZoom\zebrazoom\configuration\config.json</I><br/><br/>
+As it might be difficult to navigate to the folder where ZebraZoom is installed and then type long paths as parameters to ZebraZoom, one option can be to download a zip of this repository and then place it in a convenient location on your computer (the negative of this is that you won't be able to easily update the software).<br/><br/>
+Using ZebraZoom through the command line can be particularly useful when you want to analyze a lot of videos located in different folders, or if you want to launch ZebraZoom on a server instead of on a desktop computer.
+
+<br/><br/>
+
 
 <a name="hyperparameters"/>
 
