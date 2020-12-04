@@ -222,6 +222,26 @@ You can then, for example, plot the tail angle with the following command:
 <I>plt.plot(supstruct['wellPoissMouv'][2][0][0]["TailAngle_smoothed"])</I><br/>
 <I>plt.show()</I><br/>
 
+The full list of parameters available for each bout is:<br/>
+<I>'FishNumber'</I> : Fish number in the well. If there's only one fish per well, this number will be 0.<br/>
+<I>'BoutStart'</I>  : Frame at which the bout started.<br/>
+<I>'BoutEnd'</I>    : Frame at which the bout ended.<br/>
+<I>'TailAngle_Raw'</I> : Tail angle over time for the bout, without any smoothing.<br/>
+<I>'HeadX'</I>         : Position on the x axis of the center of the head of the animal, for each frame.<br/>
+<I>'HeadY'</I>         : Position on the y axis of the center of the head of the animal, for each frame.<br/>
+<I>'Heading_raw'</I>   : Value of the main angle of the head of the animal, for each frame, without any smoothing.<br/>
+<I>'Heading'</I>       : Value of the main angle of the head of the animal, for each frame, with smoothing.<br/>
+<I>'TailX_VideoReferential'</I>   : Position on the x axis of each of the points along the tail of the animal, for each frame.<br/>
+<I>'TailY_VideoReferential'</I>   : Position on the y axis of each of the points along the tail of the animal, for each frame.<br/>
+<I>'TailX_HeadingReferential'</I> : Position on the x axis of each of the points along the tail of the animal, for each frame, when changing the referential such that the head of the animal is at the position (0, 0) and the y axis is aligned with the heading.<br/>
+<I>'TailY_HeadingReferential'</I> : Position on the y axis of each of the points along the tail of the animal, for each frame, when changing the referential such that the head of the animal is at the position (0, 0) and the y axis is aligned with the heading.<br/>
+<I>'TailAngle_smoothed'</I>  : Tail angle over time for the bout, with smoothing.<br/>
+<I>'Bend_TimingAbsolute'</I> : List of frames at which the tail angle reached a local maximum or minimum.<br/>
+<I>'Bend_Timing'</I>         : List of frames at which the tail angle reached a local maximum or minimum, with frame 0 being set at the beginning of the bout.<br/>
+<I>'Bend_Amplitude'</I>      : List of amplitudes of the tail angles, for each of the local maximum or minimum reached by the tail angle.<br/>
+
+Here's also an <a href="./exampleAnalysisScript/readBouts.py" style="color:blue" target="_blank">example script</a> used to process the outputs of ZebraZoom.
+
 <a name="troubleshoot"/>
 
 <br/>[Back to table of content](#tableofcontent)<br/>
