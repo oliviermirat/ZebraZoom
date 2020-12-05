@@ -102,7 +102,10 @@ For example, you could type:<br/><br/>
 Warning: you must put the full paths as parameters for this to work (c:\ etc...).<br/><br/>
 Warning 2: depending on the operating system you're using, you may need to replace the "\\"s by "/"s.<br/><br/>
 Using ZebraZoom through the command line can be particularly useful when you want to analyze a lot of videos located in different folders, or if you want to launch ZebraZoom on a server instead of on a desktop computer.<br/><br/>
-If you need to generate a script that will launch ZebraZoom on multiple videos that are all present inside a same folder, using the same configuration file, you can take a look at <a href="https://github.com/oliviermirat/ZebraZoom/blob/master/zebrazoom/generateLaunchScript.sh" target="_blank">this script</a>.
+If you need to generate a script that will launch ZebraZoom on multiple videos that are all present inside a same folder, using the same configuration file, you can take a look at <a href="https://github.com/oliviermirat/ZebraZoom/blob/master/zebrazoom/generateLaunchScript.sh" target="_blank">this script</a>.<br/><br/>
+Finally, it's possible to overwrite the parameters present in the configuration file with the following command:<br/><br/>
+<I>python -m zebrazoom pathToVideo nameOfVideo extensionOfVideo pathToConfigFile nameOfParameter1 newParameter1Value nameOfParameter2 newParameter2Value nameOfParameter3 newParameter3Value</I><br/><br/>
+(it's possible to add as many or as few parameters as needed)<br/><br/>
 
 <br/><br/>
 
