@@ -12,7 +12,6 @@ import numpy as np
 from filterpy.kalman import KalmanFilter
 from filterpy.common import Q_discrete_white_noise
 
-# from calculateCurvature import calculateCurvature
 from detectMovementWithRawVideo import detectMovementWithRawVideo
 from getTailTipManual import getHeadPositionByFileSaved, getTailTipByFileSaved
 
@@ -88,22 +87,6 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
     tailX   = np.zeros((nbFrames, n))
     tailY   = np.zeros((nbFrames, n))
     
-    # fTipX = KalmanFilter (dim_x=2, dim_z=1)
-    # fTipX.x = np.array([[2.],[0.]])
-    # fTipX.F = np.array([[1.,1.],[0.,1.]])
-    # fTipX.H = np.array([[1.,0.]])
-    # fTipX.P = np.array([[1000.,    0.],[   0., 1000.] ])
-    # fTipX.R = np.array([[5.]])
-    # fTipX.Q = Q_discrete_white_noise(dim=2, dt=0.1, var=0.13)
-
-    # fTipY = KalmanFilter (dim_x=2, dim_z=1)
-    # fTipY.x = np.array([[2.],[0.]])
-    # fTipY.F = np.array([[1.,1.],[0.,1.]])
-    # fTipY.H = np.array([[1.,0.]])
-    # fTipY.P = np.array([[1000.,    0.],[   0., 1000.] ])
-    # fTipY.R = np.array([[5.]])
-    # fTipY.Q = Q_discrete_white_noise(dim=2, dt=0.1, var=0.13)
-    
     if hyperparameters["headingCalculationMethod"] == "calculatedWithMedianTailTip":
       tip2 = np.zeros((nbFrames, 2))
       nbTailPoints = len(trackingTail[0]) - 1
@@ -122,18 +105,6 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       
       nbTailPoints = len(trackingTail[0]) - 1
       tip[i]     = np.array([ trackingTail[i][nbTailPoints][0], trackingTail[i][nbTailPoints][1] ])
-      
-      # print("bef:",tip[i])
-      # fTipX.predict()
-      # fTipX.update(np.array([tip[i][0]]))
-      # tip[i][0] = fTipX.x[0]
-      # trackingTail[i][nbTailPoints][0] = fTipX.x[0]
-      
-      # fTipY.predict()
-      # fTipY.update(np.array([tip[i][1]]))
-      # tip[i][1] = fTipY.x[0]
-      # trackingTail[i][nbTailPoints][1] = fTipY.x[0]
-      # print("aft:",tip[i])
       
       head[i]    = np.array([ trackingTail[i][0][0], trackingTail[i][0][1] ])
       
@@ -154,15 +125,6 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       
       tailX[i]   = trackingTail[i,:,0]
       tailY[i]   = trackingTail[i,:,1]
-
-      # if False:
-        # tailForCurv = np.zeros((10, 2))
-        # for j in range(0,10):
-          # tailForCurv[j][0] = tailX[i][j]
-          # tailForCurv[j][1] = tailY[i][j]
-        # curvature = calculateCurvature(tailForCurv)
-        # diff = np.max(np.abs(curvature))
-        # curvatureBef = curvature
     
     if hyperparameters["noBoutsDetection"] == 1:
       auDessus        = np.zeros((nbFrames, 1))
@@ -290,18 +252,15 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       item = {}
       start = int(bouts[i][1])
       end   = int(bouts[i][2])
-      item["AnimalNumber"]  = animalId #int(bouts[i][0])
+      item["AnimalNumber"]  = animalId
       item["BoutStart"]     = start + firstFrame
       item["BoutEnd"]       = end + firstFrame
       item["TailAngle_Raw"] = angle[start:end+1,0].tolist()
       item["HeadX"]         = head[start:end+1,0].tolist()
       item["HeadY"]         = head[start:end+1,1].tolist()
-      # item["Heading_raw"]   = heading[start:end,0]
       item["Heading"]       = heading[start:end+1,0].tolist()
       item["TailX_VideoReferential"] = tailX[start:end+1].tolist()
       item["TailY_VideoReferential"] = tailY[start:end+1].tolist()
-      # item["TailX_HeadingReferential"]
-      # item["TailY_HeadingReferential"]
       data.append(item)
   
   print("Parameters extracted for well",wellNumber)
