@@ -95,12 +95,14 @@ You can also watch the <a href="https://www.youtube.com/playlist?list=PLuWZiRK2H
 
 <br/>[Back to table of content](#tableofcontent)<br/>
 <H2 CLASS="western">Using ZebraZoom through the command line:</H2>
-You can also use ZebraZoom through the command line. To do this, you will have to open Anaconda Prompt or a terminal, navigate to the directory where ZebraZoom is installed (when you type "python -m zebrazoom" in your terminal, you will see a "The data produced by ZebraZoom can be found in the folder: #" message and this will give you an indication of where that directory is). Then, type:<br/><br/>
-<I>python ZebraZoom.py pathToVideo nameOfVideo extensionOfVideo pathToConfigFile</I><br/><br/>
+You can also use ZebraZoom through the command line. To do this, you will have to open Anaconda Prompt or a terminal and type:<br/><br/>
+<I>python -m zebrazoom pathToVideo nameOfVideo extensionOfVideo pathToConfigFile</I><br/><br/>
 For example, you could type:<br/><br/>
-<I>python ZebraZoom.py trackingVideos\ experiment1 avi openZZ\ZebraZoom\zebrazoom\configuration\config.json</I><br/><br/>
-As it might be difficult to navigate to the folder where ZebraZoom is installed and then type long paths as parameters to ZebraZoom, one option can be to download a zip of this repository and then place it in a convenient location on your computer (the negative of this is that you won't be able to easily update the software).<br/><br/>
-Using ZebraZoom through the command line can be particularly useful when you want to analyze a lot of videos located in different folders, or if you want to launch ZebraZoom on a server instead of on a desktop computer.
+<I>python -m zebrazoom c:\Users\mirat\Desktop\trackingVideos\ video1 avi c:\Users\mirat\Desktop\configuration\config.json</I><br/><br/>
+Warning: you must put the full paths as parameters for this to work (c:\ etc...).<br/><br/>
+Warning 2: depending on the operating system you're using, you may need to replace the "\\"s by "/"s.<br/><br/>
+Using ZebraZoom through the command line can be particularly useful when you want to analyze a lot of videos located in different folders, or if you want to launch ZebraZoom on a server instead of on a desktop computer.<br/><br/>
+If you need to generate a script that will launch ZebraZoom on multiple videos that are all present inside a same folder, using the same configuration file, you can take a look at <a href="https://github.com/oliviermirat/ZebraZoom/blob/master/zebrazoom/generateLaunchScript.sh" target="_blank">this script</a>.
 
 <br/><br/>
 
