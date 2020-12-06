@@ -54,7 +54,7 @@ def calculateTailAngle(angle1, angle2):
     output = output - 2*3.14159265;
   return output
 
-def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, wellPositions, background):
+def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, wellPositions, background, tailAngle = 0):
 
   firstFrame = hyperparameters["firstFrame"]
   thresAngleBoutDetect = hyperparameters["thresAngleBoutDetect"]
@@ -112,14 +112,20 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
         heading[i] = calculateAngle(head[i], tail_1[i])
       elif hyperparameters["headingCalculationMethod"] == "calculatedWithMedianTailTip":
         heading[i] = calculateAngle(head[i], medianTip)
-      else: # calculatedWithHead
-        heading[i] = trackingHeading[i]
-        diff1 = distBetweenThetas(heading[i],           calculateAngle(head[i], tail_1[i]))
-        diff2 = distBetweenThetas(heading[i] + math.pi, calculateAngle(head[i], tail_1[i]))
-        if diff2 < diff1:
-          heading[i] = heading[i] + math.pi
+      else: # calculatedWithHead : THIS IS THE DEFAULT
+        if not(math.isnan(trackingHeading[i])):
+          heading[i] = trackingHeading[i]
+          diff1 = distBetweenThetas(heading[i],           calculateAngle(head[i], tail_1[i]))
+          diff2 = distBetweenThetas(heading[i] + math.pi, calculateAngle(head[i], tail_1[i]))
+          if diff2 < diff1:
+            heading[i] = heading[i] + math.pi
+        else:
+          heading[i] = 0
       
-      angle[i] = calculateTailAngle(calculateAngle(head[i], tip[i]), heading[i])
+      if type(tailAngle) == int:
+        angle[i] = calculateTailAngle(calculateAngle(head[i], tip[i]), heading[i])
+      else:
+        angle[i] = tailAngle[i]
       
       heading[i] = (heading[i] + math.pi) % (2*math.pi)
       
@@ -256,11 +262,15 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       item["BoutStart"]     = start + firstFrame
       item["BoutEnd"]       = end + firstFrame
       item["TailAngle_Raw"] = angle[start:end+1,0].tolist()
-      item["HeadX"]         = head[start:end+1,0].tolist()
-      item["HeadY"]         = head[start:end+1,1].tolist()
-      item["Heading"]       = heading[start:end+1,0].tolist()
-      item["TailX_VideoReferential"] = tailX[start:end+1].tolist()
-      item["TailY_VideoReferential"] = tailY[start:end+1].tolist()
+      if np.isnan(head[start:end+1,0]).any():
+        item["HeadX"] = [0]
+        item["HeadY"] = [0]
+      else:
+        item["HeadX"]         = head[start:end+1,0].tolist()
+        item["HeadY"]         = head[start:end+1,1].tolist()
+        item["Heading"]       = heading[start:end+1,0].tolist()
+        item["TailX_VideoReferential"] = tailX[start:end+1].tolist()
+        item["TailY_VideoReferential"] = tailY[start:end+1].tolist()
       data.append(item)
   
   print("Parameters extracted for well",wellNumber)

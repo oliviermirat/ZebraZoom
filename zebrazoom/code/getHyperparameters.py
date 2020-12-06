@@ -14,24 +14,30 @@ def getConfig(config, variableName, videoPath):
     if variableName in configDefault:
       return configDefault[variableName]
     else:
-      cap = cv2.VideoCapture(videoPath)
-      if (cap.isOpened()== False): 
+      cap = 0
+      if len(videoPath):
+        cap = cv2.VideoCapture(videoPath)
+      if (len(videoPath) == 0) or (cap.isOpened() == False): 
         print("Error opening video stream or file in getConfig")
-        return 0
-      if variableName == "firstFrame":
-        return 1
-      elif variableName == "lastFrame":
-        lastFrame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) - 2
-        return lastFrame
-      elif variableName == "videoWidth":
-        frame_width  = int(cap.get(3))
-        return frame_width
-      elif variableName == "videoHeight":
-        frame_height = int(cap.get(4))
-        return frame_height
+        if variableName == "firstFrame":
+          return 1
+        else:
+          return 0
       else:
-        print("You need to put the parameter",variableName,"in your configuration file")
-        return 0
+        if variableName == "firstFrame":
+          return 1
+        elif variableName == "lastFrame":
+          lastFrame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) - 2
+          return lastFrame
+        elif variableName == "videoWidth":
+          frame_width  = int(cap.get(3))
+          return frame_width
+        elif variableName == "videoHeight":
+          frame_height = int(cap.get(4))
+          return frame_height
+        else:
+          print("You need to put the parameter",variableName,"in your configuration file")
+          return 0
 
 def getHyperparameters(configFile, videoName, videoPath, argv):
 
