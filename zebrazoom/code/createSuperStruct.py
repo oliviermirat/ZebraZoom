@@ -8,7 +8,7 @@ import numpy as np
 from scipy.signal import find_peaks
 import pandas as pd
 import math
-import popUpAlgoFollow
+import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 
 def IsMinOrMax(maxpeaks, minpeaks, val ):
   is_minOrMax = 0
@@ -173,9 +173,11 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters):
   videoDataResults['wellPositions'] = wellPositions
   videoDataResults['firstFrame']    = hyperparameters["firstFrame"]
   
-  path = hyperparameters["outputFolder"] + hyperparameters["videoName"] + '/results_' + hyperparameters["videoName"]
+  path = os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'results_' + hyperparameters["videoName"] + '.txt')
   
-  with open(path + '.txt', 'w') as outfile:
+  print("createSuperStruct:", path)
+  
+  with open(path, 'w') as outfile:
     json.dump(videoDataResults, outfile)
     
   if (hyperparameters["freqAlgoPosFollow"] != 0):

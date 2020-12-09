@@ -1,26 +1,26 @@
 import h5py
 import numpy as np
 import cv2
-import popUpAlgoFollow
+from zebrazoom.code.popUpAlgoFollow import prepend
 import math
 import os
 
-from getImages import getImages
-from headTrackingHeadingCalculation import headTrackingHeadingCalculation
-from debugTracking import debugTracking
-from tailTracking import tailTracking
-from blackFramesDetection import getThresForBlackFrame, savingBlackFrames
-from getTailTipManual import getHeadPositionByFileSaved, findTailTipByUserInput, getTailTipByFileSaved, findHeadPositionByUserInput
+from zebrazoom.code.trackingFolder.getImages import getImages
+from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.headTrackingHeadingCalculation import headTrackingHeadingCalculation
+from zebrazoom.code.trackingFolder.debugTracking import debugTracking
+from zebrazoom.code.trackingFolder.tailTracking import tailTracking
+from zebrazoom.code.trackingFolder.blackFramesDetection import getThresForBlackFrame, savingBlackFrames
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import getHeadPositionByFileSaved, findTailTipByUserInput, getTailTipByFileSaved, findHeadPositionByUserInput
 
-from headEmbededFrame import headEmbededFrame
-from headEmbededFrameBackExtract import headEmbededFrameBackExtract
+from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
+from zebrazoom.code.getImage.headEmbededFrameBackExtract import headEmbededFrameBackExtract
 
-from adjustHyperparameters import initializeAdjustHyperparametersWindows, adjustHyperparameters, getHeadEmbededTrackingParamsForHyperParamAdjusts, getFreelySwimTrackingParamsForHyperParamAdjusts
-from headEmbededTailTracking import adjustHeadEmbededHyperparameters
+from zebrazoom.code.adjustHyperparameters import initializeAdjustHyperparametersWindows, adjustHyperparameters, getHeadEmbededTrackingParamsForHyperParamAdjusts, getFreelySwimTrackingParamsForHyperParamAdjusts
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.headEmbededTailTracking import adjustHeadEmbededHyperparameters
 
-from headEmbededTailTracking import headEmbededTailTrackFindMaxDepth
-from headEmbededTailTrackingTeresaNicolson import headEmbededTailTrackFindMaxDepthTeresaNicolson, headEmbededTailTrackingTeresaNicolson
-from centerOfMassTailTracking import centerOfMassTailTrackFindMaxDepth
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.headEmbededTailTracking import headEmbededTailTrackFindMaxDepth
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.headEmbededTailTrackingTeresaNicolson import headEmbededTailTrackFindMaxDepthTeresaNicolson, headEmbededTailTrackingTeresaNicolson
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.centerOfMassTailTracking import centerOfMassTailTrackFindMaxDepth
 
 def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, videoName):
 
@@ -99,7 +99,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     if (hyperparameters["freqAlgoPosFollow"] != 0) and (i % hyperparameters["freqAlgoPosFollow"] == 0):
       print("Tracking: wellNumber:",wellNumber," ; frame:",i)
       if hyperparameters["popUpAlgoFollow"]:
-        popUpAlgoFollow.prepend("Tracking: wellNumber:" + str(wellNumber) + " ; frame:" + str(i))
+        prepend("Tracking: wellNumber:" + str(wellNumber) + " ; frame:" + str(i))
     if hyperparameters["debugTracking"]:
       print("frame:",i)
     # Get images for frame i
@@ -132,6 +132,6 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
   
   print("Tracking done for well", wellNumber)
   if hyperparameters["popUpAlgoFollow"]:
-    popUpAlgoFollow.prepend("Tracking done for well "+ str(wellNumber))
+    prepend("Tracking done for well "+ str(wellNumber))
   
   return [trackingHeadTailAllAnimals, trackingHeadingAllAnimals, headPositionFirstFrame, tailTipFirstFrame]

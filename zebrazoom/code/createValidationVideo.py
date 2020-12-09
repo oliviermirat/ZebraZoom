@@ -2,8 +2,9 @@ import numpy as np
 import cv2
 import math
 import json
-import popUpAlgoFollow
+import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 import random
+import os
 
 def createValidationVideo(videoPath, superStruct, hyperparameters):
 
@@ -31,7 +32,6 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
   for i in range(0, len(superStruct["wellPoissMouv"])):
     colorModifTab = [{"red": random.randrange(255), "green": random.randrange(255), "blue": random.randrange(255)} for i in range(1, hyperparameters["nbAnimalsPerWell"])]
     colorModifTab.insert(0, {"red": 0, "green": 0, "blue": 0})
-    # colorModifTab.insert(0, {"red": 0, "green": 0, "blue": 0})
     for j in range(0, len(superStruct["wellPoissMouv"][i])):
       for k in range(0, len(superStruct["wellPoissMouv"][i][j])):
       
@@ -127,7 +127,7 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
               infoFrame[BoutStart + l] = t2
 
   # Going through the video and printing stuff on it.
-  outputName = hyperparameters["outputFolder"] + hyperparameters["videoName"] + '/' + hyperparameters["videoName"] + '.avi'
+  outputName = os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), hyperparameters["videoName"] + '.avi')
   out = cv2.VideoWriter(outputName,cv2.VideoWriter_fourcc('M','J','P','G'), 10, (frame_width,frame_height))
 
   cap.set(1, firstFrame)
@@ -135,7 +135,6 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
   for l in range(firstFrame, lastFrame):
   
     if l < nbFrames:
-      # cap.set(1, l)
       ret, frame = cap.read()
       
       for i in range(0, len(infoFrame[l])):
@@ -157,26 +156,10 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
           numMouv = infoFrame[l][i]["numMouv"]
           numWell = infoFrame[l][i]["numWell"]
           cv2.putText(frame,str(numMouv),(15+infoWells[numWell][0],25+infoWells[numWell][1]),font,1,(255,255,255))
-          
-          # CvFont font;
-          # cvInitFont( &font, CV_FONT_HERSHEY_SIMPLEX,0.7,0.7,0,2,8);
-          # std::ostringstream out;
-          # out << infoFrame[l][i]["numMouv"];
-          # string str = out.str();
-          # size_t size = str.size() + 1;
-          # char * buffer = new char[ size ];
-          # strncpy( buffer, str.c_str(), size );
-          # int numWell = (int) infoFrame[l][i]["numWell"];
-          # cvRectangle(dst,cvPoint((int)infoWells[numWell][0],(int)infoWells[numWell][1]),cvPoint(15 + (int)infoWells[numWell][0], 25 + (int)infoWells[numWell][1]),CV_RGB(0,0,255),-1);
-          # cvPutText(dst,buffer,cvPoint((int)infoWells[numWell][0],20+(int)infoWells[numWell][1]),&font,CV_RGB(255,255,255));
 
         cv2.circle(frame, (int(x),int(y)), size, (red,green,blue), -1)
         
-      # cv2.imshow('Frame', frame)
-      # cv2.waitKey(10)
       out.write(frame)
-      
-      # l = l + 1
   
   out.release()
   

@@ -1,29 +1,14 @@
+import sys
 import os
 dir_path = os.path.dirname(os.path.realpath(__file__))
-os.chdir(dir_path)
 print("The data produced by ZebraZoom can be found in the folder: " + os.path.join(dir_path,'ZZoutput'))
 
-import sys
-sys.path.insert(1, './')
-sys.path.insert(1, './code/')
-sys.path.insert(1, './code/GUI/')
-sys.path.insert(1, './code/getImage/')
-sys.path.insert(1, './code/trackingFolder/')
-sys.path.insert(1, './code/trackingFolder/headTrackingHeadingCalculationFolder/')
-sys.path.insert(1, './code/trackingFolder/tailTrackingFunctionsFolder/')
-sys.path.insert(1, './code/trackingFolder/tailTrackingFunctionsFolder/tailTrackingExtremityDetectFolder/')
-sys.path.insert(1, './code/trackingFolder/tailTrackingFunctionsFolder/tailTrackingExtremityDetectFolder/findTailExtremeteFolder/')
-sys.path.insert(1, './dataAnalysis/')
-sys.path.insert(1, './dataAnalysis/dataanalysis/')
-sys.path.insert(1, './dataAnalysis/datasetcreation/')
-
-
-from vars import getGlobalVariables
+from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
 if len(sys.argv) == 1:
 
-  from GUIAllPy import SampleApp
+  from zebrazoom.GUIAllPy import SampleApp
   if __name__ == "__main__":
     app = SampleApp()
     app.mainloop()
@@ -40,7 +25,7 @@ else:
       configFile  = sys.argv[5]
       argv        = sys.argv
       argv.pop(0)
-      from getTailExtremityFirstFrame import getTailExtremityFirstFrame
+      from zebrazoom.getTailExtremityFirstFrame import getTailExtremityFirstFrame
       if __name__ == '__main__':
         __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
         getTailExtremityFirstFrame(pathToVideo, videoName, videoExt, configFile, argv)
@@ -53,7 +38,7 @@ else:
       configFile  = sys.argv[5]
       argv        = sys.argv
       argv.pop(0)
-      from recreateSuperStruct import recreateSuperStruct
+      from zebrazoom.recreateSuperStruct import recreateSuperStruct
       if __name__ == '__main__':
         __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
         recreateSuperStruct(pathToVideo, videoName, videoExt, configFile, argv)
@@ -65,7 +50,7 @@ else:
       videoExt    = sys.argv[3]
       configFile  = sys.argv[4]
       argv        = sys.argv
-      from mainZZ import mainZZ
+      from zebrazoom.mainZZ import mainZZ
       if __name__ == '__main__':
         __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
         mainZZ(pathToVideo, videoName, videoExt, configFile, argv)

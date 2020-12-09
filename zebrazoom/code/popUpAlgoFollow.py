@@ -5,7 +5,7 @@ import cv2
 import cvui
 import numpy as np
 
-from vars import getGlobalVariables
+from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
 def launchStuff():

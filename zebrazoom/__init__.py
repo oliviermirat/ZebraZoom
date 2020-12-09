@@ -1,1 +1,1 @@
-from extractZZParametersFromTailAngle import extractZZParametersFromTailAngle
+from zebrazoom.extractZZParametersFromTailAngle import extractZZParametersFromTailAngle

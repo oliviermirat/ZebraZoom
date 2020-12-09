@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import tkinter as tk
 from tkinter import font  as tkfont
@@ -6,14 +7,14 @@ from tkinter import ttk
 from tkinter import *
 import json
 import cv2
-from getCoordinates import findWellLeft, findWellRight, findHeadCenter, findBodyExtremity
+from zebrazoom.code.GUI.getCoordinates import findWellLeft, findWellRight, findHeadCenter, findBodyExtremity
 import math
-from findWells import findWells
-from getHyperparameters import getHyperparametersSimple
-from getBackground import getBackground
-from getForegroundImage import getForegroundImage
+from zebrazoom.code.findWells import findWells
+from zebrazoom.code.getHyperparameters import getHyperparametersSimple
+from zebrazoom.code.getBackground import getBackground
+from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
 import cvui
-from vars import getGlobalVariables
+from zebrazoom.code.vars import getGlobalVariables
 import json
 import os
 globalVariables = getGlobalVariables()
@@ -21,10 +22,16 @@ globalVariables = getGlobalVariables()
 def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
 
   if int(reloadConfigFile):
+  
+    cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+    pathconf = Path(cur_dir_path)
+    pathconf = pathconf.parent.parent
+    pathconf = os.path.join(pathconf, 'configuration/')
+    
     if globalVariables["mac"]:
-      configFileName =  filedialog.askopenfilename(initialdir = "./configuration/",title = "Select file")
+      configFileName =  filedialog.askopenfilename(initialdir = pathconf, title = "Select file")
     else:
-      configFileName =  filedialog.askopenfilename(initialdir = "./configuration/",title = "Select file",filetypes = (("json files","*.json"),("all files","*.*")))
+      configFileName =  filedialog.askopenfilename(initialdir = pathconf, title = "Select file", filetypes = (("json files","*.json"),("all files","*.*")))
     with open(configFileName) as f:
       self.configFile = json.load(f)
 
@@ -322,22 +329,25 @@ def identifyMultipleHead(self, controller, nbanimals):
   wellPositions = findWells(self.videoToCreateConfigFileFor, hyperparameters)
   background    = getBackground(self.videoToCreateConfigFileFor, hyperparameters)
   
+  cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+  cur_dir_path = Path(cur_dir_path)
+  
   tab = [1]
-  img = cv2.imread('./code/GUI/no1.png')
+  img = cv2.imread(os.path.join(cur_dir_path, 'no1.png'))
   img = cv2.resize(img,(int(horizontal*0.95),int(vertical*0.8)))
   buttonclicked = False
   while not(buttonclicked):
     buttonclicked = cvui.button(img, 10, 10, "Ok, I understand!")
     cvui.imshow(WINDOW_NAME, img)
     cv2.waitKey(20)
-  img = cv2.imread('./code/GUI/no2.png')
+  img = cv2.imread(os.path.join(cur_dir_path, 'no2.png'))
   img = cv2.resize(img,(int(horizontal*0.95),int(vertical*0.8)))
   buttonclicked = False
   while not(buttonclicked):
     buttonclicked = cvui.button(img, 10, 10, "Ok, I understand!")
     cvui.imshow(WINDOW_NAME, img)
     cv2.waitKey(20)
-  img = cv2.imread('./code/GUI/ok1.png')
+  img = cv2.imread(os.path.join(cur_dir_path, 'ok1.png'))
   img = cv2.resize(img,(int(horizontal*0.95),int(vertical*0.8)))
   buttonclicked = False
   while not(buttonclicked):
@@ -499,7 +509,13 @@ def goToAdvanceSettings(self, controller, yes, no):
     self.calculateBackgroundFreelySwim(controller, 0)
 
 def finishConfig(self, controller, configFileNameToSave):
-  with open('./configuration/' + configFileNameToSave + '.json', 'w') as outfile:
+
+  cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+  cur_dir_path = Path(cur_dir_path)
+  cur_dir_path = cur_dir_path.parent.parent
+  reference = os.path.join(cur_dir_path, os.path.join('configuration', configFileNameToSave + '.json'))
+
+  with open(reference, 'w') as outfile:
     json.dump(self.configFile, outfile)
   self.configFile = {}
   self.videoToCreateConfigFileFor = ''

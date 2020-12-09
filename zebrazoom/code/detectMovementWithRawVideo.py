@@ -1,9 +1,9 @@
 import numpy as np
 import cv2
 import math
-from getImageSequential import getImageSequential
-from getImage import getImage
-from adjustHyperparameters import initializeAdjustHyperparametersWindows, adjustHyperparameters, getDetectMouvRawVideosParamsForHyperParamAdjusts
+from zebrazoom.code.getImage.getImageSequential import getImageSequential
+from zebrazoom.code.getImage.getImage import getImage
+from zebrazoom.code.adjustHyperparameters import initializeAdjustHyperparametersWindows, adjustHyperparameters, getDetectMouvRawVideosParamsForHyperParamAdjusts
 
 def putTabIntoBoundaries(img, tab):
   if tab[0] < 0:

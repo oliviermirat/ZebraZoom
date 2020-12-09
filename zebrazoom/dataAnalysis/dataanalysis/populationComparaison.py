@@ -6,11 +6,13 @@ import pickle
 
 def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder):
 
-  if os.path.exists(outputFolder+nameOfFile):
-    shutil.rmtree(outputFolder+nameOfFile)
-  os.mkdir(outputFolder+nameOfFile)
+  outputFolderResult = os.path.join(outputFolder, nameOfFile)
 
-  infile = open(resFolder + nameOfFile,'rb')
+  if os.path.exists(outputFolderResult):
+    shutil.rmtree(outputFolderResult)
+  os.mkdir(outputFolderResult)
+
+  infile = open(os.path.join(resFolder, nameOfFile),'rb')
   dfParam = pickle.load(infile)
   infile.close()
   
@@ -36,4 +38,4 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
       tabAx[int(idx/nbColumns), idx%nbColumns].set_title(parameter)
       tabAx[int(idx/nbColumns), idx%nbColumns].boxplot(concatenatedValues)
       tabAx[int(idx/nbColumns), idx%nbColumns].set_xticklabels(labels)
-  plt.savefig(outputFolder+nameOfFile+'/globalParametersInsideCategories.png')
+  plt.savefig(os.path.join(outputFolderResult, 'globalParametersInsideCategories.png'))

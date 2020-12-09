@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-from getMidline import getMidline
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.getMidline import getMidline
 import math
 
 def checkIfMidlineIsInBlob(headX, headY, pointAlongTheTail, bodyContour, dst, size, distance2, debugAdv, hyperparameters):

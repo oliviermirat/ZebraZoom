@@ -3,7 +3,7 @@ from tkinter import font  as tkfont
 from tkinter import filedialog
 from tkinter import ttk
 from tkinter import *
-from vars import getGlobalVariables
+from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
 

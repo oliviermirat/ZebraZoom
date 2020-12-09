@@ -1,23 +1,22 @@
-import sys
+from zebrazoom.code.findWells import findWells
+from zebrazoom.code.getBackground import getBackground
+from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
+from zebrazoom.code.trackingFolder.tracking import tracking
+from zebrazoom.code.extractParameters import extractParameters
+from zebrazoom.code.createSuperStruct import createSuperStruct
+from zebrazoom.code.createValidationVideo import createValidationVideo
+from zebrazoom.code.getHyperparameters import getHyperparameters
+from zebrazoom.code.generateAllTimeTailAngleGraph import generateAllTimeTailAngleGraph
+from zebrazoom.code.perBoutOutput import perBoutOutput
+import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 
-from findWells import findWells
-from getBackground import getBackground
-from getForegroundImage import getForegroundImage
-from tracking import tracking
-from extractParameters import extractParameters
-from createSuperStruct import createSuperStruct
-from createValidationVideo import createValidationVideo
-from getHyperparameters import getHyperparameters
-from generateAllTimeTailAngleGraph import generateAllTimeTailAngleGraph
-from perBoutOutput import perBoutOutput
-import popUpAlgoFollow
-  
+import sys
 import pickle
 import os
 import shutil
 import time
 
-from vars import getGlobalVariables
+from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 import multiprocessing as mp
 if globalVariables["mac"]:
@@ -66,27 +65,28 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
   previouslyAcquiredTrackingDataForDebug = []
 
   # Getting hyperparameters
-  hyperparameters = getHyperparameters(configFile, videoNameWithExt, pathToVideo + videoNameWithExt, argv)
+  hyperparameters = getHyperparameters(configFile, videoNameWithExt, os.path.join(pathToVideo, videoNameWithExt), argv)
+  
+  outputFolderVideo = os.path.join(hyperparameters["outputFolder"], videoName)
   
   # Launching GUI algoFollower if necessary
   if hyperparameters["popUpAlgoFollow"]:
-    # if hyperparameters["popUpAlgoFollow"] == 2:
     popUpAlgoFollow.initialise()
     popUpAlgoFollow.prepend("starting ZebraZoom analysis on " + videoName)
 
   if hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justExtractParamFromPreviousTrackData":
     # Reloading previously extracted tracking data if debugging option selected
-    outfile = open(hyperparameters["outputFolder"] + videoName + '/intermediaryTracking.txt','rb')
+    outfile = open(os.path.join(outputFolderVideo, 'intermediaryTracking.txt'),'rb')
     previouslyAcquiredTrackingDataForDebug = pickle.load(outfile)
     outfile.close()
   else:
     # Creating output folder
     if not(hyperparameters["reloadWellPositions"]) and not(hyperparameters["reloadBackground"]):
-      if os.path.exists(hyperparameters["outputFolder"] + videoName):
-        shutil.rmtree(hyperparameters["outputFolder"] + videoName)
+      if os.path.exists(outputFolderVideo):
+        shutil.rmtree(outputFolderVideo)
       while True:
         try:
-          os.mkdir(hyperparameters["outputFolder"] + videoName)
+          os.mkdir(outputFolderVideo)
           break
         except OSError as e:
           print("waiting inside except")
@@ -97,19 +97,20 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     
   # Saving the configuration file used
   if type(configFile) == str:
-    shutil.copyfile(configFile, hyperparameters["outputFolder"] + videoName + '/configUsed.txt')
+    print(os.path.join(outputFolderVideo, 'configUsed.txt'), outputFolderVideo)
+    shutil.copyfile(configFile, os.path.join(outputFolderVideo, 'configUsed.txt'))
 
   # Getting well positions
   if hyperparameters["headEmbeded"]:
-    wellPositions = [{"topLeftX":0, "topLeftY":0, "lengthX":hyperparameters["videoWidth"], "lengthY":hyperparameters["videoHeight"]}]
+    wellPositions = [{"topLeftX":0, "topLeftY":0, "lengthX": hyperparameters["videoWidth"], "lengthY": hyperparameters["videoHeight"]}]
   else:
     print("start find wells")
     if hyperparameters["reloadWellPositions"]:
-      outfile = open(hyperparameters["outputFolder"] + videoName + '/intermediaryWellPosition.txt','rb')
+      outfile = open(os.path.join(outputFolderVideo, 'intermediaryWellPosition.txt'),'rb')
       wellPositions = pickle.load(outfile)
     else:
-      outfile = open(hyperparameters["outputFolder"] + videoName + '/intermediaryWellPosition.txt','wb')
-      wellPositions = findWells(pathToVideo + videoNameWithExt, hyperparameters)
+      outfile = open(os.path.join(outputFolderVideo, 'intermediaryWellPosition.txt'),'wb')
+      wellPositions = findWells(os.path.join(pathToVideo, videoNameWithExt), hyperparameters)
       pickle.dump(wellPositions,outfile)
     outfile.close()
     
@@ -119,12 +120,12 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
   else:
     print("start get background")
     if hyperparameters["reloadBackground"]:
-      outfile = open(hyperparameters["outputFolder"] + videoName + '/intermediaryBackground.txt','rb')
+      outfile = open(os.path.join(outputFolderVideo, 'intermediaryBackground.txt'),'rb')
       background = pickle.load(outfile)
       print("Background Reloaded")
     else:
-      outfile = open(hyperparameters["outputFolder"] + videoName + '/intermediaryBackground.txt','wb')
-      background = getBackground(pathToVideo + videoNameWithExt, hyperparameters)
+      outfile = open(os.path.join(outputFolderVideo, 'intermediaryBackground.txt'),'wb')
+      background = getBackground(os.path.join(pathToVideo, videoNameWithExt), hyperparameters)
       pickle.dump(background,outfile)
     outfile.close()
   if hyperparameters["exitAfterBackgroundExtraction"]:
@@ -136,21 +137,21 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
       # for all wells, in parallel
       processes = []
       for wellNumber in range(0,hyperparameters["nbWells"]):
-        p = Process(target=getParametersForWell, args=(pathToVideo + videoNameWithExt, background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName))
+        p = Process(target=getParametersForWell, args=(os.path.join(pathToVideo, videoNameWithExt), background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName))
         p.start()
         processes.append(p)
     else:
       # for just one well
       processes = [1]
-      getParametersForWell(pathToVideo + videoNameWithExt, background, hyperparameters["onlyTrackThisOneWell"], wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName)
+      getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, hyperparameters["onlyTrackThisOneWell"], wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName)
   else:
     if hyperparameters["onlyTrackThisOneWell"] == -1:
       processes = [1 for i in range(0, hyperparameters["nbWells"])]
       for wellNumber in range(0,hyperparameters["nbWells"]):
-        getParametersForWell(pathToVideo + videoNameWithExt, background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName)
+        getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName)
     else:
       processes = [1]
-      getParametersForWell(pathToVideo + videoNameWithExt, background, hyperparameters["onlyTrackThisOneWell"], wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName)
+      getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, hyperparameters["onlyTrackThisOneWell"], wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName)
   
   # Sorting wells after the end of the parallelized calls end
   dataPerWellUnsorted = [output.get() for p in processes]
@@ -167,7 +168,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
 
   if (hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "saveTrackDataAndExtractParam") or (hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justSaveTrackData"):
     # saving tracking results for future uses
-    outfile = open(hyperparameters["outputFolder"] + videoName + '/intermediaryTracking.txt','wb')
+    outfile = open(os.path.join(outputFolderVideo, 'intermediaryTracking.txt'),'wb')
     pickle.dump(trackingDataPerWell,outfile)
     outfile.close()
     
@@ -176,18 +177,18 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     superStruct = createSuperStruct(paramDataPerWell, wellPositions, hyperparameters)
   
   if hyperparameters["generateAllTimeTailAngleGraph"]:
-    generateAllTimeTailAngleGraph(hyperparameters["outputFolder"] + videoName, superStruct, hyperparameters["generateAllTimeTailAngleGraphLineWidth"])
+    generateAllTimeTailAngleGraph(outputFolderVideo, superStruct, hyperparameters["generateAllTimeTailAngleGraphLineWidth"])
     
   if hyperparameters["createValidationVideo"]:
     # Creating validation video
-    infoFrame = createValidationVideo(pathToVideo + videoNameWithExt, superStruct, hyperparameters)
+    infoFrame = createValidationVideo(os.path.join(pathToVideo, videoNameWithExt), superStruct, hyperparameters)
   
   if hyperparameters["perBoutOutput"]:
     # Creating additional validation output per bout
     perBoutOutput(superStruct, hyperparameters, videoName)
 
   if hyperparameters["popUpAlgoFollow"]:
-    popUpAlgoFollow.prepend("ZebraZoom Analysis finished for "+ videoName)
+    popUpAlgoFollow.prepend("ZebraZoom Analysis finished for " + videoName)
     # popUpAlgoFollow.prepend("")
     # if hyperparameters["closePopUpWindowAtTheEnd"]:
       # popUpAlgoFollow.prepend("ZebraZoom Analysis all finished")

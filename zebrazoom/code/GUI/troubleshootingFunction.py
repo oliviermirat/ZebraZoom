@@ -9,7 +9,7 @@ import json
 import cv2
 import math
 import cvui
-from vars import getGlobalVariables
+from zebrazoom.code.vars import getGlobalVariables
 import json
 import os
 globalVariables = getGlobalVariables()

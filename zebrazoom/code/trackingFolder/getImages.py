@@ -1,12 +1,12 @@
 import cv2
 import numpy as np
 
-from getForegroundImageSequential import getForegroundImageSequential
-from getForegroundImage import getForegroundImage
-from headEmbededFrame import headEmbededFrame
-from headEmbededFrameSequential import headEmbededFrameSequential
-from headEmbededFrameSequentialBackExtract import headEmbededFrameSequentialBackExtract
-from headEmbededFrameBackExtract import headEmbededFrameBackExtract
+from zebrazoom.code.getImage.getForegroundImageSequential import getForegroundImageSequential
+from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
+from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
+from zebrazoom.code.getImage.headEmbededFrameSequential import headEmbededFrameSequential
+from zebrazoom.code.getImage.headEmbededFrameSequentialBackExtract import headEmbededFrameSequentialBackExtract
+from zebrazoom.code.getImage.headEmbededFrameBackExtract import headEmbededFrameBackExtract
 
 def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPositions):
   if hyperparameters["headEmbeded"]:

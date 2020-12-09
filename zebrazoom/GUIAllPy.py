@@ -13,24 +13,24 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import math
 import scipy.io as sio
-from readValidationVideo import readValidationVideo
+from zebrazoom.code.readValidationVideo import readValidationVideo
 
-from mainZZ import mainZZ
-from getTailExtremityFirstFrame import getTailExtremityFirstFrame
-import popUpAlgoFollow
+from zebrazoom.mainZZ import mainZZ
+from zebrazoom.getTailExtremityFirstFrame import getTailExtremityFirstFrame
+import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 
-import configFilePrepareFunctions
-import GUI_InitialFunctions
-import configFileZebrafishFunctions
-import adjustParameterInsideAlgoFunctions
-import dataAnalysisGUIFunctions
-import troubleshootingFunction
-from GUI_InitialClasses import FullScreenApp, StartPage, SeveralVideos, VideoToAnalyze, FolderToAnalyze, TailExtremityHE, ConfigFilePromp, Patience, ZZoutro, ResultsVisualization, ViewParameters
-from configFilePrepare import ChooseVideoToCreateConfigFileFor, ChooseGeneralExperiment, WellOrganisation, CircularWells, NumberOfAnimals, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings
-from configFileZebrafish import HeadEmbeded
-from adjustParameterInsideAlgo import AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim
-from dataAnalysisGUI import CreateExperimentOrganizationExcel, ChooseExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderPopulation, AnalysisOutputFolderClustering
-from troubleshooting import ChooseVideoToTroubleshootSplitVideo, VideoToTroubleshootSplitVideo
+import zebrazoom.code.GUI.configFilePrepareFunctions as configFilePrepareFunctions
+import zebrazoom.code.GUI.GUI_InitialFunctions as GUI_InitialFunctions
+import zebrazoom.code.GUI.configFileZebrafishFunctions as configFileZebrafishFunctions
+import zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions as adjustParameterInsideAlgoFunctions
+import zebrazoom.code.GUI.dataAnalysisGUIFunctions as dataAnalysisGUIFunctions
+import zebrazoom.code.GUI.troubleshootingFunction as troubleshootingFunction
+from zebrazoom.code.GUI.GUI_InitialClasses import FullScreenApp, StartPage, SeveralVideos, VideoToAnalyze, FolderToAnalyze, TailExtremityHE, ConfigFilePromp, Patience, ZZoutro, ResultsVisualization, ViewParameters
+from zebrazoom.code.GUI.configFilePrepare import ChooseVideoToCreateConfigFileFor, ChooseGeneralExperiment, WellOrganisation, CircularWells, NumberOfAnimals, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings
+from zebrazoom.code.GUI.configFileZebrafish import HeadEmbeded
+from zebrazoom.code.GUI.adjustParameterInsideAlgo import AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim
+from zebrazoom.code.GUI.dataAnalysisGUI import CreateExperimentOrganizationExcel, ChooseExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderPopulation, AnalysisOutputFolderClustering
+from zebrazoom.code.GUI.troubleshooting import ChooseVideoToTroubleshootSplitVideo, VideoToTroubleshootSplitVideo
 
 
 LARGE_FONT= ("Verdana", 12)

@@ -8,10 +8,6 @@ from tkinter import *
 def headEmbededGUI(self, controller, blackBack, whiteBack, noBoutDetect, boutDetection, tweakTrackingParamsYes, 
 tweakTrackingParamsNo):
   
-  # self.configFile["invertBlackWhiteOnImages"] = int(whiteBack)
-  # self.configFile["headEmbededAutoSet_ExtendedDescentSearchOption"] = int(optionExtendedDescentSearchOption)
-  # self.configFile["headEmbededAutoSet_BackgroundExtractionOption" ] = int(optionBackgroundExtractionOption) * 7
-  
   self.configFile["extractBackWhiteBackground"] = int(whiteBack)
   
   self.configFile["automaticallySetSomeOfTheHeadEmbededHyperparameters"] = 1
@@ -35,7 +31,6 @@ tweakTrackingParamsNo):
     self.configFile["noBoutsDetection"] = 0
     self.configFile["extractAdvanceZebraParameters"] = 1
     self.calculateBackground(controller, 0)
-    # controller.show_frame("AdujstParamInsideAlgo")
   else:
     self.configFile["noBoutsDetection"] = 1
     controller.show_frame("FinishConfig")

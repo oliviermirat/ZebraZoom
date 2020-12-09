@@ -28,13 +28,6 @@ def getTailAngleRecalculated2(curbout, nbFramesTakenIntoAccount, numberOfBendsIn
     else:
       for j in range(tailangles_arr.shape[1]):
         tailangles_arr[i,j] = 0
-        
-  if False:
-    import matplotlib.pyplot as plt
-    aaa = np.transpose(tailangles_arr)
-    for seg in aaa:
-      plt.plot(seg)
-    plt.show()
     
   tailangles_arr = tailangles_arr.flatten()
   

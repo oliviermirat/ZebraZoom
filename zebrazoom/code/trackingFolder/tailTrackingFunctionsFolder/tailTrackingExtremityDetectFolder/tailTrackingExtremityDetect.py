@@ -4,19 +4,18 @@ import cv2
 import math
 import json
 import sys
-import matplotlib.pyplot as plt
 from scipy import interpolate
-from getForegroundImage import getForegroundImage
-from headEmbededFrame import headEmbededFrame
+from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
+from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from scipy.interpolate import UnivariateSpline
 from numpy import linspace
 
-from getMidline import getMidline
-from findTailExtremete import findTailExtremete
-from findTheTwoSides import findTheTwoSides
-from findBodyContour import findBodyContour
-from Rotate import Rotate
-from checkIfMidlineIsInBlob import checkIfMidlineIsInBlob
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.getMidline import getMidline
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.findTailExtremete import findTailExtremete
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTheTwoSides import findTheTwoSides
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findBodyContour import findBodyContour
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.Rotate import Rotate
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.checkIfMidlineIsInBlob import checkIfMidlineIsInBlob
 
 # from kalmanFilter import kalman_xy
 # from trackingFunctions import calculateAngle

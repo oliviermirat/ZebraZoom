@@ -1,18 +1,19 @@
+import os
 import scipy.io
 import pandas as pd
 import json
 import numpy as np
-from getDynamicParameters import getDynamicParameters
-from getTailAngles import getTailAngles
-from getInstaSpeed import getInstaSpeed
-from getInstaHeadingDiff import getInstaHeadingDiff
-from getInstaHorizontalDisplacement import getInstaHorizontalDisplacement
-from getGlobalParameters import getGlobalParameters
-from getDeltaHead import getDeltaHead
-from getTailLength  import getTailLength
-from getTailLength2 import getTailLength2
-from getTailAngleRecalculated import getTailAngleRecalculated
-from getTailAngleRecalculated2 import getTailAngleRecalculated2
+from zebrazoom.dataAnalysis.datasetcreation.getDynamicParameters import getDynamicParameters
+from zebrazoom.dataAnalysis.datasetcreation.getTailAngles import getTailAngles
+from zebrazoom.dataAnalysis.datasetcreation.getInstaSpeed import getInstaSpeed
+from zebrazoom.dataAnalysis.datasetcreation.getInstaHeadingDiff import getInstaHeadingDiff
+from zebrazoom.dataAnalysis.datasetcreation.getInstaHorizontalDisplacement import getInstaHorizontalDisplacement
+from zebrazoom.dataAnalysis.datasetcreation.getGlobalParameters import getGlobalParameters
+from zebrazoom.dataAnalysis.datasetcreation.getDeltaHead import getDeltaHead
+from zebrazoom.dataAnalysis.datasetcreation.getTailLength  import getTailLength
+from zebrazoom.dataAnalysis.datasetcreation.getTailLength2 import getTailLength2
+from zebrazoom.dataAnalysis.datasetcreation.getTailAngleRecalculated import getTailAngleRecalculated
+from zebrazoom.dataAnalysis.datasetcreation.getTailAngleRecalculated2 import getTailAngleRecalculated2
 import pickle
 
 def createDataFrame(dataframeOptions):
@@ -37,20 +38,20 @@ def createDataFrame(dataframeOptions):
     computetailAnglesRecalculatedParamsForCluster = False
   
   nbFramesTakenIntoAccount          = dataframeOptions['nbFramesTakenIntoAccount']
-  excelFile = pd.read_excel(pathToExcelFile + nameOfFile + fileExtension)
+  excelFile = pd.read_excel(os.path.join(pathToExcelFile, nameOfFile + fileExtension))
   if nbFramesTakenIntoAccount == -1:
     boutNbFrames = []
     boutTakenIntoAcccount = 0
     videoId = 0
     if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder":
-      path    = defaultZZoutputFolderPath + excelFile.loc[videoId, 'trial_id'] + '/'
+      path    = os.path.join(defaultZZoutputFolderPath, excelFile.loc[videoId, 'trial_id'])
     else:
-      path    = excelFile.loc[videoId, 'path'] + excelFile.loc[videoId, 'trial_id'] + '/'
+      path    = os.path.join(excelFile.loc[videoId, 'path'], excelFile.loc[videoId, 'trial_id'])
     trial_id  = excelFile.loc[videoId, 'trial_id']
     include   = excelFile.loc[videoId, 'include']
     include = eval('[' + include + ']')
     include = include[0]
-    with open(path+'results_'+trial_id+'.txt') as f:
+    with open(os.path.join(path, 'results_' + trial_id + '.txt')) as f:
       supstruct = json.load(f)
     for Well_ID, Cond in enumerate(include):
       if include[Well_ID]:
@@ -102,9 +103,9 @@ def createDataFrame(dataframeOptions):
   print("Calculating and storing all parameters:")
   for videoId in range(0, len(excelFile)):
     if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder":
-      path    = defaultZZoutputFolderPath + excelFile.loc[videoId, 'trial_id'] + '/'
+      path    = os.path.join(defaultZZoutputFolderPath, excelFile.loc[videoId, 'trial_id'])
     else:
-      path    = excelFile.loc[videoId, 'path'] + excelFile.loc[videoId, 'trial_id'] + '/'
+      path    = os.path.join(excelFile.loc[videoId, 'path'], excelFile.loc[videoId, 'trial_id'])
     trial_id  = excelFile.loc[videoId, 'trial_id']
     fq        = excelFile.loc[videoId, 'fq']
     pixelsize = excelFile.loc[videoId, 'pixelsize']
@@ -118,7 +119,7 @@ def createDataFrame(dataframeOptions):
     include = eval('[' + include + ']')
     include = include[0]
     
-    with open(path+'results_'+trial_id+'.txt') as f:
+    with open(os.path.join(path, 'results_' + trial_id + '.txt')) as f:
       supstruct = json.load(f)
     
     for Well_ID, Cond in enumerate(condition):
@@ -199,7 +200,8 @@ def createDataFrame(dataframeOptions):
   # Saving the dataframe
   dfParam = dfParam.reset_index()
   dfParam['Trial_ID'][:] = trialidstab
-  outfile = open(resFolder + nameOfFile,'wb')
+  
+  outfile = open(os.path.join(resFolder, nameOfFile), 'wb')
   pickle.dump(dfParam,outfile)
   outfile.close()
   

@@ -1,17 +1,6 @@
-import sys
-sys.path.insert(1, './')
-sys.path.insert(1, './code/')
-sys.path.insert(1, './code/GUI/')
-sys.path.insert(1, './code/getImage/')
-sys.path.insert(1, './code/trackingFolder/')
-sys.path.insert(1, './code/trackingFolder/headTrackingHeadingCalculationFolder/')
-sys.path.insert(1, './code/trackingFolder/tailTrackingFunctionsFolder/')
-sys.path.insert(1, './code/trackingFolder/tailTrackingFunctionsFolder/tailTrackingExtremityDetectFolder/')
-sys.path.insert(1, './code/trackingFolder/tailTrackingFunctionsFolder/tailTrackingExtremityDetectFolder/findTailExtremeteFolder/')
-
-from extractParameters import extractParameters
-from getHyperparameters import getHyperparameters
-from createSuperStruct import createSuperStruct
+from zebrazoom.code.extractParameters import extractParameters
+from zebrazoom.code.getHyperparameters import getHyperparameters
+from zebrazoom.code.createSuperStruct import createSuperStruct
 import numpy as np
 import shutil
 import os
@@ -19,12 +8,14 @@ import os
 def extractZZParametersFromTailAngle(videoName, tailAngle):
   
   hyperparameters = getHyperparameters({"noChecksForBoutSelectionInExtractParams": 1, "windowForLocalBendMinMaxFind": 3, "thresAngleBoutDetect": 0.1, "nbWells": 1}, videoName + '.avi', '', [])
+
+  outputFolderVideo = os.path.join(hyperparameters["outputFolder"], videoName)
   
-  if os.path.exists(hyperparameters["outputFolder"] + videoName):
-    shutil.rmtree(hyperparameters["outputFolder"] + videoName)
+  if os.path.exists(outputFolderVideo):
+    shutil.rmtree(outputFolderVideo)
   while True:
     try:
-      os.mkdir(hyperparameters["outputFolder"] + videoName)
+      os.mkdir(outputFolderVideo)
       break
     except OSError as e:
       print("waiting inside except")

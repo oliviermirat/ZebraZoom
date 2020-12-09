@@ -4,10 +4,9 @@ import cv2
 import math
 import json
 import sys
-import matplotlib.pyplot as plt
 from scipy import interpolate
-from getForegroundImage import getForegroundImage
-from headEmbededFrame import headEmbededFrame
+from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
+from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from scipy.interpolate import UnivariateSpline
 from numpy import linspace
 

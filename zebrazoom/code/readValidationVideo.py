@@ -1,16 +1,15 @@
-# from win32api import GetSystemMetrics
 import cv2
 import json
 import numpy as np
 import sys
 import tkinter as tk
+import os
+from pathlib import Path
 
 def readValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, start):
 
   print("configFilePath:",configFilePath)
-
-  # horizontal = GetSystemMetrics(0)
-  # vertical   = GetSystemMetrics(1)
+  
   root = tk.Tk()
   horizontal = root.winfo_screenwidth()
   vertical   = root.winfo_screenheight()
@@ -19,16 +18,19 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, st
   cv2.moveWindow("press q to quit", 0, 0)
   cv2.resizeWindow("press q to quit", horizontal, vertical)
   
-  s1  = "./ZZoutput/"
+  s1  = "ZZoutput"
   s2  = folderName
-  s3  = "/"
-  s3b = "/results_"
+  s3b = "results_"
   s4  = folderName
   s5  = ".avi"
   s5b = ".txt"
   
-  videoPath = s1 + s2 + s3 + s4 + s5
-  resultsPath = s1 + s2 + s3b + s4 + s5b
+  cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+  initialPath  = Path(cur_dir_path)
+  initialPath  = initialPath.parent
+  
+  videoPath   = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, s4 + s5)))
+  resultsPath = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, s3b + s4 + s5b)))
   
   cap = cv2.VideoCapture(videoPath)
   
@@ -132,24 +134,6 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, st
       xmax = HeadX[l + supstruct["firstFrame"] - 1] + length/2
       ymin = HeadY[l + supstruct["firstFrame"] - 1] - length/2
       ymax = HeadY[l + supstruct["firstFrame"] - 1] + length/2
-      
-      # if (xmin <= 0):
-        # xmin = 1
-      # if (ymin <= 0):
-        # ymin = 1
-      # if (xmax > nx-1):
-        # xmax = nx-1
-      # if (ymax > ny-1):
-        # ymax = ny-1
-      
-      # if (xmin > nx-1):
-        # xmin = 1
-      # if (ymin > ny-1):
-        # ymin = 1
-      # if (xmax <= 0):
-        # xmax = nx-1
-      # if (ymax <= 0):
-        # ymax = ny-1
       
       x = xmin + xOriginal
       y = ymin + yOriginal

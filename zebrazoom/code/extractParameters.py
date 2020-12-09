@@ -5,15 +5,15 @@ import math
 import json
 import os
 import sys
-import popUpAlgoFollow
+import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 import pandas as pd
 
 import numpy as np
 from filterpy.kalman import KalmanFilter
 from filterpy.common import Q_discrete_white_noise
 
-from detectMovementWithRawVideo import detectMovementWithRawVideo
-from getTailTipManual import getHeadPositionByFileSaved, getTailTipByFileSaved
+from zebrazoom.code.detectMovementWithRawVideo import detectMovementWithRawVideo
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import getHeadPositionByFileSaved, getTailTipByFileSaved
 
 import pdb
 

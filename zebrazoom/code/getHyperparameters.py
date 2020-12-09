@@ -1,23 +1,40 @@
+from pathlib import Path
 import json
 import cv2
-from vars import getGlobalVariables
+import os
+from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
-with open("./code/defaultConfigFile.json") as f:
+cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+
+cur_dir_path2 = Path(cur_dir_path)
+cur_dir_path2 = cur_dir_path2.parent
+
+with open(os.path.join(cur_dir_path, 'defaultConfigFile.json')) as f:
   configDefault = json.load(f)
 
 # Returns parameters in config file
 def getConfig(config, variableName, videoPath):
+  
   if variableName in config:
+    
     return config[variableName]
+    
   else:
+    
     if variableName in configDefault:
-      return configDefault[variableName]
+      
+      if variableName == "outputFolder":
+        return os.path.join(cur_dir_path2, "ZZoutput")
+      else:
+        return configDefault[variableName]
+        
     else:
+      
       cap = 0
       if len(videoPath):
         cap = cv2.VideoCapture(videoPath)
-      if (len(videoPath) == 0) or (cap.isOpened() == False): 
+      if (len(videoPath) == 0) or (cap.isOpened() == False):
         print("Error opening video stream or file in getConfig")
         if variableName == "firstFrame":
           return 1

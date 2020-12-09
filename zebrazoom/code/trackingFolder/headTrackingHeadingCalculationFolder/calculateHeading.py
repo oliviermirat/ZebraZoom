@@ -2,8 +2,8 @@ import cv2
 import math
 import numpy as np
 
-from trackingFunctions import calculateAngle
-from trackingFunctions import distBetweenThetas
+from zebrazoom.code.trackingFolder.trackingFunctions import calculateAngle
+from zebrazoom.code.trackingFolder.trackingFunctions import distBetweenThetas
 
 def computeHeading(thresh1, x, y, headSize, hyperparameters):
   

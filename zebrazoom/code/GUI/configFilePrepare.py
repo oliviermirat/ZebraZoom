@@ -1,9 +1,10 @@
+import os
 import tkinter as tk
 from tkinter import font  as tkfont
 from tkinter import filedialog
 from tkinter import ttk
 from tkinter import *
-from vars import getGlobalVariables
+from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
 
@@ -54,9 +55,7 @@ class ChooseGeneralExperiment(tk.Frame):
     tk.Label(self, text="").pack()
     
     drosophilia = IntVar()
-    # Checkbutton(self, text="Drosophilia", variable=drosophilia).pack()
     rodent = IntVar()
-    # Checkbutton(self, text="Mouse / Rodent", variable=rodent).pack()
     other = IntVar()
     Checkbutton(self, text="Track centers of mass of any kind of animal.", variable=other).pack()
     tk.Label(self, text='Several animals can be tracked at once. The animals must be "darker" than the background and the background must be still.').pack()
@@ -80,8 +79,7 @@ class WellOrganisation(tk.Frame):
     
     circular = IntVar()
     Checkbutton(self, text="Circular Wells", variable=circular).pack()
-    # rectangular = IntVar()
-    # Checkbutton(self, text="Rectangular Wells", variable=rectangular).pack()
+    
     roi = IntVar()
     Checkbutton(self, text="Choose Region of Interest", variable=roi).pack()
     other = IntVar()
@@ -134,7 +132,8 @@ class ChooseCircularWellsLeft(tk.Frame):
     
     canvas = Canvas(self, width=2500, height=2000)
     canvas.pack()
-    img = PhotoImage(file="./code/GUI/leftborder.png")
+    cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+    img = PhotoImage(file=os.path.join(cur_dir_path, 'leftborder.png'))
     self.img = img
     canvas.create_image(20, 20, anchor=NW, image=img)
     
@@ -156,7 +155,8 @@ class ChooseCircularWellsRight(tk.Frame):
     
     canvas = Canvas(self, width=2500, height=2000)
     canvas.pack()
-    img = PhotoImage(file="./code/GUI/rightborder.png")
+    cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+    img = PhotoImage(file=os.path.join(cur_dir_path, 'rightborder.png'))
     self.img = img
     canvas.create_image(20, 20, anchor=NW, image=img)
     
@@ -212,7 +212,8 @@ class IdentifyHeadCenter(tk.Frame):
     
     canvas = Canvas(self, width=2500, height=2000)
     canvas.pack()
-    img = PhotoImage(file="./code/GUI/blobCenter.png")
+    cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+    img = PhotoImage(file=os.path.join(cur_dir_path, 'blobCenter.png'))
     self.img = img
     canvas.create_image(20, 20, anchor=NW, image=img)
     
@@ -234,7 +235,8 @@ class IdentifyBodyExtremity(tk.Frame):
     
     canvas = Canvas(self, width=2500, height=2000)
     canvas.pack()
-    img = PhotoImage(file="./code/GUI/blobExtremity.png")
+    cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+    img = PhotoImage(file=os.path.join(cur_dir_path, 'blobExtremity.png'))
     self.img = img
     canvas.create_image(20, 20, anchor=NW, image=img)
     

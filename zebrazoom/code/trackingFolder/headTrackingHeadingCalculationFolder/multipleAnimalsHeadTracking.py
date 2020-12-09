@@ -1,7 +1,7 @@
 import math
 import cv2
 import numpy as np
-from calculateHeading import calculateHeadingSimple
+from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.calculateHeading import calculateHeadingSimple
 
 def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, hyperparameters, gray, i, firstFrame, thresh1, thresh3):
   

@@ -1,3 +1,4 @@
+from pathlib import Path
 import numpy as np
 import tkinter as tk
 from tkinter import font  as tkfont
@@ -8,19 +9,16 @@ import json
 import cv2
 import math
 import cvui
-from vars import getGlobalVariables
+from zebrazoom.code.vars import getGlobalVariables
 import json
 import os
 import subprocess
+import sys
 globalVariables = getGlobalVariables()
 
-import sys
-sys.path.insert(1, './dataAnalysis/datasetcreation/')
-sys.path.insert(1, './dataAnalysis/')
-sys.path.insert(1, './dataAnalysis/dataanalysis/')
-from createDataFrame import createDataFrame
-from populationComparaison import populationComparaison
-from applyClustering import applyClustering
+from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
+from zebrazoom.dataAnalysis.dataanalysis.populationComparaison import populationComparaison
+from zebrazoom.dataAnalysis.dataanalysis.applyClustering import applyClustering
 
 def openExperimentOrganizationExcelFolder(self, homeDirectory):
   dir_path = os.path.join(homeDirectory,'dataAnalysis/experimentOrganizationExcel/')
@@ -50,10 +48,15 @@ def openClusteringAnalysisFolder(self, homeDirectory):
 
 
 def chooseExperimentOrganizationExcel(self, controller):
+  
+  cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+  cur_dir_path = Path(cur_dir_path)
+  cur_dir_path = cur_dir_path.parent.parent
+  
   if globalVariables["mac"]:
-    experimentOrganizationExcel = filedialog.askopenfilename(initialdir = "./dataAnalysis/experimentOrganizationExcel/", title = "Select the excel file describing your experiments")
+    experimentOrganizationExcel = filedialog.askopenfilename(initialdir = os.path.join(cur_dir_path, 'dataAnalysis/experimentOrganizationExcel/'), title = "Select the excel file describing your experiments")
   else:
-    experimentOrganizationExcel = filedialog.askopenfilename(initialdir = "./dataAnalysis/experimentOrganizationExcel/", title = "Select the excel file describing your experiments",filetypes = (("video","*.*"),("all files","*.*")))
+    experimentOrganizationExcel = filedialog.askopenfilename(initialdir = os.path.join(cur_dir_path, 'dataAnalysis/experimentOrganizationExcel/'), title = "Select the excel file describing your experiments",filetypes = (("video","*.*"),("all files","*.*")))
   
   array = os.path.split(experimentOrganizationExcel)
   
@@ -64,18 +67,22 @@ def chooseExperimentOrganizationExcel(self, controller):
 
 def populationComparison(self, controller, BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude):
 
+  cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+  cur_dir_path = Path(cur_dir_path)
+  cur_dir_path = cur_dir_path.parent.parent
+
   # Creating the dataframe
 
   dataframeOptions = {
-    'pathToExcelFile'                   : './dataAnalysis/experimentOrganizationExcel/',
+    'pathToExcelFile'                   : os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'experimentOrganizationExcel/')),
     'fileExtension'                     : '.' + self.experimentOrganizationExcel.split(".")[1],
-    'resFolder'                         : './dataAnalysis/data/',
+    'resFolder'                         : os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'data')),
     'nameOfFile'                        : self.experimentOrganizationExcel.split(".")[0],
     'smoothingFactorDynaParam'          : 0,   # 0.001
     'nbFramesTakenIntoAccount'          : 28,
     'numberOfBendsIncludedForMaxDetect' : -1,
     'minNbBendForBoutDetect'            : 3,
-    'defaultZZoutputFolderPath'         : './ZZoutput/',
+    'defaultZZoutputFolderPath'         : os.path.join(cur_dir_path, 'ZZoutput'),
     'computeTailAngleParamForCluster'   : False,
     'computeMassCenterParamForCluster'  : False
   }
@@ -100,24 +107,28 @@ def populationComparison(self, controller, BoutDuration, TotalDistance, Speed, N
   if int(maxAmplitude):
     globParam.append('maxAmplitude')
 
-  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, './dataAnalysis/resultsKinematic/')
+  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')))
   
   controller.show_frame("AnalysisOutputFolderPopulation")
 
 
 def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded):
 
+  cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+  cur_dir_path = Path(cur_dir_path)
+  cur_dir_path = cur_dir_path.parent.parent
+
   # Creating the dataframe on which the clustering will be applied
   dataframeOptions = {
-    'pathToExcelFile'                   : './dataAnalysis/experimentOrganizationExcel/',
+    'pathToExcelFile'                   : os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'experimentOrganizationExcel')),
     'fileExtension'                     : '.' + self.experimentOrganizationExcel.split(".")[1],
-    'resFolder'                         : './dataAnalysis/data/',
+    'resFolder'                         : os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'data')),
     'nameOfFile'                        : self.experimentOrganizationExcel.split(".")[0],
     'smoothingFactorDynaParam'          : 0,   # 0.001
     'nbFramesTakenIntoAccount'          : -1, #28,
     'numberOfBendsIncludedForMaxDetect' : -1,
     'minNbBendForBoutDetect'            : 3, # THIS NEEDS TO BE CHANGED IF FPS IS LOW (default: 3)
-    'defaultZZoutputFolderPath'         : './ZZoutput/',
+    'defaultZZoutputFolderPath'         : os.path.join(cur_dir_path, 'ZZoutput'),
     'computeTailAngleParamForCluster'   : True,
     'computeMassCenterParamForCluster'  : False
   }
@@ -128,7 +139,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
   # Applying the clustering on this dataframe
   clusteringOptions = {
     'analyzeAllWellsAtTheSameTime' : 0, # put this to 1 for head-embedded videos, and to 0 for multi-well videos
-    'pathToVideos' : './ZZoutput/',
+    'pathToVideos' : os.path.join(cur_dir_path, 'ZZoutput'),
     'nbCluster' : int(nbClustersToFind),
     #'nbPcaComponents' : 30,
     'nbFramesTakenIntoAccount' : nbFramesTakenIntoAccount,
@@ -145,7 +156,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
     'videoSaveFirstTenBouts' : False,
     'globalParametersCalculations' : True,
     'nbVideosToSave' : 10,
-    'resFolder' : './dataAnalysis/data/',
+    'resFolder' : os.path.join(os.path.join(cur_dir_path, 'dataAnalysis'),'data/'),
     'nameOfFile' : self.experimentOrganizationExcel.split(".")[0]
   }
   if int(FreelySwimming):
@@ -153,7 +164,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
   if int(HeadEmbeded):
     clusteringOptions['useAngles'] = True
   # Applies the clustering
-  [allBouts, classifier] = applyClustering(clusteringOptions, 0, './dataAnalysis/resultsClustering/')
+  [allBouts, classifier] = applyClustering(clusteringOptions, 0, os.path.join(os.path.join(cur_dir_path, 'dataAnalysis'),'resultsClustering/'))
   # Saves the classifier
   controller.show_frame("AnalysisOutputFolderClustering")
 

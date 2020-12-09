@@ -4,9 +4,8 @@ import cv2
 import math
 import json
 import sys
-import matplotlib.pyplot as plt
 from scipy import interpolate
-import popUpAlgoFollow
+import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 
 def findRectangularWells(videoPath, hyperparameters):
   

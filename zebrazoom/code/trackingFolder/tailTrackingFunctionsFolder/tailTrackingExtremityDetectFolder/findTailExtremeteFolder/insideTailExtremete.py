@@ -4,17 +4,16 @@ import cv2
 import math
 import json
 import sys
-import matplotlib.pyplot as plt
 from scipy import interpolate
-from getForegroundImage import getForegroundImage
-from headEmbededFrame import headEmbededFrame
+from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
+from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from scipy.interpolate import UnivariateSpline
 from numpy import linspace
 
-from functions import PointDot
-from functions import calculateJuge
-from functions import calculateJuge2
-from functions import smoothTail
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.functions import PointDot
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.functions import calculateJuge
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.functions import calculateJuge2
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.functions import smoothTail
 
 def insideTailExtremete(distance, DotProds, max_droite, min_gauche, max_bas, min_haut, ind_droite, ind_gauche, ind_bas, ind_haut, tailRange, boundary, dst):
   

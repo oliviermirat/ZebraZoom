@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import math
-from trackingFunctions import assignValueIfBetweenRange
+from zebrazoom.code.trackingFolder.trackingFunctions import assignValueIfBetweenRange
 
 def headTrackingTakeHeadClosestToWellCenter(thresh1, thresh2, blur, erodeSize, minArea, maxArea, frame_width, frame_height):
 

@@ -1,3 +1,4 @@
+from pathlib import Path
 import tkinter as tk
 from tkinter import font  as tkfont
 from tkinter import filedialog
@@ -13,22 +14,15 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import math
 import scipy.io as sio
-from readValidationVideo import readValidationVideo
+from zebrazoom.code.readValidationVideo import readValidationVideo
 import numpy as np
 
-from vars import getGlobalVariables
+from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
-import sys
-sys.path.insert(1, './')
-sys.path.insert(1, './code/')
-sys.path.insert(1, './code/getImage/')
-sys.path.insert(1, './code/tracking/')
-sys.path.insert(1, './code/tracking/tailTrackingExtremityDetect/')
-sys.path.insert(1, './code/tracking/tailTrackingExtremityDetect/findTailExtremete/')
-from mainZZ import mainZZ
-from getTailExtremityFirstFrame import getTailExtremityFirstFrame
-import popUpAlgoFollow
+from zebrazoom.mainZZ import mainZZ
+from zebrazoom.getTailExtremityFirstFrame import getTailExtremityFirstFrame
+import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 
 LARGE_FONT= ("Verdana", 12)
 
@@ -57,7 +51,7 @@ class StartPage(tk.Frame):
         label.pack(side="top", fill="x", pady=10)
         
         button0 = tk.Button(self, text="Prepare configuration file for tracking",
-                            command=lambda: controller.show_frame("ChooseVideoToCreateConfigFileFor"))#IdentifyHeadCenter")) #ChooseVideoToCreateConfigFileFor"))
+                            command=lambda: controller.show_frame("ChooseVideoToCreateConfigFileFor"))
         
         button1 = tk.Button(self, text="Run ZebraZoom on a video",
                             command=lambda: controller.show_frame("VideoToAnalyze"))
@@ -217,14 +211,18 @@ class ResultsVisualization(tk.Frame):
         tk.Frame.__init__(self, parent)
         self.controller = controller
         label = tk.Label(self, text="Choose the results you'd like to visualize", font=controller.title_font)
-        # label.pack(side="top", fill="x", pady=10)
         label.grid(row=0,column=0)
         
-        if not(os.path.exists('./ZZoutput/')):
-          os.mkdir('./ZZoutput/')
+        cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+        path = Path(cur_dir_path)
+        path = path.parent.parent
+        reference = os.path.join(path, 'ZZoutput')
         
-        os.walk('./ZZoutput/')
-        for x in sorted(next(os.walk('./ZZoutput'))[1]):
+        if not(os.path.exists(reference)):
+          os.mkdir(reference)
+        
+        os.walk(reference)
+        for x in sorted(next(os.walk(reference))[1]):
           tk.Button(self, text=x, command=lambda currentResultFolder=x : controller.exploreResultFolder(currentResultFolder)).grid(row=curLine,column=curCol)
           if (curLine > nbLines):
             curLine = 1
@@ -242,11 +240,15 @@ class ViewParameters(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        
+                
         name = self.controller.currentResultFolder
         
         if name != "abc":
-          reference = './ZZoutput/'+name+'/results_'+name+'.txt'
+          
+          cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+          path = Path(cur_dir_path)
+          path = path.parent.parent
+          reference = os.path.join(path, os.path.join('ZZoutput', os.path.join(name, 'results_' + name + '.txt')))
           
           if controller.justEnteredViewParameter == 1:
             with open(reference) as ff:
@@ -283,15 +285,6 @@ class ViewParameters(tk.Frame):
             else:
               numMouv = nbMouv - 1
           
-          # if controller.visualization == 0:
-            # label = tk.Label(self, text="Tail Angle Smoothed and min/max amplitudes for well "+str(numWell)+" , fish "+str(numPoiss)+" , bout "+str(numMouv), font=LARGE_FONT)
-          # elif controller.visualization == 1:
-            # label = tk.Label(self, text="Tail Angle Raw for well "+str(numWell)+" , fish "+str(numPoiss)+" , bout "+str(numMouv), font=LARGE_FONT)
-          # else:
-            # label = tk.Label(self, text="Body Coordinates for well "+str(numWell)+" , fish "+str(numPoiss)+" , bout "+str(numMouv), font=LARGE_FONT)
-          
-          # label.grid(row=0,column=7)
-          
           label = tk.Label(self, text="    ", font=LARGE_FONT)
           label.grid(row=0,column=6)
           
@@ -308,7 +301,6 @@ class ViewParameters(tk.Frame):
           tk.Button(self, text="-", command=lambda: controller.printSomeResults(int(e1.get())-1,e2.get(),e3.get())).grid(row=1,column=3)
           tk.Button(self, text="+", command=lambda: controller.printSomeResults(int(e1.get())+1,e2.get(),e3.get())).grid(row=1,column=4)
           
-          # ttk.Button(self, text="View video for well "+str(numWell), command=lambda: controller.showValidationVideo(e1.get(),0,-1)).grid(row=2,column=1)
           ttk.Button(self, text="View zoomed video for well "+str(numWell), command=lambda: controller.showValidationVideo(e1.get(),1,-1)).grid(row=2,column=2)
           
           label = tk.Label(self, text="Fish number:")
@@ -359,8 +351,6 @@ class ViewParameters(tk.Frame):
           tk.Button(self, text="Go to the previous page", command=lambda: controller.show_frame("ResultsVisualization")).grid(row=7,column=1)
           
           tk.Button(self, text="Change Visualization", command=lambda: controller.printSomeResults(e1.get(), e2.get(), e3.get(), True)).grid(row=7,column=2)
-          
-          # tk.Button(self, text="Refine Parameters Extraction", command=lambda: controller.changeVisualization()).grid(row=8,column=1)
           
           if (controller.superstructmodified == 1):
             button1 = tk.Button(self, text="Save SuperStruct", command=lambda: controller.saveSuperStruct(e1.get(),e2.get(),e3.get()))
@@ -465,10 +455,6 @@ class ViewParameters(tk.Frame):
               canvas = FigureCanvasTkAgg(f, self)
               canvas.draw()
               canvas.get_tk_widget().grid(row=1,column=7,rowspan=7)
-              
-              # toolbar = NavigationToolbar2TkAgg(canvas, self)
-              # toolbar.update()
-              # canvas._tkcanvas.grid(row=8,column=6,rowspan=1)
 
           else:
           

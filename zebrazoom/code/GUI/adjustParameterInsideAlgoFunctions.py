@@ -4,7 +4,7 @@ from tkinter import font  as tkfont
 from tkinter import filedialog
 from tkinter import ttk
 from tkinter import *
-from mainZZ import mainZZ
+from zebrazoom.mainZZ import mainZZ
 import pickle
 import cv2
 import cvui

@@ -1,8 +1,8 @@
 import numpy as np
 import cv2
-from trackingFunctions import calculateAngle
-from trackingFunctions import distBetweenThetas
-from trackingFunctions import assignValueIfBetweenRange
+from zebrazoom.code.trackingFolder.trackingFunctions import calculateAngle
+from zebrazoom.code.trackingFolder.trackingFunctions import distBetweenThetas
+from zebrazoom.code.trackingFolder.trackingFunctions import assignValueIfBetweenRange
 import math
 from scipy.interpolate import UnivariateSpline
 from numpy import linspace

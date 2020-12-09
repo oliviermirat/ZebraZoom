@@ -13,20 +13,14 @@ from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import math
 import scipy.io as sio
-from readValidationVideo import readValidationVideo
-from vars import getGlobalVariables
+from pathlib import Path
+from zebrazoom.code.readValidationVideo import readValidationVideo
+from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
-import sys
-sys.path.insert(1, './')
-sys.path.insert(1, './code/')
-sys.path.insert(1, './code/getImage/')
-sys.path.insert(1, './code/tracking/')
-sys.path.insert(1, './code/tracking/tailTrackingExtremityDetect/')
-sys.path.insert(1, './code/tracking/tailTrackingExtremityDetect/findTailExtremete/')
-from mainZZ import mainZZ
-from getTailExtremityFirstFrame import getTailExtremityFirstFrame
-import popUpAlgoFollow
+from zebrazoom.mainZZ import mainZZ
+from zebrazoom.getTailExtremityFirstFrame import getTailExtremityFirstFrame
+import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 
 LARGE_FONT= ("Verdana", 12)
 
@@ -57,17 +51,23 @@ def chooseFolderForTailExtremityHE(self):
     self.show_frame("ConfigFilePromp")
 
 def chooseConfigFile(self):
+    
+    cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+    path = Path(cur_dir_path)
+    path = path.parent.parent
+    path = os.path.join(path, 'configuration')
+    
     if globalVariables["mac"]:
-        tk.configFile =  filedialog.askopenfilename(initialdir = "./configuration/",title = "Select file")
+        tk.configFile =  filedialog.askopenfilename(initialdir = path, title = "Select file")
     else:
-        tk.configFile =  filedialog.askopenfilename(initialdir = "./configuration/",title = "Select file",filetypes = (("json files","*.json"),("all files","*.*")))
+        tk.configFile =  filedialog.askopenfilename(initialdir = path, title = "Select file", filetypes = (("json files","*.json"),("all files","*.*")))
     if globalVariables["mac"] or globalVariables["lin"]:
         self.show_frame("Patience")
     else:
         self.launchZebraZoom()
 
 def launchZebraZoom(self):
-  # __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
+  
   last = 0
   allVideos = []
   
@@ -80,9 +80,6 @@ def launchZebraZoom(self):
   else:
     allVideos = [tk.videoName]
   
-  # if tk.headEmbedded == 0:
-    # popUpAlgoFollow.initialise()
-  
   for idx, text in enumerate(allVideos):
     for m in re.finditer('/', text):
       last = m.start()
@@ -91,7 +88,6 @@ def launchZebraZoom(self):
     pointPos = nameWithExt.find('.')
     name     = nameWithExt[:pointPos]
     videoExt = nameWithExt[pointPos+1:]
-    # closePopUpWindowAtTheEnd = (idx == len(allVideos)-1)
     
     if tk.headEmbedded == 0:
       tabParams = ["mainZZ", path, name, videoExt, tk.configFile, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1]
@@ -107,12 +103,12 @@ def launchZebraZoom(self):
 
 
 def showValidationVideo(self, numWell, zoom, deb):
-    # filepath = 'ZZoutput/'+self.currentResultFolder+'/pathToVideo.txt'
-    # with open(filepath) as fp:
-       # videoPath = fp.readline()
-    # videoPath = videoPath[:len(videoPath)-1]
+
+    cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+    path = Path(cur_dir_path)
+    path = path.parent.parent
+    filepath = os.path.join(path, os.path.join('ZZoutput', os.path.join(self.currentResultFolder, 'pathToVideo.txt')))
     
-    filepath = './ZZoutput/'+self.currentResultFolder+'/pathToVideo.txt'
     if os.path.exists(filepath):
         with open(filepath) as fp:
            videoPath = fp.readline()
@@ -120,16 +116,17 @@ def showValidationVideo(self, numWell, zoom, deb):
     else:
         videoPath = ""
     
-    readValidationVideo(videoPath, self.currentResultFolder,'.txt',int(numWell),int(zoom),int(deb))
+    readValidationVideo(videoPath, self.currentResultFolder, '.txt', int(numWell), int(zoom), int(deb))
     
 
 def exploreResultFolder(self, currentResultFolder):
+    
     self.currentResultFolder = currentResultFolder
     self.superstructmodified = 0
     self.justEnteredViewParameter = 1
     self.printSomeResults(0, 0, 0)
-    
-    
+
+
 def printNextResults(self, numWell, numPoiss, numMouv, nbWells, nbPoiss, nbMouv):
 
     numWell  = int(numWell)
@@ -184,8 +181,6 @@ def flagMove(self, numWell, numPoiss, numMouv):
 
     name = self.currentResultFolder
 
-    reference = './ZZoutput/'+name+'/results_'+name+'.txt'
-
     dataRef = self.dataRef
     
     if "flag" in dataRef["wellPoissMouv"][int(numWell)][int(numPoiss)][int(numMouv)]:
@@ -205,23 +200,14 @@ def saveSuperStruct(self, numWell, numPoiss, numMouv):
     name = self.currentResultFolder
     dataRef = self.dataRef
     
-    reference = './ZZoutput/'+name+'/results_'+name+'.txt'
+    cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+    path = Path(cur_dir_path)
+    path = path.parent.parent
+    reference = os.path.join(path, os.path.join('ZZoutput', os.path.join(name, 'results_' + name + '.txt')))
+    print("reference:", reference)
     
     with open(reference,'w') as out:
        json.dump(dataRef, out)
-    
-    # sio.savemat('../ZZoutput/'+name+'/results_'+name+'.mat', {'videoDataResults':dataRef})
-    
-    # f=open("lance.m","w+")
-    # f.write("cd ZebraZoom\n")
-    # f.write("saveToMatlabFromGUI('../ZZoutput/" + name + "/results_" + name + ".mat')\n")
-    # f.write("cd ..\n")
-    # f.write("quit\n")
-    
-    # f2=open("lance.sh","w+")
-    # f2.write("matlab -r lance -nodesktop -nojvm -nosplash\n")
-    
-    # os.startfile('lance.sh')
     
     self.dataRef = dataRef
     
@@ -229,7 +215,6 @@ def saveSuperStruct(self, numWell, numPoiss, numMouv):
 
 
 def openConfigurationFileFolder(self, homeDirectory):
-  # dir_path = os.path.dirname(os.path.realpath(__file__))
   dir_path = os.path.join(homeDirectory,'configuration')
   if sys.platform == "win32":
     os.startfile(dir_path)
@@ -239,7 +224,6 @@ def openConfigurationFileFolder(self, homeDirectory):
 
 
 def openZZOutputFolder(self, homeDirectory):
-  # dir_path = os.path.dirname(os.path.realpath(__file__))
   dir_path = os.path.join(homeDirectory,'ZZoutput')
   if sys.platform == "win32":
     os.startfile(dir_path)

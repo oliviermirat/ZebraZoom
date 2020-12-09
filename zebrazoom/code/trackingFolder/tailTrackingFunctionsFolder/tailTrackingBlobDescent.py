@@ -4,17 +4,16 @@ import cv2
 import math
 import json
 import sys
-import matplotlib.pyplot as plt
 from scipy import interpolate
-from getForegroundImage import getForegroundImage
-from headEmbededFrame import headEmbededFrame
+from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
+from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from scipy.interpolate import UnivariateSpline
 from numpy import linspace
 # from kalmanFilter import kalman_xy
 
-from trackingFunctions import calculateAngle
-from trackingFunctions import distBetweenThetas
-from trackingFunctions import assignValueIfBetweenRange
+from zebrazoom.code.trackingFolder.trackingFunctions import calculateAngle
+from zebrazoom.code.trackingFolder.trackingFunctions import distBetweenThetas
+from zebrazoom.code.trackingFolder.trackingFunctions import assignValueIfBetweenRange
 
 def dist2(v, w):
   return (v["x"] - w["x"])**2 + (v["y"] - w["y"])**2

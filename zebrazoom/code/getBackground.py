@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-import popUpAlgoFollow
+import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 
 def getBackground(videoPath, hyperparameters):
 

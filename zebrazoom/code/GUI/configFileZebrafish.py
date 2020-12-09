@@ -51,18 +51,6 @@ class HeadEmbeded(tk.Frame):
     Checkbutton(self, text="No", variable=tweakTrackingParamsNo).pack()
     tk.Label(self, text="").pack()
     
-    # tk.Label(self, text="Options: Only select one or several of the options below if you've already tried the tracking without them:", font=("Helvetica", 12)).pack(side="top", fill="x", pady=10)
-    
-    # optionExtendedDescentSearchOption = IntVar()
-    # Checkbutton(self, text="Extended descent search option", variable=optionExtendedDescentSearchOption).pack()
-    # tk.Label(self, text="Warning: in some cases, this will make the tracking work better; please try without this option first.").pack()
-    # tk.Label(self, text="").pack()
-    
-    # optionBackgroundExtractionOption  = IntVar()
-    # Checkbutton(self, text="Background extraction option", variable=optionBackgroundExtractionOption).pack()
-    # tk.Label(self, text="Warning: in some cases, this will make the tracking work better; please try without this option first.").pack()
-    # tk.Label(self, text="").pack()
-    
     #####
     
     tk.Button(self, text="Next", command=lambda: controller.headEmbededGUI(controller, blackBack.get(), whiteBack.get(), noBoutDetect.get(), boutDetection.get(), tweakTrackingParamsYes.get(), tweakTrackingParamsNo.get())).pack()

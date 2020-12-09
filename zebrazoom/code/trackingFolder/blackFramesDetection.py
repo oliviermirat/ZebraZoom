@@ -1,5 +1,5 @@
 import numpy as np
-from headEmbededTailTrackingTeresaNicolson import getMeanOfImageOverVideo
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.headEmbededTailTrackingTeresaNicolson import getMeanOfImageOverVideo
 
 def getThresForBlackFrame(hyperparameters, videoPath):
   threshForBlackFrames = 0

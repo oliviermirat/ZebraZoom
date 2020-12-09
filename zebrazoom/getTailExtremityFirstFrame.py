@@ -1,13 +1,11 @@
-import sys
-
-from findWells import findWells
-from getBackground import getBackground
-from getForegroundImage import getForegroundImage
-from tracking import tracking
-from extractParameters import extractParameters
-from createSuperStruct import createSuperStruct
-from createValidationVideo import createValidationVideo
-from getHyperparameters import getHyperparameters
+from zebrazoom.code.findWells import findWells
+from zebrazoom.code.getBackground import getBackground
+from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
+from zebrazoom.code.trackingFolder.tracking import tracking
+from zebrazoom.code.extractParameters import extractParameters
+from zebrazoom.code.createSuperStruct import createSuperStruct
+from zebrazoom.code.createValidationVideo import createValidationVideo
+from zebrazoom.code.getHyperparameters import getHyperparameters
 
 from sklearn.preprocessing import normalize
 import multiprocessing as mp
@@ -18,9 +16,9 @@ import csv
 
 import numpy as np
 
-from getTailTipManual import findTailTipByUserInput
-from getTailTipManual import findHeadPositionByUserInput
-from headEmbededFrame import headEmbededFrame
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import findTailTipByUserInput
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import findHeadPositionByUserInput
+from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 
 def getTailExtremityFirstFrame(pathToVideo, videoName, videoExt, configFile, argv):
   
