@@ -33,10 +33,12 @@ For more information visit <a href="https://zebrazoom.org/" target="_blank">zebr
 [Starting the GUI](#starting)<br/>
 [Testing the installation and using ZebraZoom](#testanduse)<br/>
 [Using ZebraZoom through the command line](#commandlinezebrazoom)<br/>
+[Checking the quality of the tracking](#trackingqualitycheck)<br/>
 [Adjusting ZebraZoom's hyperparameters](#hyperparameters)<br/>
 [Further analyzing ZebraZoom's output through the Graphical User Interface](#GUIanalysis)<br/>
 [Further analyzing ZebraZoom's output with Python](#pythonanalysis)<br/>
 [Troubleshooting ZebraZoom's tracking](#troubleshoot)<br/>
+[Contributions and running ZebraZoom from the source code](#contributions)<br/>
 [Cite us](#citeus)<br/>
 
 <a name="installation"/>
@@ -108,6 +110,23 @@ Finally, it's possible to overwrite the parameters present in the configuration 
 (it's possible to add as many or as few parameters as needed)<br/><br/>
 
 <br/><br/>
+
+
+<a name="trackingqualitycheck"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Checking the quality of the tracking:</H2>
+
+<H4 CLASS="western">Quality control for one video:</H4>
+Once you've performed the tracking on a video, it is important to check the quality of this tracking. The easiest method to do so is to click on the button "Visualize ZebraZoom's output" in the main menu of the GUI, and then to click on the name of the video you analyzed. You can then use the graphical interface to go through a few bouts and to click on the button "View video for well i" for some of those bouts.<br/><br/>
+For fishes, you should use the validation video to check that the tracking points are placed correctly on the head and along the tail of the animal (if you tracked the tail) and that the heading is correctly calculated. For animals other than fishes, you can simply check that the center of mass is correctly placed on each frame.<br/><br/>
+If you set the configuration file to detect bouts of movements, you should also check that the bouts of movements are being detected at the right times: in this situation, the tracking points will be displayed when and only when a bout is occurring. Therefore, for this situation, you should check that the tracking points are displayed when and only when a bout of movement is occurring, be sure to check for both false negative as well as for false positive bout detections.<br/><br/>
+If you are tracking the tail of fishes at a high enough frame rate (at ~100Hz minimum for zebrafish larvae, but a higher frequency is better) and if you are interested in calculating the parameters related to the tail maximum and minimum bends, then it will also be important to check that the minimum and maximum of bends are correctly detected. When the tail reaches a maximum or minimum bend, the extremity of the tail becomes red on the validation video: you can therefore check the correct detection this way. You can also look at the graph on the right side of the interface to check the detection of the bends (they are shown with orange vertical bars).<br/><br/>
+Finally, if you set the configuration file in order to detect circular wells, you should also click on "Open ZebraZoom's output folder" in the main menu of the GUI, then on the name of the video you want to check, and then open the file repartition.jpg: this file should contain red circles on and only on the wells, so you can use this to check for correct detection of the wells.<br/><br/>
+If you find the quality of the tracking to be insufficient, you can try to improve the configuration file that you're using and/or contact us to get some help.<br/>
+
+<H4 CLASS="western">Quality control for a set of similar videos:</H4>
+If you have a set of videos on which you want to perform a quality control, you should first focus on a few of the videos and check them thoroughly with the method described in the previous section. Once you're confident that the tracking is working well, you can quickly "scan" through all of the other videos (or through some of those videos, if your dataset is really large).
 
 
 <a name="hyperparameters"/>
@@ -252,6 +271,14 @@ Here's also an <a href="./exampleAnalysisScript/readBouts.py" style="color:blue"
 <br/>[Back to table of content](#tableofcontent)<br/>
 <H2 CLASS="western">Troubleshooting tracking issues:</H2>
 If you are having trouble tracking animals in a video, you can click on the button "Troubleshoot" in the main menu to create a smaller sub-video out of the video you are trying to track. Once this sub-video is created, you can send it to info@zebrazoom.org and we can try to help.
+
+<a name="contributions"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Contributions and running ZebraZoom from the source code:</H2>
+
+We welcome contributions, feel free to submit pull requests!<br/><br/>
+In order to contribute, you will need to download this repository on your computer. To run ZebraZoom, you must then navigate to the root folder of this repository inside a terminal and type "python -m zebrazoom" as shown in the previous sections <a href="#commandlinezebrazoom" style="color:blue">"Using ZebraZoom through the command line"</a> and <a href="#starting" style="color:blue">"Starting the GUI"</a> above (except that you must make sure to be in the root folder of this repository).<br/>
 
 <a name="citeus"/>
 

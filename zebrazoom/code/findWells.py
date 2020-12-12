@@ -4,6 +4,7 @@ import cv2
 import math
 import json
 import sys
+import os
 from scipy import interpolate
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 
@@ -231,7 +232,7 @@ def findWells(videoPath, hyperparameters):
       cv2.circle(frame,(l[i]['topLeftX']+200,l[i]['topLeftY']+200), 170, (0,0,255), 2)
       cv2.putText(frame,str(i),(l[i]['topLeftX']+200,l[i]['topLeftY']+200), cv2.FONT_HERSHEY_SIMPLEX, 4,(255,255,255),2,cv2.LINE_AA)
     frame = cv2.resize(frame,(int(lengthX/2),int(lengthY/2)))
-    cv2.imwrite( hyperparameters["outputFolder"] + hyperparameters["videoName"] + "/repartition.jpg", frame );
+    cv2.imwrite(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), "repartition.jpg"), frame );
     if debugFindWells:
       cv2.imshow('Wells Detection', frame)
       if hyperparameters["exitAfterBackgroundExtraction"]:
