@@ -264,7 +264,7 @@ The full list of parameters available for each bout is:<br/>
 <I>'Bend_Timing'</I>         : List of frames at which the tail angle reached a local maximum or minimum, with frame 0 being set at the beginning of the bout.<br/>
 <I>'Bend_Amplitude'</I>      : List of amplitudes of the tail angles, for each of the local maximum or minimum reached by the tail angle.<br/>
 
-Here's also an <a href="./exampleAnalysisScript/readBouts.py" style="color:blue" target="_blank">example script</a> used to process the outputs of ZebraZoom.
+Here's also an <a href="./readAndAnalyzeZZoutputWithPython/readBouts.py" style="color:blue" target="_blank">example script</a> used to process the outputs of ZebraZoom.
 
 <a name="troubleshoot"/>
 

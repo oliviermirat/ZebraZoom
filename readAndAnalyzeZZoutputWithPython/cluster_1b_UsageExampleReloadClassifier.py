@@ -5,7 +5,7 @@ import pickle
 
 clusteringOptions = {
   'analyzeAllWellsAtTheSameTime' : 0, # put this to 1 for head-embedded videos, and to 0 for multi-well videos
-  'pathToVideos' : '../ZZoutput/',
+  'pathToVideos' : '../zebrazoom/ZZoutput/',
   'nbCluster' : 3,
   'modelUsedForClustering' : 'KMeans', # put either 'KMeans' or 'GaussianMixture' here
   #'nbPcaComponents' : 30,
@@ -22,16 +22,16 @@ clusteringOptions = {
   'videoSaveFirstTenBouts' : False,
   'globalParametersCalculations' : True,
   'nbVideosToSave' : 10,
-  'resFolder' : 'data',
+  'resFolder' : '../zebrazoom/dataanalysis/data',
   'nameOfFile' : 'example'
 }
 
 # Reloads the classifier previously created and get the nbFramesTakenIntoAccount value
-infile = open('classifiers/classifier_'+clusteringOptions['nameOfFile']+'.txt','rb')
+infile = open('../zebrazoom/dataanalysis/classifiers/classifier_'+clusteringOptions['nameOfFile']+'.txt','rb')
 [classifier, nbFramesTakenIntoAccount] = pickle.load(infile)
 infile.close()
 clusteringOptions['nbFramesTakenIntoAccount'] = nbFramesTakenIntoAccount
 
 # Classifies bouts based on the clustering previously obtained
-[allBouts, c] = zebrazoom.applyClustering(clusteringOptions, classifier, 'resultsClustering')
+[allBouts, c] = zebrazoom.applyClustering(clusteringOptions, classifier, '../zebrazoom/dataanalysis/resultsClustering')
 

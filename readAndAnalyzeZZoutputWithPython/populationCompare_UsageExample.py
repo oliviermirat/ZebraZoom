@@ -3,15 +3,15 @@ import zebrazoom
 # Creating the dataframe
 
 dataframeOptions = {
-  'pathToExcelFile'                   : './experimentOrganizationExcel/',
+  'pathToExcelFile'                   : '../zebrazoom/dataanalysis/experimentOrganizationExcel/',
   'fileExtension'                     : '.xls',
-  'resFolder'                         : 'data',
+  'resFolder'                         : '../zebrazoom/dataanalysis/data',
   'nameOfFile'                        : 'example',
   'smoothingFactorDynaParam'          : 0,   # 0.001
   'nbFramesTakenIntoAccount'          : 28,
   'numberOfBendsIncludedForMaxDetect' : -1,
   'minNbBendForBoutDetect'            : 3,
-  'defaultZZoutputFolderPath'         : '../ZZoutput/',
+  'defaultZZoutputFolderPath'         : '../zebrazoom/ZZoutput/',
   'computeTailAngleParamForCluster'   : False,
   'computeMassCenterParamForCluster'  : False
 }
@@ -24,5 +24,4 @@ nameOfFile = dataframeOptions['nameOfFile']
 resFolder  = dataframeOptions['resFolder']
 globParam = ['BoutDuration', 'TotalDistance', 'Speed', 'NumberOfOscillations', 'meanTBF', 'maxAmplitude']
 
-zebrazoom.populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, 'resultsKinematic')
-
+zebrazoom.populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, '../zebrazoom/dataanalysis/resultsKinematic')

@@ -1,1 +1,4 @@
 from zebrazoom.extractZZParametersFromTailAngle import extractZZParametersFromTailAngle
+from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
+from zebrazoom.dataAnalysis.dataanalysis.populationComparaison import populationComparaison
+from zebrazoom.dataAnalysis.dataanalysis.applyClustering import applyClustering
