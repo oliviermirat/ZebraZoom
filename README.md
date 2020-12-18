@@ -31,7 +31,7 @@ For more information visit <a href="https://zebrazoom.org/" target="_blank">zebr
 
 [Installation](#installation)<br/>
 [Starting the GUI](#starting)<br/>
-[Testing the installation and using ZebraZoom](#testanduse)<br/>
+[Testing the installation and using ZebraZoom through the GUI](#testanduse)<br/>
 [Using ZebraZoom through the command line](#commandlinezebrazoom)<br/>
 [Checking the quality of the tracking](#trackingqualitycheck)<br/>
 [Adjusting ZebraZoom's hyperparameters](#hyperparameters)<br/>
@@ -88,10 +88,29 @@ if you have installed ZebraZoom following the "further recommendations".<br/><br
 <a name="testanduse"/>
 
 <br/>[Back to table of content](#tableofcontent)<br/>
-<H2 CLASS="western">Testing the installation and using ZebraZoom:</H2>
+<H2 CLASS="western">Testing the installation and using ZebraZoom through the GUI:</H2>
 To be able to track animals in videos you need to create a configuration file for each “type” of video you want to track. A “type” of video is defined by light intensity, number and shape of wells, number of animals per well, number of pixels per animal, the type of animal in your video, etc...<br/><br/>
 Start by testing that ZebraZoom is working on your machine. To do that, <a href="https://zebrazoom.org/testVideos.html" target="_blank">download the test videos</a> and try to run the tracking on those: in the GUI's main menu, click on “Run ZebraZoom on a video”, choose the video you want to track and then the configuration file which will have the same name as the video you want to track. Once the tracking is done, go back to the main menu and click on “Visualize ZebraZoom's output”, then on the video you just tracked. If the tracking worked well, you should be able to visualize the output produced by ZebraZoom (by clicking on “View video for well 0” for example).<br/><br/>
 You can also watch the <a href="https://www.youtube.com/playlist?list=PLuWZiRK2HkeVo8zIPixdBj-hBk-cbsQZr" style="color:blue" target="_blank">tutorial videos on how to use ZebraZoom</a> for more guidance about how to create configuration files, launch ZebraZoom on videos and visualize the outputs.<br/>
+
+<a name="validationvideoreadingtips"/>
+<H4 CLASS="western">GUI validation video reading tips:</H4>
+After clicking on "Visualize ZebraZoom's output" and then on the name of a video, you will have the ability to visualize validation videos by clicking on the buttons "View video for all wells together", "View video for well i", "View zoomed video for well i"or  "View bout's video". You will then be able to navigate that validation video with the following keys:<br/><br/>
+- <b>"4" or "a" or "left arrow (on windows)"</b>: to go back 1 frame<br/>
+- <b>"6" or "d" or "right arrow (on windows)"</b>: to go forward 1 frame<br/>
+- <b>"s"</b>: to go back 20 frames<br/>
+- <b>"w"</b>: to go forward 20 frames<br/>
+- <b>"g"</b>: to go back 50 frames<br/>
+- <b>"h"</b>: to go forward 50 frames<br/>
+- <b>"f"</b>: to go back 100 frames<br/>
+- <b>"j"</b>: to go forward 100 frames<br/><br/>
+Then click on "q" to exit the viewing of the validation video.<br/>
+
+<a name="flagingbouts"/>
+<H4 CLASS="western">Adding flags to bouts:</H4>
+After clicking on "Visualize ZebraZoom's output" and then on the name of a video, you will have the ability to flag bouts that you think should be ignored in your analysis (or conversely you can also decide to flag bouts of interest): this system can be useful when further <a href="#pythonanalysis">post-processing the outputs of ZebraZoom with Python</a>.<br/>
+When you click on "Flag" it will add a field "flag" inside the json result structure (saved in the results_videoName.txt file) and it will set that flag to 1 (then clicking on "Unflag" will set that "flag" field to 0), and clicking on save SuperStruct will actually save those flags into the file (if you don't click on save superstruct before exiting, the flags won't be saved).
+
 
 <a name="commandlinezebrazoom"/>
 

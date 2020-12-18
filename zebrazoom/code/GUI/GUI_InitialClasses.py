@@ -16,6 +16,7 @@ import math
 import scipy.io as sio
 from zebrazoom.code.readValidationVideo import readValidationVideo
 import numpy as np
+import webbrowser
 
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
@@ -303,6 +304,13 @@ class ViewParameters(tk.Frame):
           
           ttk.Button(self, text="View zoomed video for well "+str(numWell), command=lambda: controller.showValidationVideo(e1.get(),1,-1)).grid(row=2,column=2)
           
+          def callback(url):
+            webbrowser.open_new(url)
+          
+          link1 = tk.Button(self, text="Video viewing tips", cursor="hand2", bg = 'red')
+          link1.grid(row=2,column=4)
+          link1.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom#validationvideoreadingtips"))
+          
           label = tk.Label(self, text="Fish number:")
           label.grid(row=3,column=1)
           e2 = tk.Entry(self)
@@ -365,7 +373,6 @@ class ViewParameters(tk.Frame):
               ttk.Button(self, text="View video for well "+str(numWell), command=lambda: controller.showValidationVideo(e1.get(),0,begMove)).grid(row=2,column=1)
               
               ttk.Button(self, text="View bout's video", command=lambda: controller.showValidationVideo(e1.get(),1,begMove)).grid(row=5,column=1)
-              
               
               if controller.visualization == 0 and not("TailAngle_smoothed" in dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]):
                   controller.visualization = 1
