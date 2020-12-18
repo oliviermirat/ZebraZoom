@@ -309,7 +309,7 @@ class ViewParameters(tk.Frame):
           
           link1 = tk.Button(self, text="Video viewing tips", cursor="hand2", bg = 'red')
           link1.grid(row=2,column=4)
-          link1.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom#validationvideoreadingtips"))
+          link1.bind("<Button-1>", lambda e: callback("https://zebrazoom.org/validationVideoReading.html"))
           
           label = tk.Label(self, text="Fish number:")
           label.grid(row=3,column=1)
