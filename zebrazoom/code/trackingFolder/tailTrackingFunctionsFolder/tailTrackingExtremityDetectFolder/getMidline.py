@@ -21,12 +21,12 @@ def fillTailRanges(tailRange1,tailRange2,fillSecond,i,MostCurvyIndex):
     tailRange2.append(i)
   return [tailRange1,tailRange2,fillSecond]
 
-def getMidline(bord1, bord2, MostCurvyIndex, boundary, dst, taille, distance2, debug, hyperparameters):
+def getMidline(bord1, bord2, MostCurvyIndex, boundary, dst, taille, distance2, debug, hyperparameters, nbTailPoints):
 
   nbTailPoints = taille
   output = np.zeros((1, 0, 2))
 
-  numTailPoints = 10
+  numTailPoints = nbTailPoints
   minTailSize = 20
   maxTailSize = 60
   trackingPointSizeDisplay = 1

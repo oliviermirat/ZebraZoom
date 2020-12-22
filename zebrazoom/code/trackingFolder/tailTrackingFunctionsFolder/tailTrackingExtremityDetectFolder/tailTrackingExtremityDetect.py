@@ -67,23 +67,23 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
       cv2.waitKey(0)
     
     # Getting Midline
-    taille = 10
-    tail = getMidline(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, taille-1, distance2, debugAdv, hyperparameters)
+    taille = nbTailPoints
+    tail = getMidline(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, taille-1, distance2, debugAdv, hyperparameters, nbTailPoints)
     
     # Optimizing midline if necessary
     midlineIsInBlobTrackingOptimization = hyperparameters["midlineIsInBlobTrackingOptimization"]
     if midlineIsInBlobTrackingOptimization:
-      [allInside, tailLength] = checkIfMidlineIsInBlob(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, taille-1, distance2, debugAdv, hyperparameters)
+      [allInside, tailLength] = checkIfMidlineIsInBlob(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, taille-1, distance2, debugAdv, hyperparameters, nbTailPoints)
       if allInside == False:
         n = len(bodyContour)
         maxTailLength = -1
         for j in range(0, n):
-          [allInside, tailLength] = checkIfMidlineIsInBlob(int(res[0]), int(res[1]), j, bodyContour, dst, taille-1, distance2, debugAdv, hyperparameters)
+          [allInside, tailLength] = checkIfMidlineIsInBlob(int(res[0]), int(res[1]), j, bodyContour, dst, taille-1, distance2, debugAdv, hyperparameters, nbTailPoints)
           if allInside:
             if tailLength > maxTailLength:
               MostCurvyIndex = j
               maxTailLength = tailLength
-        tail = getMidline(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, taille-1, distance2, debugAdv, hyperparameters)        
+        tail = getMidline(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, taille-1, distance2, debugAdv, hyperparameters, nbTailPoints)
     
     # Applying snake on tail
     applySnake = False

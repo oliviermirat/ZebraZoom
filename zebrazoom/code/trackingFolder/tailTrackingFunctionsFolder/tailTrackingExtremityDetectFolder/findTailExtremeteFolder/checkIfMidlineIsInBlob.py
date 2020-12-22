@@ -3,9 +3,9 @@ import cv2
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.getMidline import getMidline
 import math
 
-def checkIfMidlineIsInBlob(headX, headY, pointAlongTheTail, bodyContour, dst, size, distance2, debugAdv, hyperparameters):
+def checkIfMidlineIsInBlob(headX, headY, pointAlongTheTail, bodyContour, dst, size, distance2, debugAdv, hyperparameters, nbTailPoints):
 
-  tail = getMidline(headX, headY, pointAlongTheTail, bodyContour, dst, size, distance2, debugAdv, hyperparameters)
+  tail = getMidline(headX, headY, pointAlongTheTail, bodyContour, dst, size, distance2, debugAdv, hyperparameters, nbTailPoints)
   
   tail2 = tail[0]
   n = len(tail2)

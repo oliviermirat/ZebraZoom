@@ -10,11 +10,12 @@ import pandas as pd
 def perBoutOutput(superStruct, hyperparameters, videoName):
   
   # Creation of the sub-folder "perBoutOutput" 
-  if os.path.exists(hyperparameters["outputFolder"] + videoName + "/perBoutOutput"):
-    shutil.rmtree(hyperparameters["outputFolder"] + videoName + "/perBoutOutput")
+  outputPath = os.path.join(os.path.join(hyperparameters["outputFolder"], videoName), "perBoutOutput")
+  if os.path.exists(outputPath):
+    shutil.rmtree(outputPath)
   while True:
     try:
-      os.mkdir(hyperparameters["outputFolder"] + videoName + "/perBoutOutput")
+      os.mkdir(outputPath)
       break
     except OSError as e:
       print("waiting inside except")
@@ -24,7 +25,8 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
       time.sleep(0.1)
       
   # opening the video previously created in createValidationVideo as an input video stream
-  cap = cv2.VideoCapture(hyperparameters["outputFolder"] + hyperparameters["videoName"] + '/' + hyperparameters["videoName"] + '.avi')
+  cap = cv2.VideoCapture(os.path.join(os.path.join(hyperparameters["outputFolder"], videoName), hyperparameters["videoName"] + '.avi'))
+  
   if (cap.isOpened()== False): 
     print("Error opening video stream or file")
   
@@ -113,7 +115,7 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         ax[0].set_xlabel('Rostral to Caudal')
         ax[0].set_ylabel('Frame number')
         plt.colorbar()
-        plt.savefig(hyperparameters["outputFolder"] + hyperparameters["videoName"] + '/perBoutOutput/' + hyperparameters["videoName"] + "_curvature_bout" + str(k) + '.png')
+        plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_curvature_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.png'))
         plt.close(1)
         
         
@@ -125,7 +127,7 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         plt.plot([i for i in range(bStart, bEnd + 1)], [t*(180/math.pi) for t in tailAngle])
         if hyperparameters["perBoutOutputYaxis"]:
           plt.axis([bStart, bEnd + 1, hyperparameters["perBoutOutputYaxis"][0], hyperparameters["perBoutOutputYaxis"][1]])
-        plt.savefig(hyperparameters["outputFolder"] + hyperparameters["videoName"] + '/perBoutOutput/' + hyperparameters["videoName"] + "_angle_bout" + str(k) + '.png')
+        plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_angle_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.png'))
         plt.close(1)
         
         # Creation of sub-video for bout k
@@ -138,7 +140,7 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         tailExtY = TailY_VideoReferential[0][len(TailY_VideoReferential[0])-1]
         dist = int((math.sqrt((tailExtX-x0)**2 + (tailExtY-y0)**2))*1.3)
         
-        outputName = hyperparameters["outputFolder"] + hyperparameters["videoName"] + '/perBoutOutput/' + hyperparameters["videoName"] + "_bout" + str(k) + '.avi'
+        outputName = os.path.join(outputPath, hyperparameters["videoName"] + "_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.avi')
         outputVideoX = int(x+dist/2)-int(x-dist/2)
         outputVideoY = int(dist)
         out = cv2.VideoWriter(outputName,cv2.VideoWriter_fourcc('M','J','P','G'), 10, (outputVideoX, outputVideoY))
@@ -154,6 +156,7 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         
         for l in range(BoutStart, BoutEnd):
           ret, frame = cap.read()
+          
           if l < superStruct["wellPoissMouv"][i][j][k]["BoutStart"]:
             l2 = 0
           elif l >= superStruct["wellPoissMouv"][i][j][k]["BoutEnd"]:
@@ -171,7 +174,15 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
           cols = len(frame[0])
           M = cv2.getRotationMatrix2D((x, y), -(((math.pi/2) - (Heading+math.pi))%(2*math.pi))*(180/math.pi), 1)
           frame = cv2.warpAffine(frame, M, (cols,rows))
-          frame = frame[int(y):int(y)+outputVideoY, int(x-dist/2):int(x-dist/2)+outputVideoX]
+          
+          if int(x-dist/2)+outputVideoX <= 0:
+            print("problem in perBoutOutput")
+          else:
+            if int(x-dist/2) > 0:
+              frame = frame[int(y):int(y)+outputVideoY, int(x-dist/2):int(x-dist/2)+outputVideoX]
+            else:
+              frame = frame[int(y):int(y)+outputVideoY, 0:int(x-dist/2)+outputVideoX]
+          
           frame2 = np.zeros((outputVideoX, outputVideoY, 3), np.uint8)
           frame2[0:len(frame), 0:len(frame[0]), :] = frame[0:len(frame), 0:len(frame[0]), :]
           frame = frame2
