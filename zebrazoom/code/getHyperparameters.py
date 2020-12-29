@@ -284,6 +284,10 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["forceBlobMethodForHeadTracking"] = getConfig(config, "forceBlobMethodForHeadTracking", videoPath)
   
+  hyperparameters["headEmbededRetrackIfWeirdInitialTracking"] = getConfig(config, "headEmbededRetrackIfWeirdInitialTracking", videoPath)
+  
+  hyperparameters["overwriteHeadEmbededParamGaussianBlur"] = getConfig(config, "overwriteHeadEmbededParamGaussianBlur", videoPath)
+  
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5
@@ -291,7 +295,11 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
       print("command line hyperparameter change:", argv[i], argv[i+1])
       
       if not(argv[i] in ["debugPauseBetweenTrackAndParamExtract", "outputFolder", "coverPortionForHeadDetect", "freeSwimmingTailTrackingMethod", "findContourPrecision", "headingCalculationMethod"]):
-        hyperparameters[argv[i]] = int(argv[i+1])
+        try:
+          hyperparameters[argv[i]] = int(argv[i+1])
+        except:
+          hyperparameters[argv[i]] = float(argv[i+1])
+        
       else:
         hyperparameters[argv[i]] = argv[i+1]
       

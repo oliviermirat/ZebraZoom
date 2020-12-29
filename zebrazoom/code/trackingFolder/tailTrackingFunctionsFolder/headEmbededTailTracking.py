@@ -94,7 +94,7 @@ def appendPoint(x, y, points):
   points = np.append(points, curPoint, axis=1)
   return points
 
-def findNextPoints(depth,x,y,frame,points,angle,maxDepth,steps,nbList,initialImage,debug, hyperparameters):
+def findNextPoints(depth,x,y,frame,points,angle,maxDepth,steps,nbList,initialImage,debug, hyperparameters, dontChooseThisPoint = [], maxRadiusForDontChoosePoint = 0):
   
   lenX = len(frame[0]) - 1
   lenY = len(frame) - 1
@@ -128,10 +128,20 @@ def findNextPoints(depth,x,y,frame,points,angle,maxDepth,steps,nbList,initialIma
       
       # Keeps that theta angle as maximum if appropriate
       if (pixTot < pixTotMax):
-        pixTotMax = pixTot
-        maxTheta = theta
-        xTot = xNew
-        yTot = yNew
+        if (len(dontChooseThisPoint) == 0):
+          pixTotMax = pixTot
+          maxTheta = theta
+          xTot = xNew
+          yTot = yNew
+        else:
+          dist = 1000000000000000000
+          for num in range(0, len(dontChooseThisPoint[0])):
+            dist = min(dist, math.sqrt((xNew - dontChooseThisPoint[0, num])**2 + (yNew - dontChooseThisPoint[1, num])**2))
+          if (not(dist <= maxRadiusForDontChoosePoint)):
+            pixTotMax = pixTot
+            maxTheta = theta
+            xTot = xNew
+            yTot = yNew
   
   w = 4
   ym = yTot - w
@@ -182,6 +192,72 @@ def findNextPoints(depth,x,y,frame,points,angle,maxDepth,steps,nbList,initialIma
   return (points,newTheta)
 
 
+def weirdTrackingPoints(points, headPosition, tailTip):
+
+  newTrackedTipX = points[0, len(points[0]) - 1]
+  newTrackedTipY = points[1, len(points[0]) - 1]
+  
+  distInitialHeadToNewTrackedTip = math.sqrt((headPosition[0] - newTrackedTipX)**2 + (headPosition[1] - newTrackedTipY)**2)
+  distInitialTipToNewTrackTip    = math.sqrt((tailTip[0] - newTrackedTipX)**2 + (tailTip[1] - newTrackedTipY)**2)
+  
+  initialTailLength = math.sqrt((headPosition[0] - tailTip[0])**2 + (headPosition[1] - tailTip[1])**2)
+  
+  if (initialTailLength * 0.7 < distInitialHeadToNewTrackedTip) and (distInitialHeadToNewTrackedTip <initialTailLength * 1.3 ) and (distInitialTipToNewTrackTip < initialTailLength):
+    return False
+  else:
+    return True
+  
+
+def retrackIfWeirdInitialTracking(points, headPosition, tailTip, hyperparameters, x, y, frame, angle, maxDepth, nbList, initialImage, i):
+  
+  steps = hyperparameters["step"]
+  
+  if weirdTrackingPoints(points, headPosition, tailTip):
+    dontTakeThesePoints       = points.copy()
+    dontTakeThesePointsAdding = points.copy()
+    pointNumTest   = 0
+    steps3 = [indStep for indStep in range(steps[0], steps[len(steps)-1])]
+    # First Attempt: for each of the previously tracked points, prevent new tracking from choosing that previously tracked point + steps change
+    while (weirdTrackingPoints(points, headPosition, tailTip)) and (pointNumTest < len(dontTakeThesePoints[0])):
+      points = np.zeros((2, 0))
+      (points, lastFirstTheta2) = findNextPoints(0,x,y,frame,points,angle,maxDepth,steps3,nbList,initialImage,hyperparameters["debugHeadEmbededFindNextPoints"], hyperparameters, np.transpose(np.array([dontTakeThesePoints[:,pointNumTest]])))
+      dontTakeThesePointsAdding = np.concatenate((dontTakeThesePointsAdding, points), axis=1)
+      dontTakeThesePointsAdding = np.unique(dontTakeThesePointsAdding, axis=1)
+      points = np.insert(points, 0, headPosition, axis=1)
+      pointNumTest = pointNumTest + 1
+    
+    if (pointNumTest == len(dontTakeThesePoints[0])) and (weirdTrackingPoints(points, headPosition, tailTip)):
+      pointNumTest   = 0
+      # Second Attempt: for each of the previously tracked points, prevent new tracking from choosing any point in a 2 pixel radius of that previously tracked point + steps change
+      while (weirdTrackingPoints(points, headPosition, tailTip)) and (pointNumTest < len(dontTakeThesePoints[0])):
+        points = np.zeros((2, 0))
+        (points, lastFirstTheta2) = findNextPoints(0,x,y,frame,points,angle,maxDepth,steps3,nbList,initialImage,hyperparameters["debugHeadEmbededFindNextPoints"], hyperparameters, np.transpose(np.array([dontTakeThesePoints[:,pointNumTest]])), 2)
+        dontTakeThesePointsAdding = np.concatenate((dontTakeThesePointsAdding, points), axis=1)
+        dontTakeThesePointsAdding = np.unique(dontTakeThesePointsAdding, axis=1)
+        points = np.insert(points, 0, headPosition, axis=1)
+        pointNumTest = pointNumTest + 1
+    
+    if (pointNumTest == len(dontTakeThesePoints[0])) and (weirdTrackingPoints(points, headPosition, tailTip)):
+      points = np.zeros((2, 0))
+      # Third attempt: prevents new tracking from choosing any of the initially tracked points as well as all the points tracked in the second and third attempt + step change
+      (points, lastFirstTheta2) = findNextPoints(0,x,y,frame,points,angle,maxDepth,steps3,nbList,initialImage,hyperparameters["debugHeadEmbededFindNextPoints"], hyperparameters, dontTakeThesePointsAdding, 0)
+      points = np.insert(points, 0, headPosition, axis=1) 
+
+    if (pointNumTest == len(dontTakeThesePoints[0])) and (weirdTrackingPoints(points, headPosition, tailTip)):
+      points = np.zeros((2, 0))
+      # Third attempt: prevents new tracking from choosing any of the initially tracked points as well as all the points tracked in the second and third attempt + extended step change
+      steps2 = [indStep for indStep in range(max(0, steps[0]-1), steps[len(steps)-1]+4)]
+      (points, lastFirstTheta2) = findNextPoints(0,x,y,frame,points,angle,maxDepth,steps2,nbList,initialImage,hyperparameters["debugHeadEmbededFindNextPoints"], hyperparameters, dontTakeThesePointsAdding, 0)
+      points = np.insert(points, 0, headPosition, axis=1)       
+    
+    if (pointNumTest == len(dontTakeThesePoints[0])) and (weirdTrackingPoints(points, headPosition, tailTip)):
+      print("PROBLEM for frame", i, "despite applying correction procedure")
+    else:
+      print("Ok! Problem solved for frame", i)
+  
+  return points
+
+
 def headEmbededTailTracking(headPosition,nbTailPoints,i,thresh1,frame,hyperparameters,heading,maxDepth,tailTip):
   steps   = hyperparameters["step"]
   nbList  = 10
@@ -192,13 +268,19 @@ def headEmbededTailTracking(headPosition,nbTailPoints,i,thresh1,frame,hyperparam
   initialImage = frame.copy()
   
   gaussian_blur = hyperparameters["headEmbededParamGaussianBlur"]
+  
   frame = cv2.GaussianBlur(frame, (gaussian_blur, gaussian_blur), 0)
   # angle = hyperparameters["headEmbededParamInitialAngle"]
   angle = calculateAngle(x, y, tailTip[0], tailTip[1])
   
   points = np.zeros((2, 0))
   (points, lastFirstTheta2) = findNextPoints(0,x,y,frame,points,angle,maxDepth,steps,nbList,initialImage,hyperparameters["debugHeadEmbededFindNextPoints"], hyperparameters)
-  points = np.insert(points, 0, headPosition, axis=1) 
+  points = np.insert(points, 0, headPosition, axis=1)
+  
+  # Anomalie detection here
+  headEmbededRetrackIfWeirdInitialTracking = hyperparameters["headEmbededRetrackIfWeirdInitialTracking"]
+  if headEmbededRetrackIfWeirdInitialTracking:
+    points = retrackIfWeirdInitialTracking(points, headPosition, tailTip, hyperparameters, x, y, frame, angle, maxDepth, nbList, initialImage, i)
   
   if len(points[0]) > 3:
     if hyperparameters["smoothTailHeadEmbeded"]:
@@ -235,6 +317,7 @@ def headEmbededTailTrackFindMaxDepth(headPosition,nbTailPoints,i,x,y,thresh1,fra
   initialImage = frame.copy()
   
   gaussian_blur = hyperparameters["headEmbededParamGaussianBlur"]
+  
   frame = cv2.GaussianBlur(frame, (gaussian_blur, gaussian_blur), 0)
   
   angle = calculateAngle(x, y, tailTip[0], tailTip[1])
@@ -299,6 +382,10 @@ def adjustHeadEmbededHyperparameters(hyperparameters, frame, headPosition, tailT
     hyperparameters["step"] = step
   
   hyperparameters["headEmbededParamGaussianBlur"] = int(13 * factor)
+  
+  if hyperparameters["overwriteHeadEmbededParamGaussianBlur"]:
+    hyperparameters["headEmbededParamGaussianBlur"] = int(hyperparameters["overwriteHeadEmbededParamGaussianBlur"])
+  
   if hyperparameters["headEmbededParamGaussianBlur"] % 2 == 0:
     hyperparameters["headEmbededParamGaussianBlur"] = hyperparameters["headEmbededParamGaussianBlur"] + 1
   

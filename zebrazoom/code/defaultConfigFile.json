@@ -99,6 +99,7 @@
   "headEmbededParamInitialAngle" : 0.78539816339,
   "headEmbededParamGaussianBlur" : 13,
   "authorizedRelativeLengthTailEnd" : 0.85,
+  "overwriteHeadEmbededParamGaussianBlur" : 0,
   "headEmbededParamTailDescentPixThreshStop" : 150,
   "headEmbededParamTailDescentPixThreshStopOverwrite" : -1,
   "headEmbededTailTrackFindMaxDepthInitialMaxDepth" : 300,
@@ -107,6 +108,7 @@
   "centerOfMassParamHalfDiam" : 13,
   "initialTailPortionMaxSegmentDiffAngleCutOffPos" : 0.15,
   "initialTailPortionMaxSegmentDiffAngleValue" : 1,
+  "headEmbededRetrackIfWeirdInitialTracking": 0,
   
   
   "headingCalculationMethod" : "calculatedWithHead",

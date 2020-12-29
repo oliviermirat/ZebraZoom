@@ -20,7 +20,7 @@ def headEmbededFrameBackExtract(videoPath, background, hyperparameters, frameNum
   kernel = np.ones((8,8),np.float32)/25
   thres1  = cv2.filter2D(frame,-1,kernel)
   retval, thres1 = cv2.threshold(thres1, 80, 255, cv2.THRESH_BINARY)
-    
+  
   frame  = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
   thres1 = cv2.cvtColor(thres1, cv2.COLOR_BGR2GRAY)
 

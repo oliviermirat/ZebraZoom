@@ -57,12 +57,21 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
   # Using the first frame of the video to calculate parameters that will be used afterwards for the tracking
   if (hyperparameters["headEmbeded"] == 1):
     # Getting images
-    if hyperparameters["headEmbededRemoveBack"] == 0:
+    
+    if hyperparameters["headEmbededRemoveBack"] == 0 and hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0:
       [frame, thresh1] = headEmbededFrame(videoPath, firstFrame)
     else:
+      hyperparameters["headEmbededRemoveBack"] = 1
+      hyperparameters["minPixelDiffForBackExtract"] = hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"]
       [frame, thresh1] = headEmbededFrameBackExtract(videoPath, background, hyperparameters, firstFrame)
+      
+    if hyperparameters["invertBlackWhiteOnImages"]:
+      frame   = 255 - frame
+    
     gray = frame.copy()
+    
     oppHeading = (heading + math.pi) % (2 * math.pi)
+    
     # Getting headPositionFirstFrame and tailTipFirstFrame positions
     if os.path.exists(videoPath+'HP.csv'):
       headPositionFirstFrame = getHeadPositionByFileSaved(videoPath)

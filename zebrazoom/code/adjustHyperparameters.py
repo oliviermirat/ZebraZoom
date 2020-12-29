@@ -94,7 +94,7 @@ def getDetectMouvRawVideosParamsForHyperParamAdjusts(img, res, l, totDiff, hyper
 def getHeadEmbededTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, output, outputHeading, frame, frame2, hyperparameters):
   
   # hyperparametersListNames = ["headEmbededAutoSet_BackgroundExtractionOption", "overwriteFirstStepValue", "overwriteLastStepValue", "overwriteNbOfStepValues", "headEmbededParamTailDescentPixThreshStopOverwrite", "authorizedRelativeLengthTailEnd"]
-  hyperparametersListNames = ["headEmbededAutoSet_BackgroundExtractionOption", "overwriteFirstStepValue", "overwriteLastStepValue", "headEmbededParamTailDescentPixThreshStopOverwrite", "authorizedRelativeLengthTailEnd"]
+  hyperparametersListNames = ["headEmbededAutoSet_BackgroundExtractionOption", "overwriteFirstStepValue", "overwriteLastStepValue", "headEmbededParamTailDescentPixThreshStopOverwrite", "authorizedRelativeLengthTailEnd", "overwriteHeadEmbededParamGaussianBlur"]
   marginX = 30
   organizationTab = [\
   [470,   marginX + 5, 350,  0,  20, "Transforms non-background pixels to black. Can be useful when the tail isn't very different from the background."],
@@ -103,7 +103,8 @@ def getHeadEmbededTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame
   # [1,   marginX + 137, 350,  1,  50, "This is set automatically when you change either overwriteFirstStepValue or overwriteLastStepValue. Decrease to make the tracking faster."],
   [1,   marginX + 137, 350,  0, 255, "Decrease if the tail tracking is going too far (further than the tip of the tail). Increase if the tail if not going far enough (stops before the tip)."],
   [470, marginX + 137, 350,  0, 1, 'Relative length along the "normal lenght" of the tail where the tracking is "allowed" to stop. Decrease if the tail becomes invisible "mid-tail".'],
-  [1, marginX + 208,  -1, -1,  -1, "Click here if you're done adjusting these parameters."],]
+  [1, marginX + 208,  350, 0, 100, 'Try to find the right balance between too much and too little gaussian smoothing of the image.'],
+  [470, marginX + 208,  -1, -1,  -1, "Click here if you're done adjusting these parameters."]]
   WINDOW_NAME = "Tracking"
   
   # frame2 = np.concatenate((frame2, frame),axis=1)
