@@ -121,8 +121,7 @@ You can also use ZebraZoom through the command line. To do this, you will have t
 <I>python -m zebrazoom pathToVideo nameOfVideo extensionOfVideo pathToConfigFile</I><br/><br/>
 For example, you could type:<br/><br/>
 <I>python -m zebrazoom c:\Users\mirat\Desktop\trackingVideos\ video1 avi c:\Users\mirat\Desktop\configuration\config.json</I><br/><br/>
-Warning: you must put the full paths as parameters for this to work (c:\ etc...).<br/><br/>
-Warning 2: depending on the operating system you're using, you may need to replace the "\\"s by "/"s.<br/><br/>
+Warning: depending on the operating system you're using, you may need to replace the "\\"s by "/"s.<br/><br/>
 Using ZebraZoom through the command line can be particularly useful when you want to analyze a lot of videos located in different folders, or if you want to launch ZebraZoom on a server instead of on a desktop computer.<br/><br/>
 If you need to generate a script that will launch ZebraZoom on multiple videos that are all present inside a same folder, using the same configuration file, you can take a look at <a href="https://github.com/oliviermirat/ZebraZoom/blob/master/zebrazoom/generateLaunchScript.sh" target="_blank">this script</a>.<br/><br/>
 Finally, it's possible to overwrite the parameters present in the configuration file with the following command:<br/><br/>
