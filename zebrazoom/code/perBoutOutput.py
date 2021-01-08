@@ -120,15 +120,16 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         
         
         # Creation of tail angle graph for bout k
-        tailAngle = superStruct["wellPoissMouv"][i][j][k]["TailAngle_smoothed"]
-        plt.figure(1)
         bStart = superStruct["wellPoissMouv"][i][j][k]["BoutStart"]
         bEnd   = superStruct["wellPoissMouv"][i][j][k]["BoutEnd"]
-        plt.plot([i for i in range(bStart, bEnd + 1)], [t*(180/math.pi) for t in tailAngle])
-        if hyperparameters["perBoutOutputYaxis"]:
-          plt.axis([bStart, bEnd + 1, hyperparameters["perBoutOutputYaxis"][0], hyperparameters["perBoutOutputYaxis"][1]])
-        plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_angle_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.png'))
-        plt.close(1)
+        tailAngle = superStruct["wellPoissMouv"][i][j][k]["TailAngle_smoothed"]
+        if bEnd - bStart + 1 == len(tailAngle):
+          plt.figure(1)
+          plt.plot([i for i in range(bStart, bEnd + 1)], [t*(180/math.pi) for t in tailAngle])
+          if hyperparameters["perBoutOutputYaxis"]:
+            plt.axis([bStart, bEnd + 1, hyperparameters["perBoutOutputYaxis"][0], hyperparameters["perBoutOutputYaxis"][1]])
+          plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_angle_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.png'))
+          plt.close(1)
         
         # Creation of sub-video for bout k
         
