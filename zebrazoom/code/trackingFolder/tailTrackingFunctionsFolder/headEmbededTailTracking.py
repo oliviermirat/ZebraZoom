@@ -116,32 +116,34 @@ def findNextPoints(depth,x,y,frame,points,angle,maxDepth,steps,nbList,initialIma
     # print("debug")
   
   for step in steps:
-  
-    for theta in l:
-      
-      xNew = assignValueIfBetweenRange(int(x + step * (math.cos(theta))), 0, lenX)
-      yNew = assignValueIfBetweenRange(int(y + step * (math.sin(theta))), 0, lenY)
-      pixTot = frame[yNew][xNew]
-      
-      # if debug:
-        # print([theta,pixTot])
-      
-      # Keeps that theta angle as maximum if appropriate
-      if (pixTot < pixTotMax):
-        if (len(dontChooseThisPoint) == 0):
-          pixTotMax = pixTot
-          maxTheta = theta
-          xTot = xNew
-          yTot = yNew
-        else:
-          dist = 1000000000000000000
-          for num in range(0, len(dontChooseThisPoint[0])):
-            dist = min(dist, math.sqrt((xNew - dontChooseThisPoint[0, num])**2 + (yNew - dontChooseThisPoint[1, num])**2))
-          if (not(dist <= maxRadiusForDontChoosePoint)):
+    
+    if (step < maxDepth - depth) or (step == steps[0]):
+    
+      for theta in l:
+        
+        xNew = assignValueIfBetweenRange(int(x + step * (math.cos(theta))), 0, lenX)
+        yNew = assignValueIfBetweenRange(int(y + step * (math.sin(theta))), 0, lenY)
+        pixTot = frame[yNew][xNew]
+        
+        # if debug:
+          # print([theta,pixTot])
+        
+        # Keeps that theta angle as maximum if appropriate
+        if (pixTot < pixTotMax):
+          if (len(dontChooseThisPoint) == 0):
             pixTotMax = pixTot
             maxTheta = theta
             xTot = xNew
             yTot = yNew
+          else:
+            dist = 1000000000000000000
+            for num in range(0, len(dontChooseThisPoint[0])):
+              dist = min(dist, math.sqrt((xNew - dontChooseThisPoint[0, num])**2 + (yNew - dontChooseThisPoint[1, num])**2))
+            if (not(dist <= maxRadiusForDontChoosePoint)):
+              pixTotMax = pixTot
+              maxTheta = theta
+              xTot = xNew
+              yTot = yNew
   
   w = 4
   ym = yTot - w
@@ -274,6 +276,7 @@ def headEmbededTailTracking(headPosition,nbTailPoints,i,thresh1,frame,hyperparam
   angle = calculateAngle(x, y, tailTip[0], tailTip[1])
   
   points = np.zeros((2, 0))
+  
   (points, lastFirstTheta2) = findNextPoints(0,x,y,frame,points,angle,maxDepth,steps,nbList,initialImage,hyperparameters["debugHeadEmbededFindNextPoints"], hyperparameters)
   points = np.insert(points, 0, headPosition, axis=1)
   
@@ -327,14 +330,22 @@ def headEmbededTailTrackFindMaxDepth(headPosition,nbTailPoints,i,x,y,thresh1,fra
   (points, lastFirstTheta2) = findNextPoints(0,x,y,frame,points,angle,hyperparameters["headEmbededTailTrackFindMaxDepthInitialMaxDepth"],steps,nbList,initialImage, hyperparameters["debugHeadEmbededFindNextPoints"], hyperparameters)
   
   distToTip        = np.full((200),10000)
+  distToBase       = np.full((200),10000)
   curTailLengthTab = np.full((200),10000)
   curTailLength  = 0
-  k = 0
   
+  k = 0
+  distToTip[k]        = abs(math.sqrt((points[0,k]-tailTip[0])**2 + (points[1,k]-tailTip[1])**2))
+  distToBase[k]       = abs(math.sqrt((points[0,k] - x)**2 + (points[1,k] - y)**2))
+  curTailLength       = abs(math.sqrt((points[0,k] - x)**2 + (points[1,k] - y)**2))
+  curTailLengthTab[k] = curTailLength
+  
+  k = 1
   distFromHeadToTip = abs(math.sqrt((x-tailTip[0])**2 + (y-tailTip[1])**2))
   while (curTailLength < 1.5*distFromHeadToTip) and (k < len(points[0])-1):
-    curTailLength = curTailLength + abs(math.sqrt((points[0,k]-points[0,k+1])**2 + (points[1,k]-points[1,k+1])**2))
+    curTailLength = curTailLength + abs(math.sqrt((points[0,k]-points[0,k-1])**2 + (points[1,k]-points[1,k-1])**2))
     distToTip[k]  = abs(math.sqrt((points[0,k]-tailTip[0])**2 + (points[1,k]-tailTip[1])**2))
+    distToBase[k] = abs(math.sqrt((points[0,k] - x)**2 + (points[1,k] - y)**2))
     curTailLengthTab[k] = curTailLength
     k = k + 1
   
@@ -344,10 +355,12 @@ def headEmbededTailTrackFindMaxDepth(headPosition,nbTailPoints,i,x,y,thresh1,fra
     if dist < minDistToTip:
       minDistToTip = dist
       indMinDistToTip = idx
-      
+  
   hyperparameters["headEmbededParamTailDescentPixThreshStop"] = headEmbededParamTailDescentPixThreshStopInit
   
-  return (curTailLengthTab[indMinDistToTip] )
+  pathFactor = curTailLengthTab[indMinDistToTip] / distToBase[indMinDistToTip]
+  
+  return (math.sqrt((x - tailTip[0])**2 + (y - tailTip[1])**2)* pathFactor)
 
 
 def adjustHeadEmbededHyperparameters(hyperparameters, frame, headPosition, tailTip):
