@@ -54,7 +54,7 @@ def getTailExtremityFirstFrame(pathToVideo, videoName, videoExt, configFile, arg
     frame = frame.astype(int)
     frame = (frame / np.linalg.norm(frame))*255
   
-  tailTip  = findTailTipByUserInput(frame,hyperparameters)
+  tailTip  = findTailTipByUserInput(frame, frameNumber, videoPath, hyperparameters)
 
   for videoN in videoNames:
   
@@ -63,7 +63,7 @@ def getTailExtremityFirstFrame(pathToVideo, videoName, videoExt, configFile, arg
       employee_writer.writerow(tailTip)
       
     if hyperparameters["findHeadPositionByUserInput"]:
-      headPosition = findHeadPositionByUserInput(frame)
+      headPosition = findHeadPositionByUserInput(frame, frameNumber, videoPath)
       with open(pathToVideo+'/'+videoN+'HP.csv', mode='w') as employee_file:
         employee_writer = csv.writer(employee_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
         employee_writer.writerow(headPosition)

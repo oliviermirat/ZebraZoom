@@ -97,8 +97,8 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     
   # Saving the configuration file used
   if type(configFile) == str:
-    print(os.path.join(outputFolderVideo, 'configUsed.txt'), outputFolderVideo)
-    shutil.copyfile(configFile, os.path.join(outputFolderVideo, 'configUsed.txt'))
+    print(os.path.join(outputFolderVideo, 'configUsed.json'), outputFolderVideo)
+    shutil.copyfile(configFile, os.path.join(outputFolderVideo, 'configUsed.json'))
 
   # Getting well positions
   if hyperparameters["headEmbeded"]:

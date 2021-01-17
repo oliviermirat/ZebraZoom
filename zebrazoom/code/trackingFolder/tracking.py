@@ -77,7 +77,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
       headPositionFirstFrame = getHeadPositionByFileSaved(videoPath)
     else:
       if hyperparameters["findHeadPositionByUserInput"]:
-        headPositionFirstFrame = findHeadPositionByUserInput(frame)
+        headPositionFirstFrame = findHeadPositionByUserInput(frame, firstFrame, videoPath)
       else:
         [frame, gray, thresh1, blur, thresh2, frame2] = getImages(hyperparameters, cap, videoPath, firstFrame, background, wellNumber, wellPositions)
         cap.set(1, firstFrame)
@@ -85,7 +85,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     if os.path.exists(videoPath+'.csv'):
       tailTipFirstFrame  = getTailTipByFileSaved(hyperparameters,videoPath)
     else:
-      tailTipFirstFrame  = findTailTipByUserInput(frame,hyperparameters)
+      tailTipFirstFrame  = findTailTipByUserInput(frame, firstFrame, videoPath, hyperparameters)
     if hyperparameters["automaticallySetSomeOfTheHeadEmbededHyperparameters"] == 1:
       hyperparameters = adjustHeadEmbededHyperparameters(hyperparameters, frame, headPositionFirstFrame, tailTipFirstFrame)
     # Getting max depth

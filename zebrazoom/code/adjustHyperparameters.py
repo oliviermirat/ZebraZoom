@@ -60,6 +60,11 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
     elif (r == 52) or (r == 97) or (r == 113):
       frameNum[0] = frameNum[0] - 1
   l = int(frameNum[0])
+  if l >= hyperparameters["lastFrame"]:
+    l = hyperparameters["lastFrame"] - 1
+  if l <= hyperparameters["firstFrame"]:
+    l = hyperparameters["firstFrame"]
+  
   for idx, hyperParamCurVal in enumerate(hyperparametersList):
     hyperparameters[hyperparametersListNames[idx]] = hyperParamCurVal[0]
   if buttonclicked:
