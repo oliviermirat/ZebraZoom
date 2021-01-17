@@ -150,10 +150,10 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         BoutEnd = superStruct["wellPoissMouv"][i][j][k]["BoutEnd"] + perBoutOutputVideoStartStopFrameMargin
         if BoutStart < 0:
           BoutStart = 0
-        if BoutEnd >= nbFrames:
-          BoutEnd = nbFrames - 1
+        if BoutEnd >= lastFrame:
+          BoutEnd = lastFrame - 1
         mouvLength = len(superStruct["wellPoissMouv"][i][j][k]["HeadX"])
-        cap.set(1, BoutStart)
+        cap.set(1, BoutStart - firstFrame)
         
         for l in range(BoutStart, BoutEnd):
           ret, frame = cap.read()
