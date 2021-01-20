@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 import pandas as pd
+import pickle
 
 def perBoutOutput(superStruct, hyperparameters, videoName):
   
@@ -118,6 +119,9 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_curvature_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.png'))
         plt.close(1)
         
+        curvatureMatrixFile = open(os.path.join(outputPath, hyperparameters["videoName"] + "_curvatureData" + str(i) + '_' + str(j) + '_' + str(k) + '.txt'), 'wb')
+        pickle.dump(curvature, curvatureMatrixFile)
+        curvatureMatrixFile.close()
         
         # Creation of tail angle graph for bout k
         bStart = superStruct["wellPoissMouv"][i][j][k]["BoutStart"]
