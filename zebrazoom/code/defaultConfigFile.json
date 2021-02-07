@@ -17,6 +17,7 @@
   "debugCoverHorizontalPortionBelow" : 0,
   "debugHeadEmbededFindNextPoints" : 0,
   "createValidationVideo" : 1,
+  "calculateAllTailAngles" : 0,
   "freqAlgoPosFollow" : 0,
   "popUpAlgoFollow" : 0,
   "closePopUpWindowAtTheEnd" : 1,

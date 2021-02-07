@@ -22,6 +22,57 @@ def IsMinOrMax(maxpeaks, minpeaks, val ):
       is_minOrMax=1
   return is_minOrMax
 
+# def calculateAllTailAngles(curbout, tailAngleSmoothingFactor, hyperparameters):
+  # nbFramesTakenIntoAccount = len(curbout["TailAngle_Raw"])
+  # fin = curbout["BoutEnd"] - curbout["BoutStart"] + 1
+  # headx = curbout["HeadX"]
+  # heady = curbout["HeadY"]
+  # tailx = curbout["TailX_VideoReferential"]
+  # taily = curbout["TailY_VideoReferential"]
+  # heading = curbout["Heading"]
+  # tailangles_arr = np.zeros((nbFramesTakenIntoAccount,8))
+  
+  # for i in range(min(len(headx),tailangles_arr.shape[0])):
+    # if len(taily[i]) > 3 and len(tailx[i]) > 3:
+      # ang = np.arctan2(heady[i] - taily[i][-3], headx[i] - tailx[i][-3])
+      # for j in range(1, tailangles_arr.shape[1]):
+        # ang2 = np.arctan2(heady[i] - taily[i][j], headx[i] - tailx[i][j])
+        # delang = ang2 - ang
+        # if np.abs(delang) < np.pi:
+          # tailangles_arr[i,j] = delang
+        # elif delang > np.pi:
+          # tailangles_arr[i,j] = delang - 2*np.pi
+        # elif delang < -np.pi:
+          # tailangles_arr[i,j] = 2*np.pi + delang
+    # else:
+      # for j in range(tailangles_arr.shape[1]):
+        # tailangles_arr[i,j] = 0
+  # tailangles_arr = np.transpose(tailangles_arr)
+  # tailangles_arr = np.append(tailangles_arr, np.array([[-val for val in curbout["TailAngle_Raw"]]]), axis=0)
+  
+  # tailangles_arr_smoothed = np.zeros((0, nbFramesTakenIntoAccount))
+  # for angle_raw in tailangles_arr:
+    # rolling_window = hyperparameters["tailAngleMedianFilter"]
+    # if rolling_window > 0:
+      # shift = int(-rolling_window / 2)
+      # angle_median = np.array(pd.Series(angle_raw).rolling(rolling_window).median())
+      # angle_median = np.roll(angle_median, shift)
+      # for ii in range(0, rolling_window):
+        # angle_median[ii] = angle_raw[ii]
+      # for ii in range(len(angle_median)-rolling_window,len(angle_median)):
+        # angle_median[ii] = angle_raw[ii]
+    # else:
+      # angle_median = angle_raw
+    # tailToSmooth = angle_median
+    # x = np.linspace(0, 1, len(tailToSmooth))
+    # s = UnivariateSpline(x, tailToSmooth, s=tailAngleSmoothingFactor)
+    # tailSmoothed     = s(x)
+    # tailSmoothed2    = np.zeros((1, nbFramesTakenIntoAccount))
+    # tailSmoothed2[0] = tailSmoothed
+    # tailangles_arr_smoothed = np.append(tailangles_arr_smoothed, tailSmoothed2, axis=0)
+  # return [tailangles_arr, tailangles_arr_smoothed]
+
+
 def createSuperStruct(dataPerWell, wellPositions, hyperparameters):
 
   nbWells                      = hyperparameters["nbWells"]
@@ -42,7 +93,7 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters):
     
     tab  = [[] for idAnimal in range(0, hyperparameters["nbAnimalsPerWell"])]
     
-    for i in range(0,nbMouv):
+    for i in range(0, nbMouv):
       item = j[i]
       
       angle_raw = item["TailAngle_Raw"]
@@ -71,6 +122,11 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters):
       else:
         TailAngle_smoothed = np.array(angle_raw)
         item['TailAngle_smoothed'] = angle_raw
+      
+      # if hyperparameters["calculateAllTailAngles"]:
+        # [tailangles_arr, tailangles_arr_smoothed] = calculateAllTailAngles(item, tailAngleSmoothingFactor, hyperparameters)
+        # item["allTailAngles"]         = tailangles_arr.tolist()
+        # item["allTailAnglesSmoothed"] = tailangles_arr_smoothed.tolist()
       
       if hyperparameters['extractAdvanceZebraParameters']:
       
@@ -160,7 +216,7 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters):
           item['Bend_Amplitude'] = []
           item['TailAngle_raw'] = []
           item['TailAngle_smoothed'] = []
-          tab[item["AnimalNumber"]].append(item)          
+          tab[item["AnimalNumber"]].append(item)
         
       else:
         item['TailAngle_raw'] = []

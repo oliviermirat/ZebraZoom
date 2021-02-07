@@ -7,6 +7,7 @@ import os
 import sys
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 import pandas as pd
+from scipy.interpolate import UnivariateSpline
 
 import numpy as np
 from filterpy.kalman import KalmanFilter
@@ -53,12 +54,37 @@ def calculateTailAngle(angle1, angle2):
   if output > 3.14159265:
     output = output - 2*3.14159265;
   return output
+  
+def smoothAllTailAngles(allAngles, hyperparameters, start, end):
+  tailangles_arr = np.transpose(allAngles[start:end+1, 1:len(allAngles)])
+  tailangles_arr_smoothed = np.zeros((0, len(tailangles_arr[0])))
+  for angle_raw in tailangles_arr:
+    rolling_window = hyperparameters["tailAngleMedianFilter"]
+    if rolling_window > 0:
+      shift = int(-rolling_window / 2)
+      angle_median = np.array(pd.Series(angle_raw).rolling(rolling_window).median())
+      angle_median = np.roll(angle_median, shift)
+      for ii in range(0, rolling_window):
+        angle_median[ii] = angle_raw[ii]
+      for ii in range(len(angle_median)-rolling_window,len(angle_median)):
+        angle_median[ii] = angle_raw[ii]
+    else:
+      angle_median = angle_raw
+    tailToSmooth = angle_median
+    x = np.linspace(0, 1, len(tailToSmooth))
+    s = UnivariateSpline(x, tailToSmooth, s=hyperparameters["tailAngleSmoothingFactor"])
+    tailSmoothed     = s(x)
+    tailSmoothed2    = np.zeros((1, len(tailSmoothed)))
+    tailSmoothed2[0] = tailSmoothed
+    tailangles_arr_smoothed = np.append(tailangles_arr_smoothed, tailSmoothed2, axis=0)
+  return [tailangles_arr, tailangles_arr_smoothed]
 
 def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, wellPositions, background, tailAngle = 0):
 
   firstFrame = hyperparameters["firstFrame"]
   thresAngleBoutDetect = hyperparameters["thresAngleBoutDetect"]
   debugExtractParams = hyperparameters["debugExtractParams"]
+  tailAngleSmoothingFactor = hyperparameters["tailAngleSmoothingFactor"]
 
   trackingHeadTailAllAnimals = trackingData[0]
   trackingHeadingAllAnimals = trackingData[1]
@@ -79,13 +105,14 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
     nbFrames = len(trackingTail)
     nbPoints = len(trackingTail[0])
 
-    tail_1  = np.zeros((nbFrames, 2))
-    tip     = np.zeros((nbFrames, 2))
-    head    = np.zeros((nbFrames, 2))
-    heading = np.zeros((nbFrames, 1))
-    angle   = np.zeros((nbFrames, 1))
-    tailX   = np.zeros((nbFrames, n))
-    tailY   = np.zeros((nbFrames, n))
+    tail_1    = np.zeros((nbFrames, 2))
+    tip       = np.zeros((nbFrames, 2))
+    head      = np.zeros((nbFrames, 2))
+    heading   = np.zeros((nbFrames, 1))
+    angle     = np.zeros((nbFrames, 1))
+    allAngles = np.zeros((nbFrames, n))
+    tailX     = np.zeros((nbFrames, n))
+    tailY     = np.zeros((nbFrames, n))
     
     if hyperparameters["headingCalculationMethod"] == "calculatedWithMedianTailTip":
       tip2 = np.zeros((nbFrames, 2))
@@ -126,6 +153,10 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
         angle[i] = calculateTailAngle(calculateAngle(head[i], tip[i]), heading[i])
       else:
         angle[i] = tailAngle[i]
+        
+      if hyperparameters["calculateAllTailAngles"]:
+        for j in range(0, n):
+          allAngles[i][j] = calculateTailAngle(calculateAngle(head[i], np.array([trackingTail[i][j][0], trackingTail[i][j][1]])), heading[i])
       
       heading[i] = (heading[i] + math.pi) % (2*math.pi)
       
@@ -262,6 +293,13 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       item["BoutStart"]     = start + firstFrame
       item["BoutEnd"]       = end + firstFrame
       item["TailAngle_Raw"] = angle[start:end+1,0].tolist()
+      
+      [tailangles_arr, tailangles_arr_smoothed] = smoothAllTailAngles(allAngles, hyperparameters, start, end)
+      
+      if hyperparameters["calculateAllTailAngles"]:
+        item["allTailAngles"]         = tailangles_arr.tolist()
+        item["allTailAnglesSmoothed"] = tailangles_arr_smoothed.tolist()
+      
       if np.isnan(head[start:end+1,0]).any():
         item["HeadX"] = [0]
         item["HeadY"] = [0]

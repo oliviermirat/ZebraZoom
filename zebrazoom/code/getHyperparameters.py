@@ -288,6 +288,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["overwriteHeadEmbededParamGaussianBlur"] = getConfig(config, "overwriteHeadEmbededParamGaussianBlur", videoPath)
   
+  hyperparameters["calculateAllTailAngles"] = getConfig(config, "calculateAllTailAngles", videoPath)
+  
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5
