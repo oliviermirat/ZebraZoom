@@ -7,6 +7,7 @@ import numpy as np
 import time
 import pandas as pd
 import pickle
+import scipy as sp
 
 def perBoutOutput(superStruct, hyperparameters, videoName):
   
@@ -59,25 +60,7 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         for l in range(0, len(TailX_VideoReferential)):
           tailX = TailX_VideoReferential[l]
           tailY = TailY_VideoReferential[l]
-          # curvature calculation method 1
-          # a = np.array([[tailX[m], tailY[m]] for m in range(5, len(tailX))]) # CHECK OUT THE 5 HERE !!!
-          # dx_dt = np.gradient(a[:, 0])
-          # dy_dt = np.gradient(a[:, 1])
-          # velocity = np.array([ [dx_dt[i], dy_dt[i]] for i in range(dx_dt.size)])
-          # ds_dt = np.sqrt(dx_dt * dx_dt + dy_dt * dy_dt)
-          # tangent = np.array([1/ds_dt] * 2).transpose() * velocity
-          # tangent_x = tangent[:, 0]
-          # tangent_y = tangent[:, 1]
-          # deriv_tangent_x = np.gradient(tangent_x)
-          # deriv_tangent_y = np.gradient(tangent_y)
-          # dT_dt = np.array([ [deriv_tangent_x[i], deriv_tangent_y[i]] for i in range(deriv_tangent_x.size)])
-          # length_dT_dt = np.sqrt(deriv_tangent_x * deriv_tangent_x + deriv_tangent_y * deriv_tangent_y)
-          # normal = np.array([1/length_dT_dt] * 2).transpose() * dT_dt
-          # d2s_dt2 = np.gradient(ds_dt)
-          # d2x_dt2 = np.gradient(dx_dt)
-          # d2y_dt2 = np.gradient(dy_dt)
-          # curv = np.abs(d2x_dt2 * dy_dt - dx_dt * d2y_dt2) / (dx_dt * dx_dt + dy_dt * dy_dt)**1.5
-          # curvature calculation method 2
+
           ydiff  = np.diff(tailY)
           ydiff2 = np.diff(ydiff)
           xdiff  = np.diff(tailX)
@@ -89,26 +72,37 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
             num = xdiff[ii] * ydiff2[ii] - ydiff[ii] * xdiff2[ii]
             den = (xdiff[ii]**2 + ydiff[ii]**2)**1.5
             curv[ii] = num / den
-          curv = curv[1:l-2]  
+          
+          curv = curv[hyperparameters["nbPointsToIgnoreAtCurvatureBeginning"]: l-1-hyperparameters["nbPointsToIgnoreAtCurvatureEnd"]]
           curvature.append(curv)
           
-        rolling_window = hyperparameters["curvatureMedianFilterSmoothingWindow"]
-        curvature2 = []
-        curvatureTransposed = np.transpose(curvature)
-        for transposedCurv in curvatureTransposed:
-          # x = [i for i in range(0, len(transposedCurv))]
-          # tck = splrep(x, transposedCurv, s=0.0001)
-          # smoothedTransposedCurv = splev(x, tck)
-          shift = int(-rolling_window / 2)
-          smoothedTransposedCurv = np.array(pd.Series(transposedCurv).rolling(rolling_window).median())
-          smoothedTransposedCurv = np.roll(smoothedTransposedCurv, shift)
-          for ii in range(0, rolling_window):
-            smoothedTransposedCurv[ii] = transposedCurv[ii]
-          for ii in range(len(smoothedTransposedCurv)-rolling_window,len(smoothedTransposedCurv)):
-            smoothedTransposedCurv[ii] = transposedCurv[ii] 
-          curvature2.append(smoothedTransposedCurv)  
-        curvature = np.transpose(curvature2)
-          
+        if False: # Old version: 1d median filter: TO REMOVE MOST LIKELY
+        
+          rolling_window = hyperparameters["curvatureMedianFilterSmoothingWindow"]
+          if rolling_window:
+            curvature2 = []
+            curvatureTransposed = np.transpose(curvature)
+            for transposedCurv in curvatureTransposed:
+              shift = int(-rolling_window / 2)
+              smoothedTransposedCurv = np.array(pd.Series(transposedCurv).rolling(rolling_window).median())
+              smoothedTransposedCurv = np.roll(smoothedTransposedCurv, shift)
+              for ii in range(0, rolling_window):
+                smoothedTransposedCurv[ii] = transposedCurv[ii]
+              for ii in range(len(smoothedTransposedCurv)-rolling_window,len(smoothedTransposedCurv)):
+                smoothedTransposedCurv[ii] = transposedCurv[ii] 
+              curvature2.append(smoothedTransposedCurv)  
+            curvature = np.transpose(curvature2)
+          else:
+            curvature = np.array(curvature)
+            
+        else: # New version: 2d median filter
+        
+          rolling_window = hyperparameters["curvatureMedianFilterSmoothingWindow"]
+          if rolling_window:
+            curvature = sp.signal.medfilt2d(curvature, rolling_window)
+          else:
+            curvature = np.array(curvature)
+        
         fig = plt.figure(1)
         plt.pcolor(curvature)
         
@@ -188,9 +182,11 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
             else:
               frame = frame[int(y):int(y)+outputVideoY, 0:int(x-dist/2)+outputVideoX]
           
-          frame2 = np.zeros((outputVideoX, outputVideoY, 3), np.uint8)
+          frame2 = np.zeros((len(frame), len(frame[0]), 3), np.uint8)
           frame2[0:len(frame), 0:len(frame[0]), :] = frame[0:len(frame), 0:len(frame[0]), :]
           frame = frame2
+          
+          cv2.putText(frame, str(l + hyperparameters["firstFrame"] - 1), (int(outputVideoX - 100), int(outputVideoY - 30)), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0))
           
           out.write(frame)
           

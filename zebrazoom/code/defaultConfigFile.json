@@ -148,6 +148,8 @@
   "perBoutOutput" : 0,
   "perBoutOutputVideoStartStopFrameMargin" : 0,
   "perBoutOutputYaxis" : 0,
-  "smoothTailHeadEmbeded" : 0,
-  "curvatureMedianFilterSmoothingWindow" : 3
+  "smoothTailHeadEmbeded" : -1,
+  "curvatureMedianFilterSmoothingWindow" : 3,
+  "nbPointsToIgnoreAtCurvatureBeginning" : 0,
+  "nbPointsToIgnoreAtCurvatureEnd" : 0
 }

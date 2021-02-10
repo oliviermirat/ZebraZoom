@@ -20,11 +20,13 @@ def smoothTail(points, nbTailPoints, smoothingFactor):
   x = linspace(0, 1, len(y))
     
   if len(x) > 3:
-   
     interpolated_points = {}
     
     try:
-      tck, u = splprep(points3, s=smoothingFactor)
+      if smoothingFactor != -1:
+        tck, u = splprep(points3, s=smoothingFactor)
+      else:
+        tck, u = splprep(points3)
       u2 = [i/(nbTailPoints-1) for i in range(0, nbTailPoints)]
       interpolated_points = splev(u2, tck)
       newX = interpolated_points[0]

@@ -290,6 +290,10 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["calculateAllTailAngles"] = getConfig(config, "calculateAllTailAngles", videoPath)
   
+  hyperparameters["nbPointsToIgnoreAtCurvatureBeginning"] = getConfig(config, "nbPointsToIgnoreAtCurvatureBeginning", videoPath)
+  
+  hyperparameters["nbPointsToIgnoreAtCurvatureEnd"] = getConfig(config, "nbPointsToIgnoreAtCurvatureEnd", videoPath)
+  
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5
