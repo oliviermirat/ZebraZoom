@@ -129,7 +129,7 @@ def createDataFrame(dataframeOptions):
         curBoutId = 0
         for fishId in range(0, len(supstruct["wellPoissMouv"][Well_ID])):
           for NumBout, dataForBout in enumerate(supstruct["wellPoissMouv"][Well_ID][fishId]):
-            if type(dataForBout["Bend_Timing"]) == list and len(dataForBout["Bend_Timing"]) >= minNbBendForBoutDetect and (not("flag" in dataForBout) or dataForBout["flag"] == 0):
+            if "Bend_Timing" in dataForBout and type(dataForBout["Bend_Timing"]) == list and len(dataForBout["Bend_Timing"]) >= minNbBendForBoutDetect and (not("flag" in dataForBout) or dataForBout["flag"] == 0):
             
               trialidstab.append(trial_id)
               if not(genotype[Well_ID] in genotypes):
@@ -190,10 +190,24 @@ def createDataFrame(dataframeOptions):
                 
                 toPutInDataFrameColumn = toPutInDataFrameColumn + ['tailLength', 'tailLengthFromRecalculatedAngles'] + tailAnglesRecalculated + tailAnglesRecalculated2
                 toPutInDataFrame       = toPutInDataFrame + [tailLength, tailLengthFromRecalculatedAngles] + tailAnglesRecalculatedData + tailAnglesRecalculatedData2.tolist()
+            
+            else:  
+            
+              trialidstab.append(trial_id)
+              if not(genotype[Well_ID] in genotypes):
+                genotypes.append(genotype[Well_ID])
+              if not(condition[Well_ID] in conditions):
+                conditions.append(condition[Well_ID])
               
-              dfParamSub.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
+              # Calculating the global kinematic parameters and more and stores them the dataframe
               
-              curBoutId = curBoutId + 1
+              [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, xstart, xend, xmean, firstBendTime, firstBendAmplitude] = getGlobalParameters(dataForBout, fq, pixelsize)
+              
+              toPutInDataFrameColumn = ['Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'BoutDuration', 'TotalDistance', 'Speed']
+              toPutInDataFrame       = [Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], BoutDuration, TotalDistance, Speed]
+            
+            dfParamSub.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
+            curBoutId = curBoutId + 1
         
         dfParam = pd.concat([dfParam, dfParamSub])
   
