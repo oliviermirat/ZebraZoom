@@ -113,9 +113,9 @@ class BoutClustering(tk.Frame):
     
     tk.Label(self, text="Choose one of the options below:").pack()
     FreelySwimming = IntVar()
-    Checkbutton(self, text="FreelySwimming", variable=FreelySwimming).pack()
+    Checkbutton(self, text="Freely swimming fish with tail tracking", variable=FreelySwimming).pack()
     HeadEmbeded = IntVar()
-    Checkbutton(self, text="HeadEmbeded", variable=HeadEmbeded).pack()
+    Checkbutton(self, text="Head embeded fish with tail tracking", variable=HeadEmbeded).pack()
     
     tk.Button(self, text="Launch Analysis", command=lambda: controller.boutClustering(controller, nbClustersToFind.get(), FreelySwimming.get(), HeadEmbeded.get())).pack()
     

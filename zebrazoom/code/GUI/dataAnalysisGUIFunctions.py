@@ -61,6 +61,7 @@ def chooseExperimentOrganizationExcel(self, controller):
   array = os.path.split(experimentOrganizationExcel)
   
   self.experimentOrganizationExcel = array[len(array)-1]
+  self.experimentOrganizationExcelFileAndFolder = ''.join(array[0:len(array)-1])
   
   controller.show_frame("ChooseDataAnalysisMethod")
 
@@ -74,7 +75,7 @@ def populationComparison(self, controller, BoutDuration, TotalDistance, Speed, N
   # Creating the dataframe
 
   dataframeOptions = {
-    'pathToExcelFile'                   : os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'experimentOrganizationExcel/')),
+    'pathToExcelFile'                   : self.experimentOrganizationExcelFileAndFolder, #os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'experimentOrganizationExcel/')),
     'fileExtension'                     : '.' + self.experimentOrganizationExcel.split(".")[1],
     'resFolder'                         : os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'data')),
     'nameOfFile'                        : self.experimentOrganizationExcel.split(".")[0],
@@ -120,7 +121,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
 
   # Creating the dataframe on which the clustering will be applied
   dataframeOptions = {
-    'pathToExcelFile'                   : os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'experimentOrganizationExcel')),
+    'pathToExcelFile'                   : self.experimentOrganizationExcelFileAndFolder, # os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'experimentOrganizationExcel')),
     'fileExtension'                     : '.' + self.experimentOrganizationExcel.split(".")[1],
     'resFolder'                         : os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'data')),
     'nameOfFile'                        : self.experimentOrganizationExcel.split(".")[0],

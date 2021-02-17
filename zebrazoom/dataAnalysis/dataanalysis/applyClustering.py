@@ -123,6 +123,15 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
     scaler = StandardScaler()
     allInstaValues = scaler.fit_transform(allInstaValues)
 
+  allInstaValuesLenBef = len(allInstaValues)
+  dfParam = dfParam.drop([idx for idx, val in enumerate(~np.isnan(allInstaValues).any(axis=1)) if not(val)])
+  allInstaValues = allInstaValues[~np.isnan(allInstaValues).any(axis=1)]
+  allInstaValuesLenAft = len(allInstaValues)
+  if allInstaValuesLenBef - allInstaValuesLenAft > 0:
+    print(allInstaValuesLenBef - allInstaValuesLenAft, " bouts (out of ", allInstaValuesLenBef, " ) were deleted because they contained NaN values")
+  else:
+    print("all bouts were kept (no nan values)")
+
   if classifier == 0:
     print("creating pca transform and applying it on the data")
     pca_result = pca.fit_transform(allInstaValues)
@@ -149,7 +158,7 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
     predictedProbas = model.predict_proba(pca_result)
 
   # Sorting labels
-  nbLabels       = clusteringOptions['nbCluster'] # len(np.unique(labels))
+  nbLabels       = clusteringOptions['nbCluster']
   labels2        = np.zeros(len(labels))
   nbElemPerClass = np.zeros(nbLabels) 
   for i in range(0, nbLabels):

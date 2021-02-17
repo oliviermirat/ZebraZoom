@@ -129,85 +129,84 @@ def createDataFrame(dataframeOptions):
         curBoutId = 0
         for fishId in range(0, len(supstruct["wellPoissMouv"][Well_ID])):
           for NumBout, dataForBout in enumerate(supstruct["wellPoissMouv"][Well_ID][fishId]):
-            if "Bend_Timing" in dataForBout and type(dataForBout["Bend_Timing"]) == list and len(dataForBout["Bend_Timing"]) >= minNbBendForBoutDetect and (not("flag" in dataForBout) or dataForBout["flag"] == 0):
-            
-              trialidstab.append(trial_id)
-              if not(genotype[Well_ID] in genotypes):
-                genotypes.append(genotype[Well_ID])
-              if not(condition[Well_ID] in conditions):
-                conditions.append(condition[Well_ID])
+            if not("flag" in dataForBout) or dataForBout["flag"] == 0:
+              if "Bend_Timing" in dataForBout and type(dataForBout["Bend_Timing"]) == list and len(dataForBout["Bend_Timing"]) >= minNbBendForBoutDetect:
               
-              # Calculating the global kinematic parameters and more and stores them the dataframe
-              
-              [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, xstart, xend, xmean, firstBendTime, firstBendAmplitude] = getGlobalParameters(dataForBout, fq, pixelsize)
-              
-              deltahead  = abs(getDeltaHead(dataForBout))
-              tailLength = getTailLength(dataForBout)
-              
-              tailAnglesRecalculatedData  = getTailAngleRecalculated(dataForBout, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
-              
-              # tailLengthFromRecalculatedAngles = getTailLength2(tailAnglesRecalculatedData)
-              
-              toPutInDataFrameColumn = []
-              toPutInDataFrame       = []
-              
-              toPutInDataFrameColumn = toPutInDataFrameColumn + globParam
-              toPutInDataFrame       = toPutInDataFrame + [Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, deltahead, xstart, xend, xmean, firstBendTime, firstBendAmplitude]
-              
-              toPutInDataFrameColumn = toPutInDataFrameColumn + tailAngles
-              toPutInDataFrame       = toPutInDataFrame + getTailAngles(dataForBout, smoothingFactor, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
-              
-              
-              # Calculate "dynamic" tail angle related parameters for clustering
-              
-              if computeTailAngleParamForCluster:
-              
-                toPutInDataFrameColumn = toPutInDataFrameColumn + instaTBF + instaAmp + instaAsym
-                toPutInDataFrame       = toPutInDataFrame + getDynamicParameters(dataForBout, smoothingFactor, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
-              
-              # Calculate "dynamic" center of mass related parameters for clustering
-              
-              if computeMassCenterParamForCluster:
-              
-                instaSpeedVal       = getInstaSpeed(dataForBout, nbFramesTakenIntoAccount)
-                instaHeadingDiffVal = getInstaHeadingDiff(dataForBout, nbFramesTakenIntoAccount)
-                instaHorizDisplVal  = getInstaHorizontalDisplacement(dataForBout, nbFramesTakenIntoAccount)
+                trialidstab.append(trial_id)
+                if not(genotype[Well_ID] in genotypes):
+                  genotypes.append(genotype[Well_ID])
+                if not(condition[Well_ID] in conditions):
+                  conditions.append(condition[Well_ID])
                 
-                toPutInDataFrameColumn = toPutInDataFrameColumn + instaSpeed + instaHeadingDiff + instaHorizDispl
-                toPutInDataFrame       = toPutInDataFrame + instaSpeedVal + instaHeadingDiffVal + instaHorizDisplVal
+                # Calculating the global kinematic parameters and more and stores them the dataframe
                 
-              # Recalculates tail angles and calculates 
-              
-              if computetailAnglesRecalculatedParamsForCluster:
-
+                [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, xstart, xend, xmean, firstBendTime, firstBendAmplitude] = getGlobalParameters(dataForBout, fq, pixelsize)
+                
+                deltahead  = abs(getDeltaHead(dataForBout))
                 tailLength = getTailLength(dataForBout)
                 
                 tailAnglesRecalculatedData  = getTailAngleRecalculated(dataForBout, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
                 
-                tailLengthFromRecalculatedAngles = getTailLength2(tailAnglesRecalculatedData)
-              
-                tailAnglesRecalculatedData2 = getTailAngleRecalculated2(dataForBout, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
+                # tailLengthFromRecalculatedAngles = getTailLength2(tailAnglesRecalculatedData)
                 
-                toPutInDataFrameColumn = toPutInDataFrameColumn + ['tailLength', 'tailLengthFromRecalculatedAngles'] + tailAnglesRecalculated + tailAnglesRecalculated2
-                toPutInDataFrame       = toPutInDataFrame + [tailLength, tailLengthFromRecalculatedAngles] + tailAnglesRecalculatedData + tailAnglesRecalculatedData2.tolist()
-            
-            else:  
-            
-              trialidstab.append(trial_id)
-              if not(genotype[Well_ID] in genotypes):
-                genotypes.append(genotype[Well_ID])
-              if not(condition[Well_ID] in conditions):
-                conditions.append(condition[Well_ID])
+                toPutInDataFrameColumn = []
+                toPutInDataFrame       = []
+                
+                toPutInDataFrameColumn = toPutInDataFrameColumn + globParam
+                toPutInDataFrame       = toPutInDataFrame + [Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, deltahead, xstart, xend, xmean, firstBendTime, firstBendAmplitude]
+                
+                toPutInDataFrameColumn = toPutInDataFrameColumn + tailAngles
+                toPutInDataFrame       = toPutInDataFrame + getTailAngles(dataForBout, smoothingFactor, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
+                
+                
+                # Calculate "dynamic" tail angle related parameters for clustering
+                
+                if computeTailAngleParamForCluster:
+                
+                  toPutInDataFrameColumn = toPutInDataFrameColumn + instaTBF + instaAmp + instaAsym
+                  toPutInDataFrame       = toPutInDataFrame + getDynamicParameters(dataForBout, smoothingFactor, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
+                
+                # Calculate "dynamic" center of mass related parameters for clustering
+                
+                if computeMassCenterParamForCluster:
+                
+                  instaSpeedVal       = getInstaSpeed(dataForBout, nbFramesTakenIntoAccount)
+                  instaHeadingDiffVal = getInstaHeadingDiff(dataForBout, nbFramesTakenIntoAccount)
+                  instaHorizDisplVal  = getInstaHorizontalDisplacement(dataForBout, nbFramesTakenIntoAccount)
+                  
+                  toPutInDataFrameColumn = toPutInDataFrameColumn + instaSpeed + instaHeadingDiff + instaHorizDispl
+                  toPutInDataFrame       = toPutInDataFrame + instaSpeedVal + instaHeadingDiffVal + instaHorizDisplVal
+                  
+                # Recalculates tail angles and calculates 
+                
+                if computetailAnglesRecalculatedParamsForCluster:
+
+                  tailLength = getTailLength(dataForBout)
+                  
+                  tailAnglesRecalculatedData  = getTailAngleRecalculated(dataForBout, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
+                  
+                  tailLengthFromRecalculatedAngles = getTailLength2(tailAnglesRecalculatedData)
+                
+                  tailAnglesRecalculatedData2 = getTailAngleRecalculated2(dataForBout, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
+                  
+                  toPutInDataFrameColumn = toPutInDataFrameColumn + ['tailLength', 'tailLengthFromRecalculatedAngles'] + tailAnglesRecalculated + tailAnglesRecalculated2
+                  toPutInDataFrame       = toPutInDataFrame + [tailLength, tailLengthFromRecalculatedAngles] + tailAnglesRecalculatedData + tailAnglesRecalculatedData2.tolist()
               
-              # Calculating the global kinematic parameters and more and stores them the dataframe
+              else:  
               
-              [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, xstart, xend, xmean, firstBendTime, firstBendAmplitude] = getGlobalParameters(dataForBout, fq, pixelsize)
+                trialidstab.append(trial_id)
+                if not(genotype[Well_ID] in genotypes):
+                  genotypes.append(genotype[Well_ID])
+                if not(condition[Well_ID] in conditions):
+                  conditions.append(condition[Well_ID])
               
-              toPutInDataFrameColumn = ['Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'BoutDuration', 'TotalDistance', 'Speed']
-              toPutInDataFrame       = [Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], BoutDuration, TotalDistance, Speed]
+                [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, xstart, xend, xmean, firstBendTime, firstBendAmplitude] = getGlobalParameters(dataForBout, fq, pixelsize)
+              
+                toPutInDataFrameColumn = ['Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'BoutDuration', 'TotalDistance', 'Speed']
+                toPutInDataFrame       = [Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], BoutDuration, TotalDistance, Speed]
             
-            dfParamSub.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
-            curBoutId = curBoutId + 1
+              dfParamSub.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
+              curBoutId = curBoutId + 1
         
         dfParam = pd.concat([dfParam, dfParamSub])
   

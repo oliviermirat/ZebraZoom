@@ -6,7 +6,7 @@ def getGlobalParameters(curbout, fps, pixelSize):
 
   BoutDuration = (curbout["BoutEnd"] - curbout["BoutStart"] + 1) / fps
   
-  if "Bend_Timing" in curbout:
+  if "Bend_Timing" in curbout and type(curbout["Bend_Timing"]) == list:
     NumberOfOscillations = len(curbout["Bend_Timing"]) / 2
   else:
     NumberOfOscillations = float('NaN')
@@ -29,12 +29,12 @@ def getGlobalParameters(curbout, fps, pixelSize):
   else:
     maxAmplitude = float('NaN')
   
-  if "Bend_Timing" in curbout:
+  if "Bend_Timing" in curbout and type(curbout["Bend_Timing"]) == list:
     firstBendTime = curbout["Bend_Timing"][0]
   else:
     firstBendTime = float('NaN')
   
-  if "Bend_Amplitude" in curbout:
+  if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list:
     firstBendAmplitude = abs(curbout["Bend_Amplitude"][0])
   else:
     firstBendAmplitude = float('NaN')
