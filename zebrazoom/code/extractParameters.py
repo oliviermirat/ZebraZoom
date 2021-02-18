@@ -65,9 +65,11 @@ def smoothAllTailAngles(allAngles, hyperparameters, start, end):
       angle_median = np.array(pd.Series(angle_raw).rolling(rolling_window).median())
       angle_median = np.roll(angle_median, shift)
       for ii in range(0, rolling_window):
-        angle_median[ii] = angle_raw[ii]
+        if ii >= 0 and ii < len(angle_raw):
+          angle_median[ii] = angle_raw[ii]
       for ii in range(len(angle_median)-rolling_window,len(angle_median)):
-        angle_median[ii] = angle_raw[ii]
+        if ii >= 0 and ii < len(angle_raw):
+          angle_median[ii] = angle_raw[ii]
     else:
       angle_median = angle_raw
     tailToSmooth = angle_median
