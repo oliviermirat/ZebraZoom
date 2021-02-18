@@ -73,11 +73,16 @@ def smoothAllTailAngles(allAngles, hyperparameters, start, end):
     else:
       angle_median = angle_raw
     tailToSmooth = angle_median
-    x = np.linspace(0, 1, len(tailToSmooth))
-    s = UnivariateSpline(x, tailToSmooth, s=hyperparameters["tailAngleSmoothingFactor"])
-    tailSmoothed     = s(x)
+    if len(tailToSmooth) >= 5:
+      x = np.linspace(0, 1, len(tailToSmooth))
+      s = UnivariateSpline(x, tailToSmooth, s=hyperparameters["tailAngleSmoothingFactor"])
+      tailSmoothed     = s(x)
+    else:
+      tailSmoothed = tailToSmooth
+      
     tailSmoothed2    = np.zeros((1, len(tailSmoothed)))
     tailSmoothed2[0] = tailSmoothed
+      
     tailangles_arr_smoothed = np.append(tailangles_arr_smoothed, tailSmoothed2, axis=0)
   return [tailangles_arr, tailangles_arr_smoothed]
 

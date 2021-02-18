@@ -140,8 +140,13 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         dist = int((math.sqrt((tailExtX-x0)**2 + (tailExtY-y0)**2))*1.3)
         
         outputName = os.path.join(outputPath, hyperparameters["videoName"] + "_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.avi')
-        outputVideoX = int(x+dist/2)-int(x-dist/2)
-        outputVideoY = int(dist)
+        if dist < cap.get(3) and dist < cap.get(4):
+          outputVideoX = int(dist)
+          outputVideoY = int(dist)
+        else:
+          outputVideoX = min(cap.get(3), cap.get(4))
+          outputVideoY = min(cap.get(3), cap.get(4))
+        
         out = cv2.VideoWriter(outputName,cv2.VideoWriter_fourcc('M','J','P','G'), 10, (outputVideoX, outputVideoY))
         
         BoutStart = superStruct["wellPoissMouv"][i][j][k]["BoutStart"] - perBoutOutputVideoStartStopFrameMargin
@@ -180,9 +185,9 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
             if int(x-dist/2) > 0:
               frame = frame[int(y):int(y)+outputVideoY, int(x-dist/2):int(x-dist/2)+outputVideoX]
             else:
-              frame = frame[int(y):int(y)+outputVideoY, 0:int(x-dist/2)+outputVideoX]
+              frame = frame[int(y):int(y)+outputVideoY, 0:outputVideoX]
           
-          frame2 = np.zeros((len(frame), len(frame[0]), 3), np.uint8)
+          frame2 = np.zeros((outputVideoX, outputVideoY, 3), np.uint8)
           frame2[0:len(frame), 0:len(frame[0]), :] = frame[0:len(frame), 0:len(frame[0]), :]
           frame = frame2
           
