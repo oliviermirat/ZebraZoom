@@ -21,10 +21,6 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
   thresh2[:, len(thresh2[0])-1] = 255
   thresh2[len(thresh2)-1, :]    = 255
   
-  # print("frame:", i)
-  # cv2.imshow('Frame', thresh2)
-  # cv2.waitKey(0)
-  
   if hyperparameters["multipleHeadTrackingIterativelyRelaxAreaCriteria"]:
     contours, hierarchy = cv2.findContours(thresh2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     while (len(headCoordinatesOptions) < hyperparameters["nbAnimalsPerWell"]) and (minAreaCur > 0):
@@ -63,7 +59,7 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
           x = 0
           y = 0
         headCoordinatesOptions.append([x, y])
-      
+
   headCoordinatesOptionsAlreadyTakenDist     = [-1 for k in headCoordinatesOptions]
   headCoordinatesOptionsAlreadyTakenAnimalId = [-1 for k in headCoordinatesOptions]
   animalNotPutOrEjectedBecausePositionAlreadyTaken = 1
@@ -108,7 +104,6 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
                 trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][1] = headCoordinatesOptions[index_min][1]  
                 headCoordinatesOptionsAlreadyTakenDist[index_min]     = min_dist
                 headCoordinatesOptionsAlreadyTakenAnimalId[index_min] = animal_Id               
-  
   
   headCoordinatesOptions = [headCoordinatesOptions[idx] for idx, k in enumerate(headCoordinatesOptionsAlreadyTakenAnimalId) if k == -1]
   

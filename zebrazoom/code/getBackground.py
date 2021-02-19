@@ -1,11 +1,12 @@
 import numpy as np
 import cv2
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
+from zebrazoom.code.preprocessImage import preprocessImage
 
 def getBackground(videoPath, hyperparameters):
 
-  cap = cv2.VideoCapture(videoPath)
-  max_l      = int(cap.get(7))
+  cap   = cv2.VideoCapture(videoPath)
+  max_l = int(cap.get(7))
 
   backCalculationStep = hyperparameters["backCalculationStep"]
   if "firstFrame" in hyperparameters:
@@ -39,8 +40,12 @@ def getBackground(videoPath, hyperparameters):
           back = cv2.min(frame, back)
       else:
         print("couldn't use the frame", k, "for the background extraction")
-
+  
+  if hyperparameters["imagePreProcessMethod"]:
+    back = preprocessImage(back, hyperparameters)
+  
   if (debugExtractBack):
+      
     cv2.imshow('Background extracted', back)
     if hyperparameters["exitAfterBackgroundExtraction"]:
       cv2.waitKey(3000)

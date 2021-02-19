@@ -1,3 +1,4 @@
+from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
 
@@ -16,12 +17,16 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
   # cap = cv2.VideoCapture(videoPath)
   # cap.set(1, frameNumber)
   ret, frame = cap.read()
+  
   if not(ret):
     currentFrameNum = int(cap.get(1))
     while not(ret):
       currentFrameNum = currentFrameNum - 1
       cap.set(1, currentFrameNum)
       ret, frame = cap.read()
+  
+  if hyperparameters["imagePreProcessMethod"]:
+    frame = preprocessImage(frame, hyperparameters)
   
   grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
   curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]

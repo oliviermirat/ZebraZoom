@@ -1,3 +1,4 @@
+from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
 
@@ -15,6 +16,9 @@ def headEmbededFrame(videoPath, frameNumber):
     frameNumber = frameNumber - 1
     cap.set(1, frameNumber)
     ret, frame = cap.read()
+  
+  if hyperparameters["imagePreProcessMethod"]:
+    frame = preprocessImage(frame, hyperparameters)
   
   kernel = np.ones((8,8),np.float32)/25
   thres1  = cv2.filter2D(frame,-1,kernel)

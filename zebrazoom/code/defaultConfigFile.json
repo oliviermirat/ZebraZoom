@@ -60,11 +60,15 @@
   "generateAllTimeTailAngleGraph" : 0,
   "generateAllTimeTailAngleGraphLineWidth" : 0.3,
   
+  "imagePreProcessMethod" : 0,
+  "imagePreProcessParameters" : [],
+  
   "minWellDistanceForWellDetection" : 250,
   "wellOutputVideoDiameter" : -1,
   
   "nbImagesForBackgroundCalculation" : 60,
   "minPixelDiffForBackExtract" : 20,
+  "backgroundExtractionWithOnlyTwoFrames" : 0,
   
   "findContourPrecision" : "CHAIN_APPROX_SIMPLE",
   

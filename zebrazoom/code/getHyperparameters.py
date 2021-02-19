@@ -294,6 +294,11 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["nbPointsToIgnoreAtCurvatureEnd"] = getConfig(config, "nbPointsToIgnoreAtCurvatureEnd", videoPath)
   
+  hyperparameters["imagePreProcessMethod"] = getConfig(config, "imagePreProcessMethod", videoPath)
+  hyperparameters["imagePreProcessParameters"] = getConfig(config, "imagePreProcessParameters", videoPath)
+  
+  hyperparameters["backgroundExtractionWithOnlyTwoFrames"] = getConfig(config, "backgroundExtractionWithOnlyTwoFrames", videoPath)
+  
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5
