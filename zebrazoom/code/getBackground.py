@@ -26,20 +26,44 @@ def getBackground(videoPath, hyperparameters):
   
   ret, back = cap.read()
   back = cv2.cvtColor(back, cv2.COLOR_BGR2GRAY)
-  for k in range(firstFrame,lastFrame):
-    if (k % backCalculationStep == 0):
-      cap.set(1, k)
-      ret, frame = cap.read()
-      if debugExtractBack:
-        print(k)
-      if ret:
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        if hyperparameters["extractBackWhiteBackground"]:
-          back = cv2.max(frame, back)
+  if hyperparameters["backgroundExtractionWithOnlyTwoFrames"] == 0:
+    for k in range(firstFrame,lastFrame):
+      if (k % backCalculationStep == 0):
+        cap.set(1, k)
+        ret, frame = cap.read()
+        if debugExtractBack:
+          print(k)
+        if ret:
+          frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+          if hyperparameters["extractBackWhiteBackground"]:
+            back = cv2.max(frame, back)
+          else:
+            back = cv2.min(frame, back)
         else:
-          back = cv2.min(frame, back)
+          print("couldn't use the frame", k, "for the background extraction")
+  else:
+    maxDiff    = 0
+    indMaxDiff = firstFrame
+    for k in range(firstFrame,lastFrame):
+      if (k % backCalculationStep == 0):
+        cap.set(1, k)
+        ret, frame = cap.read()
+        if ret:
+          frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+          diff  = np.sum(np.abs(frame - back))
+          if diff > maxDiff:
+            maxDiff    = diff
+            indMaxDiff = k
+    cap.set(1, indMaxDiff)
+    ret, frame = cap.read()
+    if ret:
+      frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+      if hyperparameters["extractBackWhiteBackground"]:
+        back = cv2.max(frame, back)
       else:
-        print("couldn't use the frame", k, "for the background extraction")
+        back = cv2.min(frame, back)
+    else:
+      print("couldn't use the frame", k, "for the background extraction")
   
   if hyperparameters["imagePreProcessMethod"]:
     back = preprocessImage(back, hyperparameters)
