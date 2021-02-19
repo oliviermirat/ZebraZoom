@@ -68,6 +68,40 @@ def getBackground(videoPath, hyperparameters):
   if hyperparameters["imagePreProcessMethod"]:
     back = preprocessImage(back, hyperparameters)
   
+  if hyperparameters["checkThatMovementOccurInVideo"]:
+    cap.set(1, firstFrame)
+    ret, frame = cap.read()
+    if ret:
+      frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+      if hyperparameters["imagePreProcessMethod"]:
+        frame = preprocessImage(frame, hyperparameters)
+      if type(frame[0][0]) == np.ndarray:
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+      putToWhite = (frame.astype('int32') >= (back.astype('int32')-hyperparameters["minPixelDiffForBackExtract"]))
+      frame[putToWhite] = 255
+    firstImage = frame
+    maxDiff    = 0
+    indMaxDiff = firstFrame
+    for k in range(firstFrame,lastFrame):
+      if (k % backCalculationStep == 0):
+        cap.set(1, k)
+        ret, frame = cap.read()
+        if ret:
+          frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+          if hyperparameters["imagePreProcessMethod"]:
+            frame = preprocessImage(frame, hyperparameters)
+          if type(frame[0][0]) == np.ndarray:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+          putToWhite = (frame.astype('int32') >= (back.astype('int32')-hyperparameters["minPixelDiffForBackExtract"]))
+          frame[putToWhite] = 255
+          diff  = np.sum(cv2.medianBlur(np.abs(frame - firstImage), hyperparameters["checkThatMovementOccurInVideoMedianFilterWindow"]))
+          if diff > maxDiff:
+            maxDiff    = diff
+            indMaxDiff = k
+    print("checkThatMovementOccurInVideo: max difference is:", maxDiff)
+    if maxDiff < hyperparameters["checkThatMovementOccurInVideo"]:
+      back[:, :] = 0 # TODO: tracking should NOT RUN after background is set to 0 as it is here
+  
   if (debugExtractBack):
       
     cv2.imshow('Background extracted', back)

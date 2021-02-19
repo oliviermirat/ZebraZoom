@@ -299,6 +299,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["backgroundExtractionWithOnlyTwoFrames"] = getConfig(config, "backgroundExtractionWithOnlyTwoFrames", videoPath)
   
+  hyperparameters["checkThatMovementOccurInVideo"] = getConfig(config, "checkThatMovementOccurInVideo", videoPath)
+  hyperparameters["checkThatMovementOccurInVideoMedianFilterWindow"] = getConfig(config, "checkThatMovementOccurInVideoMedianFilterWindow", videoPath)
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5
