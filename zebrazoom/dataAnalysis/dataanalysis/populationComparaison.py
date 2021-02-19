@@ -16,6 +16,9 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
   dfParam = pickle.load(infile)
   infile.close()
   
+  columnsForRawDataExport = ['index', 'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype'] + globParam
+  dfParam[columnsForRawDataExport].to_excel(os.path.join(outputFolderResult, 'globalParametersInsideCategories.xlsx'))
+  
   nbLines   = int(math.sqrt(len(globParam)))
   nbColumns = math.ceil(len(globParam) / nbLines)
   fig, tabAx = plt.subplots(nbLines, nbColumns, figsize=(22.9, 8.8))
