@@ -34,8 +34,10 @@ For more information visit <a href="https://zebrazoom.org/" target="_blank">zebr
 [Testing the installation and using ZebraZoom through the GUI](#testanduse)<br/>
 [Using ZebraZoom through the command line](#commandlinezebrazoom)<br/>
 [Checking the quality of the tracking](#trackingqualitycheck)<br/>
-[Adjusting ZebraZoom's hyperparameters](#hyperparameters)<br/>
-[Adjusting hyperparameters for head-embedded zebrafish tail tracking in difficult conditions](#extremeHeadEmbeddedTailTracking)<br/>
+[Adjusting ZebraZoom's hyperparameters through the GUI](#hyperparameters)<br/>
+[Adjusting ZebraZoom's hyperparameters: further adjustment of tail angle smoothing and bouts and bends detection](#hyperparametersTailAngleSmoothBoutsAndBendsDetect)<br/>
+[Adjusting ZebraZoom's hyperparameters: head-embedded zebrafish tail tracking in difficult conditions](#extremeHeadEmbeddedTailTracking)<br/>
+[Adjusting ZebraZoom's hyperparameters: other adjustments](#hyperparametersOtherAdjustments)<br/>
 [Further analyzing ZebraZoom's output through the Graphical User Interface](#GUIanalysis)<br/>
 [Further analyzing ZebraZoom's output with Python](#pythonanalysis)<br/>
 [Calculating fish tail curvature](#curvature)<br/>
@@ -152,12 +154,15 @@ If you have a set of videos on which you want to perform a quality control, you 
 <a name="hyperparameters"/>
 
 <br/>[Back to table of content](#tableofcontent)<br/>
-<H2 CLASS="western">Adjusting ZebraZoom's hyperparameters:</H2>
-<H4 CLASS="western">Adjusting hyperparameters through the GUI:</H4>
+<H2 CLASS="western">Adjusting ZebraZoom's hyperparameters through the GUI:</H2>
 In order to track videos other than the ones provided on ZebraZoom's website, you might need to create your own configuration files. In order to do that, you can click on “Prepare configuration file for tracking” and follow the steps described to create a configuration file adapted to the videos you want to track. Please note that this procedure isn't complete and may not work on all videos. If you don't manage to create a configuration file on your own, you can contact us at info@zebrazoom.org and we will try to make one for you.<br/>
 Tip: once you've created a configuration file for some videos and launched the tracking on those videos using that configuration file, check the quality of the tracking and bouts extraction by clicking on “Visualize ZebraZoom's output”. If you are unsatisfied with the results, you can refine the configuration file you created by clicking on “Prepare configuration file for tracking” in the main menu and then by clicking on the box “Click here to start from a configuration file previously created (instead of from scratch)”: this will allow you to reload and refine the configuration file you already created. You can then save that refined configuration file and use it to re-tracked your videos.<br/>
 
-<H4 CLASS="western">Further adjustments of tail angle smoothing and bouts and bends detection:</H4>
+
+<a name="hyperparametersTailAngleSmoothBoutsAndBendsDetect"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Adjusting ZebraZoom's hyperparameters: further adjustment of tail angle smoothing and bouts and bends detection:</H2>
 If you are tracking the tail of zebrafish larva, then you might need to further refine the parameters controlling the smoothing of the tail angle and the identification of bouts and bends. To do this, start by clicking on “Visualize ZebraZoom's output” and then on the name of the video you just tracked. Then look at some of the bouts and click on the button “Change Visualization” to compare the smoothed tail angle from which the bends are extracted with the raw un-smoothed tail angle. If the smoothing of the tail angle or the bouts and bends detection is not good enough, you can refine the configuration file to adjust the parameters controlling the smoothing and the bouts and bends detection. To do this, open your configuration file in a text editor (your configuration file should be in the folder ZebraZoom/configuration), and add/change the parameters listed below. You can then relaunch the tracking with that updated configuration file. When you relaunch the tracking, check the box “I ran the tracking already, I only want to redo the extraction of parameters.”.
 
 <H5 CLASS="western">Post-processing of bouts initially detected: parameters below control the removal of “outlier bouts”</H5>
@@ -226,11 +231,6 @@ You must then choose the threshold for bout detection using the angle variation 
 By default, the tail angle variation will be calculated on a period of 10 frames. To adjust this window you can adjust the following parameter:<br/>
 <font color="blue">"windowForBoutDetectWithAngle":</font> 10,<br/>
 
-<H4 CLASS="western">Other useful parameters that can be changed:</H4>
-<font color="blue">"plotOnlyOneTailPointForVisu" : 0,</font> if set to 1, it will only plot the tip of the tail on the validation video <br/>
-<font color="blue">"trackingPointSizeDisplay": 1,</font> size of points displayed on the validation video <br/>
-<font color="blue">"fillGapFrameNb" : 5,</font> try to decrease this if the bouts detected are too long, try increasing if the bouts detected are too short or if they are "cut" into several different pieces.<br/>
-
 </p>
 
 <a name="extremeHeadEmbeddedTailTracking"/>
@@ -244,6 +244,32 @@ If after creating a custom configuration file with the method above you still do
 Finally, you can also try manually adding and adjusting the parameters <I>"initialTailPortionMaxSegmentDiffAngleValue"</I> (default value is 1) and <I>"initialTailPortionMaxSegmentDiffAngleCutOffPos"</I> (default value 0.15) in the configuration file that you previously created. <I>"initialTailPortionMaxSegmentDiffAngleValue"</I> is the maximum difference "allowed" between two subsequently detected points along the tail of the animal near the base of the tail (starting from the base of the tail, going towards the tip of the tail); so decreasing the value of <I>"initialTailPortionMaxSegmentDiffAngleValue"</I> will force the tail tracking near the base of the tail to be more "straight".<br/>
 <I>"initialTailPortionMaxSegmentDiffAngleCutOffPos"</I> represents the portion (from 0 to 1) that qualifies as "near the base of the tail". So 0.15 (the default value) means that the tail is considered as "near the base of the tail" from the base of the tail until 15% of the length of the tail.<br/><br/>
 If after following the instructions above you still don't manage to create a configuration file that works well for your videos, please let us know by emailing us at info@zebrazoom.org (also please read the troubleshooting section below).
+
+
+<a name="hyperparametersOtherAdjustments"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Adjusting ZebraZoom's hyperparameters: other adjustments:</H2>
+
+It can sometimes be useful to preprocess the frames of the video before starting the tracking. The two parameters below can be used to this end:<br/>
+<font color="blue">"imagePreProcessMethod" (default 0):</font> set it to the preprocessing method you want to use. At the moment, the only method available is "medianAndMinimum". If necessary, feel free to add other methods in the file <a href="https://github.com/oliviermirat/ZebraZoom/blob/master/zebrazoom/code/preprocessImage.py" style="color:blue" target="_blank">preprocessImage.py</a>. By default (0), no preprocessing will be applied.<br/>
+<font color="blue">"imagePreProcessParameters" (default []):</font> parameters of the previously specified preprocessing method used. <br/><br/>
+
+<font color="blue">"backgroundExtractionWithOnlyTwoFrames" (default 0):</font> set this parameter to 1 to perform the background subtraction with only two frames (the two frames will be chosen in order to maximise the amount of differences between the two frames). Setting this parameter to 1 can be useful to speed up the background extraction process and/or if for some reason using a lot of frames for the background extraction leads to problems.<br/><br/>
+
+Not having any movement occur in a video can sometimes lead to the tracking detecting tracking points at wrong locations. To solve this issue, you can adjust the two following parameters:<br/>
+<font color="blue">"checkThatMovementOccurInVideo (default 0):</font> set to a value above 0 to avoid having the tracking being performed if it seems that no movement is occurring in the video. When launching ZebraZoom with this parameter set to a value above 0, ZebraZoom will print in the console:<br/>
+<I>start get background<br/>
+checkThatMovementOccurInVideo: max difference is: X<br/>
+Background Extracted</I><br/>
+When movement is occurring in the video, the value of X will be high; and when no movement is occurring, the value will be low. You should run ZebraZoom on several videos to determine a good threshold of this value of X between videos where movement is occurring and videos where no movement is occurring. Then, set <font color="blue">"checkThatMovementOccurInVideo</font> to that threshold to allow ZebraZoom to be able to differentiate between videos with movements and videos with no movements.<br/>
+
+<font color="blue">"checkThatMovementOccurInVideoMedianFilterWindow" (default 11):</font> The previous method relies on a median filter that smooth images. You can adjust the window of that median filter with this parameter.<br/><br/>
+
+Other useful parameters include:<br/>
+<font color="blue">"plotOnlyOneTailPointForVisu" (default 0):</font> if set to 1, it will only plot the tip of the tail on the validation video <br/>
+<font color="blue">"trackingPointSizeDisplay" (default 1):</font> size of points displayed on the validation video <br/>
+<font color="blue">"fillGapFrameNb" (default 5):</font> try to decrease this if the bouts detected are too long, try increasing if the bouts detected are too short or if they are "cut" into several different pieces.<br/>
 
 <a name="GUIanalysis"/>
 
