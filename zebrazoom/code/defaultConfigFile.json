@@ -46,7 +46,15 @@
   "extractBackWhiteBackground" : 1,
   "extractAdvanceZebraParameters" : 1,
   "takeTheHeadClosestToTheCenter" : 0,
+  
   "wellsAreRectangles" : 0,
+  "findRectangleWellArea"                : 165000,
+  "rectangleWellAreaImageThreshold"      : 105,
+  "rectangleWellErodeDilateKernelSize"   : 20,
+  "rectangularWellsInvertBlackWhite"     : 0,
+  "rectangularWellStretchPercentage"     : 5,
+  "rectangleWellAreaTolerancePercentage" : 20,
+  
   "nbWells" : -1,
   "nbRowsOfWells"  : 0,
   "nbWellsPerRows" : 0,

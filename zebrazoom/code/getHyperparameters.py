@@ -302,6 +302,13 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["checkThatMovementOccurInVideo"] = getConfig(config, "checkThatMovementOccurInVideo", videoPath)
   hyperparameters["checkThatMovementOccurInVideoMedianFilterWindow"] = getConfig(config, "checkThatMovementOccurInVideoMedianFilterWindow", videoPath)
   
+  hyperparameters["findRectangleWellArea"] = getConfig(config, "findRectangleWellArea", videoPath)
+  hyperparameters["rectangleWellAreaImageThreshold"] = getConfig(config, "rectangleWellAreaImageThreshold", videoPath)
+  hyperparameters["rectangleWellErodeDilateKernelSize"] = getConfig(config, "rectangleWellErodeDilateKernelSize", videoPath)
+  hyperparameters["rectangularWellsInvertBlackWhite"] = getConfig(config, "rectangularWellsInvertBlackWhite", videoPath)
+  hyperparameters["rectangularWellStretchPercentage"] = getConfig(config, "rectangularWellStretchPercentage", videoPath)
+  hyperparameters["rectangleWellAreaTolerancePercentage"] = getConfig(config, "rectangleWellAreaTolerancePercentage", videoPath)
+  
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5
     while i < len(argv):
