@@ -1,16 +1,63 @@
 import h5py
 import numpy as np
 import cv2
+import cvui
 import math
 import json
 import sys
 import os
 from scipy import interpolate
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
+from zebrazoom.code.adjustHyperparameters import initializeAdjustHyperparametersWindows, adjustHyperparameters
+import tkinter as tk
 
-def findRectangularWells(frame, videoPath, hyperparameters):
+def findRectangularWellsArea(frame, videoPath, hyperparameters):
   
-  findRectangleWellArea              = hyperparameters["findRectangleWellArea"]
+  frame2 = frame.copy()
+  
+  root = tk.Tk()
+  horizontal = root.winfo_screenwidth()
+  vertical   = root.winfo_screenheight()
+  getRealValueCoefX = 1
+  getRealValueCoefY = 1
+  if len(frame2[0]) > horizontal or len(frame2) > vertical:
+    getRealValueCoefX = len(frame2[0]) / int(horizontal*0.8)
+    getRealValueCoefY = len(frame2) / int(vertical*0.8)
+    frame2 = cv2.resize(frame2, (int(horizontal*0.8), int(vertical*0.8)))
+  root.destroy()
+  
+  WINDOW_NAME = "Click on the top left of one of the wells"
+  cvui.init(WINDOW_NAME)
+  cv2.moveWindow(WINDOW_NAME, 0,0)
+  cvui.imshow(WINDOW_NAME, frame2)
+  while not(cvui.mouse(cvui.CLICK)):
+    cursor = cvui.mouse()
+    if cv2.waitKey(20) == 27:
+      break
+  topLeft = [cursor.x, cursor.y]
+  cv2.destroyAllWindows()
+  
+  WINDOW_NAME = "Click on the bottom right of the same well"
+  cvui.init(WINDOW_NAME)
+  cv2.moveWindow(WINDOW_NAME, 0,0)
+  cvui.imshow(WINDOW_NAME, frame2)
+  while not(cvui.mouse(cvui.CLICK)):
+    cursor = cvui.mouse()
+    if cv2.waitKey(20) == 27:
+      break
+  bottomRight = [cursor.x, cursor.y]
+  cv2.destroyAllWindows()  
+  
+  rectangularWellsArea = int(abs((topLeft[0] - bottomRight[0]) * getRealValueCoefX) * abs((topLeft[1] - bottomRight[1]) * getRealValueCoefY))
+  
+  return rectangularWellsArea
+
+
+def findRectangularWells(frame, videoPath, hyperparameters, rectangularWellsArea):
+  
+  findRectangleWellArea                    = rectangularWellsArea
+  hyperparameters["findRectangleWellArea"] = rectangularWellsArea
+  
   rectangleWellAreaImageThreshold    = hyperparameters["rectangleWellAreaImageThreshold"]
   rectangleWellErodeDilateKernelSize = hyperparameters["rectangleWellErodeDilateKernelSize"]
   rectangularWellsInvertBlackWhite   = hyperparameters["rectangularWellsInvertBlackWhite"]
@@ -31,8 +78,12 @@ def findRectangularWells(frame, videoPath, hyperparameters):
   retval, gray = cv2.threshold(gray, rectangleWellAreaImageThreshold, 255, cv2.THRESH_BINARY)
 
   kernel = np.ones((rectangleWellErodeDilateKernelSize, rectangleWellErodeDilateKernelSize), np.uint8)
-  gray = cv2.erode(gray,  kernel, iterations = 1)
-  gray = cv2.dilate(gray, kernel, iterations = 1)
+  if rectangularWellsInvertBlackWhite:
+    gray = cv2.dilate(gray, kernel, iterations = 1)
+    gray = cv2.erode(gray,  kernel, iterations = 1)  
+  else:
+    gray = cv2.erode(gray,  kernel, iterations = 1)
+    gray = cv2.dilate(gray, kernel, iterations = 1)
 
   contours, hierarchy = cv2.findContours(gray, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
   for contour in contours:
@@ -69,6 +120,46 @@ def findRectangularWells(frame, videoPath, hyperparameters):
         well = {'topLeftX' : left, 'topLeftY' : top, 'lengthX' : right - left, 'lengthY': bottom - top}
       
       wellPositions.append(well)
+  
+  if hyperparameters["adjustRectangularWellsDetect"]:
+    
+    gray   = cv2.cvtColor(gray, cv2.COLOR_GRAY2RGB)
+    frame2 = frame.copy()
+    rectangleTickness = 2
+    lengthY = len(frame)
+    lengthX = len(frame[0])
+    if len(wellPositions):
+      perm1 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
+      perm2 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
+      perm3 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
+      for i in range(0, len(wellPositions)):
+        if hyperparameters["wellsAreRectangles"]:
+          topLeft     = (wellPositions[i]['topLeftX'], wellPositions[i]['topLeftY'])
+          bottomRight = (wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'], wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'])
+          color = (int(perm1[i]), int(perm2[i]), int(perm3[i]))
+          frame2 = cv2.rectangle(frame2, topLeft, bottomRight, color, rectangleTickness)
+    
+    hyperparametersListNames = ["rectangleWellAreaImageThreshold", "rectangleWellErodeDilateKernelSize","findRectangleWellArea", "rectangularWellsInvertBlackWhite"]
+    marginX = 30
+    organizationTab = [\
+    [470,  marginX + 5,  350,  0, 255,   "Adjust this threshold in order to get the inside of the wells as white as possible and the well's borders as black as possible."],
+    [1,    marginX + 71, 350,  0, 75,    "Increase the value of this parameter if some sections of the well's borders are not black (if there are some 'holes' in the borders)."],
+    [470,  marginX + 71, 350,  0, 50000, "Only change the value of this parameter as a last resort (and change it 'slowly' if you do). This parameter represents the mean area of the wells to detect."],
+    [1,   marginX + 137, 350,  0, 1,     "Put this value to 1 if and only if the inside of your wells are darker than the well's borders in your video."],
+    [470, marginX + 137,  -1, -1, -1,    "Click here once all wells are detected on the image on the right."]]
+    WINDOW_NAME = "Rectangular Wells Detection: Adjust parameters until you get the right number of wells detected (on the right side)"
+    frameToShow = np.concatenate((gray, frame2), axis=1)
+    
+    cv2.putText(frameToShow, "Wells detected:" + str(len(wellPositions)), (int(len(frameToShow[0])/2), 80), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 255), 8)
+  
+    [l, hyperparameters, organizationTab] = adjustHyperparameters(0, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab)
+    
+    for param in hyperparametersListNames:
+      hyperparameters[param] = int(hyperparameters[param])
+    if hyperparameters["rectangularWellsInvertBlackWhite"] > 1:
+      hyperparameters["rectangularWellsInvertBlackWhite"] = 1
+    
+    findRectangularWells(frame, videoPath, hyperparameters, hyperparameters["findRectangleWellArea"])
   
   return wellPositions
 
@@ -140,7 +231,13 @@ def findWells(videoPath, hyperparameters):
   ret, frame = cap.read()
   
   if hyperparameters["wellsAreRectangles"]:
-    wellPositions = findRectangularWells(frame, videoPath, hyperparameters)
+    if hyperparameters["adjustRectangularWellsDetect"]:
+      rectangularWellsArea = findRectangularWellsArea(frame, videoPath, hyperparameters)
+      initializeAdjustHyperparametersWindows("Rectangular Wells Detection: Adjust parameters until you get the right number of wells detected (on the right side)")
+    else:
+      rectangularWellsArea = hyperparameters["findRectangleWellArea"]
+      
+    wellPositions = findRectangularWells(frame, videoPath, hyperparameters, rectangularWellsArea)
   else:
     wellPositions = findCircularWells(frame, videoPath, hyperparameters)
   
@@ -148,50 +245,53 @@ def findWells(videoPath, hyperparameters):
   
   # Sorting wells
   
-  for i in range(0, len(wellPositions)):
-    for j in range(0, len(wellPositions)-1):
-      if wellPositions[j]['topLeftY'] > wellPositions[j+1]['topLeftY']:
-        aux                = wellPositions[j]
-        wellPositions[j]   = wellPositions[j+1]
-        wellPositions[j+1] = aux
-  
-  nbWellsPerRows = hyperparameters["nbWellsPerRows"]
-  nbRowsOfWells  = hyperparameters["nbRowsOfWells"]
-  
-  if (nbRowsOfWells == 0):
+  if len(wellPositions):
+    
     for i in range(0, len(wellPositions)):
       for j in range(0, len(wellPositions)-1):
-        if wellPositions[j]['topLeftX'] > wellPositions[j+1]['topLeftX']:
+        if wellPositions[j]['topLeftY'] > wellPositions[j+1]['topLeftY']:
           aux                = wellPositions[j]
           wellPositions[j]   = wellPositions[j+1]
           wellPositions[j+1] = aux
-  else:
-    for k in range(0, nbRowsOfWells):
-      for i in range(nbWellsPerRows*k, nbWellsPerRows*(k+1)):
-        for j in range(nbWellsPerRows*k, nbWellsPerRows*(k+1)-1):
+    
+    nbWellsPerRows = hyperparameters["nbWellsPerRows"]
+    nbRowsOfWells  = hyperparameters["nbRowsOfWells"]
+    
+    if (nbRowsOfWells == 0):
+      for i in range(0, len(wellPositions)):
+        for j in range(0, len(wellPositions)-1):
           if wellPositions[j]['topLeftX'] > wellPositions[j+1]['topLeftX']:
             aux                = wellPositions[j]
             wellPositions[j]   = wellPositions[j+1]
-            wellPositions[j+1] = aux   
+            wellPositions[j+1] = aux
+    else:
+      for k in range(0, nbRowsOfWells):
+        for i in range(nbWellsPerRows*k, nbWellsPerRows*(k+1)):
+          for j in range(nbWellsPerRows*k, nbWellsPerRows*(k+1)-1):
+            if wellPositions[j]['topLeftX'] > wellPositions[j+1]['topLeftX']:
+              aux                = wellPositions[j]
+              wellPositions[j]   = wellPositions[j+1]
+              wellPositions[j+1] = aux   
   
   # Creating validation image
   
   rectangleTickness = 2
   lengthY = len(frame)
   lengthX = len(frame[0])
-  perm1 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
-  perm2 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
-  perm3 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
-  for i in range(0, len(wellPositions)):
-    if hyperparameters["wellsAreRectangles"]:
-      topLeft     = (wellPositions[i]['topLeftX'], wellPositions[i]['topLeftY'])
-      bottomRight = (wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'], wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'])
-      color = (int(perm1[i]), int(perm2[i]), int(perm3[i]))
-      frame = cv2.rectangle(frame, topLeft, bottomRight, color, rectangleTickness)
-    else:
-      cv2.circle(frame, (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), 170, (0,0,255), 2)
-    cv2.putText(frame, str(i), (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), cv2.FONT_HERSHEY_SIMPLEX, 4,(255,255,255),2,cv2.LINE_AA)
-  frame = cv2.resize(frame, (int(lengthX/2), int(lengthY/2)))
+  if len(wellPositions):
+    perm1 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
+    perm2 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
+    perm3 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
+    for i in range(0, len(wellPositions)):
+      if hyperparameters["wellsAreRectangles"]:
+        topLeft     = (wellPositions[i]['topLeftX'], wellPositions[i]['topLeftY'])
+        bottomRight = (wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'], wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'])
+        color = (int(perm1[i]), int(perm2[i]), int(perm3[i]))
+        frame = cv2.rectangle(frame, topLeft, bottomRight, color, rectangleTickness)
+      else:
+        cv2.circle(frame, (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), 170, (0,0,255), 2)
+      cv2.putText(frame, str(i), (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), cv2.FONT_HERSHEY_SIMPLEX, 4,(255,255,255),2,cv2.LINE_AA)
+  frame = cv2.resize(frame, (int(lengthX/2), int(lengthY/2))) # ???
   cv2.imwrite(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), "repartition.jpg"), frame )
   if hyperparameters["debugFindWells"]:
     cv2.imshow('Wells Detection', frame)

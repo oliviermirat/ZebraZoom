@@ -56,7 +56,7 @@ def findTailTipByUserInput(frame, frameNumber, videoPath, hyperparameters):
   while not(cvui.mouse(WINDOW_NAME, cvui.CLICK)):
     cursor = cvui.mouse(WINDOW_NAME)
     if cv2.waitKey(20) != -1:
-      [frame, thresh1] = headEmbededFrame(videoPath, frameNumber + plus)
+      [frame, thresh1] = headEmbededFrame(videoPath, frameNumber + plus, hyperparameters)
       frame = cv2.rectangle(frame, (0, 0), (250, 29), (255, 255, 255), -1)
       cv2.putText(frame,'Click any key if the tail is', (1, 10), font, 0.5, (0, 150, 0), 1, cv2.LINE_AA)
       cv2.putText(frame,'not straight on this image', (1, 22), font, 0.5, (0, 150, 0), 1, cv2.LINE_AA)
@@ -92,7 +92,7 @@ def findHeadPositionByUserInput(frame, frameNumber, videoPath):
   while not(cvui.mouse(WINDOW_NAME, cvui.CLICK)):
     cursor = cvui.mouse(WINDOW_NAME)
     if cv2.waitKey(20) != -1:
-      [frame, thresh1] = headEmbededFrame(videoPath, frameNumber + plus)
+      [frame, thresh1] = headEmbededFrame(videoPath, frameNumber + plus, hyperparameters)
       frame = cv2.rectangle(frame, (0, 0), (250, 29), (255, 255, 255), -1)
       cv2.putText(frame,'Click any key if the tail is', (1, 10), font, 0.5, (0, 150, 0), 1, cv2.LINE_AA)
       cv2.putText(frame,'not straight on this image', (1, 22), font, 0.5, (0, 150, 0), 1, cv2.LINE_AA)

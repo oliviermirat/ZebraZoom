@@ -3,6 +3,7 @@ import cvui
 import numpy as np
 import pickle
 import math
+import tkinter as tk
 
 def initializeAdjustHyperparametersWindows(WINDOW_NAME):
   cv2.destroyAllWindows()
@@ -34,6 +35,13 @@ def printStuffOnCtrlImg(frameCtrl, frameNum, x, y, l, minn, maxx, name, hint):
 
 
 def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab):
+  
+  root = tk.Tk()
+  horizontal = root.winfo_screenwidth()
+  vertical   = root.winfo_screenheight()
+  if len(frameToShow[0]) > horizontal or len(frameToShow) > vertical:
+    frameToShow = cv2.resize(frameToShow, (int(horizontal*0.8), int(vertical*0.8)))
+  root.destroy()
   
   WINDOW_NAME_CTRL = "Adjust Parameters."
   frameNum            = [l]

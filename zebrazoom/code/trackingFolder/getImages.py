@@ -12,9 +12,9 @@ def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPo
   if hyperparameters["headEmbeded"]:
     if hyperparameters["headEmbededRemoveBack"] == 0:
       if hyperparameters["adjustHeadEmbededTracking"] == 0:
-        [frame, thresh1] = headEmbededFrameSequential(cap, videoPath, i)
+        [frame, thresh1] = headEmbededFrameSequential(cap, videoPath, i, hyperparameters)
       else:
-        [frame, thresh1] = headEmbededFrame(videoPath, i)
+        [frame, thresh1] = headEmbededFrame(videoPath, i, hyperparameters)
       gray = frame.copy()
     else:
       if hyperparameters["adjustHeadEmbededTracking"] == 0:

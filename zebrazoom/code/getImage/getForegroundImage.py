@@ -7,10 +7,16 @@ def getForegroundImage(videoPath, background, frameNumber, wellNumber, wellPosit
   minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtract"]
   debug = 0
   
-  xtop = wellPositions[wellNumber]['topLeftX']
-  ytop = wellPositions[wellNumber]['topLeftY']
-  lenX = wellPositions[wellNumber]['lengthX']
-  lenY = wellPositions[wellNumber]['lengthY']
+  if len(wellPositions):
+    xtop = wellPositions[wellNumber]['topLeftX']
+    ytop = wellPositions[wellNumber]['topLeftY']
+    lenX = wellPositions[wellNumber]['lengthX']
+    lenY = wellPositions[wellNumber]['lengthY']
+  else:
+    xtop = 0
+    ytop = 0
+    lenX = len(background[0])
+    lenY = len(background)
   
   back = background[ytop:ytop+lenY, xtop:xtop+lenX]
   

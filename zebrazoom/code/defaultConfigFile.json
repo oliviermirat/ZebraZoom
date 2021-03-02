@@ -3,6 +3,7 @@
   "adjustDetectMovWithRawVideo" : 0,
   "adjustHeadEmbededTracking" : 0,
   "adjustFreelySwimTracking" : 0,
+  "adjustRectangularWellsDetect" : 0,
   "debugExtractParams" : 0,
   "debugTracking" : 0,
   "debugTrackingPtExtreme" : 0,

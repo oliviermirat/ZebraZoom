@@ -80,18 +80,21 @@ class WellOrganisation(tk.Frame):
     circular = IntVar()
     Checkbutton(self, text="Circular Wells", variable=circular).pack()
     
+    rectangular = IntVar()
+    Checkbutton(self, text="Rectangular Wells", variable=rectangular).pack()
+    
     roi = IntVar()
     Checkbutton(self, text="Choose Region of Interest", variable=roi).pack()
     other = IntVar()
     Checkbutton(self, text="Whole video", variable=other).pack()
     
     
-    tk.Button(self, text="Next", command=lambda: controller.wellOrganisation(controller, circular.get(), roi.get(), other.get())).pack()
+    tk.Button(self, text="Next", command=lambda: controller.wellOrganisation(controller, circular.get(), rectangular.get(), roi.get(), other.get())).pack()
     
     tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
 
 
-class CircularWells(tk.Frame):
+class CircularOrRectangularWells(tk.Frame):
 
   def __init__(self, parent, controller):
   
@@ -112,7 +115,7 @@ class CircularWells(tk.Frame):
     nbWellsPerRows = tk.Entry(self)
     nbWellsPerRows.pack()
     
-    tk.Button(self, text="Next", command=lambda: controller.circularWells(controller, nbwells.get(), nbRowsOfWells.get(), nbWellsPerRows.get())).pack()
+    tk.Button(self, text="Next", command=lambda: controller.circularOrRectangularWells(controller, nbwells.get(), nbRowsOfWells.get(), nbWellsPerRows.get())).pack()
     
     tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
 

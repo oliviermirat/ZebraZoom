@@ -308,6 +308,9 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["rectangularWellsInvertBlackWhite"] = getConfig(config, "rectangularWellsInvertBlackWhite", videoPath)
   hyperparameters["rectangularWellStretchPercentage"] = getConfig(config, "rectangularWellStretchPercentage", videoPath)
   hyperparameters["rectangleWellAreaTolerancePercentage"] = getConfig(config, "rectangleWellAreaTolerancePercentage", videoPath)
+
+  hyperparameters["adjustRectangularWellsDetect"] = getConfig(config, "adjustRectangularWellsDetect", videoPath)
+  
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5

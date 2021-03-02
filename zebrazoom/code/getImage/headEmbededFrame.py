@@ -2,7 +2,7 @@ from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
 
-def headEmbededFrame(videoPath, frameNumber):
+def headEmbededFrame(videoPath, frameNumber, hyperparameters):
   
   debug = 0
   

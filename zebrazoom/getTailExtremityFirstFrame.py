@@ -40,7 +40,7 @@ def getTailExtremityFirstFrame(pathToVideo, videoName, videoExt, configFile, arg
       else:
         videoNames.append(argv[i])
   
-  [frame, thresh1] = headEmbededFrame(videoPath, frameNumber)
+  [frame, thresh1] = headEmbededFrame(videoPath, frameNumber, hyperparameters)
   
   if hyperparameters["accentuateFrameForManualTailExtremityFind"]:
     quartileChose = 0.01

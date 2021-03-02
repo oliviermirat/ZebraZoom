@@ -14,10 +14,24 @@ from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.getBackground import getBackground
 from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
 import cvui
+import pickle
 from zebrazoom.code.vars import getGlobalVariables
+from zebrazoom.mainZZ import mainZZ
 import json
 import os
 globalVariables = getGlobalVariables()
+
+def getMainArguments(self):
+  s            = self.videoToCreateConfigFileFor
+  arr          = s.split("/")
+  nameWithExt  = arr.pop()
+  pathToVideo  = '/'.join(arr) + '/'
+  nameWithExtL = nameWithExt.split(".")
+  videoExt     = nameWithExtL.pop()
+  videoName    = '.'.join(nameWithExtL)
+  configFile   = self.configFile
+  argv         = []
+  return [pathToVideo, videoName, videoExt, configFile, argv]
 
 def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
 
@@ -57,45 +71,78 @@ def chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophil
     self.configFile["freeSwimmingTailTrackingMethod"] = "none"
     controller.show_frame("WellOrganisation")
 
-def wellOrganisation(self, controller, circular, roi, other):
-  if circular and self.organism != 'drosoorrodent':
-    controller.show_frame("CircularWells")
+def wellOrganisation(self, controller, circular, rectangular, roi, other):
+  if rectangular:
+    self.shape = 'rectangular'
+    self.configFile["wellsAreRectangles"] = 1
+    controller.show_frame("CircularOrRectangularWells")
   else:
-    if roi:
-      cap = cv2.VideoCapture(self.videoToCreateConfigFileFor)
-      cap.set(1, 10)
-      ret, frame = cap.read()
-      
-      WINDOW_NAME = "Click on the top left of the region of interest"
-      cvui.init(WINDOW_NAME)
-      cv2.moveWindow(WINDOW_NAME, 0,0)
-      cvui.imshow(WINDOW_NAME, frame)
-      while not(cvui.mouse(cvui.CLICK)):
-        cursor = cvui.mouse()
-        if cv2.waitKey(20) == 27:
-          break
-      self.configFile["oneWellManuallyChosenTopLeft"] = [cursor.x, cursor.y]
-      cv2.destroyAllWindows()
-      
-      WINDOW_NAME = "Click on the bottom right of the region of interest"
-      cvui.init(WINDOW_NAME)
-      cv2.moveWindow(WINDOW_NAME, 0,0)
-      cvui.imshow(WINDOW_NAME, frame)
-      while not(cvui.mouse(cvui.CLICK)):
-        cursor = cvui.mouse()
-        if cv2.waitKey(20) == 27:
-          break
-      self.configFile["oneWellManuallyChosenBottomRight"] = [cursor.x, cursor.y]
-      cv2.destroyAllWindows()
-      
-      self.configFile["nbWells"] = 1
-      chooseBeginningAndEndOfVideo(self, controller)
+    if circular and self.organism != 'drosoorrodent': # should remove the self.organism != 'drosoorrodent' at some point
+      self.shape = 'circular'
+      controller.show_frame("CircularOrRectangularWells")
     else:
-      self.configFile["noWellDetection"] = 1
-      self.configFile["nbWells"] = 1
-      chooseBeginningAndEndOfVideo(self, controller)
+      self.shape = 'other'
+      if roi:
+        cap = cv2.VideoCapture(self.videoToCreateConfigFileFor)
+        cap.set(1, 10)
+        ret, frame = cap.read()
+        
+        WINDOW_NAME = "Click on the top left of the region of interest"
+        cvui.init(WINDOW_NAME)
+        cv2.moveWindow(WINDOW_NAME, 0,0)
+        cvui.imshow(WINDOW_NAME, frame)
+        while not(cvui.mouse(cvui.CLICK)):
+          cursor = cvui.mouse()
+          if cv2.waitKey(20) == 27:
+            break
+        self.configFile["oneWellManuallyChosenTopLeft"] = [cursor.x, cursor.y]
+        cv2.destroyAllWindows()
+        
+        WINDOW_NAME = "Click on the bottom right of the region of interest"
+        cvui.init(WINDOW_NAME)
+        cv2.moveWindow(WINDOW_NAME, 0,0)
+        cvui.imshow(WINDOW_NAME, frame)
+        while not(cvui.mouse(cvui.CLICK)):
+          cursor = cvui.mouse()
+          if cv2.waitKey(20) == 27:
+            break
+        self.configFile["oneWellManuallyChosenBottomRight"] = [cursor.x, cursor.y]
+        cv2.destroyAllWindows()
+        
+        self.configFile["nbWells"] = 1
+        chooseBeginningAndEndOfVideo(self, controller)
+      else:
+        self.configFile["noWellDetection"] = 1
+        self.configFile["nbWells"] = 1
+        chooseBeginningAndEndOfVideo(self, controller)
 
-def circularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
+
+def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
+  
+  [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
+  
+  configFile["adjustRectangularWellsDetect"] = 1
+  
+  try:
+    WINDOW_NAME = "Please Wait"
+    cvui.init(WINDOW_NAME)
+    cv2.moveWindow(WINDOW_NAME, 0,0)
+    r = cv2.waitKey(2)
+    mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+    cv2.destroyAllWindows()
+  except ValueError:
+    newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
+    for index in newhyperparameters:
+      configFile[index] = newhyperparameters[index]
+  
+  configFile["adjustRectangularWellsDetect"] = 0
+  
+  self.configFile = configFile
+  
+  chooseBeginningAndEndOfVideo(self, controller)
+  
+
+def circularOrRectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
   self.configFile["nbWells"]        = int(nbwells)
   
   if len(nbRowsOfWells):
@@ -108,7 +155,11 @@ def circularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
   else:
     self.configFile["nbWellsPerRows"]  = 4
   
-  controller.show_frame("ChooseCircularWellsLeft")
+  if self.shape == 'circular':
+    controller.show_frame("ChooseCircularWellsLeft")
+  else:
+    rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows)
+
 
 def chooseCircularWellsLeft(self, controller):
   cap = cv2.VideoCapture(self.videoToCreateConfigFileFor)
@@ -248,7 +299,9 @@ def chooseBeginningAndEndOfVideo(self, controller):
 
   
 def getImageForMultipleAnimalGUI(l, vertical, horizontal, nx, ny, max_l, videoToCreateConfigFileFor, background, wellPositions, hyperparameters):
-  frame = getForegroundImage(videoToCreateConfigFileFor, background, l, 0, wellPositions, hyperparameters)
+  
+  frame = getForegroundImage(videoToCreateConfigFileFor, background, l, 0, [], hyperparameters)
+  
   lengthX = nx * 2
   lengthY = ny
   
@@ -315,6 +368,9 @@ def printStuffOnCtrlImg(frameCtrl, frameNum, x, y, l, minn, maxx, name):
   cvui.counter(frameCtrl,  x+l+10, y+20,    frameNum)
 
 def identifyMultipleHead(self, controller, nbanimals):
+  
+  self.configFile["videoName"] = "configFilePrep"
+
   tempConfig = self.configFile
   
   horizontal = self.winfo_screenwidth()
@@ -322,6 +378,7 @@ def identifyMultipleHead(self, controller, nbanimals):
   
   # Wait image
   WINDOW_NAME = "Please Wait"
+  cv2.destroyAllWindows()
   cvui.init(WINDOW_NAME)
   cv2.moveWindow(WINDOW_NAME, 0,0)
   # Getting hyperparameters, wellPositions, and background
@@ -336,24 +393,36 @@ def identifyMultipleHead(self, controller, nbanimals):
   img = cv2.imread(os.path.join(cur_dir_path, 'no1.png'))
   img = cv2.resize(img,(int(horizontal*0.95),int(vertical*0.8)))
   buttonclicked = False
+  count = 0
   while not(buttonclicked):
     buttonclicked = cvui.button(img, 10, 10, "Ok, I understand!")
     cvui.imshow(WINDOW_NAME, img)
     cv2.waitKey(20)
+    count = count + 1
+    if count > 100:
+      buttonclicked = True
   img = cv2.imread(os.path.join(cur_dir_path, 'no2.png'))
   img = cv2.resize(img,(int(horizontal*0.95),int(vertical*0.8)))
   buttonclicked = False
+  count = 0
   while not(buttonclicked):
     buttonclicked = cvui.button(img, 10, 10, "Ok, I understand!")
     cvui.imshow(WINDOW_NAME, img)
     cv2.waitKey(20)
+    count = count + 1
+    if count > 100:
+      buttonclicked = True
   img = cv2.imread(os.path.join(cur_dir_path, 'ok1.png'))
   img = cv2.resize(img,(int(horizontal*0.95),int(vertical*0.8)))
   buttonclicked = False
+  count = 0
   while not(buttonclicked):
     buttonclicked = cvui.button(img, 10, 10, "Ok, I understand!")
     cvui.imshow(WINDOW_NAME, img)
     cv2.waitKey(20)
+    count = count + 1
+    if count > 100:
+      buttonclicked = True
   
   WINDOW_NAME = "Adjust Parameters: As much as possible, you must see red points on and only on animals on the right image."
   WINDOW_NAME_CTRL = "Adjust Parameters."
@@ -364,7 +433,7 @@ def identifyMultipleHead(self, controller, nbanimals):
   ny         = int(cap.get(4))
   max_l      = int(cap.get(7))
   
-  hyperparameters["minArea"] = 10
+  hyperparameters["minArea"] = 5
   hyperparameters["maxArea"] = 800
 
   [frame, maxAreaBlobs] = getImageForMultipleAnimalGUI(1, vertical, horizontal, nx, ny, max_l, self.videoToCreateConfigFileFor, background, wellPositions, hyperparameters)
@@ -418,6 +487,8 @@ def identifyMultipleHead(self, controller, nbanimals):
     if cv2.waitKey(20) == 27:
         break
   cv2.destroyAllWindows()
+  
+  del self.configFile["videoName"]
   
   self.configFile["minPixelDiffForBackExtract"] = int(hyperparameters["minPixelDiffForBackExtract"])
   self.configFile["thresholdForBlobImg"]        = int(hyperparameters["thresholdForBlobImg"])

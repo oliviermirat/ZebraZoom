@@ -59,7 +59,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     # Getting images
     
     if hyperparameters["headEmbededRemoveBack"] == 0 and hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0:
-      [frame, thresh1] = headEmbededFrame(videoPath, firstFrame)
+      [frame, thresh1] = headEmbededFrame(videoPath, firstFrame, hyperparameters)
     else:
       hyperparameters["headEmbededRemoveBack"] = 1
       hyperparameters["minPixelDiffForBackExtract"] = hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"]
