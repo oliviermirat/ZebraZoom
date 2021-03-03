@@ -20,6 +20,7 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
   frame_width  = int(cap.get(3))
   frame_height = int(cap.get(4))
   nbFrames     = int(cap.get(7))
+  inputFps     = int(cap.get(5))
   
   infoFrame = [[]] * nbFrames
   infoWells = []
@@ -128,7 +129,11 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
 
   # Going through the video and printing stuff on it.
   outputName = os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), hyperparameters["videoName"] + '.avi')
-  out = cv2.VideoWriter(outputName,cv2.VideoWriter_fourcc('M','J','P','G'), 10, (frame_width,frame_height))
+  outputFps = inputFps
+  if hyperparameters["outputValidationVideoFps"] > 0:
+    outputFps = int(hyperparameters["outputValidationVideoFps"])
+  
+  out = cv2.VideoWriter(outputName,cv2.VideoWriter_fourcc('M','J','P','G'), outputFps, (frame_width,frame_height))
 
   cap.set(1, firstFrame)
   

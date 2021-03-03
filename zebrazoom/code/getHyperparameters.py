@@ -311,6 +311,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
 
   hyperparameters["adjustRectangularWellsDetect"] = getConfig(config, "adjustRectangularWellsDetect", videoPath)
   
+  hyperparameters["outputValidationVideoFps"] = getConfig(config, "outputValidationVideoFps", videoPath)
+  
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5

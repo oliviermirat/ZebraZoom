@@ -270,12 +270,16 @@ Other useful parameters include:<br/>
 <font color="blue">"plotOnlyOneTailPointForVisu" (default 0):</font> if set to 1, it will only plot the tip of the tail on the validation video <br/>
 <font color="blue">"trackingPointSizeDisplay" (default 1):</font> size of points displayed on the validation video <br/>
 <font color="blue">"fillGapFrameNb" (default 5):</font> try to decrease this if the bouts detected are too long, try increasing if the bouts detected are too short or if they are "cut" into several different pieces.<br/>
+<font color="blue">"outputValidationVideoFps" (default -1):</font> fps of the output validation video (if value is strictly above 0). Otherwise, the fps of the output validation video will be the same as the fps of the input video.<br/>
 
 <a name="GUIanalysis"/>
 
 <br/>[Back to table of content](#tableofcontent)<br/>
 <H2 CLASS="western">Further analyzing ZebraZoom's output through the Graphical User Interface:</H2>
-Click on "Analyze ZebraZoom's outputs" in the main menu. Then you can choose to either compare different populations of animals with kinematic parameters or to cluster bouts of movements.
+Click on "Analyze ZebraZoom's outputs" in the main menu. Then you can choose to either compare different populations of animals with kinematic parameters or to cluster bouts of movements.<br/><br/>
+
+<H3 CLASS="western">Units of output parameters for comparaison of populations with kinematic parameters:</H3>
+When the results are first saved after the tracking (in the file results_videoName.txt in the subfolder ZZoutput/videoName) the units are simply in pixels (for spatial resolution) and frames (for time resolution). However, when using the option "Analyze ZebraZoom's outputs" from the main menu of the GUI, you will need to choose an "organization excel file". This "organization excel file" contains a column named "fq" and another column named "pixelsize". In the column "pixelsize" you must put the size of the pixels in your video and you can choose the unit for this value of pixel size (it could be in μm, mm, cm, m, etc...): this choice will then be reflected in the units of speed and distance travel calculated: for example if you choose mm for the pixel size, then the distance traveled calculated will also be in mm. Similarly, in the column "fq" you must put the frequency of acquisition of the video: if you put this unit in Hz (1/second) then the time unit for the duration and speed calculated will be in seconds; and if you decided to put in this column a frequency of acquisition in 1/minute, then the time unit for duration and speed will also be in minutes.
 
 <a name="pythonanalysis"/>
 
