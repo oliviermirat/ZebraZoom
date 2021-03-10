@@ -10,37 +10,27 @@ def computeHeading(thresh1, x, y, headSize, hyperparameters):
   videoWidth  = hyperparameters["videoWidth"]
   videoHeight = hyperparameters["videoHeight"]
   
-  if y-headSize < 0:
-    ymin = 0
-  else:
-    ymin = y-headSize
-    
-  if y+headSize > videoHeight:
-    ymax = videoHeight - 1
-  else:
-    ymax = y+headSize
-    
-  if x-headSize < 0:
-    xmin = 0
-  else:
-    xmin = x-headSize
-    
-  if x+headSize > videoWidth:
-    xmax = videoWidth - 1
-  else:
-    xmax = x+headSize
+  x = x + int(headSize)
+  y = y + int(headSize)
+  
+  paddedImage = np.zeros((len(thresh1) + 2 * int(headSize), len(thresh1[0]) + 2 * int(headSize)))
+  paddedImage[:, :] = 255
+  paddedImage[int(headSize):len(thresh1)+int(headSize), int(headSize):len(thresh1[0])+int(headSize)] = thresh1
+  thresh1 = paddedImage
+  
+  thresh1 = thresh1.astype(np.uint8)
+
+  ymin  = y - headSize
+  ymax  = y + headSize
+  xmin  = x - headSize
+  xmax  = x + headSize
   
   img = thresh1[int(ymin):int(ymax), int(xmin):int(xmax)]
   
   img[0,:] = 255
-  
   img[len(img)-1,:] = 255
   img[:,0] = 255
   img[:,len(img[0])-1] = 255
-  
-  if hyperparameters["debugHeadingCalculation"]:
-    cv2.imshow('imgForHeadingCalculation', img)
-    cv2.waitKey(0)
   
   y, x = np.nonzero(img)
   x = x - np.mean(x)
@@ -52,9 +42,15 @@ def computeHeading(thresh1, x, y, headSize, hyperparameters):
   x_v1, y_v1 = evecs[:, sort_indices[0]]  # Eigenvector with largest eigenvalue
   x_v2, y_v2 = evecs[:, sort_indices[1]]
   scale = 20
-  
   theta = calculateAngle(0, 0, x_v1, y_v1)
   theta = (theta - math.pi/2) % (2 * math.pi)
+  
+  if hyperparameters["debugHeadingCalculation"]:
+    img2 = img.copy()
+    img2 = cv2.cvtColor(img2, cv2.COLOR_GRAY2BGR)
+    cv2.line(img2, (int(len(img2[0])/2), int(len(img2)/2)), (int(len(img[0])/2 + 20 * math.cos(theta)), int(len(img)/2 + 20 * math.sin(theta))), (255,0,0), 1)
+    cv2.imshow('imgForHeadingCalculation', img2)
+    cv2.waitKey(0)
   
   return theta
 
