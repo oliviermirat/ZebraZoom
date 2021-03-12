@@ -11,6 +11,7 @@ zebrazoom/code/vars/__pycache__/
 zebrazoom/dataAnalysis/dataanalysis/__pycache__/
 zebrazoom/dataAnalysis/datasetcreation/__pycache__/
 zebrazoom/dataAnalysis/__pycache__
+zebrazoom/videoFormatConversion/__pycache__
 
 zebrazoom/newhyperparameters
 zebrazoom/trace.txt

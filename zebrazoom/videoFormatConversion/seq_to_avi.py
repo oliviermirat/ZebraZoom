@@ -12,6 +12,7 @@ import configparser
 import numpy as np
 import cv2
 from pathlib import Path
+import platform
 
 def sqb_convert_to_avi(path, videoName, lastFrame):
   """
@@ -51,13 +52,19 @@ def sqb_convert_to_avi(path, videoName, lastFrame):
       if (i % 500 == 0):
         print("image " + str(i) + " out of " + str(lastFrame) + " in total")
     
-      offset = struct.unpack('l', f.read(4))
-      padding = f.read(4)
-      timestamp = struct.unpack('d', f.read(8))
-      binfile = struct.unpack('i', f.read(4))
-      padding = f.read(4)
+      if int(platform.system() == "Linux"):
+        offset = struct.unpack('l', f.read(8))
+        timestamp = struct.unpack('d', f.read(8))
+        binfile = struct.unpack('i', f.read(4))
+        padding = f.read(4)
+      else:
+        offset = struct.unpack('l', f.read(4))
+        padding = f.read(4)
+        timestamp = struct.unpack('d', f.read(8))
+        binfile = struct.unpack('i', f.read(4))
+        padding = f.read(4)
       
-      bin_path = "%s\\%s%0.5d.bin" % (pathstr, bin_file, binfile[0])
+      bin_path = os.path.join("%s" % (pathstr), "%s%0.5d.bin" % (bin_file, binfile[0]))
       
       f_bin = open(bin_path, 'rb')
       f_bin.seek(offset[0], os.SEEK_SET)
