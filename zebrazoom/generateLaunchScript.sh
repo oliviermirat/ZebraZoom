@@ -2,7 +2,7 @@
 
 # This script takes as parameters:
 # 1 : path to the folder where all the videos you want to analyze are
-# 2 : extension of the video to analyze
+# 2 : extension of the videos to analyze
 # 3 : path to the configuration file
 
 # Warning: you must put the full paths as parameters for this to work (c:/ etc...)

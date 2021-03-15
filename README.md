@@ -35,6 +35,7 @@ For more information visit <a href="https://zebrazoom.org/" target="_blank">zebr
 [Using ZebraZoom through the command line](#commandlinezebrazoom)<br/>
 [Checking the quality of the tracking](#trackingqualitycheck)<br/>
 [Adjusting ZebraZoom's hyperparameters through the GUI](#hyperparameters)<br/>
+[Adjusting ZebraZoom's hyperparameters: for testing/troubleshooting](#hyperparametersTesting)<br/>
 [Adjusting ZebraZoom's hyperparameters: further adjustment of tail angle smoothing and bouts and bends detection](#hyperparametersTailAngleSmoothBoutsAndBendsDetect)<br/>
 [Adjusting ZebraZoom's hyperparameters: head-embedded zebrafish tail tracking in difficult conditions](#extremeHeadEmbeddedTailTracking)<br/>
 [Adjusting ZebraZoom's hyperparameters: other adjustments](#hyperparametersOtherAdjustments)<br/>
@@ -159,6 +160,14 @@ In order to track videos other than the ones provided on ZebraZoom's website, yo
 Tip: once you've created a configuration file for some videos and launched the tracking on those videos using that configuration file, check the quality of the tracking and bouts extraction by clicking on “Visualize ZebraZoom's output”. If you are unsatisfied with the results, you can refine the configuration file you created by clicking on “Prepare configuration file for tracking” in the main menu and then by clicking on the box “Click here to start from a configuration file previously created (instead of from scratch)”: this will allow you to reload and refine the configuration file you already created. You can then save that refined configuration file and use it to re-tracked your videos.<br/>
 
 
+<a name="hyperparametersTesting"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Adjusting ZebraZoom's hyperparameters: for testing/troubleshooting:</H2>
+When first trying out a configuration file, it can sometimes be a good idea to check the quality of the tracking on a smaller sub-video before launching the tracking on the entire video. For this, you can set the parameters "firstFrame" and "lastFrame" to, respectively, the frame where you want the tracking to start and to the frame where you want the tracking to end.<br/>
+If you are detecting wells in your video before the tracking, you can also set the parameter "onlyTrackThisOneWell" to the number of the well you want the tracking to be performed on. If this parameter is left to its default value of -1, then the tracking will be performed on all wells detected.<br/>
+If you are using the <a href="#commandlinezebrazoom">command line</a> to launch the tracking, you can also set some of the "debugging parameters" (such as "debugExtractParams", "debugTracking", "debugTrackingPtExtreme", "debugExtractBack", "debugFindWells", "debugHeadingCalculation", "debugDetectMovWithRawVideo") to 1 to help you find where problems might be occuring.<br/>
+
 <a name="hyperparametersTailAngleSmoothBoutsAndBendsDetect"/>
 
 <br/>[Back to table of content](#tableofcontent)<br/>
@@ -251,26 +260,39 @@ If after following the instructions above you still don't manage to create a con
 <br/>[Back to table of content](#tableofcontent)<br/>
 <H2 CLASS="western">Adjusting ZebraZoom's hyperparameters: other adjustments:</H2>
 
+<H3 CLASS="western">Image preprocessing before tracking:</H3>
 It can sometimes be useful to preprocess the frames of the video before starting the tracking. The two parameters below can be used to this end:<br/>
 <font color="blue">"imagePreProcessMethod" (default 0):</font> set it to the preprocessing method you want to use. At the moment, the methods available are "medianAndMinimum" and "erodeThenDilate". If necessary, feel free to add other methods in the file <a href="https://github.com/oliviermirat/ZebraZoom/blob/master/zebrazoom/code/preprocessImage.py" style="color:blue" target="_blank">preprocessImage.py</a>. By default (0), no preprocessing will be applied.<br/>
 <font color="blue">"imagePreProcessParameters" (default []):</font> parameters of the previously specified preprocessing method used. <br/><br/>
 
+<H3 CLASS="western">Background extraction with only two frames of the video:</H3>
 <font color="blue">"backgroundExtractionWithOnlyTwoFrames" (default 0):</font> set this parameter to 1 to perform the background subtraction with only two frames (the two frames will be chosen in order to maximise the amount of differences between the two frames). Setting this parameter to 1 can be useful to speed up the background extraction process and/or if for some reason using a lot of frames for the background extraction leads to problems.<br/><br/>
 
+<H3 CLASS="western">Prevent issues when no movement is occuring (only works when wells are not detected at the moment):</H3>
 Not having any movement occur in a video can sometimes lead to the tracking detecting tracking points at wrong locations. To solve this issue, you can adjust the two following parameters:<br/>
 <font color="blue">"checkThatMovementOccurInVideo (default 0):</font> set to a value above 0 to avoid having the tracking being performed if it seems that no movement is occurring in the video. When launching ZebraZoom with this parameter set to a value above 0, ZebraZoom will print in the console:<br/>
 <I>start get background<br/>
 checkThatMovementOccurInVideo: max difference is: X<br/>
 Background Extracted</I><br/>
 When movement is occurring in the video, the value of X will be high; and when no movement is occurring, the value will be low. You should run ZebraZoom on several videos to determine a good threshold of this value of X between videos where movement is occurring and videos where no movement is occurring. Then, set <font color="blue">"checkThatMovementOccurInVideo</font> to that threshold to allow ZebraZoom to be able to differentiate between videos with movements and videos with no movements.<br/>
-
 <font color="blue">"checkThatMovementOccurInVideoMedianFilterWindow" (default 11):</font> The previous method relies on a median filter that smooth images. You can adjust the window of that median filter with this parameter.<br/><br/>
 
-Other useful parameters include:<br/>
-<font color="blue">"plotOnlyOneTailPointForVisu" (default 0):</font> if set to 1, it will only plot the tip of the tail on the validation video <br/>
-<font color="blue">"trackingPointSizeDisplay" (default 1):</font> size of points displayed on the validation video <br/>
+<H3 CLASS="western">Freely swimming in "difficult conditions", mostly when low number of pixels per fish:</H3>
+If you are trying to track freely swimming fish in "difficult conditions", especially if there's a low number of pixels per fish, you can try adjusting the following parameters:<br/>
+<font color="blue">"headingCalculationMethod" (default "calculatedWithHead"):</font> set this parameter to "simplyFromPreviousCalculations" to keep the heading initially calculated during the initial stages of the calculation (calculated with the blob representing the head of the fish and the blob representing the body of the fish).<br/>
+<font color="blue">"findContourPrecision" (default "CHAIN_APPROX_SIMPLE"):</font> set this parameter to "CHAIN_APPROX_NONE" in order to increase the accuracy of the tail calculation.<br/>
+<font color="blue">"checkAllContourForTailExtremityDetect" (default 0):</font> set to 1 to avoid having the algorithm mismatch the head section of the contour with the tail section of the contour when looking for the tip of the tail<br/>
+<font color="blue">"considerHighPointForTailExtremityDetect" (default 1):</font> set to 0 to avoid taking into consideration the "highest" point along the body of the fish as a tail extremity candidate point when looking for the tip of the tail.<br/>
+<font color="blue">"erodeIter" (default 1):</font> set this parameter to 0, especially if there are many pixels not belonging to the fish set to black pixels after the thresholding.<br/><br/>
+
+<H3 CLASS="western">Parameters related to the output validation video:</H3>
+<font color="blue">"plotOnlyOneTailPointForVisu" (default 0):</font> if set to 1, it will only plot the tip of the tail on the validation video<br/>
+<font color="blue">"trackingPointSizeDisplay" (default 1):</font> size of points displayed on the validation video<br/>
+<font color="blue">"validationVideoPlotHeading" (default 1):</font> make sure this parameter is set to 1 if you want to see heading on your validation video<br/>
+<font color="blue">"outputValidationVideoFps" (default -1):</font> fps of the output validation video (if value is strictly above 0). Otherwise, the fps of the output validation video will be the same as the fps of the input video.<br/><br/>
+
+<H3 CLASS="western">Other parameters:</H3>
 <font color="blue">"fillGapFrameNb" (default 5):</font> try to decrease this if the bouts detected are too long, try increasing if the bouts detected are too short or if they are "cut" into several different pieces.<br/>
-<font color="blue">"outputValidationVideoFps" (default -1):</font> fps of the output validation video (if value is strictly above 0). Otherwise, the fps of the output validation video will be the same as the fps of the input video.<br/>
 
 <a name="GUIanalysis"/>
 

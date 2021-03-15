@@ -55,7 +55,7 @@ def computeHeading(thresh1, x, y, headSize, hyperparameters):
   return theta
 
 
-def calculateHeading(x, y, i, thresh1, thresh2, takeTheHeadClosestToTheCenter, hyperparameters):
+def calculateHeading(x, y, i, thresh1, thresh2, takeTheHeadClosestToTheCenter, hyperparameters, previousFrameHeading=0):
 
   nbList = hyperparameters["nbList"]
   expDecreaseFactor = hyperparameters["expDecreaseFactor"]
@@ -91,35 +91,35 @@ def calculateHeading(x, y, i, thresh1, thresh2, takeTheHeadClosestToTheCenter, h
     for contour in contours:
       area = cv2.contourArea(contour)
       if (area > minAreaCur) and (area < maxAreaCur):
-        M = cv2.moments(contour)
-        if takeTheHeadClosestToTheCenter == 0:
+        dist = cv2.pointPolygonTest(contour, (x, y), True)
+        if dist >= 0:
+          M = cv2.moments(contour)
           if M['m00']:
             cx = int(M['m10']/M['m00'])
             cy = int(M['m01']/M['m00'])
+            bodyContour = contour
           else:
             cx = 0
             cy = 0
-        else:
-          if M['m00']:
-            cxNew = int(M['m10']/M['m00'])
-            cyNew = int(M['m01']/M['m00'])
-          else:
-            cx = 0
-            cy = 0
-          
-          distToCenterNew = math.sqrt((cxNew-x)**2 + (cyNew-y)**2)
-          distToCenter    = math.sqrt((cx-x)**2    + (cy-y)**2)
-          # print("distToCenter:",distToCenter," ; distToCenterNew:",distToCenterNew)
-          if distToCenterNew < distToCenter:
-            cx = cxNew
-            cy = cyNew
-            # print("change realized, new center is:", cx, cy)
-    minAreaCur = minAreaCur - 100
-    maxAreaCur = maxAreaCur + 100
+          if hyperparameters["debugHeadingCalculation"]:
+            print("area:", area)
+            print("dist, cx, cy:", dist, cx, cy)
+            print("x, y:", x, y)
+    
+    minAreaCur = minAreaCur - 100 # NEED TO IMPROVE THIS AT SOME POINT: IT SHOULDN'T BE 100 AUTOMATICALY
+    maxAreaCur = maxAreaCur + 100 # NEED TO ADJUST THAT VALUE
   
+  if hyperparameters["debugHeadingCalculation"]:
+    print("x, y, cx, cy:", x, y, cx, cy)
   
   heading = computeHeading(thresh2, x, y, headSize, hyperparameters)
-  lastFirstTheta = calculateAngle(x, y, cx, cy)
+  if hyperparameters["debugHeadingCalculation"]:
+    print("previousFrameHeading:", previousFrameHeading)
+    print("math.sqrt((x - cx)**2 + (y - cy)**2):", math.sqrt((x - cx)**2 + (y - cy)**2))
+  if math.sqrt((x - cx)**2 + (y - cy)**2) > 1:
+    lastFirstTheta = calculateAngle(x, y, cx, cy)
+  else:
+    lastFirstTheta = (previousFrameHeading + math.pi) % (2 * math.pi)
   
   headingApproximate = lastFirstTheta
   headingPreciseOpt1 = heading
@@ -130,6 +130,14 @@ def calculateHeading(x, y, i, thresh1, thresh2, takeTheHeadClosestToTheCenter, h
     heading = headingPreciseOpt1
   else:
     heading = headingPreciseOpt2
+  
+  if hyperparameters["debugHeadingCalculation"]:
+    print("headingApproximate:", headingApproximate)
+    print("headingPreciseOpt1:", headingPreciseOpt1)
+    print("headingPreciseOpt2:", headingPreciseOpt2)
+    print("diffAngle1:", diffAngle1)
+    print("diffAngle2:", diffAngle2)
+    print("heading:", heading)
   
   return [heading, lastFirstTheta]
 

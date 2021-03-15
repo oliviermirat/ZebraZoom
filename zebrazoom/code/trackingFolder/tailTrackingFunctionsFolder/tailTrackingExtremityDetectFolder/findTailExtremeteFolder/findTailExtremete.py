@@ -17,7 +17,7 @@ from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtre
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.functions import smoothTail
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.insideTailExtremete import insideTailExtremete
 
-def findTailExtremete(rotatedContour, bodyContour, aaa, bord1b, bord2b, debug, dst, tailExtremityMaxJugeDecreaseCoeff):
+def findTailExtremete(rotatedContour, bodyContour, aaa, bord1b, bord2b, debug, dst, tailExtremityMaxJugeDecreaseCoeff, hyperparameters):
 
   max  = 0
   max2 = 0
@@ -62,16 +62,21 @@ def findTailExtremete(rotatedContour, bodyContour, aaa, bord1b, bord2b, debug, d
   max1 = distance2[bord2] - distance2[bord1] 
   max2 = (distance2[bord1] - distance2[0])  + (distance2[len(rotatedContour)] - distance2[bord2])
   
-  tailRange = []
-  if (max1 > max2):
-    for i in range(bord1, bord2):
-      tailRange.append(i)
+  if hyperparameters["checkAllContourForTailExtremityDetect"] == 0:
+    tailRange = []
+    if (max1 > max2):
+      for i in range(bord1, bord2):
+        tailRange.append(i)
+    else:
+      for i in range(0, bord1):
+        tailRange.append(i)
+      for i in range(bord2, len(rotatedContour)):
+        tailRange.append(i)
   else:
-    for i in range(0, bord1):
+    tailRange = []
+    for i in range(0, len(rotatedContour)):
       tailRange.append(i)
-    for i in range(bord2, len(rotatedContour)):
-      tailRange.append(i)
-  
+    
   [max2, max_droite, min_gauche, max_bas, min_haut, ind_droite, ind_gauche, ind_bas, ind_haut] = insideTailExtremete(distance2, DotProds, max_droite, min_gauche, max_bas, min_haut, ind_droite, ind_gauche, ind_bas, ind_haut, tailRange, rotatedContour, dst)
     
   MostCurvy = 100000
@@ -126,7 +131,7 @@ def findTailExtremete(rotatedContour, bodyContour, aaa, bord1b, bord2b, debug, d
   if debug:
     print("Haut (white) = curv: ", DotProdPtr, " ; jugeHaut: ", jugeHaut)
 
-  if (( DotProdPtr < MostCurvy) and (jugeHaut > maxJuge)):
+  if (( DotProdPtr < MostCurvy) and (jugeHaut > maxJuge) and hyperparameters["considerHighPointForTailExtremityDetect"]):
     MostCurvy =  DotProdPtr
     MostCurvyIndex = ind_haut
     if (debug):
@@ -155,6 +160,12 @@ def findTailExtremete(rotatedContour, bodyContour, aaa, bord1b, bord2b, debug, d
     # Bas
     pt1 = bodyContour[int(ind_bas)][0]
     cv2.circle(dst, (pt1[0],pt1[1]), 1, (255, 255, 0), -1)
+    if False: # The following can sometimes be useful when debugging
+      for i in range(0, len(rotatedContour)):
+        pt1 = rotatedContour[int(i)][0]
+        cv2.circle(dst, (pt1[0],pt1[1]), 1, (0, 0, 0), -1)
+    if hyperparameters["debugTrackingPtExtremeLargeVerticals"]:
+      dst = dst[pt1[1]-200:len(dst), :]
     # Plotting points
     cv2.imshow('Frame', dst)
     cv2.waitKey(0)

@@ -1,7 +1,7 @@
 import math
 import cv2
 import numpy as np
-from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.calculateHeading import calculateHeadingSimple
+from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.calculateHeading import calculateHeadingSimple, calculateHeading
 
 def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, hyperparameters, gray, i, firstFrame, thresh1, thresh3):
   
@@ -27,9 +27,8 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
       # print("MMMinAreaCur:", minAreaCur)
       for contour in contours:
         area = cv2.contourArea(contour)
-        # if area > 100:
-          # print("area:", area)
         if (area > minAreaCur) and (area < maxAreaCur):
+          # print("Find center of mass: area:", area)
           M = cv2.moments(contour)
           if M['m00']:
             x = int(M['m10']/M['m00'])
@@ -51,6 +50,7 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
     for contour in contours:
       area = cv2.contourArea(contour)
       if (area > minAreaCur) and (area < maxAreaCur):
+        # print("Find center of mass: area:", area)
         M = cv2.moments(contour)
         if M['m00']:
           x = int(M['m10']/M['m00'])
@@ -171,7 +171,13 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
     if x_curFrame_animal_Id != 0 and y_curFrame_animal_Id != 0:
       x_curFrame_animal_Id = int(x_curFrame_animal_Id)
       y_curFrame_animal_Id = int(y_curFrame_animal_Id)
-      heading = calculateHeadingSimple(x_curFrame_animal_Id, y_curFrame_animal_Id, thresh2, hyperparameters)
+      
+      if hyperparameters["forceBlobMethodForHeadTracking"]: # Fish tracking, usually
+        previousFrameHeading = trackingHeadingAllAnimals[animal_Id, i-firstFrame-1] if i-firstFrame-1 > 0 else 0
+        [heading, lastFirstTheta] = calculateHeading(x_curFrame_animal_Id, y_curFrame_animal_Id, 0, thresh1, thresh2, 0, hyperparameters, previousFrameHeading)
+      else: # Drosophilia, mouse, and other center of mass only tracking
+        heading = calculateHeadingSimple(x_curFrame_animal_Id, y_curFrame_animal_Id, thresh2, hyperparameters)
+      
       trackingHeadingAllAnimals[animal_Id, i-firstFrame] = heading
   
   return [trackingHeadingAllAnimals, trackingHeadTailAllAnimals]

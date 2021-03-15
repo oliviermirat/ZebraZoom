@@ -31,7 +31,10 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
   lastFrame = hyperparameters["lastFrame"]
   
   if hyperparameters["debugTrackingThreshImg"]:
-    cv2.imshow('debugTrackingThreshImg', thresh1)
+    if hyperparameters["debugTrackingPtExtremeLargeVerticals"]:
+      cv2.imshow('debugTrackingThreshImg', thresh1[int(headPosition[1])-200:len(thresh1), :] )
+    else:
+      cv2.imshow('debugTrackingThreshImg', thresh1)
     cv2.waitKey(0)
   
   # Finding blob corresponding to the body of the fish
@@ -43,12 +46,9 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
     res = findTheTwoSides(headPosition, bodyContour, dst)
     
     # Finding tail extremity
-    # if True:
     rotatedContour = bodyContour.copy()
     rotatedContour = Rotate(rotatedContour,int(headPosition[0]),int(headPosition[1]),heading,dst)
-    [MostCurvyIndex, distance2] = findTailExtremete(rotatedContour, bodyContour, headPosition[0], int(res[0]), int(res[1]), debugAdv, dst, hyperparameters["tailExtremityMaxJugeDecreaseCoeff"])
-    # else:
-      # [MostCurvyIndex, distance2] = findTailExtremete(bodyContour, headPosition[0], int(res[0]), int(res[1]), debugAdv, dst)
+    [MostCurvyIndex, distance2] = findTailExtremete(rotatedContour, bodyContour, headPosition[0], int(res[0]), int(res[1]), debugAdv, dst, hyperparameters["tailExtremityMaxJugeDecreaseCoeff"], hyperparameters)
     
     if debugAdv:
       # Head Center
@@ -58,10 +58,13 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
       cv2.circle(dst, (pt1[0],pt1[1]), 3, (255, 0, 0), -1)
       # Tail basis 2
       pt1 = bodyContour[int(res[1])][0]
-      cv2.circle(dst, (pt1[0],pt1[1]), 3, (255, 0, 0), -1)
+      cv2.circle(dst, (pt1[0],pt1[1]), 3, (180, 0, 0), -1)
       # Tail extremity
       pt1 = bodyContour[int(MostCurvyIndex)][0]
       cv2.circle(dst, (pt1[0],pt1[1]), 3, (0, 0, 255), -1)
+      #
+      if hyperparameters["debugTrackingPtExtremeLargeVerticals"]:
+        dst = dst[int(headPosition[1])-200:len(dst), :]
       # Plotting points
       cv2.imshow('Frame', dst)
       cv2.waitKey(0)

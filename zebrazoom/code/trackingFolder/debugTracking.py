@@ -16,6 +16,9 @@ def debugTracking(nbTailPoints, i, firstFrame, output, outputHeading, frame2, hy
       x = output[k, i-firstFrame][0][0]
       y = output[k, i-firstFrame][0][1]
       cv2.line(frame2,(int(x),int(y)),(int(x+20*math.cos(outputHeading[k, i-firstFrame])),int(y+20*math.sin(outputHeading[k, i-firstFrame]))), (255,0,0), 3)
-      
+    
+    if hyperparameters["debugTrackingPtExtremeLargeVerticals"]: # Put this to True for large resolution videos (to be able to see on your screen what's happening)
+      frame2 = frame2[int(y-200):len(frame2), :]
+    
     cv2.imshow('Frame', frame2)
     cv2.waitKey(0)

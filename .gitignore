@@ -35,3 +35,4 @@ zebrazoom/dataAnalysis/resultsKinematic/*
 zebrazoom/dataAnalysis/analysisScriptsForProjects/
 
 prepRepo.sh
+trace.txt

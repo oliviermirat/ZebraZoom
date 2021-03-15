@@ -17,8 +17,8 @@ def Rotate(boundary, aaa, bbb, angle, dst):
 
   x1 = aaa + 100*math.cos(angle)
   y1 = bbb + 100*math.sin(angle)
-  x2 = aaa + 100*math.cos(angle + 3.14159265)
-  y2 = bbb + 100*math.sin(angle + 3.14159265)
+  x2 = aaa + 100*math.cos(angle + math.pi)
+  y2 = bbb + 100*math.sin(angle + math.pi)
   x = 0
   y = 0
   r = 0
@@ -45,9 +45,9 @@ def Rotate(boundary, aaa, bbb, angle, dst):
   if (min_dist1<min_dist2):
     theta = angle
   else:
-    theta = angle + 3.14159265
+    theta = angle + math.pi
 
-  theta = (3.14159265/2) - theta
+  theta = (math.pi/2) - theta
 
   for i in range(0, len(boundary)):
     Pt = boundary[i][0]
@@ -61,12 +61,12 @@ def Rotate(boundary, aaa, bbb, angle, dst):
     if (x<0):
       x = -x
       alpha_aux = math.atan(y/x)
-      alpha = 3.14159265 - alpha_aux
+      alpha = math.pi - alpha_aux
     if (x == 0):
       if (y>0):
-        alpha = 3.14159265/2
+        alpha = math.pi/2
       else:
-        alpha = -3.14159265/2
+        alpha = -math.pi/2
 
     final_angle = theta + alpha
     x = r*math.cos(final_angle)

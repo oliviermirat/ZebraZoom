@@ -100,4 +100,14 @@ def getMidline(bord1, bord2, MostCurvyIndex, boundary, dst, taille, distance2, d
       else:
         ClosestPoint = [-200, -200]
   
+  else:
+  
+    # THIS SHOULD BE IMPROVED IN THE FUTURE:
+    # WE SHOULD CHECK FOR TAIL LENGHT
+    # ALSO WE SHOULD DO SOMETHING BETTER THAN JUST PUTTING THE TAIL TIP FOR EACH OF THE TEN POINTS !!!
+    Tail = boundary[MostCurvyIndex][0]    
+    point = np.array([Tail[0], Tail[1]])
+    for i in range(0, taille):
+      output = np.insert(output, 0, point, axis=1)    
+  
   return output

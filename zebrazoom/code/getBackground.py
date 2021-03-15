@@ -94,7 +94,10 @@ def getBackground(videoPath, hyperparameters):
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
           putToWhite = (frame.astype('int32') >= (back.astype('int32')-hyperparameters["minPixelDiffForBackExtract"]))
           frame[putToWhite] = 255
-          diff  = np.sum(cv2.medianBlur(np.abs(frame - firstImage), hyperparameters["checkThatMovementOccurInVideoMedianFilterWindow"]))
+          if hyperparameters["checkThatMovementOccurInVideoMedianFilterWindow"]:
+            diff  = np.sum(cv2.medianBlur(np.abs(frame - firstImage), hyperparameters["checkThatMovementOccurInVideoMedianFilterWindow"]))
+          else:
+            diff  = np.sum(np.abs(frame - firstImage))
           if diff > maxDiff:
             maxDiff    = diff
             indMaxDiff = k

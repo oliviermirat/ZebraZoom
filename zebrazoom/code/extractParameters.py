@@ -146,6 +146,9 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
         heading[i] = calculateAngle(head[i], tail_1[i])
       elif hyperparameters["headingCalculationMethod"] == "calculatedWithMedianTailTip":
         heading[i] = calculateAngle(head[i], medianTip)
+      elif hyperparameters["headingCalculationMethod"] == "simplyFromPreviousCalculations":
+        heading[i] = trackingHeading[i]
+        heading[i] = (heading[i] + math.pi) % (2*math.pi)
       else: # calculatedWithHead : THIS IS THE DEFAULT
         if not(math.isnan(trackingHeading[i])):
           heading[i] = trackingHeading[i]

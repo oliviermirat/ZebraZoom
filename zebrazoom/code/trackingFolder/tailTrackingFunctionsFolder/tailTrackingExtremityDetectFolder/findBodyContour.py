@@ -30,12 +30,14 @@ def findBodyContour(headPosition, hyperparameters, thresh1):
       contourPrecision = cv2.CHAIN_APPROX_SIMPLE
     else: # hyperparameters["findContourPrecision"] == "CHAIN_APPROX_NONE"
       contourPrecision = cv2.CHAIN_APPROX_NONE
+    
     contours, hierarchy = cv2.findContours(thresh1, cv2.RETR_TREE, contourPrecision)
     for contour in contours:
       area = cv2.contourArea(contour)
       if (area > minAreaCur) and (area < maxAreaCur):
-        M = cv2.moments(contour)
-        if takeTheHeadClosestToTheCenter == 0:
+        dist = cv2.pointPolygonTest(contour, (x, y), True)
+        if dist >= 0:
+          M = cv2.moments(contour)
           if M['m00']:
             cx = int(M['m10']/M['m00'])
             cy = int(M['m01']/M['m00'])
@@ -43,19 +45,7 @@ def findBodyContour(headPosition, hyperparameters, thresh1):
           else:
             cx = 0
             cy = 0
-        else:
-          if M['m00']:
-            cxNew = int(M['m10']/M['m00'])
-            cyNew = int(M['m01']/M['m00'])
-          else:
-            cxNew = 0
-            cyNew = 0
-          distToCenterNew = math.sqrt((cxNew-x)**2 + (cyNew-y)**2)
-          distToCenter    = math.sqrt((cx-x)**2    + (cy-y)**2)
-          if distToCenterNew < distToCenter:
-            cx = cxNew
-            cy = cyNew
-            bodyContour = contour
+    
     minAreaCur = minAreaCur - 100
     maxAreaCur = maxAreaCur + 100
   return bodyContour

@@ -170,6 +170,7 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["maxTailSize"] = getConfig(config, "maxTailSize", videoPath)
   
   hyperparameters["debugTrackingPtExtreme"] = getConfig(config, "debugTrackingPtExtreme", videoPath)
+  hyperparameters["debugTrackingPtExtremeLargeVerticals"] = getConfig(config, "debugTrackingPtExtremeLargeVerticals", videoPath)
   hyperparameters["debugTrackingThreshImg"] = getConfig(config, "debugTrackingThreshImg", videoPath)
 
   hyperparameters["erodeSize"]  = getConfig(config, "erodeSize", videoPath)
@@ -313,6 +314,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["outputValidationVideoFps"] = getConfig(config, "outputValidationVideoFps", videoPath)
   
+  hyperparameters["checkAllContourForTailExtremityDetect"] = getConfig(config, "checkAllContourForTailExtremityDetect", videoPath)
+  hyperparameters["considerHighPointForTailExtremityDetect"] = getConfig(config, "considerHighPointForTailExtremityDetect", videoPath)
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5
