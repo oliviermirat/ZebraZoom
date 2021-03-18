@@ -317,6 +317,16 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["checkAllContourForTailExtremityDetect"] = getConfig(config, "checkAllContourForTailExtremityDetect", videoPath)
   hyperparameters["considerHighPointForTailExtremityDetect"] = getConfig(config, "considerHighPointForTailExtremityDetect", videoPath)
   
+  hyperparameters["debugEyeTracking"]                   = getConfig(config, "debugEyeTracking", videoPath)
+  hyperparameters["debugEyeTrackingAdvanced"]           = getConfig(config, "debugEyeTrackingAdvanced", videoPath)
+  hyperparameters["eyeTracking"]                        = getConfig(config, "eyeTracking", videoPath)
+  hyperparameters["headCenterToMidEyesPointDistance"]   = getConfig(config, "headCenterToMidEyesPointDistance", videoPath)
+  hyperparameters["eyeBinaryThreshold"]                 = getConfig(config, "eyeBinaryThreshold", videoPath)
+  hyperparameters["midEyesPointToEyeCenterMaxDistance"] = getConfig(config, "midEyesPointToEyeCenterMaxDistance", videoPath)
+  hyperparameters["eyeHeadingSearchAreaHalfDiameter"]   = getConfig(config, "eyeHeadingSearchAreaHalfDiameter", videoPath)
+  hyperparameters["headingLineValidationPlotLength"]    = getConfig(config, "headingLineValidationPlotLength", videoPath)
+  
+  
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5
     while i < len(argv):

@@ -126,7 +126,48 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
               t2 = t.copy()
               t2.append(dataToPlot)
               infoFrame[BoutStart + l] = t2
-
+            
+            if hyperparameters["eyeTracking"]:
+              leftEyeX     = superStruct["wellPoissMouv"][i][j][k]["leftEyeX"][l]
+              leftEyeY     = superStruct["wellPoissMouv"][i][j][k]["leftEyeY"][l]
+              leftEyeAngle = superStruct["wellPoissMouv"][i][j][k]["leftEyeAngle"][l]
+              x = x + infoWells[i][0]
+              y = y + infoWells[i][1]
+              dataToPlot = {}
+              dataToPlot["x"]       = leftEyeX
+              dataToPlot["y"]       = leftEyeY
+              dataToPlot["size"]    = 1
+              dataToPlot["Heading"] = leftEyeAngle
+              dataToPlot["numMouv"] = k+1
+              dataToPlot["numWell"] = i
+              dataToPlot["red"]     = 255
+              dataToPlot["green"]   = 255
+              dataToPlot["blue"]    = 0
+              t = infoFrame[BoutStart + l]
+              t2 = t.copy()
+              t2.append(dataToPlot)
+              infoFrame[BoutStart + l] = t2
+              
+              rightEyeX     = superStruct["wellPoissMouv"][i][j][k]["rightEyeX"][l]
+              rightEyeY     = superStruct["wellPoissMouv"][i][j][k]["rightEyeY"][l]
+              rightEyeAngle = superStruct["wellPoissMouv"][i][j][k]["rightEyeAngle"][l]
+              x = x + infoWells[i][0]
+              y = y + infoWells[i][1]
+              dataToPlot = {}
+              dataToPlot["x"]       = rightEyeX
+              dataToPlot["y"]       = rightEyeY
+              dataToPlot["size"]    = 1
+              dataToPlot["Heading"] = rightEyeAngle
+              dataToPlot["numMouv"] = k+1
+              dataToPlot["numWell"] = i
+              dataToPlot["red"]     = 0
+              dataToPlot["green"]   = 0
+              dataToPlot["blue"]    = 255
+              t = infoFrame[BoutStart + l]
+              t2 = t.copy()
+              t2.append(dataToPlot)
+              infoFrame[BoutStart + l] = t2
+            
   # Going through the video and printing stuff on it.
   outputName = os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), hyperparameters["videoName"] + '.avi')
   outputFps = inputFps
@@ -153,9 +194,9 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
           heading = infoFrame[l][i]["Heading"]
           if hyperparameters["validationVideoPlotHeading"]:
             if hyperparameters["debugValidationVideoHeading"] == 0:
-              cv2.line(frame,(int(x),int(y)),(int(x+20*math.cos(heading)),int(y+20*math.sin(heading))), (255,0,0), trackingPointSizeDisplay+1)
+              cv2.line(frame,(int(x),int(y)),(int(x+20*math.cos(heading)),int(y+20*math.sin(heading))), (255,0,0), trackingPointSizeDisplay)
             else:
-              cv2.line(frame,(int(x),int(y)),(int(x-250*math.cos(heading)),int(y-250*math.sin(heading))), (255,0,0), trackingPointSizeDisplay+1)
+              cv2.line(frame,(int(x),int(y)),(int(x-250*math.cos(heading)),int(y-250*math.sin(heading))), (255,0,0), trackingPointSizeDisplay)
           
           font = cv2.FONT_HERSHEY_SIMPLEX
           numMouv = infoFrame[l][i]["numMouv"]

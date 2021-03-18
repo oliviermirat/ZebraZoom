@@ -94,9 +94,10 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
   tailAngleSmoothingFactor = hyperparameters["tailAngleSmoothingFactor"]
 
   trackingHeadTailAllAnimals = trackingData[0]
-  trackingHeadingAllAnimals = trackingData[1]
-  headPositionFirstFrame = trackingData[2]
-  tailTipFirstFrame = trackingData[3]
+  trackingHeadingAllAnimals  = trackingData[1]
+  trackingEyesAllAnimals     = trackingData[2]
+  headPositionFirstFrame     = trackingData[3]
+  tailTipFirstFrame          = trackingData[4]
   
   data = []
   
@@ -303,6 +304,16 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       item["BoutStart"]     = start + firstFrame
       item["BoutEnd"]       = end + firstFrame
       item["TailAngle_Raw"] = angle[start:end+1,0].tolist()
+      
+      if hyperparameters["eyeTracking"]:
+        item["leftEyeX"]      = trackingEyesAllAnimals[animalId, start:end+1, 0].tolist()
+        item["leftEyeY"]      = trackingEyesAllAnimals[animalId, start:end+1, 1].tolist()
+        item["leftEyeAngle"]  = trackingEyesAllAnimals[animalId, start:end+1, 2].tolist()
+        item["leftEyeArea"]   = trackingEyesAllAnimals[animalId, start:end+1, 3].tolist()
+        item["rightEyeX"]     = trackingEyesAllAnimals[animalId, start:end+1, 4].tolist()
+        item["rightEyeY"]     = trackingEyesAllAnimals[animalId, start:end+1, 5].tolist()
+        item["rightEyeAngle"] = trackingEyesAllAnimals[animalId, start:end+1, 6].tolist()
+        item["rightEyeArea"]  = trackingEyesAllAnimals[animalId, start:end+1, 7].tolist()
       
       [tailangles_arr, tailangles_arr_smoothed] = smoothAllTailAngles(allAngles, hyperparameters, start, end)
       

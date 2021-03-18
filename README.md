@@ -39,6 +39,7 @@ For more information visit <a href="https://zebrazoom.org/" target="_blank">zebr
 [Adjusting ZebraZoom's hyperparameters: further adjustment of tail angle smoothing and bouts and bends detection](#hyperparametersTailAngleSmoothBoutsAndBendsDetect)<br/>
 [Adjusting ZebraZoom's hyperparameters: head-embedded zebrafish tail tracking in difficult conditions](#extremeHeadEmbeddedTailTracking)<br/>
 [Adjusting ZebraZoom's hyperparameters: other adjustments](#hyperparametersOtherAdjustments)<br/>
+[Eye tracking of zebrafish larvae](#eyesTracking)<br/>
 [Further analyzing ZebraZoom's output through the Graphical User Interface](#GUIanalysis)<br/>
 [Further analyzing ZebraZoom's output with Python](#pythonanalysis)<br/>
 [Calculating fish tail curvature](#curvature)<br/>
@@ -293,6 +294,23 @@ If you are trying to track freely swimming fish in "difficult conditions", espec
 
 <H3 CLASS="western">Other parameters:</H3>
 <font color="blue">"fillGapFrameNb" (default 5):</font> try to decrease this if the bouts detected are too long, try increasing if the bouts detected are too short or if they are "cut" into several different pieces.<br/>
+
+
+<a name="eyesTracking"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Eye tracking of zebrafish larvae:</H2>
+This will only work if there are enough pixels per eye and if the eyes are much darker than the rest of the body of the zebrafish (swim bladder excluded). To make the eye tracking work, set the following parameters to the appropriate values:<br/>
+<font color="blue">"eyeTracking" (default 0):</font> Set this parameter to 1 for the eye tracking to be performed.<br/>
+<font color="blue">"headCenterToMidEyesPointDistance" (default 10):</font> approximate distance (in pixels) between the center of the head (automatically detected by ZebraZoom) and the mid-point between the center of the two eyes.<br/>
+<font color="blue">"eyeBinaryThreshold" (default 50):</font> threshold value (between 0 and 255) to differentiate the eyes (and the swim bladder) from the rest of the body.<br/>
+<font color="blue">"midEyesPointToEyeCenterMaxDistance" (default 10):</font> maximum accepted distance (in pixels) between the mid-eye point and the center of an eye<br/>
+<font color="blue">"eyeHeadingSearchAreaHalfDiameter" (default 40):</font> half diameter (in pixels) of the sub-image on which the heading is calculated for an eye.<br/>
+<font color="blue">"headingLineValidationPlotLength" (default 10):</font> length (in pixels) of the heading line plotted on the image during the eye tracking debugging (when the parameter "debugEyeTracking" is set to 1).<br/><br/>
+
+It's also important to note that you can set the parameter "debugEyeTracking" and "debugEyeTrackingAdvanced" to 1 to troubleshoot this eye tracking.
+
+<br/><br/>
 
 <a name="GUIanalysis"/>
 

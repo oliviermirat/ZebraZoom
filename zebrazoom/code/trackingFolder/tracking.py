@@ -11,6 +11,7 @@ from zebrazoom.code.trackingFolder.debugTracking import debugTracking
 from zebrazoom.code.trackingFolder.tailTracking import tailTracking
 from zebrazoom.code.trackingFolder.blackFramesDetection import getThresForBlackFrame, savingBlackFrames
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import getHeadPositionByFileSaved, findTailTipByUserInput, getTailTipByFileSaved, findHeadPositionByUserInput
+from zebrazoom.code.trackingFolder.eyeTracking.eyeTracking import eyeTracking
 
 from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from zebrazoom.code.getImage.headEmbededFrameBackExtract import headEmbededFrameBackExtract
@@ -50,6 +51,10 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     
   trackingHeadTailAllAnimals = np.zeros((hyperparameters["nbAnimalsPerWell"], lastFrame-firstFrame+1, nbTailPoints, 2))
   trackingHeadingAllAnimals = np.zeros((hyperparameters["nbAnimalsPerWell"], lastFrame-firstFrame+1))
+  if hyperparameters["eyeTracking"]:
+    trackingEyesAllAnimals = np.zeros((hyperparameters["nbAnimalsPerWell"], lastFrame-firstFrame+1, 8))
+  else:
+    trackingEyesAllAnimals = 0
   
   threshForBlackFrames = getThresForBlackFrame(hyperparameters, videoPath) # For headEmbededTeresaNicolson 
   cap.set(1, firstFrame)
@@ -119,6 +124,9 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     if hyperparameters["trackTail"] == 1 :
       for animalId in range(0, hyperparameters["nbAnimalsPerWell"]):
         trackingHeadTailAllAnimals = tailTracking(animalId, i, firstFrame, videoPath, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, lastFirstTheta, maxDepth, tailTipFirstFrame)
+    # Eye tracking for frame i
+    if hyperparameters["eyeTracking"]:
+      trackingEyesAllAnimals = eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals)
     
     # Debug functions
     debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame2, hyperparameters)
@@ -143,4 +151,4 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
   if hyperparameters["popUpAlgoFollow"]:
     prepend("Tracking done for well "+ str(wellNumber))
   
-  return [trackingHeadTailAllAnimals, trackingHeadingAllAnimals, headPositionFirstFrame, tailTipFirstFrame]
+  return [trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingEyesAllAnimals, headPositionFirstFrame, tailTipFirstFrame]

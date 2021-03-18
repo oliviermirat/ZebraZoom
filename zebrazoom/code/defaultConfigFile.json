@@ -18,6 +18,8 @@
   "debugDetectMovWithRawVideoShowVid" : 1,
   "debugCoverHorizontalPortionBelow" : 0,
   "debugHeadEmbededFindNextPoints" : 0,
+  "debugEyeTracking" : 0,
+  "debugEyeTrackingAdvanced" : 0,
   "createValidationVideo" : 1,
   "calculateAllTailAngles" : 0,
   "freqAlgoPosFollow" : 0,
@@ -103,6 +105,13 @@
   "midlineIsInBlobTrackingOptimization" : 1,
   "nbTailPoints" : 10,
   "forceBlobMethodForHeadTracking" : 0,
+
+  "eyeTracking" : 0,
+  "headCenterToMidEyesPointDistance" : 10,
+  "eyeBinaryThreshold" : 50,
+  "midEyesPointToEyeCenterMaxDistance" : 10,
+  "eyeHeadingSearchAreaHalfDiameter" : 40,
+  "headingLineValidationPlotLength" : 10,
   
   "backCalculationStep" : -1,
   "step" : -1,

@@ -12,7 +12,7 @@ def headTrackingTakeHeadClosestToWellCenter(thresh1, thresh2, blur, erodeSize, m
   minAreaCur = minArea
   maxAreaCur = maxArea
   while (x == 0) and (minAreaCur > -200):
-    im2, contours, hierarchy = cv2.findContours(thresh2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    contours, hierarchy = cv2.findContours(thresh2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     for contour in contours:
       area = cv2.contourArea(contour)
       if (area > minAreaCur) and (area < maxAreaCur):
