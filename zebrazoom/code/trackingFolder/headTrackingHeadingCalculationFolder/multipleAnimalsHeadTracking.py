@@ -172,11 +172,24 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
       x_curFrame_animal_Id = int(x_curFrame_animal_Id)
       y_curFrame_animal_Id = int(y_curFrame_animal_Id)
       
+      # Removing the other blobs from the image to get good heading detection
+      # Performance improvement possible below: TODO in the future
+      correspondingContour = 0
+      contours, hierarchy = cv2.findContours(thresh2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+      for contour in contours:
+        dist = cv2.pointPolygonTest(contour, (x_curFrame_animal_Id, y_curFrame_animal_Id), True)
+        if dist >= 0:
+          correspondingContour = contour
+      thresh2bis = np.zeros((len(thresh2), len(thresh2[0])))
+      thresh2bis[:, :] = 255
+      if type(correspondingContour) != int:
+        cv2.fillPoly(thresh2bis, pts =[correspondingContour], color=(0, 0, 0))
+      
       if hyperparameters["forceBlobMethodForHeadTracking"]: # Fish tracking, usually
         previousFrameHeading = trackingHeadingAllAnimals[animal_Id, i-firstFrame-1] if i-firstFrame-1 > 0 else 0
-        [heading, lastFirstTheta] = calculateHeading(x_curFrame_animal_Id, y_curFrame_animal_Id, 0, thresh1, thresh2, 0, hyperparameters, previousFrameHeading)
+        [heading, lastFirstTheta] = calculateHeading(x_curFrame_animal_Id, y_curFrame_animal_Id, 0, thresh1, thresh2bis, 0, hyperparameters, previousFrameHeading)
       else: # Drosophilia, mouse, and other center of mass only tracking
-        heading = calculateHeadingSimple(x_curFrame_animal_Id, y_curFrame_animal_Id, thresh2, hyperparameters)
+        heading = calculateHeadingSimple(x_curFrame_animal_Id, y_curFrame_animal_Id, thresh2bis, hyperparameters)
       
       trackingHeadingAllAnimals[animal_Id, i-firstFrame] = heading
   
