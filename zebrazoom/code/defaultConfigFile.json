@@ -168,6 +168,8 @@
   "doubleCheckBendMinMaxStatus" : 1,
   "removeFirstSmallBend" : 0,
   
+  "saveSuperStructToMatlab" : 0,
+  
   "plotOnlyOneTailPointForVisu" : 0,
   "trackingPointSizeDisplay" : 1,
   "validationVideoPlotHeading" : 1,

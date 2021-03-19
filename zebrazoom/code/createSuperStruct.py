@@ -4,6 +4,7 @@ import json
 import scipy.io as io
 from scipy.interpolate import UnivariateSpline
 import scipy.interpolate as interp
+from scipy.io import savemat
 import numpy as np
 from scipy.signal import find_peaks
 import pandas as pd
@@ -235,6 +236,12 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters):
   
   with open(path, 'w') as outfile:
     json.dump(videoDataResults, outfile)
+    
+  if hyperparameters["saveSuperStructToMatlab"]:
+    matlabPath = os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'results_' + hyperparameters["videoName"] + '.mat')
+    videoDataResults2 = {}
+    videoDataResults2['videoDataResults'] = videoDataResults
+    savemat(matlabPath, videoDataResults2)
     
   if (hyperparameters["freqAlgoPosFollow"] != 0):
     print("Super Structure created")

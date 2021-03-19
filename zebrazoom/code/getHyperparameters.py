@@ -325,6 +325,7 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["midEyesPointToEyeCenterMaxDistance"] = getConfig(config, "midEyesPointToEyeCenterMaxDistance", videoPath)
   hyperparameters["eyeHeadingSearchAreaHalfDiameter"]   = getConfig(config, "eyeHeadingSearchAreaHalfDiameter", videoPath)
   hyperparameters["headingLineValidationPlotLength"]    = getConfig(config, "headingLineValidationPlotLength", videoPath)
+  hyperparameters["saveSuperStructToMatlab"]            = getConfig(config, "saveSuperStructToMatlab", videoPath)
   
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
