@@ -326,6 +326,10 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["eyeHeadingSearchAreaHalfDiameter"]   = getConfig(config, "eyeHeadingSearchAreaHalfDiameter", videoPath)
   hyperparameters["headingLineValidationPlotLength"]    = getConfig(config, "headingLineValidationPlotLength", videoPath)
   hyperparameters["saveSuperStructToMatlab"]            = getConfig(config, "saveSuperStructToMatlab", videoPath)
+  hyperparameters["validationVideoPlotAnimalNumber"]    = getConfig(config, "validationVideoPlotAnimalNumber", videoPath)
+  hyperparameters["postProcessMultipleTrajectories"]    = getConfig(config, "postProcessMultipleTrajectories", videoPath)
+  hyperparameters["postProcessMaxDistanceAuthorized"]   = getConfig(config, "postProcessMaxDistanceAuthorized", videoPath)
+  hyperparameters["postProcessMaxDisapearanceFrames"]   = getConfig(config, "postProcessMaxDisapearanceFrames", videoPath)
   
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):

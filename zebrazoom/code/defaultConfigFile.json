@@ -105,6 +105,9 @@
   "midlineIsInBlobTrackingOptimization" : 1,
   "nbTailPoints" : 10,
   "forceBlobMethodForHeadTracking" : 0,
+  "postProcessMultipleTrajectories" : 0,
+  "postProcessMaxDistanceAuthorized" : 180,
+  "postProcessMaxDisapearanceFrames" : 100,
 
   "eyeTracking" : 0,
   "headCenterToMidEyesPointDistance" : 10,
@@ -137,7 +140,6 @@
   "initialTailPortionMaxSegmentDiffAngleCutOffPos" : 0.15,
   "initialTailPortionMaxSegmentDiffAngleValue" : 1,
   "headEmbededRetrackIfWeirdInitialTracking": 0,
-  
   
   "headingCalculationMethod" : "calculatedWithHead",
   
@@ -173,6 +175,7 @@
   "plotOnlyOneTailPointForVisu" : 0,
   "trackingPointSizeDisplay" : 1,
   "validationVideoPlotHeading" : 1,
+  "validationVideoPlotAnimalNumber": 0,
   
   "perBoutOutput" : 0,
   "perBoutOutputVideoStartStopFrameMargin" : 0,

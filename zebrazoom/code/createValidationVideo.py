@@ -63,6 +63,7 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
             dataToPlot["Heading"] = Heading
             dataToPlot["numMouv"] = k+1
             dataToPlot["numWell"] = i
+            dataToPlot["numAnimal"] = j
             
             dataToPlot["red"]     = 255
             dataToPlot["green"]   = 0
@@ -158,8 +159,8 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
               dataToPlot["y"]       = rightEyeY
               dataToPlot["size"]    = 1
               dataToPlot["Heading"] = rightEyeAngle
-              dataToPlot["numMouv"] = k+1
-              dataToPlot["numWell"] = i
+              # dataToPlot["numMouv"] = k+1
+              # dataToPlot["numWell"] = i
               dataToPlot["red"]     = 0
               dataToPlot["green"]   = 0
               dataToPlot["blue"]    = 255
@@ -198,12 +199,20 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
             else:
               cv2.line(frame,(int(x),int(y)),(int(x-250*math.cos(heading)),int(y-250*math.sin(heading))), (255,0,0), trackingPointSizeDisplay)
           
-          font = cv2.FONT_HERSHEY_SIMPLEX
-          numMouv = infoFrame[l][i]["numMouv"]
-          numWell = infoFrame[l][i]["numWell"]
-          cv2.putText(frame,str(numMouv),(15+infoWells[numWell][0],25+infoWells[numWell][1]),font,1,(255,255,255))
+          if ("numMouv" in infoFrame[l][i]) and ("numWell" in infoFrame[l][i]):
+            numMouv = infoFrame[l][i]["numMouv"]
+            numWell = infoFrame[l][i]["numWell"]
+            cv2.putText(frame,str(numMouv),(15+infoWells[numWell][0],25+infoWells[numWell][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255))
 
         cv2.circle(frame, (int(x),int(y)), size, (red,green,blue), -1)
+        
+        if hyperparameters["validationVideoPlotAnimalNumber"]:
+          if "numAnimal" in infoFrame[l][i]:
+            numAnimal = int(infoFrame[l][i]["numAnimal"])
+            red       = int(0   + colorModifTab[numAnimal]["red"])
+            green     = int(255 - colorModifTab[numAnimal]["green"])
+            blue      = int(0   + colorModifTab[numAnimal]["blue"])
+            cv2.putText(frame, str(numAnimal), (int(x + 10), int(y + 10)), cv2.FONT_HERSHEY_SIMPLEX, 1, (red, green, blue), 2)
         
       out.write(frame)
   

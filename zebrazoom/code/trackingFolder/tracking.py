@@ -12,6 +12,7 @@ from zebrazoom.code.trackingFolder.tailTracking import tailTracking
 from zebrazoom.code.trackingFolder.blackFramesDetection import getThresForBlackFrame, savingBlackFrames
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import getHeadPositionByFileSaved, findTailTipByUserInput, getTailTipByFileSaved, findHeadPositionByUserInput
 from zebrazoom.code.trackingFolder.eyeTracking.eyeTracking import eyeTracking
+from zebrazoom.code.trackingFolder.postProcessMultipleTrajectories import postProcessMultipleTrajectories
 
 from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from zebrazoom.code.getImage.headEmbededFrameBackExtract import headEmbededFrameBackExtract
@@ -144,6 +145,9 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
       [i, hyperparameters, organizationTabCur] = adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTabCur)
     else:
       i = i + 1
+      
+  if hyperparameters["postProcessMultipleTrajectories"]:
+    [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals] = postProcessMultipleTrajectories(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, hyperparameters)
   
   savingBlackFrames(hyperparameters, videoName, trackingHeadTailAllAnimals)
   

@@ -120,6 +120,23 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
             trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][1] = idx_y_Option
             break
 
+  if hyperparameters["postProcessMultipleTrajectories"]:
+    maxDistanceAuthorized = hyperparameters["postProcessMaxDistanceAuthorized"]
+    maxDisapearanceFrames = hyperparameters["postProcessMaxDisapearanceFrames"]
+    for animal_Id in range(0, len(trackingHeadTailAllAnimals)):
+      goBackFrames = 1
+      xCur = trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][0]
+      yCur = trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][1]
+      if xCur != 0 or yCur != 0:
+        while (i-firstFrame-goBackFrames >= 0) and (goBackFrames < maxDisapearanceFrames) and (trackingHeadTailAllAnimals[animal_Id, i-firstFrame-goBackFrames][0][0] == 0) and (trackingHeadTailAllAnimals[animal_Id, i-firstFrame-goBackFrames][0][1] == 0):
+          goBackFrames = goBackFrames + 1
+        if (goBackFrames < maxDisapearanceFrames) and (i-firstFrame-goBackFrames >= 0):
+          xBef = trackingHeadTailAllAnimals[animal_Id, i-firstFrame-goBackFrames][0][0]
+          yBef = trackingHeadTailAllAnimals[animal_Id, i-firstFrame-goBackFrames][0][1]
+          if math.sqrt((xCur - xBef)**2 + (yCur - yBef)**2) > maxDistanceAuthorized:
+            trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][0] = 0
+            trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][1] = 0
+  
   
   # for idxCoordinateOption, [idx_x_Option, idx_y_Option] in enumerate(headCoordinatesOptions):
     # print(i, idxCoordinateOption, idx_x_Option, idx_y_Option)
