@@ -330,6 +330,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["postProcessMultipleTrajectories"]    = getConfig(config, "postProcessMultipleTrajectories", videoPath)
   hyperparameters["postProcessMaxDistanceAuthorized"]   = getConfig(config, "postProcessMaxDistanceAuthorized", videoPath)
   hyperparameters["postProcessMaxDisapearanceFrames"]   = getConfig(config, "postProcessMaxDisapearanceFrames", videoPath)
+  hyperparameters["computeEyesHeadingPlot"]             = getConfig(config, "computeEyesHeadingPlot", videoPath)
+  hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] = getConfig(config, "adjustMinPixelDiffForBackExtract_nbBlackPixelsMax", videoPath)
   
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):

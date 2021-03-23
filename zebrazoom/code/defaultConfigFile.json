@@ -80,6 +80,7 @@
   
   "nbImagesForBackgroundCalculation" : 60,
   "minPixelDiffForBackExtract" : 20,
+  "adjustMinPixelDiffForBackExtract_nbBlackPixelsMax" : 0,
   "backgroundExtractionWithOnlyTwoFrames" : 0,
   "checkThatMovementOccurInVideo" : 0,
   "checkThatMovementOccurInVideoMedianFilterWindow" : 11,
@@ -183,5 +184,7 @@
   "smoothTailHeadEmbeded" : -1,
   "curvatureMedianFilterSmoothingWindow" : 3,
   "nbPointsToIgnoreAtCurvatureBeginning" : 0,
-  "nbPointsToIgnoreAtCurvatureEnd" : 0
+  "nbPointsToIgnoreAtCurvatureEnd" : 0,
+  
+  "computeEyesHeadingPlot": 0
 }

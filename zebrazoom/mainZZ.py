@@ -6,9 +6,8 @@ from zebrazoom.code.extractParameters import extractParameters
 from zebrazoom.code.createSuperStruct import createSuperStruct
 from zebrazoom.code.createValidationVideo import createValidationVideo
 from zebrazoom.code.getHyperparameters import getHyperparameters
-from zebrazoom.code.generateAllTimeTailAngleGraph import generateAllTimeTailAngleGraph
-from zebrazoom.code.perBoutOutput import perBoutOutput
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
+from zebrazoom.code.dataPostProcessing.dataPostProcessing import dataPostProcessing
 
 import sys
 import pickle
@@ -176,16 +175,12 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     # Creating super structure
     superStruct = createSuperStruct(paramDataPerWell, wellPositions, hyperparameters)
   
-  if hyperparameters["generateAllTimeTailAngleGraph"]:
-    generateAllTimeTailAngleGraph(outputFolderVideo, superStruct, hyperparameters["generateAllTimeTailAngleGraphLineWidth"])
-    
-  if hyperparameters["createValidationVideo"]:
     # Creating validation video
-    infoFrame = createValidationVideo(os.path.join(pathToVideo, videoNameWithExt), superStruct, hyperparameters)
-  
-  if hyperparameters["perBoutOutput"]:
-    # Creating additional validation output per bout
-    perBoutOutput(superStruct, hyperparameters, videoName)
+    if hyperparameters["createValidationVideo"]:
+      infoFrame = createValidationVideo(os.path.join(pathToVideo, videoNameWithExt), superStruct, hyperparameters)
+    
+    # Various post-processing options depending on configuration file choices
+    dataPostProcessing(outputFolderVideo, superStruct, hyperparameters, videoName)
 
   if hyperparameters["popUpAlgoFollow"]:
     popUpAlgoFollow.prepend("ZebraZoom Analysis finished for " + videoName)

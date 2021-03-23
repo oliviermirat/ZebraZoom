@@ -13,6 +13,7 @@ zebrazoom/dataAnalysis/dataanalysis/__pycache__/
 zebrazoom/dataAnalysis/datasetcreation/__pycache__/
 zebrazoom/dataAnalysis/__pycache__
 zebrazoom/videoFormatConversion/__pycache__
+zebrazoom/code/dataPostProcessing/__pycache__/
 
 zebrazoom/newhyperparameters
 zebrazoom/trace.txt
@@ -37,3 +38,6 @@ zebrazoom/dataAnalysis/analysisScriptsForProjects/
 
 prepRepo.sh
 trace.txt
+
+launch.sh
+launch2.sh

@@ -35,6 +35,29 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
   putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
   
   curFrame[putToWhite] = 255
+  
+  if hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"]:
+    countTries = 0
+    nbBlackPixels = 0
+    nbBlackPixelsMax = int(hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"])
+    while ((nbBlackPixels < 1) or (nbBlackPixels > nbBlackPixelsMax)) and (countTries < 30):
+      if countTries > 0:
+        curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
+        putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
+        curFrame[putToWhite] = 255
+      ret, thresh1 = cv2.threshold(curFrame, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
+      thresh1 = 255 - thresh1
+      nbBlackPixels = cv2.countNonZero(thresh1)
+      if nbBlackPixels > nbBlackPixelsMax:
+        minPixelDiffForBackExtract = minPixelDiffForBackExtract + 1
+      if nbBlackPixels < 1 and minPixelDiffForBackExtract > 1:
+        minPixelDiffForBackExtract = minPixelDiffForBackExtract - 1
+      countTries = countTries + 1
+    # print("countTries:", countTries, "; nbBlackPixels:", nbBlackPixels, "; minPixelDiffForBackExtract:", minPixelDiffForBackExtract)
+    curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
+    putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
+    curFrame[putToWhite] = 255      
+
   # else:
     # putToBlack3a = ( curFrame.astype('int32') <= (back.astype('int32') - minPixelDiffForBackExtract) )
     # putToBlack3b = ( curFrame.astype('int32') >= (back.astype('int32') + minPixelDiffForBackExtract) )
