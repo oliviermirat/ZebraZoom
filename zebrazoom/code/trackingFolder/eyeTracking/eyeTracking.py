@@ -45,7 +45,7 @@ def eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, tracki
     else:
       cx = 0
       cy = 0
-    if math.sqrt((cx - midEyesPointX)**2 + (cy - midEyesPointY)**2) < midEyesPointToEyeCenterMaxDistance:
+    if area < (len(frame)*len(frame[0]))/2 and math.sqrt((cx - midEyesPointX)**2 + (cy - midEyesPointY)**2) < midEyesPointToEyeCenterMaxDistance:
       if (area > maxArea1):
         maxArea2    = maxArea1
         maxContour2 = maxContour1

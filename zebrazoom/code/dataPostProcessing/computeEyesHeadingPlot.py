@@ -47,6 +47,6 @@ def computeEyesHeadingPlot(superStruct, hyperparameters, videoName):
         plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_eyeDiffAngle_" + str(wellId) + '_' + str(animalId) + '_' + str(boutId) + '.png'))
         
         dataToSave = {"leftDiffAngle": leftDiffAngle, "rightDiffAngle": rightDiffAngle, "leftEyeArea": leftEyeArea, "rightEyeArea": rightEyeArea}
-        with open(os.path.join(outputPath, hyperparameters["videoName"] + "_eyeDiffAngle_" + str(wellId) + '_' + str(animalId) + '_' + str(boutId) + '.txt'), "wb") as f:
+        with open(os.path.join(outputPath, hyperparameters["videoName"] + "_eyeDiffAnglePickleData_" + str(wellId) + '_' + str(animalId) + '_' + str(boutId) + '.pickle'), "wb") as f:
           pickle.dump(dataToSave, f)
         
