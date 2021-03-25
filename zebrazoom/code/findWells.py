@@ -245,7 +245,10 @@ def findWells(videoPath, hyperparameters):
   
   # Sorting wells
   
-  if len(wellPositions):
+  nbWellsPerRows = hyperparameters["nbWellsPerRows"]
+  nbRowsOfWells  = hyperparameters["nbRowsOfWells"]
+  
+  if len(wellPositions) >= nbWellsPerRows * nbRowsOfWells:
     
     for i in range(0, len(wellPositions)):
       for j in range(0, len(wellPositions)-1):
@@ -253,9 +256,6 @@ def findWells(videoPath, hyperparameters):
           aux                = wellPositions[j]
           wellPositions[j]   = wellPositions[j+1]
           wellPositions[j+1] = aux
-    
-    nbWellsPerRows = hyperparameters["nbWellsPerRows"]
-    nbRowsOfWells  = hyperparameters["nbRowsOfWells"]
     
     if (nbRowsOfWells == 0):
       for i in range(0, len(wellPositions)):
@@ -272,6 +272,10 @@ def findWells(videoPath, hyperparameters):
               aux                = wellPositions[j]
               wellPositions[j]   = wellPositions[j+1]
               wellPositions[j+1] = aux   
+  
+  else:
+    
+    print("Not enough wells detected, please adjust your configuration file")
   
   # Creating validation image
   
