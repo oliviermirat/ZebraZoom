@@ -238,7 +238,7 @@ def headEmbededTailTrackFindMaxDepthTeresaNicolson(headPosition,nbTailPoints,i,x
   return (curTailLengthTab[indMinDistToTip] )
   
   
-def getMeanOfImageOverVideo(videoPath):
+def getMeanOfImageOverVideo(videoPath, hyperparameters):
   cap = cv2.VideoCapture(videoPath)
   meanss = []
   ret = True
@@ -246,6 +246,8 @@ def getMeanOfImageOverVideo(videoPath):
   while (i < 100):
     ret, frame = cap.read()
     if ret:
+      if hyperparameters["invertBlackWhiteOnImages"]:
+        frame = 255 - frame
       val = np.mean(np.mean(frame))
       meanss.append(val)
     i = i +1

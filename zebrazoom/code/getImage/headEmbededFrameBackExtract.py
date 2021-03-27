@@ -17,6 +17,9 @@ def headEmbededFrameBackExtract(videoPath, background, hyperparameters, frameNum
     frameNumber = frameNumber - 1
     cap.set(1, frameNumber)
     ret, frame = cap.read()
+  
+  if hyperparameters["invertBlackWhiteOnImages"]:
+    frame = 255 - frame
     
   if hyperparameters["imagePreProcessMethod"]:
     frame = preprocessImage(frame, hyperparameters)
@@ -33,7 +36,7 @@ def headEmbededFrameBackExtract(videoPath, background, hyperparameters, frameNum
     cv2.waitKey(0)
   
   putToWhite = ( frame.astype('int32') >= (background.astype('int32') + minPixelDiffForBackExtract) )
-
+  # This puts the pixels that belong to a fish to white
   frame[putToWhite] = 255
   
   if (debug):

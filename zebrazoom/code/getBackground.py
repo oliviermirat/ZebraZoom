@@ -25,12 +25,16 @@ def getBackground(videoPath, hyperparameters):
       backCalculationStep = 1
   
   ret, back = cap.read()
+  if ret and hyperparameters["invertBlackWhiteOnImages"]:
+    back = 255 - back
   back = cv2.cvtColor(back, cv2.COLOR_BGR2GRAY)
   if hyperparameters["backgroundExtractionWithOnlyTwoFrames"] == 0:
     for k in range(firstFrame,lastFrame):
       if (k % backCalculationStep == 0):
         cap.set(1, k)
         ret, frame = cap.read()
+        if ret and hyperparameters["invertBlackWhiteOnImages"]:
+          frame = 255 - frame
         if debugExtractBack:
           print(k)
         if ret:
@@ -49,6 +53,8 @@ def getBackground(videoPath, hyperparameters):
         cap.set(1, k)
         ret, frame = cap.read()
         if ret:
+          if hyperparameters["invertBlackWhiteOnImages"]:
+            frame = 255 - frame
           frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
           diff  = np.sum(np.abs(frame - back))
           if diff > maxDiff:
@@ -57,6 +63,8 @@ def getBackground(videoPath, hyperparameters):
     cap.set(1, indMaxDiff)
     ret, frame = cap.read()
     if ret:
+      if hyperparameters["invertBlackWhiteOnImages"]:
+        frame = 255 - frame
       frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
       if hyperparameters["extractBackWhiteBackground"]:
         back = cv2.max(frame, back)
@@ -72,6 +80,8 @@ def getBackground(videoPath, hyperparameters):
     cap.set(1, firstFrame)
     ret, frame = cap.read()
     if ret:
+      if hyperparameters["invertBlackWhiteOnImages"]:
+        frame = 255 - frame
       frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
       if hyperparameters["imagePreProcessMethod"]:
         frame = preprocessImage(frame, hyperparameters)
@@ -87,6 +97,8 @@ def getBackground(videoPath, hyperparameters):
         cap.set(1, k)
         ret, frame = cap.read()
         if ret:
+          if hyperparameters["invertBlackWhiteOnImages"]:
+            frame = 255 - frame
           frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
           if hyperparameters["imagePreProcessMethod"]:
             frame = preprocessImage(frame, hyperparameters)

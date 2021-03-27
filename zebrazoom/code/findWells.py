@@ -229,6 +229,8 @@ def findWells(videoPath, hyperparameters):
   if (cap.isOpened()== False): 
     print("Error opening video stream or file")
   ret, frame = cap.read()
+  if hyperparameters["invertBlackWhiteOnImages"]:
+    frame = 255 - frame
   
   if hyperparameters["wellsAreRectangles"]:
     if hyperparameters["adjustRectangularWellsDetect"]:

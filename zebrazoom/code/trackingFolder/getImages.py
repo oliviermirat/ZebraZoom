@@ -31,10 +31,10 @@ def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPo
     
     ret,thresh1 = cv2.threshold(gray,hyperparameters["thresholdForBlobImg"],255,cv2.THRESH_BINARY)
   
-  if hyperparameters["invertBlackWhiteOnImages"]:
-    frame   = 255 - frame
-    gray    = 255 - gray
-    thresh1 = 255 - thresh1
+  # if hyperparameters["invertBlackWhiteOnImages"]:
+    # frame   = 255 - frame
+    # gray    = 255 - gray
+    # thresh1 = 255 - thresh1
   
   
   coverHorizontalPortionBelowForHeadDetect = hyperparameters["coverHorizontalPortionBelowForHeadDetect"]

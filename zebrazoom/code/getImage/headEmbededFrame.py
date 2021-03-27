@@ -17,6 +17,9 @@ def headEmbededFrame(videoPath, frameNumber, hyperparameters):
     cap.set(1, frameNumber)
     ret, frame = cap.read()
   
+  if hyperparameters["invertBlackWhiteOnImages"]:
+    frame = 255 - frame
+  
   if hyperparameters["imagePreProcessMethod"]:
     frame = preprocessImage(frame, hyperparameters)
   

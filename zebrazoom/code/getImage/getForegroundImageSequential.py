@@ -24,6 +24,9 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
       currentFrameNum = currentFrameNum - 1
       cap.set(1, currentFrameNum)
       ret, frame = cap.read()
+      
+  if hyperparameters["invertBlackWhiteOnImages"]:
+    frame = 255 - frame
   
   if hyperparameters["imagePreProcessMethod"]:
     frame = preprocessImage(frame, hyperparameters)

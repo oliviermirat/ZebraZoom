@@ -8,7 +8,8 @@ from tkinter import *
 def headEmbededGUI(self, controller, blackBack, whiteBack, noBoutDetect, boutDetection, tweakTrackingParamsYes, 
 tweakTrackingParamsNo):
   
-  self.configFile["extractBackWhiteBackground"] = int(whiteBack)
+  self.configFile["invertBlackWhiteOnImages"] = int(whiteBack)
+  self.configFile["extractBackWhiteBackground"] = 0
   
   self.configFile["automaticallySetSomeOfTheHeadEmbededHyperparameters"] = 1
   self.configFile["findHeadPositionByUserInput"] = 1
@@ -28,7 +29,7 @@ tweakTrackingParamsNo):
   self.configFile["headingCalculationMethod"] = "calculatedWithMedianTailTip"
   
   if int(boutDetection) or int(tweakTrackingParamsYes):
-    self.configFile["noBoutsDetection"] = 0
+    # self.configFile["noBoutsDetection"] = 0
     self.configFile["extractAdvanceZebraParameters"] = 1
     self.calculateBackground(controller, 0)
   else:

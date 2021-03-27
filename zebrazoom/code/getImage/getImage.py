@@ -20,6 +20,9 @@ def getImage(videoPath, frameNumber, wellNumber, wellPositions, hyperparameters)
     if not(ret):
       frameNumber = frameNumber - 1
   
+  if hyperparameters["invertBlackWhiteOnImages"]:
+    frame = 255 - frame
+  
   if hyperparameters["imagePreProcessMethod"]:
     frame = preprocessImage(frame, hyperparameters)
   

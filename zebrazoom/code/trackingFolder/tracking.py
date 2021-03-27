@@ -71,8 +71,8 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
       hyperparameters["minPixelDiffForBackExtract"] = hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"]
       [frame, thresh1] = headEmbededFrameBackExtract(videoPath, background, hyperparameters, firstFrame)
       
-    if hyperparameters["invertBlackWhiteOnImages"]:
-      frame   = 255 - frame
+    # if hyperparameters["invertBlackWhiteOnImages"]:
+      # frame   = 255 - frame
     
     gray = frame.copy()
     
@@ -87,7 +87,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
       else:
         [frame, gray, thresh1, blur, thresh2, frame2] = getImages(hyperparameters, cap, videoPath, firstFrame, background, wellNumber, wellPositions)
         cap.set(1, firstFrame)
-        [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, heading, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, firstFrame, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, headPositionFirstFrame, wellPositions[wellNumber]["lengthX"])
+        [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, firstFrame, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, headPositionFirstFrame, wellPositions[wellNumber]["lengthX"])
     if os.path.exists(videoPath+'.csv'):
       tailTipFirstFrame  = getTailTipByFileSaved(hyperparameters,videoPath)
     else:
@@ -96,6 +96,8 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
       hyperparameters = adjustHeadEmbededHyperparameters(hyperparameters, frame, headPositionFirstFrame, tailTipFirstFrame)
     # Getting max depth
     if hyperparameters["headEmbededTeresaNicolson"] == 1:
+      if len(headPositionFirstFrame) == 0:
+        headPositionFirstFrame = [trackingHeadTailAllAnimals[0][0][0][0], trackingHeadTailAllAnimals[0][0][0][1]]
       maxDepth = headEmbededTailTrackFindMaxDepthTeresaNicolson(headPositionFirstFrame,nbTailPoints,firstFrame,headPositionFirstFrame[0],headPositionFirstFrame[1],thresh1,frame,hyperparameters,oppHeading,tailTipFirstFrame)
     else:
       if hyperparameters["centerOfMassTailTracking"] == 0:

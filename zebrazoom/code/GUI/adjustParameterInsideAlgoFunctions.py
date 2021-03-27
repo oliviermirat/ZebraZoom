@@ -116,6 +116,7 @@ def detectBouts(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWho
   
   [configFile, initialFirstFrameValue, initialLastFrameValue] = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrameParamAdjust, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
   
+  configFile["noBoutsDetection"] = 0
   configFile["trackTail"]                   = 0
   configFile["adjustDetectMovWithRawVideo"] = 1
   configFile["reloadWellPositions"]         = 1
