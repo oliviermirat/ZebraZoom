@@ -1,30 +1,118 @@
 import numpy as np
 import cv2
 
-def medianAndMinimum(img, hyperparameters):
+def findNonGrayScalePixels(image, hyperparameters):
+  
+  if len(hyperparameters["oneWellManuallyChosenTopLeft"]):
+    xtop = hyperparameters["oneWellManuallyChosenTopLeft"][0]
+    ytop = hyperparameters["oneWellManuallyChosenTopLeft"][1]
+    lenX = hyperparameters["oneWellManuallyChosenBottomRight"][0] - xtop
+    lenY = hyperparameters["oneWellManuallyChosenBottomRight"][1] - ytop
+  else:
+    xtop = 0
+    ytop = 0
+    lenX = len(image[0])
+    lenY = len(image)
+  
+  gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+  gray2 = cv2.cvtColor(gray, cv2.COLOR_GRAY2BGR)
 
-  medianImage = cv2.medianBlur(img, hyperparameters["imagePreProcessParameters"][0])
+  image = image.astype(np.int32)
+  gray2 = gray2.astype(np.int32)
+
+  fin = abs(image - gray2)
+  fin = fin.astype(np.uint8)
+
+  fin2 = cv2.cvtColor(fin, cv2.COLOR_BGR2GRAY)
+  fin2 = 255 - fin2
+  
+  thresh = 245
+  ret, fin3 = cv2.threshold(fin2, thresh, 255, cv2.THRESH_BINARY)
+  numberOfBlackPixels =  lenX * lenY - np.sum(fin3[ytop:ytop+lenY, xtop:xtop+lenX])/255
+  
+  previousThres = []
+  while (numberOfBlackPixels < 50 or numberOfBlackPixels > 80) and thresh < 254 and not(thresh in previousThres):
+    previousThres.append(thresh)
+    if numberOfBlackPixels < 50:
+      # if not(thresh + 1 in previousThres):
+      thresh = thresh + 1
+    else:
+      # if not(thresh - 1 in previousThres):
+      thresh = thresh - 1
+    ret, fin3 = cv2.threshold(fin2, thresh, 255, cv2.THRESH_BINARY)
+    numberOfBlackPixels =  lenX * lenY - np.sum(fin3[ytop:ytop+lenY, xtop:xtop+lenX])/255
+    # print("AAA: thresh:", thresh, "; numberOfBlackPixels:", numberOfBlackPixels)
+    
+  # print("thresh used:", thresh, "; numberOfBlackPixels:", numberOfBlackPixels)
+  
+  kernel = np.ones((6, 6), np.uint8)
+  fin3 = cv2.erode(fin3, kernel, iterations = 1)
+  
+  fin3 = cv2.cvtColor(fin3, cv2.COLOR_GRAY2BGR)
+
+  return fin3
+
+
+def medianAndMinimum(img, hyperparameters, imagePreProcessParameters):
+
+  medianImage = cv2.medianBlur(img, imagePreProcessParameters[0])
   img = np.minimum(img, medianImage)
   
   return img
-  
-def erodeThenDilate(img, hyperparameters):
 
-  kernelErodeSize = hyperparameters["imagePreProcessParameters"][0]
+
+def erodeThenDilate(img, hyperparameters, imagePreProcessParameters):
+
+  kernelErodeSize = imagePreProcessParameters[0]
   kernelErode = np.ones((kernelErodeSize, kernelErodeSize), np.uint8)
   img = cv2.erode(img, kernelErode)
   
-  kernelDilateSize = hyperparameters["imagePreProcessParameters"][1]
+  kernelDilateSize = imagePreProcessParameters[1]
   kernelDilate = np.ones((kernelDilateSize, kernelDilateSize), np.uint8)
   img = cv2.dilate(img, kernelDilate)
   
   return img
 
+
 def preprocessImage(img, hyperparameters):
   
-  if hyperparameters["imagePreProcessMethod"] == "medianAndMinimum":    
-    img = medianAndMinimum(img, hyperparameters)
-  elif hyperparameters["imagePreProcessMethod"] == "erodeThenDilate":
-    img = erodeThenDilate(img, hyperparameters)
+  if type(hyperparameters["imagePreProcessMethod"]) == list:
+    imagePreProcessMethodList     = hyperparameters["imagePreProcessMethod"].copy()
+    imagePreProcessParametersList = hyperparameters["imagePreProcessParameters"].copy()
+  else:
+    imagePreProcessMethodList     = [hyperparameters["imagePreProcessMethod"]]
+    imagePreProcessParametersList = [hyperparameters["imagePreProcessParameters"]]
+  
+  while len(imagePreProcessMethodList):
+    imagePreProcessMethod     = imagePreProcessMethodList.pop(0)
+    imagePreProcessParameters = imagePreProcessParametersList.pop(0)
+    if imagePreProcessMethod == "medianAndMinimum":
+      img = medianAndMinimum(img, hyperparameters, imagePreProcessParameters)
+    elif imagePreProcessMethod == "erodeThenDilate":
+      img = erodeThenDilate(img, hyperparameters, imagePreProcessParameters)
+    elif imagePreProcessMethod == "findNonGrayScalePixels":
+      img = findNonGrayScalePixels(img, hyperparameters)
+  
+  return img
+
+
+def preprocessBackgroundImage(img, hyperparameters):
+  
+  if type(hyperparameters["backgroundPreProcessMethod"]) == list:
+    imagePreProcessMethodList     = hyperparameters["backgroundPreProcessMethod"].copy()
+    imagePreProcessParametersList = hyperparameters["backgroundPreProcessParameters"].copy()
+  else:
+    imagePreProcessMethodList     = [hyperparameters["backgroundPreProcessMethod"]]
+    imagePreProcessParametersList = [hyperparameters["backgroundPreProcessParameters"]]
+  
+  while len(imagePreProcessMethodList):
+    imagePreProcessMethod     = imagePreProcessMethodList.pop(0)
+    imagePreProcessParameters = imagePreProcessParametersList.pop(0)
+    if imagePreProcessMethod == "medianAndMinimum":
+      img = medianAndMinimum(img, hyperparameters, imagePreProcessParameters)
+    elif imagePreProcessMethod == "erodeThenDilate":
+      img = erodeThenDilate(img, hyperparameters, imagePreProcessParameters)
+    elif imagePreProcessMethod == "findNonGrayScalePixels":
+      img = findNonGrayScalePixels(img, hyperparameters)
   
   return img

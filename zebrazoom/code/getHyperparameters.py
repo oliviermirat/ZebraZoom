@@ -298,6 +298,9 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["imagePreProcessMethod"] = getConfig(config, "imagePreProcessMethod", videoPath)
   hyperparameters["imagePreProcessParameters"] = getConfig(config, "imagePreProcessParameters", videoPath)
   
+  hyperparameters["backgroundPreProcessMethod"] = getConfig(config, "backgroundPreProcessMethod", videoPath)
+  hyperparameters["backgroundPreProcessParameters"] = getConfig(config, "backgroundPreProcessParameters", videoPath)
+  
   hyperparameters["backgroundExtractionWithOnlyTwoFrames"] = getConfig(config, "backgroundExtractionWithOnlyTwoFrames", videoPath)
   
   hyperparameters["checkThatMovementOccurInVideo"] = getConfig(config, "checkThatMovementOccurInVideo", videoPath)

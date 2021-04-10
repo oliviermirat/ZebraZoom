@@ -1,7 +1,7 @@
 import numpy as np
 import cv2
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
-from zebrazoom.code.preprocessImage import preprocessImage
+from zebrazoom.code.preprocessImage import preprocessImage, preprocessBackgroundImage
 
 def getBackground(videoPath, hyperparameters):
 
@@ -74,7 +74,7 @@ def getBackground(videoPath, hyperparameters):
       print("couldn't use the frame", k, "for the background extraction")
   
   if hyperparameters["imagePreProcessMethod"]:
-    back = preprocessImage(back, hyperparameters)
+    back = preprocessBackgroundImage(back, hyperparameters)
   
   if hyperparameters["checkThatMovementOccurInVideo"]:
     cap.set(1, firstFrame)
@@ -84,7 +84,7 @@ def getBackground(videoPath, hyperparameters):
         frame = 255 - frame
       frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
       if hyperparameters["imagePreProcessMethod"]:
-        frame = preprocessImage(frame, hyperparameters)
+        frame = preprocessBackgroundImage(frame, hyperparameters)
       if type(frame[0][0]) == np.ndarray:
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
       putToWhite = (frame.astype('int32') >= (back.astype('int32')-hyperparameters["minPixelDiffForBackExtract"]))
@@ -101,7 +101,7 @@ def getBackground(videoPath, hyperparameters):
             frame = 255 - frame
           frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
           if hyperparameters["imagePreProcessMethod"]:
-            frame = preprocessImage(frame, hyperparameters)
+            frame = preprocessBackgroundImage(frame, hyperparameters)
           if type(frame[0][0]) == np.ndarray:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
           putToWhite = (frame.astype('int32') >= (back.astype('int32')-hyperparameters["minPixelDiffForBackExtract"]))

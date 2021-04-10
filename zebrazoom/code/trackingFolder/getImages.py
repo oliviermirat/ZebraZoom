@@ -3,6 +3,8 @@ import numpy as np
 
 from zebrazoom.code.getImage.getForegroundImageSequential import getForegroundImageSequential
 from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
+from zebrazoom.code.getImage.getImageSequential import getImageSequential
+from zebrazoom.code.getImage.getImage import getImage
 from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from zebrazoom.code.getImage.headEmbededFrameSequential import headEmbededFrameSequential
 from zebrazoom.code.getImage.headEmbededFrameSequentialBackExtract import headEmbededFrameSequentialBackExtract
@@ -24,9 +26,16 @@ def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPo
       gray = frame.copy()
   else:
     if hyperparameters["adjustFreelySwimTracking"] == 0:
-      frame = getForegroundImageSequential(cap, videoPath, background, i, wellNumber, wellPositions, hyperparameters)
+      if len(background):
+        frame = getForegroundImageSequential(cap, videoPath, background, i, wellNumber, wellPositions, hyperparameters)
+      else:
+        frame = getImageSequential(cap, videoPath, i, wellNumber, wellPositions, hyperparameters)
     else:
-      frame = getForegroundImage(videoPath, background, i, wellNumber, wellPositions, hyperparameters)
+      if len(background):
+        frame = getForegroundImage(videoPath, background, i, wellNumber, wellPositions, hyperparameters)
+      else:
+        frame = getImage(videoPath, i, wellNumber, wellPositions, hyperparameters)
+    
     gray = frame.copy()
     
     ret,thresh1 = cv2.threshold(gray,hyperparameters["thresholdForBlobImg"],255,cv2.THRESH_BINARY)
