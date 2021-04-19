@@ -85,7 +85,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
       if hyperparameters["findHeadPositionByUserInput"]:
         headPositionFirstFrame = findHeadPositionByUserInput(frame, firstFrame, videoPath)
       else:
-        [frame, gray, thresh1, blur, thresh2, frame2] = getImages(hyperparameters, cap, videoPath, firstFrame, background, wellNumber, wellPositions)
+        [frame, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back] = getImages(hyperparameters, cap, videoPath, firstFrame, background, wellNumber, wellPositions)
         cap.set(1, firstFrame)
         [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, firstFrame, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, headPositionFirstFrame, wellPositions[wellNumber]["lengthX"])
     if os.path.exists(videoPath+'.csv'):
@@ -120,17 +120,16 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     if hyperparameters["debugTracking"]:
       print("frame:",i)
     # Get images for frame i
-    [frame, gray, thresh1, blur, thresh2, frame2] = getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPositions)
+    [frame, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back] = getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPositions)
     # Head tracking and heading calculation
     [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, headPositionFirstFrame, wellPositions[wellNumber]["lengthX"])
     # Tail tracking for frame i
     if hyperparameters["trackTail"] == 1 :
       for animalId in range(0, hyperparameters["nbAnimalsPerWell"]):
-        trackingHeadTailAllAnimals = tailTracking(animalId, i, firstFrame, videoPath, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, lastFirstTheta, maxDepth, tailTipFirstFrame)
+        trackingHeadTailAllAnimals = tailTracking(animalId, i, firstFrame, videoPath, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, lastFirstTheta, maxDepth, tailTipFirstFrame, initialCurFrame, back)
     # Eye tracking for frame i
     if hyperparameters["eyeTracking"]:
       trackingEyesAllAnimals = eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals)
-    
     # Debug functions
     debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame2, hyperparameters)
     

@@ -61,8 +61,6 @@ def calculateHeading(x, y, i, thresh1, thresh2, takeTheHeadClosestToTheCenter, h
   expDecreaseFactor = hyperparameters["expDecreaseFactor"]
   firstFrame = hyperparameters["firstFrame"]
   lastFrame = hyperparameters["lastFrame"]
-  minAreaBody = hyperparameters["minAreaBody"]
-  maxAreaBody = hyperparameters["maxAreaBody"]
   headSize = hyperparameters["headSize"]
   debugTracking = hyperparameters["debugTracking"]
   headEmbeded = hyperparameters["headEmbeded"]
@@ -77,37 +75,28 @@ def calculateHeading(x, y, i, thresh1, thresh2, takeTheHeadClosestToTheCenter, h
   cy = 0
   cxNew = 0
   cyNew = 0
+    
+  thresh1[0,:]                 = 255
+  thresh1[len(thresh1)-1,:]    = 255
+  thresh1[:,0]                 = 255
+  thresh1[:,len(thresh1[0])-1] = 255
   
-  minAreaCur = minAreaBody
-  maxAreaCur = maxAreaBody
-  while (cx == 0) and (minAreaCur > -200):
-    
-    thresh1[0,:]                 = 255
-    thresh1[len(thresh1)-1,:]    = 255
-    thresh1[:,0]                 = 255
-    thresh1[:,len(thresh1[0])-1] = 255
-    
-    contours, hierarchy = cv2.findContours(thresh1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-    for contour in contours:
-      area = cv2.contourArea(contour)
-      if (area > minAreaCur) and (area < maxAreaCur):
-        dist = cv2.pointPolygonTest(contour, (x, y), True)
-        if dist >= 0:
-          M = cv2.moments(contour)
-          if M['m00']:
-            cx = int(M['m10']/M['m00'])
-            cy = int(M['m01']/M['m00'])
-            bodyContour = contour
-          else:
-            cx = 0
-            cy = 0
-          if hyperparameters["debugHeadingCalculation"]:
-            print("area:", area)
-            print("dist, cx, cy:", dist, cx, cy)
-            print("x, y:", x, y)
-    
-    minAreaCur = minAreaCur - 100 # NEED TO IMPROVE THIS AT SOME POINT: IT SHOULDN'T BE 100 AUTOMATICALY
-    maxAreaCur = maxAreaCur + 100 # NEED TO ADJUST THAT VALUE
+  contours, hierarchy = cv2.findContours(thresh1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+  for contour in contours:
+    dist = cv2.pointPolygonTest(contour, (x, y), True)
+    if dist >= 0:
+      M = cv2.moments(contour)
+      if M['m00']:
+        cx = int(M['m10']/M['m00'])
+        cy = int(M['m01']/M['m00'])
+        bodyContour = contour
+      else:
+        cx = 0
+        cy = 0
+      if hyperparameters["debugHeadingCalculation"]:
+        print("area:", area)
+        print("dist, cx, cy:", dist, cx, cy)
+        print("x, y:", x, y)
   
   if hyperparameters["debugHeadingCalculation"]:
     print("x, y, cx, cy:", x, y, cx, cy)

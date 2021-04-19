@@ -10,7 +10,7 @@ from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from scipy.interpolate import UnivariateSpline
 from numpy import linspace
 
-def findBodyContour(headPosition, hyperparameters, thresh1):
+def findBodyContour(headPosition, hyperparameters, thresh1, initialCurFrame, back):
 
   thresh1[:,0] = 255
   thresh1[0,:] = 255
@@ -22,19 +22,30 @@ def findBodyContour(headPosition, hyperparameters, thresh1):
   cx = 0
   cy = 0
   takeTheHeadClosestToTheCenter = 1
-  minAreaCur = hyperparameters["minAreaBody"]
-  maxAreaCur = hyperparameters["maxAreaBody"]
   bodyContour = 0
-  while (cx == 0) and (minAreaCur > -200):
-    if hyperparameters["findContourPrecision"] == "CHAIN_APPROX_SIMPLE":
-      contourPrecision = cv2.CHAIN_APPROX_SIMPLE
-    else: # hyperparameters["findContourPrecision"] == "CHAIN_APPROX_NONE"
-      contourPrecision = cv2.CHAIN_APPROX_NONE
+
+  if hyperparameters["findContourPrecision"] == "CHAIN_APPROX_SIMPLE":
+    contourPrecision = cv2.CHAIN_APPROX_SIMPLE
+  else: # hyperparameters["findContourPrecision"] == "CHAIN_APPROX_NONE"
+    contourPrecision = cv2.CHAIN_APPROX_NONE
+  
+  if hyperparameters["recalculateForegroundImageBasedOnBodyArea"]:
     
-    contours, hierarchy = cv2.findContours(thresh1, cv2.RETR_TREE, contourPrecision)
-    for contour in contours:
-      area = cv2.contourArea(contour)
-      if (area > minAreaCur) and (area < maxAreaCur):
+    minPixel2nbBlackPixels = {}
+    countTries = 0
+    nbBlackPixels = 0
+    nbBlackPixelsMax = int(hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] / hyperparameters["nbAnimalsPerWell"])
+    minPixelDiffForBackExtract = int(hyperparameters["minPixelDiffForBackExtract"])
+    
+    while (minPixelDiffForBackExtract > 0) and (countTries < 30) and not(minPixelDiffForBackExtract in minPixel2nbBlackPixels):
+      curFrame = initialCurFrame
+      putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
+      curFrame[putToWhite] = 255
+      ret, thresh1_b = cv2.threshold(curFrame, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
+      thresh1_b = 255 - thresh1_b
+      bodyContour = 0
+      contours, hierarchy = cv2.findContours(thresh1, cv2.RETR_TREE, contourPrecision)
+      for contour in contours:
         dist = cv2.pointPolygonTest(contour, (x, y), True)
         if dist >= 0:
           M = cv2.moments(contour)
@@ -45,7 +56,47 @@ def findBodyContour(headPosition, hyperparameters, thresh1):
           else:
             cx = 0
             cy = 0
+      if not(type(bodyContour) == int):
+        nbBlackPixels = cv2.contourArea(bodyContour)
+      else:
+        nbBlackPixels = -100000000
     
-    minAreaCur = minAreaCur - 100
-    maxAreaCur = maxAreaCur + 100
+      minPixel2nbBlackPixels[minPixelDiffForBackExtract] = nbBlackPixels
+      if nbBlackPixels > nbBlackPixelsMax:
+        minPixelDiffForBackExtract = minPixelDiffForBackExtract + 1
+      if nbBlackPixels <= nbBlackPixelsMax:
+        minPixelDiffForBackExtract = minPixelDiffForBackExtract - 1
+      
+      countTries = countTries + 1
+    
+    best_minPixelDiffForBackExtract = 0
+    minDist = 10000000000000
+    for minPixelDiffForBackExtract in minPixel2nbBlackPixels:
+      nbBlackPixels = minPixel2nbBlackPixels[minPixelDiffForBackExtract]
+      dist = abs(nbBlackPixels - nbBlackPixelsMax)
+      if dist < minDist:
+        minDist = dist
+        best_minPixelDiffForBackExtract = minPixelDiffForBackExtract
+        
+    minPixelDiffForBackExtract = best_minPixelDiffForBackExtract
+    putToWhite = (curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
+    curFrame[putToWhite] = 255
+    
+    ret, thresh1 = cv2.threshold(curFrame, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
+    thresh1 = 255 - thresh1
+    
+  #
+  contours, hierarchy = cv2.findContours(thresh1, cv2.RETR_TREE, contourPrecision)
+  for contour in contours:
+    dist = cv2.pointPolygonTest(contour, (x, y), True)
+    if dist >= 0:
+      M = cv2.moments(contour)
+      if M['m00']:
+        cx = int(M['m10']/M['m00'])
+        cy = int(M['m01']/M['m00'])
+        bodyContour = contour
+      else:
+        cx = 0
+        cy = 0
+  
   return bodyContour

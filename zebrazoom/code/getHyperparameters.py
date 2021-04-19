@@ -336,6 +336,11 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["computeEyesHeadingPlot"]             = getConfig(config, "computeEyesHeadingPlot", videoPath)
   hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] = getConfig(config, "adjustMinPixelDiffForBackExtract_nbBlackPixelsMax", videoPath)
   
+  hyperparameters["fixedHeadPositionX"] = getConfig(config, "fixedHeadPositionX", videoPath)
+  hyperparameters["fixedHeadPositionY"] = getConfig(config, "fixedHeadPositionY", videoPath)
+  
+  hyperparameters["recalculateForegroundImageBasedOnBodyArea"] = getConfig(config, "recalculateForegroundImageBasedOnBodyArea", videoPath)
+  
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5

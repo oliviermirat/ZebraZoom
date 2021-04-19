@@ -8,6 +8,7 @@ from tkinter import *
 import json
 import cv2
 from zebrazoom.code.GUI.getCoordinates import findWellLeft, findWellRight, findHeadCenter, findBodyExtremity
+from zebrazoom.code.GUI.automaticallyFindOptimalParameters import automaticallyFindOptimalParameters
 import math
 from zebrazoom.code.findWells import findWells
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
@@ -55,10 +56,14 @@ def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
     self.videoToCreateConfigFileFor = filedialog.askopenfilename(initialdir = os.path.expanduser("~"),title = "Select video to create config file for",filetypes = (("video","*.*"),("all files","*.*")))
   controller.show_frame("ChooseGeneralExperiment")
 
-def chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other):
+def chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, freeZebra2):
   self.configFile["extractAdvanceZebraParameters"] = 0
   if int(freeZebra):
     self.organism = 'zebrafish'
+    self.configFile["headEmbeded"] = 0
+    controller.show_frame("WellOrganisation")
+  elif int(freeZebra2):
+    self.organism = 'zebrafishNew'
     self.configFile["headEmbeded"] = 0
     controller.show_frame("WellOrganisation")
   elif int(headEmbZebra):
@@ -300,7 +305,7 @@ def chooseBeginningAndEndOfVideo(self, controller):
   
 def getImageForMultipleAnimalGUI(l, vertical, horizontal, nx, ny, max_l, videoToCreateConfigFileFor, background, wellPositions, hyperparameters):
   
-  frame = getForegroundImage(videoToCreateConfigFileFor, background, l, 0, [], hyperparameters)
+  [frame, a1, a2] = getForegroundImage(videoToCreateConfigFileFor, background, l, 0, [], hyperparameters)
   
   lengthX = nx * 2
   lengthY = ny
@@ -521,6 +526,8 @@ def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHea
   
   if self.organism == 'zebrafish':
     controller.show_frame("IdentifyHeadCenter")
+  elif self.organism == 'zebrafishNew':
+    automaticallyFindOptimalParameters(self, controller, True)
   else:
     identifyMultipleHead(self, controller, nbanimals)
     controller.show_frame("FinishConfig")

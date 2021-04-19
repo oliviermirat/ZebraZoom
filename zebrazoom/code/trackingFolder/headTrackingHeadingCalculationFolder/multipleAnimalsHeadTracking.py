@@ -23,7 +23,9 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
   
   if hyperparameters["multipleHeadTrackingIterativelyRelaxAreaCriteria"]:
     contours, hierarchy = cv2.findContours(thresh2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+    areaDecreaseFactor = int(hyperparameters["minArea"]/10)
     while (len(headCoordinatesOptions) < hyperparameters["nbAnimalsPerWell"]) and (minAreaCur > 0):
+      headCoordinatesOptions = []
       # print("MMMinAreaCur:", minAreaCur)
       for contour in contours:
         area = cv2.contourArea(contour)
@@ -39,12 +41,12 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
           if not([x, y] in headCoordinatesOptions):
             headCoordinatesOptions.append([x, y])
       
-      if int(hyperparameters["minArea"]/10):
-        minAreaCur = minAreaCur - int(hyperparameters["minArea"]/10)
-        maxAreaCur = maxAreaCur + int(hyperparameters["minArea"]/10)
+      if areaDecreaseFactor:
+        minAreaCur = minAreaCur - areaDecreaseFactor
+        maxAreaCur = int(maxAreaCur * 1.1)
       else:
         minAreaCur = minAreaCur - 1
-        maxAreaCur = maxAreaCur + 1   
+        maxAreaCur = int(maxAreaCur * 1.1)   
   else:
     contours, hierarchy = cv2.findContours(thresh2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     for contour in contours:

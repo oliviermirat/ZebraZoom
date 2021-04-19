@@ -109,6 +109,9 @@
   "postProcessMultipleTrajectories" : 0,
   "postProcessMaxDistanceAuthorized" : 180,
   "postProcessMaxDisapearanceFrames" : 100,
+  "fixedHeadPositionX" : -1,
+  "fixedHeadPositionY" : -1,
+  "recalculateForegroundImageBasedOnBodyArea" : 0,
 
   "eyeTracking" : 0,
   "headCenterToMidEyesPointDistance" : 10,

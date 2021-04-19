@@ -60,8 +60,13 @@ class ChooseGeneralExperiment(tk.Frame):
     Checkbutton(self, text="Track centers of mass of any kind of animal.", variable=other).pack()
     tk.Label(self, text='Several animals can be tracked at once. The animals must be "darker" than the background and the background must be still.').pack()
     tk.Label(self, text="").pack()
+
+    freeZebra2 = IntVar()
+    Checkbutton(self, text="NEW BETA VERSION: Track heads and tails of freely swimming fish.", variable=freeZebra2).pack()
+    tk.Label(self, text="The fish must be in one well of any shape or in several circular wells. Each well should contain the same number of fish.").pack()
+    tk.Label(self, text="").pack()
     
-    tk.Button(self, text="Next", command=lambda: controller.chooseGeneralExperiment(controller, freeZebra.get(), headEmbZebra.get(), drosophilia.get(), rodent.get(), other.get())).pack()
+    tk.Button(self, text="Next", command=lambda: controller.chooseGeneralExperiment(controller, freeZebra.get(), headEmbZebra.get(), drosophilia.get(), rodent.get(), other.get(), freeZebra2.get())).pack()
     
     tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
 

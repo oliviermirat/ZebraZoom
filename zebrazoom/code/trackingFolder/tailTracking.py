@@ -9,7 +9,7 @@ from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingBlobD
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import findHeadPositionByUserInput
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.headEmbededTailTrackingTeresaNicolson import headEmbededTailTrackingTeresaNicolson
 
-def tailTracking(animalId, i, firstFrame, videoPath, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, lastFirstTheta, maxDepth, tailTip):
+def tailTracking(animalId, i, firstFrame, videoPath, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, lastFirstTheta, maxDepth, tailTip, initialCurFrame, back):
 
   headPosition = [trackingHeadTailAllAnimals[animalId, i-firstFrame][0][0], trackingHeadTailAllAnimals[animalId, i-firstFrame][0][1]]
   heading      = trackingHeadingAllAnimals[animalId, i-firstFrame]
@@ -33,7 +33,7 @@ def tailTracking(animalId, i, firstFrame, videoPath, frame, hyperparameters, thr
   else:
     if hyperparameters["freeSwimmingTailTrackingMethod"] == "tailExtremityDetect":
       # through the tail extremity descent method (original C++ method)
-      trackingHeadTailAllAnimalsI = tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,hyperparameters["debugTrackingPtExtreme"],heading,hyperparameters)
+      trackingHeadTailAllAnimalsI = tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,hyperparameters["debugTrackingPtExtreme"],heading,hyperparameters, initialCurFrame, back)
       trackingHeadTailAllAnimals[animalId, i-firstFrame] = trackingHeadTailAllAnimalsI
     elif hyperparameters["freeSwimmingTailTrackingMethod"] == "blobDescent":
       # through the "blob descent" method

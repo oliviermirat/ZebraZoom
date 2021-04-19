@@ -37,6 +37,7 @@ def getForegroundImage(videoPath, background, frameNumber, wellNumber, wellPosit
     
   grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
   curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
+  initialCurFrame = curFrame.copy()
   
   # if False:
   putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
@@ -44,10 +45,11 @@ def getForegroundImage(videoPath, background, frameNumber, wellNumber, wellPosit
   curFrame[putToWhite] = 255
   
   if hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"]:
+    minPixel2nbBlackPixels = {}
     countTries = 0
     nbBlackPixels = 0
     nbBlackPixelsMax = int(hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"])
-    while ((nbBlackPixels < 1) or (nbBlackPixels > nbBlackPixelsMax)) and (countTries < 30):
+    while (minPixelDiffForBackExtract > 0) and (countTries < 30) and not(minPixelDiffForBackExtract in minPixel2nbBlackPixels):
       if countTries > 0:
         curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
         putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
@@ -55,12 +57,23 @@ def getForegroundImage(videoPath, background, frameNumber, wellNumber, wellPosit
       ret, thresh1 = cv2.threshold(curFrame, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
       thresh1 = 255 - thresh1
       nbBlackPixels = cv2.countNonZero(thresh1)
+      minPixel2nbBlackPixels[minPixelDiffForBackExtract] = nbBlackPixels
       if nbBlackPixels > nbBlackPixelsMax:
         minPixelDiffForBackExtract = minPixelDiffForBackExtract + 1
-      if nbBlackPixels < 1 and minPixelDiffForBackExtract > 1:
+      if nbBlackPixels <= nbBlackPixelsMax:
         minPixelDiffForBackExtract = minPixelDiffForBackExtract - 1
       countTries = countTries + 1
-    # print("countTries:", countTries, "; nbBlackPixels:", nbBlackPixels, "; minPixelDiffForBackExtract:", minPixelDiffForBackExtract)
+    
+    best_minPixelDiffForBackExtract = 0
+    minDist = 10000000000000
+    for minPixelDiffForBackExtract in minPixel2nbBlackPixels:
+      nbBlackPixels = minPixel2nbBlackPixels[minPixelDiffForBackExtract]
+      dist = abs(nbBlackPixels - nbBlackPixelsMax)
+      if dist < minDist:
+        minDist = dist
+        best_minPixelDiffForBackExtract = minPixelDiffForBackExtract
+        
+    minPixelDiffForBackExtract = best_minPixelDiffForBackExtract
     curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
     putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
     curFrame[putToWhite] = 255      
@@ -82,4 +95,4 @@ def getForegroundImage(videoPath, background, frameNumber, wellNumber, wellPosit
     cv2.imshow('Frame', frame)
     cv2.waitKey(0)
     
-  return curFrame
+  return [curFrame, initialCurFrame, back]

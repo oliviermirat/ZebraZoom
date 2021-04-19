@@ -11,6 +11,10 @@ from zebrazoom.code.getImage.headEmbededFrameSequentialBackExtract import headEm
 from zebrazoom.code.getImage.headEmbededFrameBackExtract import headEmbededFrameBackExtract
 
 def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPositions):
+  
+  initialCurFrame = 0
+  back = 0
+
   if hyperparameters["headEmbeded"]:
     if hyperparameters["headEmbededRemoveBack"] == 0:
       if hyperparameters["adjustHeadEmbededTracking"] == 0:
@@ -27,12 +31,12 @@ def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPo
   else:
     if hyperparameters["adjustFreelySwimTracking"] == 0:
       if len(background):
-        frame = getForegroundImageSequential(cap, videoPath, background, i, wellNumber, wellPositions, hyperparameters)
+        [frame, initialCurFrame, back] = getForegroundImageSequential(cap, videoPath, background, i, wellNumber, wellPositions, hyperparameters)
       else:
         frame = getImageSequential(cap, videoPath, i, wellNumber, wellPositions, hyperparameters)
     else:
       if len(background):
-        frame = getForegroundImage(videoPath, background, i, wellNumber, wellPositions, hyperparameters)
+        [frame, initialCurFrame, back] = getForegroundImage(videoPath, background, i, wellNumber, wellPositions, hyperparameters)
       else:
         frame = getImage(videoPath, i, wellNumber, wellPositions, hyperparameters)
     
@@ -83,4 +87,4 @@ def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPo
   thresh2 = thresh1.copy()
   thresh2 = cv2.dilate(thresh2, kernel, iterations=hyperparameters["dilateIter"])
   
-  return [frame, gray, thresh1, blur, thresh2, frame2]
+  return [frame, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back]

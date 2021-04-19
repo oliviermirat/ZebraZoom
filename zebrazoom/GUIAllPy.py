@@ -150,8 +150,8 @@ class SampleApp(tk.Tk):
     def chooseVideoToCreateConfigFileFor(self, controller):
         configFilePrepareFunctions.chooseVideoToCreateConfigFileFor(self, controller)
     
-    def chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other):
-        configFilePrepareFunctions.chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other)
+    def chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, freeZebra2):
+        configFilePrepareFunctions.chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, freeZebra2)
         
     def wellOrganisation(self, controller, circular, rectangular, roi, other):
         configFilePrepareFunctions.wellOrganisation(self, controller, circular, rectangular, roi, other)

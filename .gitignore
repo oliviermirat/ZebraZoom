@@ -41,3 +41,9 @@ trace.txt
 
 launch.sh
 launch2.sh
+
+*_paramSet
+*_config.json
+newhyperparameters
+
+experimentWithAutomaticOptimalParamSearch.py

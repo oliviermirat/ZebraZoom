@@ -23,7 +23,7 @@ from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtre
 # from trackingFunctions import assignValueIfBetweenRange
 
  
-def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugAdv,heading, hyperparameters):
+def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugAdv,heading, hyperparameters, initialCurFrame, back):
   
   dst = frame.copy()
   dst = cv2.cvtColor(dst, cv2.COLOR_GRAY2RGB)
@@ -38,18 +38,14 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
     cv2.waitKey(0)
   
   # Finding blob corresponding to the body of the fish
-  bodyContour = findBodyContour(headPosition, hyperparameters, thresh1)
-  
+  bodyContour = findBodyContour(headPosition, hyperparameters, thresh1, initialCurFrame, back)
   if type(bodyContour) != int:
-    
     # Finding the two sides of the fish
     res = findTheTwoSides(headPosition, bodyContour, dst)
-    
     # Finding tail extremity
     rotatedContour = bodyContour.copy()
     rotatedContour = Rotate(rotatedContour,int(headPosition[0]),int(headPosition[1]),heading,dst)
     [MostCurvyIndex, distance2] = findTailExtremete(rotatedContour, bodyContour, headPosition[0], int(res[0]), int(res[1]), debugAdv, dst, hyperparameters["tailExtremityMaxJugeDecreaseCoeff"], hyperparameters)
-    
     if debugAdv:
       # Head Center
       cv2.circle(dst, (int(headPosition[0]),int(headPosition[1])), 3, (255, 255, 0), -1)
@@ -72,7 +68,6 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
     # Getting Midline
     taille = nbTailPoints
     tail = getMidline(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, taille-1, distance2, debugAdv, hyperparameters, nbTailPoints)
-    
     # Optimizing midline if necessary
     midlineIsInBlobTrackingOptimization = hyperparameters["midlineIsInBlobTrackingOptimization"]
     if midlineIsInBlobTrackingOptimization:
@@ -87,7 +82,6 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
               MostCurvyIndex = j
               maxTailLength = tailLength
         tail = getMidline(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, taille-1, distance2, debugAdv, hyperparameters, nbTailPoints)
-    
     # Applying snake on tail
     applySnake = False
     if applySnake:
