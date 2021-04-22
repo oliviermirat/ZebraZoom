@@ -36,15 +36,18 @@ def findBodyContour(headPosition, hyperparameters, thresh1, initialCurFrame, bac
     nbBlackPixels = 0
     nbBlackPixelsMax = int(hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] / hyperparameters["nbAnimalsPerWell"])
     minPixelDiffForBackExtract = int(hyperparameters["minPixelDiffForBackExtract"])
+    if "minPixelDiffForBackExtractBody" in hyperparameters:
+      minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtractBody"]
     
+    previousNbBlackPixels = []
     while (minPixelDiffForBackExtract > 0) and (countTries < 30) and not(minPixelDiffForBackExtract in minPixel2nbBlackPixels):
-      curFrame = initialCurFrame
+      curFrame = initialCurFrame.copy()
       putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
       curFrame[putToWhite] = 255
       ret, thresh1_b = cv2.threshold(curFrame, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
       thresh1_b = 255 - thresh1_b
       bodyContour = 0
-      contours, hierarchy = cv2.findContours(thresh1, cv2.RETR_TREE, contourPrecision)
+      contours, hierarchy = cv2.findContours(thresh1_b, cv2.RETR_TREE, contourPrecision)
       for contour in contours:
         dist = cv2.pointPolygonTest(contour, (x, y), True)
         if dist >= 0:
@@ -68,6 +71,12 @@ def findBodyContour(headPosition, hyperparameters, thresh1, initialCurFrame, bac
         minPixelDiffForBackExtract = minPixelDiffForBackExtract - 1
       
       countTries = countTries + 1
+      
+      previousNbBlackPixels.append(nbBlackPixels)
+      if len(previousNbBlackPixels) >= 3:
+        lastThree = previousNbBlackPixels[len(previousNbBlackPixels)-3: len(previousNbBlackPixels)]
+        if lastThree.count(lastThree[0]) == len(lastThree):
+          countTries = 1000000
     
     best_minPixelDiffForBackExtract = 0
     minDist = 10000000000000
@@ -85,6 +94,7 @@ def findBodyContour(headPosition, hyperparameters, thresh1, initialCurFrame, bac
     ret, thresh1 = cv2.threshold(curFrame, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
     thresh1 = 255 - thresh1
     
+    hyperparameters["minPixelDiffForBackExtractBody"] = minPixelDiffForBackExtract
   #
   contours, hierarchy = cv2.findContours(thresh1, cv2.RETR_TREE, contourPrecision)
   for contour in contours:
@@ -98,5 +108,10 @@ def findBodyContour(headPosition, hyperparameters, thresh1, initialCurFrame, bac
       else:
         cx = 0
         cy = 0
+  
+  # print("area body contour:", cv2.contourArea(bodyContour))
+  if type(bodyContour) != int:
+    if cv2.contourArea(bodyContour) >= hyperparameters["maxAreaBody"]:
+      bodyContour = 0
   
   return bodyContour

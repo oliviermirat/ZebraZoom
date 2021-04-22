@@ -22,8 +22,11 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
   saveIntermediary = True # Should be set to True except when debugging
   # paraSetSaved (below) is the intermediary to reload when the boolean above is set to True
   # paraSetSaved = '4wellsZebrafishLarvaeEscapeResponses_paramSet'
-  # paraSetSaved = 'Catamaran_10e_t2a_paramSet'
-  paraSetSaved = 'maha_paramSet'
+  paraSetSaved = 'Catamaran_10e_t2a_paramSet'
+  # paraSetSaved = 'maha_paramSet'
+  # paraSetSaved = 'GoodTracking_IssueswithHeading1_paramSet'
+  # paraSetSaved = 'KowalkoDuboue1_paramSet'
+  # paraSetSaved = 'Escape_Btx_CTL_A1_1_paramSet'
   
   # # # Getting ground truth from user: head center and tail extremity coordinates for a few frames
   
@@ -110,7 +113,7 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
         cv2.waitKey(2000)
         cv2.destroyAllWindows()
         
-        if False: # Centered on the animal
+        if True: # Centered on the animal
           minX = min(headCoordinates[0], tailTipCoordinates[0])
           maxX = max(headCoordinates[0], tailTipCoordinates[0])
           minY = min(headCoordinates[1], tailTipCoordinates[1])
@@ -157,7 +160,7 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
   
   # # # Starting the process of finding the best hyperparameters to track the video
   
-  configFile = {"extractAdvanceZebraParameters": 0, "headEmbeded": 0, "nbWells": 1, "noBoutsDetection": 1, "noChecksForBoutSelectionInExtractParams": 1, "trackingPointSizeDisplay": 4, "validationVideoPlotHeading": 1, "nbAnimalsPerWell": initialConfigFile["nbAnimalsPerWell"], "forceBlobMethodForHeadTracking": 1, "multipleHeadTrackingIterativelyRelaxAreaCriteria": 1, "erodeIter":0, "minArea": 0, "maxArea": 100000000000000, "minAreaBody": 0, "maxAreaBody": 100000000000000, "headSize": 20, "minTailSize": 0, "maxTailSize": 100000000000000, "paramGaussianBlur": 25, "extractBackWhiteBackground": 1, "dilateIter": 1, "thresholdForBlobImg": 254, "findContourPrecision": "CHAIN_APPROX_NONE", "midlineIsInBlobTrackingOptimization": 0}
+  configFile = {"extractAdvanceZebraParameters": 0, "headEmbeded": 0, "nbWells": 1, "noBoutsDetection": 1, "noChecksForBoutSelectionInExtractParams": 1, "trackingPointSizeDisplay": 4, "validationVideoPlotHeading": 1, "nbAnimalsPerWell": 1, "forceBlobMethodForHeadTracking": 1, "multipleHeadTrackingIterativelyRelaxAreaCriteria": 1, "erodeIter":0, "minArea": 0, "maxArea": 100000000000000, "minAreaBody": 0, "maxAreaBody": 100000000000000, "headSize": 20, "minTailSize": 0, "maxTailSize": 100000000000000, "paramGaussianBlur": 25, "extractBackWhiteBackground": 1, "dilateIter": 1, "thresholdForBlobImg": 254, "findContourPrecision": "CHAIN_APPROX_NONE", "midlineIsInBlobTrackingOptimization": 0, "checkAllContourForTailExtremityDetect": 1, "recalculateForegroundImageBasedOnBodyArea": 0}
   
   hyperparameters = getHyperparametersSimple(configFile)
   
@@ -189,7 +192,6 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
     bestMinPixelDiffForBackExtract = 10
     lowestTailTipDistError = 1000000000
     for minPixelDiffForBackExtract in range(3, 25):
-      print("trying with minPixelDiffForBackExtract:", minPixelDiffForBackExtract)
       hyperparameters["minPixelDiffForBackExtract"] = minPixelDiffForBackExtract
       trackingData = tracking(videoPath, background, image["wellNumber"], wellPositions, hyperparameters, videoName)
       tailTipGroundTruth = image["tailTipCoordinates"] #[image["tailTipCoordinates"][0] - image["oneWellManuallyChosenTopLeft"][0], image["tailTipCoordinates"][1] - image["oneWellManuallyChosenTopLeft"][1]]
@@ -209,6 +211,7 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
           previousDataPoint = dataPoint
         image["tailLength"] = tailLength
         image["tailLengthManual"] = math.sqrt((image["headCoordinates"][0] - tailTipGroundTruth[0])**2 + (image["headCoordinates"][1] - tailTipGroundTruth[1])**2)
+      print("minPixelDiffForBackExtract:", minPixelDiffForBackExtract, "; tailTipDistError:", tailTipDistError)
     
     image["bestMinPixelDiffForBackExtract"] = bestMinPixelDiffForBackExtract
     image["lowestTailTipDistError"]         = lowestTailTipDistError
@@ -217,7 +220,13 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
       hyperparameters["minPixelDiffForBackExtract"] = image["bestMinPixelDiffForBackExtract"]
       [foregroundImage, o1, o2] = getForegroundImage(videoPath, background, image["frameNumber"], image["wellNumber"], wellPositions, hyperparameters)
       ret, thresh = cv2.threshold(foregroundImage, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
+      thresh[0,:] = 255
+      thresh[len(thresh)-1,:] = 255
+      thresh[:,0] = 255
+      thresh[:,len(thresh[0])-1] = 255
       contourClickedByUser = 0
+      # cv2.imshow('Frame', thresh)
+      # cv2.waitKey(0)
       contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
       for contour in contours:
         dist = cv2.pointPolygonTest(contour, (image["headCoordinates"][0], image["headCoordinates"][1]), True)
@@ -235,6 +244,9 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
     
   # # # Choosing the hyperparameters related to the background substraction and to the tail length as well as the headSize hyperparameter (for the heading calculation)
   
+  configFile["nbAnimalsPerWell"]      = initialConfigFile["nbAnimalsPerWell"]
+  hyperparameters["nbAnimalsPerWell"] = initialConfigFile["nbAnimalsPerWell"]
+  
   tailLengthManualOptions = []
   for image in data:
     tailLengthManualOptions.append(image["tailLengthManual"])
@@ -248,39 +260,45 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
   tailLengthOptions = []
   for image in data:
     if image["lowestTailTipDistError"] != 1000000000 and (image["tailLength"] < 10 * maxTailLengthManual):
-      bestMinPixelDiffForBackExtractOptions.append(image["bestMinPixelDiffForBackExtract"])
-      tailLengthOptions.append(image["tailLength"])
       if image["bodyContourArea"] != -1:
+        bestMinPixelDiffForBackExtractOptions.append(image["bestMinPixelDiffForBackExtract"])
+        tailLengthOptions.append(image["tailLength"])
         bodyContourAreaOptions.append(image["bodyContourArea"])
   
-  if len(bestMinPixelDiffForBackExtractOptions):
-    bestMinPixelDiffForBackExtract = np.mean(bestMinPixelDiffForBackExtractOptions)
-    tailLength = np.mean(tailLengthOptions)
-  
-  if len(bodyContourAreaOptions):
-    bodyContourArea = np.mean(bodyContourAreaOptions)
-  else:
-    print("NEED TO START OVER: bodyContourArea")
-    bodyContourArea = 0
-  
-  if bestMinPixelDiffForBackExtract == -1:
-    print("NEED TO START OVER")
-    
   print("bestMinPixelDiffForBackExtractOptions:", bestMinPixelDiffForBackExtractOptions)
   print("tailLengthOptions:", tailLengthOptions)
   print("bodyContourAreaOptions:", bodyContourAreaOptions)
+  
+  if len(bestMinPixelDiffForBackExtractOptions):
+    if False:
+      bestMinPixelDiffForBackExtract = int(np.max(bestMinPixelDiffForBackExtractOptions))
+      tailLength = int(np.min(tailLengthOptions))
+      bodyContourArea = int(np.min(bodyContourAreaOptions))
+    else:
+      ind = np.argmin(bodyContourAreaOptions)
+      bestMinPixelDiffForBackExtract = bestMinPixelDiffForBackExtractOptions[ind]
+      tailLength      = tailLengthOptions[ind]
+      bodyContourArea = bodyContourAreaOptions[ind]
+  else:
+    print("NEED TO START OVER: bodyContourArea")
+    bodyContourArea = 0
+  if bestMinPixelDiffForBackExtract == -1:
+    print("NEED TO START OVER")
   
   hyperparameters["minPixelDiffForBackExtract"] = bestMinPixelDiffForBackExtract
   hyperparameters["minTailSize"] = tailLength / 10
   hyperparameters["maxTailSize"] = tailLength * 2
   hyperparameters["headSize"]    = int(tailLength / 2)
+  hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] = bodyContourArea * configFile["nbAnimalsPerWell"]
+  hyperparameters["maxAreaBody"] = 5 * bodyContourArea
+  hyperparameters["trackingPointSizeDisplay"] = int(np.ceil(math.sqrt(bodyContourArea) / 15))
   configFile["minPixelDiffForBackExtract"] = bestMinPixelDiffForBackExtract
   configFile["minTailSize"] = tailLength / 10
   configFile["maxTailSize"] = tailLength * 2
   configFile["headSize"]    = int(tailLength / 2)
-  
-  hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] = bodyContourArea * configFile["nbAnimalsPerWell"]
   configFile["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] = bodyContourArea * configFile["nbAnimalsPerWell"]
+  configFile["maxAreaBody"] = 5 * bodyContourArea
+  configFile["trackingPointSizeDisplay"] = int(np.ceil(math.sqrt(bodyContourArea) / 15))
   
   # # # For each frame that has some ground truth provided by the user:
   # # # Finds the area of the body as well as the optimal dilateIter hyperparameters to go from body contour to head contour
@@ -293,7 +311,10 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
       
       [foregroundImage, o1, o2] = getForegroundImage(videoPath, background, image["frameNumber"], image["wellNumber"], wellPositions, hyperparameters)
       ret, thresh = cv2.threshold(foregroundImage, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
-
+      thresh[0,:] = 255
+      thresh[len(thresh)-1,:] = 255
+      thresh[:,0] = 255
+      thresh[:,len(thresh[0])-1] = 255
       contourClickedByUser = 0
       contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
       for contour in contours:
@@ -304,6 +325,10 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
       if not(type(contourClickedByUser) == int): # We found the contour that the user selected
         image["contourClickedByUser"] = contourClickedByUser
         thresh2 = thresh.copy()
+        thresh2[0,:] = 255
+        thresh2[len(thresh2)-1,:] = 255
+        thresh2[:,0] = 255
+        thresh2[:,len(thresh2[0])-1] = 255
         erodeSize = hyperparameters["erodeSize"]
         kernel  = np.ones((erodeSize, erodeSize), np.uint8)
         
@@ -343,7 +368,7 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
   
   dilateIterOptions = []
   for image in data:
-    if image["lowestTailTipDistError"] != 1000000000 and (image["tailLength"] < 10 * maxTailLengthManual):
+    if image["lowestTailTipDistError"] != 1000000000 and (image["tailLength"] < 10 * maxTailLengthManual) and ("dilateIter" in image):
       dilateIterOptions.append(image["dilateIter"])
       
   print("dilateIterOptions:", dilateIterOptions)
@@ -359,11 +384,14 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
   
   for image in data:
   
-    if image["lowestTailTipDistError"] != 1000000000 and (image["tailLength"] < 10 * maxTailLengthManual):
+    if image["lowestTailTipDistError"] != 1000000000 and (image["tailLength"] < 10 * maxTailLengthManual) and ("contourClickedByUser" in image):
     
       [foregroundImage, o1, o2] = getForegroundImage(videoPath, background, image["frameNumber"], image["wellNumber"], wellPositions, hyperparameters)
       ret, thresh = cv2.threshold(foregroundImage, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
-      
+      thresh[0,:] = 255
+      thresh[len(thresh)-1,:] = 255
+      thresh[:,0] = 255
+      thresh[:,len(thresh[0])-1] = 255
       contourClickedByUser = image["contourClickedByUser"]
       
       thresh2 = cv2.dilate(thresh, kernel, iterations=hyperparameters["dilateIter"])
@@ -408,11 +436,11 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
   
   # # # Overwritting some of the hyperparameters from hyperparameters in the initial configFile
   
-  listOfParametersToOverwrite = ["nbWells", "nbRowsOfWells", "nbWellsPerRows", "minWellDistanceForWellDetection", "wellOutputVideoDiameter", "wellsAreRectangles", "rectangleWellAreaImageThreshold", "rectangleWellErodeDilateKernelSize", "findRectangleWellArea", "rectangularWellsInvertBlackWhite", "noWellDetection"]
+  listOfParametersToOverwrite = ["nbWells", "nbRowsOfWells", "nbWellsPerRows", "minWellDistanceForWellDetection", "wellOutputVideoDiameter", "wellsAreRectangles", "rectangleWellAreaImageThreshold", "rectangleWellErodeDilateKernelSize", "findRectangleWellArea", "rectangularWellsInvertBlackWhite", "noWellDetection", "oneWellManuallyChosenTopLeft", "oneWellManuallyChosenBottomRight"]
   for parameter in listOfParametersToOverwrite:
     if parameter in initialConfigFile:
       configFile[parameter] = initialConfigFile[parameter]
-  configFile["recalculateForegroundImageBasedOnBodyArea"] = 1
+  # configFile["recalculateForegroundImageBasedOnBodyArea"] = 1
       
   # # # Moving on to the next step
   

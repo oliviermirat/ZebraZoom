@@ -5,6 +5,8 @@ import cv2
 def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNumber, wellPositions, hyperparameters):
   
   minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtract"]
+  if "minPixelDiffForBackExtractHead" in hyperparameters:
+    minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtractHead"]
   debug = 0
   
   xtop = wellPositions[wellNumber]['topLeftX']
@@ -39,7 +41,7 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
   putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
   
   curFrame[putToWhite] = 255
-  
+  previousNbBlackPixels = []
   if hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"]:
     minPixel2nbBlackPixels = {}
     countTries = 0
@@ -59,6 +61,11 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
       if nbBlackPixels <= nbBlackPixelsMax:
         minPixelDiffForBackExtract = minPixelDiffForBackExtract - 1
       countTries = countTries + 1
+      previousNbBlackPixels.append(nbBlackPixels)
+      if len(previousNbBlackPixels) >= 3:
+        lastThree = previousNbBlackPixels[len(previousNbBlackPixels)-3: len(previousNbBlackPixels)]
+        if lastThree.count(lastThree[0]) == len(lastThree):
+          countTries = 1000000
     
     best_minPixelDiffForBackExtract = 0
     minDist = 10000000000000
@@ -70,6 +77,7 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
         best_minPixelDiffForBackExtract = minPixelDiffForBackExtract
         
     minPixelDiffForBackExtract = best_minPixelDiffForBackExtract
+    hyperparameters["minPixelDiffForBackExtractHead"] = minPixelDiffForBackExtract
     curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
     putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
     curFrame[putToWhite] = 255      

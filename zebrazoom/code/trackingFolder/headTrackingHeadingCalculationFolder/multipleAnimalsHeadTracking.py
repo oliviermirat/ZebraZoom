@@ -46,7 +46,7 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
         maxAreaCur = int(maxAreaCur * 1.1)
       else:
         minAreaCur = minAreaCur - 1
-        maxAreaCur = int(maxAreaCur * 1.1)   
+        maxAreaCur = int(maxAreaCur * 1.1)
   else:
     contours, hierarchy = cv2.findContours(thresh2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     for contour in contours:

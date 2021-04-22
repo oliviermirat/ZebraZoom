@@ -68,6 +68,29 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
     # Getting Midline
     taille = nbTailPoints
     tail = getMidline(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, taille-1, distance2, debugAdv, hyperparameters, nbTailPoints)
+    
+    if False:
+      maxDistContourToTail = -1
+      for contourPt in bodyContour:
+        contourPtX = contourPt[0][0]
+        contourPtY = contourPt[0][1]
+        minDistContourPointToTail = 1000000000000
+        for tailPt in np.append(tail[0], np.array([headPosition]), axis=0):
+          tailPtX = tailPt[0]
+          tailPtY = tailPt[1]
+          dist = math.sqrt((tailPtX - contourPtX)**2 + (tailPtY - contourPtY)**2)
+          if dist < minDistContourPointToTail:
+            minDistContourPointToTail = dist
+        if minDistContourPointToTail > maxDistContourToTail:
+          maxDistContourToTail = minDistContourPointToTail
+      print("maxDistContourToTail:", maxDistContourToTail, "; tailLength:", hyperparameters["minTailSize"]*10)
+      
+    if False:
+      for pt in bodyContour:
+        cv2.circle(dst, (pt[0][0], pt[0][1]), 3, (0, 0, 255), -1)
+      cv2.imshow('Frame', dst)
+      cv2.waitKey(0)
+    
     # Optimizing midline if necessary
     midlineIsInBlobTrackingOptimization = hyperparameters["midlineIsInBlobTrackingOptimization"]
     if midlineIsInBlobTrackingOptimization:
