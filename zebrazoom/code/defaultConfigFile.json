@@ -27,6 +27,7 @@
   "closePopUpWindowAtTheEnd" : 1,
   "reloadWellPositions" : 0,
   "reloadBackground" : 0,
+  "backgroundExtractionForceUseAllVideoFrames" : 0,
   "exitAfterBackgroundExtraction": 0,
   
   "setPixDiffBoutDetectParameters" : 0,

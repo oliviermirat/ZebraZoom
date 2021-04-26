@@ -344,6 +344,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["detectMouthInsteadOfHeadTwoSides"] = getConfig(config, "detectMouthInsteadOfHeadTwoSides", videoPath)
   hyperparameters["findCenterOfAnimalByIterativelyDilating"] = getConfig(config, "findCenterOfAnimalByIterativelyDilating", videoPath)
   
+  hyperparameters["backgroundExtractionForceUseAllVideoFrames"] = getConfig(config, "backgroundExtractionForceUseAllVideoFrames", videoPath)
+  
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5
     while i < len(argv):

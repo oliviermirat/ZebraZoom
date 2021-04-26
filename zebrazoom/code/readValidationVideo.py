@@ -130,10 +130,10 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, st
     if ((numWell != -1) and (zoom)):
       
       length = 250
-      xmin = HeadX[l + supstruct["firstFrame"] - 1] - length/2
-      xmax = HeadX[l + supstruct["firstFrame"] - 1] + length/2
-      ymin = HeadY[l + supstruct["firstFrame"] - 1] - length/2
-      ymax = HeadY[l + supstruct["firstFrame"] - 1] + length/2
+      xmin = int(HeadX[l + supstruct["firstFrame"] - 1] - length/2)
+      xmax = int(HeadX[l + supstruct["firstFrame"] - 1] + length/2)
+      ymin = int(HeadY[l + supstruct["firstFrame"] - 1] - length/2)
+      ymax = int(HeadY[l + supstruct["firstFrame"] - 1] + length/2)
       
       x = xmin + xOriginal
       y = ymin + yOriginal
@@ -143,17 +143,13 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, st
       # This is new
       if True:
         if y <= 0:
-          lengthY = length
           y = 0
         if x <= 0:
-          lengthX = length
           x = 0
-        if lengthY != length:
-          lengthY = length
-          y = ny - length - 1
-        if lengthX != length:
-          lengthX = length
-          x = nx - length - 1
+        if y + lengthY >= len(img):
+          lengthY = len(img) - y - 1
+        if x + lengthX >= len(img[0]):
+          lengthX = len(img[0]) - x - 1
     
     if (numWell != -1):
       img = img[int(y):int(y+lengthY), int(x):int(x+lengthX)]

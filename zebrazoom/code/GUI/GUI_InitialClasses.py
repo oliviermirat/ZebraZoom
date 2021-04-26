@@ -299,49 +299,49 @@ class ViewParameters(tk.Frame):
               numMouv = nbMouv - 1
           
           label = tk.Label(self, text="    ", font=LARGE_FONT)
-          label.grid(row=0,column=6)
+          label.grid(row=1,column=6)
           
-          ttk.Button(self, text="View video for all wells together", command=lambda: controller.showValidationVideo(-1,0,-1)).grid(row=0,column=1)
+          ttk.Button(self, text="View video for all wells together", command=lambda: controller.showValidationVideo(-1,0,-1)).grid(row=1,column=1)
           
-          label = tk.Label(self, text=name, font=LARGE_FONT)
-          label.grid(row=0,column=2)
+          label = tk.Label(self, text=name, font="bold", justify=LEFT, pady=10)
+          label.grid(sticky=W, row=0, column=0, columnspan=8)
           
           label = tk.Label(self, text="Well number:")
-          label.grid(row=1,column=1)
+          label.grid(row=2,column=1)
           e1 = tk.Entry(self)
           e1.insert(0,numWell)
-          e1.grid(row=1,column=2)
-          tk.Button(self, text="-", command=lambda: controller.printSomeResults(int(e1.get())-1,e2.get(),e3.get())).grid(row=1,column=3)
-          tk.Button(self, text="+", command=lambda: controller.printSomeResults(int(e1.get())+1,e2.get(),e3.get())).grid(row=1,column=4)
+          e1.grid(row=2,column=2)
+          tk.Button(self, text="-", command=lambda: controller.printSomeResults(int(e1.get())-1,e2.get(),e3.get())).grid(row=2,column=3)
+          tk.Button(self, text="+", command=lambda: controller.printSomeResults(int(e1.get())+1,e2.get(),e3.get())).grid(row=2,column=4)
           
-          ttk.Button(self, text="View zoomed video for well "+str(numWell), command=lambda: controller.showValidationVideo(e1.get(),1,-1)).grid(row=2,column=2)
+          ttk.Button(self, text="View zoomed video for well "+str(numWell), command=lambda: controller.showValidationVideo(e1.get(),1,-1)).grid(row=3,column=2)
           
           def callback(url):
             webbrowser.open_new(url)
           
           link1 = tk.Button(self, text="Video viewing tips", cursor="hand2", bg = 'red')
-          link1.grid(row=2,column=4)
+          link1.grid(row=3,column=4)
           link1.bind("<Button-1>", lambda e: callback("https://zebrazoom.org/validationVideoReading.html"))
           
           label = tk.Label(self, text="Fish number:")
-          label.grid(row=3,column=1)
+          label.grid(row=4,column=1)
           e2 = tk.Entry(self)
           e2.insert(0,numPoiss)
-          e2.grid(row=3,column=2)
-          tk.Button(self, text="-", command=lambda: controller.printSomeResults(e1.get(),int(e2.get())-1,e3.get())).grid(row=3,column=3)
-          tk.Button(self, text="+", command=lambda: controller.printSomeResults(e1.get(),int(e2.get())+1,e3.get())).grid(row=3,column=4)
+          e2.grid(row=4,column=2)
+          tk.Button(self, text="-", command=lambda: controller.printSomeResults(e1.get(),int(e2.get())-1,e3.get())).grid(row=4,column=3)
+          tk.Button(self, text="+", command=lambda: controller.printSomeResults(e1.get(),int(e2.get())+1,e3.get())).grid(row=4,column=4)
           
           label = tk.Label(self, text="Bout number:")
-          label.grid(row=4,column=1)
+          label.grid(row=5,column=1)
           e3 = tk.Entry(self)
           e3.insert(0,numMouv)
-          e3.grid(row=4,column=2)
-          tk.Button(self, text="-", command=lambda: controller.printSomeResults(e1.get(),e2.get(),int(e3.get())-1)).grid(row=4,column=3)
-          tk.Button(self, text="+", command=lambda: controller.printSomeResults(e1.get(),e2.get(),int(e3.get())+1)).grid(row=4,column=4)
+          e3.grid(row=5,column=2)
+          tk.Button(self, text="-", command=lambda: controller.printSomeResults(e1.get(),e2.get(),int(e3.get())-1)).grid(row=5,column=3)
+          tk.Button(self, text="+", command=lambda: controller.printSomeResults(e1.get(),e2.get(),int(e3.get())+1)).grid(row=5,column=4)
           
           button1 = ttk.Button(self, text="View bout's angle",
                               command=lambda: controller.printSomeResults(e1.get(),e2.get(),e3.get()))
-          button1.grid(row=5,column=2)
+          button1.grid(row=6,column=2)
           
           
           if (len(dataRef["wellPoissMouv"][numWell][numPoiss]) > 0):
@@ -357,34 +357,34 @@ class ViewParameters(tk.Frame):
             button3 = tk.Button(self, text=flagTxt, command=lambda: controller.flagMove(e1.get(),e2.get(),e3.get()))
             if flagTxt == "UnFlag Movement":
               button3.configure(bg = 'red')
-            button3.grid(row=5,column=4)
+            button3.grid(row=6,column=4)
 
           
           prev = ttk.Button(self, text="Previous Bout",
                               command=lambda: controller.printPreviousResults(e1.get(),e2.get(),e3.get(), nbWells, nbPoiss, nbMouv))
-          prev.grid(row=6,column=1)
+          prev.grid(row=7,column=1)
           
           next = ttk.Button(self, text="Next Bout",
                               command=lambda: controller.printNextResults(e1.get(),e2.get(),e3.get(),nbWells,nbPoiss,nbMouv))
-          next.grid(row=6,column=2)
+          next.grid(row=7,column=2)
           
-          tk.Button(self, text="Go to the previous page", command=lambda: controller.show_frame("ResultsVisualization")).grid(row=7,column=1)
+          tk.Button(self, text="Go to the previous page", command=lambda: controller.show_frame("ResultsVisualization")).grid(row=8,column=1)
           
-          tk.Button(self, text="Change Visualization", command=lambda: controller.printSomeResults(e1.get(), e2.get(), e3.get(), True)).grid(row=7,column=2)
+          tk.Button(self, text="Change Visualization", command=lambda: controller.printSomeResults(e1.get(), e2.get(), e3.get(), True)).grid(row=8,column=2)
           
           if (controller.superstructmodified == 1):
             button1 = tk.Button(self, text="Save SuperStruct", command=lambda: controller.saveSuperStruct(e1.get(),e2.get(),e3.get()))
             button1.configure(bg = 'orange')
-            button1.grid(row=6,column=4)
+            button1.grid(row=7,column=4)
 
           if nbMouv > 0:
               
               begMove = dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["BoutStart"]
               endMove = dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["BoutEnd"]
               
-              ttk.Button(self, text="View video for well "+str(numWell), command=lambda: controller.showValidationVideo(e1.get(),0,begMove)).grid(row=2,column=1)
+              ttk.Button(self, text="View video for well "+str(numWell), command=lambda: controller.showValidationVideo(e1.get(),0,begMove)).grid(row=3,column=1)
               
-              ttk.Button(self, text="View bout's video", command=lambda: controller.showValidationVideo(e1.get(),1,begMove)).grid(row=5,column=1)
+              ttk.Button(self, text="View bout's video", command=lambda: controller.showValidationVideo(e1.get(),1,begMove)).grid(row=6,column=1)
               
               if controller.visualization == 0 and not("TailAngle_smoothed" in dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]):
                   controller.visualization = 1
@@ -401,7 +401,7 @@ class ViewParameters(tk.Frame):
                 label = tk.Label(self, text="Tail Angle Raw for well "+str(numWell)+", fish "+str(numPoiss)+", bout "+str(numMouv)+"                             ", font=LARGE_FONT)
               else:
                 label = tk.Label(self, text="Body Coordinates for well "+str(numWell)+" , fish "+str(numPoiss)+" , bout "+str(numMouv), font=LARGE_FONT)
-              label.grid(row=0,column=7)
+              label.grid(row=1,column=7)
               
               if controller.visualization == 0:
                 
@@ -473,7 +473,7 @@ class ViewParameters(tk.Frame):
               
               canvas = FigureCanvasTkAgg(f, self)
               canvas.draw()
-              canvas.get_tk_widget().grid(row=1,column=7,rowspan=7)
+              canvas.get_tk_widget().grid(row=2,column=7,rowspan=7)
 
           else:
           
@@ -486,8 +486,8 @@ class ViewParameters(tk.Frame):
 
               canvas = FigureCanvasTkAgg(f, self)
               canvas.draw()
-              canvas.get_tk_widget().grid(row=1,column=7,rowspan=7)
+              canvas.get_tk_widget().grid(row=2,column=7,rowspan=7)
               
               canvas = Canvas(self)
               canvas.create_text(100,10, text="No bout detected for well "+str(numWell))
-              canvas.grid(row=1,column=7,rowspan=7)
+              canvas.grid(row=2,column=7,rowspan=7)
