@@ -120,7 +120,7 @@ def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparisi
 def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumber, wellPositions, head, headPositionFirstFrame, tailTipFirstFrame):
   
   if hyperparameters["adjustDetectMovWithRawVideo"]:
-    initializeAdjustHyperparametersWindows("Bouts Detection")
+    initializeAdjustHyperparametersWindows("Red dot must appear only when movement is occuring")
   organizationTabCur = []
   
   if hyperparameters["debugDetectMovWithRawVideo"]:

@@ -41,7 +41,7 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
   bodyContour = findBodyContour(headPosition, hyperparameters, thresh1, initialCurFrame, back)
   if type(bodyContour) != int:
     # Finding the two sides of the fish
-    res = findTheTwoSides(headPosition, bodyContour, dst)
+    res = findTheTwoSides(headPosition, bodyContour, dst, hyperparameters)
     # Finding tail extremity
     rotatedContour = bodyContour.copy()
     rotatedContour = Rotate(rotatedContour,int(headPosition[0]),int(headPosition[1]),heading,dst)
@@ -66,8 +66,11 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
       cv2.waitKey(0)
     
     # Getting Midline
-    taille = nbTailPoints
-    tail = getMidline(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, taille-1, distance2, debugAdv, hyperparameters, nbTailPoints)
+    if hyperparameters["detectMouthInsteadOfHeadTwoSides"] == 0:
+      tail = getMidline(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, nbTailPoints-1, distance2, debugAdv, hyperparameters, nbTailPoints)
+    else:
+      tail = getMidline(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, nbTailPoints+1, distance2, debugAdv, hyperparameters, nbTailPoints)
+      tail = np.array([tail[0][1:len(tail[0])]])
     
     if False:
       maxDistContourToTail = -1
@@ -94,17 +97,17 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
     # Optimizing midline if necessary
     midlineIsInBlobTrackingOptimization = hyperparameters["midlineIsInBlobTrackingOptimization"]
     if midlineIsInBlobTrackingOptimization:
-      [allInside, tailLength] = checkIfMidlineIsInBlob(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, taille-1, distance2, debugAdv, hyperparameters, nbTailPoints)
+      [allInside, tailLength] = checkIfMidlineIsInBlob(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, nbTailPoints-1, distance2, debugAdv, hyperparameters, nbTailPoints)
       if allInside == False:
         n = len(bodyContour)
         maxTailLength = -1
         for j in range(0, n):
-          [allInside, tailLength] = checkIfMidlineIsInBlob(int(res[0]), int(res[1]), j, bodyContour, dst, taille-1, distance2, debugAdv, hyperparameters, nbTailPoints)
+          [allInside, tailLength] = checkIfMidlineIsInBlob(int(res[0]), int(res[1]), j, bodyContour, dst, nbTailPoints-1, distance2, debugAdv, hyperparameters, nbTailPoints)
           if allInside:
             if tailLength > maxTailLength:
               MostCurvyIndex = j
               maxTailLength = tailLength
-        tail = getMidline(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, taille-1, distance2, debugAdv, hyperparameters, nbTailPoints)
+        tail = getMidline(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, nbTailPoints-1, distance2, debugAdv, hyperparameters, nbTailPoints)
     # Applying snake on tail
     applySnake = False
     if applySnake:
@@ -131,15 +134,28 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
   else:
     
     tail = np.zeros((1, 0, 2))
+    point = np.array([0, 0])
+    for i in range(0, nbTailPoints):
+      tail = np.insert(tail, 0, point, axis=1)  
+    if hyperparameters["detectMouthInsteadOfHeadTwoSides"] != 0:
+      tail = np.insert(tail, 0, point, axis=1)  
   
   # Inserting head position, smoothing tail and creating output
-  tail = np.insert(tail, 0, headPosition, axis=1)
+  if hyperparameters["detectMouthInsteadOfHeadTwoSides"] == 0:
+    tail = np.insert(tail, 0, headPosition, axis=1)
   # tail = smoothTail(tail, nbTailPoints)
+ 
+  if nbTailPoints != len(tail[0]):
+    print("small problem 1 in tailTrackingExtremityDetect")
   
-  output = np.zeros((1, len(tail[0]), 2))
+  # output = np.zeros((1, len(tail[0]), 2))
+  output = np.zeros((1, nbTailPoints, 2))
   
   for idx, x in enumerate(tail[0]):
-    output[0][idx][0] = x[0]
-    output[0][idx][1] = x[1]
+    if idx < nbTailPoints:
+      output[0][idx][0] = x[0]
+      output[0][idx][1] = x[1]
+    else:
+      print("small problem 2 in tailTrackingExtremityDetect")
 
   return output

@@ -56,6 +56,13 @@ def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
     self.videoToCreateConfigFileFor = filedialog.askopenfilename(initialdir = os.path.expanduser("~"),title = "Select video to create config file for",filetypes = (("video","*.*"),("all files","*.*")))
   controller.show_frame("ChooseGeneralExperiment")
 
+def chooseGeneralExperimentFirstStep(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other):
+  self.configFile["extractAdvanceZebraParameters"] = 0
+  if int(freeZebra):
+    controller.show_frame("FreelySwimmingExperiment")
+  else:
+    chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, 0)
+
 def chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, freeZebra2):
   self.configFile["extractAdvanceZebraParameters"] = 0
   if int(freeZebra):
@@ -300,7 +307,10 @@ def chooseBeginningAndEndOfVideo(self, controller):
   if int(self.configFile["headEmbeded"]) == 1:
     controller.show_frame("HeadEmbeded")
   else:
-    controller.show_frame("NumberOfAnimals")
+    if self.organism == 'zebrafishNew':
+      controller.show_frame("NumberOfAnimals2")
+    else:
+      controller.show_frame("NumberOfAnimals")
 
   
 def getImageForMultipleAnimalGUI(l, vertical, horizontal, nx, ny, max_l, videoToCreateConfigFileFor, background, wellPositions, hyperparameters):
@@ -503,7 +513,7 @@ def identifyMultipleHead(self, controller, nbanimals):
   self.configFile["headSize"]        = math.sqrt((int(hyperparameters["minArea"]) + int(hyperparameters["maxArea"])) / 2)
 
 
-def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHeadTracking):
+def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHeadTracking, yesBouts, nooBouts, recommendedMethod, alternativeMethod):
 
   self.configFile["noBoutsDetection"] = 1
   self.configFile["noChecksForBoutSelectionInExtractParams"] = 1
@@ -527,7 +537,13 @@ def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHea
   if self.organism == 'zebrafish':
     controller.show_frame("IdentifyHeadCenter")
   elif self.organism == 'zebrafishNew':
-    automaticallyFindOptimalParameters(self, controller, True)
+    detectBouts = 0
+    if int(yesBouts):
+      detectBouts = 1
+    method = 0
+    if int(alternativeMethod):
+      method = 1
+    automaticallyFindOptimalParameters(self, controller, True, detectBouts, method)
   else:
     identifyMultipleHead(self, controller, nbanimals)
     controller.show_frame("FinishConfig")

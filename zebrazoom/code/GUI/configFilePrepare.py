@@ -60,13 +60,34 @@ class ChooseGeneralExperiment(tk.Frame):
     Checkbutton(self, text="Track centers of mass of any kind of animal.", variable=other).pack()
     tk.Label(self, text='Several animals can be tracked at once. The animals must be "darker" than the background and the background must be still.').pack()
     tk.Label(self, text="").pack()
+    
+    tk.Button(self, text="Next", command=lambda: controller.chooseGeneralExperimentFirstStep(controller, freeZebra.get(), headEmbZebra.get(), drosophilia.get(), rodent.get(), other.get())).pack()
+    
+    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
 
+
+class FreelySwimmingExperiment(tk.Frame):
+
+  def __init__(self, parent, controller):
+  
+    tk.Frame.__init__(self, parent)
+    self.controller = controller
+    label = tk.Label(self, text="Prepare Config File for Freely Swimming Fish:", font=controller.title_font)
+    label.pack(side="top", fill="x", pady=10)
+    
+    tk.Label(self, text="Choose only one of the options below:", font=("Helvetica", 12)).pack(side="top", fill="x", pady=10)
+    
     freeZebra2 = IntVar()
-    Checkbutton(self, text="NEW BETA VERSION: Track heads and tails of freely swimming fish.", variable=freeZebra2).pack()
-    tk.Label(self, text="The fish must be in one well of any shape or in several circular wells. Each well should contain the same number of fish.").pack()
+    Checkbutton(self, text="Recommended method: Try this option first!", variable=freeZebra2).pack()
+    tk.Label(self, text="This method will work well on most videos. One exception is for fish of very different sizes.").pack()
     tk.Label(self, text="").pack()
     
-    tk.Button(self, text="Next", command=lambda: controller.chooseGeneralExperiment(controller, freeZebra.get(), headEmbZebra.get(), drosophilia.get(), rodent.get(), other.get(), freeZebra2.get())).pack()
+    freeZebra = IntVar()
+    Checkbutton(self, text="Alternative method", variable=freeZebra).pack()
+    tk.Label(self, text="This method is more difficult to use, but it can work better with fishes of different sizes.").pack()
+    tk.Label(self, text="").pack()
+    
+    tk.Button(self, text="Next", command=lambda: controller.chooseGeneralExperiment(controller, freeZebra.get(), 0, 0, 0, 0, freeZebra2.get())).pack()
     
     tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
 
@@ -200,8 +221,45 @@ class NumberOfAnimals(tk.Frame):
     
     
     tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    tk.Button(self, text="Next", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), forceBlobMethodForHeadTracking.get())).pack()
+    tk.Button(self, text="Next", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), forceBlobMethodForHeadTracking.get(), 0, 0, 0, 0)).pack()
     tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    
+class NumberOfAnimals2(tk.Frame):
+
+  def __init__(self, parent, controller):
+  
+    tk.Frame.__init__(self, parent)
+    self.controller = controller
+    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
+    label.pack(side="top", fill="x", pady=10)
+    
+    tk.Label(self, text="What's the total number of animals in your video?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    
+    nbanimals = tk.Entry(self)
+    nbanimals.pack()
+    
+    tk.Label(self, text="Are all of those animals ALWAYS visible throughout the video?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    yes = IntVar()
+    Checkbutton(self, text="Yes", variable=yes).pack()
+    noo = IntVar()
+    Checkbutton(self, text="No", variable=noo).pack()
+    
+    tk.Label(self, text="Do you want bouts of movement to be detected?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    tk.Label(self, text="Warning: at the moment, the parameters related to the bouts detection are a little challenging to set.").pack()
+    yesBouts = IntVar()
+    Checkbutton(self, text="Yes", variable=yesBouts).pack()
+    nooBouts = IntVar()
+    Checkbutton(self, text="No", variable=nooBouts).pack()
+    
+    tk.Label(self, text="Choose an option below:", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    recommendedMethod = IntVar()
+    Checkbutton(self, text="Recommended Method: Fast Tracking but tail tip might be detected too soon along the tail", variable=recommendedMethod).pack()
+    alternativeMethod = IntVar()
+    Checkbutton(self, text="Alternative Method: Slower Tracker but tail tip MIGHT be detected more acurately", variable=alternativeMethod).pack()
+    tk.Label(self, text="Please start by using the recommended method! Once your configuration is created, you will be able to switch from one method to the other", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    tk.Label(self, text="simply by changing the value of the parameter recalculateForegroundImageBasedOnBodyArea from 0 to 1 or from 1 to 0.", font=("Helvetica", 10)).pack(side="top", fill="x")
+    tk.Button(self, text="Ok, next step", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, yesBouts.get(), nooBouts.get(), recommendedMethod.get(), alternativeMethod.get())).pack()
     tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
 
 

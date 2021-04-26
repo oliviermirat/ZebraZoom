@@ -48,43 +48,55 @@ class StartPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        label = tk.Label(self, text="Welcome to ZebraZoom!", font=controller.title_font)
-        label.pack(side="top", fill="x", pady=10)
         
-        button0 = tk.Button(self, text="Prepare configuration file for tracking",
-                            command=lambda: controller.show_frame("ChooseVideoToCreateConfigFileFor"))
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=1)
+        self.columnconfigure(2, weight=1)
         
-        button1 = tk.Button(self, text="Run ZebraZoom on a video",
-                            command=lambda: controller.show_frame("VideoToAnalyze"))
-               
-        button3 = tk.Button(self, text="Run ZebraZoom on several videos",
-                            command=lambda: controller.show_frame("SeveralVideos"))
+        # tk.Label(self, text="Welcome to ZebraZoom!", font=controller.title_font).pack()
         
-        button2 = tk.Button(self, text="Visualize ZebraZoom's output",
-                            command=lambda: controller.showResultsVisualization())
+        # tk.Label(self, text="1 - Configuration File Creation", pady=10).pack()
         
-        tk.Label(self, text="", font=controller.title_font).pack()
-        button0.pack()
-        tk.Label(self, text="", font=controller.title_font).pack()
-        button1.pack()
+        # tk.Button(self, text="Prepare configuration file for tracking", command=lambda: controller.show_frame("ChooseVideoToCreateConfigFileFor")).pack()
+        # tk.Label(self, text="You first need to create a configuration file for each 'type' of video you want to track.").pack(side=tk.RIGHT)
+        
+        # tk.Button(self, text="Open configuration file folder", command=lambda: controller.openConfigurationFileFolder(controller.homeDirectory)).pack(side=tk.BOTTOM)
+        # tk.Label(self, text="You can access the folder where configuration files are saved with this button.").pack(side=tk.RIGHT)
 
-        tk.Label(self, text="", font=controller.title_font).pack()
-        button3.pack()
-
-        tk.Label(self, text="", font=controller.title_font).pack()
-        button2.pack()
+        tk.Label(self, text="Welcome to ZebraZoom!", font=controller.title_font, pady=20).grid(row=0,column=0, columnspan = 2)
         
-        tk.Label(self, text="", font=controller.title_font).pack()
-        tk.Button(self, text="Open configuration file folder", command=lambda: controller.openConfigurationFileFolder(controller.homeDirectory)).pack()
+        tk.Label(self, text="1 - Create a Configuration File:", font = "bold", pady=10).grid(row=1,column=0)
+        tk.Button(self, text="Prepare configuration file for tracking", command=lambda: controller.show_frame("ChooseVideoToCreateConfigFileFor")).grid(row=2,column=0)
+        tk.Label(self, text="You first need to create a configuration file for each 'type' of video you want to track.", pady=10).grid(row=3,column=0)
+        tk.Button(self, text="Open configuration file folder", command=lambda: controller.openConfigurationFileFolder(controller.homeDirectory)).grid(row=4,column=0)
+        tk.Label(self, text="Access the folder where configuration files are saved with the button above.", pady=10).grid(row=5,column=0)
+        tk.Label(self, text="").grid(row=6,column=0)
         
-        tk.Label(self, text="", font=controller.title_font).pack()
-        tk.Button(self, text="Open ZebraZoom's output folder", command=lambda: controller.openZZOutputFolder(controller.homeDirectory)).pack()
+        tk.Label(self, text="2 - Run the Tracking:", font = "bold", pady=10).grid(row=1,column=1)
+        tk.Button(self, text="Run ZebraZoom's Tracking on a video", command=lambda: controller.show_frame("VideoToAnalyze")).grid(row=2,column=1)
+        tk.Label(self, text="Once you have a configuration file, use it to track a video.", pady=10).grid(row=3,column=1)
+        tk.Button(self, text="Run ZebraZoom's Tracking on several videos", command=lambda: controller.show_frame("SeveralVideos")).grid(row=4,column=1)
+        tk.Label(self, text="Or run the tracking on all videos inside a folder.", pady=10).grid(row=5,column=1)
         
-        tk.Label(self, text="", font=controller.title_font).pack()
-        tk.Button(self, text="Analyze ZebraZoom's outputs", command=lambda: controller.show_frame("CreateExperimentOrganizationExcel")).pack()
+        tk.Label(self, text="3 - Verify tracking results:", font = "bold", pady=10).grid(row=7,column=0)
+        tk.Button(self, text="Open ZebraZoom's output folder", command=lambda: controller.openZZOutputFolder(controller.homeDirectory)).grid(row=8,column=0)
+        tk.Label(self, text="Access the folder where the tracking results are saved with the button above.", pady=10).grid(row=9,column=0)
+        tk.Button(self, text="Visualize ZebraZoom's output", command=lambda: controller.showResultsVisualization()).grid(row=10,column=0)
+        tk.Label(self, text="Visualize/Verify/Explore the tracking results with the button above.", pady=10).grid(row=11,column=0)
         
-        tk.Label(self, text="", font=controller.title_font).pack()
-        tk.Button(self, text="Troubleshoot", command=lambda: controller.show_frame("ChooseVideoToTroubleshootSplitVideo")).pack()
+        tk.Label(self, text="4 - Analyze behavior:", font = "bold", pady=10).grid(row=7,column=1)
+        tk.Button(self, text="Analyze ZebraZoom's outputs", command=lambda: controller.show_frame("CreateExperimentOrganizationExcel")).grid(row=8,column=1)
+        tk.Label(self, text="Compare populations based on either kinematic parameters or clustering of bouts.", pady=10).grid(row=9,column=1)
+        
+        tk.Label(self, text="").grid(row=12,column=0, columnspan = 2)
+        tk.Button(self, text="Troubleshoot", command=lambda: controller.show_frame("ChooseVideoToTroubleshootSplitVideo")).grid(row=13,column=0, columnspan = 2)
+        
+        def callback(url):
+            webbrowser.open_new(url)
+        
+        link1 = tk.Button(self, text="Video online documentation")
+        link1.grid(row=14,column=0, columnspan = 2)
+        link1.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom#tableofcontent"))
         
 
 class SeveralVideos(tk.Frame):

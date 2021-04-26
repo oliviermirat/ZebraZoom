@@ -44,6 +44,8 @@ launch2.sh
 
 *_paramSet
 *_config.json
+*_config_old.json
+*_configOld.json
 newhyperparameters
 
 experimentWithAutomaticOptimalParamSearch.py

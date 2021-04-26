@@ -4,6 +4,7 @@ import cv2
 import math
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
+from zebrazoom.mainZZ import mainZZ
 import cvui
 import pickle
 import json
@@ -12,21 +13,14 @@ import re
 from zebrazoom.code.getBackground import getBackground
 from zebrazoom.code.findWells import findWells
 from zebrazoom.code.trackingFolder.tracking import tracking
-import pdb
+from zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions import prepareConfigFileForParamsAdjustements
 
-def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
+def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, detectBouts, method):
   
   nbOfImagesToManuallyClassify = 3
-  headAreaDividedByBodyAreaTarget = 0.4
+  headAreaDividedByBodyAreaTarget = 1.1 #0.4
   
   saveIntermediary = True # Should be set to True except when debugging
-  # paraSetSaved (below) is the intermediary to reload when the boolean above is set to True
-  # paraSetSaved = '4wellsZebrafishLarvaeEscapeResponses_paramSet'
-  paraSetSaved = 'Catamaran_10e_t2a_paramSet'
-  # paraSetSaved = 'maha_paramSet'
-  # paraSetSaved = 'GoodTracking_IssueswithHeading1_paramSet'
-  # paraSetSaved = 'KowalkoDuboue1_paramSet'
-  # paraSetSaved = 'Escape_Btx_CTL_A1_1_paramSet'
   
   # # # Getting ground truth from user: head center and tail extremity coordinates for a few frames
   
@@ -139,9 +133,11 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
       toSave    = [initialConfigFile, videoPath, data, wellPositions, pathToVideo, videoNameWithExt, videoName, videoExt]
       pickle.dump(toSave, open(videoName + '_paramSet', 'wb'))
       
+    cap.release()
+    
   else:
     
-    toSave = pickle.load(open(paraSetSaved, 'rb'))
+    toSave = pickle.load(open(self, 'rb'))
     initialConfigFile = toSave[0]
     videoPath         = toSave[1]
     data              = toSave[2]
@@ -160,7 +156,7 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
   
   # # # Starting the process of finding the best hyperparameters to track the video
   
-  configFile = {"extractAdvanceZebraParameters": 0, "headEmbeded": 0, "nbWells": 1, "noBoutsDetection": 1, "noChecksForBoutSelectionInExtractParams": 1, "trackingPointSizeDisplay": 4, "validationVideoPlotHeading": 1, "nbAnimalsPerWell": 1, "forceBlobMethodForHeadTracking": 1, "multipleHeadTrackingIterativelyRelaxAreaCriteria": 1, "erodeIter":0, "minArea": 0, "maxArea": 100000000000000, "minAreaBody": 0, "maxAreaBody": 100000000000000, "headSize": 20, "minTailSize": 0, "maxTailSize": 100000000000000, "paramGaussianBlur": 25, "extractBackWhiteBackground": 1, "dilateIter": 1, "thresholdForBlobImg": 254, "findContourPrecision": "CHAIN_APPROX_NONE", "midlineIsInBlobTrackingOptimization": 0, "checkAllContourForTailExtremityDetect": 1, "recalculateForegroundImageBasedOnBodyArea": 0}
+  configFile = {"extractAdvanceZebraParameters": 0, "headEmbeded": 0, "nbWells": 1, "noBoutsDetection": 1, "noChecksForBoutSelectionInExtractParams": 1, "trackingPointSizeDisplay": 4, "validationVideoPlotHeading": 1, "nbAnimalsPerWell": 1, "forceBlobMethodForHeadTracking": 1, "multipleHeadTrackingIterativelyRelaxAreaCriteria": 1, "erodeIter":0, "minArea": 0, "maxArea": 100000000000000, "minAreaBody": 0, "maxAreaBody": 100000000000000, "headSize": 20, "minTailSize": 0, "maxTailSize": 100000000000000, "paramGaussianBlur": 25, "extractBackWhiteBackground": 1, "dilateIter": 1, "thresholdForBlobImg": 254, "findContourPrecision": "CHAIN_APPROX_NONE", "midlineIsInBlobTrackingOptimization": 0, "checkAllContourForTailExtremityDetect": 1, "recalculateForegroundImageBasedOnBodyArea": 0, "headingCalculationMethod": "calculatedWithTwoFirstTailPt", "detectMouthInsteadOfHeadTwoSides": 1, "findCenterOfAnimalByIterativelyDilating": 1}
   
   hyperparameters = getHyperparametersSimple(configFile)
   
@@ -310,6 +306,7 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
       bodyContourArea = image["bodyContourArea"]
       
       [foregroundImage, o1, o2] = getForegroundImage(videoPath, background, image["frameNumber"], image["wellNumber"], wellPositions, hyperparameters)
+      
       ret, thresh = cv2.threshold(foregroundImage, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
       thresh[0,:] = 255
       thresh[len(thresh)-1,:] = 255
@@ -323,6 +320,9 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
           contourClickedByUser = contour
       
       if not(type(contourClickedByUser) == int): # We found the contour that the user selected
+        
+        # bodyContourArea = cv2.contourArea(contourClickedByUser) # New
+        
         image["contourClickedByUser"] = contourClickedByUser
         thresh2 = thresh.copy()
         thresh2[0,:] = 255
@@ -440,13 +440,154 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI):
   for parameter in listOfParametersToOverwrite:
     if parameter in initialConfigFile:
       configFile[parameter] = initialConfigFile[parameter]
-  # configFile["recalculateForegroundImageBasedOnBodyArea"] = 1
       
+  if method:
+    configFile["recalculateForegroundImageBasedOnBodyArea"] = 1
+  
+  print("Intermediary config file:", configFile)
+  
+  if configFile["nbAnimalsPerWell"] == 1:
+  
+    if detectBouts:
+    
+      # Extracting Background and finding Wells
+      
+      configFile["exitAfterBackgroundExtraction"] = 1
+      configFile["debugExtractBack"]              = 1
+      configFile["debugFindWells"]                = 1
+      
+      WINDOW_NAME = "Please Wait"
+      cvui.init(WINDOW_NAME)
+      cv2.moveWindow(WINDOW_NAME, 0,0)
+      img = np.zeros((400, 900, 3), np.uint8)
+      lineType               = 2
+      img = cv2.putText(img,'In the next window, you will need to adjust parameters in order', (5, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), lineType)
+      cv2.putText(img,'for the red dot to appear when and only when the animal is moving.', (5, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), lineType)
+      cv2.imshow(WINDOW_NAME, img)
+      r = cv2.waitKey(10)
+      
+      try:
+        mainZZ(pathToVideo, videoName, videoExt, configFile, [])
+      except ValueError:
+        configFile["exitAfterBackgroundExtraction"] = 0
+      
+      cv2.destroyAllWindows()
+      
+      del configFile["exitAfterBackgroundExtraction"]
+      del configFile["debugExtractBack"]
+      del configFile["debugFindWells"]
+    
+      # Finding the frame with the most movement
+      
+      cap   = cv2.VideoCapture(videoPath)
+      max_l = int(cap.get(7))
+      
+      wellNumber = data[0]["wellNumber"]
+      xtop = wellPositions[wellNumber]['topLeftX']
+      ytop = wellPositions[wellNumber]['topLeftY']
+      lenX = wellPositions[wellNumber]['lengthX']
+      lenY = wellPositions[wellNumber]['lengthY']
+      
+      print("xtop, ytop, lenX, lenY:", xtop, ytop, lenX, lenY)
+      
+      firstFrameNum  = 0
+      lastFrameNum   = max_l - 1
+      
+      while abs(lastFrameNum - firstFrameNum) > 40:
+        
+        middleFrameNum = int((firstFrameNum + lastFrameNum) / 2)
+        
+        cap.set(1, firstFrameNum)
+        ret, firstFrame = cap.read()
+        firstFrame = cv2.cvtColor(firstFrame, cv2.COLOR_BGR2GRAY)
+        
+        cap.set(1, middleFrameNum)
+        ret, middleFrame = cap.read()
+        middleFrame = cv2.cvtColor(middleFrame, cv2.COLOR_BGR2GRAY)
+        
+        cap.set(1, lastFrameNum)
+        ret, lastFrame = cap.read()
+        lastFrame = cv2.cvtColor(lastFrame, cv2.COLOR_BGR2GRAY)
+        
+        firstFrameROI  = firstFrame[ytop:ytop+lenY, xtop:xtop+lenX]
+        middleFrameROI = middleFrame[ytop:ytop+lenY, xtop:xtop+lenX]
+        lastFrameROI   = lastFrame[ytop:ytop+lenY, xtop:xtop+lenX]
+        pixelsChangeFirstToMiddle = np.sum(abs(firstFrameROI-middleFrameROI))
+        pixelsChangeMiddleToLast  = np.sum(abs(middleFrameROI-lastFrameROI))
+        
+        if pixelsChangeFirstToMiddle > pixelsChangeMiddleToLast:
+          lastFrameNum  = middleFrameNum
+        else:
+          firstFrameNum = middleFrameNum
+        
+        print("intermediary: firstFrameNum:", firstFrameNum, "; lastFrameNum:", lastFrameNum)
+        print("pixelsChangeFirstToMiddle:", pixelsChangeFirstToMiddle, "; pixelsChangeMiddleToLast:", pixelsChangeMiddleToLast)
+        
+      cap.release()
+      
+      print("wellNumber:", wellNumber, "; lastFrameNum:", lastFrameNum, "; firstFrameNum:", firstFrameNum)
+      
+      # Launching the interactive adjustement of hyperparameters related to the detection of bouts
+      
+      wellNumber = str(data[0]["wellNumber"])
+      firstFrameParamAdjust = 0
+      adjustOnWholeVideo    = 0
+      
+      [configFile, initialFirstFrameValue, initialLastFrameValue] = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrameParamAdjust, videoPath, adjustOnWholeVideo)
+      configFile["firstFrame"] = lastFrameNum - 500 if lastFrameNum - 500 > 0 else 0
+      configFile["lastFrame"]  = (configFile["firstFrame"] + 500) if (configFile["firstFrame"] + 500) < (max_l - 1) else (max_l - 1)
+      
+      configFile["noBoutsDetection"] = 0
+      configFile["trackTail"]                   = 0
+      configFile["adjustDetectMovWithRawVideo"] = 1
+      configFile["reloadWellPositions"]         = 1
+      
+      if "thresForDetectMovementWithRawVideo" in configFile:
+        if configFile["thresForDetectMovementWithRawVideo"] == 0:
+          configFile["thresForDetectMovementWithRawVideo"] = 1
+      else:
+        configFile["thresForDetectMovementWithRawVideo"] = 1
+      
+      try:
+        WINDOW_NAME = "Please Wait"
+        cvui.init(WINDOW_NAME)
+        cv2.moveWindow(WINDOW_NAME, 0,0)
+        img = np.zeros((400, 900, 3), np.uint8)
+        lineType               = 2
+        img = cv2.putText(img,'In the next window, you will need to adjust parameters in order', (5, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), lineType)
+        cv2.putText(img,'for the red dot to appear when and only when the animal is moving.', (5, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), lineType)
+        cv2.imshow(WINDOW_NAME, img)
+        r = cv2.waitKey(10)
+        mainZZ(pathToVideo, videoName, videoExt, configFile, [])
+        cv2.destroyAllWindows()
+      except ValueError:
+        newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
+        for index in newhyperparameters:
+          configFile[index] = newhyperparameters[index]
+      
+      del configFile["onlyTrackThisOneWell"]
+      del configFile["trackTail"]
+      del configFile["adjustDetectMovWithRawVideo"]
+      del configFile["reloadWellPositions"]
+      
+      if initialLastFrameValue == -1:
+        if 'firstFrame' in configFile:
+          del configFile['firstFrame']
+        if 'lastFrame' in configFile:
+          del configFile['lastFrame']
+      else:
+        configFile["firstFrame"]                  = initialFirstFrameValue
+        configFile["lastFrame"]                   = initialLastFrameValue
+      
+      del configFile["reloadBackground"]
+      
+      configFile["fillGapFrameNb"] = 2 # We would need to try to improve this in the future
+  
   # # # Moving on to the next step
   
   if realExecThroughGUI:
     self.configFile = configFile
-    # Need to do a redirect here
+    controller.show_frame("FinishConfig")
   
   print("final Config File", configFile)
   

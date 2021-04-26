@@ -3,6 +3,97 @@ import cv2
 import numpy as np
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.calculateHeading import calculateHeadingSimple, calculateHeading
 
+def simpleOptimalValueSearch(PtClosest, contour, unitVector, lenX, lenY):
+  
+  factor = 0
+  dist = 1
+  maxDist = 0
+  indMax = 0
+  testCenter = PtClosest + factor * unitVector
+  while (dist > 0) and (factor < 20) and (testCenter[0] >= 0) and (testCenter[1] >= 0) and (testCenter[0] < lenX) and (testCenter[1] < lenY):
+    factor = factor + 1
+    testCenter = PtClosest + factor * unitVector
+    testCenter = testCenter.astype(int)
+    dist = cv2.pointPolygonTest(contour, (testCenter[0], testCenter[1]), True)
+    if dist > maxDist:
+      maxDist = dist
+      indMax  = factor
+  
+  testCenter = PtClosest + indMax * unitVector
+  testCenter = testCenter.astype(int)
+  
+  return testCenter
+  
+
+def reajustCenterOfMassIfNecessary(contour, x, y, lenX, lenY):
+  inside = cv2.pointPolygonTest(contour, (x, y), True)
+  if inside < 0:
+    
+    minDist = 100000000000000
+    indMin  = 0
+    for i in range(0, len(contour)):
+      Pt = contour[i][0]
+      dist = math.sqrt((Pt[0] - x)**2 + (Pt[1] - y)**2)
+      if dist < minDist:
+        minDist = dist
+        indMin  = i
+    PtClosest = contour[indMin][0]
+    unitVector = np.array([PtClosest[0] - x, PtClosest[1] - y])
+    unitVectorLength = math.sqrt(unitVector[0]**2 + unitVector[1]**2)
+    unitVector[0] = unitVector[0] / unitVectorLength
+    unitVector[1] = unitVector[1] / unitVectorLength
+    if True:
+      factor = 5
+      testCenter = PtClosest + factor * unitVector
+      testCenter = testCenter.astype(int)
+      while (cv2.pointPolygonTest(contour, (testCenter[0], testCenter[1]), True) <= 0) and (factor > 1):
+        factor = factor - 1
+        testCenter = PtClosest + factor * unitVector
+    else:
+      testCenter = simpleOptimalValueSearch(PtClosest, contour, unitVector, lenX, lenY)
+    
+    x = testCenter[0]
+    y = testCenter[1]
+  
+  return [x, y]
+  
+def findCenterByIterativelyDilating(initialContour, lenX, lenY):
+  x = 0
+  y = 0
+  image = np.zeros((lenY, lenX))
+  image[:, :] = 255
+  image = image.astype(np.uint8)
+  kernel  = np.ones((3, 3), np.uint8)
+  if type(initialContour) != int:
+    cv2.fillPoly(image, pts =[initialContour], color=(0))
+    nbBlackPixels = 1
+    dilateIter = 0
+    while nbBlackPixels > 0:
+      dilateIter   = dilateIter + 1
+      dilatedImage = cv2.dilate(image, kernel, iterations=dilateIter)
+      nbBlackPixels = cv2.countNonZero(255-dilatedImage)
+    dilateIter   = dilateIter - 1
+    dilatedImage = cv2.dilate(image, kernel, iterations=dilateIter)
+    dilatedImage[:,0] = 255
+    dilatedImage[0,:] = 255
+    dilatedImage[:, len(dilatedImage[0])-1] = 255
+    dilatedImage[len(dilatedImage)-1, :]    = 255
+    contours, hierarchy = cv2.findContours(dilatedImage, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    maxContour = 0
+    maxContourArea = 0
+    for contour in contours:
+      contourArea = cv2.contourArea(contour)
+      if contourArea < int(lenX * lenY * 0.8):
+        if contourArea > maxContourArea:
+          maxContourArea = contourArea
+          maxContour     = contour
+    M = cv2.moments(maxContour)
+    if M['m00']:
+      x = int(M['m10']/M['m00'])
+      y = int(M['m01']/M['m00'])
+  return [x, y]
+   
+
 def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, hyperparameters, gray, i, firstFrame, thresh1, thresh3):
   
   headCoordinatesOptions = []
@@ -26,18 +117,21 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
     areaDecreaseFactor = int(hyperparameters["minArea"]/10)
     while (len(headCoordinatesOptions) < hyperparameters["nbAnimalsPerWell"]) and (minAreaCur > 0):
       headCoordinatesOptions = []
-      # print("MMMinAreaCur:", minAreaCur)
       for contour in contours:
         area = cv2.contourArea(contour)
         if (area > minAreaCur) and (area < maxAreaCur):
-          # print("Find center of mass: area:", area)
-          M = cv2.moments(contour)
-          if M['m00']:
-            x = int(M['m10']/M['m00'])
-            y = int(M['m01']/M['m00'])
+          if hyperparameters["findCenterOfAnimalByIterativelyDilating"]:
+            [x, y] = findCenterByIterativelyDilating(contour, len(thresh2[0]), len(thresh2))
           else:
-            x = 0
-            y = 0
+            M = cv2.moments(contour)
+            if M['m00']:
+              x = int(M['m10']/M['m00'])
+              y = int(M['m01']/M['m00'])
+            else:
+              x = 0
+              y = 0
+            if hyperparameters["readjustCenterOfMassIfNotInsideContour"]:
+              [x, y] = reajustCenterOfMassIfNecessary(contour, x, y, len(thresh2[0]), len(thresh2))
           if not([x, y] in headCoordinatesOptions):
             headCoordinatesOptions.append([x, y])
       
@@ -53,13 +147,18 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
       area = cv2.contourArea(contour)
       if (area > minAreaCur) and (area < maxAreaCur):
         # print("Find center of mass: area:", area)
-        M = cv2.moments(contour)
-        if M['m00']:
-          x = int(M['m10']/M['m00'])
-          y = int(M['m01']/M['m00'])
+        if hyperparameters["findCenterOfAnimalByIterativelyDilating"]:
+          [x, y] = findCenterByIterativelyDilating(contour, len(thresh2[0]), len(thresh2))
         else:
-          x = 0
-          y = 0
+          M = cv2.moments(contour)
+          if M['m00']:
+            x = int(M['m10']/M['m00'])
+            y = int(M['m01']/M['m00'])
+          else:
+            x = 0
+            y = 0
+          if hyperparameters["readjustCenterOfMassIfNotInsideContour"]:
+            [x, y] = reajustCenterOfMassIfNecessary(contour, x, y, len(thresh2[0]), len(thresh2))
         headCoordinatesOptions.append([x, y])
 
   headCoordinatesOptionsAlreadyTakenDist     = [-1 for k in headCoordinatesOptions]
@@ -184,32 +283,33 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
         # trackingHeadTailAllAnimals[index_animal_Id_alwaysBeenAt0, i-firstFrame][0][0] = idx_x_Option
         # trackingHeadTailAllAnimals[index_animal_Id_alwaysBeenAt0, i-firstFrame][0][1] = idx_y_Option
   
-  for animal_Id in range(0, hyperparameters["nbAnimalsPerWell"]):
-    x_curFrame_animal_Id  = trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][0]
-    y_curFrame_animal_Id  = trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][1]
-    if x_curFrame_animal_Id != 0 and y_curFrame_animal_Id != 0:
-      x_curFrame_animal_Id = int(x_curFrame_animal_Id)
-      y_curFrame_animal_Id = int(y_curFrame_animal_Id)
-      
-      # Removing the other blobs from the image to get good heading detection
-      # Performance improvement possible below: TODO in the future
-      correspondingContour = 0
-      contours, hierarchy = cv2.findContours(thresh2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
-      for contour in contours:
-        dist = cv2.pointPolygonTest(contour, (x_curFrame_animal_Id, y_curFrame_animal_Id), True)
-        if dist >= 0:
-          correspondingContour = contour
-      thresh2bis = np.zeros((len(thresh2), len(thresh2[0])))
-      thresh2bis[:, :] = 255
-      if type(correspondingContour) != int:
-        cv2.fillPoly(thresh2bis, pts =[correspondingContour], color=(0, 0, 0))
-      
-      if hyperparameters["forceBlobMethodForHeadTracking"]: # Fish tracking, usually
-        previousFrameHeading = trackingHeadingAllAnimals[animal_Id, i-firstFrame-1] if i-firstFrame-1 > 0 else 0
-        [heading, lastFirstTheta] = calculateHeading(x_curFrame_animal_Id, y_curFrame_animal_Id, 0, thresh1, thresh2bis, 0, hyperparameters, previousFrameHeading)
-      else: # Drosophilia, mouse, and other center of mass only tracking
-        heading = calculateHeadingSimple(x_curFrame_animal_Id, y_curFrame_animal_Id, thresh2bis, hyperparameters)
-      
-      trackingHeadingAllAnimals[animal_Id, i-firstFrame] = heading
+  if hyperparameters["findCenterOfAnimalByIterativelyDilating"] == 0:
+    for animal_Id in range(0, hyperparameters["nbAnimalsPerWell"]):
+      x_curFrame_animal_Id  = trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][0]
+      y_curFrame_animal_Id  = trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][1]
+      if x_curFrame_animal_Id != 0 and y_curFrame_animal_Id != 0:
+        x_curFrame_animal_Id = int(x_curFrame_animal_Id)
+        y_curFrame_animal_Id = int(y_curFrame_animal_Id)
+        
+        # Removing the other blobs from the image to get good heading detection
+        # Performance improvement possible below: TODO in the future
+        correspondingContour = 0
+        contours, hierarchy = cv2.findContours(thresh2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+        for contour in contours:
+          dist = cv2.pointPolygonTest(contour, (x_curFrame_animal_Id, y_curFrame_animal_Id), True)
+          if dist >= 0:
+            correspondingContour = contour
+        thresh2bis = np.zeros((len(thresh2), len(thresh2[0])))
+        thresh2bis[:, :] = 255
+        if type(correspondingContour) != int:
+          cv2.fillPoly(thresh2bis, pts =[correspondingContour], color=(0, 0, 0))
+        
+        if hyperparameters["forceBlobMethodForHeadTracking"]: # Fish tracking, usually
+          previousFrameHeading = trackingHeadingAllAnimals[animal_Id, i-firstFrame-1] if i-firstFrame-1 > 0 else 0
+          [heading, lastFirstTheta] = calculateHeading(x_curFrame_animal_Id, y_curFrame_animal_Id, 0, thresh1, thresh2bis, 0, hyperparameters, previousFrameHeading)
+        else: # Drosophilia, mouse, and other center of mass only tracking
+          heading = calculateHeadingSimple(x_curFrame_animal_Id, y_curFrame_animal_Id, thresh2bis, hyperparameters)
+        
+        trackingHeadingAllAnimals[animal_Id, i-firstFrame] = heading
   
   return [trackingHeadingAllAnimals, trackingHeadTailAllAnimals]

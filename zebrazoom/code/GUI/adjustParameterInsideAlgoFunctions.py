@@ -28,6 +28,7 @@ def prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFramePar
   initialLastFrameValue  = -1
   if "firstFrame" in configFile:
     initialFirstFrameValue = configFile["firstFrame"]
+  if "lastFrame" in configFile:
     initialLastFrameValue  = configFile["lastFrame"]
   
   cap = cv2.VideoCapture(videoToCreateConfigFileFor)

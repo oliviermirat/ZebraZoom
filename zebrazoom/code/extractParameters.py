@@ -114,6 +114,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
     nbPoints = len(trackingTail[0])
 
     tail_1    = np.zeros((nbFrames, 2))
+    tail_2    = np.zeros((nbFrames, 2))
     tip       = np.zeros((nbFrames, 2))
     head      = np.zeros((nbFrames, 2))
     heading   = np.zeros((nbFrames, 1))
@@ -137,6 +138,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
         print("Extract Param Begin: wellNumber:",wellNumber," ; frame:",i)
       
       tail_1[i]  = np.array([ trackingTail[i][1][0], trackingTail[i][1][1] ])
+      tail_2[i]  = np.array([ trackingTail[i][2][0], trackingTail[i][2][1] ])
       
       nbTailPoints = len(trackingTail[0]) - 1
       tip[i]     = np.array([ trackingTail[i][nbTailPoints][0], trackingTail[i][nbTailPoints][1] ])
@@ -145,6 +147,8 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       
       if hyperparameters["headingCalculationMethod"] == "calculatedWithFirstTailPt":
         heading[i] = calculateAngle(head[i], tail_1[i])
+      if hyperparameters["headingCalculationMethod"] == "calculatedWithTwoFirstTailPt":
+        heading[i] = calculateAngle(head[i], tail_2[i])
       elif hyperparameters["headingCalculationMethod"] == "calculatedWithMedianTailTip":
         heading[i] = calculateAngle(head[i], medianTip)
       elif hyperparameters["headingCalculationMethod"] == "simplyFromPreviousCalculations":

@@ -95,7 +95,7 @@ def getDetectMouvRawVideosParamsForHyperParamAdjusts(img, res, l, totDiff, hyper
   [470,  marginX + 71, 350,  0, 500, "Controls the size of the images on which pixel change from image to the next are counted."],
   [1,   marginX + 137, 350,  0, 50,  "Increase if too much movement is being detected."],
   [470, marginX + 137,  -1, -1, -1,  "Click here once the red dot appears on enough images where movement is occurring."]]
-  WINDOW_NAME = "Bouts Detection"
+  WINDOW_NAME = "Red dot must appear only when movement is occuring"
   frameToShow = np.concatenate((img, res),axis=1)
   frameToShow = cv2.cvtColor(frameToShow,cv2.COLOR_GRAY2RGB)
   frameToShow = cv2.putText(frameToShow, str(l), (1, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 3)
