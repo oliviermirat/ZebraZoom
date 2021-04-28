@@ -115,6 +115,7 @@
   "recalculateForegroundImageBasedOnBodyArea" : 0,
   "detectMouthInsteadOfHeadTwoSides" : 0,
   "findCenterOfAnimalByIterativelyDilating" : 0,
+  "readjustCenterOfMassIfNotInsideContour": 0,
   
   "eyeTracking" : 0,
   "headCenterToMidEyesPointDistance" : 10,

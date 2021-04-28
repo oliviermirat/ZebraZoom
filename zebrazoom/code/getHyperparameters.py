@@ -346,6 +346,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["backgroundExtractionForceUseAllVideoFrames"] = getConfig(config, "backgroundExtractionForceUseAllVideoFrames", videoPath)
   
+  hyperparameters["readjustCenterOfMassIfNotInsideContour"] = getConfig(config, "readjustCenterOfMassIfNotInsideContour", videoPath)
+  
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5
     while i < len(argv):
