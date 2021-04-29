@@ -33,8 +33,10 @@ def tailTracking(animalId, i, firstFrame, videoPath, frame, hyperparameters, thr
   else:
     if hyperparameters["freeSwimmingTailTrackingMethod"] == "tailExtremityDetect":
       # through the tail extremity descent method (original C++ method)
-      trackingHeadTailAllAnimalsI = tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,hyperparameters["debugTrackingPtExtreme"],heading,hyperparameters, initialCurFrame, back)
+      [trackingHeadTailAllAnimalsI, newHeading] = tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,hyperparameters["debugTrackingPtExtreme"],heading,hyperparameters, initialCurFrame, back)
       trackingHeadTailAllAnimals[animalId, i-firstFrame] = trackingHeadTailAllAnimalsI
+      if newHeading != -1:
+        trackingHeadingAllAnimals[animalId, i-firstFrame] = newHeading
     elif hyperparameters["freeSwimmingTailTrackingMethod"] == "blobDescent":
       # through the "blob descent" method
       trackingHeadTailAllAnimalsI = tailTrackingBlobDescent(headPosition, nbTailPoints, i, headPosition[0], headPosition[1], thresh1, frame, lastFirstTheta, hyperparameters["debugTrackingPtExtreme"], thetaDiffAccept, hyperparameters)
@@ -44,4 +46,4 @@ def tailTracking(animalId, i, firstFrame, videoPath, frame, hyperparameters, thr
       trackingHeadTailAllAnimals[animalId, i-firstFrame][0][0] = headPosition[0]
       trackingHeadTailAllAnimals[animalId, i-firstFrame][0][1] = headPosition[1]
       
-  return trackingHeadTailAllAnimals
+  return [trackingHeadTailAllAnimals, trackingHeadingAllAnimals]

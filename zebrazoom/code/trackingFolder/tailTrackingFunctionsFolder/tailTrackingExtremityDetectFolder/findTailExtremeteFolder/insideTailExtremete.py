@@ -17,10 +17,15 @@ from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtre
 
 def insideTailExtremete(distance, DotProds, max_droite, min_gauche, max_bas, min_haut, ind_droite, ind_gauche, ind_bas, ind_haut, tailRange, boundary, dst):
   
-  dist_calculate_curv=3;
-  max = 0
-
+  
   TotalBPts = len(boundary)
+  
+  # This may require some adjustements in the future (maybe some value other than 25)
+  dist_calculate_curv = int(TotalBPts / 25)
+  if dist_calculate_curv < 3:
+    dist_calculate_curv = 3
+  
+  max = 0
 
   AheadPtr  = 0
   BehindPtr = 0

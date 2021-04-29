@@ -25,6 +25,8 @@ from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtre
  
 def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugAdv,heading, hyperparameters, initialCurFrame, back):
   
+  newHeading = -1
+  
   dst = frame.copy()
   dst = cv2.cvtColor(dst, cv2.COLOR_GRAY2RGB)
   firstFrame = hyperparameters["firstFrame"]
@@ -42,6 +44,9 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
   if type(bodyContour) != int:
     # Finding the two sides of the fish
     res = findTheTwoSides(headPosition, bodyContour, dst, hyperparameters)
+    if len(res) == 3:
+      heading = res[2]
+      newHeading = res[2]
     # Finding tail extremity
     rotatedContour = bodyContour.copy()
     rotatedContour = Rotate(rotatedContour,int(headPosition[0]),int(headPosition[1]),heading,dst)
@@ -69,7 +74,7 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
     if hyperparameters["detectMouthInsteadOfHeadTwoSides"] == 0:
       tail = getMidline(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, nbTailPoints-1, distance2, debugAdv, hyperparameters, nbTailPoints)
     else:
-      tail = getMidline(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, nbTailPoints+1, distance2, debugAdv, hyperparameters, nbTailPoints)
+      tail = getMidline(int(res[0]), int(res[1]), int(MostCurvyIndex), bodyContour, dst, nbTailPoints, distance2, debugAdv, hyperparameters, nbTailPoints)
       tail = np.array([tail[0][1:len(tail[0])]])
     
     if False:
@@ -137,13 +142,13 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
     point = np.array([0, 0])
     for i in range(0, nbTailPoints):
       tail = np.insert(tail, 0, point, axis=1)  
-    if hyperparameters["detectMouthInsteadOfHeadTwoSides"] != 0:
-      tail = np.insert(tail, 0, point, axis=1)  
+    # if hyperparameters["detectMouthInsteadOfHeadTwoSides"] != 0:
+      # tail = np.insert(tail, 0, point, axis=1)  
   
   # Inserting head position, smoothing tail and creating output
-  if hyperparameters["detectMouthInsteadOfHeadTwoSides"] == 0:
-    tail = np.insert(tail, 0, headPosition, axis=1)
-  # tail = smoothTail(tail, nbTailPoints)
+  # if hyperparameters["detectMouthInsteadOfHeadTwoSides"] == 0:
+    # tail = np.insert(tail, 0, headPosition, axis=1)
+  tail = np.insert(tail, 0, headPosition, axis=1)
  
   if nbTailPoints != len(tail[0]):
     print("small problem 1 in tailTrackingExtremityDetect")
@@ -158,4 +163,4 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
     else:
       print("small problem 2 in tailTrackingExtremityDetect")
 
-  return output
+  return [output, newHeading]

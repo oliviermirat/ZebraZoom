@@ -414,4 +414,4 @@ In order to contribute, you will need to download this repository on your comput
 <p>In all your publications that make use of ZebraZoom:</p>
 <p>First and foremost, please acknowledge <a href="https://wyartlab.org/" style="color:blue" target="_blank">Claire Wyart's lab</a> that has been supporting the development of ZebraZoom for many years.</p>
 <p>Please also cite the original <a href="https://www.frontiersin.org/articles/10.3389/fncir.2013.00107/full" style="color:blue" target="_blank">ZebraZoom paper</a>.</p>
-<p>Please also consider mentioning our website <a href="https://zebrazoom.org/" style="color:blue" target="_blank">zebrazoom.org</a> and/or this github repository <a href="https://github.com/oliviermirat/ZebraZoom" style="color:blue" target="_blank">github.com/oliviermirat/ZebraZoom</a>.</p>
+<p>Please also mention this github repository <a href="https://github.com/oliviermirat/ZebraZoom" style="color:blue" target="_blank">github.com/oliviermirat/ZebraZoom</a> and/or our website <a href="https://zebrazoom.org/" style="color:blue" target="_blank">zebrazoom.org</a>.</p>

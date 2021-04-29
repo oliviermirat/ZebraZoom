@@ -101,7 +101,7 @@
   "headSize" : -1,
   "minTailSize" : 3,
   "maxTailSize" : 60,
-  "tailExtremityMaxJugeDecreaseCoeff" : 0.15,
+  "tailExtremityMaxJugeDecreaseCoeff" : 0.3,
   "checkAllContourForTailExtremityDetect" : 0,
   "considerHighPointForTailExtremityDetect" : 1,
   "midlineIsInBlobTrackingOptimization" : 1,

@@ -9,6 +9,7 @@ from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
 from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from scipy.interpolate import UnivariateSpline
 from numpy import linspace
+# import time
 
 def findTheTwoSides(headPosition, bodyContour, dst, hyperparameters):
   
@@ -34,17 +35,37 @@ def findTheTwoSides(headPosition, bodyContour, dst, hyperparameters):
       if nbWhitePixels < minWhitePixel:
         minWhitePixel = nbWhitePixels
         bestAngle     = angleOption
+    bestAngleAfterFirstStep = bestAngle
     
+    secondStepFindFirstPointOutOfCnt = True
+    maxDist = -1
+    # start = time.time()
     for i in range(0, nTries):
-      angleOption = bestAngle - (math.pi / 5) + i * ((2 * (math.pi / 5)) / nTries)
-      startPoint = (int(headPosition[0]), int(headPosition[1]))
-      endPoint   = (int(headPosition[0] + 100000 * math.cos(angleOption)), int(headPosition[1] + 100000 * math.sin(angleOption)))
-      testImage  = originalShape.copy()
-      testImage  = cv2.line(testImage, startPoint, endPoint, (0), 1)
-      nbWhitePixels = cv2.countNonZero(testImage)
-      if nbWhitePixels < minWhitePixel:
-        minWhitePixel = nbWhitePixels
-        bestAngle     = angleOption
+      angleOption = bestAngleAfterFirstStep - (math.pi / 5) + i * ((2 * (math.pi / 5)) / nTries)
+      if secondStepFindFirstPointOutOfCnt:
+        unitVector = np.array([math.cos(angleOption), math.sin(angleOption)])
+        factor     = 1
+        headPos    = np.array(headPosition)
+        testBorder = headPos + factor * unitVector
+        testBorder = testBorder.astype(int)
+        while (cv2.pointPolygonTest(bodyContour, (testBorder[0], testBorder[1]), True) > 0) and (factor < 100) and (testBorder[0] >= 0) and (testBorder[1] >= 0) and (testBorder[0] < len(dst[0])) and (testBorder[1] < len(dst)):
+          factor = factor + 1
+          testBorder = headPos + factor * unitVector
+        dist = math.sqrt((headPos[0] - testBorder[0])**2 + (headPos[1] - testBorder[1])**2)
+        if dist > maxDist:
+          maxDist   = dist
+          bestAngle = angleOption
+      else:
+        startPoint = (int(headPosition[0]), int(headPosition[1]))
+        endPoint   = (int(headPosition[0] + 100000 * math.cos(angleOption)), int(headPosition[1] + 100000 * math.sin(angleOption)))
+        testImage  = originalShape.copy()
+        testImage  = cv2.line(testImage, startPoint, endPoint, (0), 1)
+        nbWhitePixels = cv2.countNonZero(testImage)
+        if nbWhitePixels < minWhitePixel:
+          minWhitePixel = nbWhitePixels
+          bestAngle     = angleOption
+    # end = time.time()
+    # print(end - start)
     
     unitVector = np.array([math.cos(bestAngle + math.pi), math.sin(bestAngle + math.pi)])
     factor     = 1
@@ -74,7 +95,7 @@ def findTheTwoSides(headPosition, bodyContour, dst, hyperparameters):
           minDist2 = dist
           indMin2  = i
     
-    res = [indMin1, indMin2]
+    res = [indMin1, indMin2, bestAngle + math.pi]
     
   else:
     

@@ -66,6 +66,10 @@ def findCenterByIterativelyDilating(initialContour, lenX, lenY):
   kernel  = np.ones((3, 3), np.uint8)
   if type(initialContour) != int:
     cv2.fillPoly(image, pts =[initialContour], color=(0))
+    image[:,0] = 255
+    image[0,:] = 255
+    image[:, len(image[0])-1] = 255
+    image[len(image)-1, :]    = 255
     nbBlackPixels = 1
     dilateIter = 0
     while nbBlackPixels > 0:
