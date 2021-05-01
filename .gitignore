@@ -39,8 +39,8 @@ zebrazoom/dataAnalysis/analysisScriptsForProjects/
 prepRepo.sh
 trace.txt
 
-launch.sh
-launch2.sh
+launch*.sh
+*Launch.sh
 
 *_paramSet
 *_config.json

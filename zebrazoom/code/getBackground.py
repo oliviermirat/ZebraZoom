@@ -73,7 +73,7 @@ def getBackground(videoPath, hyperparameters):
     else:
       print("couldn't use the frame", k, "for the background extraction")
   
-  if hyperparameters["imagePreProcessMethod"]:
+  if hyperparameters["backgroundPreProcessMethod"]:
     back = preprocessBackgroundImage(back, hyperparameters)
   
   if hyperparameters["checkThatMovementOccurInVideo"]:

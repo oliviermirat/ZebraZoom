@@ -73,6 +73,13 @@ def erodeThenDilate(img, hyperparameters, imagePreProcessParameters):
   
   return img
 
+def erodeThenMin(img, hyperparameters, imagePreProcessParameters):
+  
+  kernel  = np.ones((3, 3), np.uint8)
+  img2 = cv2.erode(img, kernel, iterations=imagePreProcessParameters[0])
+  img3 = cv2.min(img, img2)
+  
+  return img3
 
 def preprocessImage(img, hyperparameters):
   
@@ -92,6 +99,8 @@ def preprocessImage(img, hyperparameters):
       img = erodeThenDilate(img, hyperparameters, imagePreProcessParameters)
     elif imagePreProcessMethod == "findNonGrayScalePixels":
       img = findNonGrayScalePixels(img, hyperparameters)
+    elif imagePreProcessMethod == "erodeThenMin":
+      img = erodeThenMin(img, hyperparameters, imagePreProcessParameters)
   
   return img
 
@@ -114,5 +123,7 @@ def preprocessBackgroundImage(img, hyperparameters):
       img = erodeThenDilate(img, hyperparameters, imagePreProcessParameters)
     elif imagePreProcessMethod == "findNonGrayScalePixels":
       img = findNonGrayScalePixels(img, hyperparameters)
+    elif imagePreProcessMethod == "erodeThenMin":
+      img = erodeThenMin(img, hyperparameters, imagePreProcessParameters)
   
   return img

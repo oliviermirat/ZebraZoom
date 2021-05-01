@@ -287,6 +287,7 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, det
   hyperparameters["headSize"]    = int(tailLength / 2)
   hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] = bodyContourArea * configFile["nbAnimalsPerWell"]
   hyperparameters["maxAreaBody"] = 5 * bodyContourArea
+  hyperparameters["minAreaBody"] = int(bodyContourArea / 5)
   hyperparameters["trackingPointSizeDisplay"] = int(np.ceil(math.sqrt(bodyContourArea) / 15))
   configFile["minPixelDiffForBackExtract"] = bestMinPixelDiffForBackExtract
   configFile["minTailSize"] = tailLength / 10
@@ -294,6 +295,7 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, det
   configFile["headSize"]    = int(tailLength / 2)
   configFile["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] = bodyContourArea * configFile["nbAnimalsPerWell"]
   configFile["maxAreaBody"] = 5 * bodyContourArea
+  configFile["minAreaBody"] = int(bodyContourArea / 5)
   configFile["trackingPointSizeDisplay"] = int(np.ceil(math.sqrt(bodyContourArea) / 15))
   
   # # # For each frame that has some ground truth provided by the user:

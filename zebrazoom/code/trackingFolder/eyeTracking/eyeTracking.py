@@ -58,7 +58,6 @@ def eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, tracki
   if debugEyeTrackingAdvanced:
     cv2.imshow('Frame', threshEye)
     cv2.waitKey(0)
-  
   # Finding, in the image without the white circle, the contours corresponding to the contours previously found in the image with the white circle
   # This to make sure that we get the blobs that "really" correspond to the eyes in the unlikely event where the white circle would have overlapped with the eyes
   M = cv2.moments(maxContour1)
@@ -90,7 +89,6 @@ def eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, tracki
       maxContour1b = contour
     if dist2 >= 0:
       maxContour2b = contour
-  
   # Finding the left and the right eyes
   M = cv2.moments(maxContour1b)
   if M['m00']:
@@ -117,7 +115,6 @@ def eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, tracki
   else:
     contourLeft  = maxContour2b
     contourRight = maxContour1b
-  
   # Finding the (X, Y) coordinates and the angle of each of the two eyes
   eyeX     = [0, 0]
   eyeY     = [0, 0]
@@ -130,17 +127,48 @@ def eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, tracki
       eyeX[idx] = int(M['m10']/M['m00'])
       eyeY[idx] = int(M['m01']/M['m00'])
     if type(contour) != int and len(contour) >= 3:
-      threshEye1 = np.zeros((len(threshEye), len(threshEye[0])))
-      threshEye1[:, :] = 255
-      cv2.fillPoly(threshEye1, pts =[contour], color=(0, 0, 0))
-      if debugEyeTrackingAdvanced:
-        cv2.imshow('Frame', threshEye1)
-        cv2.waitKey(0)
-      if False:
-        kernel  = np.ones((11, 11), np.uint8)
-        threshEye1 = cv2.erode(threshEye1, kernel, iterations=7)
-      angle1 = computeHeading(threshEye1, eyeX[idx], eyeY[idx], eyeHeadingSearchAreaHalfDiameter, hyperparameters)
-      headingApproximate = trackingHeadingAllAnimals[animalId, i-firstFrame]
+      if len(contour) >= 5:
+        ellipse = cv2.fitEllipse(contour)
+        angle1 = ellipse[2] * (math.pi / 180) + (math.pi / 2)
+      else:
+        print("problem with eye angle here, not enough points in the contour to use fitEllipse")
+        threshEye1 = np.zeros((len(threshEye), len(threshEye[0])))
+        threshEye1[:, :] = 0
+        cv2.fillPoly(threshEye1, pts =[contour], color=(255))
+        if debugEyeTrackingAdvanced:
+          cv2.imshow('Frame', threshEye1)
+          cv2.waitKey(0)
+        if False:
+          angle1 = computeHeading(threshEye1, eyeX[idx], eyeY[idx], eyeHeadingSearchAreaHalfDiameter, hyperparameters)
+        else:
+          minWhitePixel = 10000000000000000000000
+          bestAngle     = 0
+          nTries        = 200
+          for j in range(0, nTries):
+            angleOption = j * (math.pi / nTries)
+            startPoint = (int(eyeX[idx] - 100000 * math.cos(angleOption)), int(eyeY[idx] - 100000 * math.sin(angleOption)))
+            endPoint   = (int(eyeX[idx] + 100000 * math.cos(angleOption)), int(eyeY[idx] + 100000 * math.sin(angleOption)))
+            testImage  = threshEye1.copy()
+            testImage  = cv2.line(testImage, startPoint, endPoint, (0), 4)
+            nbWhitePixels = cv2.countNonZero(testImage)
+            if nbWhitePixels < minWhitePixel:
+              minWhitePixel = nbWhitePixels
+              bestAngle     = angleOption
+            if False:
+              firstBestAngle = bestAngle
+              for j in range(0, nTries):
+                angleOption = firstBestAngle - (math.pi / 5) + j * ((2 * (math.pi / 5)) / nTries)
+                startPoint = (int(eyeX[idx] - 100000 * math.cos(angleOption)), int(eyeY[idx] - 100000 * math.sin(angleOption)))
+                endPoint   = (int(eyeX[idx] + 100000 * math.cos(angleOption)), int(eyeY[idx] + 100000 * math.sin(angleOption)))
+                testImage  = threshEye1.copy()
+                testImage  = cv2.line(testImage, startPoint, endPoint, (0), 4)
+                nbWhitePixels = cv2.countNonZero(testImage)
+                if nbWhitePixels < minWhitePixel:
+                  minWhitePixel = nbWhitePixels
+                  bestAngle     = angleOption
+          angle1 = bestAngle
+      
+      headingApproximate = trackingHeadingAllAnimals[animalId, i-firstFrame] % (2*math.pi)
       headingPreciseOpt1 = angle1
       headingPreciseOpt2 = (angle1 + math.pi) % (2*math.pi)
       diffAngle1 = distBetweenThetas(headingApproximate, headingPreciseOpt1)
@@ -151,7 +179,6 @@ def eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, tracki
         eyeAngle[idx] = headingPreciseOpt2
     else:
       eyeAngle[idx] = 0
-  
   # Debugging Plot
   if debugEyeTracking:
     colorFrame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
@@ -161,7 +188,7 @@ def eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, tracki
     cv2.line(colorFrame, (eyeX[0], eyeY[0]), (int(eyeX[0]+headingLineValidationPlotLength*math.cos(eyeAngle[0])), int(eyeY[0]+headingLineValidationPlotLength*math.sin(eyeAngle[0]))), (255,0,255), 1)
     cv2.line(colorFrame, (eyeX[1], eyeY[1]), (int(eyeX[1]+headingLineValidationPlotLength*math.cos(eyeAngle[1])), int(eyeY[1]+headingLineValidationPlotLength*math.sin(eyeAngle[1]))), (255,0,255), 1)
     cv2.circle(colorFrame, (eyeX[1], eyeY[1]), 2, (0,255,255), 1)
-    cv2.imshow('Frame', colorFrame)
+    cv2.imshow('Eye Tracking debugging', colorFrame)
     cv2.waitKey(0)
   
   # Storing the (X, Y) coordinates and angles

@@ -44,7 +44,7 @@ def getConfig(config, variableName, videoPath):
         if variableName == "firstFrame":
           return 1
         elif variableName == "lastFrame":
-          lastFrame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) - 2
+          lastFrame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
           return lastFrame
         elif variableName == "videoWidth":
           frame_width  = int(cap.get(3))

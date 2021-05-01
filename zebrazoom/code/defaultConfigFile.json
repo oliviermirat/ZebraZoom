@@ -76,6 +76,9 @@
   "imagePreProcessMethod" : 0,
   "imagePreProcessParameters" : [],
   
+  "backgroundPreProcessMethod" : 0,
+  "backgroundPreProcessParameters" : [],
+  
   "minWellDistanceForWellDetection" : 250,
   "wellOutputVideoDiameter" : -1,
   
@@ -118,7 +121,7 @@
   "readjustCenterOfMassIfNotInsideContour": 0,
   
   "eyeTracking" : 0,
-  "headCenterToMidEyesPointDistance" : 10,
+  "headCenterToMidEyesPointDistance" : 5,
   "eyeBinaryThreshold" : 50,
   "midEyesPointToEyeCenterMaxDistance" : 10,
   "eyeHeadingSearchAreaHalfDiameter" : 40,

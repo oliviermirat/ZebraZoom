@@ -95,21 +95,22 @@ def findBodyContour(headPosition, hyperparameters, thresh1, initialCurFrame, bac
     thresh1 = 255 - thresh1
     
     hyperparameters["minPixelDiffForBackExtractBody"] = minPixelDiffForBackExtract
-  #
+  
   contours, hierarchy = cv2.findContours(thresh1, cv2.RETR_TREE, contourPrecision)
   for contour in contours:
-    dist = cv2.pointPolygonTest(contour, (x, y), True)
-    if dist >= 0:
-      M = cv2.moments(contour)
-      if M['m00']:
-        cx = int(M['m10']/M['m00'])
-        cy = int(M['m01']/M['m00'])
-        bodyContour = contour
-      else:
-        cx = 0
-        cy = 0
+    area = cv2.contourArea(contour)
+    if (area >= hyperparameters["minAreaBody"]) and (area <= hyperparameters["maxAreaBody"]):
+      dist = cv2.pointPolygonTest(contour, (x, y), True)
+      if dist >= 0:
+        M = cv2.moments(contour)
+        if M['m00']:
+          cx = int(M['m10']/M['m00'])
+          cy = int(M['m01']/M['m00'])
+          bodyContour = contour
+        else:
+          cx = 0
+          cy = 0
   
-  # print("area body contour:", cv2.contourArea(bodyContour))
   if type(bodyContour) != int:
     if cv2.contourArea(bodyContour) >= hyperparameters["maxAreaBody"]:
       bodyContour = 0

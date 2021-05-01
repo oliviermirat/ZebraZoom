@@ -132,8 +132,8 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
               leftEyeX     = superStruct["wellPoissMouv"][i][j][k]["leftEyeX"][l]
               leftEyeY     = superStruct["wellPoissMouv"][i][j][k]["leftEyeY"][l]
               leftEyeAngle = superStruct["wellPoissMouv"][i][j][k]["leftEyeAngle"][l]
-              x = x + infoWells[i][0]
-              y = y + infoWells[i][1]
+              leftEyeX = leftEyeX + infoWells[i][0]
+              leftEyeY = leftEyeY + infoWells[i][1]
               dataToPlot = {}
               dataToPlot["x"]       = leftEyeX
               dataToPlot["y"]       = leftEyeY
@@ -152,8 +152,8 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
               rightEyeX     = superStruct["wellPoissMouv"][i][j][k]["rightEyeX"][l]
               rightEyeY     = superStruct["wellPoissMouv"][i][j][k]["rightEyeY"][l]
               rightEyeAngle = superStruct["wellPoissMouv"][i][j][k]["rightEyeAngle"][l]
-              x = x + infoWells[i][0]
-              y = y + infoWells[i][1]
+              rightEyeX = rightEyeX + infoWells[i][0]
+              rightEyeY = rightEyeY + infoWells[i][1]
               dataToPlot = {}
               dataToPlot["x"]       = rightEyeX
               dataToPlot["y"]       = rightEyeY
