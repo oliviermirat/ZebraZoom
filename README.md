@@ -38,6 +38,7 @@ For more information visit <a href="https://zebrazoom.org/" target="_blank">zebr
 [Adjusting ZebraZoom's hyperparameters: for testing/troubleshooting](#hyperparametersTesting)<br/>
 [Adjusting ZebraZoom's hyperparameters: further adjustment of tail angle smoothing and bouts and bends detection](#hyperparametersTailAngleSmoothBoutsAndBendsDetect)<br/>
 [Adjusting ZebraZoom's hyperparameters: head-embedded zebrafish tail tracking in difficult conditions](#extremeHeadEmbeddedTailTracking)<br/>
+[Adjusting ZebraZoom's hyperparameters: image pre-processing](#hyperparametersImagePreprocessing)<br/>
 [Adjusting ZebraZoom's hyperparameters: other adjustments](#hyperparametersOtherAdjustments)<br/>
 [Eye tracking of zebrafish larvae](#eyesTracking)<br/>
 [Further analyzing ZebraZoom's output through the Graphical User Interface](#GUIanalysis)<br/>
@@ -258,15 +259,24 @@ Finally, you can also try manually adding and adjusting the parameters <I>"initi
 If after following the instructions above you still don't manage to create a configuration file that works well for your videos, please let us know by emailing us at info@zebrazoom.org (also please read the troubleshooting section below).
 
 
+<a name="hyperparametersImagePreprocessing"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Adjusting ZebraZoom's hyperparameters: Image Pre-Processing:</H2>
+
+<H3 CLASS="western">Image pre-processing before tracking:</H3>
+It can sometimes be useful to preprocess the frames of the video before starting the tracking. The two parameters below can be used to this end:<br/>
+<font color="blue">"imagePreProcessMethod" (default 0):</font> set it to a list of preprocessing methods you want to apply on all images before the tracking is performed on them. You can see the preprocessing methods available (and potentially add some more methods if necessary) in this file: <a href="https://github.com/oliviermirat/ZebraZoom/blob/master/zebrazoom/code/preprocessImage.py" style="color:blue" target="_blank">preprocessImage.py</a>. For example, you could set this parameter to ["medianAndMinimum", "findNonGrayScalePixels"], in which case the "medianAndMinimum" filter will first be applied, followed by the "findNonGrayScalePixels" filter. By default (0), no preprocessing will be applied.<br/>
+<font color="blue">"imagePreProcessParameters" (default []):</font> parameters of the previously specified preprocessing methods used. If you are using image preprocessing methods, you must set the parameters of the preprocessing methods here. For example, if you set "imagePreProcessMethod" to ["medianAndMinimum", "findNonGrayScalePixels"], you could then, for example, set "imagePreProcessParameters" to [[51], []].<br/><br/>
+
+<H3 CLASS="western">Post-processing of the background extracted:</H3>
+<font color="blue">"backgroundPreProcessMethod" (default 0):</font> same as "imagePreProcessMethod", except this will specify a list of post-processing methods to be applied on the background of the video, after it has been extracted.<br/>
+<font color="blue">"backgroundPreProcessParameters" (default []):</font> same as "imagePreProcessParameters", except this specifies the values of the parameters specified in "backgroundPreProcessMethod".<br/><br/>
+
 <a name="hyperparametersOtherAdjustments"/>
 
 <br/>[Back to table of content](#tableofcontent)<br/>
 <H2 CLASS="western">Adjusting ZebraZoom's hyperparameters: other adjustments:</H2>
-
-<H3 CLASS="western">Image preprocessing before tracking:</H3>
-It can sometimes be useful to preprocess the frames of the video before starting the tracking. The two parameters below can be used to this end:<br/>
-<font color="blue">"imagePreProcessMethod" (default 0):</font> set it to the preprocessing method you want to use. At the moment, the methods available are "medianAndMinimum" and "erodeThenDilate". If necessary, feel free to add other methods in the file <a href="https://github.com/oliviermirat/ZebraZoom/blob/master/zebrazoom/code/preprocessImage.py" style="color:blue" target="_blank">preprocessImage.py</a>. By default (0), no preprocessing will be applied.<br/>
-<font color="blue">"imagePreProcessParameters" (default []):</font> parameters of the previously specified preprocessing method used. <br/><br/>
 
 <H3 CLASS="western">Background extraction with only two frames of the video:</H3>
 <font color="blue">"backgroundExtractionWithOnlyTwoFrames" (default 0):</font> set this parameter to 1 to perform the background subtraction with only two frames (the two frames will be chosen in order to maximise the amount of differences between the two frames). Setting this parameter to 1 can be useful to speed up the background extraction process and/or if for some reason using a lot of frames for the background extraction leads to problems.<br/><br/>

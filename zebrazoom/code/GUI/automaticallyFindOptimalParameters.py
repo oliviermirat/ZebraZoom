@@ -158,6 +158,11 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, det
   
   configFile = {"extractAdvanceZebraParameters": 0, "headEmbeded": 0, "nbWells": 1, "noBoutsDetection": 1, "noChecksForBoutSelectionInExtractParams": 1, "trackingPointSizeDisplay": 4, "validationVideoPlotHeading": 1, "nbAnimalsPerWell": 1, "forceBlobMethodForHeadTracking": 1, "multipleHeadTrackingIterativelyRelaxAreaCriteria": 1, "erodeIter":0, "minArea": 0, "maxArea": 100000000000000, "minAreaBody": 0, "maxAreaBody": 100000000000000, "headSize": 20, "minTailSize": 0, "maxTailSize": 100000000000000, "paramGaussianBlur": 25, "extractBackWhiteBackground": 1, "dilateIter": 1, "thresholdForBlobImg": 254, "findContourPrecision": "CHAIN_APPROX_NONE", "midlineIsInBlobTrackingOptimization": 0, "checkAllContourForTailExtremityDetect": 1, "recalculateForegroundImageBasedOnBodyArea": 0, "headingCalculationMethod": "simplyFromPreviousCalculations", "detectMouthInsteadOfHeadTwoSides": 1, "findCenterOfAnimalByIterativelyDilating": 1}
   
+  if "firstFrame" in initialConfigFile:
+    configFile["firstFrame"] = initialConfigFile["firstFrame"]
+  if "lastFrame" in initialConfigFile:
+    configFile["lastFrame"]  = initialConfigFile["lastFrame"]
+  
   hyperparameters = getHyperparametersSimple(configFile)
   
   background = getBackground(os.path.join(pathToVideo, videoNameWithExt), hyperparameters)
