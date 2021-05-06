@@ -348,6 +348,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["readjustCenterOfMassIfNotInsideContour"] = getConfig(config, "readjustCenterOfMassIfNotInsideContour", videoPath)
   
+  hyperparameters["onlyDoTheTrackingForThisNumberOfFrames"] = getConfig(config, "onlyDoTheTrackingForThisNumberOfFrames", videoPath)
+  
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5
     while i < len(argv):

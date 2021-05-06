@@ -119,7 +119,7 @@ def getBackground(videoPath, hyperparameters):
   
   if (debugExtractBack):
       
-    cv2.imshow('Background extracted', back)
+    cv2.imshow('Background extracted: Click on any key to proceed!', back)
     if hyperparameters["exitAfterBackgroundExtraction"]:
       cv2.waitKey(3000)
     else:

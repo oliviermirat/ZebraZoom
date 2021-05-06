@@ -111,6 +111,8 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
   
   # Performing the tracking on each frame
   i = firstFrame
+  if int(hyperparameters["onlyDoTheTrackingForThisNumberOfFrames"]) != 0:
+    lastFrame = min(lastFrame, firstFrame + int(hyperparameters["onlyDoTheTrackingForThisNumberOfFrames"]))
   while (i < lastFrame+1):
     
     if (hyperparameters["freqAlgoPosFollow"] != 0) and (i % hyperparameters["freqAlgoPosFollow"] == 0):

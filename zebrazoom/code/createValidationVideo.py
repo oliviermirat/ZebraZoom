@@ -176,7 +176,10 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
     outputFps = int(hyperparameters["outputValidationVideoFps"])
   
   out = cv2.VideoWriter(outputName,cv2.VideoWriter_fourcc('M','J','P','G'), outputFps, (frame_width,frame_height))
-
+  
+  if int(hyperparameters["onlyDoTheTrackingForThisNumberOfFrames"]) != 0:
+    lastFrame = min(lastFrame, firstFrame + int(hyperparameters["onlyDoTheTrackingForThisNumberOfFrames"]))
+  
   cap.set(1, firstFrame)
   
   for l in range(firstFrame, lastFrame):

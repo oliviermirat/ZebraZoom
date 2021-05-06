@@ -80,8 +80,8 @@ class SampleApp(tk.Tk):
         frame = self.frames[page_name]
         frame.tkraise()
         
-    def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo):
-        GUI_InitialFunctions.chooseVideoToAnalyze(self, justExtractParams, noValidationVideo)
+    def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, debugMode):
+        GUI_InitialFunctions.chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, debugMode)
 
     def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo):
         GUI_InitialFunctions.chooseFolderToAnalyze(self, justExtractParams, noValidationVideo)

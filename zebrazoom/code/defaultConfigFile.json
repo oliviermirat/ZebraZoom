@@ -20,6 +20,7 @@
   "debugHeadEmbededFindNextPoints" : 0,
   "debugEyeTracking" : 0,
   "debugEyeTrackingAdvanced" : 0,
+  "onlyDoTheTrackingForThisNumberOfFrames": 0,
   "createValidationVideo" : 1,
   "calculateAllTailAngles" : 0,
   "freqAlgoPosFollow" : 0,

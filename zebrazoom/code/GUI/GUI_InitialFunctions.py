@@ -24,7 +24,7 @@ import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 
 LARGE_FONT= ("Verdana", 12)
 
-def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo):
+def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, debugMode=0):
     
     if globalVariables["mac"]:
         tk.videoName =  filedialog.askopenfilename(initialdir = os.path.expanduser("~"),title = "Select file")
@@ -35,6 +35,7 @@ def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo):
     
     tk.justExtractParams = int(justExtractParams)
     tk.noValidationVideo = int(noValidationVideo)
+    tk.debugMode         = int(debugMode)
     
     self.show_frame("ConfigFilePromp")
 
@@ -43,6 +44,7 @@ def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo):
     tk.headEmbedded = 0
     tk.justExtractParams = int(justExtractParams)
     tk.noValidationVideo = int(noValidationVideo)
+    tk.debugMode = 0
     self.show_frame("ConfigFilePromp")
     
 def chooseFolderForTailExtremityHE(self):
@@ -98,9 +100,15 @@ def launchZebraZoom(self):
         tabParams = tabParams + ["reloadWellPositions", 1, "reloadBackground", 1, "debugPauseBetweenTrackAndParamExtract", "justExtractParamFromPreviousTrackData"]
       if tk.noValidationVideo == 1:
           tabParams = tabParams + ["createValidationVideo", 0]
+      if tk.debugMode == 1:
+        tabParams = tabParams + ["debugTracking", 1, "debugExtractBack", 1, "onlyDoTheTrackingForThisNumberOfFrames", 3, "onlyTrackThisOneWell", 0]
       mainZZ(path, name, videoExt, tk.configFile, tabParams)
     else:
-      getTailExtremityFirstFrame(path, name, videoExt, tk.configFile, [])
+      if tk.debugMode == 1:
+        tabParams = ["mainZZ", path, name, videoExt, tk.configFile, "freqAlgoPosFollow", 100, "debugTracking", 1, "debugExtractBack", 1, "onlyDoTheTrackingForThisNumberOfFrames", 3, "onlyTrackThisOneWell", 0]
+      else:
+        tabParams = []
+      getTailExtremityFirstFrame(path, name, videoExt, tk.configFile, tabParams)
   
   self.show_frame("ZZoutro")
 

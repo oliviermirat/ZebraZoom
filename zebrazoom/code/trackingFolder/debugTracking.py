@@ -20,5 +20,5 @@ def debugTracking(nbTailPoints, i, firstFrame, output, outputHeading, frame2, hy
     if hyperparameters["debugTrackingPtExtremeLargeVerticals"]: # Put this to True for large resolution videos (to be able to see on your screen what's happening)
       frame2 = frame2[int(y-200):len(frame2), :]
     
-    cv2.imshow('Frame', frame2)
+    cv2.imshow('Tracked frame: Click on any key to proceed!', frame2)
     cv2.waitKey(0)

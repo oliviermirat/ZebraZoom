@@ -129,13 +129,27 @@ class VideoToAnalyze(tk.Frame):
         tk.Label(self, text="Look for the video you want to analyze.").pack(side="top", fill="x", pady=10)
         justExtractParams = IntVar()
         noValidationVideo = IntVar()
+        debugMode         = IntVar()
         button = tk.Button(self, text="Choose file",
-                           command=lambda: controller.chooseVideoToAnalyze(justExtractParams.get(), noValidationVideo.get()))
+                           command=lambda: controller.chooseVideoToAnalyze(justExtractParams.get(), noValidationVideo.get(), debugMode.get()))
         button.pack()
         
-        Checkbutton(self, text="I ran the tracking already, I only want to redo the extraction of parameters.", variable=justExtractParams).pack()
         tk.Label(self, text="", pady=0).pack()
-        Checkbutton(self, text="Don't (re)generate a validation video (for speed efficiency).", variable=noValidationVideo).pack()
+        Checkbutton(self, text="Run in debug mode.", bg="red", variable=debugMode).pack()
+        tk.Label(self, text="This option can be useful to test a new configuration file.", bg="red", pady=0).pack()
+        tk.Label(self, text="In this mode you will need to click on any key on each visualization windows.", bg="red", pady=0).pack()
+        tk.Label(self, text="", pady=0).pack()
+        
+        def callback(url):
+          webbrowser.open_new(url)
+        link1 = tk.Button(self, text="Click here if you prefer to run the tracking from the command line", bg="green")
+        link1.pack()
+        link1.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom#commandlinezebrazoom"))
+        
+        tk.Label(self, text="", pady=0).pack()
+        Checkbutton(self, text="I ran the tracking already, I only want to redo the extraction of parameters.", fg="purple", variable=justExtractParams).pack()
+        tk.Label(self, text="", pady=0).pack()
+        Checkbutton(self, text="Don't (re)generate a validation video (for speed efficiency).", fg="purple", variable=noValidationVideo).pack()
         tk.Label(self, text="", pady=0).pack()
         
         tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
