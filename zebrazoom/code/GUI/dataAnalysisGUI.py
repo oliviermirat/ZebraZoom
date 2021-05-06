@@ -34,11 +34,11 @@ class CreateExperimentOrganizationExcel(tk.Frame):
     tk.Label(self, text="Once this is done, click on the button below:").pack()
     tk.Label(self, text="").pack()
     
-    tk.Button(self, text="Ok done!", command=lambda: controller.show_frame("ChooseExperimentOrganizationExcel")).pack()
+    tk.Button(self, text="Ok done!", bg="light yellow", command=lambda: controller.show_frame("ChooseExperimentOrganizationExcel")).pack()
     
     tk.Label(self, text="").pack()
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class ChooseExperimentOrganizationExcel(tk.Frame):
@@ -50,9 +50,9 @@ class ChooseExperimentOrganizationExcel(tk.Frame):
     label = tk.Label(self, text="Choose organization excel file:", font=controller.title_font)
     label.pack(side="top", fill="x", pady=10)
     
-    tk.Button(self, text="Select the excel file describing the organization of your experiment.", command=lambda: controller.chooseExperimentOrganizationExcel(controller)).pack()
+    tk.Button(self, text="Select the excel file describing the organization of your experiment.", bg="light yellow", command=lambda: controller.chooseExperimentOrganizationExcel(controller)).pack()
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class ChooseDataAnalysisMethod(tk.Frame):
@@ -64,10 +64,10 @@ class ChooseDataAnalysisMethod(tk.Frame):
     label = tk.Label(self, text="Choose the analysis you want to perform:", font=controller.title_font)
     label.pack(side="top", fill="x", pady=10)
     
-    tk.Button(self, text="Compare populations with kinematic parameters", command=lambda: controller.show_frame("PopulationComparison")).pack()
-    tk.Button(self, text="Cluster bouts of movements.", command=lambda: controller.show_frame("BoutClustering")).pack()
+    tk.Button(self, text="Compare populations with kinematic parameters", bg="light yellow", command=lambda: controller.show_frame("PopulationComparison")).pack()
+    tk.Button(self, text="Cluster bouts of movements  (for zebrafish only)", bg="light yellow", command=lambda: controller.show_frame("BoutClustering")).pack()
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class PopulationComparison(tk.Frame):
@@ -86,15 +86,15 @@ class PopulationComparison(tk.Frame):
     Speed = IntVar()
     Checkbutton(self, text="Speed", variable=Speed).pack()
     NumberOfOscillations = IntVar()
-    Checkbutton(self, text="NumberOfOscillations", variable=NumberOfOscillations).pack()
+    Checkbutton(self, text="NumberOfOscillations (for zebrafish only)", variable=NumberOfOscillations).pack()
     meanTBF = IntVar()
-    Checkbutton(self, text="meanTBF", variable=meanTBF).pack()
+    Checkbutton(self, text="meanTBF (for zebrafish only)", variable=meanTBF).pack()
     maxAmplitude = IntVar()
-    Checkbutton(self, text="maxAmplitude", variable=maxAmplitude).pack()
+    Checkbutton(self, text="maxAmplitude (for zebrafish only)", variable=maxAmplitude).pack()
     
-    tk.Button(self, text="Launch Analysis", command=lambda: controller.populationComparison(controller, BoutDuration.get(), TotalDistance.get(), Speed.get(), NumberOfOscillations.get(), meanTBF.get(), maxAmplitude.get())).pack()
+    tk.Button(self, text="Launch Analysis", bg="light yellow", command=lambda: controller.populationComparison(controller, BoutDuration.get(), TotalDistance.get(), Speed.get(), NumberOfOscillations.get(), meanTBF.get(), maxAmplitude.get())).pack()
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class BoutClustering(tk.Frame):
@@ -117,9 +117,9 @@ class BoutClustering(tk.Frame):
     HeadEmbeded = IntVar()
     Checkbutton(self, text="Head embeded fish with tail tracking", variable=HeadEmbeded).pack()
     
-    tk.Button(self, text="Launch Analysis", command=lambda: controller.boutClustering(controller, nbClustersToFind.get(), FreelySwimming.get(), HeadEmbeded.get())).pack()
+    tk.Button(self, text="Launch Analysis", bg="light yellow", command=lambda: controller.boutClustering(controller, nbClustersToFind.get(), FreelySwimming.get(), HeadEmbeded.get())).pack()
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class AnalysisOutputFolderPopulation(tk.Frame):
@@ -135,9 +135,9 @@ class AnalysisOutputFolderPopulation(tk.Frame):
     tk.Label(self, text="Click the button below to open the folder that contains the results of the analysis.").pack()
     tk.Label(self, text="").pack()
     
-    tk.Button(self, text="View results folder", command=lambda: controller.openPopulationAnalysisFolder(controller.homeDirectory)).pack()
+    tk.Button(self, text="View results folder", bg="light yellow", command=lambda: controller.openPopulationAnalysisFolder(controller.homeDirectory)).pack()
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class AnalysisOutputFolderClustering(tk.Frame):
@@ -153,7 +153,7 @@ class AnalysisOutputFolderClustering(tk.Frame):
     tk.Label(self, text="Click the button below to open the folder that contains the results of the analysis.").pack()
     tk.Label(self, text="").pack()
     
-    tk.Button(self, text="View results folder", command=lambda: controller.openClusteringAnalysisFolder(controller.homeDirectory)).pack()
+    tk.Button(self, text="View results folder", bg="light yellow", command=lambda: controller.openClusteringAnalysisFolder(controller.homeDirectory)).pack()
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 

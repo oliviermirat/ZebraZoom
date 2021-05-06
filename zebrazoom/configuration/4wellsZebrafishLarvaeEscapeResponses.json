@@ -15,5 +15,6 @@
   "minAreaBody" : 400,
   "maxAreaBody" : 800,
   "headSize" : 15,
-  "windowForLocalBendMinMaxFind" : 3
+  "windowForLocalBendMinMaxFind" : 3,
+  "noChecksForBoutSelectionInExtractParams" : 0
 }

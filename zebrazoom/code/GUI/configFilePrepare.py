@@ -21,13 +21,13 @@ class ChooseVideoToCreateConfigFileFor(tk.Frame):
     reloadConfigFile = IntVar()
     Checkbutton(self, text="Click here to start from a configuration file previously created (instead of from scratch).", variable=reloadConfigFile).pack()
     
-    tk.Button(self, text="Select the video you want to create a configuration file for.", command=lambda: controller.chooseVideoToCreateConfigFileFor(controller, reloadConfigFile.get())).pack()
+    tk.Button(self, text="Select the video you want to create a configuration file for.", bg="light yellow", command=lambda: controller.chooseVideoToCreateConfigFileFor(controller, reloadConfigFile.get())).pack()
     
     tk.Label(self, text='').pack()
     tk.Label(self, text="(you will be able to use the configuration file you create for all videos that are similar to that video)").pack()
     tk.Label(self, text="").pack()
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
     
     tk.Label(self, text='').pack()
     tk.Label(self, text='Warning: This procedure to create configuration files is incomplete.').pack()
@@ -62,9 +62,9 @@ class ChooseGeneralExperiment(tk.Frame):
     tk.Label(self, text='Several animals can be tracked at once. The animals must be "darker" than the background and the background must be still.').pack()
     tk.Label(self, text="").pack()
     
-    tk.Button(self, text="Next", command=lambda: controller.chooseGeneralExperimentFirstStep(controller, freeZebra.get(), headEmbZebra.get(), drosophilia.get(), rodent.get(), other.get())).pack()
+    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.chooseGeneralExperimentFirstStep(controller, freeZebra.get(), headEmbZebra.get(), drosophilia.get(), rodent.get(), other.get())).pack()
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class FreelySwimmingExperiment(tk.Frame):
@@ -88,9 +88,9 @@ class FreelySwimmingExperiment(tk.Frame):
     tk.Label(self, text="This method is more difficult to use, but it can work better with fishes of different sizes.").pack()
     tk.Label(self, text="").pack()
     
-    tk.Button(self, text="Next", command=lambda: controller.chooseGeneralExperiment(controller, freeZebra.get(), 0, 0, 0, 0, freeZebra2.get())).pack()
+    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.chooseGeneralExperiment(controller, freeZebra.get(), 0, 0, 0, 0, freeZebra2.get())).pack()
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class WellOrganisation(tk.Frame):
@@ -111,14 +111,14 @@ class WellOrganisation(tk.Frame):
     Checkbutton(self, text="Rectangular Wells", variable=rectangular).pack()
     
     roi = IntVar()
-    Checkbutton(self, text="Choose Region of Interest", variable=roi).pack()
+    Checkbutton(self, text="Choose Rectangular Region of Interest", variable=roi).pack()
     other = IntVar()
     Checkbutton(self, text="Whole video", variable=other).pack()
     
     
-    tk.Button(self, text="Next", command=lambda: controller.wellOrganisation(controller, circular.get(), rectangular.get(), roi.get(), other.get())).pack()
+    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.wellOrganisation(controller, circular.get(), rectangular.get(), roi.get(), other.get())).pack()
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class CircularOrRectangularWells(tk.Frame):
@@ -142,9 +142,9 @@ class CircularOrRectangularWells(tk.Frame):
     nbWellsPerRows = tk.Entry(self)
     nbWellsPerRows.pack()
     
-    tk.Button(self, text="Next", command=lambda: controller.circularOrRectangularWells(controller, nbwells.get(), nbRowsOfWells.get(), nbWellsPerRows.get())).pack()
+    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.circularOrRectangularWells(controller, nbwells.get(), nbRowsOfWells.get(), nbWellsPerRows.get())).pack()
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class ChooseCircularWellsLeft(tk.Frame):
@@ -167,7 +167,7 @@ class ChooseCircularWellsLeft(tk.Frame):
     self.img = img
     canvas.create_image(20, 20, anchor=NW, image=img)
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class ChooseCircularWellsRight(tk.Frame):
@@ -190,7 +190,7 @@ class ChooseCircularWellsRight(tk.Frame):
     self.img = img
     canvas.create_image(20, 20, anchor=NW, image=img)
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class NumberOfAnimals(tk.Frame):
@@ -224,7 +224,7 @@ class NumberOfAnimals(tk.Frame):
     tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
     tk.Button(self, text="Next", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), forceBlobMethodForHeadTracking.get(), 0, 0, 0, 0, 0, 0)).pack()
     tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
     
 class NumberOfAnimals2(tk.Frame):
 
@@ -277,8 +277,8 @@ class NumberOfAnimals2(tk.Frame):
     tk.Label(self, text="by changing the value of the parameter recalculateForegroundImageBasedOnBodyArea", font=("Helvetica", 10)).grid(row=12, column=0)
     tk.Label(self, text="in your config file between 0 and 1.", font=("Helvetica", 10)).grid(row=13, column=0)
     
-    tk.Button(self, text="Ok, next step", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, yesBouts.get(), nooBouts.get(), recommendedMethod.get(), alternativeMethod.get(), yesBends.get(), nooBends.get())).grid(row=14, column=0, columnspan = 2)
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).grid(row=15, column=0, columnspan = 2)
+    tk.Button(self, text="Ok, next step", bg="light yellow", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, yesBouts.get(), nooBouts.get(), recommendedMethod.get(), alternativeMethod.get(), yesBends.get(), nooBends.get())).grid(row=14, column=0, columnspan = 2)
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).grid(row=15, column=0, columnspan = 2)
 
 
 class IdentifyHeadCenter(tk.Frame):
@@ -301,7 +301,7 @@ class IdentifyHeadCenter(tk.Frame):
     self.img = img
     canvas.create_image(20, 20, anchor=NW, image=img)
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
     
 class IdentifyBodyExtremity(tk.Frame):
@@ -324,7 +324,7 @@ class IdentifyBodyExtremity(tk.Frame):
     self.img = img
     canvas.create_image(20, 20, anchor=NW, image=img)
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class GoToAdvanceSettings(tk.Frame):
@@ -346,9 +346,9 @@ class GoToAdvanceSettings(tk.Frame):
     Checkbutton(self, text="No", variable=no).pack()
     tk.Label(self, text="").pack()
     
-    tk.Button(self, text="Next", command=lambda: controller.goToAdvanceSettings(controller, yes.get(), no.get())).pack()
+    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.goToAdvanceSettings(controller, yes.get(), no.get())).pack()
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class FinishConfig(tk.Frame):
@@ -364,7 +364,7 @@ class FinishConfig(tk.Frame):
     configFileNameToSave.pack()
     
     if (globalVariables["mac"] or globalVariables["lin"]):
-      tk.Button(self, text="Save Config File (this will also close this window, restart it afterwards)", command=lambda: controller.finishConfig(controller, configFileNameToSave.get())).pack()
+      tk.Button(self, text="Save Config File (this will also close this window, restart it afterwards)", bg="light yellow", command=lambda: controller.finishConfig(controller, configFileNameToSave.get())).pack()
     else:
-      tk.Button(self, text="Save Config File", command=lambda: controller.finishConfig(controller, configFileNameToSave.get())).pack()
+      tk.Button(self, text="Save Config File", bg="light yellow", command=lambda: controller.finishConfig(controller, configFileNameToSave.get())).pack()
 

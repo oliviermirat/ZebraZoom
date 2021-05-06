@@ -79,14 +79,16 @@ class StartPage(tk.Frame):
         tk.Label(self, text="Or run the tracking on all videos inside a folder.", pady=10, fg="green").grid(row=5,column=1)
         
         tk.Label(self, text="3 - Verify tracking results:", font = "bold", pady=10, fg="blue").grid(row=7,column=0)
-        tk.Button(self, text="Open ZebraZoom's output folder", command=lambda: controller.openZZOutputFolder(controller.homeDirectory), bg="light yellow").grid(row=8,column=0)
-        tk.Label(self, text="Access the folder where the tracking results are saved with the button above.", pady=10, fg="green").grid(row=9,column=0)
-        tk.Button(self, text="Visualize ZebraZoom's output", command=lambda: controller.showResultsVisualization(), bg="light yellow").grid(row=10,column=0)
-        tk.Label(self, text="Visualize/Verify/Explore the tracking results with the button above.", pady=10, fg="green").grid(row=11,column=0)
+        tk.Button(self, text="Visualize ZebraZoom's output", command=lambda: controller.showResultsVisualization(), bg="light yellow").grid(row=8,column=0)
+        tk.Label(self, text="Visualize/Verify/Explore the tracking results with the button above.", pady=10, fg="green").grid(row=9,column=0)
+        tk.Button(self, text="Enhance ZebraZoom's output", command=lambda: controller.show_frame("EnhanceZZOutput"), bg="light yellow").grid(row=10,column=0)
+        tk.Label(self, text="Tips on how to correct/enhance ZebraZoom's output when necessary.", pady=11, fg="green").grid(row=11,column=0)
         
         tk.Label(self, text="4 - Analyze behavior:", font = "bold", pady=10, fg="blue").grid(row=7,column=1)
         tk.Button(self, text="Analyze ZebraZoom's outputs", command=lambda: controller.show_frame("CreateExperimentOrganizationExcel"), bg="light yellow").grid(row=8,column=1)
         tk.Label(self, text="Compare populations based on either kinematic parameters or clustering of bouts.", pady=10, fg="green").grid(row=9,column=1)
+        tk.Button(self, text="Open ZebraZoom's output folder: Access raw data", command=lambda: controller.openZZOutputFolder(controller.homeDirectory), bg="light yellow").grid(row=10,column=1)
+        tk.Label(self, text="Access the folder where the tracking results are saved with the button above.", pady=10, fg="green").grid(row=11,column=1)
         
         tk.Label(self, text="").grid(row=12,column=0, columnspan = 2)
         tk.Button(self, text="Troubleshoot", command=lambda: controller.show_frame("ChooseVideoToTroubleshootSplitVideo"), bg="light cyan").grid(row=13,column=0, columnspan = 2)
@@ -98,6 +100,8 @@ class StartPage(tk.Frame):
         link1.grid(row=14,column=0, columnspan = 2)
         link1.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom#tableofcontent"))
         
+        tk.Label(self, text="Regularly update your version of ZebraZoom with: 'pip install zebrazoom --upgrade'!", bg="gold").grid(row=15,column=0, columnspan = 2)
+
 
 class SeveralVideos(tk.Frame):
 
@@ -107,16 +111,14 @@ class SeveralVideos(tk.Frame):
         label = tk.Label(self, text="Run ZebraZoom on several videos", font=controller.title_font)
         label.pack(side="top", fill="x", pady=10)
             
-        button3 = tk.Button(self, text="Run ZebraZoom on an entire folder",
-                            command=lambda: controller.show_frame("FolderToAnalyze")).pack()
+        button3 = tk.Button(self, text="Run ZebraZoom on an entire folder", bg="light yellow", command=lambda: controller.show_frame("FolderToAnalyze")).pack()
         
         tk.Label(self, text="", font=controller.title_font).pack()
         
-        button4 = tk.Button(self, text="Manual first frame tail extremity for head embedded",
-                            command=lambda: controller.show_frame("TailExtremityHE")).pack()
+        button4 = tk.Button(self, text="Manual first frame tail extremity for head embedded", bg="light yellow", command=lambda: controller.show_frame("TailExtremityHE")).pack()
         tk.Label(self, text="", font=controller.title_font).pack()
                             
-        tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+        tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class VideoToAnalyze(tk.Frame):
@@ -130,8 +132,7 @@ class VideoToAnalyze(tk.Frame):
         justExtractParams = IntVar()
         noValidationVideo = IntVar()
         debugMode         = IntVar()
-        button = tk.Button(self, text="Choose file",
-                           command=lambda: controller.chooseVideoToAnalyze(justExtractParams.get(), noValidationVideo.get(), debugMode.get()))
+        button = tk.Button(self, text="Choose file", bg="light yellow", command=lambda: controller.chooseVideoToAnalyze(justExtractParams.get(), noValidationVideo.get(), debugMode.get()))
         button.pack()
         
         tk.Label(self, text="", pady=0).pack()
@@ -152,7 +153,7 @@ class VideoToAnalyze(tk.Frame):
         Checkbutton(self, text="Don't (re)generate a validation video (for speed efficiency).", fg="purple", variable=noValidationVideo).pack()
         tk.Label(self, text="", pady=0).pack()
         
-        tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+        tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class FolderToAnalyze(tk.Frame):
@@ -165,8 +166,7 @@ class FolderToAnalyze(tk.Frame):
         tk.Label(self, text="Look for the folder you want to analyze.").pack(side="top", fill="x", pady=10)
         justExtractParams = IntVar()
         noValidationVideo = IntVar()
-        button = tk.Button(self, text="Choose folder",
-                           command=lambda: controller.chooseFolderToAnalyze(justExtractParams.get(), noValidationVideo.get()))
+        button = tk.Button(self, text="Choose folder", bg="light yellow", command=lambda: controller.chooseFolderToAnalyze(justExtractParams.get(), noValidationVideo.get()))
         button.pack()
         
         Checkbutton(self, text="I ran the tracking already, I only want to redo the extraction of parameters.", variable=justExtractParams).pack()
@@ -175,7 +175,7 @@ class FolderToAnalyze(tk.Frame):
         Checkbutton(self, text="Don't (re)generate a validation video (for speed efficiency).", variable=noValidationVideo).pack()
         tk.Label(self, text="", pady=0).pack()
         
-        tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+        tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class TailExtremityHE(tk.Frame):
@@ -186,10 +186,9 @@ class TailExtremityHE(tk.Frame):
         label = tk.Label(self, text="Choose folder.", font=controller.title_font)
         label.pack(side="top", fill="x", pady=10)
         tk.Label(self, text="Look for the folder of videos where you want to manually label tail extremities.").pack(side="top", fill="x", pady=10)
-        button = tk.Button(self, text="Choose folder",
-                           command=lambda: controller.chooseFolderForTailExtremityHE())
+        button = tk.Button(self, text="Choose folder", bg="light yellow", command=lambda: controller.chooseFolderForTailExtremityHE())
         button.pack()
-        tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+        tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class ConfigFilePromp(tk.Frame):
@@ -200,10 +199,10 @@ class ConfigFilePromp(tk.Frame):
         label = tk.Label(self, text="Choose configuration file.", font=controller.title_font)
         label.pack(side="top", fill="x", pady=10)
         
-        button = tk.Button(self, text="Choose file", command=lambda: controller.chooseConfigFile())
+        button = tk.Button(self, text="Choose file", bg="light yellow", command=lambda: controller.chooseConfigFile())
         button.pack()
         
-        tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+        tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class Patience(tk.Frame):
@@ -211,7 +210,7 @@ class Patience(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        tk.Button(self, text="Launch ZebraZoom on your video(s)", command=lambda: controller.launchZebraZoom()).pack()
+        tk.Button(self, text="Launch ZebraZoom on your video(s)", bg="light yellow", command=lambda: controller.launchZebraZoom()).pack()
         label2 = tk.Label(self, text="After clicking on the button above, please wait for ZebraZoom to run, you can look at the console outside of the GUI to check on the progress of ZebraZoom.")
         label2.pack(side="top", fill="x", pady=10)
 
@@ -223,8 +222,7 @@ class ZZoutro(tk.Frame):
         self.controller = controller
         label = tk.Label(self, text="Analysis is finished.")
         label.pack(side="top", fill="x", pady=10)
-        button = tk.Button(self, text="Go to the start page",
-                           command=lambda: controller.show_frame("StartPage"))
+        button = tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage"))
         button.pack()
 
 
@@ -257,11 +255,48 @@ class ResultsVisualization(tk.Frame):
           else:
             curLine = curLine + 1
         
-        button = tk.Button(self, text="Go to the start page",
-                           command=lambda: controller.show_frame("StartPage"))
+        button = tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage"))
         button.grid(row=curLine,column=curCol)
 
+
+class EnhanceZZOutput(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
         
+        tk.Label(self, text="Tips on how to correct/enhance ZebraZoom's output when necessary", font=controller.title_font).pack(side="top", fill="x", pady=10)
+        
+        tk.Label(self, text="").pack()
+        tk.Label(self, text="Movement Flagging System:", font = "bold").pack()
+        tk.Label(self, text="You can see the results obtained from ZebraZoom's tracking thanks to the button 'Visualize ZebraZoom's output' in the main menu.").pack()
+        tk.Label(self, text="If one of the movements detected by ZebraZoom seems false or if you want to ignore it, you can click on the 'flag' button for that movement:").pack()
+        tk.Label(self, text="that will save a flag for that movement in the raw data obtained for that video,").pack()
+        tk.Label(self, text="and if you use 'Analyze ZebraZoom's outputs' (in the main menu) each movement flagged will be ignored from that analysis.").pack()
+        
+        tk.Label(self, text="").pack()
+        tk.Label(self, text="Speed and Distance traveled Parameter Check:", font = "bold").pack()
+        tk.Label(self, text="If you are interested in comparing the speed and distance traveled between different populations,").pack()
+        tk.Label(self, text="then you need to make sure that the (x, y) coordinates were correctly calculated for every frame.").pack()
+        tk.Label(self, text="To do this, from the 'Analyze ZebraZoom's outputs' menu, you can click on 'Change Right Side Plot' until you see the 'Body Coordinates' plot.").pack()
+        tk.Label(self, text="You can then check on this plot that the body coordinates never goes to the (0, 0) coordinate (in which case a error occurred).").pack()
+        tk.Label(self, text="If an error occurred, one option can be to use the flagging system described above to ignore that movement.").pack()
+        
+        tk.Label(self, text="").pack()
+        tk.Label(self, text="Bend detection for zebrafish:", font = "bold").pack()
+        tk.Label(self, text="If you are tracking zebrafish larvae and trying to detect local maximums and minimums of the tail angle (called 'bends'),").pack()
+        tk.Label(self, text="then you might need to further adjust the parameters related to the bends detection (if these bends are not being detected right).").pack()
+        tk.Label(self, text="You can check if the bends are being detected right with the 'Visualize ZebraZoom's output' in the main menu.").pack()
+        def callback(url):
+          webbrowser.open_new(url)
+        link1 = tk.Button(self, text="View tips on bends detection")
+        link1.pack()
+        link1.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom#hyperparametersTailAngleSmoothBoutsAndBendsDetect"))
+        tk.Label(self, text="").pack()
+        
+        tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+
+
 class ViewParameters(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -316,6 +351,8 @@ class ViewParameters(tk.Frame):
           label.grid(row=1,column=6)
           
           ttk.Button(self, text="View video for all wells together", command=lambda: controller.showValidationVideo(-1,0,-1)).grid(row=1,column=1)
+          
+          # ttk.Button(self, text="Verify wells detection", command=lambda: controller.showValidationVideo(-1,0,-1)).grid(row=1,column=2, columnspan=2)
           
           label = tk.Label(self, text=name, font="bold", justify=LEFT, pady=10)
           label.grid(sticky=W, row=0, column=0, columnspan=8)
@@ -384,7 +421,7 @@ class ViewParameters(tk.Frame):
           
           tk.Button(self, text="Go to the previous page", command=lambda: controller.show_frame("ResultsVisualization")).grid(row=8,column=1)
           
-          tk.Button(self, text="Change Visualization", command=lambda: controller.printSomeResults(e1.get(), e2.get(), e3.get(), True)).grid(row=8,column=2)
+          tk.Button(self, text="Change Right Side Plot", command=lambda: controller.printSomeResults(e1.get(), e2.get(), e3.get(), True), bg="light green").grid(row=8,column=2, columnspan=2)
           
           if (controller.superstructmodified == 1):
             button1 = tk.Button(self, text="Save SuperStruct", command=lambda: controller.saveSuperStruct(e1.get(),e2.get(),e3.get()))

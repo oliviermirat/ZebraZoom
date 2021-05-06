@@ -23,7 +23,7 @@ class ChooseVideoToTroubleshootSplitVideo(tk.Frame):
     tk.Label(self, text="Click on the button above to start this process.", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
     tk.Label(self, text="(if your video is light enough you can also send it to info@zebrazoom.org without reducing its size)", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 class VideoToTroubleshootSplitVideo(tk.Frame):
 
@@ -34,5 +34,5 @@ class VideoToTroubleshootSplitVideo(tk.Frame):
     
     tk.Label(self, text="Ok, your sub-video has been saved in the folder you chose. You can now send that sub-video to info@zebrazoom.org", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
     
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
     
