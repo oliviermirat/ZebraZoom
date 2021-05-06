@@ -36,7 +36,7 @@ For more information visit <a href="https://zebrazoom.org/" target="_blank">zebr
 [Checking the quality of the tracking](#trackingqualitycheck)<br/>
 [Adjusting ZebraZoom's hyperparameters through the GUI](#hyperparameters)<br/>
 [Adjusting ZebraZoom's hyperparameters: for testing/troubleshooting](#hyperparametersTesting)<br/>
-[Adjusting ZebraZoom's hyperparameters: further adjustment of tail angle smoothing and bouts and bends detection](#hyperparametersTailAngleSmoothBoutsAndBendsDetect)<br/>
+[Adjusting ZebraZoom's hyperparameters: further adjustment of the tail angle smoothing, the bouts detection and bends detection](#hyperparametersTailAngleSmoothBoutsAndBendsDetect)<br/>
 [Adjusting ZebraZoom's hyperparameters: head-embedded zebrafish tail tracking in difficult conditions](#extremeHeadEmbeddedTailTracking)<br/>
 [Adjusting ZebraZoom's hyperparameters: image pre-processing](#hyperparametersImagePreprocessing)<br/>
 [Adjusting ZebraZoom's hyperparameters: other adjustments](#hyperparametersOtherAdjustments)<br/>
@@ -175,26 +175,39 @@ If you are using the <a href="#commandlinezebrazoom">command line</a> to launch 
 <a name="hyperparametersTailAngleSmoothBoutsAndBendsDetect"/>
 
 <br/>[Back to table of content](#tableofcontent)<br/>
-<H2 CLASS="western">Adjusting ZebraZoom's hyperparameters: further adjustment of tail angle smoothing and bouts and bends detection:</H2>
-If you are tracking the tail of zebrafish larva, then you might need to further refine the parameters controlling the smoothing of the tail angle and the identification of bouts and bends. To do this, start by clicking on “Visualize ZebraZoom's output” and then on the name of the video you just tracked. Then look at some of the bouts and click on the button “Change Visualization” to compare the smoothed tail angle from which the bends are extracted with the raw un-smoothed tail angle. If the smoothing of the tail angle or the bouts and bends detection is not good enough, you can refine the configuration file to adjust the parameters controlling the smoothing and the bouts and bends detection. To do this, open your configuration file in a text editor (your configuration file should be in the folder ZebraZoom/configuration), and add/change the parameters listed below. You can then relaunch the tracking with that updated configuration file. When you relaunch the tracking, check the box “I ran the tracking already, I only want to redo the extraction of parameters.”.
+<H2 CLASS="western">Adjusting ZebraZoom's hyperparameters: further adjustment of the tail angle smoothing, the bouts detection and bends detection:</H2>
 
-<H5 CLASS="western">Post-processing of bouts initially detected: parameters below control the removal of “outlier bouts”</H5>
+If you are tracking the tail of zebrafish larva, you might need to further refine the configuration file parameters controlling the smoothing of the tail angle, the parameters controlling the detection of the bouts of movements, and the parameters controlling the detection of the local minimums and maximums of the tail angle (which we call the "bends").<br/><br/>
+
+To check if adjusting those parameters is necessary, start by clicking on "Visualize ZebraZoom's output" and then on the name of the video you just tracked. Then look at some of the bouts and click on the button "Change Visualization" to compare the smoothed tail angle with the raw un-smoothed tail angle. Also pay close attention to where the bends are detected. You can also use the "View video" buttons to check if the bouts of movements are detected at the right times.<br/>
+If the smoothing of the tail angle or the bouts or bends detection doesn't seem good enough, you can try to refine the configuration file you initially used: first open your configuration file in a text editor (you can access the folder where configuration files are stored by clicking on "Open configuration file folder" in the main menu), and then try to add and/or change some of the parameters listed below.<br/><br/>
+
+Once your new configuration file is ready, relaunch the tracking with that updated configuration file.<br/>
+If you relaunch the tracking from ZebraZoom's graphical interface, check the box "I ran the tracking already, I only want to redo the extraction of parameters" (this will reload saved tracked data instead of re-tracking the video, in order to speed up the analysis).<br/>
+Optionally, you can also click the box "Don't (re)generate a validation video" to speed up the analysis even further: however be aware that in this case the validation video present in the output results folder won't necessarily correspond to the output data after your new analysis is done. Therefore, it can be a good idea to check that box if iteratively trying lots of configuration file options and then "un-checking it" for the final analysis.<br/>
+If you are relaunching the tracking with the new configuration file (instead of from the GUI), then you can optionally set the following parameters to the specified values: "reloadWellPositions": 1, "reloadBackground": 1, "debugPauseBetweenTrackAndParamExtract": "justExtractParamFromPreviousTrackData" (this will have the same effect as checking the box "I ran the tracking already, I only want to redo the extraction of parameters" above) and you can also set the parameter "createValidationVideo" to 0 (which will have the same effect as checking the box "Don't (re)generate a validation video" above).<br/><br/>
+
+There are a lot of parameters listed below which can be overwhelming. To begin adjusting these parameters, a good place to start could be to tweak the parameters "windowForLocalBendMinMaxFind", "tailAngleMedianFilter", and potentially also "tailAngleSmoothingFactor" (see below for more information about these parameters).<br/>
+If some false positive bouts of movements are being detected, you can also set "noChecksForBoutSelectionInExtractParams" to 0 and further adjust the related parameters.<br/>
+Importantly, please also note that the parameter "extractAdvanceZebraParameters" must be set to 1 in order for any of these calculations (removal of outlier bouts, tail angle smoothing, and bends detection) to occur.<br/><br/>
+
+<H5 CLASS="western">Post-processing of the bouts of movements initially detected: the parameters below control the removal of "outlier bouts"</H5>
+
+<font color="blue">noChecksForBoutSelectionInExtractParams</font>: default: 1:
+If set to 1 (which is the default value), none of the checks described below will happen
 
 <font color="blue">detectBoutMinNbFrames</font> : default: 2:
-minimum number of frames a bout must have to be detected
+minimum number of frames a bout must have to be considered a "false positive" and thus removed
 
 <font color="blue">detectBoutMinDist</font> : default: 4:
-minimum distance traveled during the bout (between beginning and finish) for the bout to be detected
+minimum distance traveled during the bout (between beginning and finish) for the bout to be considered a "false positive" and thus removed
 
 <font color="blue">detectBoutMinAngleDiff</font> : default: -1:
-minimum variation of the angle (max(angle)-min(angle)) for the bout to be detected
+minimum variation of the angle (max(angle)-min(angle)) for the bout to be considered a "false positive" and thus removed
 
 <font color="blue">minNbPeaksForBoutDetect</font>: default: 2:
-minimum required number of bends in a bout for the bout to be detected
-
-<font color="blue">noChecksForBoutSelectionInExtractParams</font>: default: 0:
-If set to 1, none of the checks described below will happen
-
+minimum required number of bends in a bout for the bout to be considered a "false positive" and thus removed
+<br/><br/>
 
 <H5 CLASS="western">Parameters related to the smoothing of the tail angle</H5>
 
@@ -203,37 +216,36 @@ Smoothing factor applied on the tail angle. Higher values lead to more smoothing
 
 <font color="blue">tailAngleMedianFilter</font> : default: 3:
 Window of the median filter applied to the tail angle (before smoothing).
+<br/><br/>
 
-
-<H5 CLASS="western">Parameters related to the detection of bends</H5>
+<H5 CLASS="western">Parameters related to the detection of bends (local minimums and maximums of the tail angle)</H5>
 <p>
-These two first parameters control the initial detection of the bend through the “find_peaks” function of scipy (https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html).
+These two first parameters control the initial detection of the bends through the "find_peaks" function of scipy (https://docs.scipy.org/doc/scipy/reference/generated/scipy.signal.find_peaks.html).
 
 <font color="blue">windowForLocalBendMinMaxFind</font> : default: 1:
 
 <font color="blue">minProminenceForBendsDetect</font> : default: 0.01:
 
-For time t, if the angle is a local minimum/maximum for the values between 
-t-windowForLocalBendMinMaxFind and t+windowForLocalBendMinMaxFind, and if the “depth” of that maximum/minimum is at least minProminenceForBendsDetect, then a bend is detected at time t. If minProminenceForBendsDetect is equal to -1, then minProminenceForBendsDetect is set to minProminenceForBendsDetect = maxDiffPeakToPeak / 10,  maxDiffPeakToPeak being the difference between the maximum and the minimum values of the tail angle over the entire bout.
+If the value of the angle at frame n is a local minimum/maximum relative to all angles for the frames in the range n-windowForLocalBendMinMaxFind and n+windowForLocalBendMinMaxFind, and if the "depth" of that maximum/minimum is at least minProminenceForBendsDetect, then a bend is detected for frame n. If minProminenceForBendsDetect is equal to -1, then minProminenceForBendsDetect is set to minProminenceForBendsDetect = maxDiffPeakToPeak / 10, maxDiffPeakToPeak being the difference between the maximum and the minimum values of the tail angle over the entire bout.<br/>
 
 
-The parameters below control the post processing of the peaks previously found (they control the removal of “outlier bends”):
+The parameters below control the post processing of the peaks found with the method above: more precisely, they control the removal of "false-positive bends":
 
 <font color="blue">minDiffBetweenSubsequentBendAmp</font> : default: 0.02:
-if the bend “n” has a value X, then the bend “n+1” must have a value Y for which 
-absoluteValue(X-Y) >  minDiffBetweenSubsequentBendAmp. If the bend “n+1” doesn't satisfy that condition, then the bend is not detected.
+if the bend "n" has a value X, then the bend "n+1" must have a value Y for which 
+absoluteValue(X-Y) >  minDiffBetweenSubsequentBendAmp. If the bend "n+1" doesn't satisfy that condition, then the bend is considered a false-positive and thus removed.
 
 <font color="blue">minFirstBendValue</font> : default: -1: 
-minimum value required for the first bend (so by default all bends are accepted)
+minimum value required for the first bend in order to not be considered a false-positive (so by default all bends are accepted)
 
 <font color="blue">doubleCheckBendMinMaxStatus</font> : default: 1:
-if doubleCheckBendMinMaxStatus is equal to 1, then only keeps bends for which:
-bend(n-1) > bend(n) and bend(n) < bend(n+1)
-bend(n-1) < bend(n) and bend(n) > bend(n+1)
+if doubleCheckBendMinMaxStatus is equal to 1, then ZebraZoom only keeps bends for which:
+(bend(n-1) > bend(n) and bend(n) < bend(n+1)) OR (bend(n-1) < bend(n) and bend(n) > bend(n+1))
 
 <font color="blue">removeFirstSmallBend</font> : default: 0:
-if removeFirstSmallBend is different than 0 (so not by default), then removes the first bend if:
+if removeFirstSmallBend is different than 0 (so not by default), ZebraZoom removes the first bend if:
 abs(TailAngle_smoothed[firstBend]) < abs(TailAngle_smoothed[secondBend]) / hyperparameters["removeFirstSmallBend"]
+<br/><br/>
 
 <H4 CLASS="western">Detection of bout through tail angle variation instead of subsequent frames pixel differences:</H4>
 The configuration files provided for the example files as well as the configuration files created through the GUI are set to make ZebraZoom detect bouts of movements by looking at the number of pixels that have a different intensity between subsequent frames of the video. It can sometimes be useful to instead detect the bouts by detecting variations in the tail angles. To do this, you must set the parameters in the configuration file as follow:<br/>

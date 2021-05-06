@@ -165,7 +165,7 @@
   "boutEdgesWhereZeros" : 0,
   "noBoutsDetection" : 0,
   
-  "noChecksForBoutSelectionInExtractParams" : 0,
+  "noChecksForBoutSelectionInExtractParams" : 1,
   "detectBoutMinNbFrames" : 2,
   "detectBoutMinDist" : 4,
   "detectBoutMinAngleDiff" : -1,

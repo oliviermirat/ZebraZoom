@@ -3,6 +3,7 @@
   "headEmbededAutoSet_ExtendedDescentSearchOption" : 0,
   "headEmbededAutoSet_BackgroundExtractionOption"  : 0,
   "findHeadPositionByUserInput" : 1,
+  "trackingPointSizeDisplay" : 4,
   
   "thresForDetectMovementWithRawVideo" : 18,
   "minNbPixelForDetectMovementWithRawVideo" : 5,

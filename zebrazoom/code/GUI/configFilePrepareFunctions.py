@@ -513,12 +513,15 @@ def identifyMultipleHead(self, controller, nbanimals):
   self.configFile["headSize"]        = math.sqrt((int(hyperparameters["minArea"]) + int(hyperparameters["maxArea"])) / 2)
 
 
-def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHeadTracking, yesBouts, nooBouts, recommendedMethod, alternativeMethod):
+def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHeadTracking, yesBouts, nooBouts, recommendedMethod, alternativeMethod, yesBends, nooBends):
 
   self.configFile["noBoutsDetection"] = 1
   self.configFile["noChecksForBoutSelectionInExtractParams"] = 1
   self.configFile["trackingPointSizeDisplay"] = 4
   self.configFile["validationVideoPlotHeading"] = 0
+  
+  if int(yesBends):
+    self.configFile["extractAdvanceZebraParameters"] = 1
   
   nbanimals = int(nbanimals)
   if nbanimals == self.configFile["nbWells"]:

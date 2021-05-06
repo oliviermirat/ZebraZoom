@@ -4,6 +4,7 @@ from tkinter import font  as tkfont
 from tkinter import filedialog
 from tkinter import ttk
 from tkinter import *
+import webbrowser
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
@@ -221,7 +222,7 @@ class NumberOfAnimals(tk.Frame):
     
     
     tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    tk.Button(self, text="Next", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), forceBlobMethodForHeadTracking.get(), 0, 0, 0, 0)).pack()
+    tk.Button(self, text="Next", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), forceBlobMethodForHeadTracking.get(), 0, 0, 0, 0, 0, 0)).pack()
     tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
     tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
     
@@ -231,36 +232,53 @@ class NumberOfAnimals2(tk.Frame):
   
     tk.Frame.__init__(self, parent)
     self.controller = controller
-    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
-    label.pack(side="top", fill="x", pady=10)
     
-    tk.Label(self, text="What's the total number of animals in your video?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    tk.Label(self, text="Prepare Config File", font=controller.title_font).grid(row=0, column=0, columnspan = 2, pady=10)
     
+    tk.Label(self, text="What's the total number of animals in your video?", font = "bold").grid(row=1, column=0, pady=10)
     nbanimals = tk.Entry(self)
-    nbanimals.pack()
+    nbanimals.grid(row=2, column=0)
     
-    tk.Label(self, text="Are all of those animals ALWAYS visible throughout the video?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    tk.Label(self, text="Are all of those animals ALWAYS visible throughout the video?", font = "bold").grid(row=1, column=1, pady=10)
     yes = IntVar()
-    Checkbutton(self, text="Yes", variable=yes).pack()
+    Checkbutton(self, text="Yes", variable=yes).grid(row=2, column=1)
     noo = IntVar()
-    Checkbutton(self, text="No", variable=noo).pack()
+    Checkbutton(self, text="No", variable=noo).grid(row=3, column=1)
     
-    tk.Label(self, text="Do you want bouts of movement to be detected?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    tk.Label(self, text="Warning: at the moment, the parameters related to the bouts detection are a little challenging to set.").pack()
+    tk.Label(self, text="Do you want bouts of movement to be detected?", font = "bold").grid(row=4, column=0, pady=10)
+    tk.Label(self, text="Warning: at the moment, the parameters related to the bouts detection are a little challenging to set.").grid(row=5, column=0)
     yesBouts = IntVar()
-    Checkbutton(self, text="Yes", variable=yesBouts).pack()
+    Checkbutton(self, text="Yes", variable=yesBouts).grid(row=6, column=0)
     nooBouts = IntVar()
-    Checkbutton(self, text="No", variable=nooBouts).pack()
+    Checkbutton(self, text="No", variable=nooBouts).grid(row=7, column=0)
     
-    tk.Label(self, text="Choose an option below:", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    tk.Label(self, text="Do you want bends and associated paramaters to be calculated?", font = "bold").grid(row=4, column=1, pady=10)
+    tk.Label(self, text="Bends are the local minimum and maximum of the tail angle.").grid(row=5, column=1)
+    tk.Label(self, text="Bends are used to calculate parameters such as tail beat frequency.").grid(row=6, column=1)
+    
+    def callback(url):
+      webbrowser.open_new(url)
+    
+    link1 = tk.Button(self, text="You may need to further adjust these parameters afterwards: see documentation.")
+    link1.grid(row=7, column=1)
+    link1.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom#hyperparametersTailAngleSmoothBoutsAndBendsDetect"))
+    
+    yesBends = IntVar()
+    Checkbutton(self, text="Yes", variable=yesBends).grid(row=8, column=1)
+    nooBends = IntVar()
+    Checkbutton(self, text="No", variable=nooBends).grid(row=9, column=1)
+    
+    tk.Label(self, text="Tail tracking: Choose an option below:", font = "bold").grid(row=8, column=0, pady=10)
     recommendedMethod = IntVar()
-    Checkbutton(self, text="Recommended Method: Fast Tracking but tail tip might be detected too soon along the tail", variable=recommendedMethod).pack()
+    Checkbutton(self, text="Recommended Method: Fast Tracking but tail tip might be detected too soon along the tail", variable=recommendedMethod).grid(row=9, column=0)
     alternativeMethod = IntVar()
-    Checkbutton(self, text="Alternative Method: Slower Tracker but tail tip MIGHT be detected more acurately", variable=alternativeMethod).pack()
-    tk.Label(self, text="Please start by using the recommended method! Once your configuration is created, you will be able to switch from one method to the other", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    tk.Label(self, text="simply by changing the value of the parameter recalculateForegroundImageBasedOnBodyArea from 0 to 1 or from 1 to 0.", font=("Helvetica", 10)).pack(side="top", fill="x")
-    tk.Button(self, text="Ok, next step", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, yesBouts.get(), nooBouts.get(), recommendedMethod.get(), alternativeMethod.get())).pack()
-    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).pack()
+    Checkbutton(self, text="Alternative Method: Slower Tracker but tail tip MIGHT be detected more acurately", variable=alternativeMethod).grid(row=10, column=0)
+    tk.Label(self, text="Once your configuration is created, you can switch from one method to the other", font=("Helvetica", 10)).grid(row=11, column=0)
+    tk.Label(self, text="by changing the value of the parameter recalculateForegroundImageBasedOnBodyArea", font=("Helvetica", 10)).grid(row=12, column=0)
+    tk.Label(self, text="in your config file between 0 and 1.", font=("Helvetica", 10)).grid(row=13, column=0)
+    
+    tk.Button(self, text="Ok, next step", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, yesBouts.get(), nooBouts.get(), recommendedMethod.get(), alternativeMethod.get(), yesBends.get(), nooBends.get())).grid(row=14, column=0, columnspan = 2)
+    tk.Button(self, text="Go to the start page", command=lambda: controller.show_frame("StartPage")).grid(row=15, column=0, columnspan = 2)
 
 
 class IdentifyHeadCenter(tk.Frame):

@@ -171,8 +171,8 @@ class SampleApp(tk.Tk):
     def chooseCircularWellsRight(self, controller):
         configFilePrepareFunctions.chooseCircularWellsRight(self, controller)
 
-    def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHeadTracking, yesBouts, nooBouts, recommendedMethod, alternativeMethod):
-      configFilePrepareFunctions.numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHeadTracking, yesBouts, nooBouts, recommendedMethod, alternativeMethod)
+    def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHeadTracking, yesBouts, nooBouts, recommendedMethod, alternativeMethod, yesBends, nooBends):
+      configFilePrepareFunctions.numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHeadTracking, yesBouts, nooBouts, recommendedMethod, alternativeMethod, yesBends, nooBends)
         
     def chooseHeadCenter(self, controller):
         configFilePrepareFunctions.chooseHeadCenter(self, controller)
