@@ -309,8 +309,10 @@ def chooseBeginningAndEndOfVideo(self, controller):
   else:
     if self.organism == 'zebrafishNew':
       controller.show_frame("NumberOfAnimals2")
-    else:
+    elif self.organism == 'zebrafish':
       controller.show_frame("NumberOfAnimals")
+    else:
+      controller.show_frame("NumberOfAnimalsCenterOfMass")
 
   
 def getImageForMultipleAnimalGUI(l, vertical, horizontal, nx, ny, max_l, videoToCreateConfigFileFor, background, wellPositions, hyperparameters):
@@ -513,7 +515,7 @@ def identifyMultipleHead(self, controller, nbanimals):
   self.configFile["headSize"]        = math.sqrt((int(hyperparameters["minArea"]) + int(hyperparameters["maxArea"])) / 2)
 
 
-def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHeadTracking, yesBouts, nooBouts, recommendedMethod, alternativeMethod, yesBends, nooBends):
+def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHeadTracking, yesBouts, nooBouts, recommendedMethod, alternativeMethod, yesBends, nooBends, adjustBackgroundExtractionBasedOnNumberOfBlackPixels):
 
   self.configFile["noBoutsDetection"] = 1
   self.configFile["noChecksForBoutSelectionInExtractParams"] = 1
@@ -546,7 +548,9 @@ def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHea
     method = 0
     if int(alternativeMethod):
       method = 1
-    automaticallyFindOptimalParameters(self, controller, True, detectBouts, method)
+    automaticallyFindOptimalParameters(self, controller, True, detectBouts, method, int(noo), int(adjustBackgroundExtractionBasedOnNumberOfBlackPixels))
+  elif self.organism == 'drosoorrodent' and int(recommendedMethod):
+    automaticallyFindOptimalParameters(self, controller, True, 0, 0, int(noo), int(adjustBackgroundExtractionBasedOnNumberOfBlackPixels))
   else:
     identifyMultipleHead(self, controller, nbanimals)
     controller.show_frame("FinishConfig")

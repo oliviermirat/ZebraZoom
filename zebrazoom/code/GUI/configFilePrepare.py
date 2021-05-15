@@ -80,12 +80,12 @@ class FreelySwimmingExperiment(tk.Frame):
     
     freeZebra2 = IntVar()
     Checkbutton(self, text="Recommended method: Try this option first!", variable=freeZebra2).pack()
-    tk.Label(self, text="This method will work well on most videos. One exception is for fish of very different sizes.").pack()
+    tk.Label(self, text="This method will work well on most videos. One exception can be for fish of very different sizes.").pack()
     tk.Label(self, text="").pack()
     
     freeZebra = IntVar()
     Checkbutton(self, text="Alternative method", variable=freeZebra).pack()
-    tk.Label(self, text="This method is more difficult to use, but it can work better with fishes of different sizes.").pack()
+    tk.Label(self, text="It's more difficult to create a configuration file with this method, but it can sometimes be useful as an alternative.").pack()
     tk.Label(self, text="").pack()
     
     tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.chooseGeneralExperiment(controller, freeZebra.get(), 0, 0, 0, 0, freeZebra2.get())).pack()
@@ -222,7 +222,7 @@ class NumberOfAnimals(tk.Frame):
     
     
     tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    tk.Button(self, text="Next", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), forceBlobMethodForHeadTracking.get(), 0, 0, 0, 0, 0, 0)).pack()
+    tk.Button(self, text="Next", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), forceBlobMethodForHeadTracking.get(), 0, 0, 0, 0, 0, 0, 0)).pack()
     tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
     tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
     
@@ -277,8 +277,49 @@ class NumberOfAnimals2(tk.Frame):
     tk.Label(self, text="by changing the value of the parameter recalculateForegroundImageBasedOnBodyArea", font=("Helvetica", 10)).grid(row=12, column=0)
     tk.Label(self, text="in your config file between 0 and 1.", font=("Helvetica", 10)).grid(row=13, column=0)
     
-    tk.Button(self, text="Ok, next step", bg="light yellow", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, yesBouts.get(), nooBouts.get(), recommendedMethod.get(), alternativeMethod.get(), yesBends.get(), nooBends.get())).grid(row=14, column=0, columnspan = 2)
+    tk.Label(self, text="Tracking: Choose an option below:", font = "bold").grid(row=10, column=1, pady=10)
+    recommendedTrackingMethod = IntVar()
+    Checkbutton(self, text="Recommended Method in most cases: Slower Tracking but often more accurate.", variable=recommendedTrackingMethod).grid(row=11, column=1)
+    alternativeTrackingMethod = IntVar()
+    Checkbutton(self, text="Alternative Method: Faster tracking, sometimes less accurate.", variable=alternativeTrackingMethod).grid(row=12, column=1)
+    tk.Label(self, text="The alternative method can also work better for animals of different sizes.", font=("Helvetica", 10)).grid(row=13, column=1)
+    
+    tk.Button(self, text="Ok, next step", bg="light yellow", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, yesBouts.get(), nooBouts.get(), recommendedMethod.get(), alternativeMethod.get(), yesBends.get(), nooBends.get(), recommendedTrackingMethod.get())).grid(row=14, column=0, columnspan = 2)
     tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).grid(row=15, column=0, columnspan = 2)
+
+
+class NumberOfAnimalsCenterOfMass(tk.Frame):
+
+  def __init__(self, parent, controller):
+  
+    tk.Frame.__init__(self, parent)
+    self.controller = controller
+    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
+    label.pack(side="top", fill="x", pady=10)
+    
+    tk.Label(self, text="What's the total number of animals in your video?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    
+    nbanimals = tk.Entry(self)
+    nbanimals.pack()
+    
+    tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    tk.Label(self, text="Are all of those animals ALWAYS visible throughout the video?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    
+    yes = IntVar()
+    Checkbutton(self, text="Yes", variable=yes).pack()
+    noo = IntVar()
+    Checkbutton(self, text="No", variable=noo).pack()
+    
+    tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    
+    tk.Button(self, text="Use Recommended Method 1: Slower but often more accurate tracking", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, 0, 0, 1, 0, 0, 0, 1)).pack()
+    tk.Button(self, text="Use Recommended Method 2: Faster but often less accurate tracking", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, 0, 0, 1, 0, 0, 0, 0)).pack()
+    tk.Label(self, text="", font=("Helvetica", 10)).pack()
+    tk.Button(self, text="Use Alternative Method", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, 0, 0, 0, 1, 0, 0)).pack()
+    tk.Label(self, text="Try the 'Recommended Method 1' first. If it doesn't work, try the other methods.", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    
+    tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class IdentifyHeadCenter(tk.Frame):

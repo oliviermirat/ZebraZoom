@@ -15,7 +15,7 @@ from zebrazoom.code.findWells import findWells
 from zebrazoom.code.trackingFolder.tracking import tracking
 from zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions import prepareConfigFileForParamsAdjustements
 
-def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary):
+def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack):
   
   videoPath = self.videoToCreateConfigFileFor
   
@@ -71,7 +71,11 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
       lenY  = wellPositions[wellNumber]['lengthY']
       frame = frame[ytop:ytop+lenY, xtop:xtop+lenX]
       
-      WINDOW_NAME_1 = "Click on the center of the head of one animal"
+      if zebrafishToTrack:
+        WINDOW_NAME_1 = "Click on the center of the head of one animal"
+      else:
+        WINDOW_NAME_1 = "Click on the center of mass of an animal"
+        
       cvui.init(WINDOW_NAME_1)
       cv2.moveWindow(WINDOW_NAME_1, 0,0)
       cvui.imshow(WINDOW_NAME_1, frame)
@@ -82,7 +86,11 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
         headCoordinates = [cursor.x, cursor.y]
       cv2.destroyAllWindows()
       
-      WINDOW_NAME_2 = "Click on the tip of the tail of the same animal"
+      if zebrafishToTrack:
+        WINDOW_NAME_2 = "Click on the tip of the tail of the same animal"
+      else:
+        WINDOW_NAME_2 = "Click on a point on the border of the same animal"
+      
       cvui.init(WINDOW_NAME_2)
       cv2.moveWindow(WINDOW_NAME_2, 0,0)
       frame2 = frame.copy()
@@ -121,7 +129,7 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
       data.append({"image": frame, "headCoordinates": headCoordinates, "tailTipCoordinates": tailTipCoordinates, "oneWellManuallyChosenTopLeft": oneWellManuallyChosenTopLeft, "oneWellManuallyChosenBottomRight": oneWellManuallyChosenBottomRight, "frameNumber": k, "wellNumber": wellNumber})
 
   if saveIntermediary:
-    toSave    = [initialConfigFile, videoPath, data, wellPositions, pathToVideo, videoNameWithExt, videoName, videoExt]
+    toSave    = [initialConfigFile, videoPath, data, wellPositions, pathToVideo, videoNameWithExt, videoName, videoExt, zebrafishToTrack]
     pickle.dump(toSave, open(videoName + '_paramSet', 'wb'))
     
   cap.release()
@@ -129,7 +137,28 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
   return [initialConfigFile, videoPath, data, wellPositions, pathToVideo, videoNameWithExt, videoName, videoExt]
 
 
-def findBestBackgroundSubstractionParameterForEachImage(data, videoPath, background, wellPositions, hyperparameters, videoName):
+def evaluateMinPixelDiffForBackExtractForCenterOfMassTracking(videoPath, background, image, wellPositions, hyperparameters, tailTipGroundTruth):
+  
+  [foregroundImage, o1, o2] = getForegroundImage(videoPath, background, image["frameNumber"], image["wellNumber"], wellPositions, hyperparameters)
+  ret, thresh = cv2.threshold(foregroundImage, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
+  thresh[0,:] = 255
+  thresh[len(thresh)-1,:] = 255
+  thresh[:,0] = 255
+  thresh[:,len(thresh[0])-1] = 255
+  contourClickedByUser = 0
+  contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+  tailTipDistError = 1000000000000000
+  for contour in contours:
+    dist = cv2.pointPolygonTest(contour, (image["headCoordinates"][0], image["headCoordinates"][1]), True)
+    if dist >= 0:
+      for pt in contour:
+        contourToPointOnBorderDistance = math.sqrt((pt[0][0] - tailTipGroundTruth[0])**2 + (pt[0][1] - tailTipGroundTruth[1])**2)
+        if contourToPointOnBorderDistance < tailTipDistError:
+          tailTipDistError = contourToPointOnBorderDistance
+        
+  return tailTipDistError
+
+def findBestBackgroundSubstractionParameterForEachImage(data, videoPath, background, wellPositions, hyperparameters, videoName, zebrafishToTrack):
   
   for image in data:
     
@@ -153,24 +182,31 @@ def findBestBackgroundSubstractionParameterForEachImage(data, videoPath, backgro
     lowestTailTipDistError = 1000000000
     for minPixelDiffForBackExtract in range(3, 25):
       hyperparameters["minPixelDiffForBackExtract"] = minPixelDiffForBackExtract
-      trackingData = tracking(videoPath, background, image["wellNumber"], wellPositions, hyperparameters, videoName)
-      tailTipGroundTruth = image["tailTipCoordinates"] #[image["tailTipCoordinates"][0] - image["oneWellManuallyChosenTopLeft"][0], image["tailTipCoordinates"][1] - image["oneWellManuallyChosenTopLeft"][1]]
-      tailTipPredicted = trackingData[0][0][0][len(trackingData[0][0][0])-1]
-      if (trackingData[0][0][0][0][0] == tailTipPredicted[0] and trackingData[0][0][0][0][1] == tailTipPredicted[1]) or (trackingData[0][0][0][1][0] == tailTipPredicted[0] and trackingData[0][0][0][1][1] == tailTipPredicted[1]):
-        tailTipDistError = 1000000000
+      tailTipGroundTruth = image["tailTipCoordinates"]
+      if zebrafishToTrack:
+        trackingData = tracking(videoPath, background, image["wellNumber"], wellPositions, hyperparameters, videoName)
+        tailTipPredicted = trackingData[0][0][0][len(trackingData[0][0][0])-1]
+        if (trackingData[0][0][0][0][0] == tailTipPredicted[0] and trackingData[0][0][0][0][1] == tailTipPredicted[1]) or (trackingData[0][0][0][1][0] == tailTipPredicted[0] and trackingData[0][0][0][1][1] == tailTipPredicted[1]):
+          tailTipDistError = 1000000000
+        else:
+          tailTipDistError = math.sqrt((tailTipGroundTruth[0] - tailTipPredicted[0])** 2 + (tailTipGroundTruth[1] - tailTipPredicted[1])**2)
       else:
-        tailTipDistError = math.sqrt((tailTipGroundTruth[0] - tailTipPredicted[0])** 2 + (tailTipGroundTruth[1] - tailTipPredicted[1])**2)
+        tailTipDistError = evaluateMinPixelDiffForBackExtractForCenterOfMassTracking(videoPath, background, image, wellPositions, hyperparameters, tailTipGroundTruth)
+      
       if tailTipDistError < lowestTailTipDistError:
         lowestTailTipDistError = tailTipDistError
         bestMinPixelDiffForBackExtract = minPixelDiffForBackExtract
-        previousDataPoint = []
-        tailLength = 0
-        for dataPoint in trackingData[0][0][0]:
-          if len(previousDataPoint):
-            tailLength = tailLength + math.sqrt((dataPoint[0] - previousDataPoint[0])**2 + (dataPoint[1] - previousDataPoint[1])**2)
-          previousDataPoint = dataPoint
-        image["tailLength"] = tailLength
-        image["tailLengthManual"] = math.sqrt((image["headCoordinates"][0] - tailTipGroundTruth[0])**2 + (image["headCoordinates"][1] - tailTipGroundTruth[1])**2)
+        
+        if zebrafishToTrack:
+          previousDataPoint = []
+          tailLength = 0
+          for dataPoint in trackingData[0][0][0]:
+            if len(previousDataPoint):
+              tailLength = tailLength + math.sqrt((dataPoint[0] - previousDataPoint[0])**2 + (dataPoint[1] - previousDataPoint[1])**2)
+            previousDataPoint = dataPoint
+          image["tailLength"] = tailLength
+          image["tailLengthManual"] = math.sqrt((image["headCoordinates"][0] - tailTipGroundTruth[0])**2 + (image["headCoordinates"][1] - tailTipGroundTruth[1])**2)
+      
       print("minPixelDiffForBackExtract:", minPixelDiffForBackExtract, "; tailTipDistError:", tailTipDistError)
     
     image["bestMinPixelDiffForBackExtract"] = bestMinPixelDiffForBackExtract
@@ -185,8 +221,6 @@ def findBestBackgroundSubstractionParameterForEachImage(data, videoPath, backgro
       thresh[:,0] = 255
       thresh[:,len(thresh[0])-1] = 255
       contourClickedByUser = 0
-      # cv2.imshow('Frame', thresh)
-      # cv2.waitKey(0)
       contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
       for contour in contours:
         dist = cv2.pointPolygonTest(contour, (image["headCoordinates"][0], image["headCoordinates"][1]), True)
@@ -209,7 +243,7 @@ def findInitialBlobArea(data, videoPath, background, wellPositions, hyperparamet
   
   for image in data:
     
-    if image["lowestTailTipDistError"] != 1000000000 and image["bodyContourArea"] and (image["tailLength"] < 10 * maxTailLengthManual):
+    if image["lowestTailTipDistError"] != 1000000000 and image["bodyContourArea"] and (not("tailLength" in image) or (image["tailLength"] < 10 * maxTailLengthManual)):
       
       bodyContourArea = image["bodyContourArea"]
       

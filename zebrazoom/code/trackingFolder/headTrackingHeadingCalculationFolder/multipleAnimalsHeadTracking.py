@@ -100,11 +100,13 @@ def findCenterByIterativelyDilating(initialContour, lenX, lenY):
 
 def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, hyperparameters, gray, i, firstFrame, thresh1, thresh3):
   
-  headCoordinatesOptions = []
+  headCoordinatesOptions      = []
+  headCoordinatesAreasOptions = []
   x = 0
   y = 0
   minAreaCur = hyperparameters["minArea"]
   maxAreaCur = hyperparameters["maxArea"]
+  meanArea   = (hyperparameters["minArea"] + hyperparameters["maxArea"]) / 2
   
   ret,thresh2 = cv2.threshold(gray,hyperparameters["thresholdForBlobImg"],255,cv2.THRESH_BINARY)
   erodeSize = hyperparameters["erodeSize"]
@@ -121,6 +123,7 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
     areaDecreaseFactor = int(hyperparameters["minArea"]/10)
     while (len(headCoordinatesOptions) < hyperparameters["nbAnimalsPerWell"]) and (minAreaCur > 0):
       headCoordinatesOptions = []
+      headCoordinatesAreasOptions = []
       for contour in contours:
         area = cv2.contourArea(contour)
         if (area > minAreaCur) and (area < maxAreaCur):
@@ -138,6 +141,7 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
               [x, y] = reajustCenterOfMassIfNecessary(contour, x, y, len(thresh2[0]), len(thresh2))
           if not([x, y] in headCoordinatesOptions):
             headCoordinatesOptions.append([x, y])
+            headCoordinatesAreasOptions.append(abs(area - (meanArea/2)))
       
       if areaDecreaseFactor:
         minAreaCur = minAreaCur - areaDecreaseFactor
@@ -164,7 +168,11 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
           if hyperparameters["readjustCenterOfMassIfNotInsideContour"]:
             [x, y] = reajustCenterOfMassIfNecessary(contour, x, y, len(thresh2[0]), len(thresh2))
         headCoordinatesOptions.append([x, y])
+        headCoordinatesAreasOptions.append(abs(area - (meanArea/2)))
 
+  headCoordinatesAreasOptionsSorted = np.argsort(headCoordinatesAreasOptions)
+  headCoordinatesOptions = [headCoordinatesOptions[elem] for elem in headCoordinatesAreasOptionsSorted]
+  
   headCoordinatesOptionsAlreadyTakenDist     = [-1 for k in headCoordinatesOptions]
   headCoordinatesOptionsAlreadyTakenAnimalId = [-1 for k in headCoordinatesOptions]
   animalNotPutOrEjectedBecausePositionAlreadyTaken = 1
