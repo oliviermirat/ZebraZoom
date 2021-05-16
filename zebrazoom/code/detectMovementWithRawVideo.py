@@ -47,8 +47,11 @@ def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparisi
     ymax = 0 + lenY - 1
 
   if hyperparameters["adjustDetectMovWithRawVideo"]:
-    img = getImage(videoPath, l, wellNumber, wellPositions, hyperparameters)
-    imgFuture = getImage(videoPath, l+frameGapComparision, wellNumber, wellPositions, hyperparameters)  
+    img       = cap1[l - firstFrame]
+    if l + frameGapComparision - firstFrame < len(cap1):
+      imgFuture = cap1[int(l + frameGapComparision - firstFrame)]
+    else:
+      imgFuture = cap1[len(cap1) - 1]
   else:
     img = getImageSequential(cap1, videoPath, l, wellNumber, wellPositions, hyperparameters)
     imgFuture = getImageSequential(cap2, videoPath, l+frameGapComparision, wellNumber, wellPositions, hyperparameters)
@@ -144,11 +147,19 @@ def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumbe
   
   mouvement = [0] * (max_l-debut_l+1)
   
-  cap1 = cv2.VideoCapture(videoPath)
-  cap1.set(1, debut_l)
-  
-  cap2 = cv2.VideoCapture(videoPath)
-  cap2.set(1, debut_l + hyperparameters["frameGapComparision"])
+  if hyperparameters["adjustDetectMovWithRawVideo"]:
+    cap1 = []
+    cap2 = 0
+    cap = cv2.VideoCapture(videoPath)
+    cap.set(1, debut_l)
+    for k in range(debut_l, max_l):
+      imgTemp = getImageSequential(cap, videoPath, k, wellNumber, wellPositions, hyperparameters)
+      cap1.append(imgTemp)
+  else:
+    cap1 = cv2.VideoCapture(videoPath)
+    cap1.set(1, debut_l)
+    cap2 = cv2.VideoCapture(videoPath)
+    cap2.set(1, debut_l + hyperparameters["frameGapComparision"])
   
   while ((l < max_l) and (l-firstFrame < len(head))) or hyperparameters["adjustDetectMovWithRawVideo"]:
     if l >= debut_l:
@@ -178,7 +189,12 @@ def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumbe
         if len(organizationTabCur) == 0:
           organizationTabCur = organizationTab
       
+        if l + hyperparameters["frameGapComparision"] > hyperparameters["lastFrame"]:
+          l = int(hyperparameters["lastFrame"] - hyperparameters["frameGapComparision"] - 3)
         [l, hyperparameters, organizationTabCur] = adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTabCur)
+        if l + hyperparameters["frameGapComparision"] > hyperparameters["lastFrame"]:
+          l = int(hyperparameters["lastFrame"] - hyperparameters["frameGapComparision"] - 3)
+          
       else:
         l = l + 1
       

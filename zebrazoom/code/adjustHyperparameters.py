@@ -98,9 +98,18 @@ def getDetectMouvRawVideosParamsForHyperParamAdjusts(img, res, l, totDiff, hyper
   WINDOW_NAME = "Red dot must appear only when movement is occuring"
   frameToShow = np.concatenate((img, res),axis=1)
   frameToShow = cv2.cvtColor(frameToShow,cv2.COLOR_GRAY2RGB)
-  frameToShow = cv2.putText(frameToShow, str(l), (1, 20), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,255,0), 3)
+  
+  minDimension    = min(len(frameToShow), len(frameToShow[0]))
+  redDotDimension = 20
+  if minDimension < 200:
+    redDotDimension = int(minDimension / 10)
+  
+  fontSize = redDotDimension/20
+  tickness = int(3*fontSize) if int(3*fontSize) != 0 else 1
+  frameToShow = cv2.putText(frameToShow, str(l), (2*redDotDimension, redDotDimension), cv2.FONT_HERSHEY_SIMPLEX, fontSize, (0,255,0), tickness)
+  
   if totDiff > hyperparameters["minNbPixelForDetectMovementWithRawVideo"]:
-    cv2.circle(frameToShow, (20, 40), 20, (0,0,255), -1)
+    cv2.circle(frameToShow, (redDotDimension, redDotDimension), redDotDimension, (0,0,255), -1)
   return [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab]
 
 
