@@ -80,7 +80,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     outfile.close()
   else:
     # Creating output folder
-    if not(hyperparameters["reloadWellPositions"]) and not(hyperparameters["reloadBackground"]):
+    if not(hyperparameters["reloadWellPositions"]) and not(hyperparameters["reloadBackground"]) and not(os.path.exists(os.path.join(outputFolderVideo, 'intermediaryWellPositionReloadNoMatterWhat.txt'))):
       if os.path.exists(outputFolderVideo):
         shutil.rmtree(outputFolderVideo)
       while True:
@@ -104,14 +104,25 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     wellPositions = [{"topLeftX":0, "topLeftY":0, "lengthX": hyperparameters["videoWidth"], "lengthY": hyperparameters["videoHeight"]}]
   else:
     print("start find wells")
-    if hyperparameters["reloadWellPositions"]:
-      outfile = open(os.path.join(outputFolderVideo, 'intermediaryWellPosition.txt'),'rb')
+    if hyperparameters["saveWellPositionsToBeReloadedNoMatterWhat"]:
+      outfile = open(os.path.join(outputFolderVideo, 'intermediaryWellPositionReloadNoMatterWhat.txt'),'wb')
+      wellPositions = findWells(os.path.join(pathToVideo, videoNameWithExt), hyperparameters)
+      pickle.dump(wellPositions,outfile)
+    elif os.path.exists(os.path.join(outputFolderVideo, 'intermediaryWellPositionReloadNoMatterWhat.txt')):
+      outfile = open(os.path.join(outputFolderVideo, 'intermediaryWellPositionReloadNoMatterWhat.txt'), 'rb')
+      wellPositions = pickle.load(outfile)
+    elif hyperparameters["reloadWellPositions"]:
+      outfile = open(os.path.join(outputFolderVideo, 'intermediaryWellPosition.txt'), 'rb')
       wellPositions = pickle.load(outfile)
     else:
       outfile = open(os.path.join(outputFolderVideo, 'intermediaryWellPosition.txt'),'wb')
       wellPositions = findWells(os.path.join(pathToVideo, videoNameWithExt), hyperparameters)
       pickle.dump(wellPositions,outfile)
     outfile.close()
+  if int(hyperparameters["exitAfterWellsDetection"]):
+    if hyperparameters["popUpAlgoFollow"]:
+      popUpAlgoFollow.prepend("ZebraZoom Analysis finished for " + videoName)
+    raise ValueError
     
   # Getting background
   if hyperparameters["headEmbeded"] and hyperparameters["headEmbededRemoveBack"] == 0 and hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0 and hyperparameters["adjustHeadEmbededTracking"] == 0:

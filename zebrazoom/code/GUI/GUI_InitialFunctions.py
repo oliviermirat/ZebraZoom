@@ -3,6 +3,7 @@ from tkinter import font  as tkfont
 from tkinter import filedialog
 from tkinter import ttk
 from tkinter import *
+import cv2
 import re
 import os
 import json
@@ -36,6 +37,7 @@ def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, debugMode=0
     tk.justExtractParams = int(justExtractParams)
     tk.noValidationVideo = int(noValidationVideo)
     tk.debugMode         = int(debugMode)
+    tk.findMultipleROIs = 0
     
     self.show_frame("ConfigFilePromp")
 
@@ -45,11 +47,22 @@ def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo):
     tk.justExtractParams = int(justExtractParams)
     tk.noValidationVideo = int(noValidationVideo)
     tk.debugMode = 0
+    tk.findMultipleROIs = 0
     self.show_frame("ConfigFilePromp")
     
 def chooseFolderForTailExtremityHE(self):
     tk.folderName =  filedialog.askdirectory(initialdir = os.path.expanduser("~"),title = "Select folder")
     tk.headEmbedded = 1
+    tk.findMultipleROIs = 0
+    self.show_frame("ConfigFilePromp")
+
+def chooseFolderForMultipleROIs(self):
+    tk.folderName =  filedialog.askdirectory(initialdir = os.path.expanduser("~"),title = "Select folder")
+    tk.headEmbedded = 0
+    tk.justExtractParams = 0
+    tk.noValidationVideo = 0
+    tk.debugMode = 0
+    tk.findMultipleROIs = 1
     self.show_frame("ConfigFilePromp")
 
 def chooseConfigFile(self):
@@ -102,13 +115,24 @@ def launchZebraZoom(self):
           tabParams = tabParams + ["createValidationVideo", 0]
       if tk.debugMode == 1:
         tabParams = tabParams + ["debugTracking", 1, "debugExtractBack", 1, "onlyDoTheTrackingForThisNumberOfFrames", 3, "onlyTrackThisOneWell", 0]
-      mainZZ(path, name, videoExt, tk.configFile, tabParams)
+      if tk.findMultipleROIs == 1:
+        tabParams = tabParams + ["exitAfterWellsDetection", 1, "saveWellPositionsToBeReloadedNoMatterWhat", 1]
+      try:
+        mainZZ(path, name, videoExt, tk.configFile, tabParams)
+      except ValueError:
+        print("moving on to the next video for ROIs identification")
     else:
       if tk.debugMode == 1:
         tabParams = ["mainZZ", path, name, videoExt, tk.configFile, "freqAlgoPosFollow", 100, "debugTracking", 1, "debugExtractBack", 1, "onlyDoTheTrackingForThisNumberOfFrames", 3, "onlyTrackThisOneWell", 0]
       else:
         tabParams = []
       getTailExtremityFirstFrame(path, name, videoExt, tk.configFile, tabParams)
+  
+  tk.headEmbedded      = 0
+  tk.justExtractParams = 0
+  tk.noValidationVideo = 0
+  tk.debugMode         = 0
+  tk.findMultipleROIs  = 0
   
   self.show_frame("ZZoutro")
 

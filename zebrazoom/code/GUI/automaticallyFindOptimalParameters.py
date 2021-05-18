@@ -20,7 +20,7 @@ from zebrazoom.code.GUI.automaticallyFindOptimalParametersFunctions import getGr
 def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, detectBouts, method, nbOfAnimalToTrackNotConstantOverTime, adjustBackgroundExtractionBasedOnNumberOfBlackPixels):
   
   nbOfImagesToManuallyClassify = 3
-  saveIntermediary = True # Should be set to False except when debugging
+  saveIntermediary = False # Should be set to False except when debugging
   zebrafishToTrack = True
   
   # # # Getting ground truth from user: head center and tail extremity coordinates for a few frames
@@ -167,20 +167,20 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, det
   
   # # # Overwritting some of the hyperparameters from hyperparameters in the initial configFile
   
-  listOfParametersToOverwrite = ["extractAdvanceZebraParameters", "nbWells", "nbRowsOfWells", "nbWellsPerRows", "minWellDistanceForWellDetection", "wellOutputVideoDiameter", "wellsAreRectangles", "rectangleWellAreaImageThreshold", "rectangleWellErodeDilateKernelSize", "findRectangleWellArea", "rectangularWellsInvertBlackWhite", "noWellDetection", "oneWellManuallyChosenTopLeft", "oneWellManuallyChosenBottomRight"]
+  listOfParametersToOverwrite = ["extractAdvanceZebraParameters", "nbWells", "nbRowsOfWells", "nbWellsPerRows", "minWellDistanceForWellDetection", "wellOutputVideoDiameter", "wellsAreRectangles", "rectangleWellAreaImageThreshold", "rectangleWellErodeDilateKernelSize", "findRectangleWellArea", "rectangularWellsInvertBlackWhite", "noWellDetection", "oneWellManuallyChosenTopLeft", "oneWellManuallyChosenBottomRight", "multipleROIsDefinedDuringExecution"]
   for parameter in listOfParametersToOverwrite:
     if parameter in initialConfigFile:
       configFile[parameter] = initialConfigFile[parameter]
   
-  # Setting recalculateForegroundImageBasedOnBodyArea to 1 when asked by user to try to obtain better tail tracking
-  if adjustBackgroundExtractionBasedOnNumberOfBlackPixels and method:
-    configFile["recalculateForegroundImageBasedOnBodyArea"] = 1
-  
   print("Intermediary config file:", configFile)
-  
+    
   # Adjusting config file hyperparameters related to bouts detection
   if (configFile["nbAnimalsPerWell"] == 1) and detectBouts:
     configFile = boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, wellPositions, videoPath)
+  
+  # Setting recalculateForegroundImageBasedOnBodyArea to 1 when asked by user to try to obtain better tail tracking
+  if adjustBackgroundExtractionBasedOnNumberOfBlackPixels and method:
+    configFile["recalculateForegroundImageBasedOnBodyArea"] = 1
   
   # # # Moving on to the next step
   

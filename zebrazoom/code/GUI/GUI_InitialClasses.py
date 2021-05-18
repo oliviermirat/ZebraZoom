@@ -116,6 +116,11 @@ class SeveralVideos(tk.Frame):
         tk.Label(self, text="", font=controller.title_font).pack()
         
         button4 = tk.Button(self, text="Manual first frame tail extremity for head embedded", bg="light yellow", command=lambda: controller.show_frame("TailExtremityHE")).pack()
+        tk.Label(self, text="This will allow you to manually select the tail extremities, you can run the tracking on multiple videos without interruptions afterwards.").pack()
+        tk.Label(self, text="", font=controller.title_font).pack()
+        
+        tk.Button(self, text="Only select the regions of interest", bg="light yellow", command=lambda: controller.show_frame("FolderMultipleROIInitialSelect")).pack()
+        tk.Label(self, text="This will allow you to only select the ROIs, you can run the tracking on multiple videos without interruptions afterwards.").pack()
         tk.Label(self, text="", font=controller.title_font).pack()
                             
         tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
@@ -190,6 +195,17 @@ class TailExtremityHE(tk.Frame):
         button.pack()
         tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
+class FolderMultipleROIInitialSelect(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        label = tk.Label(self, text="Choose folder.", font=controller.title_font)
+        label.pack(side="top", fill="x", pady=10)
+        tk.Label(self, text="Select the folder of videos for which you want to define the regions of interest.").pack(side="top", fill="x", pady=10)
+        button = tk.Button(self, text="Choose folder", bg="light yellow", command=lambda: controller.chooseFolderForMultipleROIs())
+        button.pack()
+        tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 class ConfigFilePromp(tk.Frame):
 

@@ -350,6 +350,11 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["onlyDoTheTrackingForThisNumberOfFrames"] = getConfig(config, "onlyDoTheTrackingForThisNumberOfFrames", videoPath)
   
+  hyperparameters["multipleROIsDefinedDuringExecution"] = getConfig(config, "multipleROIsDefinedDuringExecution", videoPath)
+  
+  hyperparameters["saveWellPositionsToBeReloadedNoMatterWhat"] = getConfig(config, "saveWellPositionsToBeReloadedNoMatterWhat", videoPath)
+  hyperparameters["exitAfterWellsDetection"] = getConfig(config, "exitAfterWellsDetection", videoPath)
+  
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5
     while i < len(argv):

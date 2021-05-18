@@ -28,8 +28,10 @@
   "closePopUpWindowAtTheEnd" : 1,
   "reloadWellPositions" : 0,
   "reloadBackground" : 0,
+  "saveWellPositionsToBeReloadedNoMatterWhat" : 0,
   "backgroundExtractionForceUseAllVideoFrames" : 0,
-  "exitAfterBackgroundExtraction": 0,
+  "exitAfterBackgroundExtraction" : 0,
+  "exitAfterWellsDetection" : 0,
   
   "setPixDiffBoutDetectParameters" : 0,
   
@@ -44,6 +46,7 @@
   "outputFolder" : "./ZZoutput/",
   "onlyTrackThisOneWell" : -1,
   "noWellDetection" : 0,
+  "multipleROIsDefinedDuringExecution" : 0,
   "oneWellManuallyChosenTopLeft" : [],
   "oneWellManuallyChosenBottomRight" : [],
   "headEmbeded" : 0,

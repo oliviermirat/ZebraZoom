@@ -104,19 +104,40 @@ class WellOrganisation(tk.Frame):
     
     tk.Label(self, text="Choose only one of the options below:", font=("Helvetica", 12)).pack(side="top", fill="x", pady=10)
     
-    circular = IntVar()
-    Checkbutton(self, text="Circular Wells", variable=circular).pack()
+    multipleROIs = IntVar()
+    Checkbutton(self, text="Multiple rectangular region of interest chosen at runtime", variable=multipleROIs).pack()
     
-    rectangular = IntVar()
-    Checkbutton(self, text="Rectangular Wells", variable=rectangular).pack()
-    
-    roi = IntVar()
-    Checkbutton(self, text="Choose Rectangular Region of Interest", variable=roi).pack()
     other = IntVar()
     Checkbutton(self, text="Whole video", variable=other).pack()
     
+    roi = IntVar()
+    Checkbutton(self, text="One rectangular region of interest fixed in the configuration file", variable=roi).pack()
     
-    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.wellOrganisation(controller, circular.get(), rectangular.get(), roi.get(), other.get())).pack()
+    circular = IntVar()
+    Checkbutton(self, text="Circular wells (beta version)", variable=circular).pack()
+    
+    rectangular = IntVar()
+    Checkbutton(self, text="Rectangular wells (beta version)", variable=rectangular).pack()
+    
+    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.wellOrganisation(controller, circular.get(), rectangular.get(), roi.get(), other.get(), multipleROIs.get())).pack()
+    
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+
+
+class NbRegionsOfInterest(tk.Frame):
+
+  def __init__(self, parent, controller):
+  
+    tk.Frame.__init__(self, parent)
+    self.controller = controller
+    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
+    label.pack(side="top", fill="x", pady=10)
+    
+    tk.Label(self, text="How many regions of interest / wells are there in your video?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    nbwells = tk.Entry(self)
+    nbwells.pack()
+    
+    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.regionsOfInterest(controller, nbwells.get())).pack()
     
     tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 

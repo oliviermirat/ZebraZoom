@@ -83,51 +83,62 @@ def chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophil
     self.configFile["freeSwimmingTailTrackingMethod"] = "none"
     controller.show_frame("WellOrganisation")
 
-def wellOrganisation(self, controller, circular, rectangular, roi, other):
-  if rectangular:
-    self.shape = 'rectangular'
-    self.configFile["wellsAreRectangles"] = 1
-    controller.show_frame("CircularOrRectangularWells")
+def wellOrganisation(self, controller, circular, rectangular, roi, other, multipleROIs):
+  if multipleROIs:
+    controller.show_frame("NbRegionsOfInterest")
   else:
-    if circular and self.organism != 'drosoorrodent': # should remove the self.organism != 'drosoorrodent' at some point
-      self.shape = 'circular'
+    if rectangular:
+      self.shape = 'rectangular'
+      self.configFile["wellsAreRectangles"] = 1
       controller.show_frame("CircularOrRectangularWells")
     else:
-      self.shape = 'other'
-      if roi:
-        cap = cv2.VideoCapture(self.videoToCreateConfigFileFor)
-        cap.set(1, 10)
-        ret, frame = cap.read()
-        
-        WINDOW_NAME = "Click on the top left of the region of interest"
-        cvui.init(WINDOW_NAME)
-        cv2.moveWindow(WINDOW_NAME, 0,0)
-        cvui.imshow(WINDOW_NAME, frame)
-        while not(cvui.mouse(cvui.CLICK)):
-          cursor = cvui.mouse()
-          if cv2.waitKey(20) == 27:
-            break
-        self.configFile["oneWellManuallyChosenTopLeft"] = [cursor.x, cursor.y]
-        cv2.destroyAllWindows()
-        
-        WINDOW_NAME = "Click on the bottom right of the region of interest"
-        cvui.init(WINDOW_NAME)
-        cv2.moveWindow(WINDOW_NAME, 0,0)
-        cvui.imshow(WINDOW_NAME, frame)
-        while not(cvui.mouse(cvui.CLICK)):
-          cursor = cvui.mouse()
-          if cv2.waitKey(20) == 27:
-            break
-        self.configFile["oneWellManuallyChosenBottomRight"] = [cursor.x, cursor.y]
-        cv2.destroyAllWindows()
-        
-        self.configFile["nbWells"] = 1
-        chooseBeginningAndEndOfVideo(self, controller)
+      if circular and self.organism != 'drosoorrodent': # should remove the self.organism != 'drosoorrodent' at some point
+        self.shape = 'circular'
+        controller.show_frame("CircularOrRectangularWells")
       else:
-        self.configFile["noWellDetection"] = 1
-        self.configFile["nbWells"] = 1
-        chooseBeginningAndEndOfVideo(self, controller)
+        self.shape = 'other'
+        if roi:
+          cap = cv2.VideoCapture(self.videoToCreateConfigFileFor)
+          cap.set(1, 10)
+          ret, frame = cap.read()
+          
+          WINDOW_NAME = "Click on the top left of the region of interest"
+          cvui.init(WINDOW_NAME)
+          cv2.moveWindow(WINDOW_NAME, 0,0)
+          cvui.imshow(WINDOW_NAME, frame)
+          while not(cvui.mouse(cvui.CLICK)):
+            cursor = cvui.mouse()
+            if cv2.waitKey(20) == 27:
+              break
+          self.configFile["oneWellManuallyChosenTopLeft"] = [cursor.x, cursor.y]
+          cv2.destroyAllWindows()
+          
+          WINDOW_NAME = "Click on the bottom right of the region of interest"
+          cvui.init(WINDOW_NAME)
+          cv2.moveWindow(WINDOW_NAME, 0,0)
+          cvui.imshow(WINDOW_NAME, frame)
+          while not(cvui.mouse(cvui.CLICK)):
+            cursor = cvui.mouse()
+            if cv2.waitKey(20) == 27:
+              break
+          self.configFile["oneWellManuallyChosenBottomRight"] = [cursor.x, cursor.y]
+          cv2.destroyAllWindows()
+          
+          self.configFile["nbWells"] = 1
+          chooseBeginningAndEndOfVideo(self, controller)
+        else:
+          self.configFile["noWellDetection"] = 1
+          self.configFile["nbWells"] = 1
+          chooseBeginningAndEndOfVideo(self, controller)
 
+
+def regionsOfInterest(self, controller, nbwells):
+  
+  self.configFile["multipleROIsDefinedDuringExecution"] = 1
+  self.configFile["nbWells"] = int(nbwells)
+  
+  chooseBeginningAndEndOfVideo(self, controller)
+  
 
 def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
   

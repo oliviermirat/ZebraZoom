@@ -35,7 +35,7 @@ def initialise():
     f = open("trace.txt","w+")
     f.write("")
     f.close()
-    f = Timer(0.5, launchStuff, ())
+    f = Timer(0.00000000000000000001, launchStuff, ())
     f.start()
 
 def prepend(text):
