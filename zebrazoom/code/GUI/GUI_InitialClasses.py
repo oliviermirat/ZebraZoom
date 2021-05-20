@@ -106,6 +106,10 @@ class StartPage(tk.Frame):
 class SeveralVideos(tk.Frame):
 
     def __init__(self, parent, controller):
+        
+        def callback(url):
+          webbrowser.open_new(url)
+    
         tk.Frame.__init__(self, parent)
         self.controller = controller
         label = tk.Label(self, text="Run ZebraZoom on several videos", font=controller.title_font)
@@ -124,6 +128,11 @@ class SeveralVideos(tk.Frame):
         tk.Label(self, text="", font=controller.title_font).pack()
                             
         tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+        
+        tk.Label(self, text="", pady=0).pack()
+        link2 = tk.Button(self, text="View Tracking Troubleshooting Tips", bg="gold")
+        link2.pack()
+        link2.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md"))
 
 
 class VideoToAnalyze(tk.Frame):
@@ -159,11 +168,17 @@ class VideoToAnalyze(tk.Frame):
         tk.Label(self, text="", pady=0).pack()
         
         tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+        
+        tk.Label(self, text="").pack()
+        link2 = tk.Button(self, text="View Tracking Troubleshooting Tips", bg="gold")
+        link2.pack()
+        link2.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md"))
 
 
 class FolderToAnalyze(tk.Frame):
 
     def __init__(self, parent, controller):
+        
         tk.Frame.__init__(self, parent)
         self.controller = controller
         label = tk.Label(self, text="Choose folder.", font=controller.title_font)
@@ -283,6 +298,13 @@ class EnhanceZZOutput(tk.Frame):
         
         tk.Label(self, text="Tips on how to correct/enhance ZebraZoom's output when necessary", font=controller.title_font).pack(side="top", fill="x", pady=10)
         
+        def callback(url):
+          webbrowser.open_new(url)
+        
+        link2 = tk.Button(self, text="View Tracking Troubleshooting Tips", bg="gold")
+        link2.pack()
+        link2.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md"))
+        
         tk.Label(self, text="").pack()
         tk.Label(self, text="Movement Flagging System:", font = "bold").pack()
         tk.Label(self, text="You can see the results obtained from ZebraZoom's tracking thanks to the button 'Visualize ZebraZoom's output' in the main menu.").pack()
@@ -303,8 +325,7 @@ class EnhanceZZOutput(tk.Frame):
         tk.Label(self, text="If you are tracking zebrafish larvae and trying to detect local maximums and minimums of the tail angle (called 'bends'),").pack()
         tk.Label(self, text="then you might need to further adjust the parameters related to the bends detection (if these bends are not being detected right).").pack()
         tk.Label(self, text="You can check if the bends are being detected right with the 'Visualize ZebraZoom's output' in the main menu.").pack()
-        def callback(url):
-          webbrowser.open_new(url)
+        
         link1 = tk.Button(self, text="View tips on bends detection")
         link1.pack()
         link1.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom#hyperparametersTailAngleSmoothBoutsAndBendsDetect"))

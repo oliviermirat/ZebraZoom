@@ -33,6 +33,14 @@ class ChooseVideoToCreateConfigFileFor(tk.Frame):
     tk.Label(self, text='Warning: This procedure to create configuration files is incomplete.').pack()
     tk.Label(self, text='You may not succeed at making a good configuration file to analyze your video.').pack()
     tk.Label(self, text="If you don't manage to get a good configuration file that fits your needs, email us at info@zebrazoom.org.").pack()
+    tk.Label(self, text='').pack()
+    
+    def callback(url):
+      webbrowser.open_new(url)
+    
+    link2 = tk.Button(self, text="View Tracking Troubleshooting Tips", bg="gold")
+    link2.pack()
+    link2.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md"))
 
 
 class ChooseGeneralExperiment(tk.Frame):

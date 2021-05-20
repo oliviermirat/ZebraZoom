@@ -35,8 +35,6 @@ The value "3" above is just an example. You can put any value you want: higher v
 <a name="animalsNotDetected"/>
 <H2 CLASS="western">Animals not detected:</H2>
 
-First check that the values of "minArea" and "maxArea" are within the values of "minAreaBody" and "maxAreaBody". If they are not, set the value of "minArea" to the value of "minAreaBody" and the value of "maxArea" to the value of "maxAreaBody".<br/><br/>
-
 When running the tracking in "debug mode" as adviced above, you will see a visualization window called "Tracked frame: Click on any key to proceed": on this visualization window, you should in theory see <b>non-white pixels on and only on pixels that are part of an animal</b>. If it looks like there are <b>too many non-white pixels</b>, then:<br/>
 If "adjustMinPixelDiffForBackExtract_nbBlackPixelsMax" is inside your configuration file and has a value different than zero, then you can try decreasing the value of that parameter.<br/>
 If "adjustMinPixelDiffForBackExtract_nbBlackPixelsMax" is not inside your configuration file then you can try decreasing the value of the parameter "minPixelDiffForBackExtract" instead.<br/>

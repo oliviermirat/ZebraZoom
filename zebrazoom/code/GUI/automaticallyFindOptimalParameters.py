@@ -161,6 +161,10 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, det
     hyperparameters["maxArea"] = 1.3 * headContourArea
     configFile["minArea"] = 0.7 * headContourArea
     configFile["maxArea"] = 1.3 * headContourArea
+    
+  if not((0 < configFile["minAreaBody"]) and (configFile["minAreaBody"] < configFile["minArea"]) and (configFile["minArea"] < configFile["maxArea"]) and (configFile["maxArea"] < configFile["maxAreaBody"])):
+    configFile["minArea"] = configFile["minAreaBody"]
+    configFile["maxArea"] = configFile["maxAreaBody"]
   
   hyperparameters["dilateIter"] = 0
   configFile["dilateIter"] = 0
