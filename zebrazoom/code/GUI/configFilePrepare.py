@@ -87,12 +87,12 @@ class FreelySwimmingExperiment(tk.Frame):
     tk.Label(self, text="Choose only one of the options below:", font=("Helvetica", 12)).pack(side="top", fill="x", pady=10)
     
     freeZebra2 = IntVar()
-    Checkbutton(self, text="Recommended method: Try this option first!", variable=freeZebra2).pack()
+    Checkbutton(self, text="Recommended method: Automatic Parameters Setting", variable=freeZebra2).pack()
     tk.Label(self, text="This method will work well on most videos. One exception can be for fish of very different sizes.").pack()
     tk.Label(self, text="").pack()
     
     freeZebra = IntVar()
-    Checkbutton(self, text="Alternative method", variable=freeZebra).pack()
+    Checkbutton(self, text="Alternative method: Manual Parameters Setting", variable=freeZebra).pack()
     tk.Label(self, text="It's more difficult to create a configuration file with this method, but it can sometimes be useful as an alternative.").pack()
     tk.Label(self, text="").pack()
     
@@ -341,11 +341,12 @@ class NumberOfAnimalsCenterOfMass(tk.Frame):
     
     tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
     
-    tk.Button(self, text="Use Recommended Method 1: Slower but often more accurate tracking", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, 0, 0, 1, 0, 0, 0, 1)).pack()
-    tk.Button(self, text="Use Recommended Method 2: Faster but often less accurate tracking", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, 0, 0, 1, 0, 0, 0, 0)).pack()
+    tk.Button(self, text="Automatic Parameters Setting, Method 1: Slower tracking but often more accurate", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, 0, 0, 1, 0, 0, 0, 1)).pack()
+    tk.Button(self, text="Automatic Parameters Setting, Method 2: Faster tracking but often less accurate", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, 0, 0, 1, 0, 0, 0, 0)).pack()
     tk.Label(self, text="", font=("Helvetica", 10)).pack()
-    tk.Button(self, text="Use Alternative Method", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, 0, 0, 0, 1, 0, 0)).pack()
-    tk.Label(self, text="Try the 'Recommended Method 1' first. If it doesn't work, try the other methods.", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    tk.Button(self, text="Manual Parameters Setting: More control over the choice of parameters", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, 0, 0, 0, 1, 0, 0, 0)).pack()
+    tk.Label(self, text="Try the 'Automatic Parameters Setting, Method 1' first. If it doesn't work, try the other methods.", font=("Helvetica", 10)).pack()
+    tk.Label(self, text="The 'Manual Parameter Settings' makes setting parameter slightly more challenging but offers more control over the choice of parameters.", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
     
     tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
     tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
