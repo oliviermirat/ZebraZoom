@@ -22,6 +22,7 @@ def findTheTwoSides(headPosition, bodyContour, dst, hyperparameters):
     originalShape = originalShape.astype(np.uint8)
     cv2.fillPoly(originalShape, pts =[bodyContour], color=(255))
     
+    # Heading calculation: first approximation
     minWhitePixel = 1000000000
     bestAngle     = 0
     nTries        = 50
@@ -37,9 +38,9 @@ def findTheTwoSides(headPosition, bodyContour, dst, hyperparameters):
         bestAngle     = angleOption
     bestAngleAfterFirstStep = bestAngle
     
+    # Heading calculation: second (and refined) approximation
     secondStepFindFirstPointOutOfCnt = True
     maxDist = -1
-    # start = time.time()
     for i in range(0, nTries):
       angleOption = bestAngleAfterFirstStep - (math.pi / 5) + i * ((2 * (math.pi / 5)) / nTries)
       if secondStepFindFirstPointOutOfCnt:
@@ -64,9 +65,8 @@ def findTheTwoSides(headPosition, bodyContour, dst, hyperparameters):
         if nbWhitePixels < minWhitePixel:
           minWhitePixel = nbWhitePixels
           bestAngle     = angleOption
-    # end = time.time()
-    # print(end - start)
     
+    # Finding the 'mouth' of the fish
     unitVector = np.array([math.cos(bestAngle + math.pi), math.sin(bestAngle + math.pi)])
     factor     = 1
     headPos    = np.array(headPosition)
@@ -76,6 +76,7 @@ def findTheTwoSides(headPosition, bodyContour, dst, hyperparameters):
       factor = factor + 1
       testBorder = headPos + factor * unitVector
     
+    # Finding the indexes of the two "border points" along the contour (these are the two points that are the closest from the 'mouth' of fish)
     xOtherBorder = testBorder[0]
     yOtherBorder = testBorder[1]
     minDist1 = 1000000000000
@@ -95,6 +96,27 @@ def findTheTwoSides(headPosition, bodyContour, dst, hyperparameters):
           minDist2 = dist
           indMin2  = i
     
+    # Third and final heading calculation
+    if ("minTailSize" in hyperparameters) and (hyperparameters["minTailSize"] > 3): # We have observed that this calculation only works well for a high number of pixels per fish
+      possibleAngles = []
+      for k in range(1, 4):
+        factor = k * hyperparameters["minTailSize"] # Need to improve this in the future to not depend on "minTailSize"
+        maxValueInside = -1
+        bestAngleLast  = bestAngle
+        for i in range(0, nTries):
+          angleOption = bestAngle - (math.pi / 5) + i * ((2 * (math.pi / 5)) / nTries)
+          unitVector = np.array([math.cos(angleOption), math.sin(angleOption)])
+          headPos    = np.array(headPosition)
+          testBorder = headPos + factor * unitVector
+          testBorder = testBorder.astype(int)
+          curValueInside = cv2.pointPolygonTest(bodyContour, (testBorder[0], testBorder[1]), True)
+          if (curValueInside > 0):
+            if (curValueInside > maxValueInside):
+              maxValueInside = curValueInside
+              bestAngleLast  = angleOption
+        possibleAngles.append(bestAngleLast - bestAngle)
+      bestAngle = np.mean(possibleAngles) + bestAngle
+      
     res = [indMin1, indMin2, bestAngle + math.pi]
     
   else:
