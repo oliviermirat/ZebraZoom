@@ -2,6 +2,7 @@ import numpy as np
 import cv2
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 from zebrazoom.code.preprocessImage import preprocessImage, preprocessBackgroundImage
+from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 
 def getBackground(videoPath, hyperparameters):
 
@@ -118,8 +119,11 @@ def getBackground(videoPath, hyperparameters):
       back[:, :] = 0 # TODO: tracking should NOT RUN after background is set to 0 as it is here
   
   if (debugExtractBack):
-      
-    cv2.imshow('Background extracted: Click on any key to proceed!', back)
+    
+    back2 = back.copy()
+    [back2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(back2)
+    
+    cv2.imshow('Background extracted: Click on any key to proceed!', back2)
     if hyperparameters["exitAfterBackgroundExtraction"]:
       cv2.waitKey(3000)
     else:

@@ -10,6 +10,7 @@ from scipy import interpolate
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 from zebrazoom.code.adjustHyperparameters import initializeAdjustHyperparametersWindows, adjustHyperparameters
 import tkinter as tk
+from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 
 def findRectangularWellsArea(frame, videoPath, hyperparameters):
   
@@ -353,7 +354,11 @@ def findWells(videoPath, hyperparameters):
   frame = cv2.resize(frame, (int(lengthX/2), int(lengthY/2))) # ???
   cv2.imwrite(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), "repartition.jpg"), frame )
   if hyperparameters["debugFindWells"]:
-    cv2.imshow('Wells Detection', frame)
+  
+    frame2 = frame.copy()
+    [frame2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame2)
+  
+    cv2.imshow('Wells Detection', frame2)
     if hyperparameters["exitAfterBackgroundExtraction"]:
       cv2.waitKey(3000)
     else:

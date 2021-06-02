@@ -14,6 +14,7 @@ from zebrazoom.code.getBackground import getBackground
 from zebrazoom.code.findWells import findWells
 from zebrazoom.code.trackingFolder.tracking import tracking
 from zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions import prepareConfigFileForParamsAdjustements
+from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 
 def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack):
   
@@ -75,15 +76,18 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
         WINDOW_NAME_1 = "Click on the center of the head of one animal"
       else:
         WINDOW_NAME_1 = "Click on the center of mass of an animal"
-        
+      
+      [frame, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame, True)
+      
       cvui.init(WINDOW_NAME_1)
-      cv2.moveWindow(WINDOW_NAME_1, 0,0)
+      cv2.moveWindow(WINDOW_NAME_1, 0, 0)
       cvui.imshow(WINDOW_NAME_1, frame)
+      
       while not(cvui.mouse(cvui.CLICK)):
         cursor = cvui.mouse()
         if cv2.waitKey(20) == 27:
           break
-        headCoordinates = [cursor.x, cursor.y]
+        headCoordinates = [int(getRealValueCoefX * cursor.x), int(getRealValueCoefY * cursor.y)]
       cv2.destroyAllWindows()
       
       if zebrafishToTrack:
@@ -91,17 +95,19 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
       else:
         WINDOW_NAME_2 = "Click on a point on the border of the same animal"
       
-      cvui.init(WINDOW_NAME_2)
-      cv2.moveWindow(WINDOW_NAME_2, 0,0)
       frame2 = frame.copy()
-      frame2 = cv2.circle(frame, (headCoordinates[0], headCoordinates[1]), 2, (0, 0, 255), -1)
+      frame2 = cv2.circle(frame, (int(headCoordinates[0] / getRealValueCoefX), int(headCoordinates[1] / getRealValueCoefY)), 2, (0, 0, 255), -1)
+      
+      cvui.init(WINDOW_NAME_2)
+      cv2.moveWindow(WINDOW_NAME_2, 0, 0)
       cvui.imshow(WINDOW_NAME_2, frame2)
+      
       while not(cvui.mouse(cvui.CLICK)):
         cursor = cvui.mouse()
         if cv2.waitKey(20) == 27:
           break
-        tailTipCoordinates = [cursor.x, cursor.y]
-      frame2 = cv2.circle(frame, (tailTipCoordinates[0], tailTipCoordinates[1]), 2, (0, 0, 255), -1)  
+        tailTipCoordinates = [int(getRealValueCoefX * cursor.x), int(getRealValueCoefY * cursor.y)]
+      frame2 = cv2.circle(frame, (int(tailTipCoordinates[0] / getRealValueCoefX), int(tailTipCoordinates[1] / getRealValueCoefY)), 2, (0, 0, 255), -1)  
       cvui.imshow(WINDOW_NAME_2, frame2)
       cv2.waitKey(2000)
       cv2.destroyAllWindows()
