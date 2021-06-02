@@ -2,7 +2,7 @@ import setuptools
 from distutils.core import setup
 setup(
   name = 'zebrazoom',
-  version = '0.74',
+  version = '0.78',
   license='AGPL-3.0',
   description = 'Track and analyze zebrafish and animal behavior',
   author = 'Olivier Mirat',
@@ -19,7 +19,7 @@ setup(
     "pandas",
     "filterpy",
     "cvui",
-    "opencv-python==4.5.1.48",
+    "opencv-python<=4.5.1.48",
     "xlrd"
   ],
   packages=setuptools.find_packages(),
@@ -51,5 +51,6 @@ setup(
     'Programming Language :: Python :: 3',
     'Programming Language :: Python :: 3.6',
     'Programming Language :: Python :: 3.7',
+    'Programming Language :: Python :: 3.8'
   ],
 )

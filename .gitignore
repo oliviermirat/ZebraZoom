@@ -49,3 +49,5 @@ launch*.sh
 newhyperparameters
 
 experimentWithAutomaticOptimalParamSearch.py
+
+pypiUpload.sh

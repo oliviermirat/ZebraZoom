@@ -113,7 +113,7 @@ class WellOrganisation(tk.Frame):
     tk.Label(self, text="Choose only one of the options below:", font=("Helvetica", 12)).pack(side="top", fill="x", pady=10)
     
     multipleROIs = IntVar()
-    Checkbutton(self, text="Multiple rectangular region of interest chosen at runtime", variable=multipleROIs).pack()
+    Checkbutton(self, text="Multiple rectangular regions of interest chosen at runtime", variable=multipleROIs).pack()
     
     other = IntVar()
     Checkbutton(self, text="Whole video", variable=other).pack()
