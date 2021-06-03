@@ -117,19 +117,15 @@ def getBackground(videoPath, hyperparameters):
     print("checkThatMovementOccurInVideo: max difference is:", maxDiff)
     if maxDiff < hyperparameters["checkThatMovementOccurInVideo"]:
       back[:, :] = 0 # TODO: tracking should NOT RUN after background is set to 0 as it is here
-  
   if (debugExtractBack):
-    
     back2 = back.copy()
     [back2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(back2)
-    
     cv2.imshow('Background extracted: Click on any key to proceed!', back2)
     if hyperparameters["exitAfterBackgroundExtraction"]:
       cv2.waitKey(3000)
     else:
       cv2.waitKey(0)
     cv2.destroyAllWindows()
-    
   cap.release()
   
   print("Background Extracted")

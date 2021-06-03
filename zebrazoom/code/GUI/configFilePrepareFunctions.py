@@ -20,6 +20,7 @@ from zebrazoom.code.vars import getGlobalVariables
 from zebrazoom.mainZZ import mainZZ
 import json
 import os
+from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 globalVariables = getGlobalVariables()
 
 def getMainArguments(self):
@@ -101,27 +102,29 @@ def wellOrganisation(self, controller, circular, rectangular, roi, other, multip
           cap = cv2.VideoCapture(self.videoToCreateConfigFileFor)
           cap.set(1, 10)
           ret, frame = cap.read()
+          frame2 = frame.copy()
+          [frame2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame2, True, 0.85)
           
           WINDOW_NAME = "Click on the top left of the region of interest"
           cvui.init(WINDOW_NAME)
           cv2.moveWindow(WINDOW_NAME, 0,0)
-          cvui.imshow(WINDOW_NAME, frame)
+          cvui.imshow(WINDOW_NAME, frame2)
           while not(cvui.mouse(cvui.CLICK)):
             cursor = cvui.mouse()
             if cv2.waitKey(20) == 27:
               break
-          self.configFile["oneWellManuallyChosenTopLeft"] = [cursor.x, cursor.y]
+          self.configFile["oneWellManuallyChosenTopLeft"] = [int(getRealValueCoefX * cursor.x), int(getRealValueCoefY * cursor.y)]
           cv2.destroyAllWindows()
           
           WINDOW_NAME = "Click on the bottom right of the region of interest"
           cvui.init(WINDOW_NAME)
           cv2.moveWindow(WINDOW_NAME, 0,0)
-          cvui.imshow(WINDOW_NAME, frame)
+          cvui.imshow(WINDOW_NAME, frame2)
           while not(cvui.mouse(cvui.CLICK)):
             cursor = cvui.mouse()
             if cv2.waitKey(20) == 27:
               break
-          self.configFile["oneWellManuallyChosenBottomRight"] = [cursor.x, cursor.y]
+          self.configFile["oneWellManuallyChosenBottomRight"] = [int(getRealValueCoefX * cursor.x), int(getRealValueCoefY * cursor.y)]
           cv2.destroyAllWindows()
           
           self.configFile["nbWells"] = 1

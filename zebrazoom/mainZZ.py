@@ -120,6 +120,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
       pickle.dump(wellPositions,outfile)
     outfile.close()
   if int(hyperparameters["exitAfterWellsDetection"]):
+    print("exitAfterWellsDetection")
     if hyperparameters["popUpAlgoFollow"]:
       popUpAlgoFollow.prepend("ZebraZoom Analysis finished for " + videoName)
     raise ValueError
@@ -139,6 +140,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
       pickle.dump(background,outfile)
     outfile.close()
   if hyperparameters["exitAfterBackgroundExtraction"]:
+    print("exitAfterBackgroundExtraction")
     raise ValueError
   
   # Tracking and extraction of parameters

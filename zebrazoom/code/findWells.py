@@ -220,19 +220,7 @@ def findWells(videoPath, hyperparameters):
     if (cap.isOpened()== False): 
       print("Error opening video stream or file")
     ret, frame = cap.read()
-    root = tk.Tk()
-    horizontal = root.winfo_screenwidth()
-    vertical   = root.winfo_screenheight()
-    getRealValueCoefX = 1
-    getRealValueCoefY = 1
-    if len(frame[0]) > horizontal or len(frame) > vertical:
-      reduce = min(horizontal / len(frame[0]), vertical / len(frame))
-      newLengthX = int(len(frame[0]) * reduce)
-      newLengthY = int(len(frame)    * reduce)
-      getRealValueCoefX = len(frame[0]) / newLengthX
-      getRealValueCoefY = len(frame)    / newLengthY
-      frame = cv2.resize(frame, (newLengthX, newLengthY))
-    root.destroy()
+    [frame, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame, True, 0.85)
     cv2.waitKey(500)
     for i in range(0, int(hyperparameters["nbWells"])):
       WINDOW_NAME = "Click on the top left of one of the regions of interest"
@@ -254,11 +242,9 @@ def findWells(videoPath, hyperparameters):
       bottomRight = [cursor.x, cursor.y]
       frame = cv2.rectangle(frame, (topLeft[0], topLeft[1]), (bottomRight[0], bottomRight[1]), (255, 0, 0), 1)
       cv2.destroyWindow(WINDOW_NAME)
-      topLeftX = int(topLeft[0] * getRealValueCoefX)
-      topLeftY = int(topLeft[1] * getRealValueCoefY)
-      frame_width  = int((bottomRight[0] - topLeft[0]) * getRealValueCoefX)
-      frame_height = int((bottomRight[1] - topLeft[1]) * getRealValueCoefY)
-      well = {'topLeftX' : topLeftX, 'topLeftY' : topLeftY, 'lengthX' : frame_width, 'lengthY': frame_height}
+      frame_width  = int(getRealValueCoefX * (bottomRight[0] - topLeft[0]))
+      frame_height = int(getRealValueCoefY * (bottomRight[1] - topLeft[1]))
+      well = {'topLeftX' : int(getRealValueCoefX * topLeft[0]), 'topLeftY' : int(getRealValueCoefY * topLeft[1]), 'lengthX' : frame_width, 'lengthY': frame_height}
       l.append(well)
     cap.release()
     return l
