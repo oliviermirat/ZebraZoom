@@ -8,6 +8,9 @@ import os
 
 def createValidationVideo(videoPath, superStruct, hyperparameters):
 
+  if (hyperparameters["freqAlgoPosFollow"] != 0):
+    print("Starting the creation of the validation video")
+
   firstFrame                  = hyperparameters["firstFrame"]
   lastFrame                   = hyperparameters["lastFrame"]
   plotOnlyOneTailPointForVisu = hyperparameters["plotOnlyOneTailPointForVisu"]
@@ -185,6 +188,10 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
   for l in range(firstFrame, lastFrame):
   
     if l < nbFrames:
+    
+      if (hyperparameters["freqAlgoPosFollow"] != 0) and (i % hyperparameters["freqAlgoPosFollow"] == 0):
+        print("Validation video creation: wellNumber:", wellNumber, " ; frame:", i)
+    
       ret, frame = cap.read()
       
       for i in range(0, len(infoFrame[l])):

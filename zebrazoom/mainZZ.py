@@ -183,6 +183,8 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     outfile = open(os.path.join(outputFolderVideo, 'intermediaryTracking.txt'),'wb')
     pickle.dump(trackingDataPerWell,outfile)
     outfile.close()
+    if (hyperparameters["freqAlgoPosFollow"] != 0):
+      print("intermediary results saved")
     
   if hyperparameters["debugPauseBetweenTrackAndParamExtract"] != "justSaveTrackData":
     # Creating super structure

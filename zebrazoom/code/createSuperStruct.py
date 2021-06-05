@@ -76,6 +76,9 @@ def IsMinOrMax(maxpeaks, minpeaks, val ):
 
 def createSuperStruct(dataPerWell, wellPositions, hyperparameters):
 
+  if (hyperparameters["freqAlgoPosFollow"] != 0):
+    print("Starting the creation of the super structure")
+
   nbWells                      = hyperparameters["nbWells"]
   wellsAreRectangles           = hyperparameters["wellsAreRectangles"]
   tailAngleSmoothingFactor     = hyperparameters["tailAngleSmoothingFactor"]
