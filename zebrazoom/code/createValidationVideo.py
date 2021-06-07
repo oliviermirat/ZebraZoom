@@ -189,8 +189,8 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
   
     if l < nbFrames:
     
-      if (hyperparameters["freqAlgoPosFollow"] != 0) and (i % hyperparameters["freqAlgoPosFollow"] == 0):
-        print("Validation video creation: wellNumber:", wellNumber, " ; frame:", i)
+      if (hyperparameters["freqAlgoPosFollow"] != 0) and (l % hyperparameters["freqAlgoPosFollow"] == 0):
+        print("Validation video creation: frame:", l)
     
       ret, frame = cap.read()
       
@@ -229,7 +229,7 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
   out.release()
   
   if (hyperparameters["freqAlgoPosFollow"] != 0):
-    print("Create Validation Video")
+    print("Validation video created")
   if hyperparameters["popUpAlgoFollow"]:
     popUpAlgoFollow.prepend("Create Validation Video")
 

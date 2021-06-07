@@ -16,6 +16,7 @@ from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtre
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findBodyContour import findBodyContour
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.Rotate import Rotate
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.checkIfMidlineIsInBlob import checkIfMidlineIsInBlob
+from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 
 # from kalmanFilter import kalman_xy
 # from trackingFunctions import calculateAngle
@@ -52,20 +53,27 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
     rotatedContour = Rotate(rotatedContour,int(headPosition[0]),int(headPosition[1]),heading,dst)
     [MostCurvyIndex, distance2] = findTailExtremete(rotatedContour, bodyContour, headPosition[0], int(res[0]), int(res[1]), debugAdv, dst, hyperparameters["tailExtremityMaxJugeDecreaseCoeff"], hyperparameters)
     if debugAdv:
-      # Head Center
-      cv2.circle(dst, (int(headPosition[0]),int(headPosition[1])), 3, (255, 255, 0), -1)
-      # Tail basis 1
-      pt1 = bodyContour[int(res[0])][0]
-      cv2.circle(dst, (pt1[0],pt1[1]), 3, (255, 0, 0), -1)
-      # Tail basis 2
-      pt1 = bodyContour[int(res[1])][0]
-      cv2.circle(dst, (pt1[0],pt1[1]), 3, (180, 0, 0), -1)
-      # Tail extremity
-      pt1 = bodyContour[int(MostCurvyIndex)][0]
-      cv2.circle(dst, (pt1[0],pt1[1]), 3, (0, 0, 255), -1)
+      if True:
+        # Head Center
+        cv2.circle(dst, (int(headPosition[0]),int(headPosition[1])), 3, (255, 255, 0), -1)
+        # Tail basis 1
+        pt1 = bodyContour[int(res[0])][0]
+        cv2.circle(dst, (pt1[0],pt1[1]), 3, (255, 0, 0), -1)
+        # Tail basis 2
+        pt1 = bodyContour[int(res[1])][0]
+        cv2.circle(dst, (pt1[0],pt1[1]), 3, (180, 0, 0), -1)
+        # Tail extremity
+        pt1 = bodyContour[int(MostCurvyIndex)][0]
+        cv2.circle(dst, (pt1[0],pt1[1]), 3, (0, 0, 255), -1)
+      else:
+        for pt in bodyContour:
+          cv2.circle(dst, (pt[0][0], pt[0][1]), 1, (0, 0, 0), -1)
+        cv2.circle(dst, (int(headPosition[0]),int(headPosition[1])), 2, (0, 0, 255), -1)
       #
       if hyperparameters["debugTrackingPtExtremeLargeVerticals"]:
         dst = dst[int(headPosition[1])-200:len(dst), :]
+      else:
+        [dst, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(dst)
       # Plotting points
       cv2.imshow('Frame', dst)
       cv2.waitKey(0)
