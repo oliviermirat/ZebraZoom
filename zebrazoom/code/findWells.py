@@ -229,6 +229,11 @@ def findWells(videoPath, hyperparameters):
       cvui.imshow(WINDOW_NAME, frame)
       while not(cvui.mouse(cvui.CLICK)):
         cursor = cvui.mouse()
+        frame2 = frame.copy()
+        frame2 = cv2.line(frame2, (cursor.x - 2000, cursor.y), (cursor.x + 2000, cursor.y), (0, 0, 255), 2)
+        frame2 = cv2.line(frame2, (cursor.x, cursor.y - 2000), (cursor.x, cursor.y + 2000), (0, 0, 255), 2)
+        cvui.imshow(WINDOW_NAME, frame2)
+        del frame2
         cv2.waitKey(20)
       topLeft = [cursor.x, cursor.y]
       cv2.destroyWindow(WINDOW_NAME)
@@ -238,6 +243,11 @@ def findWells(videoPath, hyperparameters):
       cvui.imshow(WINDOW_NAME, frame)
       while not(cvui.mouse(cvui.CLICK)):
         cursor = cvui.mouse()
+        frame2 = frame.copy()
+        frame2 = cv2.line(frame2, (cursor.x - 2000, cursor.y), (cursor.x + 2000, cursor.y), (0, 0, 255), 2)
+        frame2 = cv2.line(frame2, (cursor.x, cursor.y - 2000), (cursor.x, cursor.y + 2000), (0, 0, 255), 2)
+        cvui.imshow(WINDOW_NAME, frame2)
+        del frame2
         cv2.waitKey(20)
       bottomRight = [cursor.x, cursor.y]
       frame = cv2.rectangle(frame, (topLeft[0], topLeft[1]), (bottomRight[0], bottomRight[1]), (255, 0, 0), 1)
