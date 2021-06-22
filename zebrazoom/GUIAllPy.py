@@ -57,7 +57,7 @@ class SampleApp(tk.Tk):
         self.numWell = 0
         self.numPoiss = 0
         self.numMouv = 0
-        self.visualization = 0
+        self.visualization = 2
         self.justEnteredViewParameter = 0
         self.dataRef = {}
         self.title_font = tkfont.Font(family='Helvetica', size=18, weight="bold", slant="italic")   
