@@ -111,6 +111,10 @@ def wellOrganisation(self, controller, circular, rectangular, roi, other, multip
           cvui.imshow(WINDOW_NAME, frame2)
           while not(cvui.mouse(cvui.CLICK)):
             cursor = cvui.mouse()
+            frame3 = frame2.copy()
+            frame3 = cv2.line(frame3, (cursor.x - 2000, cursor.y), (cursor.x + 2000, cursor.y), (0, 0, 255), 2)
+            frame3 = cv2.line(frame3, (cursor.x, cursor.y - 2000), (cursor.x, cursor.y + 2000), (0, 0, 255), 2)
+            cvui.imshow(WINDOW_NAME, frame3)
             if cv2.waitKey(20) == 27:
               break
           self.configFile["oneWellManuallyChosenTopLeft"] = [int(getRealValueCoefX * cursor.x), int(getRealValueCoefY * cursor.y)]
@@ -122,6 +126,10 @@ def wellOrganisation(self, controller, circular, rectangular, roi, other, multip
           cvui.imshow(WINDOW_NAME, frame2)
           while not(cvui.mouse(cvui.CLICK)):
             cursor = cvui.mouse()
+            frame3 = frame2.copy()
+            frame3 = cv2.line(frame3, (cursor.x - 2000, cursor.y), (cursor.x + 2000, cursor.y), (0, 0, 255), 2)
+            frame3 = cv2.line(frame3, (cursor.x, cursor.y - 2000), (cursor.x, cursor.y + 2000), (0, 0, 255), 2)
+            cvui.imshow(WINDOW_NAME, frame3)
             if cv2.waitKey(20) == 27:
               break
           self.configFile["oneWellManuallyChosenBottomRight"] = [int(getRealValueCoefX * cursor.x), int(getRealValueCoefY * cursor.y)]
@@ -246,7 +254,9 @@ def chooseBeginningAndEndOfVideo(self, controller):
       
       cvui.text(frameCtrl, widgetX, widgetY+130, 'Keys: 4 or a: move backwards; 6 or d: move forward')
       cvui.text(frameCtrl, widgetX, widgetY+160, 'Keys: g or f: fast backwards; h or j: fast forward')
-      cvui.imshow(WINDOW_NAME, frame)
+      frame2 = frame.copy()
+      [frame2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame2, True, 0.85)
+      cvui.imshow(WINDOW_NAME, frame2)
       cvui.imshow(WINDOW_NAME_CTRL, frameCtrl)
       r = cv2.waitKey(20)
       if (r == 54) or (r == 100) or (r == 0):
@@ -300,7 +310,9 @@ def chooseBeginningAndEndOfVideo(self, controller):
         buttonclicked = cvui.button(frameCtrl, widgetX, widgetY+90, "Ok, I want the tracking to end at this frame!")
         cvui.text(frameCtrl, widgetX, widgetY+130, 'Keys: 4 or a: move backwards; 6 or d: move forward')
         cvui.text(frameCtrl, widgetX, widgetY+160, 'Keys: g or f: fast backwards; h or j: fast forward')
-        cvui.imshow(WINDOW_NAME, frame)
+        frame2 = frame.copy()
+        [frame2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame2, True, 0.85)
+        cvui.imshow(WINDOW_NAME, frame2)
         cvui.imshow(WINDOW_NAME_CTRL, frameCtrl)
         r = cv2.waitKey(20)
         if (r == 54) or (r == 100) or (r == 0):
