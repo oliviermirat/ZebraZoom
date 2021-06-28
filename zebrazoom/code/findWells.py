@@ -334,6 +334,22 @@ def findWells(videoPath, hyperparameters):
   rectangleTickness = 2
   lengthY = len(frame)
   lengthX = len(frame[0])
+  
+  if len(wellPositions):
+    for i in range(0, len(wellPositions)):
+      topLeftX = wellPositions[i]['topLeftX']
+      wellPos_lengthX = wellPositions[i]['lengthX']
+      topLeftY = wellPositions[i]['topLeftY']
+      wellPos_lengthY = wellPositions[i]['lengthY']
+      if topLeftX < 0:
+        wellPositions[i]['topLeftX'] = 0
+      if topLeftY < 0:
+        wellPositions[i]['topLeftY'] = 0
+      if topLeftX + wellPos_lengthX >= lengthX:
+        wellPositions[i]['lengthX'] = lengthX - topLeftX - 1
+      if topLeftY + wellPos_lengthY >= lengthY:
+        wellPositions[i]['lengthY'] = lengthY - topLeftY - 1
+  
   if len(wellPositions):
     perm1 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
     perm2 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
