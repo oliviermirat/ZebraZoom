@@ -102,7 +102,7 @@ def findRectangularWells(frame, videoPath, hyperparameters, rectangularWellsArea
           if math.sqrt(point[0][0]**2 + point[0][1]**2) > bottomRightDistToZero:
             bottomRightDistToZero = math.sqrt(point[0][0]**2 + point[0][1]**2)
             bottomRightCoord = point[0]
-        stretchDist = int(math.sqrt((bottomRightCoord[0] - topLeftCoord[0]) * (bottomRightCoord[1] - topLeftCoord[1])) * (rectangularWellStretchPercentage / 100))
+        stretchDist = int(math.sqrt((bottomRightCoord[0] - topLeftCoord[0] if bottomRightCoord[0] - topLeftCoord[0] >= 0 else 0) * (bottomRightCoord[1] - topLeftCoord[1] if bottomRightCoord[1] - topLeftCoord[1] >= 0 else 0)) * (rectangularWellStretchPercentage / 100))
         well = {'topLeftX': int(topLeftCoord[0] - stretchDist), 'topLeftY': int(topLeftCoord[1] - stretchDist), 'lengthX': int(bottomRightCoord[0] - topLeftCoord[0] + 2 * stretchDist), 'lengthY': int(bottomRightCoord[1] - topLeftCoord[1] + 2 * stretchDist)}
       else:
         top    = float("inf")
