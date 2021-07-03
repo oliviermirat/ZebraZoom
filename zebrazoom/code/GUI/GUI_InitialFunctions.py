@@ -53,6 +53,9 @@ def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo):
 def chooseFolderForTailExtremityHE(self):
     tk.folderName =  filedialog.askdirectory(initialdir = os.path.expanduser("~"),title = "Select folder")
     tk.headEmbedded = 1
+    tk.justExtractParams = 0
+    tk.noValidationVideo = 0
+    tk.debugMode = 0
     tk.findMultipleROIs = 0
     self.show_frame("ConfigFilePromp")
 
