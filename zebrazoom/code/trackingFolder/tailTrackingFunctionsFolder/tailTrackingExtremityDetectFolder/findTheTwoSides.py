@@ -39,32 +39,50 @@ def findTheTwoSides(headPosition, bodyContour, dst, hyperparameters):
     bestAngleAfterFirstStep = bestAngle
     
     # Heading calculation: second (and refined) approximation
-    secondStepFindFirstPointOutOfCnt = True
+    # Searching for the optimal value of iterationsForErodeImageForHeadingCalculation
+    countTries = 0
+    nbIterations2nbWhitePixels = {}
+    if "iterationsForErodeImageForHeadingCalculation" in hyperparameters:
+      iterationsForErodeImageForHeadingCalculation = hyperparameters["iterationsForErodeImageForHeadingCalculation"]
+    else:
+      iterationsForErodeImageForHeadingCalculation = 4
+    kernel = np.ones((3, 3), np.uint8)
+    nbWhitePixelsMax = 75
+    while (iterationsForErodeImageForHeadingCalculation > 0) and (countTries < 50) and not(iterationsForErodeImageForHeadingCalculation in nbIterations2nbWhitePixels):
+      testImage2 = cv2.erode(testImage, kernel, iterations = iterationsForErodeImageForHeadingCalculation)
+      nbWhitePixels = cv2.countNonZero(testImage2)
+      nbIterations2nbWhitePixels[iterationsForErodeImageForHeadingCalculation] = nbWhitePixels
+      if nbWhitePixels < nbWhitePixelsMax:
+        iterationsForErodeImageForHeadingCalculation = iterationsForErodeImageForHeadingCalculation - 1
+      if nbWhitePixels >= nbWhitePixelsMax:
+        iterationsForErodeImageForHeadingCalculation = iterationsForErodeImageForHeadingCalculation + 1
+      countTries = countTries + 1
+    best_iterations = 0
+    minDist = 10000000000000
+    for iterations in nbIterations2nbWhitePixels:
+      nbWhitePixels = nbIterations2nbWhitePixels[iterations]
+      dist = abs(nbWhitePixels - nbWhitePixelsMax)
+      if dist < minDist:
+        minDist = dist
+        best_iterations = iterations
+    iterationsForErodeImageForHeadingCalculation = best_iterations
+    hyperparameters["iterationsForErodeImageForHeadingCalculation"] = iterationsForErodeImageForHeadingCalculation
+    
     maxDist = -1
     for i in range(0, nTries):
       angleOption = bestAngleAfterFirstStep - (math.pi / 5) + i * ((2 * (math.pi / 5)) / nTries)
-      if secondStepFindFirstPointOutOfCnt:
-        unitVector = np.array([math.cos(angleOption), math.sin(angleOption)])
-        factor     = 1
-        headPos    = np.array(headPosition)
-        testBorder = headPos + factor * unitVector
-        testBorder = testBorder.astype(int)
-        while (cv2.pointPolygonTest(bodyContour, (testBorder[0], testBorder[1]), True) > 0) and (factor < 100) and (testBorder[0] >= 0) and (testBorder[1] >= 0) and (testBorder[0] < len(dst[0])) and (testBorder[1] < len(dst)):
-          factor = factor + 1
-          testBorder = headPos + factor * unitVector
-        dist = math.sqrt((headPos[0] - testBorder[0])**2 + (headPos[1] - testBorder[1])**2)
-        if dist > maxDist:
-          maxDist   = dist
-          bestAngle = angleOption
-      else:
-        startPoint = (int(headPosition[0]), int(headPosition[1]))
-        endPoint   = (int(headPosition[0] + 100000 * math.cos(angleOption)), int(headPosition[1] + 100000 * math.sin(angleOption)))
-        testImage  = originalShape.copy()
-        testImage  = cv2.line(testImage, startPoint, endPoint, (0), 1)
-        nbWhitePixels = cv2.countNonZero(testImage)
-        if nbWhitePixels < minWhitePixel:
-          minWhitePixel = nbWhitePixels
-          bestAngle     = angleOption
+
+      startPoint = (int(headPosition[0]), int(headPosition[1]))
+      endPoint   = (int(headPosition[0] + 100000 * math.cos(angleOption)), int(headPosition[1] + 100000 * math.sin(angleOption)))
+      testImage  = originalShape.copy()
+      
+      # applying dilation with the iterationsForErodeImageForHeadingCalculation value found
+      testImage = cv2.erode(testImage, kernel, iterations = iterationsForErodeImageForHeadingCalculation)
+      testImage  = cv2.line(testImage, startPoint, endPoint, (0), 1)
+      nbWhitePixels = cv2.countNonZero(testImage)
+      if nbWhitePixels < minWhitePixel:
+        minWhitePixel = nbWhitePixels
+        bestAngle     = angleOption
     
     # Finding the 'mouth' of the fish
     unitVector = np.array([math.cos(bestAngle + math.pi), math.sin(bestAngle + math.pi)])
@@ -95,27 +113,6 @@ def findTheTwoSides(headPosition, bodyContour, dst, hyperparameters):
         if (dist < minDist2):
           minDist2 = dist
           indMin2  = i
-    
-    # Third and final heading calculation
-    if ("minTailSize" in hyperparameters) and (hyperparameters["minTailSize"] > 3): # We have observed that this calculation only works well for a high number of pixels per fish
-      possibleAngles = []
-      for k in range(1, 4):
-        factor = k * hyperparameters["minTailSize"] # Need to improve this in the future to not depend on "minTailSize"
-        maxValueInside = -1
-        bestAngleLast  = bestAngle
-        for i in range(0, nTries):
-          angleOption = bestAngle - (math.pi / 5) + i * ((2 * (math.pi / 5)) / nTries)
-          unitVector = np.array([math.cos(angleOption), math.sin(angleOption)])
-          headPos    = np.array(headPosition)
-          testBorder = headPos + factor * unitVector
-          testBorder = testBorder.astype(int)
-          curValueInside = cv2.pointPolygonTest(bodyContour, (testBorder[0], testBorder[1]), True)
-          if (curValueInside > 0):
-            if (curValueInside > maxValueInside):
-              maxValueInside = curValueInside
-              bestAngleLast  = angleOption
-        possibleAngles.append(bestAngleLast - bestAngle)
-      bestAngle = np.mean(possibleAngles) + bestAngle
       
     res = [indMin1, indMin2, bestAngle + math.pi]
     
