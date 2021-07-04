@@ -215,7 +215,28 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     
     # Various post-processing options depending on configuration file choices
     dataPostProcessing(outputFolderVideo, superStruct, hyperparameters, videoName)
-
+  
+  # Copying output result folder in another folder
+  if len(hyperparameters["additionalOutputFolder"]):
+    if os.path.isdir(hyperparameters["additionalOutputFolder"]):
+      if hyperparameters["additionalOutputFolderOverwriteIfAlreadyExist"]:
+        shutil.rmtree(hyperparameters["additionalOutputFolder"])
+        while True:
+          try:
+            shutil.copytree(outputFolderVideo, hyperparameters["additionalOutputFolder"])
+            break
+          except OSError as e:
+            print("waiting inside except")
+            time.sleep(0.1)
+          else:
+            print("waiting")
+            time.sleep(0.1)
+      else:
+        print("The path " + hyperparameters["additionalOutputFolder"] + " already exists. New folder not created. If you want the folder to be overwritten in such situation in future executions, set the parameter 'additionalOutputFolderOverwriteIfAlreadyExist' to 1 in your configuration file.")
+    else:
+      shutil.copytree(outputFolderVideo, hyperparameters["additionalOutputFolder"])
+  
+  
   if hyperparameters["popUpAlgoFollow"]:
     popUpAlgoFollow.prepend("ZebraZoom Analysis finished for " + videoName)
     # popUpAlgoFollow.prepend("")

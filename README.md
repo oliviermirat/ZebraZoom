@@ -39,6 +39,7 @@ For more information visit <a href="https://zebrazoom.org/" target="_blank">zebr
 [Adjusting ZebraZoom's hyperparameters: further adjustment of the tail angle smoothing, the bouts detection and bends detection](#hyperparametersTailAngleSmoothBoutsAndBendsDetect)<br/>
 [Adjusting ZebraZoom's hyperparameters: head-embedded zebrafish tail tracking in difficult conditions](#extremeHeadEmbeddedTailTracking)<br/>
 [Adjusting ZebraZoom's hyperparameters: image pre-processing](#hyperparametersImagePreprocessing)<br/>
+[Adjusting ZebraZoom's hyperparameters: output folder and video](#hyperparametersOutputFolderAndVideo)<br/>
 [Adjusting ZebraZoom's hyperparameters: other adjustments](#hyperparametersOtherAdjustments)<br/>
 [Eye tracking of zebrafish larvae](#eyesTracking)<br/>
 [Further analyzing ZebraZoom's output through the Graphical User Interface](#GUIanalysis)<br/>
@@ -284,6 +285,17 @@ It can sometimes be useful to preprocess the frames of the video before starting
 <H3 CLASS="western">Post-processing of the background extracted:</H3>
 <font color="blue">"backgroundPreProcessMethod" (default 0):</font> same as "imagePreProcessMethod", except this will specify a list of post-processing methods to be applied on the background of the video, after it has been extracted.<br/>
 <font color="blue">"backgroundPreProcessParameters" (default []):</font> same as "imagePreProcessParameters", except this specifies the values of the parameters specified in "backgroundPreProcessMethod".<br/><br/>
+
+
+<a name="hyperparametersOutputFolderAndVideo"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Adjusting ZebraZoom's hyperparameters: output folder and video:</H2>
+
+<H4 CLASS="western">Additional output folder</H2>
+If you want to save the output result folder somewhere else than in the default output folder ZZoutput, you can set the parameter "additionalOutputFolder" to the path to a folder where your data will also be saved (in addition to being saved in the ZZoutput folder). Importantly, the path "additionalOutputFolder" must contain (at the end), the name of the final folder that will contain the files repartition.jpg, validationvideo.avi, etc... So for example, if you are analyzing the video Vid1 then you must set "additionalOutputFolder" to "~/Desktop/Vid1" in order for the results to be saved in the "Vid1" located on your Desktop.<br/>
+If the folder "additionalOutputFolder" already exists, nothing will be saved in that folder, except if the parameter "additionalOutputFolderOverwriteIfAlreadyExist" is set to 1 in your configuration file (default value is 0).<br/>
+
 
 <a name="hyperparametersOtherAdjustments"/>
 

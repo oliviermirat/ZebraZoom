@@ -353,6 +353,10 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["saveWellPositionsToBeReloadedNoMatterWhat"] = getConfig(config, "saveWellPositionsToBeReloadedNoMatterWhat", videoPath)
   hyperparameters["exitAfterWellsDetection"] = getConfig(config, "exitAfterWellsDetection", videoPath)
   
+  hyperparameters["additionalOutputFolder"] = getConfig(config, "additionalOutputFolder", videoPath)
+  hyperparameters["additionalOutputFolderOverwriteIfAlreadyExist"] = getConfig(config, "additionalOutputFolderOverwriteIfAlreadyExist", videoPath)
+  
+  
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5
     while i < len(argv):

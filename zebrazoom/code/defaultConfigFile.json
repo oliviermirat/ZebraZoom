@@ -200,5 +200,8 @@
   "nbPointsToIgnoreAtCurvatureBeginning" : 0,
   "nbPointsToIgnoreAtCurvatureEnd" : 0,
   
+  "additionalOutputFolder" : "",
+  "additionalOutputFolderOverwriteIfAlreadyExist" : 0,
+  
   "computeEyesHeadingPlot": 0
 }
