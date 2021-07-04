@@ -141,7 +141,7 @@ def launchZebraZoom(self):
   self.show_frame("ZZoutro")
 
 
-def showValidationVideo(self, numWell, zoom, deb):
+def showValidationVideo(self, numWell, numAnimal, zoom, deb):
 
     cur_dir_path = os.path.dirname(os.path.realpath(__file__))
     path = Path(cur_dir_path)
@@ -155,7 +155,7 @@ def showValidationVideo(self, numWell, zoom, deb):
     else:
         videoPath = ""
     
-    readValidationVideo(videoPath, self.currentResultFolder, '.txt', int(numWell), int(zoom), int(deb))
+    readValidationVideo(videoPath, self.currentResultFolder, '.txt', int(numWell), int(numAnimal), int(zoom), int(deb))
 
 
 def showGraphForAllBoutsCombined(self, numWell, numPoiss, dataRef, visualization, graphScaling):

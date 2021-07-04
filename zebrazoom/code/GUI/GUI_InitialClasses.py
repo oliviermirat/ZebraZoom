@@ -387,7 +387,7 @@ class ViewParameters(tk.Frame):
           label = tk.Label(self, text="    ", font=LARGE_FONT)
           label.grid(row=1,column=6)
           
-          ttk.Button(self, text="View video for all wells together", command=lambda: controller.showValidationVideo(-1,0,-1)).grid(row=1,column=1)
+          ttk.Button(self, text="View video for all wells together", command=lambda: controller.showValidationVideo(-1,numPoiss,0,-1)).grid(row=1,column=1)
           
           buttonLabel = "View "
           if controller.graphScaling:
@@ -403,8 +403,6 @@ class ViewParameters(tk.Frame):
           buttonLabel = buttonLabel + " for all bouts combined"
           ttk.Button(self, text=buttonLabel, command=lambda: controller.showGraphForAllBoutsCombined(numWell, numPoiss, dataRef, controller.visualization, controller.graphScaling)).grid(row=1, column=2, columnspan=5)
           
-          # ttk.Button(self, text="Verify wells detection", command=lambda: controller.showValidationVideo(-1,0,-1)).grid(row=1,column=2, columnspan=2)
-          
           label = tk.Label(self, text=name, font="bold", justify=LEFT, pady=10)
           label.grid(sticky=W, row=0, column=0, columnspan=8)
           
@@ -416,7 +414,7 @@ class ViewParameters(tk.Frame):
           tk.Button(self, text="-", command=lambda: controller.printSomeResults(int(e1.get())-1,e2.get(),e3.get())).grid(row=2,column=3)
           tk.Button(self, text="+", command=lambda: controller.printSomeResults(int(e1.get())+1,e2.get(),e3.get())).grid(row=2,column=4)
           
-          ttk.Button(self, text="View zoomed video for well "+str(numWell), command=lambda: controller.showValidationVideo(e1.get(),1,-1)).grid(row=3,column=2)
+          ttk.Button(self, text="View zoomed video for well "+str(numWell), command=lambda: controller.showValidationVideo(e1.get(),numPoiss,1,-1)).grid(row=3,column=2)
           
           def callback(url):
             webbrowser.open_new(url)
@@ -489,9 +487,9 @@ class ViewParameters(tk.Frame):
               begMove = dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["BoutStart"]
               endMove = dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["BoutEnd"]
               
-              ttk.Button(self, text="View video for well "+str(numWell), command=lambda: controller.showValidationVideo(e1.get(),0,begMove)).grid(row=3,column=1)
+              ttk.Button(self, text="View video for well "+str(numWell), command=lambda: controller.showValidationVideo(e1.get(),numPoiss,0,begMove)).grid(row=3,column=1)
               
-              ttk.Button(self, text="View bout's video", command=lambda: controller.showValidationVideo(e1.get(),1,begMove)).grid(row=6,column=1)
+              ttk.Button(self, text="View bout's video", command=lambda: controller.showValidationVideo(e1.get(),numPoiss,1,begMove)).grid(row=6,column=1)
               
               if controller.visualization == 0 and not("TailAngle_smoothed" in dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]):
                   controller.visualization = 1

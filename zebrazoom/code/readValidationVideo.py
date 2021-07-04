@@ -6,7 +6,7 @@ import tkinter as tk
 import os
 from pathlib import Path
 
-def readValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, start):
+def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start):
 
   print("configFilePath:",configFilePath)
   
@@ -52,20 +52,20 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, st
   
   if ((numWell != -1) and (zoom)):
     lastEnd = 0
-    lastXpos = supstruct["wellPoissMouv"][numWell][0][0]["HeadX"][0]
-    lastYpos = supstruct["wellPoissMouv"][numWell][0][0]["HeadY"][0]
-    for k in range(0,len(supstruct["wellPoissMouv"][numWell][0])):
-      beg = supstruct["wellPoissMouv"][numWell][0][k]["BoutStart"]
-      end = supstruct["wellPoissMouv"][numWell][0][k]["BoutEnd"]
+    lastXpos = supstruct["wellPoissMouv"][numWell][numAnimal][0]["HeadX"][0]
+    lastYpos = supstruct["wellPoissMouv"][numWell][numAnimal][0]["HeadY"][0]
+    for k in range(0,len(supstruct["wellPoissMouv"][numWell][numAnimal])):
+      beg = supstruct["wellPoissMouv"][numWell][numAnimal][k]["BoutStart"]
+      end = supstruct["wellPoissMouv"][numWell][numAnimal][k]["BoutEnd"]
       for l in range(lastEnd, beg):
         HeadX[l] = lastXpos
         HeadY[l] = lastYpos
       for l in range(beg, end):
-        HeadX[l]  = supstruct["wellPoissMouv"][numWell][0][k]["HeadX"][l-beg]
-        HeadY[l]  = supstruct["wellPoissMouv"][numWell][0][k]["HeadY"][l-beg]
+        HeadX[l]  = supstruct["wellPoissMouv"][numWell][numAnimal][k]["HeadX"][l-beg]
+        HeadY[l]  = supstruct["wellPoissMouv"][numWell][numAnimal][k]["HeadY"][l-beg]
       lastEnd = end
-      lastXpos = supstruct["wellPoissMouv"][numWell][0][k]["HeadX"][end-1-beg]
-      lastYpos = supstruct["wellPoissMouv"][numWell][0][k]["HeadY"][end-1-beg]
+      lastXpos = supstruct["wellPoissMouv"][numWell][numAnimal][k]["HeadX"][end-1-beg]
+      lastYpos = supstruct["wellPoissMouv"][numWell][numAnimal][k]["HeadY"][end-1-beg]
       
     for l in range(lastEnd, max_l + supstruct["firstFrame"]):
       HeadX[l] = lastXpos

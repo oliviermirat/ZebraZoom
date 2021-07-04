@@ -106,8 +106,8 @@ class SampleApp(tk.Tk):
         self.frames['ResultsVisualization'] = frame
         self.show_frame("ResultsVisualization")
 
-    def showValidationVideo(self, numWell, zoom, deb):
-        GUI_InitialFunctions.showValidationVideo(self, numWell, zoom, deb)
+    def showValidationVideo(self, numWell, numAnimal, zoom, deb):
+        GUI_InitialFunctions.showValidationVideo(self, numWell, numAnimal, zoom, deb)
 
     def printSomeResults(self, numWell, numPoiss, numMouv, changeVisualization=False, changeScaling=False):
         if changeVisualization:
