@@ -125,6 +125,9 @@ def launchZebraZoom(self):
         mainZZ(path, name, videoExt, tk.configFile, tabParams)
       except ValueError:
         print("moving on to the next video for ROIs identification")
+      except NameError:
+        self.show_frame("Error")
+        return
     else:
       if tk.debugMode == 1:
         tabParams = ["mainZZ", path, name, videoExt, tk.configFile, "freqAlgoPosFollow", 100, "debugTracking", 1, "debugExtractBack", 1, "onlyDoTheTrackingForThisNumberOfFrames", 3, "onlyTrackThisOneWell", 0]

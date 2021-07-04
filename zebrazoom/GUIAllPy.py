@@ -25,7 +25,7 @@ import zebrazoom.code.GUI.configFileZebrafishFunctions as configFileZebrafishFun
 import zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions as adjustParameterInsideAlgoFunctions
 import zebrazoom.code.GUI.dataAnalysisGUIFunctions as dataAnalysisGUIFunctions
 import zebrazoom.code.GUI.troubleshootingFunction as troubleshootingFunction
-from zebrazoom.code.GUI.GUI_InitialClasses import FullScreenApp, StartPage, SeveralVideos, VideoToAnalyze, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, ConfigFilePromp, Patience, ZZoutro, ResultsVisualization, EnhanceZZOutput, ViewParameters
+from zebrazoom.code.GUI.GUI_InitialClasses import FullScreenApp, StartPage, SeveralVideos, VideoToAnalyze, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, ConfigFilePromp, Patience, ZZoutro, ResultsVisualization, EnhanceZZOutput, ViewParameters, Error
 from zebrazoom.code.GUI.configFilePrepare import ChooseVideoToCreateConfigFileFor, ChooseGeneralExperiment, FreelySwimmingExperiment, WellOrganisation, NbRegionsOfInterest, CircularOrRectangularWells, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings
 from zebrazoom.code.GUI.configFileZebrafish import HeadEmbeded
 from zebrazoom.code.GUI.adjustParameterInsideAlgo import AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim
@@ -69,7 +69,7 @@ class SampleApp(tk.Tk):
         container.grid_columnconfigure(0, weight=1) 
         self.container = container
         self.frames = {}
-        for F in (StartPage, SeveralVideos, VideoToAnalyze, ChooseVideoToCreateConfigFileFor, ChooseGeneralExperiment, FreelySwimmingExperiment, WellOrganisation, NbRegionsOfInterest, CircularOrRectangularWells, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, ChooseCircularWellsLeft, ChooseCircularWellsRight, FinishConfig, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, ConfigFilePromp, Patience, ZZoutro, ResultsVisualization, EnhanceZZOutput, ViewParameters, HeadEmbeded, AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim, GoToAdvanceSettings, CreateExperimentOrganizationExcel, ChooseExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderPopulation, AnalysisOutputFolderClustering, ChooseVideoToTroubleshootSplitVideo, VideoToTroubleshootSplitVideo):
+        for F in (StartPage, SeveralVideos, VideoToAnalyze, ChooseVideoToCreateConfigFileFor, ChooseGeneralExperiment, FreelySwimmingExperiment, WellOrganisation, NbRegionsOfInterest, CircularOrRectangularWells, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, ChooseCircularWellsLeft, ChooseCircularWellsRight, FinishConfig, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, ConfigFilePromp, Patience, ZZoutro, ResultsVisualization, EnhanceZZOutput, ViewParameters, Error, HeadEmbeded, AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim, GoToAdvanceSettings, CreateExperimentOrganizationExcel, ChooseExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderPopulation, AnalysisOutputFolderClustering, ChooseVideoToTroubleshootSplitVideo, VideoToTroubleshootSplitVideo):
             page_name = F.__name__
             frame = F(parent=container, controller=self)
             self.frames[page_name] = frame

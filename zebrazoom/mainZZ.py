@@ -14,6 +14,7 @@ import pickle
 import os
 import shutil
 import time
+import cv2
 
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
@@ -66,6 +67,24 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
   # Getting hyperparameters
   hyperparameters = getHyperparameters(configFile, videoNameWithExt, os.path.join(pathToVideo, videoNameWithExt), argv)
   
+  # Checking first frame and last frame value
+  cap   = cv2.VideoCapture(os.path.join(pathToVideo, videoNameWithExt))
+  nbFrames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+  cap.release()
+  if hyperparameters["firstFrame"] < 0:
+    print("Error: The parameter 'firstFrame' in your configuration file is too small")
+    raise NameError("Error: The parameter 'firstFrame' in your configuration file is too small")
+  if hyperparameters["firstFrame"] > nbFrames:
+    print("Error: The parameter 'firstFrame' in your configuration file is too big")
+    raise NameError("Error: The parameter 'firstFrame' in your configuration file is too big")
+  if (hyperparameters["lastFrame"] < 0) or (hyperparameters["lastFrame"] <= hyperparameters["firstFrame"]):
+    print("Error: The parameter 'lastFrame' in your configuration file is too small")
+    raise NameError("Error: The parameter 'lastFrame' in your configuration file is too small")
+  if hyperparameters["lastFrame"] > nbFrames:
+    print("Error: The parameter 'lastFrame' in your configuration file is too big")
+    raise NameError("Error: The parameter 'lastFrame' in your configuration file is too big")
+  
+  # Setting output folder
   outputFolderVideo = os.path.join(hyperparameters["outputFolder"], videoName)
   
   # Launching GUI algoFollower if necessary

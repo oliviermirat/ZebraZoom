@@ -606,3 +606,12 @@ class ViewParameters(tk.Frame):
               canvas = Canvas(self)
               canvas.create_text(100,10, text="No bout detected for well "+str(numWell))
               canvas.grid(row=2,column=7,rowspan=7)
+
+class Error(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        tk.Label(self, text="There was an error somewhere.").pack(side="top", fill="x", pady=10)
+        tk.Label(self, text="Check the command line to see what the error was.").pack(side="top", fill="x", pady=10)
+        tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()

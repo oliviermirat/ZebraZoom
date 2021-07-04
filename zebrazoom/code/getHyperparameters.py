@@ -101,8 +101,6 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["thresForDetectMovementWithRawVideo"] = getConfig(config, "thresForDetectMovementWithRawVideo", videoPath)
   hyperparameters["minNbPixelForDetectMovementWithRawVideo"] = getConfig(config, "minNbPixelForDetectMovementWithRawVideo", videoPath)
   hyperparameters["frameGapComparision"]        = getConfig(config, "frameGapComparision", videoPath)
-  hyperparameters["firstFrame"]                 = getConfig(config, "firstFrame", videoPath)
-  hyperparameters["lastFrame"]                  = getConfig(config, "lastFrame", videoPath)
   hyperparameters["wellOutputVideoDiameter"]    = getConfig(config, "wellOutputVideoDiameter", videoPath)
   hyperparameters["fillGapFrameNb"]             = getConfig(config, "fillGapFrameNb", videoPath)
   hyperparameters["minPixelDiffForBackExtract"] = getConfig(config, "minPixelDiffForBackExtract", videoPath)
