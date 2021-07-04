@@ -295,7 +295,7 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
         # trackingHeadTailAllAnimals[index_animal_Id_alwaysBeenAt0, i-firstFrame][0][0] = idx_x_Option
         # trackingHeadTailAllAnimals[index_animal_Id_alwaysBeenAt0, i-firstFrame][0][1] = idx_y_Option
   
-  if hyperparameters["findCenterOfAnimalByIterativelyDilating"] == 0:
+  if hyperparameters["findCenterOfAnimalByIterativelyDilating"] == 0 or hyperparameters["trackTail"] == 0:
     for animal_Id in range(0, hyperparameters["nbAnimalsPerWell"]):
       x_curFrame_animal_Id  = trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][0]
       y_curFrame_animal_Id  = trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][1]
