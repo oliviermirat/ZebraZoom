@@ -389,6 +389,20 @@ class ViewParameters(tk.Frame):
           
           ttk.Button(self, text="View video for all wells together", command=lambda: controller.showValidationVideo(-1,0,-1)).grid(row=1,column=1)
           
+          buttonLabel = "View "
+          if controller.graphScaling:
+            buttonLabel = buttonLabel + "Zoomed In "
+          else:
+            buttonLabel = buttonLabel + "Zoomed Out "
+          if controller.visualization == 0:
+            buttonLabel = buttonLabel + "tail angle smoothed"
+          elif controller.visualization == 1:
+            buttonLabel = buttonLabel + "tail angle raw"
+          else:
+            buttonLabel = buttonLabel + "body coordinates"
+          buttonLabel = buttonLabel + " for all bouts combined"
+          ttk.Button(self, text=buttonLabel, command=lambda: controller.showGraphForAllBoutsCombined(numWell, numPoiss, dataRef, controller.visualization, controller.graphScaling)).grid(row=1, column=2, columnspan=5)
+          
           # ttk.Button(self, text="Verify wells detection", command=lambda: controller.showValidationVideo(-1,0,-1)).grid(row=1,column=2, columnspan=2)
           
           label = tk.Label(self, text=name, font="bold", justify=LEFT, pady=10)
@@ -459,6 +473,11 @@ class ViewParameters(tk.Frame):
           tk.Button(self, text="Go to the previous page", command=lambda: controller.show_frame("ResultsVisualization")).grid(row=8,column=1)
           
           tk.Button(self, text="Change Right Side Plot", command=lambda: controller.printSomeResults(e1.get(), e2.get(), e3.get(), True), bg="light green").grid(row=8,column=2, columnspan=2)
+          
+          if controller.graphScaling:
+            tk.Button(self, text="Zoom out Graph", command=lambda: controller.printSomeResults(e1.get(), e2.get(), e3.get(), False, True), bg="light green").grid(row=8,column=3, columnspan=2)
+          else:
+            tk.Button(self, text="Zoom in Graph", command=lambda: controller.printSomeResults(e1.get(), e2.get(), e3.get(), False, True), bg="light green").grid(row=8,column=3, columnspan=2)
           
           if (controller.superstructmodified == 1):
             button1 = tk.Button(self, text="Save SuperStruct", command=lambda: controller.saveSuperStruct(e1.get(),e2.get(),e3.get()))
@@ -531,6 +550,8 @@ class ViewParameters(tk.Frame):
                 
                 f = Figure(figsize=(5,5), dpi=100)
                 a = f.add_subplot(111)
+                if not(controller.graphScaling):
+                  a.set_ylim(-140, 140)
                 
                 if len(tailAngleSmoothed):
                   a.plot([i for i in range(begMove,endMove+1)],tailAngleSmoothed)
@@ -545,6 +566,8 @@ class ViewParameters(tk.Frame):
               
                 f = Figure(figsize=(5,5), dpi=100)
                 a = f.add_subplot(111)
+                if not(controller.graphScaling):
+                  a.set_ylim(-140, 140)
               
                 a.plot([i for i in range(begMove,endMove+1)],tailAngleSmoothed)
                 a.plot([i for i in range(begMove,endMove+1)],[0 for i in range(0,len(tailAngleSmoothed))])
@@ -556,6 +579,12 @@ class ViewParameters(tk.Frame):
                 
                 f = Figure(figsize=(5,5), dpi=100)
                 a = f.add_subplot(111)
+                
+                if not(controller.graphScaling):
+                  lengthX  = dataRef["wellPositions"][numWell]["lengthX"]
+                  lengthY  = dataRef["wellPositions"][numWell]["lengthY"]
+                  a.set_xlim(0, lengthX)
+                  a.set_ylim(0, lengthY)
                 
                 a.plot(headX, headY)
               

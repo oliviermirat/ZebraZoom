@@ -58,6 +58,7 @@ class SampleApp(tk.Tk):
         self.numPoiss = 0
         self.numMouv = 0
         self.visualization = 2
+        self.graphScaling = True
         self.justEnteredViewParameter = 0
         self.dataRef = {}
         self.title_font = tkfont.Font(family='Helvetica', size=18, weight="bold", slant="italic")   
@@ -108,10 +109,11 @@ class SampleApp(tk.Tk):
     def showValidationVideo(self, numWell, zoom, deb):
         GUI_InitialFunctions.showValidationVideo(self, numWell, zoom, deb)
 
-    def printSomeResults(self, numWell, numPoiss, numMouv, changeVisualization=False):
+    def printSomeResults(self, numWell, numPoiss, numMouv, changeVisualization=False, changeScaling=False):
         if changeVisualization:
             self.visualization = int(self.visualization + 1) % 3
-        
+        if changeScaling:
+            self.graphScaling = not(self.graphScaling)
         self.numWell  = int(numWell)
         self.numPoiss = int(numPoiss)
         self.numMouv  = int(numMouv)
@@ -126,7 +128,10 @@ class SampleApp(tk.Tk):
         frame.grid(row=0, column=0, sticky="nsew")
         self.frames['ViewParameters']=frame
         self.show_frame("ViewParameters")
-        
+    
+    def showGraphForAllBoutsCombined(self, numWell, numPoiss, dataRef, visualization, graphScaling):
+        GUI_InitialFunctions.showGraphForAllBoutsCombined(self, numWell, numPoiss, dataRef, visualization, graphScaling)
+
     def exploreResultFolder(self, currentResultFolder):
         GUI_InitialFunctions.exploreResultFolder(self, currentResultFolder)
         

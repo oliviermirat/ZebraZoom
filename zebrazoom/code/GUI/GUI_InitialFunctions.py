@@ -10,6 +10,7 @@ import json
 import subprocess
 import matplotlib
 matplotlib.use("TkAgg")
+import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import math
@@ -155,7 +156,46 @@ def showValidationVideo(self, numWell, zoom, deb):
         videoPath = ""
     
     readValidationVideo(videoPath, self.currentResultFolder, '.txt', int(numWell), int(zoom), int(deb))
+
+
+def showGraphForAllBoutsCombined(self, numWell, numPoiss, dataRef, visualization, graphScaling):
+  
+  if (visualization == 0) or (visualization == 1):
+  
+    tailAngleFinal = []
+    xaxisFinal = []
+    for numMouv in range(0, len(dataRef["wellPoissMouv"][numWell][numPoiss])):
+      if (visualization == 0):
+        tailAngle = dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["TailAngle_smoothed"].copy()
+      else:
+        tailAngle = dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["TailAngle_Raw"].copy()
+      for ind,val in enumerate(tailAngle):
+        tailAngle[ind]=tailAngle[ind]*(180/(math.pi))
+      begMove = dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["BoutStart"]
+      endMove = begMove + len(tailAngle)
+      xaxis = [i for i in range(begMove-1,endMove+1)]
+      tailAngle.append(0)
+      tailAngle.insert(0, 0)
+      tailAngleFinal = tailAngleFinal + tailAngle
+      xaxisFinal = xaxisFinal + xaxis
+    plt.plot(xaxisFinal, tailAngleFinal)
+    if not(graphScaling):
+      plt.ylim(-140, 140)
+    plt.show()
     
+  else:
+    
+    headXFinal = []
+    headYFinal = []
+    for numMouv in range(0, len(dataRef["wellPoissMouv"][numWell][numPoiss])):
+      headXFinal = headXFinal + dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["HeadX"].copy()
+      headYFinal = headYFinal + dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["HeadY"].copy()
+    plt.plot(headXFinal, headYFinal)
+    if not(graphScaling):
+      plt.xlim(0, dataRef["wellPositions"][numWell]["lengthX"])
+      plt.ylim(0, dataRef["wellPositions"][numWell]["lengthY"])
+    plt.show()
+
 
 def exploreResultFolder(self, currentResultFolder):
     
