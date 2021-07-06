@@ -198,6 +198,26 @@ def findCircularWells(frame, videoPath, hyperparameters):
   return wellPositions
 
 
+def saveWellsRepartitionImage(wellPositions, frame, hyperparameters):
+  rectangleTickness = 2
+  lengthY = len(frame)
+  lengthX = len(frame[0])
+  if len(wellPositions):
+    perm1 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
+    perm2 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
+    perm3 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
+    for i in range(0, len(wellPositions)):
+      if hyperparameters["wellsAreRectangles"] or len(hyperparameters["oneWellManuallyChosenTopLeft"]) or int(hyperparameters["multipleROIsDefinedDuringExecution"]) or hyperparameters["noWellDetection"]:
+        topLeft     = (wellPositions[i]['topLeftX'], wellPositions[i]['topLeftY'])
+        bottomRight = (wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'], wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'])
+        color = (int(perm1[i]), int(perm2[i]), int(perm3[i]))
+        frame = cv2.rectangle(frame, topLeft, bottomRight, color, rectangleTickness)
+      else:
+        cv2.circle(frame, (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), 170, (0,0,255), 2)
+      cv2.putText(frame, str(i), (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), cv2.FONT_HERSHEY_SIMPLEX, 4,(255,255,255),2,cv2.LINE_AA)
+  frame = cv2.resize(frame, (int(lengthX/2), int(lengthY/2))) # ???
+  cv2.imwrite(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), "repartition.jpg"), frame )
+
 def findWells(videoPath, hyperparameters):
 
   if hyperparameters["noWellDetection"]:
@@ -205,11 +225,14 @@ def findWells(videoPath, hyperparameters):
     cap = cv2.VideoCapture(videoPath)
     if (cap.isOpened()== False): 
       print("Error opening video stream or file")
+    ret, frame = cap.read()
     frame_width  = int(cap.get(3))
     frame_height = int(cap.get(4))
     l = []
     well = { 'topLeftX' : 0 , 'topLeftY' : 0 , 'lengthX' : frame_width , 'lengthY': frame_height }
     l.append(well)
+    saveWellsRepartitionImage(l, frame, hyperparameters)
+    cap.release()
     return l
   
   # Multiple ROIs defined by user during the execution
@@ -220,6 +243,7 @@ def findWells(videoPath, hyperparameters):
     if (cap.isOpened()== False): 
       print("Error opening video stream or file")
     ret, frame = cap.read()
+    frameForRepartitionJPG = frame.copy()
     [frame, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame, True, 0.85)
     cv2.waitKey(500)
     for i in range(0, int(hyperparameters["nbWells"])):
@@ -256,6 +280,7 @@ def findWells(videoPath, hyperparameters):
       frame_height = int(getRealValueCoefY * (bottomRight[1] - topLeft[1]))
       well = {'topLeftX' : int(getRealValueCoefX * topLeft[0]), 'topLeftY' : int(getRealValueCoefY * topLeft[1]), 'lengthX' : frame_width, 'lengthY': frame_height}
       l.append(well)
+    saveWellsRepartitionImage(l, frameForRepartitionJPG, hyperparameters)
     cap.release()
     return l
   
@@ -271,6 +296,12 @@ def findWells(videoPath, hyperparameters):
     frame_height = bottomRight_Y - topLeft_Y
     well = { 'topLeftX' : topLeft_X , 'topLeftY' : topLeft_Y , 'lengthX' : frame_width , 'lengthY': frame_height }
     l.append(well)
+    cap = cv2.VideoCapture(videoPath)
+    if (cap.isOpened()== False): 
+      print("Error opening video stream or file")
+    ret, frame = cap.read()
+    saveWellsRepartitionImage(l, frame, hyperparameters)
+    cap.release()
     return l
   
   # Circular or rectangular wells
@@ -329,9 +360,6 @@ def findWells(videoPath, hyperparameters):
     
     print("Not enough wells detected, please adjust your configuration file")
   
-  # Creating validation image
-  
-  rectangleTickness = 2
   lengthY = len(frame)
   lengthX = len(frame[0])
   
@@ -350,21 +378,8 @@ def findWells(videoPath, hyperparameters):
       if topLeftY + wellPos_lengthY >= lengthY:
         wellPositions[i]['lengthY'] = lengthY - topLeftY - 1
   
-  if len(wellPositions):
-    perm1 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
-    perm2 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
-    perm3 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
-    for i in range(0, len(wellPositions)):
-      if hyperparameters["wellsAreRectangles"]:
-        topLeft     = (wellPositions[i]['topLeftX'], wellPositions[i]['topLeftY'])
-        bottomRight = (wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'], wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'])
-        color = (int(perm1[i]), int(perm2[i]), int(perm3[i]))
-        frame = cv2.rectangle(frame, topLeft, bottomRight, color, rectangleTickness)
-      else:
-        cv2.circle(frame, (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), 170, (0,0,255), 2)
-      cv2.putText(frame, str(i), (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), cv2.FONT_HERSHEY_SIMPLEX, 4,(255,255,255),2,cv2.LINE_AA)
-  frame = cv2.resize(frame, (int(lengthX/2), int(lengthY/2))) # ???
-  cv2.imwrite(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), "repartition.jpg"), frame )
+  saveWellsRepartitionImage(wellPositions, frame, hyperparameters)
+  
   if hyperparameters["debugFindWells"]:
   
     frame2 = frame.copy()
@@ -378,6 +393,7 @@ def findWells(videoPath, hyperparameters):
     cv2.destroyWindow('Wells Detection')
   
   print("Wells found")
+  
   if hyperparameters["popUpAlgoFollow"]:
     popUpAlgoFollow.prepend("Wells found")
 
