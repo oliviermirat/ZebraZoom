@@ -232,6 +232,7 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters):
   videoDataResults['wellPoissMouv'] = wellPoissMouv
   videoDataResults['wellPositions'] = wellPositions
   videoDataResults['firstFrame']    = hyperparameters["firstFrame"]
+  videoDataResults['lastFrame']    = hyperparameters["lastFrame"]
   
   path = os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'results_' + hyperparameters["videoName"] + '.txt')
   

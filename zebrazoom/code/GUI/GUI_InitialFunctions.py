@@ -167,6 +167,13 @@ def showGraphForAllBoutsCombined(self, numWell, numPoiss, dataRef, visualization
   
     tailAngleFinal = []
     xaxisFinal = []
+    if "firstFrame" in dataRef and "lastFrame" in dataRef:
+      begMove = 0
+      endMove = dataRef["wellPoissMouv"][numWell][numPoiss][0]["BoutStart"]
+      xaxis     = [i for i in range(begMove, endMove)]
+      tailAngle = [0 for i in range(begMove, endMove)]
+      tailAngleFinal = tailAngleFinal + tailAngle
+      xaxisFinal = xaxisFinal + xaxis
     for numMouv in range(0, len(dataRef["wellPoissMouv"][numWell][numPoiss])):
       if (visualization == 0):
         tailAngle = dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["TailAngle_smoothed"].copy()
@@ -181,9 +188,24 @@ def showGraphForAllBoutsCombined(self, numWell, numPoiss, dataRef, visualization
       tailAngle.insert(0, 0)
       tailAngleFinal = tailAngleFinal + tailAngle
       xaxisFinal = xaxisFinal + xaxis
-    plt.plot(xaxisFinal, tailAngleFinal)
+    if "firstFrame" in dataRef and "lastFrame" in dataRef:
+      begMove = endMove
+      endMove = dataRef["lastFrame"] - 1
+      xaxis     = [i for i in range(begMove, endMove)]
+      tailAngle = [0 for i in range(begMove, endMove)]
+      tailAngleFinal = tailAngleFinal + tailAngle
+      xaxisFinal = xaxisFinal + xaxis
+    if "fps" in dataRef:
+      plt.plot([xaxisFinalVal / dataRef["fps"] for xaxisFinalVal in xaxisFinal], tailAngleFinal)
+    else:
+      plt.plot(xaxisFinal, tailAngleFinal)
     if not(graphScaling):
       plt.ylim(-140, 140)
+    if "firstFrame" in dataRef and "lastFrame" in dataRef:
+      if "fps" in dataRef:
+        plt.xlim(dataRef["firstFrame"] / dataRef["fps"], dataRef["lastFrame"] / dataRef["fps"])
+      else:
+        plt.xlim(dataRef["firstFrame"], dataRef["lastFrame"])
     plt.show()
     
   else:
