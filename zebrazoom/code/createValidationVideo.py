@@ -194,6 +194,20 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
     
       ret, frame = cap.read()
       
+      if hyperparameters["outputValidationVideoContrastImprovement"]:
+        frame = 255 - frame
+        frame  = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        quartileChose = hyperparameters["outputValidationVideoContrastImprovementQuartile"]
+        lowVal  = int(np.quantile(frame, quartileChose))
+        highVal = int(np.quantile(frame, 1 - quartileChose))
+        frame[frame < lowVal]  = lowVal
+        frame[frame > highVal] = highVal
+        frame = frame - lowVal
+        mult  = np.max(frame)
+        frame = frame * (255/mult)
+        frame = frame.astype('uint8')
+        frame  = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+      
       for i in range(0, len(infoFrame[l])):
         x = infoFrame[l][i]["x"]
         y = infoFrame[l][i]["y"]

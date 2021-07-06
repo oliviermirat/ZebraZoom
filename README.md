@@ -296,6 +296,10 @@ It can sometimes be useful to preprocess the frames of the video before starting
 If you want to save the output result folder somewhere else than in the default output folder ZZoutput, you can set the parameter "additionalOutputFolder" to the path to a folder where your data will also be saved (in addition to being saved in the ZZoutput folder). Importantly, the path "additionalOutputFolder" must contain (at the end), the name of the final folder that will contain the files repartition.jpg, validationvideo.avi, etc... So for example, if you are analyzing the video Vid1 then you must set "additionalOutputFolder" to "~/Desktop/Vid1" in order for the results to be saved in the "Vid1" located on your Desktop.<br/>
 If the folder "additionalOutputFolder" already exists, nothing will be saved in that folder, except if the parameter "additionalOutputFolderOverwriteIfAlreadyExist" is set to 1 in your configuration file (default value is 0).<br/>
 
+<H4 CLASS="western">Improve contrast on validation video and invert black/white color (can be useful for head embedded fish)</H2>
+If the contrast of your video is poor (for example if for head embedded fish the pixel intensity difference between the tail and the background is low), you can potentially set the parameter "outputValidationVideoContrastImprovement" to 1 in your configuration file: this will save a validation video with a better contrast and invert the black/white color in the video.<br/>
+You can also adjust the amount of "contrast improvement" applied by adjusting the parameter "outputValidationVideoContrastImprovementQuartile": increasing this parameter will increase the amount of "contrast improvement" applied, while decreasing it will decrease the amount of "contrast improvement" applied.<br/>
+
 
 <a name="hyperparametersOtherAdjustments"/>
 

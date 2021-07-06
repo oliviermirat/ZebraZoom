@@ -202,6 +202,8 @@
   
   "additionalOutputFolder" : "",
   "additionalOutputFolderOverwriteIfAlreadyExist" : 0,
+  "outputValidationVideoContrastImprovement" : 0,
+  "outputValidationVideoContrastImprovementQuartile" : 0.01,
   
   "computeEyesHeadingPlot": 0
 }

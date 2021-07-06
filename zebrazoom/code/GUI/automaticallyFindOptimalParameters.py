@@ -191,11 +191,10 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, det
   if realExecThroughGUI:
     self.configFile = configFile
     controller.show_frame("FinishConfig")
+  else:  
+    reference = videoName + '_config.json'
+    with open(reference, 'w') as outfile:
+      json.dump(configFile, outfile)
   
   print("final Config File", configFile)
-  
-  reference = videoName + '_config.json'
-  with open(reference, 'w') as outfile:
-    json.dump(configFile, outfile)
-  
   
