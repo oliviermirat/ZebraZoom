@@ -39,4 +39,7 @@ def getGlobalParameters(curbout, fps, pixelSize):
   else:
     firstBendAmplitude = float('NaN')
   
-  return [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, posY[0], posY[len(posY)-1], np.mean(posY), firstBendTime, firstBendAmplitude]
+  if len(posY) >= 1:
+    return [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, posY[0], posY[len(posY)-1], np.mean(posY), firstBendTime, firstBendAmplitude]
+  else:
+    return [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, 0, 0, 0, firstBendTime, firstBendAmplitude]
