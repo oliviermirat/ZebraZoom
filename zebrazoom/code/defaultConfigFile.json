@@ -1,4 +1,5 @@
 {
+  "videoFPS" : 0,
   "firstFrameForTracking" : -1,
   "adjustDetectMovWithRawVideo" : 0,
   "adjustHeadEmbededTracking" : 0,

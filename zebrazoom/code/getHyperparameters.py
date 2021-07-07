@@ -359,6 +359,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["outputValidationVideoContrastImprovement"] = getConfig(config, "outputValidationVideoContrastImprovement", videoPath)
   hyperparameters["outputValidationVideoContrastImprovementQuartile"] = getConfig(config, "outputValidationVideoContrastImprovementQuartile", videoPath)
   
+  hyperparameters["videoFPS"] = getConfig(config, "videoFPS", videoPath)
+  
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5
