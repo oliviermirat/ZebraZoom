@@ -179,7 +179,7 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, det
   print("Intermediary config file:", configFile)
     
   # Adjusting config file hyperparameters related to bouts detection
-  if (configFile["nbAnimalsPerWell"] == 1) and detectBouts:
+  if detectBouts:
     configFile = boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, wellPositions, videoPath)
   
   # Setting recalculateForegroundImageBasedOnBodyArea to 1 when asked by user to try to obtain better tail tracking
