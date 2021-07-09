@@ -367,7 +367,7 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
     while i < len(argv):
       print("command line hyperparameter change:", argv[i], argv[i+1])
       
-      if not(argv[i] in ["debugPauseBetweenTrackAndParamExtract", "outputFolder", "coverPortionForHeadDetect", "freeSwimmingTailTrackingMethod", "findContourPrecision", "headingCalculationMethod"]):
+      if not(argv[i] in ["debugPauseBetweenTrackAndParamExtract", "outputFolder", "coverPortionForHeadDetect", "freeSwimmingTailTrackingMethod", "findContourPrecision", "headingCalculationMethod", "additionalOutputFolder"]):
         try:
           hyperparameters[argv[i]] = int(argv[i+1])
         except:
