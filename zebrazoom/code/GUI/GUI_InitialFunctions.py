@@ -118,7 +118,7 @@ def launchZebraZoom(self):
       if tk.noValidationVideo == 1:
           tabParams = tabParams + ["createValidationVideo", 0]
       if tk.debugMode == 1:
-        tabParams = tabParams + ["debugTracking", 1, "debugExtractBack", 1, "onlyDoTheTrackingForThisNumberOfFrames", 3, "onlyTrackThisOneWell", 0]
+        tabParams = tabParams + ["debugTracking", 1, "debugExtractBack", 1, "onlyTrackThisOneWell", 0, "lastFrame", 5, "backgroundExtractionForceUseAllVideoFrames", 1, "noBoutsDetection", 1, "thresForDetectMovementWithRawVideo", 0, "noChecksForBoutSelectionInExtractParams", 1]
       if tk.findMultipleROIs == 1:
         tabParams = tabParams + ["exitAfterWellsDetection", 1, "saveWellPositionsToBeReloadedNoMatterWhat", 1]
       try:
