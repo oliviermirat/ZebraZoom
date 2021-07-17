@@ -153,16 +153,25 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
     
     if (numWell != -1):
       img = img[int(y):int(y+lengthY), int(x):int(x+lengthX)]
-      progress = ( l / max_l ) * lengthX
-      cv2.line(img, (0,int(lengthY-7)), (int(lengthX),int(lengthY-7)), (255,255,255), 10)
-      cv2.circle(img, (int(progress), int(lengthY-6)), 5, (0, 0, 255), -1)
+      if lengthX > 100 and lengthY > 100:
+        progress = ( l / max_l ) * lengthX
+        cv2.line(img, (0,int(lengthY-7)), (int(lengthX),int(lengthY-7)), (255,255,255), 10)
+        cv2.circle(img, (int(progress), int(lengthY-6)), 5, (0, 0, 255), -1)
     else:
-      progress = ( l / max_l ) * nx
-      cv2.line(img,(0,ny-7),(nx,ny-7), (255,255,255), 10)
-      cv2.circle(img, (int(progress), int(ny-6)), 5, (0, 0, 255), -1)
+      if lengthX > 100 and lengthY > 100:
+        progress = ( l / max_l ) * nx
+        cv2.line(img,(0,ny-7),(nx,ny-7), (255,255,255), 10)
+        cv2.circle(img, (int(progress), int(ny-6)), 5, (0, 0, 255), -1)
     
-    font = cv2.FONT_HERSHEY_SIMPLEX
-    cv2.putText(img,str(l + supstruct["firstFrame"] - 1),(int(lengthX-110), int(lengthY-30)),font,1,(0,255,0))
+    if lengthX > 100 and lengthY > 100:
+      font = cv2.FONT_HERSHEY_SIMPLEX
+      cv2.putText(img,str(l + supstruct["firstFrame"] - 1),(int(lengthX-110), int(lengthY-30)),font,1,(0,255,0))
+    else:
+      blank_image = np.zeros((len(img)+30, len(img[0]), 3), np.uint8)
+      blank_image[0:len(img), 0:len(img[0])] = img
+      img = blank_image
+      font = cv2.FONT_HERSHEY_SIMPLEX
+      cv2.putText(img, str(l + supstruct["firstFrame"] - 1), (int(0), int(lengthY+25)), font, 1, (0,255,0))
     
     vertical2   = vertical   - vertical   * 0.12
     horizontal2 = horizontal - horizontal * 0.015

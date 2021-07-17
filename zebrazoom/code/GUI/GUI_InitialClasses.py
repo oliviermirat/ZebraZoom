@@ -124,9 +124,14 @@ class SeveralVideos(tk.Frame):
         tk.Label(self, text="", font=controller.title_font).pack()
         
         tk.Button(self, text="Only select the regions of interest", bg="light yellow", command=lambda: controller.show_frame("FolderMultipleROIInitialSelect")).pack()
+        tk.Label(self, text="This is for the 'Multiple rectangular regions of interest chosen at runtime' option.").pack()
         tk.Label(self, text="This will allow you to only select the ROIs, you can run the tracking on multiple videos without interruptions afterwards.").pack()
         tk.Label(self, text="", font=controller.title_font).pack()
-                            
+        
+        tk.Button(self, text="'Group of multiple same size and shape equally spaced wells' coordinates pre-selection", bg="light yellow", command=lambda: controller.show_frame("FolderMultipleROIInitialSelect")).pack()
+        tk.Label(self, text="This will allow you to only select the coordinates, you can run the tracking on multiple videos without interruptions afterwards.").pack()
+        tk.Label(self, text="", font=controller.title_font).pack()
+        
         tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
         
         tk.Label(self, text="", pady=0).pack()
@@ -497,8 +502,8 @@ class ViewParameters(tk.Frame):
               if controller.visualization == 1 and not("TailAngle_Raw" in dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]):
                   controller.visualization = 2
               
-              if controller.visualization == 2 and not((len(np.unique(dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["HeadX"])) > 1) and (len(np.unique(dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["HeadY"])) > 1)):
-                  controller.visualization = 0
+              # if controller.visualization == 2 and not((len(np.unique(dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["HeadX"])) > 1) and (len(np.unique(dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["HeadY"])) > 1)):
+                  # controller.visualization = 0
               
               if controller.visualization == 0:
                 label = tk.Label(self, text="Tail Angle Smoothed and amplitudes for well "+str(numWell)+", fish "+str(numPoiss)+", bout "+str(numMouv), font=LARGE_FONT)

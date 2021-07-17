@@ -361,6 +361,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["videoFPS"] = getConfig(config, "videoFPS", videoPath)
   
+  hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"] = getConfig(config, "groupOfMultipleSameSizeAndShapeEquallySpacedWells", videoPath)
+  
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5

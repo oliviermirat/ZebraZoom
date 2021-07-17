@@ -57,6 +57,7 @@
   "extractAdvanceZebraParameters" : 1,
   "takeTheHeadClosestToTheCenter" : 0,
   
+  "groupOfMultipleSameSizeAndShapeEquallySpacedWells" : 0,
   "wellsAreRectangles" : 0,
   "findRectangleWellArea"                : 165000,
   "rectangleWellAreaImageThreshold"      : 105,

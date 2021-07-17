@@ -171,7 +171,7 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, det
   
   # # # Overwritting some of the hyperparameters from hyperparameters in the initial configFile
   
-  listOfParametersToOverwrite = ["extractAdvanceZebraParameters", "nbWells", "nbRowsOfWells", "nbWellsPerRows", "minWellDistanceForWellDetection", "wellOutputVideoDiameter", "wellsAreRectangles", "rectangleWellAreaImageThreshold", "rectangleWellErodeDilateKernelSize", "findRectangleWellArea", "rectangularWellsInvertBlackWhite", "noWellDetection", "oneWellManuallyChosenTopLeft", "oneWellManuallyChosenBottomRight", "multipleROIsDefinedDuringExecution"]
+  listOfParametersToOverwrite = ["extractAdvanceZebraParameters", "nbWells", "nbRowsOfWells", "nbWellsPerRows", "minWellDistanceForWellDetection", "wellOutputVideoDiameter", "wellsAreRectangles", "rectangleWellAreaImageThreshold", "rectangleWellErodeDilateKernelSize", "findRectangleWellArea", "rectangularWellsInvertBlackWhite", "noWellDetection", "oneWellManuallyChosenTopLeft", "oneWellManuallyChosenBottomRight", "multipleROIsDefinedDuringExecution", "groupOfMultipleSameSizeAndShapeEquallySpacedWells"]
   for parameter in listOfParametersToOverwrite:
     if parameter in initialConfigFile:
       configFile[parameter] = initialConfigFile[parameter]

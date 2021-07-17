@@ -207,16 +207,17 @@ def saveWellsRepartitionImage(wellPositions, frame, hyperparameters):
     perm2 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
     perm3 = np.random.permutation(len(wellPositions)) * int(255/len(wellPositions))
     for i in range(0, len(wellPositions)):
-      if hyperparameters["wellsAreRectangles"] or len(hyperparameters["oneWellManuallyChosenTopLeft"]) or int(hyperparameters["multipleROIsDefinedDuringExecution"]) or hyperparameters["noWellDetection"]:
+      if hyperparameters["wellsAreRectangles"] or len(hyperparameters["oneWellManuallyChosenTopLeft"]) or int(hyperparameters["multipleROIsDefinedDuringExecution"]) or hyperparameters["noWellDetection"] or hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"]:
         topLeft     = (wellPositions[i]['topLeftX'], wellPositions[i]['topLeftY'])
         bottomRight = (wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'], wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'])
         color = (int(perm1[i]), int(perm2[i]), int(perm3[i]))
         frame = cv2.rectangle(frame, topLeft, bottomRight, color, rectangleTickness)
       else:
         cv2.circle(frame, (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), 170, (0,0,255), 2)
-      cv2.putText(frame, str(i), (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), cv2.FONT_HERSHEY_SIMPLEX, 4,(255,255,255),2,cv2.LINE_AA)
+      cv2.putText(frame, str(i), (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2,cv2.LINE_AA)
   frame = cv2.resize(frame, (int(lengthX/2), int(lengthY/2))) # ???
   cv2.imwrite(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), "repartition.jpg"), frame )
+  return frame
 
 def findWells(videoPath, hyperparameters):
 
@@ -235,9 +236,78 @@ def findWells(videoPath, hyperparameters):
     cap.release()
     return l
   
+  # Group of multiple same size and shape equally spaced wells
+  
+  if int(hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"]):
+    
+    cap = cv2.VideoCapture(videoPath)
+    if (cap.isOpened()== False): 
+      print("Error opening video stream or file")
+    ret, frame = cap.read()
+    frameForRepartitionJPG = frame.copy()
+    [frame, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame, True, 0.85)
+    cv2.waitKey(500)
+    answerYes = False
+    
+    while not(answerYes):
+      position = ["top left", "top right", "bottom left"]
+      posCoord = {}
+      for pos in position:
+        WINDOW_NAME = "Click on the " + pos + " of the group of wells"
+        cvui.init(WINDOW_NAME)
+        cv2.moveWindow(WINDOW_NAME, 0,0)
+        cvui.imshow(WINDOW_NAME, frame)
+        while not(cvui.mouse(cvui.CLICK)):
+          cursor = cvui.mouse()
+          cv2.waitKey(20)
+        posCoord[pos] = np.array([cursor.x, cursor.y])
+        cv2.destroyWindow(WINDOW_NAME)
+
+      nbWellsPerRows = hyperparameters["nbWellsPerRows"]
+      nbRowsOfWells  = hyperparameters["nbRowsOfWells"]
+      
+      l = []
+      
+      vectorX = (posCoord["top right"] - posCoord["top left"]) / nbWellsPerRows
+      vectorY = (posCoord["bottom left"] - posCoord["top left"]) / nbRowsOfWells
+      
+      for row in range(0, nbRowsOfWells):
+        for col in range(0, nbWellsPerRows):
+        
+          wellTopLeft     = posCoord["top left"] + col * vectorX + row * vectorY
+          wellTopRight    = wellTopLeft + vectorX
+          wellBottomLeft  = wellTopLeft + vectorY
+          wellBottomRight = wellTopLeft + vectorX + vectorY
+          
+          minX = getRealValueCoefX * min([wellTopLeft[0], wellTopRight[0], wellBottomLeft[0], wellBottomRight[0]])
+          minY = getRealValueCoefY * min([wellTopLeft[1], wellTopRight[1], wellBottomLeft[1], wellBottomRight[1]])
+          maxX = getRealValueCoefX * max([wellTopLeft[0], wellTopRight[0], wellBottomLeft[0], wellBottomRight[0]])
+          maxY = getRealValueCoefY * max([wellTopLeft[1], wellTopRight[1], wellBottomLeft[1], wellBottomRight[1]])
+          
+          well = {'topLeftX' : int(minX), 'topLeftY' : int(minY), 'lengthX' : int(maxX - minX), 'lengthY': int(maxY - minY)}
+          l.append(well)
+      
+      possibleRepartition = saveWellsRepartitionImage(l, frameForRepartitionJPG.copy(), hyperparameters)
+      
+      WINDOW_NAME = "Is this a good repartition of wells?"
+      cvui.init(WINDOW_NAME)
+      cv2.moveWindow(WINDOW_NAME, 0,0)
+      
+      answerNo  = False
+      while not(answerYes) and not(answerNo):
+        answerYes = cvui.button(possibleRepartition, 10, 10, "Yes, this is a good repartition.")
+        answerNo  = cvui.button(possibleRepartition, 10, 40, "No, I want to try again.")
+        cvui.imshow(WINDOW_NAME, possibleRepartition)
+        cv2.waitKey(20)
+      cv2.destroyAllWindows()
+    
+    cap.release()
+    return l
+  
   # Multiple ROIs defined by user during the execution
   
   if int(hyperparameters["multipleROIsDefinedDuringExecution"]):
+    
     l = []
     cap = cv2.VideoCapture(videoPath)
     if (cap.isOpened()== False): 

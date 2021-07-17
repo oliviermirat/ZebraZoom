@@ -164,8 +164,8 @@ class SampleApp(tk.Tk):
     def chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, freeZebra2):
         configFilePrepareFunctions.chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, freeZebra2)
         
-    def wellOrganisation(self, controller, circular, rectangular, roi, other, multipleROIs):
-        configFilePrepareFunctions.wellOrganisation(self, controller, circular, rectangular, roi, other, multipleROIs)
+    def wellOrganisation(self, controller, circular, rectangular, roi, other, multipleROIs, groupSameSizeAndShapeEquallySpacedWells):
+        configFilePrepareFunctions.wellOrganisation(self, controller, circular, rectangular, roi, other, multipleROIs, groupSameSizeAndShapeEquallySpacedWells)
 
     def regionsOfInterest(self, controller, nbwells):
         configFilePrepareFunctions.regionsOfInterest(self, controller, nbwells)

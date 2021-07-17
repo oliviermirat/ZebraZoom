@@ -223,10 +223,10 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
             else:
               cv2.line(frame,(int(x),int(y)),(int(x-250*math.cos(heading)),int(y-250*math.sin(heading))), (255,0,0), trackingPointSizeDisplay)
           
-          if ("numMouv" in infoFrame[l][i]) and ("numWell" in infoFrame[l][i]):
-            numMouv = infoFrame[l][i]["numMouv"]
-            numWell = infoFrame[l][i]["numWell"]
-            cv2.putText(frame,str(numMouv),(15+infoWells[numWell][0],25+infoWells[numWell][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255))
+          # if ("numMouv" in infoFrame[l][i]) and ("numWell" in infoFrame[l][i]):
+            # numMouv = infoFrame[l][i]["numMouv"]
+            # numWell = infoFrame[l][i]["numWell"]
+            # cv2.putText(frame,str(numMouv),(15+infoWells[numWell][0],25+infoWells[numWell][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255))
 
         cv2.circle(frame, (int(x),int(y)), size, (red,green,blue), -1)
         

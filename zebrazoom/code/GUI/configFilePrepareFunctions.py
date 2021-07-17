@@ -84,63 +84,68 @@ def chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophil
     self.configFile["freeSwimmingTailTrackingMethod"] = "none"
     controller.show_frame("WellOrganisation")
 
-def wellOrganisation(self, controller, circular, rectangular, roi, other, multipleROIs):
+def wellOrganisation(self, controller, circular, rectangular, roi, other, multipleROIs, groupSameSizeAndShapeEquallySpacedWells):
   if multipleROIs:
     controller.show_frame("NbRegionsOfInterest")
   else:
-    if rectangular:
-      self.shape = 'rectangular'
-      self.configFile["wellsAreRectangles"] = 1
+    if groupSameSizeAndShapeEquallySpacedWells:
+      self.shape = 'groupSameSizeAndShapeEquallySpacedWells'
+      self.configFile["groupOfMultipleSameSizeAndShapeEquallySpacedWells"] = 1
       controller.show_frame("CircularOrRectangularWells")
     else:
-      if circular and self.organism != 'drosoorrodent': # should remove the self.organism != 'drosoorrodent' at some point
-        self.shape = 'circular'
+      if rectangular:
+        self.shape = 'rectangular'
+        self.configFile["wellsAreRectangles"] = 1
         controller.show_frame("CircularOrRectangularWells")
       else:
-        self.shape = 'other'
-        if roi:
-          cap = cv2.VideoCapture(self.videoToCreateConfigFileFor)
-          cap.set(1, 10)
-          ret, frame = cap.read()
-          frame2 = frame.copy()
-          [frame2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame2, True, 0.85)
-          
-          WINDOW_NAME = "Click on the top left of the region of interest"
-          cvui.init(WINDOW_NAME)
-          cv2.moveWindow(WINDOW_NAME, 0,0)
-          cvui.imshow(WINDOW_NAME, frame2)
-          while not(cvui.mouse(cvui.CLICK)):
-            cursor = cvui.mouse()
-            frame3 = frame2.copy()
-            frame3 = cv2.line(frame3, (cursor.x - 2000, cursor.y), (cursor.x + 2000, cursor.y), (0, 0, 255), 2)
-            frame3 = cv2.line(frame3, (cursor.x, cursor.y - 2000), (cursor.x, cursor.y + 2000), (0, 0, 255), 2)
-            cvui.imshow(WINDOW_NAME, frame3)
-            if cv2.waitKey(20) == 27:
-              break
-          self.configFile["oneWellManuallyChosenTopLeft"] = [int(getRealValueCoefX * cursor.x), int(getRealValueCoefY * cursor.y)]
-          cv2.destroyAllWindows()
-          
-          WINDOW_NAME = "Click on the bottom right of the region of interest"
-          cvui.init(WINDOW_NAME)
-          cv2.moveWindow(WINDOW_NAME, 0,0)
-          cvui.imshow(WINDOW_NAME, frame2)
-          while not(cvui.mouse(cvui.CLICK)):
-            cursor = cvui.mouse()
-            frame3 = frame2.copy()
-            frame3 = cv2.line(frame3, (cursor.x - 2000, cursor.y), (cursor.x + 2000, cursor.y), (0, 0, 255), 2)
-            frame3 = cv2.line(frame3, (cursor.x, cursor.y - 2000), (cursor.x, cursor.y + 2000), (0, 0, 255), 2)
-            cvui.imshow(WINDOW_NAME, frame3)
-            if cv2.waitKey(20) == 27:
-              break
-          self.configFile["oneWellManuallyChosenBottomRight"] = [int(getRealValueCoefX * cursor.x), int(getRealValueCoefY * cursor.y)]
-          cv2.destroyAllWindows()
-          
-          self.configFile["nbWells"] = 1
-          chooseBeginningAndEndOfVideo(self, controller)
+        if circular and self.organism != 'drosoorrodent': # should remove the self.organism != 'drosoorrodent' at some point
+          self.shape = 'circular'
+          controller.show_frame("CircularOrRectangularWells")
         else:
-          self.configFile["noWellDetection"] = 1
-          self.configFile["nbWells"] = 1
-          chooseBeginningAndEndOfVideo(self, controller)
+          self.shape = 'other'
+          if roi:
+            cap = cv2.VideoCapture(self.videoToCreateConfigFileFor)
+            cap.set(1, 10)
+            ret, frame = cap.read()
+            frame2 = frame.copy()
+            [frame2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame2, True, 0.85)
+            
+            WINDOW_NAME = "Click on the top left of the region of interest"
+            cvui.init(WINDOW_NAME)
+            cv2.moveWindow(WINDOW_NAME, 0,0)
+            cvui.imshow(WINDOW_NAME, frame2)
+            while not(cvui.mouse(cvui.CLICK)):
+              cursor = cvui.mouse()
+              frame3 = frame2.copy()
+              frame3 = cv2.line(frame3, (cursor.x - 2000, cursor.y), (cursor.x + 2000, cursor.y), (0, 0, 255), 2)
+              frame3 = cv2.line(frame3, (cursor.x, cursor.y - 2000), (cursor.x, cursor.y + 2000), (0, 0, 255), 2)
+              cvui.imshow(WINDOW_NAME, frame3)
+              if cv2.waitKey(20) == 27:
+                break
+            self.configFile["oneWellManuallyChosenTopLeft"] = [int(getRealValueCoefX * cursor.x), int(getRealValueCoefY * cursor.y)]
+            cv2.destroyAllWindows()
+            
+            WINDOW_NAME = "Click on the bottom right of the region of interest"
+            cvui.init(WINDOW_NAME)
+            cv2.moveWindow(WINDOW_NAME, 0,0)
+            cvui.imshow(WINDOW_NAME, frame2)
+            while not(cvui.mouse(cvui.CLICK)):
+              cursor = cvui.mouse()
+              frame3 = frame2.copy()
+              frame3 = cv2.line(frame3, (cursor.x - 2000, cursor.y), (cursor.x + 2000, cursor.y), (0, 0, 255), 2)
+              frame3 = cv2.line(frame3, (cursor.x, cursor.y - 2000), (cursor.x, cursor.y + 2000), (0, 0, 255), 2)
+              cvui.imshow(WINDOW_NAME, frame3)
+              if cv2.waitKey(20) == 27:
+                break
+            self.configFile["oneWellManuallyChosenBottomRight"] = [int(getRealValueCoefX * cursor.x), int(getRealValueCoefY * cursor.y)]
+            cv2.destroyAllWindows()
+            
+            self.configFile["nbWells"] = 1
+            chooseBeginningAndEndOfVideo(self, controller)
+          else:
+            self.configFile["noWellDetection"] = 1
+            self.configFile["nbWells"] = 1
+            chooseBeginningAndEndOfVideo(self, controller)
 
 
 def regionsOfInterest(self, controller, nbwells):
@@ -192,7 +197,10 @@ def circularOrRectangularWells(self, controller, nbwells, nbRowsOfWells, nbWells
   if self.shape == 'circular':
     controller.show_frame("ChooseCircularWellsLeft")
   else:
-    rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows)
+    if self.shape == 'groupSameSizeAndShapeEquallySpacedWells':
+      chooseBeginningAndEndOfVideo(self, controller)
+    else:
+      rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows)
 
 
 def chooseCircularWellsLeft(self, controller):

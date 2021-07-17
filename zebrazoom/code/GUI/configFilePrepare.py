@@ -121,13 +121,16 @@ class WellOrganisation(tk.Frame):
     roi = IntVar()
     Checkbutton(self, text="One rectangular region of interest fixed in the configuration file", variable=roi).pack()
     
+    groupSameSizeAndShapeEquallySpacedWells = IntVar()
+    Checkbutton(self, text="Group of multiple same size and shape equally spaced wells", variable=groupSameSizeAndShapeEquallySpacedWells).pack()
+    
     circular = IntVar()
     Checkbutton(self, text="Circular wells (beta version)", variable=circular).pack()
     
     rectangular = IntVar()
     Checkbutton(self, text="Rectangular wells (beta version)", variable=rectangular).pack()
     
-    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.wellOrganisation(controller, circular.get(), rectangular.get(), roi.get(), other.get(), multipleROIs.get())).pack()
+    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.wellOrganisation(controller, circular.get(), rectangular.get(), roi.get(), other.get(), multipleROIs.get(), groupSameSizeAndShapeEquallySpacedWells.get())).pack()
     
     tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
