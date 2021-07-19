@@ -7,7 +7,7 @@ import os
 
 def extractZZParametersFromTailAngle(videoName, tailAngle):
   
-  hyperparameters = getHyperparameters({"noChecksForBoutSelectionInExtractParams": 1, "windowForLocalBendMinMaxFind": 3, "thresAngleBoutDetect": 0.1, "nbWells": 1}, videoName + '.avi', '', [])
+  [hyperparameters, config] = getHyperparameters({"noChecksForBoutSelectionInExtractParams": 1, "windowForLocalBendMinMaxFind": 3, "thresAngleBoutDetect": 0.1, "nbWells": 1}, videoName + '.avi', '', [])
 
   outputFolderVideo = os.path.join(hyperparameters["outputFolder"], videoName)
   

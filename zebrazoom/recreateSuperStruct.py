@@ -17,7 +17,7 @@ def recreateSuperStruct(pathToVideo, videoName, videoExt, configFile, argv):
   videoNameWithExt = videoName + '.' + videoExt
 
   # Getting hyperparameters
-  hyperparameters = getHyperparameters(configFile, videoNameWithExt, pathToVideo + videoNameWithExt, argv)
+  [hyperparameters, configFile] = getHyperparameters(configFile, videoNameWithExt, pathToVideo + videoNameWithExt, argv)
     
   # Saving the configuration file used
   shutil.copyfile(configFile, hyperparameters["outputFolder"] + videoName + '/configUsed.json')

@@ -23,6 +23,7 @@
   "debugEyeTrackingAdvanced" : 0,
   "onlyDoTheTrackingForThisNumberOfFrames": 0,
   "createValidationVideo" : 1,
+  "copyOriginalVideoToOutputFolderForValidation" : 0,
   "calculateAllTailAngles" : 0,
   "freqAlgoPosFollow" : 0,
   "popUpAlgoFollow" : 0,
@@ -33,6 +34,7 @@
   "backgroundExtractionForceUseAllVideoFrames" : 0,
   "exitAfterBackgroundExtraction" : 0,
   "exitAfterWellsDetection" : 0,
+  "fasterMultiprocessing" : 0,
   
   "setPixDiffBoutDetectParameters" : 0,
   

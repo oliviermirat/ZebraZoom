@@ -27,7 +27,7 @@ def getTailExtremityFirstFrame(pathToVideo, videoName, videoExt, configFile, arg
   videoPath = pathToVideo + videoName
 
   # Getting hyperparameters
-  hyperparameters = getHyperparameters(configFile, videoName, videoPath, argv)
+  [hyperparameters, config] = getHyperparameters(configFile, videoName, videoPath, argv)
   
   frameNumber = hyperparameters["firstFrame"]
   videoNames = [videoName]

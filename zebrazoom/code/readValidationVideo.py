@@ -1,3 +1,4 @@
+from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 import cv2
 import json
 import numpy as np
@@ -8,7 +9,9 @@ from pathlib import Path
 
 def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start):
 
-  print("configFilePath:",configFilePath)
+  with open('./zebrazoom/ZZoutput/' + folderName + '/configUsed.json') as f:
+    configTemp = json.load(f)
+  hyperparameters = getHyperparametersSimple(configTemp)
   
   root = tk.Tk()
   horizontal = root.winfo_screenwidth()
@@ -122,10 +125,28 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   
   imageWaitTime = 1
   
+  if hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
+    frameToPosToPlot = {}
+    for frameNumber in range(l, max_l + 400):
+      frameToPosToPlot[frameNumber] = []
+    for numWell in range(0, len(supstruct["wellPoissMouv"])):
+      for numAnimal in range(0, len(supstruct["wellPoissMouv"][numWell])):
+        for numBout in range(0, len(supstruct["wellPoissMouv"][numWell][numAnimal])):
+          boutStart = supstruct["wellPoissMouv"][numWell][numAnimal][numAnimal]["BoutStart"]
+          for i in range(0, len(supstruct["wellPoissMouv"][numWell][numAnimal][numAnimal]["HeadX"])):
+            if boutStart + i in frameToPosToPlot:
+              xPos = int(supstruct["wellPositions"][numWell]["topLeftX"] + supstruct["wellPoissMouv"][numWell][numAnimal][numAnimal]["HeadX"][i])
+              yPos = int(supstruct["wellPositions"][numWell]["topLeftY"] + supstruct["wellPoissMouv"][numWell][numAnimal][numAnimal]["HeadY"][i])
+              frameToPosToPlot[boutStart + i].append([xPos, yPos])
+  
   while (l < max_l + 400):
     
     cap.set(1, l )
     ret, img = cap.read()
+    
+    if hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
+      for pos in frameToPosToPlot[l]:
+        cv2.circle(img, (pos[0], pos[1]), 1, (0, 255, 0), -1)
     
     if ((numWell != -1) and (zoom)):
       

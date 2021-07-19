@@ -56,7 +56,8 @@ def headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1
             headPosition = [xHB_TN + 100, y]
           
           # Calculate heading for frame i
-          [heading, lastFirstTheta] = calculateHeading(x, y, i, thresh1, thresh2, takeTheHeadClosestToTheCenter, hyperparameters)
+          if type(thresh1) != int:
+            [heading, lastFirstTheta] = calculateHeading(x, y, i, thresh1, thresh2, takeTheHeadClosestToTheCenter, hyperparameters)
           
           if (hyperparameters["headEmbededTeresaNicolson"] == 1):
             heading = 0

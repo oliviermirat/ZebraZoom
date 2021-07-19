@@ -8,6 +8,7 @@ from zebrazoom.code.createValidationVideo import createValidationVideo
 from zebrazoom.code.getHyperparameters import getHyperparameters
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 from zebrazoom.code.dataPostProcessing.dataPostProcessing import dataPostProcessing
+from zebrazoom.code.fasterMultiprocessing import fasterMultiprocessing
 
 import sys
 import pickle
@@ -15,6 +16,7 @@ import os
 import shutil
 import time
 import cv2
+import json
 
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
@@ -65,7 +67,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
   previouslyAcquiredTrackingDataForDebug = []
 
   # Getting hyperparameters
-  hyperparameters = getHyperparameters(configFile, videoNameWithExt, os.path.join(pathToVideo, videoNameWithExt), argv)
+  [hyperparameters, configFile] = getHyperparameters(configFile, videoNameWithExt, os.path.join(pathToVideo, videoNameWithExt), argv)
   
   # Checking first frame and last frame value
   cap   = cv2.VideoCapture(os.path.join(pathToVideo, videoNameWithExt))
@@ -114,9 +116,9 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
           time.sleep(0.1)
     
   # Saving the configuration file used
-  if type(configFile) == str:
-    print(os.path.join(outputFolderVideo, 'configUsed.json'), outputFolderVideo)
-    shutil.copyfile(configFile, os.path.join(outputFolderVideo, 'configUsed.json'))
+  with open(os.path.join(outputFolderVideo, 'configUsed.json'), 'w') as outfile:
+    json.dump(configFile, outfile)
+  
 
   # Getting well positions
   if hyperparameters["headEmbeded"]:
@@ -163,35 +165,42 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     raise ValueError
   
   # Tracking and extraction of parameters
-  if globalVariables["noMultiprocessing"] == 0:
-    if hyperparameters["onlyTrackThisOneWell"] == -1:
-      # for all wells, in parallel
-      processes = []
-      for wellNumber in range(0,hyperparameters["nbWells"]):
-        p = Process(target=getParametersForWell, args=(os.path.join(pathToVideo, videoNameWithExt), background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName))
-        p.start()
-        processes.append(p)
-    else:
-      # for just one well
-      processes = [1]
-      getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, hyperparameters["onlyTrackThisOneWell"], wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName)
+  if hyperparameters["fasterMultiprocessing"] == 1:
+    processes = -1
+    output2 = fasterMultiprocessing(os.path.join(pathToVideo, videoNameWithExt), background, wellPositions, [], hyperparameters, videoName)
   else:
-    if hyperparameters["onlyTrackThisOneWell"] == -1:
-      processes = [1 for i in range(0, hyperparameters["nbWells"])]
-      for wellNumber in range(0,hyperparameters["nbWells"]):
-        getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName)
+    if globalVariables["noMultiprocessing"] == 0:
+      if hyperparameters["onlyTrackThisOneWell"] == -1:
+        # for all wells, in parallel
+        processes = []
+        for wellNumber in range(0,hyperparameters["nbWells"]):
+          p = Process(target=getParametersForWell, args=(os.path.join(pathToVideo, videoNameWithExt), background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName))
+          p.start()
+          processes.append(p)
+      else:
+        # for just one well
+        processes = [1]
+        getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, hyperparameters["onlyTrackThisOneWell"], wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName)
     else:
-      processes = [1]
-      getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, hyperparameters["onlyTrackThisOneWell"], wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName)
+      if hyperparameters["onlyTrackThisOneWell"] == -1:
+        processes = [1 for i in range(0, hyperparameters["nbWells"])]
+        for wellNumber in range(0,hyperparameters["nbWells"]):
+          getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName)
+      else:
+        processes = [1]
+        getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, hyperparameters["onlyTrackThisOneWell"], wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName)
   
   # Sorting wells after the end of the parallelized calls end
-  dataPerWellUnsorted = [output.get() for p in processes]
+  if processes != -1:
+    dataPerWellUnsorted = [output.get() for p in processes]
+  else:
+    dataPerWellUnsorted = output2
   paramDataPerWell = [[]] * (hyperparameters["nbWells"])
   trackingDataPerWell = [[]] * (hyperparameters["nbWells"])
   for data in dataPerWellUnsorted:
     paramDataPerWell[data[0]]    = data[1]
     trackingDataPerWell[data[0]] = data[2]
-  if hyperparameters["onlyTrackThisOneWell"] == -1 and globalVariables["noMultiprocessing"] == 0:
+  if processes != -1 and hyperparameters["onlyTrackThisOneWell"] == -1 and globalVariables["noMultiprocessing"] == 0:
     for p in processes:
       p.join()
   if (hyperparameters["freqAlgoPosFollow"] != 0):
@@ -210,8 +219,11 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     superStruct = createSuperStruct(paramDataPerWell, wellPositions, hyperparameters)
   
     # Creating validation video
-    if hyperparameters["createValidationVideo"]:
-      infoFrame = createValidationVideo(os.path.join(pathToVideo, videoNameWithExt), superStruct, hyperparameters)
+    if hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
+      shutil.copyfile(os.path.join(pathToVideo, videoNameWithExt), os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), hyperparameters["videoName"] + '.avi'))
+    else:
+      if hyperparameters["createValidationVideo"]:
+        infoFrame = createValidationVideo(os.path.join(pathToVideo, videoNameWithExt), superStruct, hyperparameters)
     
     # Various post-processing options depending on configuration file choices
     dataPostProcessing(outputFolderVideo, superStruct, hyperparameters, videoName)
