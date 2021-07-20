@@ -9,7 +9,7 @@ from pathlib import Path
 
 def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start):
 
-  with open('./zebrazoom/ZZoutput/' + folderName + '/configUsed.json') as f:
+  with open(os.path.join(os.path.join(os.path.join('zebrazoom', 'ZZoutput'), folderName), 'configUsed.json')) as f:
     configTemp = json.load(f)
   hyperparameters = getHyperparametersSimple(configTemp)
   

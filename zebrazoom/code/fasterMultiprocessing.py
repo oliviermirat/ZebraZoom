@@ -2,6 +2,7 @@ from zebrazoom.code.trackingFolder.tracking import tracking
 from zebrazoom.code.extractParameters import extractParameters
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.headTrackingHeadingCalculation import headTrackingHeadingCalculation
 from zebrazoom.code.trackingFolder.postProcessMultipleTrajectories import postProcessMultipleTrajectories
+from zebrazoom.code.popUpAlgoFollow import prepend
 import multiprocessing as mp
 from multiprocessing import Process
 import cv2
