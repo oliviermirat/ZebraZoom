@@ -8,10 +8,6 @@ import os
 from pathlib import Path
 
 def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start):
-
-  with open(os.path.join(os.path.join(os.path.join('zebrazoom', 'ZZoutput'), folderName), 'configUsed.json')) as f:
-    configTemp = json.load(f)
-  hyperparameters = getHyperparametersSimple(configTemp)
   
   root = tk.Tk()
   horizontal = root.winfo_screenwidth()
@@ -31,6 +27,10 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
   initialPath  = Path(cur_dir_path)
   initialPath  = initialPath.parent
+  
+  with open(os.path.join(initialPath, os.path.join(s1, os.path.join(s2, 'configUsed.json')))) as f:
+    configTemp = json.load(f)
+  hyperparameters = getHyperparametersSimple(configTemp)
   
   videoPath   = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, s4 + s5)))
   resultsPath = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, s3b + s4 + s5b)))
