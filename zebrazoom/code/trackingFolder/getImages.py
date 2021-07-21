@@ -10,7 +10,7 @@ from zebrazoom.code.getImage.headEmbededFrameSequential import headEmbededFrameS
 from zebrazoom.code.getImage.headEmbededFrameSequentialBackExtract import headEmbededFrameSequentialBackExtract
 from zebrazoom.code.getImage.headEmbededFrameBackExtract import headEmbededFrameBackExtract
 
-def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPositions):
+def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPositions, alreadyExtractedImage=0):
   
   initialCurFrame = 0
   back = 0
@@ -31,7 +31,7 @@ def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPo
   else:
     if hyperparameters["adjustFreelySwimTracking"] == 0:
       if len(background):
-        [frame, initialCurFrame, back] = getForegroundImageSequential(cap, videoPath, background, i, wellNumber, wellPositions, hyperparameters)
+        [frame, initialCurFrame, back] = getForegroundImageSequential(cap, videoPath, background, i, wellNumber, wellPositions, hyperparameters, alreadyExtractedImage)
       else:
         frame = getImageSequential(cap, videoPath, i, wellNumber, wellPositions, hyperparameters)
     else:

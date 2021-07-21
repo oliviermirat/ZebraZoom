@@ -2,7 +2,7 @@ from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
 
-def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNumber, wellPositions, hyperparameters):
+def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNumber, wellPositions, hyperparameters, alreadyExtractedImage=0):
   
   minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtract"]
   if "minPixelDiffForBackExtractHead" in hyperparameters:
@@ -18,7 +18,11 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
   
   # cap = cv2.VideoCapture(videoPath)
   # cap.set(1, frameNumber)
-  ret, frame = cap.read()
+  if (type(alreadyExtractedImage) != int):
+    ret   = True
+    frame = alreadyExtractedImage.copy()
+  else:
+    ret, frame = cap.read()
   
   if not(ret):
     currentFrameNum = int(cap.get(1))
