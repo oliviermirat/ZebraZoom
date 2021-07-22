@@ -92,7 +92,21 @@ class PopulationComparison(tk.Frame):
     maxAmplitude = IntVar()
     Checkbutton(self, text="maxAmplitude (for zebrafish only)", variable=maxAmplitude).pack()
     
-    tk.Button(self, text="Launch Analysis", bg="light yellow", command=lambda: controller.populationComparison(controller, BoutDuration.get(), TotalDistance.get(), Speed.get(), NumberOfOscillations.get(), meanTBF.get(), maxAmplitude.get())).pack()
+    tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    tk.Label(self, text="If you are calculating one these three parameters: NumberOfOscillations, meanTBF, maxAmplitude:", font="bold").pack(side="top", fill="x")
+    tk.Label(self, text="What's the minimum number of bends a bout should have to be taken into account for the analysis?", font=("Helvetica", 10)).pack(side="top", fill="x")
+    tk.Label(self, text="(the default value is 3) (put 0 if you want all bends to be taken into account)", font=("Helvetica", 10)).pack(side="top", fill="x")
+    minNbBendForBoutDetect = tk.Entry(self)
+    minNbBendForBoutDetect.pack()
+    tk.Label(self, text="If, for a bout, NumberOfOscillations, meanTBF and maxAmplitude are being discarded because of a low amount of bends,?", font=("Helvetica", 10)).pack(side="top", fill="x")
+    tk.Label(self, text="should the BoutDuration, TotalDistance and Speed also be discarded for that bout?", font=("Helvetica", 10)).pack(side="top", fill="x")
+    discard = IntVar()
+    Checkbutton(self, text="Yes, discard BoutDuration, TotalDistance and Speed in that situation", variable=discard).pack()
+    keep = IntVar()
+    Checkbutton(self, text="No, keep BoutDuration, TotalDistance and Speed in that situation", variable=keep).pack()
+    tk.Label(self, text="Please ignore the two questions above if you're only looking at BoutDuration, TotalDistance and Speed.", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    
+    tk.Button(self, text="Launch Analysis", bg="light yellow", command=lambda: controller.populationComparison(controller, BoutDuration.get(), TotalDistance.get(), Speed.get(), NumberOfOscillations.get(), meanTBF.get(), maxAmplitude.get(), minNbBendForBoutDetect.get(), discard.get(), keep.get())).pack()
     
     tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 

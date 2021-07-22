@@ -33,6 +33,9 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
         values  = dfParam.loc[indices, parameter].values
         concatenatedValues.append(values)
         labels.append(str(condition) + '\n' + str(genotype))
+    
+    concatenatedValues = [x for x in concatenatedValues[0] if not(math.isnan(x))]
+    
     if nbLines == 1:
       tabAx[idx%nbColumns].set_title(parameter)
       tabAx[idx%nbColumns].boxplot(concatenatedValues)

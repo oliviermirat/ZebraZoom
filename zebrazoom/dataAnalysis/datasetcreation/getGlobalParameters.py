@@ -27,7 +27,10 @@ def getGlobalParameters(curbout, fps, pixelSize):
   if "TailAngle_smoothed" in curbout and len(curbout["TailAngle_smoothed"]):
     maxAmplitude = max([abs(ta) for ta in curbout["TailAngle_smoothed"]])
   else:
-    maxAmplitude = float('NaN')
+    if "TailAngle_Raw" in curbout and len(curbout["TailAngle_Raw"]):
+      maxAmplitude = max([abs(ta) for ta in curbout["TailAngle_Raw"]]) # Maybe this value should be "reduced" in some way to be consistent with the previous smoothed tail angle
+    else:
+      maxAmplitude = float('NaN')
   
   if "Bend_Timing" in curbout and type(curbout["Bend_Timing"]) == list and len(curbout["Bend_Timing"]):
     firstBendTime = curbout["Bend_Timing"][0]

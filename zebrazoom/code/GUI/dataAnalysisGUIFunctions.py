@@ -66,8 +66,11 @@ def chooseExperimentOrganizationExcel(self, controller):
   controller.show_frame("ChooseDataAnalysisMethod")
 
 
-def populationComparison(self, controller, BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude):
+def populationComparison(self, controller, BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, minNbBendForBoutDetect=3, discard=0, keep=1):
 
+  if len(minNbBendForBoutDetect) == 0:
+    minNbBendForBoutDetect = 3
+  
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
   cur_dir_path = Path(cur_dir_path)
   cur_dir_path = cur_dir_path.parent.parent
@@ -82,7 +85,8 @@ def populationComparison(self, controller, BoutDuration, TotalDistance, Speed, N
     'smoothingFactorDynaParam'          : 0,   # 0.001
     'nbFramesTakenIntoAccount'          : 28,
     'numberOfBendsIncludedForMaxDetect' : -1,
-    'minNbBendForBoutDetect'            : 3,
+    'minNbBendForBoutDetect'            : int(minNbBendForBoutDetect),
+    'keepSpeedDistDurWhenLowNbBends'    : int(keep),
     'defaultZZoutputFolderPath'         : os.path.join(cur_dir_path, 'ZZoutput'),
     'computeTailAngleParamForCluster'   : False,
     'computeMassCenterParamForCluster'  : False

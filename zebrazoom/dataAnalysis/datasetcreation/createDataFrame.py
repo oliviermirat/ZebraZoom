@@ -36,6 +36,10 @@ def createDataFrame(dataframeOptions):
     computetailAnglesRecalculatedParamsForCluster = dataframeOptions["computetailAnglesRecalculatedParamsForCluster"]
   else:
     computetailAnglesRecalculatedParamsForCluster = False
+  if 'keepSpeedDistDurWhenLowNbBends' in dataframeOptions:
+    keepSpeedDistDurWhenLowNbBends = int(dataframeOptions['keepSpeedDistDurWhenLowNbBends'])
+  else:
+    keepSpeedDistDurWhenLowNbBends = 1
   
   nbFramesTakenIntoAccount          = dataframeOptions['nbFramesTakenIntoAccount']
   excelFile = pd.read_excel(os.path.join(pathToExcelFile, nameOfFile + fileExtension))
@@ -131,7 +135,7 @@ def createDataFrame(dataframeOptions):
           for NumBout, dataForBout in enumerate(supstruct["wellPoissMouv"][Well_ID][fishId]):
             if not("flag" in dataForBout) or dataForBout["flag"] == 0:
               if "Bend_Timing" in dataForBout and type(dataForBout["Bend_Timing"]) == list and len(dataForBout["Bend_Timing"]) >= minNbBendForBoutDetect:
-              
+        
                 trialidstab.append(trial_id)
                 if not(genotype[Well_ID] in genotypes):
                   genotypes.append(genotype[Well_ID])
@@ -191,22 +195,26 @@ def createDataFrame(dataframeOptions):
                   
                   toPutInDataFrameColumn = toPutInDataFrameColumn + ['tailLength', 'tailLengthFromRecalculatedAngles'] + tailAnglesRecalculated + tailAnglesRecalculated2
                   toPutInDataFrame       = toPutInDataFrame + [tailLength, tailLengthFromRecalculatedAngles] + tailAnglesRecalculatedData + tailAnglesRecalculatedData2.tolist()
+
+                dfParamSub.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
+                curBoutId = curBoutId + 1
               
               else:  
-              
-                trialidstab.append(trial_id)
-                if not(genotype[Well_ID] in genotypes):
-                  genotypes.append(genotype[Well_ID])
-                if not(condition[Well_ID] in conditions):
-                  conditions.append(condition[Well_ID])
-              
-                [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, xstart, xend, xmean, firstBendTime, firstBendAmplitude] = getGlobalParameters(dataForBout, fq, pixelsize)
-              
-                toPutInDataFrameColumn = ['Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'BoutDuration', 'TotalDistance', 'Speed']
-                toPutInDataFrame       = [Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], BoutDuration, TotalDistance, Speed]
-            
-              dfParamSub.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
-              curBoutId = curBoutId + 1
+                
+                if keepSpeedDistDurWhenLowNbBends:
+                  trialidstab.append(trial_id)
+                  if not(genotype[Well_ID] in genotypes):
+                    genotypes.append(genotype[Well_ID])
+                  if not(condition[Well_ID] in conditions):
+                    conditions.append(condition[Well_ID])
+                
+                  [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, xstart, xend, xmean, firstBendTime, firstBendAmplitude] = getGlobalParameters(dataForBout, fq, pixelsize)
+                
+                  toPutInDataFrameColumn = ['Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'BoutDuration', 'TotalDistance', 'Speed']
+                  toPutInDataFrame       = [Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], BoutDuration, TotalDistance, Speed]
+                  
+                  dfParamSub.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
+                  curBoutId = curBoutId + 1
         
         dfParam = pd.concat([dfParam, dfParamSub])
   
