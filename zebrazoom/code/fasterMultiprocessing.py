@@ -90,7 +90,7 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
         if hyperparameters["eyeTracking"]:
           trackingEyesAllAnimalsList[wellNumber] = eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimalsList[wellNumber], trackingHeadTailAllAnimalsList[wellNumber], trackingEyesAllAnimalsList[wellNumber])
       
-      i = i + 1
+    i = i + 1
     
   for wellNumber in range(0,hyperparameters["nbWells"]):
     [trackingHeadingAllAnimalsList[wellNumber], trackingHeadTailAllAnimalsList[wellNumber], trackingEyesAllAnimals] = postProcessMultipleTrajectories(trackingHeadingAllAnimalsList[wellNumber], trackingHeadTailAllAnimalsList[wellNumber], [], hyperparameters)  
