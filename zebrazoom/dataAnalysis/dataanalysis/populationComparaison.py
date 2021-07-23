@@ -3,6 +3,7 @@ import math
 import shutil
 import matplotlib.pyplot as plt
 import pickle
+import numpy as np
 
 def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder):
 
@@ -34,7 +35,10 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
         concatenatedValues.append(values)
         labels.append(str(condition) + '\n' + str(genotype))
     
-    concatenatedValues = [x for x in concatenatedValues[0] if not(math.isnan(x))]
+    concatenatedValuesWithoutNans = []
+    for toConcat in concatenatedValues:
+      concatenatedValuesWithoutNans.append(np.array([x for x in toConcat if not(math.isnan(x))]))
+    concatenatedValues = concatenatedValuesWithoutNans
     
     if nbLines == 1:
       tabAx[idx%nbColumns].set_title(parameter)
