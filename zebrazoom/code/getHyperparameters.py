@@ -360,6 +360,7 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["outputValidationVideoContrastImprovementQuartile"] = getConfig(config, "outputValidationVideoContrastImprovementQuartile", videoPath)
   
   hyperparameters["videoFPS"] = getConfig(config, "videoFPS", videoPath)
+  hyperparameters["videoPixelSize"] = getConfig(config, "videoPixelSize", videoPath)
   
   hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"] = getConfig(config, "groupOfMultipleSameSizeAndShapeEquallySpacedWells", videoPath)
   

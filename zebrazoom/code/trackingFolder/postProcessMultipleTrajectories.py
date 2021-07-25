@@ -19,7 +19,7 @@ def postProcessMultipleTrajectories(trackingHeadingAllAnimals, trackingHeadTailA
       else:
         xHeadPrev = trackingHeadTailAllAnimals[animalId][frameNumber][0][0]
         yHeadPrev = trackingHeadTailAllAnimals[animalId][frameNumber][0][1]
-      if (xHead == 0 and yHead == 0) or (math.sqrt((xHead - xHeadPrev)**2 + (yHead - yHeadPrev)**2) > maxDistanceAuthorized):
+      if ((xHead == 0 and yHead == 0) or (math.sqrt((xHead - xHeadPrev)**2 + (yHead - yHeadPrev)**2) > maxDistanceAuthorized)) and (frameNumber != len(trackingHeadTailAllAnimals[animalId]) - 1):
         if not(currentlyZero):
           zeroFrameStart = frameNumber
         print("currentlyZero at True: animalId:", animalId, "; frameNumber:", frameNumber)
