@@ -158,8 +158,8 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
     # tail = np.insert(tail, 0, headPosition, axis=1)
   tail = np.insert(tail, 0, headPosition, axis=1)
  
-  if nbTailPoints != len(tail[0]):
-    print("small problem 1 in tailTrackingExtremityDetect")
+  # if nbTailPoints != len(tail[0]):
+    # print("small problem 1 in tailTrackingExtremityDetect")
   
   # output = np.zeros((1, len(tail[0]), 2))
   output = np.zeros((1, nbTailPoints, 2))
@@ -168,7 +168,7 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
     if idx < nbTailPoints:
       output[0][idx][0] = x[0]
       output[0][idx][1] = x[1]
-    else:
-      print("small problem 2 in tailTrackingExtremityDetect")
+    # else:
+      # print("small problem 2 in tailTrackingExtremityDetect")
 
   return [output, newHeading]

@@ -7,7 +7,7 @@ import tkinter as tk
 import os
 from pathlib import Path
 
-def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start):
+def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0):
   
   root = tk.Tk()
   horizontal = root.winfo_screenwidth()
@@ -135,9 +135,10 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
           boutStart = supstruct["wellPoissMouv"][numWell][numAnimal][numAnimal]["BoutStart"]
           for i in range(0, len(supstruct["wellPoissMouv"][numWell][numAnimal][numAnimal]["HeadX"])):
             if boutStart + i in frameToPosToPlot:
-              xPos = int(supstruct["wellPositions"][numWell]["topLeftX"] + supstruct["wellPoissMouv"][numWell][numAnimal][numAnimal]["HeadX"][i])
-              yPos = int(supstruct["wellPositions"][numWell]["topLeftY"] + supstruct["wellPoissMouv"][numWell][numAnimal][numAnimal]["HeadY"][i])
-              frameToPosToPlot[boutStart + i].append([xPos, yPos])
+              if (type(framesToShow) != np.ndarray) or (framesToShow[boutStart + i][numWell]):
+                xPos = int(supstruct["wellPositions"][numWell]["topLeftX"] + supstruct["wellPoissMouv"][numWell][numAnimal][numAnimal]["HeadX"][i])
+                yPos = int(supstruct["wellPositions"][numWell]["topLeftY"] + supstruct["wellPoissMouv"][numWell][numAnimal][numAnimal]["HeadY"][i])
+                frameToPosToPlot[boutStart + i].append([xPos, yPos])
   
   while (l < max_l + 400):
     
@@ -145,8 +146,9 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
     ret, img = cap.read()
     
     if hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
-      for pos in frameToPosToPlot[l]:
-        cv2.circle(img, (pos[0], pos[1]), 1, (0, 255, 0), -1)
+      if l in frameToPosToPlot:
+        for pos in frameToPosToPlot[l]:
+          cv2.circle(img, (pos[0], pos[1]), hyperparameters["trackingPointSizeDisplay"], (0, 255, 0), -1)
     
     if ((numWell != -1) and (zoom)):
       
