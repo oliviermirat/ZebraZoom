@@ -135,10 +135,17 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     elif hyperparameters["reloadWellPositions"]:
       outfile = open(os.path.join(outputFolderVideo, 'intermediaryWellPosition.txt'), 'rb')
       wellPositions = pickle.load(outfile)
+    elif hyperparameters["reloadWellPositionsFromFileInZZoutputIfItExistSaveInItOtherwise"] and os.path.exists(os.path.join(hyperparameters["outputFolder"], 'wellPosition.txt')):
+      outfile = open(os.path.join(hyperparameters["outputFolder"], 'wellPosition.txt'), 'rb')
+      wellPositions = pickle.load(outfile)
     else:
       outfile = open(os.path.join(outputFolderVideo, 'intermediaryWellPosition.txt'),'wb')
       wellPositions = findWells(os.path.join(pathToVideo, videoNameWithExt), hyperparameters)
       pickle.dump(wellPositions,outfile)
+      if hyperparameters["reloadWellPositionsFromFileInZZoutputIfItExistSaveInItOtherwise"]:
+        outfile2 = open(os.path.join(hyperparameters["outputFolder"], 'wellPosition.txt'), 'wb')
+        pickle.dump(wellPositions, outfile2)
+        outfile2.close()
     outfile.close()
   if int(hyperparameters["exitAfterWellsDetection"]):
     print("exitAfterWellsDetection")

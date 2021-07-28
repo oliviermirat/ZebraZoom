@@ -376,7 +376,7 @@ Optionally, some additional parameters can be added to the 'python -m zebrazoom 
 - videoPixelSize : pixelSize of the video, if this parameter is not specified it will be set to the 'videoPixelSize' parameter set in the configuration file used to launch the tracking (and if also unspecified in the configuration file, it will be set to the value 1)<br/>
 - videoFPS : fps of the video, if this parameter is not specified it will be set to the 'videoFPS' parameter set in the configuration file used to launch the tracking (and if also unspecified in the configuration file, it will be set to the value 1)<br/>
 
-Launching this analysis with the command line 'python -m zebrazoom dataPostProcessing etc...' will generate an excel file containing all the information about instantaneous speed, moving and sleep time periods for each period and each well of the video. The excel file is saved inside the result folder of each video (result folders are all stored inside the 'ZZoutput' folder) (and the 'ZZoutput' folder can be accessed by clicking on 'Open ZebraZoom's output folder: Access raw data' from the main menu of ZebraZoom's GUI (Graphical User Interface) (which can be opened with 'python -m zebrazoom').<br/>
+Launching this analysis with the command line 'python -m zebrazoom dataPostProcessing etc...' will generate an excel file containing all the information about instantaneous speed, moving and sleep time periods for each frame and each well of the video. The excel file is saved inside the result folder of each video (result folders are all stored inside the 'ZZoutput' folder) (and the 'ZZoutput' folder can be accessed by clicking on 'Open ZebraZoom's output folder: Access raw data' from the main menu of ZebraZoom's GUI (Graphical User Interface) (which can be opened with 'python -m zebrazoom').<br/>
 
 <H4 CLASS="western">Moving and sleeping times validation through visualization:</H4>
 
@@ -388,11 +388,11 @@ This command will show the coordinates of fish when and only when the previous s
 
 python -m zebrazoom visualizeMovingAndSleepingTime sleepingTime videoName<br/>
 (while replacing 'videoName' by the name of the video for which you want to validate results)<br/>
-This command will show the coordinates of fish when and only when the previous script has found that the fish is moving.<br/>
+This command will show the coordinates of fish when and only when the previous script has found that the fish is sleeping.<br/>
 
 Both commands above are loading results directly from the excel files previously generated in order to validate the time periods calculated in the most straightforward manner possible.<br/>
 This validation through visualization will only work if the parameter 'copyOriginalVideoToOutputFolderForValidation' was set to 1 in the configuration file used to launch the tracking.<br/>
-For both commands above, you can go easily go through the video using the following tips: https://zebrazoom.org/validationVideoReading.html<br/><br/>
+For both commands above, you can easily go through the video using the following tips: https://zebrazoom.org/validationVideoReading.html<br/><br/>
 
 
 <a name="GUIanalysis"/>

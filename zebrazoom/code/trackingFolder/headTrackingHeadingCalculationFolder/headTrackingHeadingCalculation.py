@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.headTrackingTakeHeadClosestToWellCenter import headTrackingTakeHeadClosestToWellCenter
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.calculateHeading import calculateHeading
@@ -6,7 +7,7 @@ from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.multiple
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.multipleAnimalsHeadTrackingAdvance import multipleAnimalsHeadTrackingAdvance
 # from postProcessingMultiAnimalTrajectories import postProcessingMultiAnimalTrajectories
 
-def headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1, thresh2, gray, erodeSize, frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, headPosition, lengthX):
+def headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1, thresh2, gray, erodeSize, frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, headPosition, lengthX):
 
   xHB_TN = 0
   heading = 0
@@ -43,6 +44,7 @@ def headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1
           takeTheHeadClosestToTheCenter = hyperparameters["takeTheHeadClosestToTheCenter"]
           if takeTheHeadClosestToTheCenter == 0:
             (minVal, maxVal, headPosition, maxLoc) = cv2.minMaxLoc(blur)
+            trackingProbabilityOfGoodDetection[0, i-firstFrame] = np.sum(255 - blur)
           else:
             headPosition = headTrackingTakeHeadClosestToWellCenter(thresh1, thresh2, blur, erodeSize, hyperparameters["minArea"], hyperparameters["maxArea"], frame_width, frame_height)
           
@@ -78,4 +80,4 @@ def headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1
         trackingHeadingAllAnimals[0, i-firstFrame]  = trackingHeadingAllAnimals[0, 0]
         trackingHeadTailAllAnimals[0, i-firstFrame] = trackingHeadTailAllAnimals[0, 0]
     
-  return [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, lastFirstTheta]
+  return [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, lastFirstTheta]

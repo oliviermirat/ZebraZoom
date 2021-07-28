@@ -368,6 +368,13 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["copyOriginalVideoToOutputFolderForValidation"] = getConfig(config, "copyOriginalVideoToOutputFolderForValidation", videoPath)
   
+  hyperparameters["postProcessRemoveLowProbabilityDetection"] = getConfig(config, "postProcessRemoveLowProbabilityDetection", videoPath)
+  hyperparameters["postProcessLowProbabilityDetectionThreshold"] = getConfig(config, "postProcessLowProbabilityDetectionThreshold", videoPath)
+  hyperparameters["postProcessRemovePointsOnBordersMargin"] = getConfig(config, "postProcessRemovePointsOnBordersMargin", videoPath)
+  hyperparameters["postProcessRemovePointsAwayFromMainTrajectory"] = getConfig(config, "postProcessRemovePointsAwayFromMainTrajectory", videoPath)
+  hyperparameters["postProcessRemovePointsAwayFromMainTrajectoryThreshold"] = getConfig(config, "postProcessRemovePointsAwayFromMainTrajectoryThreshold", videoPath)
+  
+  hyperparameters["reloadWellPositionsFromFileInZZoutputIfItExistSaveInItOtherwise"] = getConfig(config, "reloadWellPositionsFromFileInZZoutputIfItExistSaveInItOtherwise", videoPath)
   
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5
