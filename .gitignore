@@ -14,6 +14,7 @@ zebrazoom/dataAnalysis/datasetcreation/__pycache__/
 zebrazoom/dataAnalysis/__pycache__
 zebrazoom/videoFormatConversion/__pycache__
 zebrazoom/code/dataPostProcessing/__pycache__/
+zebrazoom/dataAnalysis/postProcessingFromCommandLine/__pycache__/
 
 zebrazoom/newhyperparameters
 zebrazoom/trace.txt

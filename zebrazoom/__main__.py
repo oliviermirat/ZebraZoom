@@ -3,13 +3,13 @@ if __name__ == '__main__':
   import sys
   import os
   dir_path = os.path.dirname(os.path.realpath(__file__))
-  print("The data produced by ZebraZoom can be found in the folder: " + os.path.join(dir_path,'ZZoutput'))
 
   from zebrazoom.code.vars import getGlobalVariables
   globalVariables = getGlobalVariables()
 
   if len(sys.argv) == 1:
-
+    
+    print("The data produced by ZebraZoom can be found in the folder: " + os.path.join(dir_path,'ZZoutput'))
     from zebrazoom.GUIAllPy import SampleApp
     app = SampleApp()
     app.mainloop()
@@ -70,6 +70,10 @@ if __name__ == '__main__':
           videoPixelSize = -1
           videoFPS = -1
         calculateSleepVsMovingPeriods(pathToZZoutput, videoName, speedThresholdForMoving, notMovingNumberOfFramesThresholdForSleep, distanceTravelledRollingMedianFilter, videoPixelSize, videoFPS)
+      
+      if sys.argv[2] == "calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshod":
+        from zebrazoom.dataAnalysis.postProcessingFromCommandLine.postProcessingFromCommandLine import calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold
+        calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold(dir_path, sys.argv[3], int(sys.argv[4]))
         
     elif sys.argv[1] == "visualizeMovingAndSleepingTime":
       
@@ -90,7 +94,8 @@ if __name__ == '__main__':
         readValidationVideo("", sys.argv[3], "", -1, -1, 0, 1, framesToShow)
         
     else:
-    
+      
+      print("The data produced by ZebraZoom can be found in the folder: " + os.path.join(dir_path,'ZZoutput'))
       pathToVideo = sys.argv[1]
       videoName   = sys.argv[2]
       videoExt    = sys.argv[3]
