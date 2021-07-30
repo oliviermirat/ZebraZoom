@@ -71,6 +71,14 @@ if __name__ == '__main__':
           videoFPS = -1
         calculateSleepVsMovingPeriods(pathToZZoutput, videoName, speedThresholdForMoving, notMovingNumberOfFramesThresholdForSleep, distanceTravelledRollingMedianFilter, videoPixelSize, videoFPS)
       
+      if sys.argv[2] == "firstSleepingTimeAfterSpecifiedTime":
+        from zebrazoom.code.dataPostProcessing.findSleepVsMoving import firstSleepingTimeAfterSpecifiedTime
+        pathToZZoutput = os.path.join(dir_path,'ZZoutput')
+        videoName      = sys.argv[3]
+        specifiedTime  = sys.argv[4]
+        wellNumber     = sys.argv[5]
+        firstSleepingTimeAfterSpecifiedTime(pathToZZoutput, videoName, specifiedTime, wellNumber)
+        
       if sys.argv[2] == "calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshod":
         from zebrazoom.dataAnalysis.postProcessingFromCommandLine.postProcessingFromCommandLine import calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold
         calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold(dir_path, sys.argv[3], int(sys.argv[4]))
@@ -79,7 +87,6 @@ if __name__ == '__main__':
       
       from zebrazoom.code.readValidationVideo import readValidationVideo
       import pandas as pd
-      import numpy as np
       df = pd.read_excel(os.path.join(os.path.join(os.path.join(dir_path, 'ZZoutput'), sys.argv[3]), "sleepVsMoving_" + sys.argv[3] + ".xlsx"))
       nbWells = int(len(df.columns)/3)
       

@@ -367,7 +367,10 @@ The sleep and moving time periods can be calculated with the command:<br/>
 python -m zebrazoom dataPostProcessing sleepVsMoving videoName speedThresholdForMoving notMovingNumberOfFramesThresholdForSleep<br/>
 
 while replacing:<br/>
-- videoName : by the name of the video for which you want to calculate the sleep and moving time periods<br/>
+- videoName : by the name of the video for which you want to calculate the sleep and moving time periods.<br/>
+If you want to do this analysis on several videos and also create a summary excel file about all the videos combined, you can also set this variable to a list of video names separated by commas. For example if you want to launch this analysis on three videos called video1, video2 and video3, you can set this variable to:<br/>
+video1,video2,video3<br/>
+Please note that there shouldn't be any spaces inside this variable: no spaces before or after the commas and no spaces inside the video names.<br/>
 - speedThresholdForMoving : by a number representing the speed threshold between moving and non-moving time periods<br/>
 - notMovingNumberOfFramesThresholdForSleep : by a number representing the 'number of frames not moving' threshold between sleep and non-sleep time periods<br/>
 
@@ -393,6 +396,15 @@ This command will show the coordinates of fish when and only when the previous s
 Both commands above are loading results directly from the excel files previously generated in order to validate the time periods calculated in the most straightforward manner possible.<br/>
 This validation through visualization will only work if the parameter 'copyOriginalVideoToOutputFolderForValidation' was set to 1 in the configuration file used to launch the tracking.<br/>
 For both commands above, you can easily go through the video using the following tips: https://zebrazoom.org/validationVideoReading.html<br/><br/>
+
+<H4 CLASS="western">Identifying first sleeping time after specified time:</H4>
+
+This can be done with the command:<br/>
+python -m zebrazoom dataPostProcessing firstSleepingTimeAfterSpecifiedTime videoName specifiedTime wellNumber <br/>
+Where:<br/>
+videoName must be replaced either by the name of a video or by a list of video names separated by commas as explained in the paragraph "Identifying moving and sleeping times of zebrafish" above (if you want to launch this script on the excel file created by combining several videos) (please note that there shouldn't be any spaces anywhere in this variable).<br/>
+specifiedTime must be replaced by a time in the format Hours:Minutes:Seconds (for example this could be 00:03:18 for 3 hours and 18 minutes, or it could be 15:00:07 for 15 hours and 7 seconds, etc...).<br/>
+wellNumber must be the number of the well on which to launch this analysis (please note that well numbers start at 0 (not at 1)).<br/>
 
 
 <a name="GUIanalysis"/>
