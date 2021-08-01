@@ -376,6 +376,12 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["reloadWellPositionsFromFileInZZoutputIfItExistSaveInItOtherwise"] = getConfig(config, "reloadWellPositionsFromFileInZZoutputIfItExistSaveInItOtherwise", videoPath)
   
+  hyperparameters["tailAnglesHeatMap"] = getConfig(config, "tailAnglesHeatMap", videoPath)
+  
+  if hyperparameters["tailAnglesHeatMap"]:
+    hyperparameters["calculateAllTailAngles"] = 1
+  
+  
   if len(argv) > 5 and not(argv[0] == "getTailExtremityFirstFrame"):
     i = 5
     while i < len(argv):

@@ -319,9 +319,8 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
         item["rightEyeAngle"] = trackingEyesAllAnimals[animalId, start:end+1, 6].tolist()
         item["rightEyeArea"]  = trackingEyesAllAnimals[animalId, start:end+1, 7].tolist()
       
-      [tailangles_arr, tailangles_arr_smoothed] = smoothAllTailAngles(allAngles, hyperparameters, start, end)
-      
       if hyperparameters["calculateAllTailAngles"]:
+        [tailangles_arr, tailangles_arr_smoothed] = smoothAllTailAngles(allAngles, hyperparameters, start, end)
         item["allTailAngles"]         = tailangles_arr.tolist()
         item["allTailAnglesSmoothed"] = tailangles_arr_smoothed.tolist()
       

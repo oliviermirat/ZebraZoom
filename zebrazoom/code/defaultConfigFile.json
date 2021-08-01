@@ -211,6 +211,8 @@
   "nbPointsToIgnoreAtCurvatureBeginning" : 0,
   "nbPointsToIgnoreAtCurvatureEnd" : 0,
   
+  "tailAnglesHeatMap" : 0,
+  
   "additionalOutputFolder" : "",
   "additionalOutputFolderOverwriteIfAlreadyExist" : 0,
   "outputValidationVideoContrastImprovement" : 0,

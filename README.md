@@ -34,6 +34,7 @@ For more information visit <a href="https://zebrazoom.org/" target="_blank">zebr
 [Testing the installation and using ZebraZoom through the GUI](#testanduse)<br/>
 [Using ZebraZoom through the command line](#commandlinezebrazoom)<br/>
 [Checking the quality of the tracking](#trackingqualitycheck)<br/>
+
 [Adjusting ZebraZoom's hyperparameters through the GUI](#hyperparameters)<br/>
 [Adjusting ZebraZoom's hyperparameters: for testing/troubleshooting](#hyperparametersTesting)<br/>
 [Adjusting ZebraZoom's hyperparameters: further adjustment of the tail angle smoothing, the bouts detection and bends detection](#hyperparametersTailAngleSmoothBoutsAndBendsDetect)<br/>
@@ -41,11 +42,15 @@ For more information visit <a href="https://zebrazoom.org/" target="_blank">zebr
 [Adjusting ZebraZoom's hyperparameters: image pre-processing](#hyperparametersImagePreprocessing)<br/>
 [Adjusting ZebraZoom's hyperparameters: output folder and video](#hyperparametersOutputFolderAndVideo)<br/>
 [Adjusting ZebraZoom's hyperparameters: other adjustments](#hyperparametersOtherAdjustments)<br/>
-[Eye tracking of zebrafish larvae](#eyesTracking)<br/>
-[Post-processing: Identifying moving and sleeping time periods for zebrafish](#movingAndSleepPeriodZebrafish)<br/>
+[Adjusting ZebraZoom's hyperparameters: eye tracking of zebrafish larvae](#eyesTracking)<br/>
+
 [Further analyzing ZebraZoom's output through the Graphical User Interface](#GUIanalysis)<br/>
 [Further analyzing ZebraZoom's output with Python](#pythonanalysis)<br/>
-[Calculating fish tail curvature](#curvature)<br/>
+
+[Post-processing: Identifying moving and sleeping time periods for zebrafish](#movingAndSleepPeriodZebrafish)<br/>
+[Post-processing: Calculating fish tail curvature](#curvature)<br/>
+[Post-processing: Calculating tail angle heatmap](#tailAngleHeatMap)<br/>
+
 [Troubleshooting ZebraZoom's tracking](#troubleshoot)<br/>
 [Contributions and running ZebraZoom from the source code](#contributions)<br/>
 [Cite us](#citeus)<br/>
@@ -340,7 +345,7 @@ If you are trying to track freely swimming fish in "difficult conditions", espec
 <a name="eyesTracking"/>
 
 <br/>[Back to table of content](#tableofcontent)<br/>
-<H2 CLASS="western">Eye tracking of zebrafish larvae:</H2>
+<H2 CLASS="western">Adjusting ZebraZoom's hyperparameters: Eye tracking of zebrafish larvae:</H2>
 This will only work if there are enough pixels per eye and if the eyes are much darker than the rest of the body of the zebrafish (swim bladder excluded). To make the eye tracking work, set the following parameters to the appropriate values:<br/>
 <font color="blue">"eyeTracking" (default 0):</font> Set this parameter to 1 for the eye tracking to be performed.<br/>
 <font color="blue">"headCenterToMidEyesPointDistance" (default 10):</font> approximate distance (in pixels) between the center of the head (automatically detected by ZebraZoom) and the mid-point between the center of the two eyes.<br/>
@@ -352,6 +357,65 @@ This will only work if there are enough pixels per eye and if the eyes are much 
 It's also important to note that you can set the parameter "debugEyeTracking" and "debugEyeTrackingAdvanced" to 1 to troubleshoot this eye tracking.
 
 <br/><br/>
+
+
+
+<a name="GUIanalysis"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Further analyzing ZebraZoom's output through the Graphical User Interface:</H2>
+Click on "Analyze ZebraZoom's outputs" in the main menu. Then you can choose to either compare different populations of animals with kinematic parameters or to cluster bouts of movements.<br/><br/>
+
+<H3 CLASS="western">Units of output parameters for comparaison of populations with kinematic parameters:</H3>
+When the results are first saved after the tracking (in the file results_videoName.txt in the subfolder ZZoutput/videoName) the units are simply in pixels (for spatial resolution) and frames (for time resolution). However, when using the option "Analyze ZebraZoom's outputs" from the main menu of the GUI, you will need to choose an "organization excel file". This "organization excel file" contains a column named "fq" and another column named "pixelsize". In the column "pixelsize" you must put the size of the pixels in your video and you can choose the unit for this value of pixel size (it could be in μm, mm, cm, m, etc...): this choice will then be reflected in the units of speed and distance travel calculated: for example if you choose mm for the pixel size, then the distance traveled calculated will also be in mm. Similarly, in the column "fq" you must put the frequency of acquisition of the video: if you put this unit in Hz (1/second) then the time unit for the duration and speed calculated will be in seconds; and if you decided to put in this column a frequency of acquisition in 1/minute, then the time unit for duration and speed will also be in minutes.
+
+
+
+
+<a name="pythonanalysis"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Further analyzing ZebraZoom's output with Python:</H2>
+
+A result folder will be created for each video you launch ZebraZoom on inside the ZZoutput folder.
+
+If you have launch ZebraZoom on a video named “video”, you can load the results in Python with the following code:<br/>
+<I>import json<br/>
+with open('ZZoutput/video/results_video.txt') as f:<br/>
+&nbsp;&nbsp;supstruct = json.load(f)</I>
+
+Then, you can see the data for the well numWell, the animal numAnimal, and the bout numBout using the following command:
+<I>supstruct['wellPoissMouv'][numWell][numAnimal][numBout]</I>
+
+
+For example, if you want to look at the data for the first bout of the "animal 1" in the third well, you can type:<br/>
+<I>supstruct['wellPoissMouv'][2][0][0]</I>
+
+You can then, for example, plot the tail angle with the following command:
+
+<I>import matplotlib.pyplot as plt</I><br/>
+<I>plt.plot(supstruct['wellPoissMouv'][2][0][0]["TailAngle_smoothed"])</I><br/>
+<I>plt.show()</I><br/>
+
+The full list of parameters available for each bout is:<br/>
+<I>'FishNumber'</I> : Fish number in the well. If there's only one fish per well, this number will be 0.<br/>
+<I>'BoutStart'</I>  : Frame at which the bout started.<br/>
+<I>'BoutEnd'</I>    : Frame at which the bout ended.<br/>
+<I>'TailAngle_Raw'</I> : Tail angle over time for the bout, without any smoothing.<br/>
+<I>'HeadX'</I>         : Position on the x axis of the center of the head of the animal, for each frame.<br/>
+<I>'HeadY'</I>         : Position on the y axis of the center of the head of the animal, for each frame.<br/>
+<I>'Heading_raw'</I>   : Value of the main angle of the head of the animal, for each frame, without any smoothing.<br/>
+<I>'Heading'</I>       : Value of the main angle of the head of the animal, for each frame, with smoothing.<br/>
+<I>'TailX_VideoReferential'</I>   : Position on the x axis of each of the points along the tail of the animal, for each frame.<br/>
+<I>'TailY_VideoReferential'</I>   : Position on the y axis of each of the points along the tail of the animal, for each frame.<br/>
+<I>'TailX_HeadingReferential'</I> : Position on the x axis of each of the points along the tail of the animal, for each frame, when changing the referential such that the head of the animal is at the position (0, 0) and the y axis is aligned with the heading.<br/>
+<I>'TailY_HeadingReferential'</I> : Position on the y axis of each of the points along the tail of the animal, for each frame, when changing the referential such that the head of the animal is at the position (0, 0) and the y axis is aligned with the heading.<br/>
+<I>'TailAngle_smoothed'</I>  : Tail angle over time for the bout, with smoothing.<br/>
+<I>'Bend_TimingAbsolute'</I> : List of frames at which the tail angle reached a local maximum or minimum.<br/>
+<I>'Bend_Timing'</I>         : List of frames at which the tail angle reached a local maximum or minimum, with frame 0 being set at the beginning of the bout.<br/>
+<I>'Bend_Amplitude'</I>      : List of amplitudes of the tail angles, for each of the local maximum or minimum reached by the tail angle.<br/>
+
+Here's also an <a href="./readAndAnalyzeZZoutputWithPython/readBouts.py" style="color:blue" target="_blank">example script</a> used to process the outputs of ZebraZoom.
 
 
 
@@ -407,65 +471,11 @@ specifiedTime must be replaced by a time in the format Hours:Minutes:Seconds (fo
 wellNumber must be the number of the well on which to launch this analysis (please note that well numbers start at 0 (not at 1)).<br/>
 
 
-<a name="GUIanalysis"/>
-
-<br/>[Back to table of content](#tableofcontent)<br/>
-<H2 CLASS="western">Further analyzing ZebraZoom's output through the Graphical User Interface:</H2>
-Click on "Analyze ZebraZoom's outputs" in the main menu. Then you can choose to either compare different populations of animals with kinematic parameters or to cluster bouts of movements.<br/><br/>
-
-<H3 CLASS="western">Units of output parameters for comparaison of populations with kinematic parameters:</H3>
-When the results are first saved after the tracking (in the file results_videoName.txt in the subfolder ZZoutput/videoName) the units are simply in pixels (for spatial resolution) and frames (for time resolution). However, when using the option "Analyze ZebraZoom's outputs" from the main menu of the GUI, you will need to choose an "organization excel file". This "organization excel file" contains a column named "fq" and another column named "pixelsize". In the column "pixelsize" you must put the size of the pixels in your video and you can choose the unit for this value of pixel size (it could be in μm, mm, cm, m, etc...): this choice will then be reflected in the units of speed and distance travel calculated: for example if you choose mm for the pixel size, then the distance traveled calculated will also be in mm. Similarly, in the column "fq" you must put the frequency of acquisition of the video: if you put this unit in Hz (1/second) then the time unit for the duration and speed calculated will be in seconds; and if you decided to put in this column a frequency of acquisition in 1/minute, then the time unit for duration and speed will also be in minutes.
-
-<a name="pythonanalysis"/>
-
-<br/>[Back to table of content](#tableofcontent)<br/>
-<H2 CLASS="western">Further analyzing ZebraZoom's output with Python:</H2>
-
-A result folder will be created for each video you launch ZebraZoom on inside the ZZoutput folder.
-
-If you have launch ZebraZoom on a video named “video”, you can load the results in Python with the following code:<br/>
-<I>import json<br/>
-with open('ZZoutput/video/results_video.txt') as f:<br/>
-&nbsp;&nbsp;supstruct = json.load(f)</I>
-
-Then, you can see the data for the well numWell, the animal numAnimal, and the bout numBout using the following command:
-<I>supstruct['wellPoissMouv'][numWell][numAnimal][numBout]</I>
-
-
-For example, if you want to look at the data for the first bout of the "animal 1" in the third well, you can type:<br/>
-<I>supstruct['wellPoissMouv'][2][0][0]</I>
-
-You can then, for example, plot the tail angle with the following command:
-
-<I>import matplotlib.pyplot as plt</I><br/>
-<I>plt.plot(supstruct['wellPoissMouv'][2][0][0]["TailAngle_smoothed"])</I><br/>
-<I>plt.show()</I><br/>
-
-The full list of parameters available for each bout is:<br/>
-<I>'FishNumber'</I> : Fish number in the well. If there's only one fish per well, this number will be 0.<br/>
-<I>'BoutStart'</I>  : Frame at which the bout started.<br/>
-<I>'BoutEnd'</I>    : Frame at which the bout ended.<br/>
-<I>'TailAngle_Raw'</I> : Tail angle over time for the bout, without any smoothing.<br/>
-<I>'HeadX'</I>         : Position on the x axis of the center of the head of the animal, for each frame.<br/>
-<I>'HeadY'</I>         : Position on the y axis of the center of the head of the animal, for each frame.<br/>
-<I>'Heading_raw'</I>   : Value of the main angle of the head of the animal, for each frame, without any smoothing.<br/>
-<I>'Heading'</I>       : Value of the main angle of the head of the animal, for each frame, with smoothing.<br/>
-<I>'TailX_VideoReferential'</I>   : Position on the x axis of each of the points along the tail of the animal, for each frame.<br/>
-<I>'TailY_VideoReferential'</I>   : Position on the y axis of each of the points along the tail of the animal, for each frame.<br/>
-<I>'TailX_HeadingReferential'</I> : Position on the x axis of each of the points along the tail of the animal, for each frame, when changing the referential such that the head of the animal is at the position (0, 0) and the y axis is aligned with the heading.<br/>
-<I>'TailY_HeadingReferential'</I> : Position on the y axis of each of the points along the tail of the animal, for each frame, when changing the referential such that the head of the animal is at the position (0, 0) and the y axis is aligned with the heading.<br/>
-<I>'TailAngle_smoothed'</I>  : Tail angle over time for the bout, with smoothing.<br/>
-<I>'Bend_TimingAbsolute'</I> : List of frames at which the tail angle reached a local maximum or minimum.<br/>
-<I>'Bend_Timing'</I>         : List of frames at which the tail angle reached a local maximum or minimum, with frame 0 being set at the beginning of the bout.<br/>
-<I>'Bend_Amplitude'</I>      : List of amplitudes of the tail angles, for each of the local maximum or minimum reached by the tail angle.<br/>
-
-Here's also an <a href="./readAndAnalyzeZZoutputWithPython/readBouts.py" style="color:blue" target="_blank">example script</a> used to process the outputs of ZebraZoom.
-
 
 <a name="curvature"/>
 
 <br/>[Back to table of content](#tableofcontent)<br/>
-<H2 CLASS="western">Calculating fish tail curvature:</H2>
+<H2 CLASS="western">Post-processing: Calculating fish tail curvature:</H2>
 To make ZebraZoom calculate the curvature of every bout detected, you can set the parameter <I>"perBoutOutput"</I> to 1 (the default value is 0).<br/>
 This will create in each of the output folders a subfolder called "perBoutOutput" that will contain for each bout detected: a plot of the tail angle, the curvature plot, a pickle file containing the curvature data (see <a href="https://github.com/oliviermirat/ZebraZoom/blob/master/readAndAnalyzeZZoutputWithPython/loadCurvature.py" style="color:blue" target="_blank">here an example</a> of how to load pickled data), and a short video of the bout with the fish position being adjusted in order for the head of the fish to be in the middle top of the video and the main axis of the tail to be aligned with the y axis.<br/>
 The curvature is being calculated using the method described in this <a href="https://en.wikipedia.org/wiki/Curvature#In_terms_of_a_general_parametrization" style="color:blue" target="_blank">Wikipedia page</a> (see the section "In terms of a general parametrization") in this <a href="https://github.com/oliviermirat/ZebraZoom/blob/master/zebrazoom/code/perBoutOutput.py" style="color:blue" target="_blank">section of the ZebraZoom code</a>.<br/><br/>
@@ -483,6 +493,15 @@ As an example, you can calculate the curvature of the two example videos provide
 - For 4wellsZebrafishLarvaeEscapeResponses.avi, you can use the configuration file provided (<a href="https://github.com/oliviermirat/ZebraZoom/blob/master/zebrazoom/configuration/4wellsZebrafishLarvaeEscapeResponses.json" style="color:blue" target="_blank">4wellsZebrafishLarvaeEscapeResponses.json</a>) by adding the two parameters <I>"perBoutOutput": 1</I> and <I>"nbPointsToIgnoreAtCurvatureBeginning": 1</I><br/>
 
 (if needed, you can launch ZebraZoom <a href="#commandlinezebrazoom">through the command line</a> in order to easily overwrite/add those two parameters to the configuration file initially provided)
+
+
+<a name="tailAngleHeatMap"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Post-processing: Calculating tail angle heatmap:</H2>
+You can make ZebraZoom compute tail angle heatmaps for each bout detected by adding the parameter:<br/>
+"tailAnglesHeatMap" : 1<br/>
+in your configuration file.<br/>
 
 
 <a name="troubleshoot"/>
