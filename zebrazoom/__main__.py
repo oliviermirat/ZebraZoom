@@ -60,16 +60,20 @@ if __name__ == '__main__':
         speedThresholdForMoving = float(sys.argv[4])
         notMovingNumberOfFramesThresholdForSleep = int(sys.argv[5])
         if len(sys.argv) >= 7:
-          distanceTravelledRollingMedianFilter = int(sys.argv[6])
+         specifiedStartTime  = sys.argv[6]
+        else:
+          specifiedStartTime = 0
+        if len(sys.argv) >= 8:
+          distanceTravelledRollingMedianFilter = int(sys.argv[7])
         else:
           distanceTravelledRollingMedianFilter = 0
-        if len(sys.argv) >= 9:
-          videoPixelSize = float(sys.argv[7])
-          videoFPS = float(sys.argv[8])
+        if len(sys.argv) >= 10:
+          videoPixelSize = float(sys.argv[8])
+          videoFPS = float(sys.argv[9])
         else:
           videoPixelSize = -1
           videoFPS = -1
-        calculateSleepVsMovingPeriods(pathToZZoutput, videoName, speedThresholdForMoving, notMovingNumberOfFramesThresholdForSleep, distanceTravelledRollingMedianFilter, videoPixelSize, videoFPS)
+        calculateSleepVsMovingPeriods(pathToZZoutput, videoName, speedThresholdForMoving, notMovingNumberOfFramesThresholdForSleep, specifiedStartTime, distanceTravelledRollingMedianFilter, videoPixelSize, videoFPS)
       
       if sys.argv[2] == "firstSleepingTimeAfterSpecifiedTime":
         from zebrazoom.code.dataPostProcessing.findSleepVsMoving import firstSleepingTimeAfterSpecifiedTime
@@ -78,6 +82,15 @@ if __name__ == '__main__':
         specifiedTime  = sys.argv[4]
         wellNumber     = sys.argv[5]
         firstSleepingTimeAfterSpecifiedTime(pathToZZoutput, videoName, specifiedTime, wellNumber)
+      
+      if sys.argv[2] == "numberOfSleepingAndMovingTimesInTimeRange":
+        from zebrazoom.code.dataPostProcessing.findSleepVsMoving import numberOfSleepingAndMovingTimesInTimeRange
+        pathToZZoutput     = os.path.join(dir_path,'ZZoutput')
+        videoName          = sys.argv[3]
+        specifiedStartTime = sys.argv[4]
+        specifiedEndTime   = sys.argv[5]
+        wellNumber         = sys.argv[6]
+        numberOfSleepingAndMovingTimesInTimeRange(pathToZZoutput, videoName, specifiedStartTime, specifiedEndTime, wellNumber)
         
       if sys.argv[2] == "calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshod":
         from zebrazoom.dataAnalysis.postProcessingFromCommandLine.postProcessingFromCommandLine import calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold

@@ -5,7 +5,7 @@ import os
 import time
 import datetime
 
-def calculateSleepVsMovingPeriods(pathToZZoutput, vidName, speedThresholdForMoving, notMovingNumberOfFramesThresholdForSleep, distanceTravelledRollingMedianFilter=0, videoPixelSize=-1, videoFPS=-1):
+def calculateSleepVsMovingPeriods(pathToZZoutput, vidName, speedThresholdForMoving, notMovingNumberOfFramesThresholdForSleep, specifiedStartTime=0, distanceTravelledRollingMedianFilter=0, videoPixelSize=-1, videoFPS=-1):
   
   videoNamelist    = []
   dfFinalAllVideos = pd.DataFrame()
@@ -16,7 +16,7 @@ def calculateSleepVsMovingPeriods(pathToZZoutput, vidName, speedThresholdForMovi
   else:
     videoNamelist = [vidName]
   
-  for videoName in videoNamelist:
+  for idx, videoName in enumerate(videoNamelist):
   
     pathToVideo = os.path.join(pathToZZoutput, videoName, "results_" + videoName + ".txt")
     
@@ -36,6 +36,10 @@ def calculateSleepVsMovingPeriods(pathToZZoutput, vidName, speedThresholdForMovi
       else:
         print("You should add the parameter 'videoFPS' in your configuration file")
         videoFPS = 1
+    
+    if idx == 0 and type(specifiedStartTime) == str and len(specifiedStartTime) > 1:
+      t = datetime.datetime.strptime(specifiedStartTime, "%H:%M:%S")
+      currentNbFrames = (t.hour * 60 * 60 + t.minute * 60 + t.second) * videoFPS
     
     dfFinal = pd.DataFrame()
     totalFrames  = len(dataRef['wellPoissMouv'][0][0][0]["HeadX"])
@@ -103,12 +107,54 @@ def firstSleepingTimeAfterSpecifiedTime(pathToZZoutput, vidName, specifiedTime, 
   dfTimeMinusSpecifiedTime = (df['HourMinuteSecond'].apply(datetime.datetime.strptime, args=("%H:%M:%S",)) - datetime.datetime.strptime(specifiedTime, "%H:%M:%S")).apply(pd.Timedelta.total_seconds).apply(abs)
   indexStart = dfTimeMinusSpecifiedTime.argmin()
   dfLength = len(df)
-  currentIndex = indexStart
-  while (currentIndex != dfLength) and (df['sleep_' + wellNumber][currentIndex] == 0):
-    currentIndex = currentIndex + 1
-  if currentIndex == dfLength:
-    print("For the well number", wellNumber, ", couldn't find any time point after", specifiedTime, "for which the fish was sleeping")
+  
+  if int(wellNumber) == -1:
+    allWellNumbers = [str(i) for i in range(0, int(len(df.columns) / 3))]
   else:
-    print("For the well number:", wellNumber, "and the specified time:", specifiedTime, ".")
-    print("The first time after the specified time when the fish starts sleeping is at", df['HourMinuteSecond'][currentIndex], "(which corresponds to frame number:", currentIndex, ").")
-    print("In other words, the fish starts sleeping", dfTimeMinusSpecifiedTime[currentIndex], "seconds after the specified time (or", currentIndex - indexStart, "frames after the specified time) (or", time.strftime('%H:%M:%S', time.gmtime(dfTimeMinusSpecifiedTime[currentIndex])), "Hours:Minutes:Seconds after the specified time)")
+    allWellNumbers = [wellNumber]
+  
+  for wellNum in allWellNumbers:
+    currentIndex = indexStart
+    while (currentIndex != dfLength) and (df['sleep_' + wellNum][currentIndex] == 0):
+      currentIndex = currentIndex + 1
+    if currentIndex == dfLength:
+      print("For the well number", wellNum, ", couldn't find any time point after", specifiedTime, "for which the fish was sleeping")
+    else:
+      print("For the well number:", wellNum, "and the specified time:", specifiedTime, ".")
+      print("The first time after the specified time when the fish starts sleeping is at", df['HourMinuteSecond'][currentIndex], "(which corresponds to frame number:", currentIndex, ").")
+      print("In other words, the fish starts sleeping", dfTimeMinusSpecifiedTime[currentIndex], "seconds after the specified time (or", currentIndex - indexStart, "frames after the specified time) (or", time.strftime('%H:%M:%S', time.gmtime(dfTimeMinusSpecifiedTime[currentIndex])), "Hours:Minutes:Seconds after the specified time)")
+
+def numberOfSleepingAndMovingTimesInTimeRange(pathToZZoutput, vidName, specifiedStartTime, specifiedEndTime, wellNumber):
+  
+  videoNamelist    = []
+  if ',' in vidName:
+    concatExcelFileName = "".join(vidName.split(','))
+    df = pd.read_excel(os.path.join(pathToZZoutput, "sleepVsMoving_" + concatExcelFileName + ".xlsx"))
+  else:
+    df = pd.read_excel(os.path.join(os.path.join(pathToZZoutput, vidName), "sleepVsMoving_" + vidName + ".xlsx"))
+  
+  dfTimeMinusSpecifiedStartTime = (df['HourMinuteSecond'].apply(datetime.datetime.strptime, args=("%H:%M:%S",)) - datetime.datetime.strptime(specifiedStartTime, "%H:%M:%S")).apply(pd.Timedelta.total_seconds).apply(abs)
+  indexStart = dfTimeMinusSpecifiedStartTime.argmin()
+  
+  dfTimeMinusSpecifiedEndTime = (df['HourMinuteSecond'].apply(datetime.datetime.strptime, args=("%H:%M:%S",)) - datetime.datetime.strptime(specifiedEndTime, "%H:%M:%S")).apply(pd.Timedelta.total_seconds).apply(abs)
+  indexEnd = dfTimeMinusSpecifiedEndTime.argmin()
+  
+  dfLength = len(df)
+  
+  if int(wellNumber) == -1:
+    allWellNumbers = [str(i) for i in range(0, int(len(df.columns) / 3))]
+  else:
+    allWellNumbers = [wellNumber]
+  
+  print("Between time", specifiedStartTime, "(frame number", indexStart, "), and time:", specifiedEndTime, "(frame number", indexEnd,"):")
+  
+  for wellNum in allWellNumbers:
+  
+    print("For well number", wellNum, ":")
+    
+    nbSleepFrames  = np.sum(df['sleep_'  + wellNum][indexStart:indexEnd])
+    nbMovingFrames = np.sum(df['moving_' + wellNum][indexStart:indexEnd])
+    
+    print(nbSleepFrames, "sleeping Frames")
+    print(nbMovingFrames, "moving frames\n")
+    
