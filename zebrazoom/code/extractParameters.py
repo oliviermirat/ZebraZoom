@@ -56,6 +56,7 @@ def calculateTailAngle(angle1, angle2):
   return output
   
 def smoothAllTailAngles(allAngles, hyperparameters, start, end):
+  # The first angle is removed here because it corresponds to the angle between two same point (the center of the head)
   tailangles_arr = np.transpose(allAngles[start:end+1, 1:len(allAngles)])
   tailangles_arr_smoothed = np.zeros((0, len(tailangles_arr[0])))
   for angle_raw in tailangles_arr:

@@ -80,7 +80,7 @@ def chooseConfigFile(self):
         tk.configFile =  filedialog.askopenfilename(initialdir = path, title = "Select file")
     else:
         tk.configFile =  filedialog.askopenfilename(initialdir = path, title = "Select file", filetypes = (("json files","*.json"),("all files","*.*")))
-    if globalVariables["mac"] or globalVariables["lin"]:
+    if len(tk.folderName) or globalVariables["mac"] or globalVariables["lin"]:
         self.show_frame("Patience")
     else:
         self.launchZebraZoom()
@@ -112,7 +112,10 @@ def launchZebraZoom(self):
     videoExt = nameWithExt[pointPos+1:]
     
     if tk.headEmbedded == 0:
-      tabParams = ["mainZZ", path, name, videoExt, tk.configFile, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1]
+      if len(allVideos) == 1:
+        tabParams = ["mainZZ", path, name, videoExt, tk.configFile, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1]
+      else:
+        tabParams = ["mainZZ", path, name, videoExt, tk.configFile, "freqAlgoPosFollow", 100]
       if tk.justExtractParams == 1:
         tabParams = tabParams + ["reloadWellPositions", 1, "reloadBackground", 1, "debugPauseBetweenTrackAndParamExtract", "justExtractParamFromPreviousTrackData"]
       if tk.noValidationVideo == 1:
