@@ -110,8 +110,10 @@ def firstSleepingTimeAfterSpecifiedTime(pathToZZoutput, vidName, specifiedTime, 
   
   if int(wellNumber) == -1:
     allWellNumbers = [str(i) for i in range(0, int(len(df.columns) / 3))]
+    dfResult = pd.DataFrame(index=[i for i in range(0, int(len(df.columns) / 3))], columns=['firstSleepTime', 'delayBeforeFirstSleepTimeInSeconds'])
   else:
     allWellNumbers = [wellNumber]
+    dfResult = pd.DataFrame(index=[int(wellNumber)], columns=['firstSleepTime', 'delayBeforeFirstSleepTimeInSeconds'])
   
   for wellNum in allWellNumbers:
     currentIndex = indexStart
@@ -123,6 +125,10 @@ def firstSleepingTimeAfterSpecifiedTime(pathToZZoutput, vidName, specifiedTime, 
       print("For the well number:", wellNum, "and the specified time:", specifiedTime, ".")
       print("The first time after the specified time when the fish starts sleeping is at", df['HourMinuteSecond'][currentIndex], "(which corresponds to frame number:", currentIndex, ").")
       print("In other words, the fish starts sleeping", dfTimeMinusSpecifiedTime[currentIndex], "seconds after the specified time (or", currentIndex - indexStart, "frames after the specified time) (or", time.strftime('%H:%M:%S', time.gmtime(dfTimeMinusSpecifiedTime[currentIndex])), "Hours:Minutes:Seconds after the specified time)")
+      dfResult['firstSleepTime'][int(wellNum)]                     = df['HourMinuteSecond'][currentIndex]
+      dfResult['delayBeforeFirstSleepTimeInSeconds'][int(wellNum)] = dfTimeMinusSpecifiedTime[currentIndex]
+  
+  dfResult.to_excel(os.path.join(pathToZZoutput, "firstSleepTimeAfter_" + specifiedTime.replace(':', '') + "_" + vidName.replace(',', '') + "_" + wellNumber + ".xlsx"))
 
 def numberOfSleepingAndMovingTimesInTimeRange(pathToZZoutput, vidName, specifiedStartTime, specifiedEndTime, wellNumber):
   
@@ -143,8 +149,10 @@ def numberOfSleepingAndMovingTimesInTimeRange(pathToZZoutput, vidName, specified
   
   if int(wellNumber) == -1:
     allWellNumbers = [str(i) for i in range(0, int(len(df.columns) / 3))]
+    dfResult = pd.DataFrame(index=[i for i in range(0, int(len(df.columns) / 3))], columns=['nbSleepFrames', 'nbMovingFrames'])
   else:
     allWellNumbers = [wellNumber]
+    dfResult = pd.DataFrame(index=[int(wellNumber)], columns=['nbSleepFrames', 'nbMovingFrames'])
   
   print("Between time", specifiedStartTime, "(frame number", indexStart, "), and time:", specifiedEndTime, "(frame number", indexEnd,"):")
   
@@ -155,6 +163,11 @@ def numberOfSleepingAndMovingTimesInTimeRange(pathToZZoutput, vidName, specified
     nbSleepFrames  = np.sum(df['sleep_'  + wellNum][indexStart:indexEnd])
     nbMovingFrames = np.sum(df['moving_' + wellNum][indexStart:indexEnd])
     
+    dfResult['nbSleepFrames'][int(wellNum)]  = nbSleepFrames
+    dfResult['nbMovingFrames'][int(wellNum)] = nbMovingFrames
+    
     print(nbSleepFrames, "sleeping Frames")
     print(nbMovingFrames, "moving frames\n")
-    
+  
+  dfResult.to_excel(os.path.join(pathToZZoutput, "nbSleepAndMoveFrames_" + vidName.replace(',', '') + "_" + specifiedStartTime.replace(':', '') + "_" + specifiedEndTime.replace(':', '') + "_" + wellNumber + ".xlsx"))
+  
