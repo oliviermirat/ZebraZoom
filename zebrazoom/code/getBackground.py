@@ -132,4 +132,7 @@ def getBackground(videoPath, hyperparameters):
   if hyperparameters["popUpAlgoFollow"]:
     popUpAlgoFollow.prepend("Background Extracted")
   
+  if hyperparameters["setBackgroundToImageMedian"]:
+    back[:, :] = np.median(back)
+  
   return back

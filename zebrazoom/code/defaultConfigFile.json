@@ -98,6 +98,7 @@
   "backgroundExtractionWithOnlyTwoFrames" : 0,
   "checkThatMovementOccurInVideo" : 0,
   "checkThatMovementOccurInVideoMedianFilterWindow" : 11,
+  "setBackgroundToImageMedian" : 0,
   
   "findContourPrecision" : "CHAIN_APPROX_SIMPLE",
   
@@ -212,6 +213,7 @@
   "nbPointsToIgnoreAtCurvatureEnd" : 0,
   
   "tailAnglesHeatMap" : 0,
+  "tailAnglesHeatMapNbPointsToTakeIntoAccount" : 8,
   
   "additionalOutputFolder" : "",
   "additionalOutputFolderOverwriteIfAlreadyExist" : 0,

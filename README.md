@@ -338,6 +338,18 @@ If you are trying to track freely swimming fish in "difficult conditions", espec
 <font color="blue">"validationVideoPlotHeading" (default 1):</font> make sure this parameter is set to 1 if you want to see heading on your validation video<br/>
 <font color="blue">"outputValidationVideoFps" (default -1):</font> fps of the output validation video (if value is strictly above 0). Otherwise, the fps of the output validation video will be the same as the fps of the input video.<br/><br/>
 
+
+<H3 CLASS="western">Tracking for barely moving animals:</H3>
+<p>
+For freely moving animals (not for head embedded fish), if an animal on a video isn't moving or is barely moving then ZebraZoom won't be able to extract the background of the video and thus the tracking won't work.
+
+However, if you want to track a video for which the animal is barely moving and for which the background is fairly uniform and on which the border of wells can't be seen (or if you launch the tracking on a ROI where the borders of the wells can't be seen), then you can create a configuration file using a special technique:
+
+After clicking on "Prepare configuration file for tracking" from the main menu of the GUI, check the box "Click here to start from a configuration file previously created (instead of from scratch)." then after clicking "Select the video you want to create a configuration file for", choose the configuration file barelyMovingFish.json provided in the configuration file folder, and then the video you want to create a configuration file for. For freely moving fish, it is usually advised to then choose the "Recommended method: Automatic Parameters Setting". Creating a configuration file using this technique will make ZebraZoom set the background of the video to a uniform image equal to the median of the initially extracted background which should allow ZebraZoom to perform an accurate tracking in most cases.
+
+</p>
+
+
 <H3 CLASS="western">Other parameters:</H3>
 <font color="blue">"fillGapFrameNb" (default 5):</font> try to decrease this if the bouts detected are too long, try increasing if the bouts detected are too short or if they are "cut" into several different pieces.<br/>
 
@@ -511,8 +523,8 @@ As an example, you can calculate the curvature of the two example videos provide
 <H2 CLASS="western">Post-processing: Calculating tail angle heatmap:</H2>
 You can make ZebraZoom compute tail angle heatmaps for each bout detected by adding the parameter:<br/>
 "tailAnglesHeatMap" : 1<br/>
-in your configuration file.<br/>
-
+in your configuration file.<br/><br/>
+This calculation can be based on 2 to 9 points along the tail of the animal. By default, 8 points will be taken into account, but this parameter can be adjusted by changing the value of "tailAnglesHeatMapNbPointsToTakeIntoAccount" in the configuration file (default is 8).<br/>
 
 <a name="troubleshoot"/>
 

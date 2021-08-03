@@ -36,6 +36,8 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoName):
   plotTailAngleSmoothed = False
   plotTailAngleHeatmap  = True
   
+  pointsToTakeIntoAccountStart = 9 - int(hyperparameters["tailAnglesHeatMapNbPointsToTakeIntoAccount"])
+  
   # Going through each well, each fish and each bout
   for i in range(0, len(superStruct["wellPoissMouv"])):
     for j in range(0, len(superStruct["wellPoissMouv"][i])):
@@ -45,7 +47,7 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoName):
         if plotTailAngleRaw:
           bStart = superStruct["wellPoissMouv"][i][j][k]["BoutStart"]
           bEnd   = superStruct["wellPoissMouv"][i][j][k]["BoutEnd"]
-          tailAngles = superStruct["wellPoissMouv"][i][j][k]["allTailAngles"][1:]
+          tailAngles = superStruct["wellPoissMouv"][i][j][k]["allTailAngles"][pointsToTakeIntoAccountStart:]
           plt.figure(1)
           for tailAngle in tailAngles:
             if bEnd - bStart + 1 == len(tailAngle):
@@ -58,7 +60,7 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoName):
         # Creation of tail angles smoothed graph and tail angle heatmap for bout k
         bStart = superStruct["wellPoissMouv"][i][j][k]["BoutStart"]
         bEnd   = superStruct["wellPoissMouv"][i][j][k]["BoutEnd"]
-        tailAngles = superStruct["wellPoissMouv"][i][j][k]["allTailAnglesSmoothed"][1:]
+        tailAngles = superStruct["wellPoissMouv"][i][j][k]["allTailAnglesSmoothed"][pointsToTakeIntoAccountStart:]
         tailAngleHeatmap = []
         if plotTailAngleSmoothed:
           plt.figure(1)

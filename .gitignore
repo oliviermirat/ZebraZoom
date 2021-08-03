@@ -31,6 +31,7 @@ zebrazoom/configuration/
 !zebrazoom/configuration/headEmbeddedZebrafishLarva.json
 !zebrazoom/configuration/screenFastTrackingConfigFileTemplate.json
 !zebrazoom/configuration/testThresholdsForFastScreen.json
+!zebrazoom/configuration/toCreateConfigFileForBarelyMovingAnimals.json
 
 zebrazoom/dataAnalysis/classifiers/*
 zebrazoom/dataAnalysis/data/*
