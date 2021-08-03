@@ -98,7 +98,7 @@ class PopulationComparison(tk.Frame):
     tk.Label(self, text="(the default value is 3) (put 0 if you want all bends to be taken into account)", font=("Helvetica", 10)).pack(side="top", fill="x")
     minNbBendForBoutDetect = tk.Entry(self)
     minNbBendForBoutDetect.pack()
-    tk.Label(self, text="If, for a bout, NumberOfOscillations, meanTBF and maxAmplitude are being discarded because of a low amount of bends,?", font=("Helvetica", 10)).pack(side="top", fill="x")
+    tk.Label(self, text="If, for a bout, NumberOfOscillations, meanTBF and maxAmplitude are being discarded because of a low amount of bends,", font=("Helvetica", 10)).pack(side="top", fill="x")
     tk.Label(self, text="should the BoutDuration, TotalDistance and Speed also be discarded for that bout?", font=("Helvetica", 10)).pack(side="top", fill="x")
     discard = IntVar()
     Checkbutton(self, text="Yes, discard BoutDuration, TotalDistance and Speed in that situation", variable=discard).pack()

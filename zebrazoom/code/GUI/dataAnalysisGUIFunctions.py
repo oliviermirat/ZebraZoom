@@ -68,6 +68,9 @@ def chooseExperimentOrganizationExcel(self, controller):
 
 def populationComparison(self, controller, BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, minNbBendForBoutDetect=3, discard=0, keep=1):
 
+  if discard == 0 and keep == 0:
+    keep = 1
+  
   if len(minNbBendForBoutDetect) == 0:
     minNbBendForBoutDetect = 3
   
