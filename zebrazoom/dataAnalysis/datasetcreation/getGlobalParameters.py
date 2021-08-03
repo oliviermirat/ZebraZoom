@@ -11,15 +11,21 @@ def getGlobalParameters(curbout, fps, pixelSize):
   else:
     NumberOfOscillations = float('NaN')
   
-  TotalDistance = 0 
+  TotalDistance = 0
   posX = curbout["HeadX"]
-  posX = [posX[4*i] for i in range(0, int(len(posX)/4))]
   posY = curbout["HeadY"]
-  posY = [posY[4*i] for i in range(0, int(len(posY)/4))]
-  for j in range(1, len(posX)-1):
+  rangeUsedForDistanceCalculation   = [4*i for i in range(0, int(len(posX)/4))]
+  if len(rangeUsedForDistanceCalculation) == 0:
+    rangeUsedForDistanceCalculation = [0, len(posX) - 1]
+  else:
+    rangeUsedForDistanceCalculation = rangeUsedForDistanceCalculation + [len(posX) - 1]
+  posX = [posX[i] for i in rangeUsedForDistanceCalculation]
+  posY = [posY[i] for i in rangeUsedForDistanceCalculation]
+  for j in range(0, len(posX)-1):
       TotalDistance = TotalDistance + math.sqrt((posX[j+1] - posX[j])**2 + (posY[j+1] - posY[j])**2)
   TotalDistance = TotalDistance * pixelSize
-
+  
+  
   Speed = TotalDistance / BoutDuration
   
   meanTBF = NumberOfOscillations / BoutDuration
