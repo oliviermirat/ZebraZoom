@@ -381,8 +381,33 @@ Click on "Analyze ZebraZoom's outputs" in the main menu. Then you can choose to 
 <H3 CLASS="western">Units of output parameters for comparaison of populations with kinematic parameters:</H3>
 When the results are first saved after the tracking (in the file results_videoName.txt in the subfolder ZZoutput/videoName) the units are simply in pixels (for spatial resolution) and frames (for time resolution). However, when using the option "Analyze ZebraZoom's outputs" from the main menu of the GUI, you will need to choose an "organization excel file". This "organization excel file" contains a column named "fq" and another column named "pixelsize". In the column "pixelsize" you must put the size of the pixels in your video and you can choose the unit for this value of pixel size (it could be in μm, mm, cm, m, etc...): this choice will then be reflected in the units of speed and distance travel calculated: for example if you choose mm for the pixel size, then the distance traveled calculated will also be in mm. Similarly, in the column "fq" you must put the frequency of acquisition of the video: if you put this unit in Hz (1/second) then the time unit for the duration and speed calculated will be in seconds; and if you decided to put in this column a frequency of acquisition in 1/minute, then the time unit for duration and speed will also be in minutes.
 
+<H3 CLASS="western">Launching the kinematic parameters analysis through the command line instead of the GUI:</H3>
+<p>
+To launch the same kinematic parameter analysis from the command line, you can use the following command:
+
+python -m zebrazoom dataPostProcessing kinematicParametersAnalysis pathToExcelFile frameStepForDistanceCalculation minimumNumberOfBendsPerBout keepSpeedDistDurWhenLowNbBends thresholdInDegreesBetweenSfsAndTurns
+
+while putting the parameters: 
+
+- pathToExcelFile: to the path to the excel file describing your experiment (the combination of several videos and what they correspond to)
+
+- frameStepForDistanceCalculation: to calculate the distance travelled for each bout, in order to avoid the noise caused by subsequent close-by (x, y) coordinates of the center of the head of the animal, the (x, y) coordinates to calculate the total distance are not taken for every frame of the bout, but rather for every 'frameStepForDistanceCalculation' frame in the bout. When accessed from the GUI, this parameter is fixed to 4, which is a parameter that works well in many situations. When launching the analysis from the command line, this parameter can be further fine tuned. In the future, it will also be possible to fine tune this parameter from the GUI.
+
+- minimumNumberOfBendsPerBout: the minimum number of bends that a bout must have in order for the parameters number of oscillations, tail beat frequency and maximum bend amplitude to be calculated for that bout and included in the analysis (this is for fish only)
+
+- keepSpeedDistDurWhenLowNbBends: when a bout is removed from the analysis because it has a low amount of bends, then the parameters distance, duration and speed are kept in the analysis if keepSpeedDistDurWhenLowNbBends is set to 0, and they are discarded otherwise. If the distance, duration and speed parameters are kept then the parameters number of oscillations, tail beat frequency and maximum bend amplitude are set to nan for those bouts.
+
+- thresholdInDegreesBetweenSfsAndTurns: threshold (unit in degrees) to separate a sfs from a turn (this is also for fish only)
+
+Please note that the parameters minimumNumberOfBendsPerBout, keepSpeedDistDurWhenLowNbBends and thresholdInDegreesBetweenSfsAndTurns are all optional parameters. Therefore, if you don't put anything for:
+
+- minimumNumberOfBendsPerBout and keepSpeedDistDurWhenLowNbBends then the parameters number of oscillations, tail beat frequency and max tail amplitude (all these parameters or for fish only) won't be calculated
+
+- thresholdInDegreesBetweenSfsAndTurns then no information about the amount of turns and sfs based on a threshold over the max tail amplitude will be calculated
 
 
+
+</p>
 
 <a name="pythonanalysis"/>
 

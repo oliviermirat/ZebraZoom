@@ -2,7 +2,7 @@ import numpy as np
 from scipy.interpolate import UnivariateSpline
 import math
 
-def getGlobalParameters(curbout, fps, pixelSize):
+def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation):
 
   BoutDuration = (curbout["BoutEnd"] - curbout["BoutStart"] + 1) / fps
   
@@ -14,7 +14,7 @@ def getGlobalParameters(curbout, fps, pixelSize):
   TotalDistance = 0
   posX = curbout["HeadX"]
   posY = curbout["HeadY"]
-  rangeUsedForDistanceCalculation   = [4*i for i in range(0, int(len(posX)/4))]
+  rangeUsedForDistanceCalculation   = [frameStepForDistanceCalculation*i for i in range(0, int(len(posX)/frameStepForDistanceCalculation))]
   if len(rangeUsedForDistanceCalculation) == 0:
     rangeUsedForDistanceCalculation = [0, len(posX) - 1]
   else:

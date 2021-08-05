@@ -95,7 +95,11 @@ if __name__ == '__main__':
       if sys.argv[2] == "calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshod":
         from zebrazoom.dataAnalysis.postProcessingFromCommandLine.postProcessingFromCommandLine import calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold
         calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold(dir_path, sys.argv[3], int(sys.argv[4]))
-        
+      
+      if sys.argv[2] == "kinematicParametersAnalysis":
+        from zebrazoom.kinematicParametersAnalysis import kinematicParametersAnalysis
+        kinematicParametersAnalysis(sys)
+      
     elif sys.argv[1] == "visualizeMovingAndSleepingTime":
       
       from zebrazoom.code.readValidationVideo import readValidationVideo

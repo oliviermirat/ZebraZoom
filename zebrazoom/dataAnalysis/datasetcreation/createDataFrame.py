@@ -40,6 +40,10 @@ def createDataFrame(dataframeOptions):
     keepSpeedDistDurWhenLowNbBends = int(dataframeOptions['keepSpeedDistDurWhenLowNbBends'])
   else:
     keepSpeedDistDurWhenLowNbBends = 1
+  if 'frameStepForDistanceCalculation' in dataframeOptions:
+    frameStepForDistanceCalculation = int(dataframeOptions['frameStepForDistanceCalculation'])
+  else:
+    frameStepForDistanceCalculation = 4
   
   nbFramesTakenIntoAccount          = dataframeOptions['nbFramesTakenIntoAccount']
   excelFile = pd.read_excel(os.path.join(pathToExcelFile, nameOfFile + fileExtension))
@@ -73,7 +77,7 @@ def createDataFrame(dataframeOptions):
   
   # Creating labels of columns of dataframe
   # Global parameters
-  globParam  = ['Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'BoutDuration', 'TotalDistance', 'Speed', 'NumberOfOscillations', 'meanTBF', 'maxAmplitude', 'deltaHead', 'xstart', 'xend', 'xmean', 'firstBendTime', 'firstBendAmplitude']
+  globParam  = ['Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'BoutDuration', 'TotalDistance', 'Speed', 'NumberOfOscillations', 'meanTBF', 'maxAmplitude', 'deltaHead', 'xstart', 'xend', 'xmean', 'firstBendTime', 'firstBendAmplitude', 'IBI']
   # Tail angle related parameters for clustering
   instaTBF   = ['instaTBF'  + str(i) for i in range(1,nbFramesTakenIntoAccount+1)]
   instaAmp   = ['instaAmp'  + str(i) for i in range(1,nbFramesTakenIntoAccount+1)]
@@ -144,20 +148,22 @@ def createDataFrame(dataframeOptions):
                 
                 # Calculating the global kinematic parameters and more and stores them the dataframe
                 
-                [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, xstart, xend, xmean, firstBendTime, firstBendAmplitude] = getGlobalParameters(dataForBout, fq, pixelsize)
+                [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, xstart, xend, xmean, firstBendTime, firstBendAmplitude] = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation)
                 
                 deltahead  = abs(getDeltaHead(dataForBout))
                 tailLength = getTailLength(dataForBout)
                 
-                tailAnglesRecalculatedData  = getTailAngleRecalculated(dataForBout, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
-                
-                # tailLengthFromRecalculatedAngles = getTailLength2(tailAnglesRecalculatedData)
+                if NumBout > 0:
+                  previousBoutEnd = supstruct["wellPoissMouv"][Well_ID][fishId][NumBout-1]["BoutEnd"]
+                  IBI = (dataForBout["BoutStart"] - previousBoutEnd) / fq
+                else:
+                  IBI = (dataForBout["BoutStart"]) / fq
                 
                 toPutInDataFrameColumn = []
                 toPutInDataFrame       = []
                 
                 toPutInDataFrameColumn = toPutInDataFrameColumn + globParam
-                toPutInDataFrame       = toPutInDataFrame + [Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, deltahead, xstart, xend, xmean, firstBendTime, firstBendAmplitude]
+                toPutInDataFrame       = toPutInDataFrame + [Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, deltahead, xstart, xend, xmean, firstBendTime, firstBendAmplitude, IBI]
                 
                 toPutInDataFrameColumn = toPutInDataFrameColumn + tailAngles
                 toPutInDataFrame       = toPutInDataFrame + getTailAngles(dataForBout, smoothingFactor, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
@@ -208,10 +214,16 @@ def createDataFrame(dataframeOptions):
                   if not(condition[Well_ID] in conditions):
                     conditions.append(condition[Well_ID])
                 
-                  [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, xstart, xend, xmean, firstBendTime, firstBendAmplitude] = getGlobalParameters(dataForBout, fq, pixelsize)
-                
-                  toPutInDataFrameColumn = ['Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'BoutDuration', 'TotalDistance', 'Speed']
-                  toPutInDataFrame       = [Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], BoutDuration, TotalDistance, Speed]
+                  [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, xstart, xend, xmean, firstBendTime, firstBendAmplitude] = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation)
+                  
+                  if NumBout > 0:
+                    previousBoutEnd = supstruct["wellPoissMouv"][Well_ID][fishId][NumBout-1]["BoutEnd"]
+                    IBI = (dataForBout["BoutStart"] - previousBoutEnd) / fq
+                  else:
+                    IBI = (dataForBout["BoutStart"]) / fq
+                  
+                  toPutInDataFrameColumn = ['Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'BoutDuration', 'TotalDistance', 'Speed', 'IBI']
+                  toPutInDataFrame       = [Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], BoutDuration, TotalDistance, Speed, IBI]
                   
                   dfParamSub.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
                   curBoutId = curBoutId + 1

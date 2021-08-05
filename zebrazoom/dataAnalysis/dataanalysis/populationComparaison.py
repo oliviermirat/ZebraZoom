@@ -4,14 +4,17 @@ import shutil
 import matplotlib.pyplot as plt
 import pickle
 import numpy as np
+import json
 
-def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder):
+def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, saveDataPlottedInJson = 0):
 
   outputFolderResult = os.path.join(outputFolder, nameOfFile)
 
   if os.path.exists(outputFolderResult):
     shutil.rmtree(outputFolderResult)
   os.mkdir(outputFolderResult)
+  
+  dataPlotted = {}
 
   infile = open(os.path.join(resFolder, nameOfFile),'rb')
   dfParam = pickle.load(infile)
@@ -40,6 +43,11 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
       concatenatedValuesWithoutNans.append(np.array([x for x in toConcat if not(math.isnan(x))]))
     concatenatedValues = concatenatedValuesWithoutNans
     
+    if saveDataPlottedInJson:
+      dataPlotted[parameter] = {}
+      for idx2, label in enumerate(labels):
+        dataPlotted[parameter][label] = concatenatedValues[idx2].tolist()
+    
     if nbLines == 1:
       tabAx[idx%nbColumns].set_title(parameter)
       tabAx[idx%nbColumns].boxplot(concatenatedValues)
@@ -49,3 +57,8 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
       tabAx[int(idx/nbColumns), idx%nbColumns].boxplot(concatenatedValues)
       tabAx[int(idx/nbColumns), idx%nbColumns].set_xticklabels(labels)
   plt.savefig(os.path.join(outputFolderResult, 'globalParametersInsideCategories.png'))
+  
+  if saveDataPlottedInJson:
+    outputFile = open(os.path.join(outputFolderResult, 'dataPlotted.txt'), 'w')
+    outputFile.write(json.dumps(dataPlotted))
+    outputFile.close()
