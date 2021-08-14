@@ -170,4 +170,65 @@ def numberOfSleepingAndMovingTimesInTimeRange(pathToZZoutput, vidName, specified
     print(nbMovingFrames, "moving frames\n")
   
   dfResult.to_excel(os.path.join(pathToZZoutput, "nbSleepAndMoveFrames_" + vidName.replace(',', '') + "_" + specifiedStartTime.replace(':', '') + "_" + specifiedEndTime.replace(':', '') + "_" + wellNumber + ".xlsx"))
+
+
+def numberOfSleepBoutsInTimeRange(pathToZZoutput, vidName, minSleepLenghtDurationThreshold, wellNumber='-1', specifiedStartTime=-1, specifiedEndTime=-1):
   
+  videoNamelist    = []
+  if ',' in vidName:
+    concatExcelFileName = "".join(vidName.split(','))
+    df = pd.read_excel(os.path.join(pathToZZoutput, "sleepVsMoving_" + concatExcelFileName + ".xlsx"))
+  else:
+    df = pd.read_excel(os.path.join(os.path.join(pathToZZoutput, vidName), "sleepVsMoving_" + vidName + ".xlsx"))
+ 
+  if type(specifiedStartTime) != int:
+    dfTimeMinusSpecifiedStartTime = (df['HourMinuteSecond'].apply(datetime.datetime.strptime, args=("%H:%M:%S",)) - datetime.datetime.strptime(specifiedStartTime, "%H:%M:%S")).apply(pd.Timedelta.total_seconds).apply(abs)
+    indexStart = dfTimeMinusSpecifiedStartTime.argmin()
+    dfTimeMinusSpecifiedEndTime = (df['HourMinuteSecond'].apply(datetime.datetime.strptime, args=("%H:%M:%S",)) - datetime.datetime.strptime(specifiedEndTime, "%H:%M:%S")).apply(pd.Timedelta.total_seconds).apply(abs)
+    indexEnd = dfTimeMinusSpecifiedEndTime.argmin()
+  else:
+    indexStart = 0
+    indexEnd   = len(df)
+  
+  dfLength = len(df)
+  
+  if int(wellNumber) == -1:
+    allWellNumbers = [str(i) for i in range(0, int(len(df.columns) / 3))]
+    dfResult = pd.DataFrame(index=[i for i in range(0, int(len(df.columns) / 3))], columns=['nbSleepBouts'])
+  else:
+    allWellNumbers = [wellNumber]
+    dfResult = pd.DataFrame(index=[int(wellNumber)], columns=['nbSleepBouts'])
+  
+  if type(specifiedStartTime) != int:
+    print("Between time", specifiedStartTime, "(frame number", indexStart, "), and time:", specifiedEndTime, "(frame number", indexEnd,"):")
+  
+  for wellNum in allWellNumbers:
+  
+    print("For well number", wellNum, ":")
+    
+    currentlySleeping = False
+    curSleepLength = 0
+    countNbSleepBoutsOverDurationThreshold = 0
+    for i in range(indexStart, indexEnd):
+      if df['sleep_'  + wellNum][i] == 1:
+        currentlySleeping = True
+        curSleepLength = curSleepLength + 1
+      else:
+        if currentlySleeping:
+          if curSleepLength >= minSleepLenghtDurationThreshold:
+            countNbSleepBoutsOverDurationThreshold = countNbSleepBoutsOverDurationThreshold + 1
+        currentlySleeping = False
+        curSleepLength = 0
+
+    if curSleepLength >= minSleepLenghtDurationThreshold:
+      countNbSleepBoutsOverDurationThreshold = countNbSleepBoutsOverDurationThreshold + 1    
+
+    dfResult['nbSleepBouts'][int(wellNum)]  = countNbSleepBoutsOverDurationThreshold
+    
+    print(str(countNbSleepBoutsOverDurationThreshold), "sleeping Frames\n")
+  
+  if type(specifiedStartTime) == int:
+    specifiedStartTime = ''
+    specifiedEndTime   = ''
+  
+  dfResult.to_excel(os.path.join(pathToZZoutput, "nbSleepBouts_" + vidName.replace(',', '') + "_" + specifiedStartTime.replace(':', '') + "_" + specifiedEndTime.replace(':', '') + "_" + wellNumber + ".xlsx"))

@@ -476,7 +476,7 @@ Please note that there shouldn't be any spaces inside this variable: no spaces b
 - notMovingNumberOfFramesThresholdForSleep : by a number representing the 'number of frames not moving' threshold between sleep and non-sleep time periods<br/>
 
 Optionally, some additional parameters can be added to the 'python -m zebrazoom dataPostProcessing etc...' line above, in the following order:<br/>
-- specifiedStartTime : time at which the experiment started, you must specify this parameter in the format Hours:Minutes:Seconds (for example this could be 00:03:18 for 3 hours and 18 minutes, or it could be 15:00:07 for 15 hours and 7 seconds, etc...). You can also put this parameter at 0 for the time 00:00:00
+- specifiedStartTime : time at which the experiment started, you must specify this parameter in the format Hours:Minutes:Seconds (for example this could be 00:03:18 for 3 minutes and 18 seconds, or it could be 15:00:07 for 15 hours and 7 seconds, etc...). You can also put this parameter at 0 for the time 00:00:00
 - distanceTravelledRollingMedianFilter : window of a rolling median filter applied on the distance travelled (before the speed is calculated). If this parameter is not specified (by default), no rolling median filter is applied.<br/>
 - videoPixelSize : pixelSize of the video, if this parameter is not specified it will be set to the 'videoPixelSize' parameter set in the configuration file used to launch the tracking (and if also unspecified in the configuration file, it will be set to the value 1)<br/>
 - videoFPS : fps of the video, if this parameter is not specified it will be set to the 'videoFPS' parameter set in the configuration file used to launch the tracking (and if also unspecified in the configuration file, it will be set to the value 1)<br/>
@@ -487,7 +487,7 @@ Launching this analysis with the command line 'python -m zebrazoom dataPostProce
 
 In order to validate the moving and sleeping time periods calculated, it is then possible to visualize moving and sleeping time periods with the following commands:<br/>
 
-python -m zebrazoom visualizeMovingAndSleepingTime movingTime videoName<br/>
+python -m zebrazoom visualizeMovingAndSleepingTime movingTime videoName<br/><br/>
 (while replacing 'videoName' by the name of the video for which you want to validate results)<br/>
 This command will show the coordinates of fish when and only when the previous script has found that the fish is moving.<br/>
 
@@ -501,22 +501,45 @@ For both commands above, you can easily go through the video using the following
 
 <H4 CLASS="western">Identifying first sleeping time after specified time:</H4>
 
-This can be done with the command:<br/>
-python -m zebrazoom dataPostProcessing firstSleepingTimeAfterSpecifiedTime videoName specifiedTime wellNumber <br/>
+This can be done with the command:<br/><br/>
+python -m zebrazoom dataPostProcessing firstSleepingTimeAfterSpecifiedTime videoName specifiedTime wellNumber <br/><br/>
 Where:<br/>
-videoName must be replaced either by the name of a video or by a list of video names separated by commas as explained in the paragraph "Identifying moving and sleeping times of zebrafish" above (if you want to launch this script on the excel file created by combining several videos) (please note that there shouldn't be any spaces anywhere in this variable).<br/>
-specifiedTime must be replaced by a time in the format Hours:Minutes:Seconds (for example this could be 00:03:18 for 3 hours and 18 minutes, or it could be 15:00:07 for 15 hours and 7 seconds, etc...).<br/>
-wellNumber must be the number of the well on which to launch this analysis (please note that well numbers start at 0 (not at 1)). If you set wellNumber to -1, the analysis will be launch on all wells.<br/>
+- videoName must be replaced either by the name of a video or by a list of video names separated by commas as explained in the paragraph "Identifying moving and sleeping times of zebrafish" above (if you want to launch this script on the excel file created by combining several videos) (please note that there shouldn't be any spaces anywhere in this variable).<br/>
+
+- specifiedTime must be replaced by a time in the format Hours:Minutes:Seconds (for example this could be 00:03:18 for 3 minutes and 18 seconds, or it could be 15:00:07 for 15 hours and 7 seconds, etc...).<br/>
+
+- wellNumber must be the number of the well on which to launch this analysis (please note that well numbers start at 0 (not at 1)). If you set wellNumber to -1, the analysis will be launch on all wells.<br/>
 
 <H4 CLASS="western">Calculating the number of sleeping and moving frames in-between two specified times:</H4>
 
-This can be done with the command:<br/>
-python -m zebrazoom dataPostProcessing numberOfSleepingAndMovingTimesInTimeRange videoName specifiedStartTime specifiedEndTime wellNumber <br/>
+This can be done with the command:<br/><br/>
+python -m zebrazoom dataPostProcessing numberOfSleepingAndMovingTimesInTimeRange videoName specifiedStartTime specifiedEndTime wellNumber <br/><br/>
 Where:<br/>
-videoName must be replaced either by the name of a video or by a list of video names separated by commas as explained in the paragraph "Identifying moving and sleeping times of zebrafish" above (if you want to launch this script on the excel file created by combining several videos) (please note that there shouldn't be any spaces anywhere in this variable).<br/>
-specifiedStartTime and specifiedEndTime must be replaced by a time in the format Hours:Minutes:Seconds (for example this could be 00:03:18 for 3 hours and 18 minutes, or it could be 15:00:07 for 15 hours and 7 seconds, etc...).<br/>
-wellNumber must be the number of the well on which to launch this analysis (please note that well numbers start at 0 (not at 1)). If you set wellNumber to -1, the analysis will be launch on all wells.<br/>
 
+- videoName must be replaced either by the name of a video or by a list of video names separated by commas as explained in the paragraph "Identifying moving and sleeping times of zebrafish" above (if you want to launch this script on the excel file created by combining several videos) (please note that there shouldn't be any spaces anywhere in this variable).<br/>
+specifiedStartTime and specifiedEndTime must be replaced by a time in the format Hours:Minutes:Seconds (for example this could be 00:03:18 for 3 minutes and 18 seconds, or it could be 15:00:07 for 15 hours and 7 seconds, etc...).<br/>
+
+- wellNumber must be the number of the well on which to launch this analysis (please note that well numbers start at 0 (not at 1)). If you set wellNumber to -1, the analysis will be launch on all wells.<br/>
+
+
+<H4 CLASS="western">Calculating the number of sleeping bouts:</H4>
+
+This can be done with the command:<br/><br/>
+python -m zebrazoom dataPostProcessing numberOfSleepBoutsInTimeRange videoName minSleepLenghtDurationThreshold<br/><br/>
+Where:<br/>
+
+- videoName: must be replaced either by the name of a video or by a list of video names separated by commas as explained in the paragraph "Identifying moving and sleeping times of zebrafish" above (if you want to launch this script on the excel file created by combining several videos) (please note that there shouldn't be any spaces anywhere in this variable).<br/>
+
+- minSleepLenghtDurationThreshold: must be fixed to the minimum number of consecutive sleeping frames a bout must possess in order to be considered a sleeping bout.<br/>
+
+There are also 3 additional optional parameters (wellNumber, specifiedStartTime and specifiedEndTime) which can be used with the following command:<br/><br/>
+python -m zebrazoom dataPostProcessing numberOfSleepBoutsInTimeRange videoName minSleepLenghtDurationThreshold wellNumber specifiedStartTime specifiedEndTime <br/>
+
+- wellNumber must be set to the number of the well on which to launch this analysis (please note that well numbers start at 0 (not at 1)). If you set wellNumber to -1, the analysis will be launched on all wells.<br/>
+
+- specifiedStartTime and specifiedEndTime must be replaced by a time in the format Hours:Minutes:Seconds (for example this could be 00:03:18 for 3 minutes and 18 seconds, or it could be 15:00:07 for 15 hours and 7 seconds, etc...). When these two parameters are set to -1 and -1, the analysis is performed on all frames of the video.<br/>
+
+By default, wellNumber is set to -1 (and so the analysis is performed on all wells) and specifiedStartTime and specifiedEndTime are both set to -1 (and so the analysis is performed for all frames).<br/>
 
 
 <a name="curvature"/>
