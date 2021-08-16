@@ -5,15 +5,15 @@ from zebrazoom.code.trackingFolder.tailTracking import tailTracking
 from zebrazoom.code.trackingFolder.eyeTracking.eyeTracking import eyeTracking
 from zebrazoom.code.trackingFolder.postProcessMultipleTrajectories import postProcessMultipleTrajectories
 from zebrazoom.code.trackingFolder.getImages import getImages
+from zebrazoom.code.trackingFolder.debugTracking import debugTracking
 from zebrazoom.code.popUpAlgoFollow import prepend
 import multiprocessing as mp
 from multiprocessing import Process
 import cv2
 import numpy as np
+import math
 
 def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperparameters, videoName):
-  
-  backgroundSubtractorMOG2 = False
   
   cap = cv2.VideoCapture(videoPath)
   if (cap.isOpened()== False): 
@@ -45,10 +45,10 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
     if not(hyperparameters["nbAnimalsPerWell"] > 1) and not(hyperparameters["forceBlobMethodForHeadTracking"]) and not(hyperparameters["headEmbeded"]) and (hyperparameters["findHeadPositionByUserInput"] == 0) and (hyperparameters["takeTheHeadClosestToTheCenter"] == 0):
       trackingProbabilityOfGoodDetectionList.append(np.zeros((hyperparameters["nbAnimalsPerWell"], lastFrame-firstFrame+1)))
   
-  if backgroundSubtractorMOG2:
-    fgbg = cv2.createBackgroundSubtractorMOG2()
-    for i in range(5000):
-      cap.set(1, 5000-i)
+  if hyperparameters["backgroundSubtractorKNN"]:
+    fgbg = cv2.createBackgroundSubtractorKNN()
+    for i in range(0, min(lastFrame - 1, 500), int(min(lastFrame - 1, 500) / 10)):
+      cap.set(1, min(lastFrame - 1, 500) - i)
       ret, frame = cap.read()
       fgmask = fgbg.apply(frame)
     cap.release()
@@ -69,7 +69,7 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
     
     if ret:
     
-      if backgroundSubtractorMOG2:
+      if hyperparameters["backgroundSubtractorKNN"]:
         frame = fgbg.apply(frame)
         frame = 255 - frame
       
@@ -81,15 +81,17 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
           ytop = wellPositions[wellNumber]['topLeftY']
           lenX = wellPositions[wellNumber]['lengthX']
           lenY = wellPositions[wellNumber]['lengthY']
-          if backgroundSubtractorMOG2:
+          if hyperparameters["backgroundSubtractorKNN"]:
             grey = frame
           else:
             grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
           curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
-          if not(backgroundSubtractorMOG2):
+          if not(hyperparameters["backgroundSubtractorKNN"]):
             back = background[ytop:ytop+lenY, xtop:xtop+lenX]
             putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
             curFrame[putToWhite] = 255
+          else:
+            hyperparameters["paramGaussianBlur"] = int(math.sqrt(cv2.countNonZero(255 - curFrame) / hyperparameters["nbAnimalsPerWell"]) / 2) * 2 + 1
           blur = cv2.GaussianBlur(curFrame, (hyperparameters["paramGaussianBlur"], hyperparameters["paramGaussianBlur"]),0)
           headPositionFirstFrame = 0
           thresh1 = 0
@@ -116,6 +118,8 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
         # Eye tracking for frame i
         if hyperparameters["eyeTracking"]:
           trackingEyesAllAnimalsList[wellNumber] = eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimalsList[wellNumber], trackingHeadTailAllAnimalsList[wellNumber], trackingEyesAllAnimalsList[wellNumber])
+        
+        debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimalsList[wellNumber], trackingHeadingAllAnimalsList[wellNumber], blur, hyperparameters)
       
     i = i + 1
     

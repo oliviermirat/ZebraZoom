@@ -53,10 +53,15 @@ class ChooseGeneralExperiment(tk.Frame):
     label.pack(side="top", fill="x", pady=10)
     
     tk.Label(self, text="Choose only one of the options below:", font=("Helvetica", 12)).pack(side="top", fill="x", pady=10)
+
+    fastScreen = IntVar()
+    Checkbutton(self, text="Fast and easy screen for any kind of animal.", variable=fastScreen).pack()
+    tk.Label(self, text="Only one animal per well/tank/arena. Center of mass tracking only. Very fast Tracking. Good for genetic and drug screens.").pack()
+    tk.Label(self, text="").pack()
     
     freeZebra = IntVar()
     Checkbutton(self, text="Track heads and tails of freely swimming fish.", variable=freeZebra).pack()
-    tk.Label(self, text="The fish must be in one well of any shape or in several circular wells. Each well should contain the same number of fish.").pack()
+    tk.Label(self, text="Multiple fish can be tracked in the same well but the tail tracking can be mediocre when fish collide. Each well should contain the same number of fish.").pack()
     tk.Label(self, text="").pack()
     
     headEmbZebra = IntVar()
@@ -67,10 +72,10 @@ class ChooseGeneralExperiment(tk.Frame):
     rodent = IntVar()
     other = IntVar()
     Checkbutton(self, text="Track centers of mass of any kind of animal.", variable=other).pack()
-    tk.Label(self, text='Several animals can be tracked at once. The animals must be "darker" than the background and the background must be still.').pack()
+    tk.Label(self, text='Several animals can be tracked at once in the same well/tank/arena. Each well should contain the same number of animals.').pack()
     tk.Label(self, text="").pack()
     
-    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.chooseGeneralExperimentFirstStep(controller, freeZebra.get(), headEmbZebra.get(), drosophilia.get(), rodent.get(), other.get())).pack()
+    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.chooseGeneralExperimentFirstStep(controller, freeZebra.get(), headEmbZebra.get(), drosophilia.get(), rodent.get(), other.get(), fastScreen.get())).pack()
     
     tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
@@ -151,6 +156,42 @@ class NbRegionsOfInterest(tk.Frame):
     tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.regionsOfInterest(controller, nbwells.get())).pack()
     
     tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+
+
+class HomegeneousWellsLayout(tk.Frame):
+
+  def __init__(self, parent, controller):
+    
+    tk.Frame.__init__(self, parent)
+    self.controller = controller
+    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
+    label.pack(side="top", fill="x", pady=10)
+    
+    tk.Label(self, text="How many wells are there in your video?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    nbwells = tk.Entry(self)
+    nbwells.pack()
+    
+    tk.Label(self, text="How many rows of wells are there in your video? (leave blank for default of 1)", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    nbRowsOfWells = tk.Entry(self)
+    nbRowsOfWells.pack()
+    
+    tk.Label(self, text="How many wells are there per row on your video? (leave blank for default of 4)", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    nbWellsPerRows = tk.Entry(self)
+    nbWellsPerRows.pack()
+    
+    tk.Label(self, text='').pack()
+    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.homegeneousWellsLayout(controller, nbwells.get(), nbRowsOfWells.get(), nbWellsPerRows.get())).pack()
+
+    tk.Label(self, text='').pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+    
+    def callback(url):
+      webbrowser.open_new(url)
+    
+    tk.Label(self, text='').pack()
+    link3 = tk.Button(self, text="View Instruction for an even faster tracking, also more accurate in some instances.", bg="gold")
+    link3.pack()
+    link3.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/FastScreenTrackingGuidlines.md"))
 
 
 class CircularOrRectangularWells(tk.Frame):

@@ -18,7 +18,10 @@ def postProcessMultipleTrajectories(trackingHeadingAllAnimals, trackingHeadTailA
   if hyperparameters["postProcessRemoveLowProbabilityDetection"]:
     for animalId in range(0, len(trackingHeadTailAllAnimals)):
       probabilityOfGoodDetection = trackingProbabilityOfGoodDetection[animalId, :]
-      toRemove   = (probabilityOfGoodDetection - np.mean(probabilityOfGoodDetection) < -hyperparameters["postProcessLowProbabilityDetectionThreshold"] * np.std(probabilityOfGoodDetection))
+      if hyperparameters["postProcessLowProbabilityDetectionPercentOfMaximum"] == 0:
+        toRemove   = (probabilityOfGoodDetection - np.mean(probabilityOfGoodDetection) < -hyperparameters["postProcessLowProbabilityDetectionThreshold"] * np.std(probabilityOfGoodDetection))
+      else:
+        toRemove   = (probabilityOfGoodDetection < np.max(probabilityOfGoodDetection) * hyperparameters["postProcessLowProbabilityDetectionPercentOfMaximum"])
       print("Well ", animalId, ": Number of elements to remove:", np.sum(toRemove), " out of ", len(toRemove), "elements")
       trackingHeadTailAllAnimals[animalId, toRemove, 0, 0] = 0
       trackingHeadTailAllAnimals[animalId, toRemove, 0, 1] = 0

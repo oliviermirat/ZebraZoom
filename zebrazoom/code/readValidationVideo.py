@@ -32,7 +32,12 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
     configTemp = json.load(f)
   hyperparameters = getHyperparametersSimple(configTemp)
   
-  videoPath   = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, s4 + s5)))
+  if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] and os.path.exists(os.path.join(initialPath, os.path.join(s1, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi')))):
+    # The "exist" check above is only to insure compatibility with videos tracked prior to this update
+    videoPath = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi')))
+  else:
+    videoPath = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, s4 + s5)))
+  
   resultsPath = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, s3b + s4 + s5b)))
   
   cap = cv2.VideoCapture(videoPath)

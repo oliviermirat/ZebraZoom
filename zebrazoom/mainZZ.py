@@ -154,7 +154,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     raise ValueError
     
   # Getting background
-  if hyperparameters["headEmbeded"] and hyperparameters["headEmbededRemoveBack"] == 0 and hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0 and hyperparameters["adjustHeadEmbededTracking"] == 0:
+  if hyperparameters["backgroundSubtractorKNN"] or (hyperparameters["headEmbeded"] and hyperparameters["headEmbededRemoveBack"] == 0 and hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0 and hyperparameters["adjustHeadEmbededTracking"] == 0):
     background = []
   else:
     print("start get background")
@@ -227,7 +227,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
   
     # Creating validation video
     if hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
-      shutil.copyfile(os.path.join(pathToVideo, videoNameWithExt), os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), hyperparameters["videoName"] + '.avi'))
+      shutil.copyfile(os.path.join(pathToVideo, videoNameWithExt), os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'))
     else:
       if hyperparameters["createValidationVideo"]:
         infoFrame = createValidationVideo(os.path.join(pathToVideo, videoNameWithExt), superStruct, hyperparameters)

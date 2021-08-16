@@ -60,6 +60,7 @@
   "extractBackWhiteBackground" : 1,
   "extractAdvanceZebraParameters" : 1,
   "takeTheHeadClosestToTheCenter" : 0,
+  "backgroundSubtractorKNN" : 0,
   
   "groupOfMultipleSameSizeAndShapeEquallySpacedWells" : 0,
   "wellsAreRectangles" : 0,
@@ -126,6 +127,7 @@
   "postProcessMaxDisapearanceFrames" : 100,
   "postProcessRemoveLowProbabilityDetection" : 0,
   "postProcessLowProbabilityDetectionThreshold" : 1,
+  "postProcessLowProbabilityDetectionPercentOfMaximum" : 0,
   "postProcessRemovePointsOnBordersMargin" : 0,
   "postProcessRemovePointsAwayFromMainTrajectory" : 0,
   "postProcessRemovePointsAwayFromMainTrajectoryThreshold" : 2.5,

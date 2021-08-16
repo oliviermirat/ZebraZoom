@@ -57,12 +57,15 @@ def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
     self.videoToCreateConfigFileFor = filedialog.askopenfilename(initialdir = os.path.expanduser("~"),title = "Select video to create config file for",filetypes = (("video","*.*"),("all files","*.*")))
   controller.show_frame("ChooseGeneralExperiment")
 
-def chooseGeneralExperimentFirstStep(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other):
-  self.configFile["extractAdvanceZebraParameters"] = 0
-  if int(freeZebra):
-    controller.show_frame("FreelySwimmingExperiment")
+def chooseGeneralExperimentFirstStep(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, fastScreen):
+  if int(fastScreen):
+    controller.show_frame("HomegeneousWellsLayout")
   else:
-    chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, 0)
+    self.configFile["extractAdvanceZebraParameters"] = 0
+    if int(freeZebra):
+      controller.show_frame("FreelySwimmingExperiment")
+    else:
+      chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, 0)
 
 def chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, freeZebra2):
   self.configFile["extractAdvanceZebraParameters"] = 0
@@ -179,7 +182,25 @@ def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
   self.configFile = configFile
   
   chooseBeginningAndEndOfVideo(self, controller)
+
+
+def homegeneousWellsLayout(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
+
+  self.configFile = {"nbAnimalsPerWell": 1, "nbWells": 8, "nbRowsOfWells": 2, "nbWellsPerRows": 4, "groupOfMultipleSameSizeAndShapeEquallySpacedWells": 1, "postProcessMultipleTrajectories": 1,   "postProcessRemoveLowProbabilityDetection" : 1, "postProcessLowProbabilityDetectionPercentOfMaximum" : 0.2, "trackingPointSizeDisplay": 4, "extractAdvanceZebraParameters": 0,  "validationVideoPlotHeading": 0, "trackTail": 0, "freqAlgoPosFollow": 100, "fasterMultiprocessing": 1, "copyOriginalVideoToOutputFolderForValidation": 1, "backgroundSubtractorKNN": 1}
   
+  self.configFile["nbWells"]          = int(nbwells)
+  
+  if len(nbRowsOfWells):
+    self.configFile["nbRowsOfWells"]  = int(nbRowsOfWells)
+  else:
+    self.configFile["nbRowsOfWells"]  = 1
+    
+  if len(nbWellsPerRows):
+    self.configFile["nbWellsPerRows"]  = int(nbWellsPerRows)
+  else:
+    self.configFile["nbWellsPerRows"]  = 4
+  
+  controller.show_frame("FinishConfig")
 
 def circularOrRectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
   self.configFile["nbWells"]        = int(nbwells)

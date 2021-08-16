@@ -381,6 +381,10 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["setBackgroundToImageMedian"] = getConfig(config, "setBackgroundToImageMedian", videoPath)
   
+  hyperparameters["backgroundSubtractorKNN"] = getConfig(config, "backgroundSubtractorKNN", videoPath)
+  
+  hyperparameters["postProcessLowProbabilityDetectionPercentOfMaximum"] = getConfig(config, "postProcessLowProbabilityDetectionPercentOfMaximum", videoPath)
+  
   
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1

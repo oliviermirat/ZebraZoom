@@ -510,6 +510,8 @@ Where:<br/>
 
 - wellNumber must be the number of the well on which to launch this analysis (please note that well numbers start at 0 (not at 1)). If you set wellNumber to -1, the analysis will be launch on all wells.<br/>
 
+Important note: this command will only work if you have previously launched the command "python -m zebrazoom dataPostProcessing sleepVsMoving etc..." with the exact same value for the parameter videoName.<br/>
+
 <H4 CLASS="western">Calculating the number of sleeping and moving frames in-between two specified times:</H4>
 
 This can be done with the command:<br/><br/>
@@ -521,6 +523,7 @@ specifiedStartTime and specifiedEndTime must be replaced by a time in the format
 
 - wellNumber must be the number of the well on which to launch this analysis (please note that well numbers start at 0 (not at 1)). If you set wellNumber to -1, the analysis will be launch on all wells.<br/>
 
+Important note: this command will only work if you have previously launched the command "python -m zebrazoom dataPostProcessing sleepVsMoving etc..." with the exact same value for the parameter videoName.<br/>
 
 <H4 CLASS="western">Calculating the number of sleeping bouts:</H4>
 
@@ -541,6 +544,7 @@ python -m zebrazoom dataPostProcessing numberOfSleepBoutsInTimeRange videoName m
 
 By default, wellNumber is set to -1 (and so the analysis is performed on all wells) and specifiedStartTime and specifiedEndTime are both set to -1 (and so the analysis is performed for all frames).<br/>
 
+Important note: this command will only work if you have previously launched the command "python -m zebrazoom dataPostProcessing sleepVsMoving etc..." with the exact same value for the parameter videoName.<br/>
 
 <a name="curvature"/>
 
