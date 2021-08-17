@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import time
 import datetime
+from difflib import SequenceMatcher
 
 def calculateSleepVsMovingPeriods(pathToZZoutput, vidName, speedThresholdForMoving, notMovingNumberOfFramesThresholdForSleep, specifiedStartTime=0, distanceTravelledRollingMedianFilter=0, videoPixelSize=-1, videoFPS=-1):
   
@@ -91,17 +92,25 @@ def calculateSleepVsMovingPeriods(pathToZZoutput, vidName, speedThresholdForMovi
     
     
   if len(videoNamelist) > 1:
-    
-    concatExcelFileName = "".join(videoNamelist)
+    name1 = videoNamelist[0]
+    name2 = videoNamelist[1]
+    match = SequenceMatcher(None, name1, name2).find_longest_match(0, len(name1), 0, len(name2))
+    commonSubstring = name1[match.a: match.a + match.size]
+    concatExcelFileName = commonSubstring + '_'.join([name.replace(commonSubstring, '') for name in videoNamelist])
     dfFinalAllVideos.to_excel(os.path.join(pathToZZoutput, "sleepVsMoving_" + concatExcelFileName + ".xlsx"))
 
 def firstSleepingTimeAfterSpecifiedTime(pathToZZoutput, vidName, specifiedTime, wellNumber):
   
-  videoNamelist    = []
   if ',' in vidName:
-    concatExcelFileName = "".join(vidName.split(','))
+    videoNamelist = vidName.split(',')
+    name1 = videoNamelist[0]
+    name2 = videoNamelist[1]
+    match = SequenceMatcher(None, name1, name2).find_longest_match(0, len(name1), 0, len(name2))
+    commonSubstring = name1[match.a: match.a + match.size]
+    concatExcelFileName = commonSubstring + '_'.join([name.replace(commonSubstring, '') for name in videoNamelist])
     df = pd.read_excel(os.path.join(pathToZZoutput, "sleepVsMoving_" + concatExcelFileName + ".xlsx"))
   else:
+    concatExcelFileName = vidName
     df = pd.read_excel(os.path.join(os.path.join(pathToZZoutput, vidName), "sleepVsMoving_" + vidName + ".xlsx"))
   
   dfTimeMinusSpecifiedTime = (df['HourMinuteSecond'].apply(datetime.datetime.strptime, args=("%H:%M:%S",)) - datetime.datetime.strptime(specifiedTime, "%H:%M:%S")).apply(pd.Timedelta.total_seconds).apply(abs)
@@ -128,15 +137,20 @@ def firstSleepingTimeAfterSpecifiedTime(pathToZZoutput, vidName, specifiedTime, 
       dfResult['firstSleepTime'][int(wellNum)]                     = df['HourMinuteSecond'][currentIndex]
       dfResult['delayBeforeFirstSleepTimeInSeconds'][int(wellNum)] = dfTimeMinusSpecifiedTime[currentIndex]
   
-  dfResult.to_excel(os.path.join(pathToZZoutput, "firstSleepTimeAfter_" + specifiedTime.replace(':', '') + "_" + vidName.replace(',', '') + "_" + wellNumber + ".xlsx"))
+  dfResult.to_excel(os.path.join(pathToZZoutput, "firstSleepTimeAfter_" + specifiedTime.replace(':', '') + "_" + concatExcelFileName + "_" + wellNumber + ".xlsx"))
 
 def numberOfSleepingAndMovingTimesInTimeRange(pathToZZoutput, vidName, specifiedStartTime, specifiedEndTime, wellNumber):
   
-  videoNamelist    = []
   if ',' in vidName:
-    concatExcelFileName = "".join(vidName.split(','))
+    videoNamelist = vidName.split(',')
+    name1 = videoNamelist[0]
+    name2 = videoNamelist[1]
+    match = SequenceMatcher(None, name1, name2).find_longest_match(0, len(name1), 0, len(name2))
+    commonSubstring = name1[match.a: match.a + match.size]
+    concatExcelFileName = commonSubstring + '_'.join([name.replace(commonSubstring, '') for name in videoNamelist])
     df = pd.read_excel(os.path.join(pathToZZoutput, "sleepVsMoving_" + concatExcelFileName + ".xlsx"))
   else:
+    concatExcelFileName = vidName
     df = pd.read_excel(os.path.join(os.path.join(pathToZZoutput, vidName), "sleepVsMoving_" + vidName + ".xlsx"))
   
   dfTimeMinusSpecifiedStartTime = (df['HourMinuteSecond'].apply(datetime.datetime.strptime, args=("%H:%M:%S",)) - datetime.datetime.strptime(specifiedStartTime, "%H:%M:%S")).apply(pd.Timedelta.total_seconds).apply(abs)
@@ -169,16 +183,21 @@ def numberOfSleepingAndMovingTimesInTimeRange(pathToZZoutput, vidName, specified
     print(nbSleepFrames, "sleeping Frames")
     print(nbMovingFrames, "moving frames\n")
   
-  dfResult.to_excel(os.path.join(pathToZZoutput, "nbSleepAndMoveFrames_" + vidName.replace(',', '') + "_" + specifiedStartTime.replace(':', '') + "_" + specifiedEndTime.replace(':', '') + "_" + wellNumber + ".xlsx"))
+  dfResult.to_excel(os.path.join(pathToZZoutput, "nbSleepAndMoveFrames_" + concatExcelFileName + "_" + specifiedStartTime.replace(':', '') + "_" + specifiedEndTime.replace(':', '') + "_" + wellNumber + ".xlsx"))
 
 
 def numberOfSleepBoutsInTimeRange(pathToZZoutput, vidName, minSleepLenghtDurationThreshold, wellNumber='-1', specifiedStartTime=-1, specifiedEndTime=-1):
   
-  videoNamelist    = []
   if ',' in vidName:
-    concatExcelFileName = "".join(vidName.split(','))
+    videoNamelist = vidName.split(',')
+    name1 = videoNamelist[0]
+    name2 = videoNamelist[1]
+    match = SequenceMatcher(None, name1, name2).find_longest_match(0, len(name1), 0, len(name2))
+    commonSubstring = name1[match.a: match.a + match.size]
+    concatExcelFileName = commonSubstring + '_'.join([name.replace(commonSubstring, '') for name in videoNamelist])
     df = pd.read_excel(os.path.join(pathToZZoutput, "sleepVsMoving_" + concatExcelFileName + ".xlsx"))
   else:
+    concatExcelFileName = vidName
     df = pd.read_excel(os.path.join(os.path.join(pathToZZoutput, vidName), "sleepVsMoving_" + vidName + ".xlsx"))
  
   if type(specifiedStartTime) != int:
@@ -231,4 +250,4 @@ def numberOfSleepBoutsInTimeRange(pathToZZoutput, vidName, minSleepLenghtDuratio
     specifiedStartTime = ''
     specifiedEndTime   = ''
   
-  dfResult.to_excel(os.path.join(pathToZZoutput, "nbSleepBouts_" + vidName.replace(',', '') + "_" + specifiedStartTime.replace(':', '') + "_" + specifiedEndTime.replace(':', '') + "_" + wellNumber + ".xlsx"))
+  dfResult.to_excel(os.path.join(pathToZZoutput, "nbSleepBouts_" + concatExcelFileName + "_" + specifiedStartTime.replace(':', '') + "_" + specifiedEndTime.replace(':', '') + "_" + wellNumber + ".xlsx"))
