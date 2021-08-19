@@ -16,7 +16,7 @@ dataframeOptions = {
   'computeMassCenterParamForCluster'  : False
 }
 
-[conditions, genotypes, nbFramesTakenIntoAccount] = zebrazoom.createDataFrame(dataframeOptions)
+[conditions, genotypes, nbFramesTakenIntoAccount, globParam] = zebrazoom.createDataFrame(dataframeOptions)
 
 
 # Plotting for the different conditions

@@ -17,7 +17,7 @@ dataframeOptions = {
   'computeMassCenterParamForCluster'  : True
 }
 
-[conditions, genotypes, nbFramesTakenIntoAccount] = zebrazoom.createDataFrame(dataframeOptions)
+[conditions, genotypes, nbFramesTakenIntoAccount, globParam] = zebrazoom.createDataFrame(dataframeOptions)
 
 
 # Applying the clustering on this dataframe

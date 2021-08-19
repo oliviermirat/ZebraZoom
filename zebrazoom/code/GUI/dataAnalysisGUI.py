@@ -3,6 +3,7 @@ from tkinter import font  as tkfont
 from tkinter import filedialog
 from tkinter import ttk
 from tkinter import *
+import webbrowser
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
@@ -16,7 +17,6 @@ class CreateExperimentOrganizationExcel(tk.Frame):
     label = tk.Label(self, text="Prepare experiment organization excel file:", font=controller.title_font)
     label.pack(side="top", fill="x", pady=10)
     
-    tk.Label(self, text="").pack()
     tk.Label(self, text="To further analyze the outputs of ZebraZoom you must create an excel file to describe how you organized your experiments.").pack()
     tk.Label(self, text="Click on the button below to open the folder where you should store that excel file.").pack()
     tk.Label(self, text="In this folder you will also find an file named 'example' showing an example of such an excel file.").pack()
@@ -39,6 +39,11 @@ class CreateExperimentOrganizationExcel(tk.Frame):
     tk.Label(self, text="").pack()
     
     tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+    
+    tk.Label(self, text="").pack()
+    tk.Label(self, text="If you already analyzed data and you just want to view previous results, click on one of the button above:").pack()
+    tk.Button(self, text="View previous kinematic parameter analysis results", bg="light yellow", command=lambda: controller.show_frame("AnalysisOutputFolderPopulation")).pack()
+    tk.Button(self, text="View previous clustering analysis results", bg="light yellow", command=lambda: controller.show_frame("AnalysisOutputFolderClustering")).pack()
 
 
 class ChooseExperimentOrganizationExcel(tk.Frame):
@@ -79,26 +84,29 @@ class PopulationComparison(tk.Frame):
     label = tk.Label(self, text="Population Comparison:", font=controller.title_font)
     label.pack(side="top", fill="x", pady=10)
     
-    BoutDuration = IntVar()
-    Checkbutton(self, text="BoutDuration", variable=BoutDuration).pack()
-    TotalDistance = IntVar()
-    Checkbutton(self, text="TotalDistance", variable=TotalDistance).pack()
-    Speed = IntVar()
-    Checkbutton(self, text="Speed", variable=Speed).pack()
-    NumberOfOscillations = IntVar()
-    Checkbutton(self, text="NumberOfOscillations (for zebrafish only)", variable=NumberOfOscillations).pack()
-    meanTBF = IntVar()
-    Checkbutton(self, text="meanTBF (for zebrafish only)", variable=meanTBF).pack()
-    maxAmplitude = IntVar()
-    Checkbutton(self, text="maxAmplitude (for zebrafish only)", variable=maxAmplitude).pack()
+    TailTrackingParameters = IntVar()
+    Checkbutton(self, text="I want fish tail tracking related kinematic parameters (number of oscillation, tail beat frequency, etc..) to be calculated.", variable=TailTrackingParameters).pack()
+    tk.Label(self, text="").pack()
     
-    tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    tk.Label(self, text="If you are calculating one these three parameters: NumberOfOscillations, meanTBF, maxAmplitude:", font="bold").pack(side="top", fill="x")
+    saveInMatlabFormat = IntVar()
+    Checkbutton(self, text="The result structure is always saved in the pickle format. Also save it in the matlab format.", variable=saveInMatlabFormat).pack()
+    tk.Label(self, text="").pack()
+    
+    saveRawData = IntVar()
+    Checkbutton(self, text="Save original raw data in result structure.", variable=saveRawData).pack()
+    tk.Label(self, text="").pack()
+    
+    tk.Label(self, text="Number of frames between each frame used for distance calculation (to avoid noise due to close-by subsequent points) (default value is 4):", font=("Helvetica", 10)).pack(side="top", fill="x")
+    frameStepForDistanceCalculation = tk.Entry(self)
+    frameStepForDistanceCalculation.pack()
+    tk.Label(self, text="").pack()
+    
+    tk.Label(self, text="If you are calculating fish tail tracking related kinematic parameters:", font="bold").pack(side="top", fill="x")
     tk.Label(self, text="What's the minimum number of bends a bout should have to be taken into account for the analysis?", font=("Helvetica", 10)).pack(side="top", fill="x")
     tk.Label(self, text="(the default value is 3) (put 0 if you want all bends to be taken into account)", font=("Helvetica", 10)).pack(side="top", fill="x")
     minNbBendForBoutDetect = tk.Entry(self)
     minNbBendForBoutDetect.pack()
-    tk.Label(self, text="If, for a bout, NumberOfOscillations, meanTBF and maxAmplitude are being discarded because of a low amount of bends,", font=("Helvetica", 10)).pack(side="top", fill="x")
+    tk.Label(self, text="If, for a bout, the tail tracking related kinematic parameters are being discarded because of a low amount of bends,", font=("Helvetica", 10)).pack(side="top", fill="x")
     tk.Label(self, text="should the BoutDuration, TotalDistance and Speed also be discarded for that bout?", font=("Helvetica", 10)).pack(side="top", fill="x")
     discard = IntVar()
     Checkbutton(self, text="Yes, discard BoutDuration, TotalDistance and Speed in that situation", variable=discard).pack()
@@ -106,7 +114,7 @@ class PopulationComparison(tk.Frame):
     Checkbutton(self, text="No, keep BoutDuration, TotalDistance and Speed in that situation", variable=keep).pack()
     tk.Label(self, text="Please ignore the two questions above if you're only looking at BoutDuration, TotalDistance and Speed.", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
     
-    tk.Button(self, text="Launch Analysis", bg="light yellow", command=lambda: controller.populationComparison(controller, BoutDuration.get(), TotalDistance.get(), Speed.get(), NumberOfOscillations.get(), meanTBF.get(), maxAmplitude.get(), minNbBendForBoutDetect.get(), discard.get(), keep.get())).pack()
+    tk.Button(self, text="Launch Analysis", bg="light yellow", command=lambda: controller.populationComparison(controller, TailTrackingParameters.get(), saveInMatlabFormat.get(), saveRawData.get(), minNbBendForBoutDetect.get(), discard.get(), keep.get(), frameStepForDistanceCalculation.get())).pack()
     
     tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
@@ -149,9 +157,21 @@ class AnalysisOutputFolderPopulation(tk.Frame):
     tk.Label(self, text="Click the button below to open the folder that contains the results of the analysis.").pack()
     tk.Label(self, text="").pack()
     
-    tk.Button(self, text="View results folder", bg="light yellow", command=lambda: controller.openPopulationAnalysisFolder(controller.homeDirectory)).pack()
+    tk.Button(self, text="View 'plots and processed data' folders", bg="light yellow", command=lambda: controller.openAnalysisFolder(controller.homeDirectory, 'resultsKinematic')).pack()
+    tk.Label(self, text="").pack()
+    
+    tk.Button(self, text="View raw data", bg="light yellow", command=lambda: controller.openAnalysisFolder(controller.homeDirectory, 'data')).pack()
+    tk.Label(self, text="").pack()
     
     tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Label(self, text="").pack()
+    
+    def callback(url):
+      webbrowser.open_new(url)
+    link1 = tk.Button(self, text="Video data analysis online documentation", bg="light yellow")
+    link1.pack()
+    link1.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom#GUIanalysis"))
+    tk.Label(self, text="(read the 'Further analyzing ZebraZoom's output through the Graphical User Interface' section)").pack()
 
 
 class AnalysisOutputFolderClustering(tk.Frame):
@@ -167,7 +187,11 @@ class AnalysisOutputFolderClustering(tk.Frame):
     tk.Label(self, text="Click the button below to open the folder that contains the results of the analysis.").pack()
     tk.Label(self, text="").pack()
     
-    tk.Button(self, text="View results folder", bg="light yellow", command=lambda: controller.openClusteringAnalysisFolder(controller.homeDirectory)).pack()
+    tk.Button(self, text="View plots and processed data folder", bg="light yellow", command=lambda: controller.openAnalysisFolder(controller.homeDirectory, 'resultsClustering')).pack()
+    tk.Label(self, text="").pack()
+    
+    tk.Button(self, text="View raw data folders", bg="light yellow", command=lambda: controller.openAnalysisFolder(controller.homeDirectory, 'data')).pack()
+    tk.Label(self, text="").pack()
     
     tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 

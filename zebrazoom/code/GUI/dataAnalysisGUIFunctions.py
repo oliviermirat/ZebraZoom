@@ -29,17 +29,8 @@ def openExperimentOrganizationExcelFolder(self, homeDirectory):
     subprocess.call([opener, dir_path])
     
 
-def openPopulationAnalysisFolder(self, homeDirectory):
-  dir_path = os.path.join(homeDirectory,'dataAnalysis/resultsKinematic/')
-  if sys.platform == "win32":
-    os.startfile(dir_path)
-  else:
-    opener ="open" if sys.platform == "darwin" else "xdg-open"
-    subprocess.call([opener, dir_path])
-    
-
-def openClusteringAnalysisFolder(self, homeDirectory):
-  dir_path = os.path.join(homeDirectory,'dataAnalysis/resultsClustering/')
+def openAnalysisFolder(self, homeDirectory, specificDirectory):
+  dir_path = os.path.join(os.path.join(homeDirectory,'dataAnalysis'), specificDirectory)
   if sys.platform == "win32":
     os.startfile(dir_path)
   else:
@@ -66,7 +57,7 @@ def chooseExperimentOrganizationExcel(self, controller):
   controller.show_frame("ChooseDataAnalysisMethod")
 
 
-def populationComparison(self, controller, BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, minNbBendForBoutDetect=3, discard=0, keep=1):
+def populationComparison(self, controller, TailTrackingParameters=0, saveInMatlabFormat=0, saveRawData=0, minNbBendForBoutDetect=3, discard=0, keep=1, frameStepForDistanceCalculation=4):
 
   if discard == 0 and keep == 0:
     keep = 1
@@ -92,30 +83,24 @@ def populationComparison(self, controller, BoutDuration, TotalDistance, Speed, N
     'keepSpeedDistDurWhenLowNbBends'    : int(keep),
     'defaultZZoutputFolderPath'         : os.path.join(cur_dir_path, 'ZZoutput'),
     'computeTailAngleParamForCluster'   : False,
-    'computeMassCenterParamForCluster'  : False
+    'computeMassCenterParamForCluster'  : False,
+    'tailAngleKinematicParameterCalculation'    : TailTrackingParameters,
+    'saveRawDataInAllBoutsSuperStructure'       : saveInMatlabFormat,
+    'saveAllBoutsSuperStructuresInMatlabFormat' : saveRawData,
+    'frameStepForDistanceCalculation'           : frameStepForDistanceCalculation
   }
 
-  [conditions, genotypes, nbFramesTakenIntoAccount] = createDataFrame(dataframeOptions)
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions)
 
   # Plotting for the different conditions
   nameOfFile = dataframeOptions['nameOfFile']
   resFolder  = dataframeOptions['resFolder']
   
-  globParam = []
-  if int(BoutDuration):
-    globParam.append('BoutDuration')
-  if int(TotalDistance):
-    globParam.append('TotalDistance')
-  if int(Speed):
-    globParam.append('Speed')
-  if int(NumberOfOscillations):
-    globParam.append('NumberOfOscillations')
-  if int(meanTBF):
-    globParam.append('meanTBF')
-  if int(maxAmplitude):
-    globParam.append('maxAmplitude')
-
-  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')))
+  # Mixing up all the bouts
+  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0)
+  
+  # First median per well for each kinematic parameter
+  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 1)
   
   controller.show_frame("AnalysisOutputFolderPopulation")
 
@@ -143,7 +128,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
   if int(FreelySwimming):
     dataframeOptions['computeMassCenterParamForCluster'] = True
     
-  [conditions, genotypes, nbFramesTakenIntoAccount] = createDataFrame(dataframeOptions)
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions)
   # Applying the clustering on this dataframe
   clusteringOptions = {
     'analyzeAllWellsAtTheSameTime' : 0, # put this to 1 for head-embedded videos, and to 0 for multi-well videos

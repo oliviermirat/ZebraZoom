@@ -378,6 +378,11 @@ It's also important to note that you can set the parameter "debugEyeTracking" an
 <H2 CLASS="western">Further analyzing ZebraZoom's output through the Graphical User Interface:</H2>
 Click on "Analyze ZebraZoom's outputs" in the main menu. Then you can choose to either compare different populations of animals with kinematic parameters or to cluster bouts of movements.<br/><br/>
 
+<H3 CLASS="western">Reloading and plotting the data once the analysis is done</H3>
+<p>
+After running the analysis to compare different populations of animals with kinematic parameters, it is possible to reload and replot the results, for example by using this script: <a href="https://github.com/oliviermirat/ZebraZoom/tree/master/readAndAnalyzeZZoutputWithPython/reloadKinematicDataAndPlotIt.py" style="color:blue" target="_blank">reload and plot example</a>.
+</p>
+
 <H3 CLASS="western">Units of output parameters for comparaison of populations with kinematic parameters:</H3>
 When the results are first saved after the tracking (in the file results_videoName.txt in the subfolder ZZoutput/videoName) the units are simply in pixels (for spatial resolution) and frames (for time resolution). However, when using the option "Analyze ZebraZoom's outputs" from the main menu of the GUI, you will need to choose an "organization excel file". This "organization excel file" contains a column named "fq" and another column named "pixelsize". In the column "pixelsize" you must put the size of the pixels in your video and you can choose the unit for this value of pixel size (it could be in μm, mm, cm, m, etc...): this choice will then be reflected in the units of speed and distance travel calculated: for example if you choose mm for the pixel size, then the distance traveled calculated will also be in mm. Similarly, in the column "fq" you must put the frequency of acquisition of the video: if you put this unit in Hz (1/second) then the time unit for the duration and speed calculated will be in seconds; and if you decided to put in this column a frequency of acquisition in 1/minute, then the time unit for duration and speed will also be in minutes.
 
@@ -393,11 +398,17 @@ while putting the parameters:
 
 - frameStepForDistanceCalculation: to calculate the distance travelled for each bout, in order to avoid the noise caused by subsequent close-by (x, y) coordinates of the center of the head of the animal, the (x, y) coordinates to calculate the total distance are not taken for every frame of the bout, but rather for every 'frameStepForDistanceCalculation' frame in the bout. When accessed from the GUI, this parameter is fixed to 4, which is a parameter that works well in many situations. When launching the analysis from the command line, this parameter can be further fine tuned. In the future, it will also be possible to fine tune this parameter from the GUI.
 
-- minimumNumberOfBendsPerBout: the minimum number of bends that a bout must have in order for the parameters number of oscillations, tail beat frequency and maximum bend amplitude to be calculated for that bout and included in the analysis (this is for fish only)
+- minimumNumberOfBendsPerBout (OPTIONAL): the minimum number of bends that a bout must have in order for the parameters number of oscillations, tail beat frequency and maximum bend amplitude to be calculated for that bout and included in the analysis (this is for fish only)
 
-- keepSpeedDistDurWhenLowNbBends: when a bout is removed from the analysis because it has a low amount of bends, then the parameters distance, duration and speed are kept in the analysis if keepSpeedDistDurWhenLowNbBends is set to 0, and they are discarded otherwise. If the distance, duration and speed parameters are kept then the parameters number of oscillations, tail beat frequency and maximum bend amplitude are set to nan for those bouts.
+- keepSpeedDistDurWhenLowNbBends (OPTIONAL): when a bout is removed from the analysis because it has a low amount of bends, then the parameters distance, duration and speed are kept in the analysis if keepSpeedDistDurWhenLowNbBends is set to 0, and they are discarded otherwise. If the distance, duration and speed parameters are kept then the parameters number of oscillations, tail beat frequency and maximum bend amplitude are set to nan for those bouts.
 
-- thresholdInDegreesBetweenSfsAndTurns: threshold (unit in degrees) to separate a sfs from a turn (this is also for fish only)
+- thresholdInDegreesBetweenSfsAndTurns (OPTIONAL): threshold (unit in degrees) to separate a sfs from a turn (this is also for fish only)
+
+- tailAngleKinematicParameterCalculation (OPTIONAL): set to 1 for all kinematic parameters related to tail tracking of fish to be calculated (number of oscillation, tail beat frequency, etc...). Set to 0 otherwise.
+
+- saveRawDataInAllBoutsSuperStructure (OPTIONAL): the output result structure is always saved in the pickle format. In order to also save it in the matlab format, set this parameter to 1. Set to 0 otherwise
+
+- saveAllBoutsSuperStructuresInMatlabFormat (OPTIONAL): set to 1 to save the original raw data inside the result structure.
 
 Please note that the parameters minimumNumberOfBendsPerBout, keepSpeedDistDurWhenLowNbBends and thresholdInDegreesBetweenSfsAndTurns are all optional parameters. Therefore, if you don't put anything for:
 
@@ -405,6 +416,7 @@ Please note that the parameters minimumNumberOfBendsPerBout, keepSpeedDistDurWhe
 
 - thresholdInDegreesBetweenSfsAndTurns then no information about the amount of turns and sfs based on a threshold over the max tail amplitude will be calculated
 
+- tailAngleKinematicParameterCalculation, saveRawDataInAllBoutsSuperStructure and saveAllBoutsSuperStructuresInMatlabFormat, then those three parameters will all be set to the value 1
 
 
 </p>

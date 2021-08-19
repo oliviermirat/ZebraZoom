@@ -3,21 +3,24 @@ import scipy.io
 import pandas as pd
 import json
 import numpy as np
+np.warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
 from zebrazoom.dataAnalysis.datasetcreation.getDynamicParameters import getDynamicParameters
 from zebrazoom.dataAnalysis.datasetcreation.getTailAngles import getTailAngles
 from zebrazoom.dataAnalysis.datasetcreation.getInstaSpeed import getInstaSpeed
 from zebrazoom.dataAnalysis.datasetcreation.getInstaHeadingDiff import getInstaHeadingDiff
 from zebrazoom.dataAnalysis.datasetcreation.getInstaHorizontalDisplacement import getInstaHorizontalDisplacement
 from zebrazoom.dataAnalysis.datasetcreation.getGlobalParameters import getGlobalParameters
-from zebrazoom.dataAnalysis.datasetcreation.getDeltaHead import getDeltaHead
 from zebrazoom.dataAnalysis.datasetcreation.getTailLength  import getTailLength
 from zebrazoom.dataAnalysis.datasetcreation.getTailLength2 import getTailLength2
 from zebrazoom.dataAnalysis.datasetcreation.getTailAngleRecalculated import getTailAngleRecalculated
 from zebrazoom.dataAnalysis.datasetcreation.getTailAngleRecalculated2 import getTailAngleRecalculated2
+from zebrazoom.dataAnalysis.datasetcreation.gatherInitialRawData import gatherInitialRawData
 import pickle
 
 def createDataFrame(dataframeOptions):
 
+  # Gathering user-inputed information about how to create the dataframe of parameters for the whole set of videos
+  
   pathToExcelFile                   = dataframeOptions['pathToExcelFile']
   nameOfFile                        = dataframeOptions['nameOfFile']
   fileExtension                     = dataframeOptions['fileExtension']
@@ -27,24 +30,24 @@ def createDataFrame(dataframeOptions):
   minNbBendForBoutDetect            = dataframeOptions['minNbBendForBoutDetect']
   computeTailAngleParamForCluster   = dataframeOptions['computeTailAngleParamForCluster']
   computeMassCenterParamForCluster  = dataframeOptions['computeMassCenterParamForCluster']
-  if 'defaultZZoutputFolderPath' in dataframeOptions:
-    defaultZZoutputFolderPath       = dataframeOptions['defaultZZoutputFolderPath']
-  else:
-    defaultZZoutputFolderPath       = ''
-  computetailAnglesRecalculatedParamsForCluster = False
-  if 'computetailAnglesRecalculatedParamsForCluster' in dataframeOptions:
-    computetailAnglesRecalculatedParamsForCluster = dataframeOptions["computetailAnglesRecalculatedParamsForCluster"]
-  else:
-    computetailAnglesRecalculatedParamsForCluster = False
-  if 'keepSpeedDistDurWhenLowNbBends' in dataframeOptions:
-    keepSpeedDistDurWhenLowNbBends = int(dataframeOptions['keepSpeedDistDurWhenLowNbBends'])
-  else:
-    keepSpeedDistDurWhenLowNbBends = 1
-  if 'frameStepForDistanceCalculation' in dataframeOptions:
-    frameStepForDistanceCalculation = int(dataframeOptions['frameStepForDistanceCalculation'])
-  else:
-    frameStepForDistanceCalculation = 4
   
+  defaultZZoutputFolderPath = dataframeOptions['defaultZZoutputFolderPath'] if 'defaultZZoutputFolderPath' in dataframeOptions else ''
+  
+  computetailAnglesRecalculatedParamsForCluster = dataframeOptions["computetailAnglesRecalculatedParamsForCluster"] if 'computetailAnglesRecalculatedParamsForCluster' in dataframeOptions else False
+  
+  keepSpeedDistDurWhenLowNbBends = int(dataframeOptions['keepSpeedDistDurWhenLowNbBends']) if 'keepSpeedDistDurWhenLowNbBends' in dataframeOptions else 1
+  
+  frameStepForDistanceCalculation = int(dataframeOptions['frameStepForDistanceCalculation']) if ('frameStepForDistanceCalculation' in dataframeOptions) and len(dataframeOptions['frameStepForDistanceCalculation']) else 4
+  
+  tailAngleKinematicParameterCalculation = int(dataframeOptions['tailAngleKinematicParameterCalculation']) if 'tailAngleKinematicParameterCalculation' in dataframeOptions else 0
+  
+  saveRawDataInAllBoutsSuperStructure = int(dataframeOptions['saveRawDataInAllBoutsSuperStructure']) if 'saveRawDataInAllBoutsSuperStructure' in dataframeOptions else 0
+  
+  saveAllBoutsSuperStructuresInMatlabFormat = int(dataframeOptions['saveAllBoutsSuperStructuresInMatlabFormat']) if 'saveAllBoutsSuperStructuresInMatlabFormat' in dataframeOptions else 0
+  
+  getTailAngleSignMultNormalized = int(dataframeOptions['getTailAngleSignMultNormalized']) if 'getTailAngleSignMultNormalized' in dataframeOptions else 0
+  
+  # If nbFramesTakenIntoAccount was not specified, finds an appropriate value for it
   nbFramesTakenIntoAccount          = dataframeOptions['nbFramesTakenIntoAccount']
   excelFile = pd.read_excel(os.path.join(pathToExcelFile, nameOfFile + fileExtension))
   if nbFramesTakenIntoAccount == -1:
@@ -72,12 +75,20 @@ def createDataFrame(dataframeOptions):
         break;
     nbFramesTakenIntoAccount = int(np.median(boutNbFrames))
   
-  genotypes  = []
-  conditions = []
-  
   # Creating labels of columns of dataframe
+  # General basic information
+  basicInformation = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype']
   # Global parameters
-  globParam  = ['Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'BoutDuration', 'TotalDistance', 'Speed', 'NumberOfOscillations', 'meanTBF', 'maxAmplitude', 'deltaHead', 'xstart', 'xend', 'xmean', 'firstBendTime', 'firstBendAmplitude', 'IBI']
+  if tailAngleKinematicParameterCalculation:
+    globParam  = ['BoutDuration', 'TotalDistance', 'Speed', 'maxOfInstantaneousTBF', 'meanOfInstantaneousTBF', 'medianOfInstantaneousTBF', 'maxBendAmplitude', 'meanBendAmplitude', 'medianBendAmplitude', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude', 'deltaHead', 'firstBendTime', 'firstBendAmplitude', 'IBI', 'xmean', 'ymean']
+  else:
+    globParam  = ['BoutDuration', 'TotalDistance', 'Speed']
+  # Initial raw data
+  if saveRawDataInAllBoutsSuperStructure:
+    if tailAngleKinematicParameterCalculation:
+      rawData = ['HeadX', 'HeadY', 'Heading', 'TailAngle_Raw', 'TailAngle_smoothed', 'Bend_Timing', 'Bend_TimingAbsolute', 'Bend_Amplitude', 'TailBeatFrequency']
+    else:
+      rawData = ['HeadX', 'HeadY', 'Heading']
   # Tail angle related parameters for clustering
   instaTBF   = ['instaTBF'  + str(i) for i in range(1,nbFramesTakenIntoAccount+1)]
   instaAmp   = ['instaAmp'  + str(i) for i in range(1,nbFramesTakenIntoAccount+1)]
@@ -90,7 +101,9 @@ def createDataFrame(dataframeOptions):
   instaHeadingDiff = ['instaHeadingDiff' + str(i) for i in range(1,nbFramesTakenIntoAccount+1)]
   instaHorizDispl  = ['instaHorizDispl'  + str(i) for i in range(1,nbFramesTakenIntoAccount+1)]
   # Assembling columns
-  dfCols = ['Trial_ID'] + globParam + tailAngles
+  dfCols = basicInformation + globParam + tailAngles
+  if saveRawDataInAllBoutsSuperStructure:
+    dfCols = dfCols + rawData
   if computeTailAngleParamForCluster:
     dfCols = dfCols + instaTBF + instaAmp + instaAsym
   if computeMassCenterParamForCluster:
@@ -101,14 +114,12 @@ def createDataFrame(dataframeOptions):
     dfCols = dfCols + ['classification']
   numberOfParameters = len(dfCols)
   
-  # Creating an empty dataframe
-  params = np.zeros((0, numberOfParameters))
-  dfParam = pd.DataFrame(params,columns=dfCols)
-  trialidstab = []
-  
-  # Filling in the dataframe
-  # curBoutId = 0
+  # Creating an empty dataframe then filling it with the parameters for the whole set of videos
   print("Calculating and storing all parameters:")
+  dfParam = pd.DataFrame(columns=dfCols)
+  genotypes  = []
+  conditions = []
+  # Going through each video listed in the excel file
   for videoId in range(0, len(excelFile)):
     if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder":
       path    = os.path.join(defaultZZoutputFolderPath, excelFile.loc[videoId, 'trial_id'])
@@ -130,51 +141,56 @@ def createDataFrame(dataframeOptions):
     with open(os.path.join(path, 'results_' + trial_id + '.txt')) as f:
       supstruct = json.load(f)
     
+    # Going through each well of the video
     for Well_ID, Cond in enumerate(condition):
       if include[Well_ID]:
         print("trial_id:", trial_id, " ; Well_ID:", Well_ID)
-        dfParamSub = pd.DataFrame(params,columns=dfCols)
+        dfParamForWell = pd.DataFrame(columns=dfCols)
         curBoutId = 0
+        # Going through each animal present in the well
         for fishId in range(0, len(supstruct["wellPoissMouv"][Well_ID])):
+          # Going through each bout performed by the animal
           for NumBout, dataForBout in enumerate(supstruct["wellPoissMouv"][Well_ID][fishId]):
             if not("flag" in dataForBout) or dataForBout["flag"] == 0:
+              # Calculating specified parameters for that bout
               if "Bend_Timing" in dataForBout and type(dataForBout["Bend_Timing"]) == list and len(dataForBout["Bend_Timing"]) >= minNbBendForBoutDetect:
-        
-                trialidstab.append(trial_id)
+                
+                # Initial basic information
+                
+                toPutInDataFrameColumn = basicInformation
+                toPutInDataFrame       = [trial_id, Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID]]
+                
                 if not(genotype[Well_ID] in genotypes):
                   genotypes.append(genotype[Well_ID])
                 if not(condition[Well_ID] in conditions):
                   conditions.append(condition[Well_ID])
                 
-                # Calculating the global kinematic parameters and more and stores them the dataframe
+                # Calculates the global kinematic parameters and stores them the dataframe
                 
-                [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, xstart, xend, xmean, firstBendTime, firstBendAmplitude] = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation)
-                
-                deltahead  = abs(getDeltaHead(dataForBout))
-                tailLength = getTailLength(dataForBout)
-                
-                if NumBout > 0:
-                  previousBoutEnd = supstruct["wellPoissMouv"][Well_ID][fishId][NumBout-1]["BoutEnd"]
-                  IBI = (dataForBout["BoutStart"] - previousBoutEnd) / fq
-                else:
-                  IBI = (dataForBout["BoutStart"]) / fq
-                
-                toPutInDataFrameColumn = []
-                toPutInDataFrame       = []
+                previousBoutEnd = supstruct["wellPoissMouv"][Well_ID][fishId][NumBout-1]["BoutEnd"] if NumBout > 0 else 0
+                listOfGlobalParameters = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation, previousBoutEnd, globParam)
                 
                 toPutInDataFrameColumn = toPutInDataFrameColumn + globParam
-                toPutInDataFrame       = toPutInDataFrame + [Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, deltahead, xstart, xend, xmean, firstBendTime, firstBendAmplitude, IBI]
+                toPutInDataFrame       = toPutInDataFrame       + listOfGlobalParameters
                 
-                toPutInDataFrameColumn = toPutInDataFrameColumn + tailAngles
-                toPutInDataFrame       = toPutInDataFrame + getTailAngles(dataForBout, smoothingFactor, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
+                # Raw data
                 
+                if saveRawDataInAllBoutsSuperStructure:
+                  toPutInDataFrameColumn = toPutInDataFrameColumn + rawData
+                  toPutInDataFrame       = toPutInDataFrame       + gatherInitialRawData(dataForBout, rawData, fq)
+                
+                # Tail angles
+                
+                if getTailAngleSignMultNormalized:
+                  toPutInDataFrameColumn = toPutInDataFrameColumn + tailAngles
+                  toPutInDataFrame       = toPutInDataFrame       + getTailAngles(dataForBout, smoothingFactor, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
                 
                 # Calculate "dynamic" tail angle related parameters for clustering
                 
                 if computeTailAngleParamForCluster:
                 
                   toPutInDataFrameColumn = toPutInDataFrameColumn + instaTBF + instaAmp + instaAsym
-                  toPutInDataFrame       = toPutInDataFrame + getDynamicParameters(dataForBout, smoothingFactor, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
+                  toPutInDataFrame       = toPutInDataFrame       + getDynamicParameters(dataForBout, smoothingFactor, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
                 
                 # Calculate "dynamic" center of mass related parameters for clustering
                 
@@ -185,57 +201,65 @@ def createDataFrame(dataframeOptions):
                   instaHorizDisplVal  = getInstaHorizontalDisplacement(dataForBout, nbFramesTakenIntoAccount)
                   
                   toPutInDataFrameColumn = toPutInDataFrameColumn + instaSpeed + instaHeadingDiff + instaHorizDispl
-                  toPutInDataFrame       = toPutInDataFrame + instaSpeedVal + instaHeadingDiffVal + instaHorizDisplVal
+                  toPutInDataFrame       = toPutInDataFrame       + instaSpeedVal + instaHeadingDiffVal + instaHorizDisplVal
                   
                 # Recalculates tail angles and calculates 
                 
                 if computetailAnglesRecalculatedParamsForCluster:
 
                   tailLength = getTailLength(dataForBout)
-                  
                   tailAnglesRecalculatedData  = getTailAngleRecalculated(dataForBout, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
-                  
                   tailLengthFromRecalculatedAngles = getTailLength2(tailAnglesRecalculatedData)
-                
                   tailAnglesRecalculatedData2 = getTailAngleRecalculated2(dataForBout, nbFramesTakenIntoAccount, numberOfBendsIncludedForMaxDetect)
                   
                   toPutInDataFrameColumn = toPutInDataFrameColumn + ['tailLength', 'tailLengthFromRecalculatedAngles'] + tailAnglesRecalculated + tailAnglesRecalculated2
-                  toPutInDataFrame       = toPutInDataFrame + [tailLength, tailLengthFromRecalculatedAngles] + tailAnglesRecalculatedData + tailAnglesRecalculatedData2.tolist()
-
-                dfParamSub.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
+                  toPutInDataFrame       = toPutInDataFrame       + [tailLength, tailLengthFromRecalculatedAngles] + tailAnglesRecalculatedData + tailAnglesRecalculatedData2.tolist()
+                
+                # Adding bout parameters to the dataframe created for the current well
+                
+                dfParamForWell.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
                 curBoutId = curBoutId + 1
               
-              else:  
+              else:
                 
                 if keepSpeedDistDurWhenLowNbBends:
-                  trialidstab.append(trial_id)
+                
+                  # Initial basic information
+                  
+                  toPutInDataFrameColumn = basicInformation
+                  toPutInDataFrame       = [trial_id, Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID]]
+                  
                   if not(genotype[Well_ID] in genotypes):
                     genotypes.append(genotype[Well_ID])
                   if not(condition[Well_ID] in conditions):
                     conditions.append(condition[Well_ID])
-                
-                  [BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, xstart, xend, xmean, firstBendTime, firstBendAmplitude] = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation)
                   
-                  if NumBout > 0:
-                    previousBoutEnd = supstruct["wellPoissMouv"][Well_ID][fishId][NumBout-1]["BoutEnd"]
-                    IBI = (dataForBout["BoutStart"] - previousBoutEnd) / fq
-                  else:
-                    IBI = (dataForBout["BoutStart"]) / fq
+                  # Calculating the global kinematic parameters and more and stores them the dataframe
                   
-                  toPutInDataFrameColumn = ['Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'BoutDuration', 'TotalDistance', 'Speed', 'IBI']
-                  toPutInDataFrame       = [Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], BoutDuration, TotalDistance, Speed, IBI]
+                  previousBoutEnd = supstruct["wellPoissMouv"][Well_ID][fishId][NumBout-1]["BoutEnd"] if NumBout > 0 else 0
+                  listOfGlobalParameters = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation, previousBoutEnd, ['BoutDuration', 'TotalDistance', 'Speed', 'IBI'])
                   
-                  dfParamSub.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
+                  toPutInDataFrameColumn = toPutInDataFrameColumn + ['BoutDuration', 'TotalDistance', 'Speed', 'IBI']
+                  toPutInDataFrame       = toPutInDataFrame       + listOfGlobalParameters
+                  
+                  # Adding bout parameters to the dataframe created for the current well
+                  
+                  dfParamForWell.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
                   curBoutId = curBoutId + 1
         
-        dfParam = pd.concat([dfParam, dfParamSub])
+        # Adding dataframe created for the current frame to the dataframe for the whole set of videos
+        dfParam = pd.concat([dfParam, dfParamForWell])
   
   # Saving the dataframe
   dfParam = dfParam.reset_index()
-  dfParam['Trial_ID'][:] = trialidstab
   
+  # Saving dataframe for the whole set of videos as a pickle file
   outfile = open(os.path.join(resFolder, nameOfFile), 'wb')
   pickle.dump(dfParam,outfile)
   outfile.close()
   
-  return [conditions, genotypes, nbFramesTakenIntoAccount]
+  # Saving dataframe for the whole set of videos as a matlab file
+  if saveAllBoutsSuperStructuresInMatlabFormat:
+    scipy.io.savemat(os.path.join(resFolder, nameOfFile + '.mat'), dfParam)
+    
+  return [conditions, genotypes, nbFramesTakenIntoAccount, globParam]

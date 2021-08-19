@@ -228,17 +228,14 @@ optionBackgroundExtractionOption):
     def chooseExperimentOrganizationExcel(self, controller):
       dataAnalysisGUIFunctions.chooseExperimentOrganizationExcel(self, controller)
   
-    def populationComparison(self, controller, BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, minNbBendForBoutDetect, discard, keep):
-      dataAnalysisGUIFunctions.populationComparison(self, controller, BoutDuration, TotalDistance, Speed, NumberOfOscillations, meanTBF, maxAmplitude, minNbBendForBoutDetect, discard, keep)
+    def populationComparison(self, controller, TailTrackingParameters, saveInMatlabFormat, saveRawData, minNbBendForBoutDetect, discard, keep, frameStepForDistanceCalculation):
+      dataAnalysisGUIFunctions.populationComparison(self, controller, TailTrackingParameters, saveInMatlabFormat, saveRawData, minNbBendForBoutDetect, discard, keep, frameStepForDistanceCalculation)
       
     def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded):
       dataAnalysisGUIFunctions.boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded)
     
-    def openPopulationAnalysisFolder(self, homeDirectory):
-      dataAnalysisGUIFunctions.openPopulationAnalysisFolder(self, homeDirectory)
-    
-    def openClusteringAnalysisFolder(self, homeDirectory):
-      dataAnalysisGUIFunctions.openClusteringAnalysisFolder(self, homeDirectory)    
+    def openAnalysisFolder(self, homeDirectory, specificDirectory):
+      dataAnalysisGUIFunctions.openAnalysisFolder(self, homeDirectory, specificDirectory)
     
     def chooseVideoToTroubleshootSplitVideo(self, controller):
       troubleshootingFunction.chooseVideoToTroubleshootSplitVideo(self, controller)
