@@ -53,8 +53,15 @@ def findNonGrayScalePixels(image, hyperparameters):
   return fin3
 
 
-def medianAndMinimum(img, hyperparameters, imagePreProcessParameters):
+def medianBlur(img, hyperparameters, imagePreProcessParameters):
+  
+  img = cv2.medianBlur(img, imagePreProcessParameters[0])
+  
+  return img
 
+
+def medianAndMinimum(img, hyperparameters, imagePreProcessParameters):
+  
   medianImage = cv2.medianBlur(img, imagePreProcessParameters[0])
   img = np.minimum(img, medianImage)
   
@@ -95,6 +102,8 @@ def preprocessImage(img, hyperparameters):
     imagePreProcessParameters = imagePreProcessParametersList.pop(0)
     if imagePreProcessMethod == "medianAndMinimum":
       img = medianAndMinimum(img, hyperparameters, imagePreProcessParameters)
+    if imagePreProcessMethod == "medianBlur":
+      img = medianBlur(img, hyperparameters, imagePreProcessParameters)
     elif imagePreProcessMethod == "erodeThenDilate":
       img = erodeThenDilate(img, hyperparameters, imagePreProcessParameters)
     elif imagePreProcessMethod == "findNonGrayScalePixels":
@@ -119,6 +128,8 @@ def preprocessBackgroundImage(img, hyperparameters):
     imagePreProcessParameters = imagePreProcessParametersList.pop(0)
     if imagePreProcessMethod == "medianAndMinimum":
       img = medianAndMinimum(img, hyperparameters, imagePreProcessParameters)
+    if imagePreProcessMethod == "medianBlur":
+      img = medianBlur(img, hyperparameters, imagePreProcessParameters)
     elif imagePreProcessMethod == "erodeThenDilate":
       img = erodeThenDilate(img, hyperparameters, imagePreProcessParameters)
     elif imagePreProcessMethod == "findNonGrayScalePixels":
