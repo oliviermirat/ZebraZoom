@@ -386,9 +386,9 @@ After running the analysis to compare different populations of animals with kine
 <H3 CLASS="western">Units of output parameters for comparaison of populations with kinematic parameters:</H3>
 When the results are first saved after the tracking (in the file results_videoName.txt in the subfolder ZZoutput/videoName) the units are simply in pixels (for spatial resolution) and frames (for time resolution). However, when using the option "Analyze ZebraZoom's outputs" from the main menu of the GUI, you will need to choose an "organization excel file". This "organization excel file" contains a column named "fq" and another column named "pixelsize". In the column "pixelsize" you must put the size of the pixels in your video and you can choose the unit for this value of pixel size (it could be in μm, mm, cm, m, etc...): this choice will then be reflected in the units of speed and distance travel calculated: for example if you choose mm for the pixel size, then the distance traveled calculated will also be in mm. Similarly, in the column "fq" you must put the frequency of acquisition of the video: if you put this unit in Hz (1/second) then the time unit for the duration and speed calculated will be in seconds; and if you decided to put in this column a frequency of acquisition in 1/minute, then the time unit for duration and speed will also be in minutes.
 
-<H3 CLASS="western">Launching the kinematic parameters analysis through the command line instead of the GUI:</H3>
+<H3 CLASS="western">Launching the kinematic parameters analysis through the command line instead of from the GUI:</H3>
 <p>
-To launch the same kinematic parameter analysis from the command line, you can use the following command:
+To launch from the command line, the same kinematic parameters analysis than what's available from the GUI, you can use the following command:
 
 python -m zebrazoom dataPostProcessing kinematicParametersAnalysis pathToExcelFile frameStepForDistanceCalculation minimumNumberOfBendsPerBout keepSpeedDistDurWhenLowNbBends thresholdInDegreesBetweenSfsAndTurns
 
@@ -417,6 +417,22 @@ Please note that the parameters minimumNumberOfBendsPerBout, keepSpeedDistDurWhe
 - thresholdInDegreesBetweenSfsAndTurns then no information about the amount of turns and sfs based on a threshold over the max tail amplitude will be calculated
 
 - tailAngleKinematicParameterCalculation, saveRawDataInAllBoutsSuperStructure and saveAllBoutsSuperStructuresInMatlabFormat, then those three parameters will all be set to the value 1
+
+</p>
+
+<H3 CLASS="western">Launching the clustering analysis (for zebrafish only) through the command line instead of from the GUI:</H3>
+<p>
+To launch from the command line, the same clustering analysis than what's available from the GUI, you can use the following command:
+
+python -m zebrazoom dataPostProcessing clusteringAnalysis pathToExcelFile freelySwimming nbClustersToFind
+
+while putting the parameters: 
+
+- pathToExcelFile: to the path to the excel file describing your experiment (the combination of several videos and what they correspond to)
+
+- freelySwimming (OPTIONAL): set to 1 for freely swimming fish, and to 0 for head-embedded fish. If you don't put anything for this parameter, it will be set to 1 by default.
+
+- nbClustersToFind (OPTIONAL): set to the number of clusters that you want the clustering algorithm to find. If you don't put anything for this parameter, it will be set to 3 by default.
 
 
 </p>

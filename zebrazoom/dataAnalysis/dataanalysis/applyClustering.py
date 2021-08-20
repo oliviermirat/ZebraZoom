@@ -382,7 +382,7 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
   
   # Looking into global parameters
   if globalParametersCalculations:
-    globParam = ['BoutDuration','TotalDistance','Speed','NumberOfOscillations', 'meanTBF', 'maxAmplitude']
+    globParam = ['BoutDuration', 'TotalDistance', 'Speed', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude']
     fig, tabAx = plt.subplots(2, 3, figsize=(22.9, 8.8))
     for idx, parameter in enumerate(globParam):
       concatenatedValues = []

@@ -27,7 +27,8 @@ if __name__ == '__main__':
       from zebrazoom.getTailExtremityFirstFrame import getTailExtremityFirstFrame
       __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
       getTailExtremityFirstFrame(pathToVideo, videoName, videoExt, configFile, argv)
-        
+    
+    
     elif sys.argv[1] == "recreateSuperStruct":
       
       pathToVideo = sys.argv[2]
@@ -39,7 +40,8 @@ if __name__ == '__main__':
       from zebrazoom.recreateSuperStruct import recreateSuperStruct
       __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
       recreateSuperStruct(pathToVideo, videoName, videoExt, configFile, argv)
-        
+    
+    
     elif sys.argv[1] == "convertSeqToAvi":
       
       from zebrazoom.videoFormatConversion.seq_to_avi import sqb_convert_to_avi
@@ -50,7 +52,8 @@ if __name__ == '__main__':
       else:
         lastFrame = -1
       sqb_convert_to_avi(path, videoName, lastFrame)
-
+    
+    
     elif sys.argv[1] == "dataPostProcessing":
       
       if sys.argv[2] == "sleepVsMoving":
@@ -110,6 +113,11 @@ if __name__ == '__main__':
         from zebrazoom.kinematicParametersAnalysis import kinematicParametersAnalysis
         kinematicParametersAnalysis(sys)
       
+      if sys.argv[2] == "clusteringAnalysis":
+        from zebrazoom.clusteringAnalysis import clusteringAnalysis
+        clusteringAnalysis(sys)
+    
+    
     elif sys.argv[1] == "visualizeMovingAndSleepingTime":
       
       from zebrazoom.code.readValidationVideo import readValidationVideo
@@ -126,7 +134,8 @@ if __name__ == '__main__':
         
         framesToShow = df[["sleep_" + str(i) for i in range(0, nbWells)]].to_numpy()
         readValidationVideo("", sys.argv[3], "", -1, -1, 0, 1, framesToShow)
-        
+    
+    
     else:
       
       print("The data produced by ZebraZoom can be found in the folder: " + os.path.join(dir_path,'ZZoutput'))

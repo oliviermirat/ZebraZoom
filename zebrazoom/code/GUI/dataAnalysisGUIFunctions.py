@@ -122,6 +122,8 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
     'numberOfBendsIncludedForMaxDetect' : -1,
     'minNbBendForBoutDetect'            : 3, # THIS NEEDS TO BE CHANGED IF FPS IS LOW (default: 3)
     'defaultZZoutputFolderPath'         : os.path.join(cur_dir_path, 'ZZoutput'),
+    'tailAngleKinematicParameterCalculation' : 1,
+    'getTailAngleSignMultNormalized'    : 1,
     'computeTailAngleParamForCluster'   : True,
     'computeMassCenterParamForCluster'  : False
   }
