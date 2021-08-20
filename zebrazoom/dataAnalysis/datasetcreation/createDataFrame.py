@@ -260,6 +260,6 @@ def createDataFrame(dataframeOptions):
   
   # Saving dataframe for the whole set of videos as a matlab file
   if saveAllBoutsSuperStructuresInMatlabFormat:
-    scipy.io.savemat(os.path.join(resFolder, nameOfFile + '.mat'), dfParam)
+    scipy.io.savemat(os.path.join(resFolder, nameOfFile + '.mat'), {'struct1':dfParam.to_dict("list")})
     
   return [conditions, genotypes, nbFramesTakenIntoAccount, globParam]

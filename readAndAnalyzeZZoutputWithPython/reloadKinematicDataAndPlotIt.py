@@ -20,6 +20,7 @@ sns.set_theme(style="whitegrid")
 # Choose in the array below the parameters that you want to plot
 parameter = ['BoutDuration', 'TotalDistance', 'Speed', 'NumberOfOscillations', 'maxTailAngleAmplitude', 'meanTBF']
 for idx, param in enumerate(parameter):
+  # The "barplot" function below could be replaced, for example, by functions such as "boxplot" or "violinplot", depending on how you want the data to be plotted
   sns.barplot(ax=axes[int(idx/nbColumns)][int(idx%nbColumns)], x='Genotype', hue='Condition', y=param, data=dfParam)
   # axes[int(idx/nbColumns)][int(idx%nbColumns)].set_title(param) # Uncomment this line to get the title on the top of the graph
 

@@ -58,9 +58,10 @@ def kinematicParametersAnalysis(sys):
   
   # First median per well for each kinematic parameter
   populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 1)
-
-  if angleThreshSFSvsTurns != -1:
-    calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold(cur_dir_path, dataframeOptions['nameOfFile'], angleThreshSFSvsTurns)
-
+  
+  if False:
+    if angleThreshSFSvsTurns != -1:
+      calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold(cur_dir_path, dataframeOptions['nameOfFile'], angleThreshSFSvsTurns)
+  
   print("The data has been saved in the folder:", os.path.join(os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), dataframeOptions['nameOfFile']))
   print("The raw data has also been saved in:", dataframeOptions['resFolder'])

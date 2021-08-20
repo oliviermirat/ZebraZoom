@@ -390,7 +390,7 @@ When the results are first saved after the tracking (in the file results_videoNa
 <p>
 To launch from the command line, the same kinematic parameters analysis than what's available from the GUI, you can use the following command:
 
-python -m zebrazoom dataPostProcessing kinematicParametersAnalysis pathToExcelFile frameStepForDistanceCalculation minimumNumberOfBendsPerBout keepSpeedDistDurWhenLowNbBends thresholdInDegreesBetweenSfsAndTurns
+python -m zebrazoom dataPostProcessing kinematicParametersAnalysis pathToExcelFile frameStepForDistanceCalculation minimumNumberOfBendsPerBout keepSpeedDistDurWhenLowNbBends thresholdInDegreesBetweenSfsAndTurns tailAngleKinematicParameterCalculation saveRawDataInAllBoutsSuperStructure saveAllBoutsSuperStructuresInMatlabFormat
 
 while putting the parameters: 
 

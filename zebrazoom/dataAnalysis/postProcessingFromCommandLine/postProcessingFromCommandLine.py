@@ -7,9 +7,9 @@ def calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold(pathRootDirectory, e
 
   maxAmplitudeThreshold = thresholdInDegrees * (math.pi / 180)
   
-  df = pd.read_excel(os.path.join(os.path.join(os.path.join(os.path.join(pathRootDirectory, 'dataAnalysis'), 'resultsKinematic'), experimentName), "globalParametersInsideCategories.xlsx"))
+  df = pd.read_excel(os.path.join(os.path.join(os.path.join(os.path.join(os.path.join(pathRootDirectory, 'dataAnalysis'), 'resultsKinematic'), experimentName), 'allBoutsMixed'), "globalParametersInsideCategories.xlsx"))
   
-  outputFile = open(os.path.join(os.path.join(os.path.join(os.path.join(pathRootDirectory, 'dataAnalysis'), 'resultsKinematic'), experimentName), "numberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold.txt"), "w")
+  outputFile = open(os.path.join(os.path.join(os.path.join(os.path.join(os.path.join(pathRootDirectory, 'dataAnalysis'), 'resultsKinematic'), experimentName), 'allBoutsMixed'), "numberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold.txt"), "w")
   print("There's a total of", len(df), "bouts in this dataset.")
   outputFile.write("There's a total of " + str(len(df)) + " bouts in this dataset.\n")
 
@@ -20,8 +20,8 @@ def calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold(pathRootDirectory, e
     dfCond = df.loc[df['Condition'] == conditionName]
     for genotypeName in allGenotypesNames:
       dfCondGeno = dfCond.loc[dfCond['Genotype'] == genotypeName]
-      nbTurns = np.sum(dfCondGeno['maxAmplitude'] > maxAmplitudeThreshold)
-      nbSfs   = np.sum(dfCondGeno['maxAmplitude'] <= maxAmplitudeThreshold)
+      nbTurns = np.sum(dfCondGeno['maxTailAngleAmplitude'] > maxAmplitudeThreshold)
+      nbSfs   = np.sum(dfCondGeno['maxTailAngleAmplitude'] <= maxAmplitudeThreshold)
       nbBouts = len(dfCondGeno)
       print("For the condition:", conditionName, "and the genotype:", genotypeName, "there are:", nbSfs, "sfs and", nbTurns, "turns, for a total of", nbBouts, "bouts")
       outputFile.write("For the condition: " + conditionName + " and the genotype: " + genotypeName + " there are: " + str(nbSfs) + " sfs and " + str(nbTurns) + " turns, for a total of " + str(nbBouts) + " bouts\n")
