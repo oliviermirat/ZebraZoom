@@ -97,10 +97,14 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
   resFolder  = dataframeOptions['resFolder']
   
   # Mixing up all the bouts
-  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0)
+  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, True)
+  
+  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, False)
   
   # First median per well for each kinematic parameter
-  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 1)
+  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 1, True)
+  
+  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 1, False)
   
   controller.show_frame("AnalysisOutputFolderPopulation")
 

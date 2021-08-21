@@ -7,23 +7,29 @@ import numpy as np
 import pandas as pd
 import json
 
-def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, medianPerWellFirstForEachKinematicParameter = 0, saveDataPlottedInJson = 0):
+def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, medianPerWellFirstForEachKinematicParameter = 0, plotOutliersAndMean = True, saveDataPlottedInJson = 0):
 
   outputFolderResult = os.path.join(outputFolder, nameOfFile)
   if not(os.path.exists(outputFolderResult)):
     os.mkdir(outputFolderResult)
+    
   if medianPerWellFirstForEachKinematicParameter:
     outputFolderResult = os.path.join(outputFolderResult, 'medianPerWellFirst')
   else:
     outputFolderResult = os.path.join(outputFolderResult, 'allBoutsMixed')
-  if os.path.exists(outputFolderResult):
-    shutil.rmtree(outputFolderResult)
-  while True:
-    try:
-      os.mkdir(outputFolderResult)
-      break
-    except:
-      print("waiting to create folder:", outputFolderResult)
+  
+  if plotOutliersAndMean: # This is a little bit of a hack because the creation of folders relies on the order in which the populationComparaison function is called (relative to the plotOutliersAndMean parameter)
+    if os.path.exists(outputFolderResult): 
+      shutil.rmtree(outputFolderResult)
+    while True:
+      try:
+        os.mkdir(outputFolderResult)
+        break
+      except:
+        print("waiting to create folder:", outputFolderResult)
+  else:
+    outputFolderResult = os.path.join(outputFolderResult, 'noMeanAndOutliersPlotted')
+    os.mkdir(outputFolderResult)
   
   dataPlotted = {}
 
@@ -39,11 +45,17 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
     dfKinematicValues = dfKinematicValues.groupby(['Trial_ID', 'Well_ID']).median()
     dfCondGeno = dfParam[['Trial_ID', 'Well_ID', 'Condition', 'Genotype']]
     dfCondGeno = dfCondGeno.groupby(['Trial_ID', 'Well_ID']).first()
+    dfCount = dfParam[['Trial_ID', 'Well_ID']]
+    dfCount['numberOfBouts'] = 0
+    dfCount = dfCount.groupby(['Trial_ID', 'Well_ID']).count()
     dfParam = pd.concat([dfCondGeno, dfKinematicValues], axis=1)
+    dfParam = pd.concat([dfParam, dfCount], axis=1)
+    globParam = globParam + ['numberOfBouts']
   else:
     dfParam  = dfParam[columnsForRawDataExport]
   
-  dfParam.to_excel(os.path.join(outputFolderResult, 'globalParametersInsideCategories.xlsx'))
+  if plotOutliersAndMean:
+    dfParam.to_excel(os.path.join(outputFolderResult, 'globalParametersInsideCategories.xlsx'))
   
   nbGraphs = int(len(globParam)/6) if len(globParam) % 6 == 0 else int(len(globParam)/6) + 1
   for i in range(nbGraphs):
@@ -76,15 +88,15 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
       if nbLines == 1:
         if nbColumns == 1:
           tabAx.set_title(parameter)
-          tabAx.boxplot(concatenatedValues)
+          tabAx.boxplot(concatenatedValues, showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean)
           tabAx.set_xticklabels(labels)
         else:
           tabAx[idx%nbColumns].set_title(parameter)
-          tabAx[idx%nbColumns].boxplot(concatenatedValues)
+          tabAx[idx%nbColumns].boxplot(concatenatedValues, showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean)
           tabAx[idx%nbColumns].set_xticklabels(labels)
       else:
         tabAx[int(idx/nbColumns), idx%nbColumns].set_title(parameter)
-        tabAx[int(idx/nbColumns), idx%nbColumns].boxplot(concatenatedValues)
+        tabAx[int(idx/nbColumns), idx%nbColumns].boxplot(concatenatedValues, showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean)
         tabAx[int(idx/nbColumns), idx%nbColumns].set_xticklabels(labels)
     plt.savefig(os.path.join(outputFolderResult, 'globalParametersInsideCategories_' + str(i+1) + '.png'))
   

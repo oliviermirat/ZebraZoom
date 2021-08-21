@@ -54,14 +54,19 @@ def kinematicParametersAnalysis(sys):
   [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions)
   
   # Mixing up all the bouts
-  populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0)
+  populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, True)
+  
+  populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, False)
   
   # First median per well for each kinematic parameter
-  populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 1)
+  populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 1, True)
   
-  if False:
-    if angleThreshSFSvsTurns != -1:
-      calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold(cur_dir_path, dataframeOptions['nameOfFile'], angleThreshSFSvsTurns)
+  populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 1, False)
   
+  if angleThreshSFSvsTurns != -1:
+    calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold(cur_dir_path, dataframeOptions['nameOfFile'], angleThreshSFSvsTurns)
+  
+  print("")
+  print("")
   print("The data has been saved in the folder:", os.path.join(os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), dataframeOptions['nameOfFile']))
   print("The raw data has also been saved in:", dataframeOptions['resFolder'])

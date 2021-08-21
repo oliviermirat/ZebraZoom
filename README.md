@@ -437,6 +437,25 @@ while putting the parameters:
 
 </p>
 
+<H3 CLASS="western">Launching the clustering analysis per frame (for zebrafish only) through the command line (not available from the GUI yet):</H3>
+<p>
+This can be done with the command:
+
+python -m zebrazoom dataPostProcessing clusteringAnalysisPerFrame pathToExcelFile freelySwimming nbClustersToFind
+
+while putting the parameters: 
+
+- pathToExcelFile: to the path to the excel file describing your experiment (the combination of several videos and what they correspond to)
+
+- freelySwimming (OPTIONAL): set to 1 for freely swimming fish, and to 0 for head-embedded fish. If you don't put anything for this parameter, it will be set to 1 by default.
+
+- nbClustersToFind (OPTIONAL): set to the number of clusters that you want the clustering algorithm to find. If you don't put anything for this parameter, it will be set to 3 by default.
+
+After running the command above, open ZebraZoom's GUI and navigate to 'Analyze ZebraZoom's outputs' -> 'View previous clustering analysis results' -> 'View plots and processed data folder' and then double-click on the name of the excel file with which you ran the previous command. In this folder you will find a file called classifications.xlsx which contains the classifications for each frame and each animals. You can then use this <a href="https://github.com/oliviermirat/ZebraZoom/tree/master/readAndAnalyzeZZoutputWithPython/analyzeClusteringPerFrame.py" style="color:blue" target="_blank">script to visualize these classifications</a>.
+
+</p>
+
+
 <a name="pythonanalysis"/>
 
 <br/>[Back to table of content](#tableofcontent)<br/>

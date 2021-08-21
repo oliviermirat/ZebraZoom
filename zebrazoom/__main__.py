@@ -116,6 +116,10 @@ if __name__ == '__main__':
       if sys.argv[2] == "clusteringAnalysis":
         from zebrazoom.clusteringAnalysis import clusteringAnalysis
         clusteringAnalysis(sys)
+        
+      if sys.argv[2] == "clusteringAnalysisPerFrame":
+        from zebrazoom.clusteringAnalysisPerFrame import clusteringAnalysisPerFrame
+        clusteringAnalysisPerFrame(sys)
     
     
     elif sys.argv[1] == "visualizeMovingAndSleepingTime":

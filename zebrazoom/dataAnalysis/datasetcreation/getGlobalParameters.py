@@ -113,6 +113,17 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
         else:
           maxAmplitude = float('NaN')
       listOfParametersCalculated.append(maxAmplitude)
+
+
+
+    elif parameterToCalculate == 'binaryClass25degMaxTailAngle': # Kind of a hack again as it relies on maxAmplitude having been calculated previously
+      
+      if maxAmplitude != float('NaN'):
+        binaryClass25degMaxTailAngle = 0 if maxAmplitude <= 25 else 1
+      else:
+        binaryClass25degMaxTailAngle = float('NaN')
+        
+      listOfParametersCalculated.append(binaryClass25degMaxTailAngle)    
     
     
     
