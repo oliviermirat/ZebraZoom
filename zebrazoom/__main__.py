@@ -62,21 +62,22 @@ if __name__ == '__main__':
         videoName      = sys.argv[3]
         speedThresholdForMoving = float(sys.argv[4])
         notMovingNumberOfFramesThresholdForSleep = int(sys.argv[5])
-        if len(sys.argv) >= 7:
-         specifiedStartTime  = sys.argv[6]
+        maxDistBetweenTwoPointsInsideSleepingPeriod = float(sys.argv[6]) if len(sys.argv) >= 7 else -1
+        if len(sys.argv) >= 8:
+         specifiedStartTime  = sys.argv[7]
         else:
           specifiedStartTime = 0
-        if len(sys.argv) >= 8:
-          distanceTravelledRollingMedianFilter = int(sys.argv[7])
+        if len(sys.argv) >= 9:
+          distanceTravelledRollingMedianFilter = int(sys.argv[8])
         else:
           distanceTravelledRollingMedianFilter = 0
-        if len(sys.argv) >= 10:
-          videoPixelSize = float(sys.argv[8])
-          videoFPS = float(sys.argv[9])
+        if len(sys.argv) >= 11:
+          videoPixelSize = float(sys.argv[9])
+          videoFPS = float(sys.argv[10])
         else:
           videoPixelSize = -1
           videoFPS = -1
-        calculateSleepVsMovingPeriods(pathToZZoutput, videoName, speedThresholdForMoving, notMovingNumberOfFramesThresholdForSleep, specifiedStartTime, distanceTravelledRollingMedianFilter, videoPixelSize, videoFPS)
+        calculateSleepVsMovingPeriods(pathToZZoutput, videoName, speedThresholdForMoving, notMovingNumberOfFramesThresholdForSleep, maxDistBetweenTwoPointsInsideSleepingPeriod, specifiedStartTime, distanceTravelledRollingMedianFilter, videoPixelSize, videoFPS)
       
       if sys.argv[2] == "firstSleepingTimeAfterSpecifiedTime":
         from zebrazoom.code.dataPostProcessing.findSleepVsMoving import firstSleepingTimeAfterSpecifiedTime
