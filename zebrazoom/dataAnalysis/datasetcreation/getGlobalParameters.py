@@ -63,42 +63,60 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     elif parameterToCalculate == 'maxOfInstantaneousTBF':
       
-      maxOfInstantaneousTBF = np.max(fps / (2 * np.diff([0] + curbout['Bend_Timing'])))
+      if "Bend_Timing" in curbout and type(curbout["Bend_Timing"]) == list and len(curbout["Bend_Timing"]):
+        maxOfInstantaneousTBF = np.max(fps / (2 * np.diff([0] + curbout['Bend_Timing'])))
+      else:
+        maxOfInstantaneousTBF = float('NaN')
       listOfParametersCalculated.append(maxOfInstantaneousTBF)
     
     
     
     elif parameterToCalculate == 'meanOfInstantaneousTBF':
       
-      meanOfInstantaneousTBF = np.mean(fps / (2 * np.diff([0] + curbout['Bend_Timing'])))
+      if "Bend_Timing" in curbout and type(curbout["Bend_Timing"]) == list and len(curbout["Bend_Timing"]):
+        meanOfInstantaneousTBF = np.mean(fps / (2 * np.diff([0] + curbout['Bend_Timing'])))
+      else:
+        meanOfInstantaneousTBF = float('NaN')
       listOfParametersCalculated.append(meanOfInstantaneousTBF)
     
     
     
     elif parameterToCalculate == 'medianOfInstantaneousTBF':
       
-      medianOfInstantaneousTBF = np.median(fps / (2 * np.diff([0] + curbout['Bend_Timing'])))
+      if "Bend_Timing" in curbout and type(curbout["Bend_Timing"]) == list and len(curbout["Bend_Timing"]):
+        medianOfInstantaneousTBF = np.median(fps / (2 * np.diff([0] + curbout['Bend_Timing'])))
+      else:
+        medianOfInstantaneousTBF = float('NaN')
       listOfParametersCalculated.append(medianOfInstantaneousTBF)
     
     
     
     elif parameterToCalculate == 'maxBendAmplitude':
-    
-      maxBendAmplitude = max(list(map(abs, curbout["Bend_Amplitude"]))) * (180 / math.pi)
+      
+      if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
+        maxBendAmplitude = max(list(map(abs, curbout["Bend_Amplitude"]))) * (180 / math.pi)
+      else:
+        maxBendAmplitude = float('NaN')
       listOfParametersCalculated.append(maxBendAmplitude)
     
     
     
     elif parameterToCalculate == 'medianBendAmplitude':
-    
-      medianBendAmplitude = np.median(list(map(abs, curbout["Bend_Amplitude"]))) * (180 / math.pi)
+      
+      if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
+        medianBendAmplitude = np.median(list(map(abs, curbout["Bend_Amplitude"]))) * (180 / math.pi)
+      else:
+        medianBendAmplitude = float('NaN')
       listOfParametersCalculated.append(medianBendAmplitude)
     
     
     
     elif parameterToCalculate == 'meanBendAmplitude':
-    
-      meanBendAmplitude = np.mean(list(map(abs, curbout["Bend_Amplitude"]))) * (180 / math.pi)
+      
+      if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
+        meanBendAmplitude = np.mean(list(map(abs, curbout["Bend_Amplitude"]))) * (180 / math.pi)
+      else:
+        meanBendAmplitude = float('NaN')
       listOfParametersCalculated.append(meanBendAmplitude)
     
     

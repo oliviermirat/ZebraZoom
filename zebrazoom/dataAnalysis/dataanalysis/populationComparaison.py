@@ -58,12 +58,14 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
     dfParam.to_excel(os.path.join(outputFolderResult, 'globalParametersInsideCategories.xlsx'))
   
   nbGraphs = int(len(globParam)/6) if len(globParam) % 6 == 0 else int(len(globParam)/6) + 1
+  color = ['b', 'r', 'c', 'm', 'y', 'k']
   for i in range(nbGraphs):
     globParamForPlot = [globParam[elem] for elem in range(6*i, min(6*(i+1), len(globParam)))]
     nbLines   = int(math.sqrt(len(globParamForPlot)))
     nbColumns = math.ceil(len(globParamForPlot) / nbLines)
     fig, tabAx = plt.subplots(nbLines, nbColumns, figsize=(22.9, 8.8))
     for idx, parameter in enumerate(globParamForPlot):
+      print("plotting parameter:", parameter)
       concatenatedValues = []
       labels = []
       for condition in conditions:
@@ -89,14 +91,23 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
         if nbColumns == 1:
           tabAx.set_title(parameter)
           tabAx.boxplot(concatenatedValues, showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean)
+          if plotOutliersAndMean and (medianPerWellFirstForEachKinematicParameter or len(concatenatedValues[0]) < 100):
+            for idx2, values in enumerate(concatenatedValues):
+              tabAx.plot(np.random.normal(idx2+1, 0.005*len(concatenatedValues), size=len(values)), values, 'b.', alpha=0.3, c=color[idx2] if idx2 < len(color) else 'b')
           tabAx.set_xticklabels(labels)
         else:
           tabAx[idx%nbColumns].set_title(parameter)
           tabAx[idx%nbColumns].boxplot(concatenatedValues, showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean)
+          if plotOutliersAndMean and (medianPerWellFirstForEachKinematicParameter or len(concatenatedValues[0]) < 100):
+            for idx2, values in enumerate(concatenatedValues):
+              tabAx[idx%nbColumns].plot(np.random.normal(idx2+1, 0.005*len(concatenatedValues), size=len(values)), values, 'b.', alpha=0.3, c=color[idx2] if idx2 < len(color) else 'b')
           tabAx[idx%nbColumns].set_xticklabels(labels)
       else:
         tabAx[int(idx/nbColumns), idx%nbColumns].set_title(parameter)
         tabAx[int(idx/nbColumns), idx%nbColumns].boxplot(concatenatedValues, showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean)
+        if plotOutliersAndMean and (medianPerWellFirstForEachKinematicParameter or len(concatenatedValues[0]) < 100):
+          for idx2, values in enumerate(concatenatedValues):
+            tabAx[int(idx/nbColumns), idx%nbColumns].plot(np.random.normal(idx2+1, 0.005*len(concatenatedValues), size=len(values)), values, 'b.', alpha=0.3, c=color[idx2] if idx2 < len(color) else 'b')
         tabAx[int(idx/nbColumns), idx%nbColumns].set_xticklabels(labels)
     plt.savefig(os.path.join(outputFolderResult, 'globalParametersInsideCategories_' + str(i+1) + '.png'))
   
