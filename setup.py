@@ -2,7 +2,7 @@ import setuptools
 from distutils.core import setup
 setup(
   name = 'zebrazoom',
-  version = '1.28.03',
+  version = '1.28.04',
   license='AGPL-3.0',
   description = 'Track and analyze zebrafish and animal behavior',
   author = 'Olivier Mirat',
@@ -16,7 +16,7 @@ setup(
     "numpy",
     "matplotlib",
     "scipy",
-    "pandas>=1.1.3",
+    "pandas",
     "openpyxl",
     "filterpy",
     "cvui",
