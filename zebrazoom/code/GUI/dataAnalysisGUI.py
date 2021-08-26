@@ -89,8 +89,8 @@ class PopulationComparison(tk.Frame):
     tk.Label(self, text="").pack()
     
     saveInMatlabFormat = IntVar()
-    # Checkbutton(self, text="The result structure is always saved in the pickle format. Also save it in the matlab format.", variable=saveInMatlabFormat).pack()
-    # tk.Label(self, text="").pack()
+    Checkbutton(self, text="The result structure is always saved in the pickle format. Also save it in the matlab format.", variable=saveInMatlabFormat).pack()
+    tk.Label(self, text="").pack()
     
     saveRawData = IntVar()
     Checkbutton(self, text="Save original raw data in result structure.", variable=saveRawData).pack()

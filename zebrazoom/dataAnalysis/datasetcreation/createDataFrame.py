@@ -101,7 +101,9 @@ def createDataFrame(dataframeOptions):
   instaHeadingDiff = ['instaHeadingDiff' + str(i) for i in range(1,nbFramesTakenIntoAccount+1)]
   instaHorizDispl  = ['instaHorizDispl'  + str(i) for i in range(1,nbFramesTakenIntoAccount+1)]
   # Assembling columns
-  dfCols = basicInformation + globParam + tailAngles
+  dfCols = basicInformation + globParam
+  if computeTailAngleParamForCluster:
+    dfCols = dfCols + tailAngles
   if saveRawDataInAllBoutsSuperStructure:
     dfCols = dfCols + rawData
   if computeTailAngleParamForCluster:
