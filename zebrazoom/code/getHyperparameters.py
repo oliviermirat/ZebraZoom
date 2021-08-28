@@ -68,7 +68,7 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
     
   if "parentConfigFiles" in config:
     for parentConfigFile in config["parentConfigFiles"]:
-      with open(parentConfigFile) as f2:
+      with open(os.path.join(cur_dir_path2, parentConfigFile)) as f2:
         parentConfig = json.load(f2)
         parentConfig.update(config)
         config = parentConfig
