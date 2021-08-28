@@ -15,6 +15,7 @@ import shutil
 import csv
 
 import numpy as np
+import os
 
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import findTailTipByUserInput
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import findHeadPositionByUserInput
@@ -24,7 +25,7 @@ def getTailExtremityFirstFrame(pathToVideo, videoName, videoExt, configFile, arg
   
   videoName = videoName + '.' + videoExt
   
-  videoPath = pathToVideo + videoName
+  videoPath = os.path.join(pathToVideo, videoName)
 
   # Getting hyperparameters
   [hyperparameters, config] = getHyperparameters(configFile, videoName, videoPath, argv)
