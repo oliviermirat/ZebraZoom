@@ -14,7 +14,7 @@ import cv2
 from pathlib import Path
 import platform
 
-def sqb_convert_to_avi(path, videoName, codec='MJPG', lastFrame=-1):
+def sqb_convert_to_avi(path, videoName, codec='HFYU', lastFrame=-1):
   """
       Lecture du fichier binaire de séquence sqb
       Les données sont représentées par la structure en C suivante :
@@ -41,7 +41,6 @@ def sqb_convert_to_avi(path, videoName, codec='MJPG', lastFrame=-1):
   sqb_path = seq_path.replace('.seq', '.sqb')
   
   out = cv2.VideoWriter(avi_path, cv2.VideoWriter_fourcc(codec[0],codec[1],codec[2],codec[3]), 10, (width, height))
-  # out = cv2.VideoWriter(avi_path, cv2.VideoWriter_fourcc('H','F','Y','U'), 10, (width, height))
   
   pathstr = os.path.dirname(seq_path)
   if lastFrame <= 0:

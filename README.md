@@ -53,6 +53,7 @@ For more information visit <a href="https://zebrazoom.org/" target="_blank">zebr
 
 [Troubleshooting ZebraZoom's tracking](#troubleshoot)<br/>
 [Contributions and running ZebraZoom from the source code](#contributions)<br/>
+[Read more: Tracking troubleshooting, Fast screen tracking, Seq to avi convertion](#more)<br/>
 [Cite us](#citeus)<br/>
 
 <a name="installation"/>
@@ -639,6 +640,21 @@ If you are having trouble tracking animals in a video, you can click on the butt
 
 We welcome contributions, feel free to submit pull requests!<br/><br/>
 In order to contribute, you will need to download this repository on your computer. To run ZebraZoom, you must then navigate to the root folder of this repository inside a terminal and type "python -m zebrazoom" as shown in the previous sections <a href="#commandlinezebrazoom" style="color:blue">"Using ZebraZoom through the command line"</a> and <a href="#starting" style="color:blue">"Starting the GUI"</a> above (except that you must make sure to be in the root folder of this repository).<br/>
+
+
+<a name="more"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Read more: Tracking troubleshooting, Fast screen tracking, Seq to avi convertion:</H2>
+<p>
+<a href="./TrackingTroubleshooting.md" style="color:blue" target="_blank">Tracking troubleshooting</a>
+
+<a href="./FastScreenTrackingGuidlines.md" style="color:blue" target="_blank">Fast screen tracking</a>
+
+<a href="./SeqToAviConvertion.md" style="color:blue" target="_blank">Seq to avi convertion</a>
+
+</p>
+
 
 <a name="citeus"/>
 

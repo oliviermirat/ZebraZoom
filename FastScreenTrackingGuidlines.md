@@ -4,7 +4,9 @@
 <H2 CLASS="western">Creating a configuration file for fast screen tracking:</H2>
 
 <p>
-To create a configuration file for this type of tracking, you can use the <a href="https://github.com/oliviermirat/ZebraZoom/blob/master/zebrazoom/configuration/screenFastTrackingConfigFileTemplate.json" target="_blank">screenFastTrackingConfigFileTemplate</a> configuration file and modify the following parameters inside it according to the aspect of your video:
+The easiest way to create a configuration file for fast screen tracking is to open ZebraZoom's GUI, click on "Prepare configuration file for tracking" and then to choose the option "Fast and easy screen for any kind of animal". This method works really well, but to create a configuration file that might work even better for this type of tracking, follow the instructions below:
+
+Use the <a href="https://github.com/oliviermirat/ZebraZoom/blob/master/zebrazoom/configuration/screenFastTrackingConfigFileTemplate.json" target="_blank">screenFastTrackingConfigFileTemplate</a> configuration file and modify the following parameters inside it according to the aspect of your video:
 
 - "nbWells": number of wells that should be detected in your video
 - "nbRowsOfWells": number of rows of wells in your video

@@ -47,9 +47,34 @@ if __name__ == '__main__':
       from zebrazoom.videoFormatConversion.seq_to_avi import sqb_convert_to_avi
       path      = sys.argv[2]
       videoName = sys.argv[3]
-      codec     = sys.argv[4] if len(sys.argv) >= 5 else 'MJPG'
+      codec     = sys.argv[4] if len(sys.argv) >= 5 else 'HFYU'
       lastFrame = int(sys.argv[5]) if len(sys.argv) >= 6 else -1
       sqb_convert_to_avi(path, videoName, codec, lastFrame)
+    
+    
+    elif sys.argv[1] == "convertSeqToAviThenLaunchTracking":
+      
+      from zebrazoom.videoFormatConversion.seq_to_avi import sqb_convert_to_avi
+      from zebrazoom.mainZZ import mainZZ
+      from pathlib import Path
+      import time
+      path       = sys.argv[2]
+      videoName  = sys.argv[3]
+      configFile = sys.argv[4]      
+      codec      = sys.argv[5] if len(sys.argv) >= 6 else 'HFYU'
+      lastFrame  = int(sys.argv[6]) if len(sys.argv) >= 7 else -1
+      argv2      = sys.argv.copy()
+      del argv2[1:2]
+      argv2.insert(3, 'avi')
+      del argv2[5:7]
+      path2      = Path(path).parent
+      print("Launching the convertion from seq to avi")
+      sqb_convert_to_avi(path, videoName, codec, lastFrame)
+      print("small break start")
+      time.sleep(2)
+      print("Launching the tracking, the data produced by ZebraZoom can be found in the folder: " + os.path.join(dir_path,'ZZoutput'))
+      __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
+      mainZZ(path2, videoName, 'avi', configFile, argv2)
     
     
     elif sys.argv[1] == "dataPostProcessing":
