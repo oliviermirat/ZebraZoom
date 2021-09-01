@@ -385,6 +385,12 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["postProcessLowProbabilityDetectionPercentOfMaximum"] = getConfig(config, "postProcessLowProbabilityDetectionPercentOfMaximum", videoPath)
   
+  hyperparameters["createPandasDataFrameOfParameters"] = getConfig(config, "createPandasDataFrameOfParameters", videoPath)
+  
+  hyperparameters["frameStepForDistanceCalculation"] = getConfig(config, "frameStepForDistanceCalculation", videoPath)
+  
+  hyperparameters["addBlackLineToImg_Width"] = getConfig(config, "addBlackLineToImg_Width", videoPath)
+  
   
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1

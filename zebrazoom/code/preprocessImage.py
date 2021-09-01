@@ -87,6 +87,12 @@ def erodeThenMin(img, hyperparameters, imagePreProcessParameters):
   img3 = cv2.min(img, img2)
   
   return img3
+  
+def setImageLineToBlack(img, hyperparameters, imagePreProcessParameters):
+  
+  img = cv2.line(img, (imagePreProcessParameters[0], imagePreProcessParameters[1]), (imagePreProcessParameters[2], imagePreProcessParameters[3]), (0, 0, 0), imagePreProcessParameters[4])
+  
+  return img
 
 def preprocessImage(img, hyperparameters):
   
@@ -110,6 +116,8 @@ def preprocessImage(img, hyperparameters):
       img = findNonGrayScalePixels(img, hyperparameters)
     elif imagePreProcessMethod == "erodeThenMin":
       img = erodeThenMin(img, hyperparameters, imagePreProcessParameters)
+    elif imagePreProcessMethod == "setImageLineToBlack":
+      img = setImageLineToBlack(img, hyperparameters, imagePreProcessParameters)
   
   return img
 
@@ -136,5 +144,7 @@ def preprocessBackgroundImage(img, hyperparameters):
       img = findNonGrayScalePixels(img, hyperparameters)
     elif imagePreProcessMethod == "erodeThenMin":
       img = erodeThenMin(img, hyperparameters, imagePreProcessParameters)
+    elif imagePreProcessMethod == "setImageLineToBlack":
+      img = setImageLineToBlack(img, hyperparameters, imagePreProcessParameters)
   
   return img

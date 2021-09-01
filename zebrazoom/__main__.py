@@ -60,7 +60,7 @@ if __name__ == '__main__':
       import time
       path       = sys.argv[2]
       videoName  = sys.argv[3]
-      configFile = sys.argv[4]      
+      configFile = sys.argv[4]
       codec      = sys.argv[5] if len(sys.argv) >= 6 else 'HFYU'
       lastFrame  = int(sys.argv[6]) if len(sys.argv) >= 7 else -1
       argv2      = sys.argv.copy()

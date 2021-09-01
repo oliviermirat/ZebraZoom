@@ -45,6 +45,10 @@ For more information visit <a href="https://zebrazoom.org/" target="_blank">zebr
 [Adjusting ZebraZoom's hyperparameters: eye tracking of zebrafish larvae](#eyesTracking)<br/>
 
 [Further analyzing ZebraZoom's output through the Graphical User Interface](#GUIanalysis)<br/>
+[Optimizing speed of final analysis: pre-calculating parameters during tracking execution](#kinematicParameterSpeedOptimization)<br/>
+[Launching the kinematic parameters analysis through the command line instead of from the GUI](#kinematicParamsFromCommandLine)<br/>
+[Launching the clustering analysis (for zebrafish only) through the command line instead of from the GUI](#clusteringAnalysisFromCommandLine)<br/>
+[Launching the clustering analysis per frame (for zebrafish only) through the command line](#clusterAnalysisPerFrameFromCommandLine)<br/>
 [Further analyzing ZebraZoom's output with Python](#pythonanalysis)<br/>
 
 [Post-processing: Identifying moving and sleeping time periods for zebrafish](#movingAndSleepPeriodZebrafish)<br/>
@@ -387,7 +391,33 @@ After running the analysis to compare different populations of animals with kine
 <H3 CLASS="western">Units of output parameters for comparaison of populations with kinematic parameters:</H3>
 When the results are first saved after the tracking (in the file results_videoName.txt in the subfolder ZZoutput/videoName) the units are simply in pixels (for spatial resolution) and frames (for time resolution). However, when using the option "Analyze ZebraZoom's outputs" from the main menu of the GUI, you will need to choose an "organization excel file". This "organization excel file" contains a column named "fq" and another column named "pixelsize". In the column "pixelsize" you must put the size of the pixels in your video and you can choose the unit for this value of pixel size (it could be in μm, mm, cm, m, etc...): this choice will then be reflected in the units of speed and distance travel calculated: for example if you choose mm for the pixel size, then the distance traveled calculated will also be in mm. Similarly, in the column "fq" you must put the frequency of acquisition of the video: if you put this unit in Hz (1/second) then the time unit for the duration and speed calculated will be in seconds; and if you decided to put in this column a frequency of acquisition in 1/minute, then the time unit for duration and speed will also be in minutes.
 
-<H3 CLASS="western">Launching the kinematic parameters analysis through the command line instead of from the GUI:</H3>
+<br/>
+
+<a name="kinematicParameterSpeedOptimization"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Optimizing speed of final analysis: pre-calculating parameters during tracking execution:</H2>
+<p>
+When a lot of data has been collected from the tracking, both the final kinematic parameters analysis and the clustering analysis can take a long time to run.
+In order to speed up this process, you can add the following parameters in the configuration file that you use:
+
+- "createPandasDataFrameOfParameters": set it to the value 1
+
+- "videoFPS": set it to the frequency of acquisition of your video
+
+- "videoPixelSize": set it to the pixel size in your video
+
+Then run the tracking as you normally would with this new configuration file: a pickle file will now be created inside the output result folder which will contain pre-calculated parameters. When you launch the final kinematic parameters or clustering analysis, these pre-calculated parameters will be reloaded which will speed up the analysis.
+
+</p>
+
+
+<br/>
+
+<a name="kinematicParamsFromCommandLine"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Launching the kinematic parameters analysis through the command line instead of from the GUI:</H2>
 <p>
 To launch from the command line, the same kinematic parameters analysis than what's available from the GUI, you can use the following command:
 
@@ -411,6 +441,8 @@ while putting the parameters:
 
 - saveAllBoutsSuperStructuresInMatlabFormat (OPTIONAL): set to 1 to save the original raw data inside the result structure.
 
+- forcePandasDfRecreation (OPTIONAL): set to 1 if you want to recalculate all kinematic parameter from the raw data, even if they had been previously calculated during the execution of the tracking (see <a href="#kinematicParameterSpeedOptimization">kinematic parameters speed optimization</a>). Otherwise set to 0, which is the default value.
+
 Please note that the parameters minimumNumberOfBendsPerBout, keepSpeedDistDurWhenLowNbBends and thresholdInDegreesBetweenSfsAndTurns are all optional parameters. Therefore, if you don't put anything for:
 
 - minimumNumberOfBendsPerBout and keepSpeedDistDurWhenLowNbBends then the parameters number of oscillations, tail beat frequency and max tail amplitude (all these parameters or for fish only) won't be calculated
@@ -419,9 +451,16 @@ Please note that the parameters minimumNumberOfBendsPerBout, keepSpeedDistDurWhe
 
 - tailAngleKinematicParameterCalculation, saveRawDataInAllBoutsSuperStructure and saveAllBoutsSuperStructuresInMatlabFormat, then those three parameters will all be set to the value 1
 
+- forcePandasDfRecreation will be set to 0
+
 </p>
 
-<H3 CLASS="western">Launching the clustering analysis (for zebrafish only) through the command line instead of from the GUI:</H3>
+<br/>
+
+<a name="clusteringAnalysisFromCommandLine"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+<H2 CLASS="western">Launching the clustering analysis (for zebrafish only) through the command line instead of from the GUI:</H2>
 <p>
 To launch from the command line, the same clustering analysis than what's available from the GUI, you can use the following command:
 
@@ -435,10 +474,16 @@ while putting the parameters:
 
 - nbClustersToFind (OPTIONAL): set to the number of clusters that you want the clustering algorithm to find. If you don't put anything for this parameter, it will be set to 3 by default.
 
-
 </p>
 
-<H3 CLASS="western">Launching the clustering analysis per frame (for zebrafish only) through the command line (not available from the GUI yet):</H3>
+
+<br/>
+
+<a name="clusterAnalysisPerFrameFromCommandLine"/>
+
+<br/>[Back to table of content](#tableofcontent)<br/>
+
+<H2 CLASS="western">Launching the clustering analysis per frame (for zebrafish only) through the command line:</H2>
 <p>
 This can be done with the command:
 

@@ -32,8 +32,11 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
     os.mkdir(outputFolderResult)
   
   dataPlotted = {}
-
-  infile = open(os.path.join(resFolder, nameOfFile),'rb')
+  
+  if os.path.exists(os.path.join(resFolder, nameOfFile + '.pkl')):
+    infile = open(os.path.join(resFolder, nameOfFile + '.pkl'),'rb')
+  else:
+    infile = open(os.path.join(resFolder, nameOfFile),'rb') # This is just to insure compatibility with previous versions, should remove this line in the future
   dfParam = pickle.load(infile)
   infile.close()
   
@@ -45,8 +48,8 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
     dfKinematicValues = dfKinematicValues.groupby(['Trial_ID', 'Well_ID']).median()
     dfCondGeno = dfParam[['Trial_ID', 'Well_ID', 'Condition', 'Genotype']]
     dfCondGeno = dfCondGeno.groupby(['Trial_ID', 'Well_ID']).first()
-    dfCount = dfParam[['Trial_ID', 'Well_ID']]
-    dfCount['numberOfBouts'] = 0
+    dfCount = dfParam[['Trial_ID', 'Well_ID']].copy()
+    dfCount['numberOfBouts'] = [0 for i in range(len(dfCount['Trial_ID']))]
     dfCount = dfCount.groupby(['Trial_ID', 'Well_ID']).count()
     dfParam = pd.concat([dfCondGeno, dfKinematicValues], axis=1)
     dfParam = pd.concat([dfParam, dfCount], axis=1)

@@ -24,6 +24,8 @@ from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.headEmbededTailTr
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.headEmbededTailTrackingTeresaNicolson import headEmbededTailTrackFindMaxDepthTeresaNicolson, headEmbededTailTrackingTeresaNicolson
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.centerOfMassTailTracking import centerOfMassTailTrackFindMaxDepth
 
+from zebrazoom.code.trackingFolder.trackingFunctions import addBlackLineToImgSetParameters
+
 def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, videoName):
 
   firstFrame = hyperparameters["firstFrame"]
@@ -75,7 +77,11 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
       hyperparameters["headEmbededRemoveBack"] = 1
       hyperparameters["minPixelDiffForBackExtract"] = hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"]
       [frame, thresh1] = headEmbededFrameBackExtract(videoPath, background, hyperparameters, firstFrame)
-      
+    
+    # Setting hyperparameters in order to add line on image
+    if hyperparameters["addBlackLineToImg_Width"]:
+      hyperparameters = addBlackLineToImgSetParameters(hyperparameters, frame)
+    
     # if hyperparameters["invertBlackWhiteOnImages"]:
       # frame   = 255 - frame
     

@@ -17,7 +17,7 @@ from zebrazoom.dataAnalysis.datasetcreation.getTailAngleRecalculated2 import get
 from zebrazoom.dataAnalysis.datasetcreation.gatherInitialRawData import gatherInitialRawData
 import pickle
 
-def createDataFrame(dataframeOptions):
+def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecreation=0):
 
   # Gathering user-inputed information about how to create the dataframe of parameters for the whole set of videos
   
@@ -49,7 +49,12 @@ def createDataFrame(dataframeOptions):
   
   # If nbFramesTakenIntoAccount was not specified, finds an appropriate value for it
   nbFramesTakenIntoAccount          = dataframeOptions['nbFramesTakenIntoAccount']
-  excelFile = pd.read_excel(os.path.join(pathToExcelFile, nameOfFile + fileExtension))
+  if len(pathToExcelFile):
+    excelFile = pd.read_excel(os.path.join(pathToExcelFile, nameOfFile + fileExtension))
+  elif type(excelFileDataFrame) != str:
+    excelFile = excelFileDataFrame
+  else:
+    print("You must provide either an excel file or a video name to create a dataframe of parameters.")
   if nbFramesTakenIntoAccount == -1:
     boutNbFrames = []
     boutTakenIntoAcccount = 0
@@ -121,6 +126,12 @@ def createDataFrame(dataframeOptions):
   dfParam = pd.DataFrame(columns=dfCols)
   genotypes  = []
   conditions = []
+  # This is for reload
+  if keepSpeedDistDurWhenLowNbBends == 1:
+    onlyKeepTheseColumns = basicInformation + ['BoutDuration', 'TotalDistance', 'IBI']
+  else:
+    onlyKeepTheseColumns = basicInformation + ['IBI']
+  removeColumnsWhenAppropriate = [col for col in dfCols if not(col in onlyKeepTheseColumns)]
   # Going through each video listed in the excel file
   for videoId in range(0, len(excelFile)):
     if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder":
@@ -140,12 +151,32 @@ def createDataFrame(dataframeOptions):
     include = eval('[' + include + ']')
     include = include[0]
     
-    with open(os.path.join(path, 'results_' + trial_id + '.txt')) as f:
-      supstruct = json.load(f)
+    if (not(os.path.exists(os.path.join(path, trial_id + '.pkl'))) or forcePandasDfRecreation):
+      with open(os.path.join(path, 'results_' + trial_id + '.txt')) as f:
+        supstruct = json.load(f)
+    else:
+      print("reloading previously calculated parameters")
+      dfReloadedVid = pd.read_pickle(os.path.join(path, trial_id + '.pkl'))
+      for idx, cond in enumerate(condition):
+        indForWellId = (dfReloadedVid['Well_ID'] == idx)
+        if include[idx]:
+          dfReloadedVid.loc[indForWellId, 'Condition'] = cond
+          dfReloadedVid.loc[indForWellId, 'Genotype']  = genotype[idx]
+          if minNbBendForBoutDetect > 0:
+            ind           = (dfReloadedVid['NumberOfOscillations'] < minNbBendForBoutDetect/2)
+            dfReloadedVid.loc[ind, removeColumnsWhenAppropriate] = float('NaN')
+          if not(genotype[idx] in genotypes):
+            genotypes.append(genotype[idx])
+          if not(condition[idx] in conditions):
+            conditions.append(condition[idx])
+        else:
+          dfReloadedVid.drop([idx2 for idx2, belongsToWell in enumerate(indForWellId) if belongsToWell])
+      dfParam = pd.concat([dfParam, dfReloadedVid])
     
     # Going through each well of the video
     for Well_ID, Cond in enumerate(condition):
-      if include[Well_ID]:
+      # Not going through this loop if we've already reloaded parameters
+      if include[Well_ID] and (not(os.path.exists(os.path.join(path, trial_id + '.pkl'))) or forcePandasDfRecreation):
         print("trial_id:", trial_id, " ; Well_ID:", Well_ID)
         dfParamForWell = pd.DataFrame(columns=dfCols)
         curBoutId = 0
@@ -248,7 +279,7 @@ def createDataFrame(dataframeOptions):
                   
                   dfParamForWell.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
                   curBoutId = curBoutId + 1
-        
+      
         # Adding dataframe created for the current frame to the dataframe for the whole set of videos
         dfParam = pd.concat([dfParam, dfParamForWell])
   
@@ -256,7 +287,7 @@ def createDataFrame(dataframeOptions):
   dfParam = dfParam.reset_index()
   
   # Saving dataframe for the whole set of videos as a pickle file
-  outfile = open(os.path.join(resFolder, nameOfFile), 'wb')
+  outfile = open(os.path.join(resFolder, nameOfFile + '.pkl'), 'wb')
   pickle.dump(dfParam,outfile)
   outfile.close()
   

@@ -90,6 +90,8 @@
   "backgroundPreProcessMethod" : 0,
   "backgroundPreProcessParameters" : [],
   
+  "addBlackLineToImg_Width" : 0,
+  
   "minWellDistanceForWellDetection" : 250,
   "wellOutputVideoDiameter" : -1,
   
@@ -216,6 +218,9 @@
   
   "tailAnglesHeatMap" : 0,
   "tailAnglesHeatMapNbPointsToTakeIntoAccount" : 8,
+  
+  "createPandasDataFrameOfParameters" : 0,
+  "frameStepForDistanceCalculation" : 0,
   
   "additionalOutputFolder" : "",
   "additionalOutputFolderOverwriteIfAlreadyExist" : 0,

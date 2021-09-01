@@ -233,7 +233,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
         infoFrame = createValidationVideo(os.path.join(pathToVideo, videoNameWithExt), superStruct, hyperparameters)
     
     # Various post-processing options depending on configuration file choices
-    dataPostProcessing(outputFolderVideo, superStruct, hyperparameters, videoName)
+    dataPostProcessing(outputFolderVideo, superStruct, hyperparameters, videoName, videoExt)
   
   # Copying output result folder in another folder
   if len(hyperparameters["additionalOutputFolder"]):

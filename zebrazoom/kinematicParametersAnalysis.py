@@ -24,7 +24,8 @@ def kinematicParametersAnalysis(sys):
   saveRawDataInAllBoutsSuperStructure       = int(sys.argv[9]) if len(sys.argv) >= 10 else 1
   
   saveAllBoutsSuperStructuresInMatlabFormat = int(sys.argv[10]) if len(sys.argv) >= 11 else 1
-
+  
+  forcePandasDfRecreation                   = int(sys.argv[11]) if len(sys.argv) >= 12 else 0
 
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
   cur_dir_path = Path(cur_dir_path)
@@ -51,7 +52,7 @@ def kinematicParametersAnalysis(sys):
     'saveAllBoutsSuperStructuresInMatlabFormat' : saveAllBoutsSuperStructuresInMatlabFormat
   }
 
-  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions)
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, '', forcePandasDfRecreation)
   
   # Mixing up all the bouts
   populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, True)
