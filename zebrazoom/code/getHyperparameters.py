@@ -391,6 +391,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["addBlackLineToImg_Width"] = getConfig(config, "addBlackLineToImg_Width", videoPath)
   
+  hyperparameters["headEmbededMaxAngleBetweenSubsequentSegments"] = getConfig(config, "headEmbededMaxAngleBetweenSubsequentSegments", videoPath)
+  
   
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1

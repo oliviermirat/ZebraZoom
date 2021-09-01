@@ -109,6 +109,9 @@ def findNextPoints(depth,x,y,frame,points,angle,maxDepth,steps,nbList,initialIma
   if depth > 0.85*maxDepth:
     thetaDiffAccept = 0.6
   
+  if hyperparameters["headEmbededMaxAngleBetweenSubsequentSegments"]:
+    thetaDiffAccept = hyperparameters["headEmbededMaxAngleBetweenSubsequentSegments"]
+  
   pixTotMax = 1000000
   maxTheta  = angle
 

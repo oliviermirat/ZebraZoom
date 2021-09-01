@@ -154,6 +154,7 @@
   "overwriteNbOfStepValues" : 1,
   "nbList" : -1,
   "expDecreaseFactor" : -1,
+  "headEmbededMaxAngleBetweenSubsequentSegments" : 0,
   
   "automaticallySetSomeOfTheHeadEmbededHyperparameters" : 0,
   "headEmbededAutoSet_ExtendedDescentSearchOption" : 0,
