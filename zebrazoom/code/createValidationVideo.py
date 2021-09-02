@@ -194,51 +194,52 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
     
       ret, frame = cap.read()
       
-      if hyperparameters["outputValidationVideoContrastImprovement"]:
-        frame = 255 - frame
-        frame  = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        quartileChose = hyperparameters["outputValidationVideoContrastImprovementQuartile"]
-        lowVal  = int(np.quantile(frame, quartileChose))
-        highVal = int(np.quantile(frame, 1 - quartileChose))
-        frame[frame < lowVal]  = lowVal
-        frame[frame > highVal] = highVal
-        frame = frame - lowVal
-        mult  = np.max(frame)
-        frame = frame * (255/mult)
-        frame = frame.astype('uint8')
-        frame  = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
-      
-      for i in range(0, len(infoFrame[l])):
-        x = infoFrame[l][i]["x"]
-        y = infoFrame[l][i]["y"]
-        size  = infoFrame[l][i]["size"]
-        red   = infoFrame[l][i]["red"]
-        green = infoFrame[l][i]["green"]
-        blue  = infoFrame[l][i]["blue"]
-        if (infoFrame[l][i]["Heading"] != -10):
-          heading = infoFrame[l][i]["Heading"]
-          if hyperparameters["validationVideoPlotHeading"]:
-            if hyperparameters["debugValidationVideoHeading"] == 0:
-              cv2.line(frame,(int(x),int(y)),(int(x+20*math.cos(heading)),int(y+20*math.sin(heading))), (255,0,0), trackingPointSizeDisplay)
-            else:
-              cv2.line(frame,(int(x),int(y)),(int(x-250*math.cos(heading)),int(y-250*math.sin(heading))), (255,0,0), trackingPointSizeDisplay)
-          
-          # if ("numMouv" in infoFrame[l][i]) and ("numWell" in infoFrame[l][i]):
-            # numMouv = infoFrame[l][i]["numMouv"]
-            # numWell = infoFrame[l][i]["numWell"]
-            # cv2.putText(frame,str(numMouv),(15+infoWells[numWell][0],25+infoWells[numWell][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255))
+      if ret:
+        if hyperparameters["outputValidationVideoContrastImprovement"]:
+          frame = 255 - frame
+          frame  = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+          quartileChose = hyperparameters["outputValidationVideoContrastImprovementQuartile"]
+          lowVal  = int(np.quantile(frame, quartileChose))
+          highVal = int(np.quantile(frame, 1 - quartileChose))
+          frame[frame < lowVal]  = lowVal
+          frame[frame > highVal] = highVal
+          frame = frame - lowVal
+          mult  = np.max(frame)
+          frame = frame * (255/mult)
+          frame = frame.astype('uint8')
+          frame  = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+        
+        for i in range(0, len(infoFrame[l])):
+          x = infoFrame[l][i]["x"]
+          y = infoFrame[l][i]["y"]
+          size  = infoFrame[l][i]["size"]
+          red   = infoFrame[l][i]["red"]
+          green = infoFrame[l][i]["green"]
+          blue  = infoFrame[l][i]["blue"]
+          if (infoFrame[l][i]["Heading"] != -10):
+            heading = infoFrame[l][i]["Heading"]
+            if hyperparameters["validationVideoPlotHeading"]:
+              if hyperparameters["debugValidationVideoHeading"] == 0:
+                cv2.line(frame,(int(x),int(y)),(int(x+20*math.cos(heading)),int(y+20*math.sin(heading))), (255,0,0), trackingPointSizeDisplay)
+              else:
+                cv2.line(frame,(int(x),int(y)),(int(x-250*math.cos(heading)),int(y-250*math.sin(heading))), (255,0,0), trackingPointSizeDisplay)
+            
+            # if ("numMouv" in infoFrame[l][i]) and ("numWell" in infoFrame[l][i]):
+              # numMouv = infoFrame[l][i]["numMouv"]
+              # numWell = infoFrame[l][i]["numWell"]
+              # cv2.putText(frame,str(numMouv),(15+infoWells[numWell][0],25+infoWells[numWell][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255))
 
-        cv2.circle(frame, (int(x),int(y)), size, (red,green,blue), -1)
-        
-        if hyperparameters["validationVideoPlotAnimalNumber"]:
-          if "numAnimal" in infoFrame[l][i]:
-            numAnimal = int(infoFrame[l][i]["numAnimal"])
-            red       = int(0   + colorModifTab[numAnimal]["red"])
-            green     = int(255 - colorModifTab[numAnimal]["green"])
-            blue      = int(0   + colorModifTab[numAnimal]["blue"])
-            cv2.putText(frame, str(numAnimal), (int(x + 10), int(y + 10)), cv2.FONT_HERSHEY_SIMPLEX, 1, (red, green, blue), 2)
-        
-      out.write(frame)
+          cv2.circle(frame, (int(x),int(y)), size, (red,green,blue), -1)
+          
+          if hyperparameters["validationVideoPlotAnimalNumber"]:
+            if "numAnimal" in infoFrame[l][i]:
+              numAnimal = int(infoFrame[l][i]["numAnimal"])
+              red       = int(0   + colorModifTab[numAnimal]["red"])
+              green     = int(255 - colorModifTab[numAnimal]["green"])
+              blue      = int(0   + colorModifTab[numAnimal]["blue"])
+              cv2.putText(frame, str(numAnimal), (int(x + 10), int(y + 10)), cv2.FONT_HERSHEY_SIMPLEX, 1, (red, green, blue), 2)
+          
+        out.write(frame)
   
   out.release()
   
