@@ -126,11 +126,11 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   dfParam = pd.DataFrame(columns=dfCols)
   genotypes  = []
   conditions = []
-  # This is for reload
+  # This is for the potential reload from previously calculated parameters (stored in the pkl file)
   if keepSpeedDistDurWhenLowNbBends == 1:
-    onlyKeepTheseColumns = basicInformation + ['BoutDuration', 'TotalDistance', 'IBI']
+    onlyKeepTheseColumns = basicInformation + ['BoutDuration', 'TotalDistance', 'Speed', 'IBI']
   else:
-    onlyKeepTheseColumns = basicInformation + ['IBI']
+    onlyKeepTheseColumns = basicInformation
   removeColumnsWhenAppropriate = [col for col in dfCols if not(col in onlyKeepTheseColumns)]
   # Going through each video listed in the excel file
   for videoId in range(0, len(excelFile)):
@@ -255,17 +255,17 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
               
               else:
                 
-                if keepSpeedDistDurWhenLowNbBends:
+                # Initial basic information
                 
-                  # Initial basic information
-                  
-                  toPutInDataFrameColumn = basicInformation
-                  toPutInDataFrame       = [trial_id, Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID]]
-                  
-                  if not(genotype[Well_ID] in genotypes):
-                    genotypes.append(genotype[Well_ID])
-                  if not(condition[Well_ID] in conditions):
-                    conditions.append(condition[Well_ID])
+                toPutInDataFrameColumn = basicInformation
+                toPutInDataFrame       = [trial_id, Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID]]
+                
+                if not(genotype[Well_ID] in genotypes):
+                  genotypes.append(genotype[Well_ID])
+                if not(condition[Well_ID] in conditions):
+                  conditions.append(condition[Well_ID])
+                
+                if keepSpeedDistDurWhenLowNbBends:
                   
                   # Calculating the global kinematic parameters and more and stores them the dataframe
                   
@@ -275,10 +275,10 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
                   toPutInDataFrameColumn = toPutInDataFrameColumn + ['BoutDuration', 'TotalDistance', 'Speed', 'IBI']
                   toPutInDataFrame       = toPutInDataFrame       + listOfGlobalParameters
                   
-                  # Adding bout parameters to the dataframe created for the current well
-                  
-                  dfParamForWell.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
-                  curBoutId = curBoutId + 1
+                # Adding bout parameters to the dataframe created for the current well
+                
+                dfParamForWell.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
+                curBoutId = curBoutId + 1
       
         # Adding dataframe created for the current frame to the dataframe for the whole set of videos
         dfParam = pd.concat([dfParam, dfParamForWell])

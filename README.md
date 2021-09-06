@@ -427,19 +427,19 @@ while putting the parameters:
 
 - pathToExcelFile: to the path to the excel file describing your experiment (the combination of several videos and what they correspond to)
 
-- frameStepForDistanceCalculation: to calculate the distance travelled for each bout, in order to avoid the noise caused by subsequent close-by (x, y) coordinates of the center of the head of the animal, the (x, y) coordinates to calculate the total distance are not taken for every frame of the bout, but rather for every 'frameStepForDistanceCalculation' frame in the bout. When accessed from the GUI, this parameter is fixed to 4, which is a parameter that works well in many situations. When launching the analysis from the command line, this parameter can be further fine tuned. In the future, it will also be possible to fine tune this parameter from the GUI.
+- frameStepForDistanceCalculation (OPTIONAL): to calculate the distance travelled for each bout, in order to avoid the noise caused by subsequent close-by (x, y) coordinates of the center of the head of the animal, the (x, y) coordinates to calculate the total distance are not taken for every frame of the bout, but rather for every 'frameStepForDistanceCalculation' frame in the bout. The default value is 4, which is the same default value as when accessed from the GUI.
 
-- minimumNumberOfBendsPerBout (OPTIONAL): the minimum number of bends that a bout must have in order for the parameters number of oscillations, tail beat frequency and maximum bend amplitude to be calculated for that bout and included in the analysis (this is for fish only)
+- minimumNumberOfBendsPerBout (OPTIONAL): the minimum number of bends that a bout must have in order for the parameters related to the tail tracking (such as number of oscillations, tail beat frequency, maximum bend amplitude, etc...) to be calculated for that bout and included in the analysis (this is for fish only). The default is -1 here (meaning all bouts will be kept), the default value in the GUI is 3.
 
-- keepSpeedDistDurWhenLowNbBends (OPTIONAL): when a bout is removed from the analysis because it has a low amount of bends, then the parameters distance, duration and speed are kept in the analysis if keepSpeedDistDurWhenLowNbBends is set to 0, and they are discarded otherwise. If the distance, duration and speed parameters are kept then the parameters number of oscillations, tail beat frequency and maximum bend amplitude are set to nan for those bouts.
+- keepSpeedDistDurWhenLowNbBends (OPTIONAL): when a bout is removed from the analysis because it has a low amount of bends, then the parameters distance, duration, speed and IBI are kept in the analysis if keepSpeedDistDurWhenLowNbBends is set to 1, and they are discarded otherwise. If the distance, duration, speed and IBI parameters are kept then the parameters related to the tail tracking (such as number of oscillations, tail beat frequency, maximum bend amplitude, etc...) are set to nan for those bouts.
 
-- thresholdInDegreesBetweenSfsAndTurns (OPTIONAL): threshold (unit in degrees) to separate a sfs from a turn (this is also for fish only)
+- thresholdInDegreesBetweenSfsAndTurns (OPTIONAL): threshold (unit in degrees) to separate a sfs from a turn (this is also for fish only). If set to -1 (default value) this won't be calculated.
 
-- tailAngleKinematicParameterCalculation (OPTIONAL): set to 1 for all kinematic parameters related to tail tracking of fish to be calculated (number of oscillation, tail beat frequency, etc...). Set to 0 otherwise.
+- tailAngleKinematicParameterCalculation (OPTIONAL): set to 1 for all kinematic parameters related to tail tracking of fish to be calculated (number of oscillation, tail beat frequency, etc...). Set to 0 otherwise. Default is 1.
 
-- saveRawDataInAllBoutsSuperStructure (OPTIONAL): the output result structure is always saved in the pickle format. In order to also save it in the matlab format, set this parameter to 1. Set to 0 otherwise
+- saveRawDataInAllBoutsSuperStructure (OPTIONAL): the output result structure is always saved in the pickle format. In order to also save it in the matlab format, set this parameter to 1. Set to 0 otherwise. Default is 1.
 
-- saveAllBoutsSuperStructuresInMatlabFormat (OPTIONAL): set to 1 to save the original raw data inside the result structure.
+- saveAllBoutsSuperStructuresInMatlabFormat (OPTIONAL): set to 1 to save the original raw data inside the result structure. Default is 1.
 
 - forcePandasDfRecreation (OPTIONAL): set to 1 if you want to recalculate all kinematic parameter from the raw data, even if they had been previously calculated during the execution of the tracking (see <a href="#kinematicParameterSpeedOptimization">kinematic parameters speed optimization</a>). Otherwise set to 0, which is the default value.
 

@@ -19,5 +19,4 @@ def dataPostProcessing(outputFolderVideo, superStruct, hyperparameters, videoNam
     tailAnglesHeatMap(superStruct, hyperparameters, videoName)
   
   if hyperparameters["createPandasDataFrameOfParameters"] and hyperparameters["videoFPS"] and hyperparameters["videoPixelSize"]:
-    
     createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension)

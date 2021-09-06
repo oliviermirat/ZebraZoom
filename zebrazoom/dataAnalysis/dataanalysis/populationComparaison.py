@@ -49,11 +49,11 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
     dfCondGeno = dfParam[['Trial_ID', 'Well_ID', 'Condition', 'Genotype']]
     dfCondGeno = dfCondGeno.groupby(['Trial_ID', 'Well_ID']).first()
     dfCount = dfParam[['Trial_ID', 'Well_ID']].copy()
-    dfCount['numberOfBouts'] = [0 for i in range(len(dfCount['Trial_ID']))]
+    dfCount['numberOfBouts_NoBoutsRemovedBasedOnBends'] = [0 for i in range(len(dfCount['Trial_ID']))]
     dfCount = dfCount.groupby(['Trial_ID', 'Well_ID']).count()
     dfParam = pd.concat([dfCondGeno, dfKinematicValues], axis=1)
     dfParam = pd.concat([dfParam, dfCount], axis=1)
-    globParam = globParam + ['numberOfBouts']
+    globParam = globParam + ['numberOfBouts_NoBoutsRemovedBasedOnBends']
   else:
     dfParam  = dfParam[columnsForRawDataExport]
   

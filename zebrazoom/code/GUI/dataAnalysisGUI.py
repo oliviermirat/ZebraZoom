@@ -107,12 +107,12 @@ class PopulationComparison(tk.Frame):
     minNbBendForBoutDetect = tk.Entry(self)
     minNbBendForBoutDetect.pack()
     tk.Label(self, text="If, for a bout, the tail tracking related kinematic parameters are being discarded because of a low amount of bends,", font=("Helvetica", 10)).pack(side="top", fill="x")
-    tk.Label(self, text="should the BoutDuration, TotalDistance and Speed also be discarded for that bout?", font=("Helvetica", 10)).pack(side="top", fill="x")
+    tk.Label(self, text="should the BoutDuration, TotalDistance, Speed and IBI also be discarded for that bout?", font=("Helvetica", 10)).pack(side="top", fill="x")
     discard = IntVar()
-    Checkbutton(self, text="Yes, discard BoutDuration, TotalDistance and Speed in that situation", variable=discard).pack()
+    Checkbutton(self, text="Yes, discard BoutDuration, TotalDistance, Speed and IBI in that situation", variable=discard).pack()
     keep = IntVar()
-    Checkbutton(self, text="No, keep BoutDuration, TotalDistance and Speed in that situation", variable=keep).pack()
-    tk.Label(self, text="Please ignore the two questions above if you're only looking at BoutDuration, TotalDistance and Speed.", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
+    Checkbutton(self, text="No, keep BoutDuration, TotalDistance, Speed and IBI in that situation", variable=keep).pack()
+    tk.Label(self, text="Please ignore the two questions above if you're only looking at BoutDuration, TotalDistance, Speed and IBI.", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
     
     tk.Button(self, text="Launch Analysis", bg="light yellow", command=lambda: controller.populationComparison(controller, TailTrackingParameters.get(), saveInMatlabFormat.get(), saveRawData.get(), minNbBendForBoutDetect.get(), discard.get(), keep.get(), frameStepForDistanceCalculation.get())).pack()
     
