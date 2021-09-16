@@ -28,19 +28,19 @@ from multiprocessing import Process
 output = mp.Queue()
 
 # Does the tracking and then the extraction of parameters
-def getParametersForWell(videoPath,background,wellNumber,wellPositions,output,previouslyAcquiredTrackingDataForDebug,hyperparameters, videoName):
+def getParametersForWell(videoPath,background,wellNumber,wellPositions,output,previouslyAcquiredTrackingDataForDebug,hyperparameters, videoName, dlModel):
   if hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "noDebug":
     # Normal execution process
-    trackingData = tracking(videoPath,background,wellNumber,wellPositions,hyperparameters, videoName)
+    trackingData = tracking(videoPath,background,wellNumber,wellPositions,hyperparameters, videoName, dlModel)
     parameters = extractParameters(trackingData, wellNumber, hyperparameters, videoPath, wellPositions, background)
     output.put([wellNumber,parameters,[]])
   elif hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justSaveTrackData":
     # Extracing tracking data, saving it, and that's it
-    trackingData = tracking(videoPath,background,wellNumber,wellPositions,hyperparameters, videoName)
+    trackingData = tracking(videoPath,background,wellNumber,wellPositions,hyperparameters, videoName, dlModel)
     output.put([wellNumber,[],trackingData])
   elif hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "saveTrackDataAndExtractParam":
     # Extracing tracking data, saving it, and continuing normal execution
-    trackingData = tracking(videoPath,background,wellNumber,wellPositions,hyperparameters, videoName)
+    trackingData = tracking(videoPath,background,wellNumber,wellPositions,hyperparameters, videoName, dlModel)
     parameters = extractParameters(trackingData, wellNumber, hyperparameters, videoPath, wellPositions, background)
     output.put([wellNumber,parameters,trackingData])
   else: # hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justExtractParamFromPreviousTrackData"
@@ -101,7 +101,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     outfile.close()
   else:
     # Creating output folder
-    if not(hyperparameters["reloadWellPositions"]) and not(hyperparameters["reloadBackground"]) and not(os.path.exists(os.path.join(outputFolderVideo, 'intermediaryWellPositionReloadNoMatterWhat.txt'))):
+    if not(hyperparameters["reloadWellPositions"]) and not(hyperparameters["reloadBackground"]) and not(os.path.exists(os.path.join(outputFolderVideo, 'intermediaryWellPositionReloadNoMatterWhat.txt'))) and not(hyperparameters["dontDeleteOutputFolderIfAlreadyExist"]):
       if os.path.exists(outputFolderVideo):
         shutil.rmtree(outputFolderVideo)
       while True:
@@ -154,7 +154,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     raise ValueError
     
   # Getting background
-  if hyperparameters["backgroundSubtractorKNN"] or (hyperparameters["headEmbeded"] and hyperparameters["headEmbededRemoveBack"] == 0 and hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0 and hyperparameters["adjustHeadEmbededTracking"] == 0):
+  if hyperparameters["backgroundSubtractorKNN"] or (hyperparameters["headEmbeded"] and hyperparameters["headEmbededRemoveBack"] == 0 and hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0 and hyperparameters["adjustHeadEmbededTracking"] == 0) or hyperparameters["trackingDL"]:
     background = []
   else:
     print("start get background")
@@ -171,6 +171,13 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     print("exitAfterBackgroundExtraction")
     raise ValueError
   
+  # Reloading DL model for tracking with DL
+  if hyperparameters["trackingDL"]:
+    from zebrazoom.code.deepLearningFunctions.loadDLmodel import loadDLmodel
+    dlModel = loadDLmodel(hyperparameters["trackingDL"])
+  else:
+    dlModel = 0
+  
   # Tracking and extraction of parameters
   if hyperparameters["fasterMultiprocessing"] == 1:
     processes = -1
@@ -181,21 +188,21 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
         # for all wells, in parallel
         processes = []
         for wellNumber in range(0,hyperparameters["nbWells"]):
-          p = Process(target=getParametersForWell, args=(os.path.join(pathToVideo, videoNameWithExt), background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName))
+          p = Process(target=getParametersForWell, args=(os.path.join(pathToVideo, videoNameWithExt), background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName, dlModel))
           p.start()
           processes.append(p)
       else:
         # for just one well
         processes = [1]
-        getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, hyperparameters["onlyTrackThisOneWell"], wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName)
+        getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, hyperparameters["onlyTrackThisOneWell"], wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName, dlModel)
     else:
       if hyperparameters["onlyTrackThisOneWell"] == -1:
         processes = [1 for i in range(0, hyperparameters["nbWells"])]
         for wellNumber in range(0,hyperparameters["nbWells"]):
-          getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName)
+          getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName, dlModel)
       else:
         processes = [1]
-        getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, hyperparameters["onlyTrackThisOneWell"], wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName)
+        getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, hyperparameters["onlyTrackThisOneWell"], wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName, dlModel)
   
   # Sorting wells after the end of the parallelized calls end
   if processes != -1:

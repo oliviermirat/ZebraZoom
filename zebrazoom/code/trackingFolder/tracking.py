@@ -25,9 +25,16 @@ from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.headEmbededTailTr
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.centerOfMassTailTracking import centerOfMassTailTrackFindMaxDepth
 
 from zebrazoom.code.trackingFolder.trackingFunctions import addBlackLineToImgSetParameters
+from zebrazoom.code.deepLearningFunctions.trackingDL import trackingDL
 
-def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, videoName):
-
+def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, videoName, dlModel=0):
+  
+  if hyperparameters["trackingDL"]:
+    import torch
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    [trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingEyesAllAnimals, headPositionFirstFrame, tailTipFirstFrame] = trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName, dlModel, device)
+    return [trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingEyesAllAnimals, headPositionFirstFrame, tailTipFirstFrame]
+  
   firstFrame = hyperparameters["firstFrame"]
   if hyperparameters["firstFrameForTracking"] != -1:
     firstFrame = hyperparameters["firstFrameForTracking"]
@@ -139,7 +146,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     # Tail tracking for frame i
     if hyperparameters["trackTail"] == 1 :
       for animalId in range(0, hyperparameters["nbAnimalsPerWell"]):
-        [trackingHeadTailAllAnimals, trackingHeadingAllAnimals] = tailTracking(animalId, i, firstFrame, videoPath, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, lastFirstTheta, maxDepth, tailTipFirstFrame, initialCurFrame, back)
+        [trackingHeadTailAllAnimals, trackingHeadingAllAnimals] = tailTracking(animalId, i, firstFrame, videoPath, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, lastFirstTheta, maxDepth, tailTipFirstFrame, initialCurFrame, back, wellNumber)
     # Eye tracking for frame i
     if hyperparameters["eyeTracking"]:
       trackingEyesAllAnimals = eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals)

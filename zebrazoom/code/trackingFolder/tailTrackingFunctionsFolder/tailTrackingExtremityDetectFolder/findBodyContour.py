@@ -7,16 +7,20 @@ import sys
 from scipy import interpolate
 from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
 from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
+from zebrazoom.code.deepLearningFunctions.labellingFunctions import drawWhitePointsOnInitialImages, saveImagesAndData
 from scipy.interpolate import UnivariateSpline
 from numpy import linspace
 
-def findBodyContour(headPosition, hyperparameters, thresh1, initialCurFrame, back):
+def findBodyContour(headPosition, hyperparameters, thresh1, initialCurFrame, back, wellNumber=-1, frameNumber=-1):
 
+  if hyperparameters["saveBodyMask"] and hyperparameters["bodyMask_addWhitePoints"]:
+    [img, thresh1] = drawWhitePointsOnInitialImages(initialCurFrame, back, hyperparameters)
+  
   thresh1[:,0] = 255
   thresh1[0,:] = 255
   thresh1[:, len(thresh1[0])-1] = 255
   thresh1[len(thresh1)-1, :]    = 255
-
+  
   x = headPosition[0]
   y = headPosition[1]
   cx = 0
@@ -101,7 +105,7 @@ def findBodyContour(headPosition, hyperparameters, thresh1, initialCurFrame, bac
     area = cv2.contourArea(contour)
     if (area >= hyperparameters["minAreaBody"]) and (area <= hyperparameters["maxAreaBody"]):
       dist = cv2.pointPolygonTest(contour, (x, y), True)
-      if dist >= 0:
+      if dist >= 0 or hyperparameters["saveBodyMask"]:
         M = cv2.moments(contour)
         if M['m00']:
           cx = int(M['m10']/M['m00'])
@@ -115,4 +119,7 @@ def findBodyContour(headPosition, hyperparameters, thresh1, initialCurFrame, bac
     if cv2.contourArea(bodyContour) >= hyperparameters["maxAreaBody"]:
       bodyContour = 0
   
+  if hyperparameters["saveBodyMask"]:
+    saveImagesAndData(hyperparameters, bodyContour, initialCurFrame, wellNumber, frameNumber)
+        
   return bodyContour

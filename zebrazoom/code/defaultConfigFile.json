@@ -228,5 +228,16 @@
   "outputValidationVideoContrastImprovement" : 0,
   "outputValidationVideoContrastImprovementQuartile" : 0.01,
   
-  "computeEyesHeadingPlot": 0
+  "computeEyesHeadingPlot": 0,
+  
+  "saveBodyMask": 0,
+  "bodyMask_addWhitePoints": 0,
+  "bodyMask_saveAsLabelMeJsonFormat": 0,
+  "bodyMask_saveAsPngMask": 0,
+  "saveBodyMaskResampleContourNbPoints": 0,
+  "dontDeleteOutputFolderIfAlreadyExist": 0,
+  "bodyMask_saveDataForAllFrames": 0,
+  
+  "trackingDL": 0
+  
 }

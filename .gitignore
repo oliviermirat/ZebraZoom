@@ -15,6 +15,8 @@ zebrazoom/dataAnalysis/__pycache__
 zebrazoom/videoFormatConversion/__pycache__
 zebrazoom/code/dataPostProcessing/__pycache__/
 zebrazoom/dataAnalysis/postProcessingFromCommandLine/__pycache__/
+zebrazoom/code/deepLearningFunctions/__pycache__
+zebrazoom/code/deepLearningFunctions/PyTorchFunctions/__pycache__/
 
 zebrazoom/newhyperparameters
 zebrazoom/trace.txt
@@ -32,6 +34,7 @@ zebrazoom/configuration/
 !zebrazoom/configuration/screenFastTrackingConfigFileTemplate.json
 !zebrazoom/configuration/testThresholdsForFastScreen.json
 !zebrazoom/configuration/toCreateConfigFileForBarelyMovingAnimals.json
+!zebrazoom/configuration/barelyMovingFish.json
 
 zebrazoom/dataAnalysis/classifiers/*
 zebrazoom/dataAnalysis/data/*

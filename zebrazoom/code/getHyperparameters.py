@@ -105,7 +105,7 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["fillGapFrameNb"]             = getConfig(config, "fillGapFrameNb", videoPath)
   hyperparameters["minPixelDiffForBackExtract"] = getConfig(config, "minPixelDiffForBackExtract", videoPath)
   hyperparameters["outputFolder"]               = getConfig(config, "outputFolder", videoPath)
-  hyperparameters["videoName"]                  = videoName[0:(len(videoName)-4)]
+  hyperparameters["videoName"]                  = videoName[0:(len(videoName)-4)] # Need to improve this!
   hyperparameters["detectBoutMinNbFrames"]      = getConfig(config, "detectBoutMinNbFrames", videoPath)
   hyperparameters["detectBoutMinDist"]          = getConfig(config, "detectBoutMinDist", videoPath)
   hyperparameters["nbRowsOfWells"]              = getConfig(config, "nbRowsOfWells", videoPath)
@@ -392,6 +392,16 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["addBlackLineToImg_Width"] = getConfig(config, "addBlackLineToImg_Width", videoPath)
   
   hyperparameters["headEmbededMaxAngleBetweenSubsequentSegments"] = getConfig(config, "headEmbededMaxAngleBetweenSubsequentSegments", videoPath)
+  
+  hyperparameters["saveBodyMask"] = getConfig(config, "saveBodyMask", videoPath)
+  hyperparameters["bodyMask_addWhitePoints"] = getConfig(config, "bodyMask_addWhitePoints", videoPath)
+  hyperparameters["bodyMask_saveAsLabelMeJsonFormat"] = getConfig(config, "bodyMask_saveAsLabelMeJsonFormat", videoPath)
+  hyperparameters["bodyMask_saveAsPngMask"] = getConfig(config, "bodyMask_saveAsPngMask", videoPath)
+  hyperparameters["saveBodyMaskResampleContourNbPoints"] = getConfig(config, "saveBodyMaskResampleContourNbPoints", videoPath)
+  hyperparameters["dontDeleteOutputFolderIfAlreadyExist"] = getConfig(config, "dontDeleteOutputFolderIfAlreadyExist", videoPath)
+  hyperparameters["bodyMask_saveDataForAllFrames"] = getConfig(config, "bodyMask_saveDataForAllFrames", videoPath)
+  
+  hyperparameters["trackingDL"] = getConfig(config, "trackingDL", videoPath)
   
   
   if hyperparameters["tailAnglesHeatMap"]:

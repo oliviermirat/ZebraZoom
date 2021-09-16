@@ -24,7 +24,7 @@ from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 # from trackingFunctions import assignValueIfBetweenRange
 
  
-def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugAdv,heading, hyperparameters, initialCurFrame, back):
+def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugAdv,heading, hyperparameters, initialCurFrame, back, wellNumber=-1):
   
   newHeading = -1
   
@@ -41,7 +41,7 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
     cv2.waitKey(0)
   
   # Finding blob corresponding to the body of the fish
-  bodyContour = findBodyContour(headPosition, hyperparameters, thresh1, initialCurFrame, back)
+  bodyContour = findBodyContour(headPosition, hyperparameters, thresh1, initialCurFrame, back, wellNumber, i)
   if type(bodyContour) != int:
     # Finding the two sides of the fish
     res = findTheTwoSides(headPosition, bodyContour, dst, hyperparameters)
@@ -67,8 +67,8 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
         cv2.circle(dst, (pt1[0],pt1[1]), 3, (0, 0, 255), -1)
       else:
         for pt in bodyContour:
-          cv2.circle(dst, (pt[0][0], pt[0][1]), 1, (0, 0, 0), -1)
-        cv2.circle(dst, (int(headPosition[0]),int(headPosition[1])), 2, (0, 0, 255), -1)
+          cv2.circle(dst, (pt[0][0], pt[0][1]), 1, (0, 255, 0), -1)
+        cv2.circle(dst, (int(headPosition[0]),int(headPosition[1])), 1, (0, 0, 255), -1)
       #
       if hyperparameters["debugTrackingPtExtremeLargeVerticals"]:
         dst = dst[int(headPosition[1])-200:len(dst), :]

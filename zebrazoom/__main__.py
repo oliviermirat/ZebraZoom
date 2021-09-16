@@ -77,6 +77,15 @@ if __name__ == '__main__':
       mainZZ(path2, videoName, 'avi', configFile, argv2)
     
     
+    elif sys.argv[1] == "DL_createMask":
+      
+      from zebrazoom.code.deepLearningFunctions.labellingFunctions import createMask
+      pathToImgFolder = sys.argv[2]
+      if not(os.path.exists(pathToImgFolder)):
+        pathToImgFolder = os.path.join(os.path.join(os.path.join(dir_path,'ZZoutput'), sys.argv[2]), 'PNGImages')
+      createMask(pathToImgFolder)
+    
+    
     elif sys.argv[1] == "dataPostProcessing":
       
       if sys.argv[2] == "sleepVsMoving":
