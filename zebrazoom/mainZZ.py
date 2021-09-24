@@ -165,7 +165,8 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     else:
       outfile = open(os.path.join(outputFolderVideo, 'intermediaryBackground.txt'),'wb')
       background = getBackground(os.path.join(pathToVideo, videoNameWithExt), hyperparameters)
-      pickle.dump(background,outfile)
+      pickle.dump(background, outfile)
+      cv2.imwrite(os.path.join(outputFolderVideo, 'background.png'), background)
     outfile.close()
   if hyperparameters["exitAfterBackgroundExtraction"]:
     print("exitAfterBackgroundExtraction")

@@ -11,7 +11,7 @@ from zebrazoom.code.trackingFolder.debugTracking import debugTracking
 def trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName, dlModel, device):
   
   debugPlus = False
-  dicotomySearchOfOptimalBlobArea = 0 #850
+  dicotomySearchOfOptimalBlobArea = hyperparameters["trackingDLdicotomySearchOfOptimalBlobArea"] # 700 # 850
   
   firstFrame = hyperparameters["firstFrame"]
   if hyperparameters["firstFrameForTracking"] != -1:

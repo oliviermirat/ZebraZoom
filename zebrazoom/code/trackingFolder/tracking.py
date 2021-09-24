@@ -25,12 +25,12 @@ from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.headEmbededTailTr
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.centerOfMassTailTracking import centerOfMassTailTrackFindMaxDepth
 
 from zebrazoom.code.trackingFolder.trackingFunctions import addBlackLineToImgSetParameters
-from zebrazoom.code.deepLearningFunctions.trackingDL import trackingDL
 
 def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, videoName, dlModel=0):
   
   if hyperparameters["trackingDL"]:
     import torch
+    from zebrazoom.code.deepLearningFunctions.trackingDL import trackingDL
     device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
     [trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingEyesAllAnimals, headPositionFirstFrame, tailTipFirstFrame] = trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName, dlModel, device)
     return [trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingEyesAllAnimals, headPositionFirstFrame, tailTipFirstFrame]

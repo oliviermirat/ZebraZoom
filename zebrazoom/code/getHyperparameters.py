@@ -402,6 +402,7 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["bodyMask_saveDataForAllFrames"] = getConfig(config, "bodyMask_saveDataForAllFrames", videoPath)
   
   hyperparameters["trackingDL"] = getConfig(config, "trackingDL", videoPath)
+  hyperparameters["trackingDLdicotomySearchOfOptimalBlobArea"] = getConfig(config, "trackingDLdicotomySearchOfOptimalBlobArea", videoPath)
   
   
   if hyperparameters["tailAnglesHeatMap"]:
