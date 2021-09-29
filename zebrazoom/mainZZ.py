@@ -20,12 +20,8 @@ import json
 
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
-import multiprocessing as mp
-if globalVariables["mac"]:
-  mp.set_start_method('spawn', force=True)
-from multiprocessing import Process
 
-output = mp.Queue()
+output = 0
 
 # Does the tracking and then the extraction of parameters
 def getParametersForWell(videoPath,background,wellNumber,wellPositions,output,previouslyAcquiredTrackingDataForDebug,hyperparameters, videoName, dlModel):
@@ -68,6 +64,19 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
 
   # Getting hyperparameters
   [hyperparameters, configFile] = getHyperparameters(configFile, videoNameWithExt, os.path.join(pathToVideo, videoNameWithExt), argv)
+  
+  if hyperparameters["trackingDL"]:
+    import torch.multiprocessing as mp
+  else:
+    import multiprocessing as mp
+  if globalVariables["mac"] or hyperparameters["trackingDL"]:
+    mp.set_start_method('spawn', force=True)
+  if hyperparameters["trackingDL"]:
+    from torch.multiprocessing import Process
+  else:
+    from multiprocessing import Process
+
+  output = mp.Queue()
   
   # Checking first frame and last frame value
   cap   = cv2.VideoCapture(os.path.join(pathToVideo, videoNameWithExt))
