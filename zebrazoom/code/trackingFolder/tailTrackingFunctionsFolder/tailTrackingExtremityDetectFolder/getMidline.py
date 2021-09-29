@@ -58,7 +58,15 @@ def getMidline(bord1, bord2, MostCurvyIndex, boundary, dst, taille, distance2, d
   OrigBoundB = boundary[tailRangeB]
   
   if ((bord1!=bord2) and (bord1!=MostCurvyIndex) and (bord2!=MostCurvyIndex) and not((bord1==1) and (bord2==1) and (MostCurvyIndex==1)) and (len(OrigBoundA)>1) and (len(OrigBoundB)>1)):
-
+    
+    if False:
+      for pt in OrigBoundA:
+        cv2.circle(dst, (pt[0][0], pt[0][1]), 1, (0, 255, 0), -1)
+      for pt in OrigBoundB:
+        cv2.circle(dst, (pt[0][0], pt[0][1]), 1, (255, 0, 0), -1)
+      cv2.imshow('dst', dst)
+      cv2.waitKey(0)
+    
     NBoundA = resampleSeqConstPtsPerArcLength(OrigBoundA, numTailPoints)
     NBoundB = resampleSeqConstPtsPerArcLength(OrigBoundB, numTailPoints)
 

@@ -239,6 +239,8 @@
   "bodyMask_saveDataForAllFrames": 0,
   
   "trackingDL": 0,
-  "trackingDLdicotomySearchOfOptimalBlobArea": 0
+  "trackingDLdicotomySearchOfOptimalBlobArea": 0,
+  "applySimpleThresholdOnPredictedMask": 0,
+  "simpleThresholdCheckMinForMaxCountour": 0
   
 }

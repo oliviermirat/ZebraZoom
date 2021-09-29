@@ -403,6 +403,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["trackingDL"] = getConfig(config, "trackingDL", videoPath)
   hyperparameters["trackingDLdicotomySearchOfOptimalBlobArea"] = getConfig(config, "trackingDLdicotomySearchOfOptimalBlobArea", videoPath)
+  hyperparameters["applySimpleThresholdOnPredictedMask"] = getConfig(config, "applySimpleThresholdOnPredictedMask", videoPath)
+  hyperparameters["simpleThresholdCheckMinForMaxCountour"] = getConfig(config, "simpleThresholdCheckMinForMaxCountour", videoPath)
   
   
   if hyperparameters["tailAnglesHeatMap"]:
