@@ -89,7 +89,7 @@ def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparisi
   
   res = cv2.absdiff(img22, imgFuture22)
   
-  if len(headPosition) and len(tailTip):
+  if type(headPosition) != int and type(tailTip) != int and len(headPosition) and len(tailTip):
     # Setting to black everything outside of a rectangle centered on the tail
     stencil = np.zeros(res.shape).astype(res.dtype)
     dist = (math.sqrt((headPosition[0] - tailTip[0])**2 + (headPosition[1] - tailTip[1])**2))*1.2
