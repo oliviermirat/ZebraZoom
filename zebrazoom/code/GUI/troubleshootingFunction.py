@@ -153,6 +153,7 @@ def chooseVideoToTroubleshootSplitVideo(self, controller):
   ymax = frame_height
 
   out = cv2.VideoWriter(os.path.join(directoryChosen, 'subvideo.avi'), cv2.VideoWriter_fourcc('M','J','P','G'), 10, (xmax-xmin,ymax-ymin))
+  # out = cv2.VideoWriter(os.path.join(directoryChosen, 'subvideo.avi'), cv2.VideoWriter_fourcc('H','F','Y','U'), 10, (xmax-xmin,ymax-ymin))
    
   i = firstFrame
   maxx = lastFrame

@@ -40,6 +40,24 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   
   resultsPath = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, s3b + s4 + s5b)))
   
+  if not(os.path.exists(videoPath)):
+    mypath = os.path.join(initialPath, os.path.join(s1, s2))
+    onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
+    resultFile = ''
+    for fileName in onlyfiles:
+      if '.avi' in fileName:
+        resultFile = fileName
+    videoPath = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, resultFile)))
+
+  if not(os.path.exists(resultsPath)):
+    mypath = os.path.join(initialPath, os.path.join(s1, s2))
+    onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
+    resultFile = ''
+    for fileName in onlyfiles:
+      if 'results_' in fileName:
+        resultFile = fileName
+    resultsPath = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, resultFile)))  
+  
   cap = cv2.VideoCapture(videoPath)
   
   nx    = int(cap.get(3))

@@ -354,6 +354,15 @@ class ViewParameters(tk.Frame):
           path = path.parent.parent
           reference = os.path.join(path, os.path.join('ZZoutput', os.path.join(name, 'results_' + name + '.txt')))
           
+          if not(os.path.exists(reference)):
+            mypath = os.path.join(path, os.path.join('ZZoutput', name))
+            onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
+            resultFile = ''
+            for fileName in onlyfiles:
+              if 'results_' in fileName:
+                resultFile = fileName
+            reference = os.path.join(path, os.path.join('ZZoutput', os.path.join(name, resultFile)))
+          
           if controller.justEnteredViewParameter == 1:
             with open(reference) as ff:
                 dataRef = json.load(ff)
