@@ -4,9 +4,12 @@
   "headEmbededAutoSet_BackgroundExtractionOption"  : 0,
   "findHeadPositionByUserInput" : 1,
   "trackingPointSizeDisplay" : 4,
+  "minNbPeaksForBoutDetect" : 0,
   
-  "thresForDetectMovementWithRawVideo" : 18,
+  "thresForDetectMovementWithRawVideo" : 12,
   "minNbPixelForDetectMovementWithRawVideo" : 5,
+  "frameGapComparision" : 2,
+  "halfDiameterRoiBoutDetect" : 195,
 
   "detectBoutMinDist" : -1,
   "detectBoutMinNbFrames"  : 5,

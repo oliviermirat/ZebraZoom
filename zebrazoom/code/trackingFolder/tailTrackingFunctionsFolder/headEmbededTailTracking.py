@@ -185,15 +185,21 @@ def findNextPoints(depth,x,y,frame,points,angle,maxDepth,steps,nbList,initialIma
   
   pixSurMax = hyperparameters["headEmbededParamTailDescentPixThreshStop"]
   # pixSurMax = 220 #150 #245 #150
-  if ((pixSur < pixSurMax) or (depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth)):
+  if depth + distSubsquentPoints < maxDepth and ((pixSur < pixSurMax) or (depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth)):
     points = appendPoint(xTot, yTot, points)
-    if debug:
-      cv2.circle(frame, (xTot, yTot), 3, (255,0,0),   -1)
-      cv2.imshow('HeadEmbeddedTailTracking', frame)
-      cv2.waitKey(0)
+  else:
+    vectX = xTot - x
+    vectY = yTot - y
+    xTot  = int(x + (maxDepth / (depth + distSubsquentPoints)) * vectX)
+    yTot  = int(y + (maxDepth / (depth + distSubsquentPoints)) * vectY)
+    points = appendPoint(xTot, yTot, points)
+  if debug:
+    cv2.circle(frame, (xTot, yTot), 3, (255,0,0),   -1)
+    cv2.imshow('HeadEmbeddedTailTracking', frame)
+    cv2.waitKey(0)
     
   newTheta = calculateAngle(x,y,xTot,yTot)
-  if distSubsquentPoints > 0 and depth < maxDepth and ((pixSur < pixSurMax) or (depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth)):
+  if distSubsquentPoints > 0 and depth + distSubsquentPoints < maxDepth and ((pixSur < pixSurMax) or (depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth)):
     (points,nop) = findNextPoints(depth+distSubsquentPoints,xTot,yTot,frame,points,newTheta,maxDepth,steps,nbList,initialImage,debug, hyperparameters)
   
   return (points,newTheta)
@@ -267,7 +273,7 @@ def retrackIfWeirdInitialTracking(points, headPosition, tailTip, hyperparameters
 
 def headEmbededTailTracking(headPosition,nbTailPoints,i,thresh1,frame,hyperparameters,heading,maxDepth,tailTip):
   steps   = hyperparameters["step"]
-  nbList  = 10
+  nbList  = 10 if hyperparameters["nbList"] == -1 else hyperparameters["nbList"]
   
   x = headPosition[0]
   y = headPosition[1]
@@ -312,7 +318,10 @@ def headEmbededTailTracking(headPosition,nbTailPoints,i,thresh1,frame,hyperparam
 
 
 def headEmbededTailTrackFindMaxDepth(headPosition,nbTailPoints,i,x,y,thresh1,frame,hyperparameters,oppHeading,tailTip):
-
+  
+  if True:
+    return math.sqrt((headPosition[0] - tailTip[0])**2 + (headPosition[1] - tailTip[1])**2)
+  
   headEmbededParamTailDescentPixThreshStopInit = hyperparameters["headEmbededParamTailDescentPixThreshStop"]
   hyperparameters["headEmbededParamTailDescentPixThreshStop"] = 256
   
