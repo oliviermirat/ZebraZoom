@@ -1,6 +1,17 @@
 <H1 CLASS="western" style="text-align:center;">Seq to avi convertion:</H1>
 
 <p>
+<b>Update (10/10/2021)</b>: it is now possible to use ZebraZoom with seq files directly either through the command line or through the GUI.
+
+When using the GUI, just select the .seq file corresponding to the video you want to analyze.
+When using the command line to launch the tracking, simply set the path and the video name to the .seq file of the video you want to analyze and the file extention to seq.
+
+So the information below is now only relevant if for some reason you need to convert a seq video into an avi and not use it with ZebraZoom.
+</p>
+
+<br/><br/>
+
+<p>
 You can convert a video from the seq format (RDvision format) to avi, using the following command:
 
 python -m zebrazoom convertSeqToAvi pathToVideo videoName codec lastFrame

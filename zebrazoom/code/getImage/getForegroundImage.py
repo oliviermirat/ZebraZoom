@@ -1,6 +1,7 @@
 from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 
 def getForegroundImage(videoPath, background, frameNumber, wellNumber, wellPositions, hyperparameters):
   
@@ -22,7 +23,7 @@ def getForegroundImage(videoPath, background, frameNumber, wellNumber, wellPosit
   
   back = background[ytop:ytop+lenY, xtop:xtop+lenX]
   
-  cap = cv2.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath)
   cap.set(1, frameNumber)
   ret, frame = cap.read()
   

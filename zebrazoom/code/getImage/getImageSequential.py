@@ -12,8 +12,6 @@ def getImageSequential(cap, videoPath, frameNumber, wellNumber, wellPositions, h
   lenX = wellPositions[wellNumber]['lengthX']
   lenY = wellPositions[wellNumber]['lengthY']
   
-  # cap = cv2.VideoCapture(videoPath)
-  # cap.set(1, frameNumber)
   ret, frame = cap.read()
   
   while not(ret):

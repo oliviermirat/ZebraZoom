@@ -16,8 +16,6 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
   
   back = background[ytop:ytop+lenY, xtop:xtop+lenX]
   
-  # cap = cv2.VideoCapture(videoPath)
-  # cap.set(1, frameNumber)
   if (type(alreadyExtractedImage) != int):
     ret   = True
     frame = alreadyExtractedImage.copy()

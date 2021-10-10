@@ -7,6 +7,7 @@ from tkinter import ttk
 from tkinter import *
 import json
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.GUI.getCoordinates import findWellLeft, findWellRight, findHeadCenter, findBodyExtremity
 from zebrazoom.code.GUI.automaticallyFindOptimalParameters import automaticallyFindOptimalParameters
 import math
@@ -107,7 +108,7 @@ def wellOrganisation(self, controller, circular, rectangular, roi, other, multip
         else:
           self.shape = 'other'
           if roi:
-            cap = cv2.VideoCapture(self.videoToCreateConfigFileFor)
+            cap = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
             cap.set(1, 10)
             ret, frame = cap.read()
             frame2 = frame.copy()
@@ -225,7 +226,7 @@ def circularOrRectangularWells(self, controller, nbwells, nbRowsOfWells, nbWells
 
 
 def chooseCircularWellsLeft(self, controller):
-  cap = cv2.VideoCapture(self.videoToCreateConfigFileFor)
+  cap = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
   ret, frame = cap.read()
   [x, y] = findWellLeft(frame)
   self.wellLeftBorderX = x
@@ -233,7 +234,7 @@ def chooseCircularWellsLeft(self, controller):
   controller.show_frame("ChooseCircularWellsRight")
   
 def chooseCircularWellsRight(self, controller):
-  cap = cv2.VideoCapture(self.videoToCreateConfigFileFor)
+  cap = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
   ret, frame = cap.read()
   [xRight, yRight] = findWellRight(frame)
   xLeft = self.wellLeftBorderX
@@ -244,7 +245,7 @@ def chooseCircularWellsRight(self, controller):
   chooseBeginningAndEndOfVideo(self, controller)
 
 def chooseBeginningAndEndOfVideo(self, controller):
-  cap = cv2.VideoCapture(self.videoToCreateConfigFileFor)
+  cap = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
   max_l = int(cap.get(7)) - 2
   
   cap.set(1, 1)
@@ -500,7 +501,7 @@ def identifyMultipleHead(self, controller, nbanimals):
   WINDOW_NAME_CTRL = "Adjust Parameters."
   cv2.destroyAllWindows()
   # Manual parameters adjustements
-  cap        = cv2.VideoCapture(self.videoToCreateConfigFileFor)
+  cap        = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
   nx         = int(cap.get(3))
   ny         = int(cap.get(4))
   max_l      = int(cap.get(7))
@@ -611,7 +612,7 @@ def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHea
     controller.show_frame("FinishConfig")
 
 def chooseHeadCenter(self, controller):
-  cap = cv2.VideoCapture(self.videoToCreateConfigFileFor)
+  cap = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
   ret, frame = cap.read()
   [x, y] = findHeadCenter(frame)
   self.headCenterX = x
@@ -619,7 +620,7 @@ def chooseHeadCenter(self, controller):
   controller.show_frame("IdentifyBodyExtremity")
 
 def chooseBodyExtremity(self, controller):
-  cap = cv2.VideoCapture(self.videoToCreateConfigFileFor)
+  cap = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
   ret, frame = cap.read()
   [extX, extY] = findBodyExtremity(frame)
   headCenterX = self.headCenterX

@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import math
 from zebrazoom.code.getImage.getImageSequential import getImageSequential
 from zebrazoom.code.getImage.getImage import getImage
@@ -151,15 +152,15 @@ def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumbe
   if hyperparameters["adjustDetectMovWithRawVideo"]:
     cap1 = []
     cap2 = 0
-    cap = cv2.VideoCapture(videoPath)
+    cap = zzVideoReading.VideoCapture(videoPath)
     cap.set(1, debut_l)
     for k in range(debut_l, max_l):
       imgTemp = getImageSequential(cap, videoPath, k, wellNumber, wellPositions, hyperparameters)
       cap1.append(imgTemp)
   else:
-    cap1 = cv2.VideoCapture(videoPath)
+    cap1 = zzVideoReading.VideoCapture(videoPath)
     cap1.set(1, debut_l)
-    cap2 = cv2.VideoCapture(videoPath)
+    cap2 = zzVideoReading.VideoCapture(videoPath)
     cap2.set(1, debut_l + hyperparameters["frameGapComparision"])
   
   while ((l < max_l) and (l-firstFrame < len(head))) or hyperparameters["adjustDetectMovWithRawVideo"]:

@@ -7,7 +7,7 @@ def headEmbededFrameBackExtract(videoPath, background, hyperparameters, frameNum
   minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtract"]
   debug = 0
   
-  cap = cv2.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath)
   
   cap.set(1, frameNumber)
   ret, frame = cap.read()

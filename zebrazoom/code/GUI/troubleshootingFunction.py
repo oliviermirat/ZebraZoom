@@ -7,6 +7,7 @@ from tkinter import *
 from tkinter import filedialog
 import json
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import math
 import cvui
 from zebrazoom.code.vars import getGlobalVariables
@@ -28,7 +29,7 @@ def chooseVideoToTroubleshootSplitVideo(self, controller):
   firstFrame = 1
   lastFrame  = 1000
   
-  cap = cv2.VideoCapture(self.videoToTroubleshootSplitVideo)
+  cap = zzVideoReading.VideoCapture(self.videoToTroubleshootSplitVideo)
   max_l = int(cap.get(7)) - 2
   
   cap.set(1, 1)
@@ -141,7 +142,7 @@ def chooseVideoToTroubleshootSplitVideo(self, controller):
   
   # Extracting sub-video
 
-  cap = cv2.VideoCapture(self.videoToTroubleshootSplitVideo)
+  cap = zzVideoReading.VideoCapture(self.videoToTroubleshootSplitVideo)
   if (cap.isOpened()== False): 
     print("Error opening video stream or file")
     

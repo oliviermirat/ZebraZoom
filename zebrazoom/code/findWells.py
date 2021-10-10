@@ -1,6 +1,7 @@
 import h5py
 import numpy as np
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import cvui
 import math
 import json
@@ -223,7 +224,7 @@ def findWells(videoPath, hyperparameters):
 
   if hyperparameters["noWellDetection"]:
     
-    cap = cv2.VideoCapture(videoPath)
+    cap = zzVideoReading.VideoCapture(videoPath)
     if (cap.isOpened()== False): 
       print("Error opening video stream or file")
     ret, frame = cap.read()
@@ -240,7 +241,7 @@ def findWells(videoPath, hyperparameters):
   
   if int(hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"]):
     
-    cap = cv2.VideoCapture(videoPath)
+    cap = zzVideoReading.VideoCapture(videoPath)
     if (cap.isOpened()== False): 
       print("Error opening video stream or file")
     ret, frame = cap.read()
@@ -309,7 +310,7 @@ def findWells(videoPath, hyperparameters):
   if int(hyperparameters["multipleROIsDefinedDuringExecution"]):
     
     l = []
-    cap = cv2.VideoCapture(videoPath)
+    cap = zzVideoReading.VideoCapture(videoPath)
     if (cap.isOpened()== False): 
       print("Error opening video stream or file")
     ret, frame = cap.read()
@@ -366,7 +367,7 @@ def findWells(videoPath, hyperparameters):
     frame_height = bottomRight_Y - topLeft_Y
     well = { 'topLeftX' : topLeft_X , 'topLeftY' : topLeft_Y , 'lengthX' : frame_width , 'lengthY': frame_height }
     l.append(well)
-    cap = cv2.VideoCapture(videoPath)
+    cap = zzVideoReading.VideoCapture(videoPath)
     if (cap.isOpened()== False): 
       print("Error opening video stream or file")
     ret, frame = cap.read()
@@ -376,7 +377,7 @@ def findWells(videoPath, hyperparameters):
   
   # Circular or rectangular wells
   
-  cap = cv2.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath)
   if (cap.isOpened()== False): 
     print("Error opening video stream or file")
   ret, frame = cap.read()

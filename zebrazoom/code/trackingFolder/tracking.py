@@ -1,6 +1,7 @@
 import h5py
 import numpy as np
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.popUpAlgoFollow import prepend
 import math
 import os
@@ -49,7 +50,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
   headPositionFirstFrame = []
   tailTipFirstFrame = []
   
-  cap = cv2.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath)
   if (cap.isOpened()== False): 
     print("Error opening video stream or file")
   frame_width  = int(cap.get(3))

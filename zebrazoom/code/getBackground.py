@@ -3,10 +3,11 @@ import cv2
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 from zebrazoom.code.preprocessImage import preprocessImage, preprocessBackgroundImage
 from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 
 def getBackground(videoPath, hyperparameters):
-
-  cap   = cv2.VideoCapture(videoPath)
+  
+  cap   = zzVideoReading.VideoCapture(videoPath)
   max_l = int(cap.get(7))
 
   backCalculationStep = hyperparameters["backCalculationStep"]

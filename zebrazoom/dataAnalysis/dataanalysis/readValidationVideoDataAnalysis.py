@@ -1,5 +1,6 @@
 # from win32api import GetSystemMetrics
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import json
 import numpy as np
 import sys
@@ -30,7 +31,7 @@ def readValidationVideoDataAnalysis(videoPath, folderName, configFilePath, numWe
   videoPath = s1 + s2 + s3 + s4 + s5
   resultsPath = s1 + s2 + s3b + s4 + s5b
   
-  cap = cv2.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath)
   
   nx    = int(cap.get(3))
   ny    = int(cap.get(4))

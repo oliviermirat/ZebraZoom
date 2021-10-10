@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.trackingFolder.trackingFunctions import calculateAngle
 from zebrazoom.code.trackingFolder.trackingFunctions import distBetweenThetas
 from zebrazoom.code.trackingFolder.trackingFunctions import assignValueIfBetweenRange
@@ -239,7 +240,7 @@ def headEmbededTailTrackFindMaxDepthTeresaNicolson(headPosition,nbTailPoints,i,x
   
   
 def getMeanOfImageOverVideo(videoPath, hyperparameters):
-  cap = cv2.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath)
   meanss = []
   ret = True
   i = 0

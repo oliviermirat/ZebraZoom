@@ -1,6 +1,7 @@
 import numpy as np
 import json
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import math
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
@@ -35,7 +36,7 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
   initialHyperparameters["videoName"]      = videoName
   wellPositions = findWells(os.path.join(pathToVideo, videoNameWithExt), initialHyperparameters)
   
-  cap   = cv2.VideoCapture(videoPath)
+  cap   = zzVideoReading.VideoCapture(videoPath)
   max_l = int(cap.get(7))
   
   # Finding the well with the most movement
@@ -53,7 +54,7 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
     lenY  = wellPositions[wellNumberId]['lengthY']
     firstFrameROI = firstFrame[ytop:ytop+lenY, xtop:xtop+lenX]
     lastFrameROI  = lastFrame[ytop:ytop+lenY, xtop:xtop+lenX]
-    pixelsChange[wellNumberId] = np.sum(abs(firstFrameROI-lastFrameROI))
+    pixelsChange[wellNumberId] = np.sum(abs(firstFrameROI-lastFrameROI)) / np.sum(abs(firstFrameROI)) if np.sum(abs(firstFrameROI)) else 0
   wellNumber = np.argmax(pixelsChange)
   
   backCalculationStep = int(max_l / nbOfImagesToManuallyClassify)
@@ -306,7 +307,7 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
 
   # Finding the frame with the most movement
   
-  cap   = cv2.VideoCapture(videoPath)
+  cap   = zzVideoReading.VideoCapture(videoPath)
   max_l = int(cap.get(7))
   
   wellNumber = data[0]["wellNumber"]

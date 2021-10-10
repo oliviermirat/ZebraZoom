@@ -10,12 +10,13 @@ from zebrazoom.code.popUpAlgoFollow import prepend
 import multiprocessing as mp
 from multiprocessing import Process
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import numpy as np
 import math
 
 def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperparameters, videoName):
   
-  cap = cv2.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath)
   if (cap.isOpened()== False): 
     print("Error opening video stream or file")
   frame_width  = int(cap.get(3))
@@ -52,7 +53,7 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
       ret, frame = cap.read()
       fgmask = fgbg.apply(frame)
     cap.release()
-    cap = cv2.VideoCapture(videoPath)
+    cap = zzVideoReading.VideoCapture(videoPath)
   
   i = firstFrame
   while (i < lastFrame + 1):

@@ -1,6 +1,7 @@
 from pathlib import Path
 import json
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import os
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
@@ -33,7 +34,7 @@ def getConfig(config, variableName, videoPath):
       
       cap = 0
       if len(videoPath):
-        cap = cv2.VideoCapture(videoPath)
+        cap = zzVideoReading.VideoCapture(videoPath)
       if (len(videoPath) == 0) or (cap.isOpened() == False):
         print("Error opening video stream or file in getConfig")
         if variableName == "firstFrame":

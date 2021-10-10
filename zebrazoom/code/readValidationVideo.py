@@ -1,5 +1,6 @@
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import json
 import numpy as np
 import sys
@@ -58,7 +59,7 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
         resultFile = fileName
     resultsPath = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, resultFile)))  
   
-  cap = cv2.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath)
   
   nx    = int(cap.get(3))
   ny    = int(cap.get(4))

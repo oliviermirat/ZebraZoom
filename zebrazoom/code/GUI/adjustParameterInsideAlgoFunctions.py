@@ -7,6 +7,7 @@ from tkinter import *
 from zebrazoom.mainZZ import mainZZ
 import pickle
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import cvui
 
 def getMainArguments(self):
@@ -31,7 +32,7 @@ def prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFramePar
   if "lastFrame" in configFile:
     initialLastFrameValue  = configFile["lastFrame"]
   
-  cap = cv2.VideoCapture(videoToCreateConfigFileFor)
+  cap = zzVideoReading.VideoCapture(videoToCreateConfigFileFor)
   max_l = int(cap.get(7))
   if int(firstFrameParamAdjust):
     cap.set(1, 1)

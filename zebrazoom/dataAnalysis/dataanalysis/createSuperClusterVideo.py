@@ -3,10 +3,10 @@ import numpy as np
 
 folderName = 'allCatamaran'
 
-cap1 = cv2.VideoCapture(folderName + '/cluster1.avi')
-cap2 = cv2.VideoCapture(folderName + '/cluster3.avi')
-cap3 = cv2.VideoCapture(folderName + '/cluster4.avi')
-cap4 = cv2.VideoCapture(folderName + '/cluster5.avi')
+cap1 = zzVideoReading.VideoCapture(folderName + '/cluster1.avi')
+cap2 = zzVideoReading.VideoCapture(folderName + '/cluster3.avi')
+cap3 = zzVideoReading.VideoCapture(folderName + '/cluster4.avi')
+cap4 = zzVideoReading.VideoCapture(folderName + '/cluster5.avi')
 
 frame_width  = int(cap1.get(3))
 frame_height = int(cap1.get(4))

@@ -16,6 +16,7 @@ import os
 import shutil
 import time
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import json
 
 from zebrazoom.code.vars import getGlobalVariables
@@ -79,7 +80,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
   output = mp.Queue()
   
   # Checking first frame and last frame value
-  cap   = cv2.VideoCapture(os.path.join(pathToVideo, videoNameWithExt))
+  cap   = zzVideoReading.VideoCapture(os.path.join(pathToVideo, videoNameWithExt))
   nbFrames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
   cap.release()
   if hyperparameters["firstFrame"] < 0:

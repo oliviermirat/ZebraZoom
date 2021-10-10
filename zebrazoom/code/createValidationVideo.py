@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import math
 import json
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
@@ -16,7 +17,7 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
   plotOnlyOneTailPointForVisu = hyperparameters["plotOnlyOneTailPointForVisu"]
   trackingPointSizeDisplay    = hyperparameters["trackingPointSizeDisplay"]
   
-  cap = cv2.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath)
   if (cap.isOpened()== False): 
     print("Error opening video stream or file")
 

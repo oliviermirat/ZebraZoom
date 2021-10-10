@@ -6,9 +6,6 @@ def headEmbededFrameSequential(cap, videoPath, frameNumber, hyperparameters):
   
   debug = 0
   
-  # cap = cv2.VideoCapture(videoPath)
-  
-  # cap.set(1, frameNumber)
   ret, frame = cap.read()
   
   while not(ret):

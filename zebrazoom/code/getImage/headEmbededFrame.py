@@ -1,12 +1,13 @@
 from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 
 def headEmbededFrame(videoPath, frameNumber, hyperparameters):
   
   debug = 0
   
-  cap = cv2.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath)
   
   cap.set(1, frameNumber)
   ret, frame = cap.read()

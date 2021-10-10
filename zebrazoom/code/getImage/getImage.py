@@ -1,6 +1,7 @@
 from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 
 def getImage(videoPath, frameNumber, wellNumber, wellPositions, hyperparameters):
   
@@ -14,7 +15,7 @@ def getImage(videoPath, frameNumber, wellNumber, wellPositions, hyperparameters)
   
   ret = False
   while (not(ret)):
-    cap = cv2.VideoCapture(videoPath)
+    cap = zzVideoReading.VideoCapture(videoPath)
     cap.set(1, frameNumber)
     ret, frame = cap.read()
     if not(ret):

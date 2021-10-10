@@ -1,4 +1,5 @@
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import os
 import shutil
 import math
@@ -27,7 +28,7 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
       time.sleep(0.1)
       
   # opening the video previously created in createValidationVideo as an input video stream
-  cap = cv2.VideoCapture(os.path.join(os.path.join(hyperparameters["outputFolder"], videoName), hyperparameters["videoName"] + '.avi'))
+  cap = zzVideoReading.VideoCapture(os.path.join(os.path.join(hyperparameters["outputFolder"], videoName), hyperparameters["videoName"] + '.avi'))
   
   if (cap.isOpened()== False): 
     print("Error opening video stream or file")

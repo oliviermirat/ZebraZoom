@@ -3,6 +3,7 @@ from PIL import Image # TO REMOVE !!!
 import numpy as np
 import torch
 import cv2
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.headTrackingHeadingCalculation import headTrackingHeadingCalculation
 from zebrazoom.code.trackingFolder.tailTracking import tailTracking
@@ -24,7 +25,7 @@ def trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName,
   lenX = wellPositions[wellNumber]['lengthX']
   lenY = wellPositions[wellNumber]['lengthY']
   
-  cap = cv2.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath)
   if (cap.isOpened()== False): 
     print("Error opening video stream or file")
   frame_width  = int(cap.get(3))
