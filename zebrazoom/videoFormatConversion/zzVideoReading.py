@@ -135,11 +135,7 @@ class ZzVideoReading():
 
 def VideoCapture(videoPath):
   
-  if '.avi' in videoPath:
-    
-    return cv2.VideoCapture(videoPath)
-  
-  elif '.seq' in videoPath:
+  if '.seq' in videoPath:
     
     zzVidCapture = ZzVideoReading(videoPath)
     
@@ -150,3 +146,7 @@ def VideoCapture(videoPath):
     zzVidCapture = ZzVideoReading(videoPath.replace('.sqb', '.seq'))
     
     return zzVidCapture
+  
+  else:
+    
+    return cv2.VideoCapture(videoPath)
