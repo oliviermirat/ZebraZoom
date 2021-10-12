@@ -11,6 +11,23 @@ import os.path
 import csv
 from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 
+def getAccentuateFrameForManualPointSelect(image, hyperparameters):
+  if hyperparameters["accentuateFrameForManualTailExtremityFind"]:
+    frame = image.copy()
+    quartileChose = 0.01
+    lowVal  = int(np.quantile(frame, quartileChose))
+    highVal = int(np.quantile(frame, 1 - quartileChose))
+    frame[frame < lowVal]  = lowVal
+    frame[frame > highVal] = highVal
+    frame = frame - lowVal
+    mult  = np.max(frame)
+    frame = frame * (255/mult)
+    frame = frame.astype(int)
+    frame = (frame / np.linalg.norm(frame))*255
+    return frame
+  else:
+    return image
+
 def findTailTipByUserInput(frame, frameNumber, videoPath, hyperparameters):
   
   WINDOW_NAME = "Click on tail tip"

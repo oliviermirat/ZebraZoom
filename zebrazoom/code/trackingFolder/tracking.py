@@ -11,7 +11,7 @@ from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.headTrac
 from zebrazoom.code.trackingFolder.debugTracking import debugTracking
 from zebrazoom.code.trackingFolder.tailTracking import tailTracking
 from zebrazoom.code.trackingFolder.blackFramesDetection import getThresForBlackFrame, savingBlackFrames
-from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import getHeadPositionByFileSaved, findTailTipByUserInput, getTailTipByFileSaved, findHeadPositionByUserInput
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import getHeadPositionByFileSaved, findTailTipByUserInput, getTailTipByFileSaved, findHeadPositionByUserInput, getAccentuateFrameForManualPointSelect
 from zebrazoom.code.trackingFolder.eyeTracking.eyeTracking import eyeTracking
 from zebrazoom.code.trackingFolder.postProcessMultipleTrajectories import postProcessMultipleTrajectories
 
@@ -102,7 +102,8 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
       headPositionFirstFrame = getHeadPositionByFileSaved(videoPath)
     else:
       if hyperparameters["findHeadPositionByUserInput"]:
-        headPositionFirstFrame = findHeadPositionByUserInput(frame, firstFrame, videoPath)
+        frameForManualPointSelection = getAccentuateFrameForManualPointSelect(frame, hyperparameters)
+        headPositionFirstFrame = findHeadPositionByUserInput(frameForManualPointSelection, firstFrame, videoPath)
       else:
         [frame, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back] = getImages(hyperparameters, cap, videoPath, firstFrame, background, wellNumber, wellPositions)
         cap.set(1, firstFrame)
@@ -110,7 +111,8 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     if os.path.exists(videoPath+'.csv'):
       tailTipFirstFrame  = getTailTipByFileSaved(hyperparameters,videoPath)
     else:
-      tailTipFirstFrame  = findTailTipByUserInput(frame, firstFrame, videoPath, hyperparameters)
+      frameForManualPointSelection = getAccentuateFrameForManualPointSelect(frame, hyperparameters)
+      tailTipFirstFrame  = findTailTipByUserInput(frameForManualPointSelection, firstFrame, videoPath, hyperparameters)
     if hyperparameters["automaticallySetSomeOfTheHeadEmbededHyperparameters"] == 1:
       hyperparameters = adjustHeadEmbededHyperparameters(hyperparameters, frame, headPositionFirstFrame, tailTipFirstFrame)
     # Getting max depth
