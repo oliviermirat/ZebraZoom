@@ -26,6 +26,11 @@ def sqb_convert_to_avi(path, videoName, codec='HFYU', lastFrame=-1):
           } IMGDATA;
   """
   
+  # Checking that path and video exists
+  if not(os.path.exists(os.path.join(path, videoName + '.seq'))):
+    print("Path or video name is incorrect for", os.path.join(path, videoName + '.seq'))
+    return 0
+  
   seq_path  = os.path.join(path, videoName + '.seq')
   path2 = Path(path)
   avi_path  = os.path.join(path2.parent, videoName + '.avi')

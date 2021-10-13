@@ -120,16 +120,19 @@ class SeveralVideos(tk.Frame):
         tk.Label(self, text="", font=controller.title_font).pack()
         
         button4 = tk.Button(self, text="Manual first frame tail extremity for head embedded", bg="light yellow", command=lambda: controller.show_frame("TailExtremityHE")).pack()
-        tk.Label(self, text="This will allow you to manually select the tail extremities, you can run the tracking on multiple videos without interruptions afterwards.").pack()
+        tk.Label(self, text="This button allows you to only manually select the tail extremities,").pack()
+        tk.Label(self, text="you will be able to run the tracking on multiple videos without interruptions with the 'Run ZebraZoom on an entire folder' button above afterwards.").pack()
         tk.Label(self, text="", font=controller.title_font).pack()
         
         tk.Button(self, text="Only select the regions of interest", bg="light yellow", command=lambda: controller.show_frame("FolderMultipleROIInitialSelect")).pack()
         tk.Label(self, text="This is for the 'Multiple rectangular regions of interest chosen at runtime' option.").pack()
-        tk.Label(self, text="This will allow you to only select the ROIs, you can run the tracking on multiple videos without interruptions afterwards.").pack()
+        tk.Label(self, text="This button allows you to only select the ROIs,").pack()
+        tk.Label(self, text="you will be able to run the tracking on multiple videos without interruptions with the 'Run ZebraZoom on an entire folder' button above afterwards.").pack()
         tk.Label(self, text="", font=controller.title_font).pack()
         
         tk.Button(self, text="'Group of multiple same size and shape equally spaced wells' coordinates pre-selection", bg="light yellow", command=lambda: controller.show_frame("FolderMultipleROIInitialSelect")).pack()
-        tk.Label(self, text="This will allow you to only select the coordinates, you can run the tracking on multiple videos without interruptions afterwards.").pack()
+        tk.Label(self, text="This button allows you to only select the coordinates,").pack()
+        tk.Label(self, text="you will be able to run the tracking on multiple videos without interruptions with the 'Run ZebraZoom on an entire folder' button above afterwards.").pack()
         tk.Label(self, text="", font=controller.title_font).pack()
         
         tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
@@ -256,7 +259,7 @@ class ZZoutro(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent)
         self.controller = controller
-        label = tk.Label(self, text="Analysis is finished.")
+        label = tk.Label(self, text="Finished.")
         label.pack(side="top", fill="x", pady=10)
         button = tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage"))
         button.pack()

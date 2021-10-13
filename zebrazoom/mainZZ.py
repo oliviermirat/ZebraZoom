@@ -63,6 +63,11 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
   videoNameWithExt = videoName + '.' + videoExt
   previouslyAcquiredTrackingDataForDebug = []
 
+  # Checking that path and video exists
+  if not(os.path.exists(os.path.join(pathToVideo, videoNameWithExt))):
+    print("Path or video name is incorrect for", os.path.join(pathToVideo, videoNameWithExt))
+    return 0
+
   # Getting hyperparameters
   [hyperparameters, configFile] = getHyperparameters(configFile, videoNameWithExt, os.path.join(pathToVideo, videoNameWithExt), argv)
   
