@@ -45,6 +45,10 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
   firstFrame = cv2.cvtColor(firstFrame, cv2.COLOR_BGR2GRAY)
   cap.set(1, max_l-1)
   ret, lastFrame = cap.read()
+  while not(ret):
+    max_l = max_l - 1
+    cap.set(1, max_l-1)
+    ret, lastFrame = cap.read()
   lastFrame = cv2.cvtColor(lastFrame, cv2.COLOR_BGR2GRAY)
   pixelsChange = np.zeros((len(wellPositions)))
   for wellNumberId in range(0, len(wellPositions)):
@@ -335,6 +339,10 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
     
     cap.set(1, lastFrameNum)
     ret, lastFrame = cap.read()
+    while not(ret):
+      lastFrameNum = lastFrameNum - 1
+      cap.set(1, lastFrameNum)
+      ret, lastFrame = cap.read()
     lastFrame = cv2.cvtColor(lastFrame, cv2.COLOR_BGR2GRAY)
     
     firstFrameROI  = firstFrame[ytop:ytop+lenY, xtop:xtop+lenX]
