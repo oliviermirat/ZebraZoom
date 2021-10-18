@@ -77,8 +77,9 @@ def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPo
     cv2.imshow('Frame', gray)
     cv2.waitKey(0)
     cv2.destroyWindow('Frame')
-    
-  blur = cv2.GaussianBlur(gray, (hyperparameters["paramGaussianBlur"], hyperparameters["paramGaussianBlur"]),0)
+  
+  paramGaussianBlur = int((hyperparameters["paramGaussianBlur"] / 2)) * 2 + 1
+  blur = cv2.GaussianBlur(gray, (paramGaussianBlur, paramGaussianBlur), 0)
   frame2 = frame.copy()
   erodeSize = hyperparameters["erodeSize"]
   kernel  = np.ones((erodeSize,erodeSize), np.uint8)

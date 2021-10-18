@@ -260,6 +260,10 @@ def findWells(videoPath, hyperparameters):
         cvui.imshow(WINDOW_NAME, frame)
         while not(cvui.mouse(cvui.CLICK)):
           cursor = cvui.mouse()
+          frame2 = frame.copy()
+          frame2 = cv2.line(frame2, (cursor.x - 2000, cursor.y), (cursor.x + 2000, cursor.y), (0, 0, 255), 2)
+          frame2 = cv2.line(frame2, (cursor.x, cursor.y - 2000), (cursor.x, cursor.y + 2000), (0, 0, 255), 2)
+          cvui.imshow(WINDOW_NAME, frame2)
           cv2.waitKey(20)
         posCoord[pos] = np.array([cursor.x, cursor.y])
         cv2.destroyWindow(WINDOW_NAME)

@@ -148,29 +148,32 @@ def getHeadEmbededTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame
 
 def getFreelySwimTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, output, outputHeading, frame, frame2, hyperparameters):
   
-  hyperparametersListNames = ["minPixelDiffForBackExtract", "maxAreaBody", "minTailSize", "maxTailSize"]
-  marginX = 30
-  organizationTab = [\
-  [470,   marginX + 5, 350,  0,  20, "Increase this if some of the background is not completely white. Decrease if you can't see all of the fish. "],
-  [1,    marginX + 71, 350,  0,  20, "Try increasing this if no tracking is showing."],
-  [470,  marginX + 71, 350,  0,  20, "Try increasing this if no tracking is showing."],
-  [1,   marginX + 137, 350,  0,  20, "Try decreasing this if no tracking is showing."],
-  [470, marginX + 137, -1,  -1, "Click here if you're done adjusting these parameters."]]
-  
-  # [1,    marginX + 71, 350,  0,  20, "minArea"],
-  # [470,  marginX + 71, 350,  0,  20, "maxArea"],
-  # [1,   marginX + 137, 350,  0,  20, "minAreaBody"],
-  # [470, marginX + 137, 350,  0,  20, "maxAreaBody"],
-  # [1,   marginX + 208, -1,  -1, "Click here if you're done adjusting these parameters."],]
+  if hyperparameters["trackTail"] == 1:
+    hyperparametersListNames = ["minPixelDiffForBackExtract", "maxAreaBody", "minTailSize", "maxTailSize"]
+    marginX = 30
+    organizationTab = [\
+    [470,   marginX + 5, 350,  0,  20, "Increase this if some of the background is not completely white. Decrease if you can't see all of the fish. "],
+    [1,    marginX + 71, 350,  0,  20, "Try increasing this if no tracking is showing."],
+    [470,  marginX + 71, 350,  0,  20, "Try increasing this if no tracking is showing."],
+    [1,   marginX + 137, 350,  0,  20, "Try decreasing this if no tracking is showing."],
+    [470, marginX + 137, -1,  -1, "Click here if you're done adjusting these parameters."]]
+  else:
+    hyperparametersListNames = ["minPixelDiffForBackExtract"]
+    marginX = 30
+    # The gaussian image filter should be added below, and maybe also the trajectories post-processing option
+    organizationTab = [\
+    [470,  marginX + 5, 350,  0,  20, "Increase this if some of the background is not completely white. Decrease if you can't see all of the fish. "],
+    [1,   marginX + 71, -1,  -1, "Click here if you're done adjusting these parameters."]]
   
   WINDOW_NAME = "Tracking"
   
   frame2 = cv2.cvtColor(frame2,cv2.COLOR_GRAY2RGB)
   for k in range(0, hyperparameters["nbAnimalsPerWell"]):
-    for j in range(0, nbTailPoints):
-      x = int(output[k, i-firstFrame][j][0])
-      y = int(output[k, i-firstFrame][j][1])
-      cv2.circle(frame2, (x, y), 1, (0, 255, 0),   -1)
+    if hyperparameters["trackTail"] == 1:
+      for j in range(0, nbTailPoints):
+        x = int(output[k, i-firstFrame][j][0])
+        y = int(output[k, i-firstFrame][j][1])
+        cv2.circle(frame2, (x, y), 1, (0, 255, 0),   -1)
     x = int(output[k, i-firstFrame][nbTailPoints-1][0])
     y = int(output[k, i-firstFrame][nbTailPoints-1][1])
     cv2.circle(frame2, (x, y), 2, (0, 0, 255),   -1)

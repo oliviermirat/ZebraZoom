@@ -180,18 +180,23 @@ class HomegeneousWellsLayout(tk.Frame):
     nbWellsPerRows.pack()
     
     tk.Label(self, text='').pack()
-    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.homegeneousWellsLayout(controller, nbwells.get(), nbRowsOfWells.get(), nbWellsPerRows.get())).pack()
+    tk.Button(self, text="Finish now", bg="light yellow", command=lambda: controller.homegeneousWellsLayout(controller, nbwells.get(), nbRowsOfWells.get(), nbWellsPerRows.get())).pack()
+    tk.Label(self, text='The tracking will work nicely in many cases when choosing this option.').pack()
 
     tk.Label(self, text='').pack()
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+    tk.Button(self, text="Adjust Parameters futher", bg="light yellow", command=lambda: controller.morePreciseFastScreen(controller, nbwells.get(), nbRowsOfWells.get(), nbWellsPerRows.get())).pack()
+    tk.Label(self, text='Choosing this option will lead to a higher probability that the tracking will work well.').pack()
+    tk.Label(self, text='').pack()
     
     def callback(url):
       webbrowser.open_new(url)
-    
-    tk.Label(self, text='').pack()
-    link3 = tk.Button(self, text="View Instruction for an even faster tracking, also more accurate in some instances.", bg="gold")
+    link3 = tk.Button(self, text="Alternative", bg="gold")
     link3.pack()
     link3.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/FastScreenTrackingGuidlines.md"))
+    
+    tk.Label(self, text='').pack()
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+
 
 
 class CircularOrRectangularWells(tk.Frame):

@@ -187,7 +187,7 @@ def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
 
 def homegeneousWellsLayout(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
 
-  self.configFile = {"nbAnimalsPerWell": 1, "nbWells": 8, "nbRowsOfWells": 2, "nbWellsPerRows": 4, "groupOfMultipleSameSizeAndShapeEquallySpacedWells": 1, "postProcessMultipleTrajectories": 1,   "postProcessRemoveLowProbabilityDetection" : 1, "postProcessLowProbabilityDetectionPercentOfMaximum" : 0.2, "trackingPointSizeDisplay": 4, "extractAdvanceZebraParameters": 0,  "validationVideoPlotHeading": 0, "trackTail": 0, "freqAlgoPosFollow": 100, "fasterMultiprocessing": 1, "copyOriginalVideoToOutputFolderForValidation": 1, "backgroundSubtractorKNN": 1}
+  self.configFile = {"nbAnimalsPerWell": 1, "nbWells": 8, "nbRowsOfWells": 2, "nbWellsPerRows": 4, "groupOfMultipleSameSizeAndShapeEquallySpacedWells": 1, "postProcessMultipleTrajectories": 1,   "postProcessRemoveLowProbabilityDetection" : 1, "postProcessLowProbabilityDetectionPercentOfMaximum" : 0.2, "trackingPointSizeDisplay": 4, "extractAdvanceZebraParameters": 0,  "validationVideoPlotHeading": 0, "trackTail": 0, "freqAlgoPosFollow": 100, "fasterMultiprocessing": 1, "copyOriginalVideoToOutputFolderForValidation": 0, "backgroundSubtractorKNN": 1}
   
   self.configFile["nbWells"]          = int(nbwells)
   
@@ -202,6 +202,31 @@ def homegeneousWellsLayout(self, controller, nbwells, nbRowsOfWells, nbWellsPerR
     self.configFile["nbWellsPerRows"]  = 4
   
   controller.show_frame("FinishConfig")
+
+
+def morePreciseFastScreen(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
+
+  # The gaussian image filtering should be added here in the future
+  self.configFile = {"minPixelDiffForBackExtract": 20, "backgroundPreProcessParameters": [[3]], "backgroundPreProcessMethod": ["erodeThenMin"], "trackingPointSizeDisplay": 1, "nbAnimalsPerWell": 1, "extractAdvanceZebraParameters": 0, "trackTail": 0, "nbWells": 1, "noWellDetection": 1, "backgroundExtractionForceUseAllVideoFrames": 1, "headSize": 2, "createValidationVideo": 0, "lastFrame": 1000}
+  
+  self.configFile["nbAnimalsPerWell"] = int(nbwells)
+  
+  # self.configFile["nbWells"]          = int(nbwells)
+  
+  if len(nbRowsOfWells):
+    self.configFile["nbRowsOfWells"]  = int(nbRowsOfWells)
+  else:
+    self.configFile["nbRowsOfWells"]  = 1
+    
+  if len(nbWellsPerRows):
+    self.configFile["nbWellsPerRows"]  = int(nbWellsPerRows)
+  else:
+    self.configFile["nbWellsPerRows"]  = 4
+  
+  self.calculateBackgroundFreelySwim(controller, 0, True)
+  
+  # controller.show_frame("FinishConfig")
+
 
 def circularOrRectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
   self.configFile["nbWells"]        = int(nbwells)

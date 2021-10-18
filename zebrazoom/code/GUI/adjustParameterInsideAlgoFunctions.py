@@ -232,6 +232,46 @@ def adjustFreelySwimTracking(self, controller, wellNumber, firstFrameParamAdjust
   
   self.configFile = configFile
 
+def adjustFastFreelySwimTracking(self, controller):
+  
+  wellNumber = ''
+  firstFrameParamAdjust = 1
+  adjustOnWholeVideo = 1
+  
+  [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
+  
+  [configFile, initialFirstFrameValue, initialLastFrameValue] = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrameParamAdjust, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
+  
+  configFile["reloadWellPositions"] = 1
+  configFile["adjustFreelySwimTracking"] = 1
+  configFile["reloadBackground"] = 1
+  
+  try:
+    mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+  except ValueError:
+    newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
+    for index in newhyperparameters:
+      configFile[index] = newhyperparameters[index]
+  
+  del configFile["reloadBackground"]
+  del configFile["reloadWellPositions"]
+  del configFile["adjustFreelySwimTracking"]
+  
+  self.configFile = configFile
+  
+  if configFile["trackTail"] == 0: # FasterMultiprocessing screen option here
+    
+    # The image filtering option should be added here in the future
+    self.configFile = {"nbWells": 25, "nbRowsOfWells": 5, "nbWellsPerRows": 5, "minPixelDiffForBackExtract": 20, "backgroundPreProcessParameters": [[3]], "backgroundPreProcessMethod": ["erodeThenMin"], "postProcessMultipleTrajectories": 1, "postProcessRemoveLowProbabilityDetection" : 0,"postProcessLowProbabilityDetectionThreshold" : 1, "postProcessRemovePointsOnBordersMargin" : 1, "trackingPointSizeDisplay": 1, "extractAdvanceZebraParameters": 0, "groupOfMultipleSameSizeAndShapeEquallySpacedWells": 1, "nbAnimalsPerWell": 1, "trackTail": 0, "validationVideoPlotHeading": 0, "freqAlgoPosFollow": 100, "fasterMultiprocessing": 1, "copyOriginalVideoToOutputFolderForValidation": 0, "backgroundExtractionForceUseAllVideoFrames": 1}
+    
+    self.configFile["nbWells"]          = configFile["nbAnimalsPerWell"]
+    self.configFile["nbRowsOfWells"]    = configFile["nbRowsOfWells"]
+    self.configFile["nbWellsPerRows"]   = configFile["nbWellsPerRows"]
+    self.configFile["nbAnimalsPerWell"] = 1
+    self.configFile["minPixelDiffForBackExtract"] = configFile["minPixelDiffForBackExtract"]
+  
+  controller.show_frame("FinishConfig")
+
 
 def calculateBackground(self, controller, nbImagesForBackgroundCalculation):
   
@@ -262,7 +302,7 @@ def calculateBackground(self, controller, nbImagesForBackgroundCalculation):
   controller.show_frame("AdujstParamInsideAlgo")
   
 
-def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation):
+def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False):
   
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
   
@@ -284,8 +324,11 @@ def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalcula
   
   cv2.destroyAllWindows()
   
-  configFile["exitAfterBackgroundExtraction"]   = 0
-  configFile["debugExtractBack"]                = 0
-  configFile["debugFindWells"]                  = 0
+  del configFile["exitAfterBackgroundExtraction"] #  = 0
+  del configFile["debugExtractBack"]              #  = 0
+  del configFile["debugFindWells"]                #  = 0
   
-  controller.show_frame("AdujstParamInsideAlgoFreelySwim")
+  if morePreciseFastScreen:
+    adjustFastFreelySwimTracking(self, controller)
+  else:
+    controller.show_frame("AdujstParamInsideAlgoFreelySwim")

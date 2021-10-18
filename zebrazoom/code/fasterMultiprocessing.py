@@ -7,6 +7,7 @@ from zebrazoom.code.trackingFolder.postProcessMultipleTrajectories import postPr
 from zebrazoom.code.trackingFolder.getImages import getImages
 from zebrazoom.code.trackingFolder.debugTracking import debugTracking
 from zebrazoom.code.popUpAlgoFollow import prepend
+from zebrazoom.code.adjustHyperparameters import adjustHyperparameters, getFreelySwimTrackingParamsForHyperParamAdjusts
 import multiprocessing as mp
 from multiprocessing import Process
 import cv2
@@ -56,6 +57,10 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
     cap = zzVideoReading.VideoCapture(videoPath)
   
   i = firstFrame
+  
+  if firstFrame:
+    cap.set(1, firstFrame)
+  
   while (i < lastFrame + 1):
     
     if (hyperparameters["freqAlgoPosFollow"] != 0) and (i % hyperparameters["freqAlgoPosFollow"] == 0):
@@ -93,7 +98,10 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
             curFrame[putToWhite] = 255
           else:
             hyperparameters["paramGaussianBlur"] = int(math.sqrt(cv2.countNonZero(255 - curFrame) / hyperparameters["nbAnimalsPerWell"]) / 2) * 2 + 1
-          blur = cv2.GaussianBlur(curFrame, (hyperparameters["paramGaussianBlur"], hyperparameters["paramGaussianBlur"]),0)
+          if hyperparameters["paramGaussianBlur"]:
+            blur = cv2.GaussianBlur(curFrame, (hyperparameters["paramGaussianBlur"], hyperparameters["paramGaussianBlur"]),0)
+          else:
+            blur = curFrame
           headPositionFirstFrame = 0
           thresh1 = 0
           thresh2 = 0
@@ -121,8 +129,14 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
           trackingEyesAllAnimalsList[wellNumber] = eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimalsList[wellNumber], trackingHeadTailAllAnimalsList[wellNumber], trackingEyesAllAnimalsList[wellNumber])
         
         debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimalsList[wellNumber], trackingHeadingAllAnimalsList[wellNumber], blur, hyperparameters)
-      
-    i = i + 1
+    
+    if hyperparameters["adjustFreelySwimTracking"] == 1:
+      [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getFreelySwimTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters)
+      if len(organizationTabCur) == 0:
+        organizationTabCur = organizationTab
+      [i, hyperparameters, organizationTabCur] = adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTabCur)
+    else:
+      i = i + 1
     
   for wellNumber in range(0,hyperparameters["nbWells"]):
     [trackingHeadingAllAnimalsList[wellNumber], trackingHeadTailAllAnimalsList[wellNumber], trackingEyesAllAnimals] = postProcessMultipleTrajectories(trackingHeadingAllAnimalsList[wellNumber], trackingHeadTailAllAnimalsList[wellNumber], [], trackingProbabilityOfGoodDetectionList[wellNumber], hyperparameters, wellPositions)

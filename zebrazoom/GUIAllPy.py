@@ -171,7 +171,10 @@ class SampleApp(tk.Tk):
         configFilePrepareFunctions.regionsOfInterest(self, controller, nbwells)
     
     def homegeneousWellsLayout(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
-        configFilePrepareFunctions.homegeneousWellsLayout(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows)    
+        configFilePrepareFunctions.homegeneousWellsLayout(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows)
+    
+    def morePreciseFastScreen(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
+        configFilePrepareFunctions.morePreciseFastScreen(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows)
     
     def circularOrRectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
         configFilePrepareFunctions.circularOrRectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows)
@@ -213,8 +216,8 @@ optionBackgroundExtractionOption):
     def calculateBackground(self, controller, nbImagesForBackgroundCalculation):
       adjustParameterInsideAlgoFunctions.calculateBackground(self, controller, nbImagesForBackgroundCalculation)
       
-    def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation):
-      adjustParameterInsideAlgoFunctions.calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation)
+    def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False):
+      adjustParameterInsideAlgoFunctions.calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen)
     
     def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
       configFilePrepareFunctions.chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile)
