@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 import os
 
-def createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension):
+def createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension, ZZoutputLocation=''):
   
   print("Creating pandas dataframe of parameters")
   
@@ -18,19 +18,23 @@ def createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension
   
   print("Parameter: frameStepForDistanceCalculation:", frameStepForDistanceCalculation)
   
-  cur_dir_path = Path(os.path.dirname(os.path.realpath(__file__))).parent.parent
+  if len(ZZoutputLocation) == 0:
+    cur_dir_path = Path(os.path.dirname(os.path.realpath(__file__))).parent.parent
+    cur_dir_path = os.path.join(cur_dir_path, 'ZZoutput')
+  else:
+    cur_dir_path = ZZoutputLocation
 
   dataframeOptions = {
     'pathToExcelFile'                   : "",
     'fileExtension'                     : videoExtension,
-    'resFolder'                         : os.path.join(os.path.join(cur_dir_path, 'ZZoutput'), videoName),
+    'resFolder'                         : os.path.join(cur_dir_path, videoName),
     'nameOfFile'                        : videoName,
     'smoothingFactorDynaParam'          : 0,
     'nbFramesTakenIntoAccount'          : 28,
     'numberOfBendsIncludedForMaxDetect' : -1,
     'minNbBendForBoutDetect'            : -1,
     'keepSpeedDistDurWhenLowNbBends'    : 1,
-    'defaultZZoutputFolderPath'         : os.path.join(cur_dir_path, 'ZZoutput'),
+    'defaultZZoutputFolderPath'         : cur_dir_path,
     'computeTailAngleParamForCluster'   : True,
     'computeMassCenterParamForCluster'  : True,
     'frameStepForDistanceCalculation'   : str(frameStepForDistanceCalculation),

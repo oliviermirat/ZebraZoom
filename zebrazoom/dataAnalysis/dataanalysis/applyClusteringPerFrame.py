@@ -81,7 +81,7 @@ def applyClusteringPerFrame(clusteringOptions, classifier, outputFolder):
     shutil.rmtree(outputFolderResult)
   os.mkdir(outputFolderResult)
 
-  infile = open(os.path.join(resFolder, nameOfFile),'rb')
+  infile = open(os.path.join(resFolder, nameOfFile + '.pkl'),'rb')
   dfParam = pickle.load(infile)
   infile.close()
 

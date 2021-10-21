@@ -8,7 +8,7 @@ import tkinter as tk
 import os
 from pathlib import Path
 
-def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0):
+def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation=''):
   
   root = tk.Tk()
   horizontal = root.winfo_screenwidth()
@@ -28,36 +28,39 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
   initialPath  = Path(cur_dir_path)
   initialPath  = initialPath.parent
+  initialPath  = os.path.join(initialPath, s1)
+  if len(ZZoutputLocation):
+    initialPath = ZZoutputLocation
   
-  with open(os.path.join(initialPath, os.path.join(s1, os.path.join(s2, 'configUsed.json')))) as f:
+  with open(os.path.join(initialPath, os.path.join(s2, 'configUsed.json'))) as f:
     configTemp = json.load(f)
   hyperparameters = getHyperparametersSimple(configTemp)
   
   if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] and os.path.exists(os.path.join(initialPath, os.path.join(s1, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi')))):
     # The "exist" check above is only to insure compatibility with videos tracked prior to this update
-    videoPath = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi')))
+    videoPath = os.path.join(initialPath, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'))
   else:
-    videoPath = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, s4 + s5)))
+    videoPath = os.path.join(initialPath, os.path.join(s2, s4 + s5))
   
-  resultsPath = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, s3b + s4 + s5b)))
+  resultsPath = os.path.join(initialPath, os.path.join(s2, s3b + s4 + s5b))
   
   if not(os.path.exists(videoPath)):
-    mypath = os.path.join(initialPath, os.path.join(s1, s2))
+    mypath = os.path.join(initialPath, s2)
     onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
     resultFile = ''
     for fileName in onlyfiles:
       if '.avi' in fileName:
         resultFile = fileName
-    videoPath = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, resultFile)))
+    videoPath = os.path.join(initialPath, os.path.join(s2, resultFile))
 
   if not(os.path.exists(resultsPath)):
-    mypath = os.path.join(initialPath, os.path.join(s1, s2))
+    mypath = os.path.join(initialPath, s2)
     onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
     resultFile = ''
     for fileName in onlyfiles:
       if 'results_' in fileName:
         resultFile = fileName
-    resultsPath = os.path.join(initialPath, os.path.join(s1, os.path.join(s2, resultFile)))  
+    resultsPath = os.path.join(initialPath, os.path.join(s2, resultFile))
   
   cap = zzVideoReading.VideoCapture(videoPath)
   

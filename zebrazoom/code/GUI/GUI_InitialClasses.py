@@ -21,7 +21,6 @@ import webbrowser
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
-from zebrazoom.mainZZ import mainZZ
 from zebrazoom.getTailExtremityFirstFrame import getTailExtremityFirstFrame
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 
@@ -277,10 +276,7 @@ class ResultsVisualization(tk.Frame):
         label = tk.Label(self, text="Choose the results you'd like to visualize", font=controller.title_font)
         label.grid(row=0,column=0)
         
-        cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-        path = Path(cur_dir_path)
-        path = path.parent.parent
-        reference = os.path.join(path, 'ZZoutput')
+        reference = controller.ZZoutputLocation
         
         if not(os.path.exists(reference)):
           os.mkdir(reference)
@@ -352,19 +348,15 @@ class ViewParameters(tk.Frame):
         
         if name != "abc":
           
-          cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-          path = Path(cur_dir_path)
-          path = path.parent.parent
-          reference = os.path.join(path, os.path.join('ZZoutput', os.path.join(name, 'results_' + name + '.txt')))
-          
+          reference = os.path.join(controller.ZZoutputLocation, os.path.join(name, 'results_' + name + '.txt'))
           if not(os.path.exists(reference)):
-            mypath = os.path.join(path, os.path.join('ZZoutput', name))
+            mypath = os.path.join(controller.ZZoutputLocation, name)
             onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
             resultFile = ''
             for fileName in onlyfiles:
               if 'results_' in fileName:
                 resultFile = fileName
-            reference = os.path.join(path, os.path.join('ZZoutput', os.path.join(name, resultFile)))
+            reference = os.path.join(controller.ZZoutputLocation, os.path.join(name, resultFile))
           
           if controller.justEnteredViewParameter == 1:
             with open(reference) as ff:

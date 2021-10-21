@@ -104,6 +104,9 @@ if you have installed ZebraZoom through the "general method".<br/><br/>
 <I>python -m zebrazoom</I><br/>
 if you have installed ZebraZoom following the "further recommendations".<br/><br/>
 
+It is also possible to specify the ZZoutput folder where tracking results are saved by typing:<br/>
+<I>python -m zebrazoom selectZZoutput</I><br/>
+
 <a name="testanduse"/>
 
 <br/>[Back to table of content](#tableofcontent)<br/>

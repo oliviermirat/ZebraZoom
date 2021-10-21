@@ -54,6 +54,10 @@ class SampleApp(tk.Tk):
         self.headCenterY = 0
         self.organism = ''
         
+        curZZoutputPath = os.path.dirname(os.path.realpath(__file__))
+        curZZoutputPath = os.path.join(curZZoutputPath, 'ZZoutput')
+        self.ZZoutputLocation = curZZoutputPath
+        
         self.numWell = 0
         self.numPoiss = 0
         self.numMouv = 0
@@ -75,7 +79,13 @@ class SampleApp(tk.Tk):
             self.frames[page_name] = frame
             frame.grid(row=0, column=0, sticky="nsew")
         self.show_frame("StartPage")
-
+    
+    def askForZZoutputLocation(self):
+        
+        folderName = ''
+        folderName = filedialog.askdirectory(initialdir = os.path.expanduser("~"),title = "Select ZZoutput folder")
+        self.ZZoutputLocation = folderName
+    
     def show_frame(self, page_name):
         '''Show a frame for the given page name'''
         frame = self.frames[page_name]

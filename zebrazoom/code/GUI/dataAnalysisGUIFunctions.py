@@ -69,6 +69,11 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
   cur_dir_path = Path(cur_dir_path)
   cur_dir_path = cur_dir_path.parent.parent
 
+  if len(controller.ZZoutputLocation) == 0:
+    ZZoutputLocation = os.path.join(cur_dir_path, 'ZZoutput')
+  else:
+    ZZoutputLocation = controller.ZZoutputLocation
+
   # Creating the dataframe
 
   dataframeOptions = {
@@ -81,7 +86,7 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
     'numberOfBendsIncludedForMaxDetect' : -1,
     'minNbBendForBoutDetect'            : int(minNbBendForBoutDetect),
     'keepSpeedDistDurWhenLowNbBends'    : int(keep),
-    'defaultZZoutputFolderPath'         : os.path.join(cur_dir_path, 'ZZoutput'),
+    'defaultZZoutputFolderPath'         : ZZoutputLocation,
     'computeTailAngleParamForCluster'   : False,
     'computeMassCenterParamForCluster'  : False,
     'tailAngleKinematicParameterCalculation'    : TailTrackingParameters,
@@ -115,6 +120,11 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
   cur_dir_path = Path(cur_dir_path)
   cur_dir_path = cur_dir_path.parent.parent
 
+  if len(controller.ZZoutputLocation) == 0:
+    ZZoutputLocation = os.path.join(cur_dir_path, 'ZZoutput')
+  else:
+    ZZoutputLocation = controller.ZZoutputLocation
+
   # Creating the dataframe on which the clustering will be applied
   dataframeOptions = {
     'pathToExcelFile'                   : self.experimentOrganizationExcelFileAndFolder, # os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'experimentOrganizationExcel')),
@@ -125,7 +135,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
     'nbFramesTakenIntoAccount'          : -1, #28,
     'numberOfBendsIncludedForMaxDetect' : -1,
     'minNbBendForBoutDetect'            : 3, # THIS NEEDS TO BE CHANGED IF FPS IS LOW (default: 3)
-    'defaultZZoutputFolderPath'         : os.path.join(cur_dir_path, 'ZZoutput'),
+    'defaultZZoutputFolderPath'         : ZZoutputLocation,
     'tailAngleKinematicParameterCalculation' : 1,
     'getTailAngleSignMultNormalized'    : 1,
     'computeTailAngleParamForCluster'   : True,
@@ -138,7 +148,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
   # Applying the clustering on this dataframe
   clusteringOptions = {
     'analyzeAllWellsAtTheSameTime' : 0, # put this to 1 for head-embedded videos, and to 0 for multi-well videos
-    'pathToVideos' : os.path.join(cur_dir_path, 'ZZoutput'),
+    'pathToVideos' : ZZoutputLocation,
     'nbCluster' : int(nbClustersToFind),
     #'nbPcaComponents' : 30,
     'nbFramesTakenIntoAccount' : nbFramesTakenIntoAccount,
