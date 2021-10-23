@@ -82,6 +82,10 @@ class ZzVideoReading():
       
       bin_path = os.path.join("%s" % (self.pathstr), "%s%0.5d.bin" % (self.bin_file, binfile[0]))
       
+      if not(os.path.exists(bin_path)):
+        print("Hiris video format: frame not found:", self.lastFrameRead + 1)
+        return [False, []]
+      
       f_bin = open(bin_path, 'rb')
       f_bin.seek(offset[0], os.SEEK_SET)
       
