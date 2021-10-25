@@ -408,6 +408,7 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["simpleThresholdCheckMinForMaxCountour"] = getConfig(config, "simpleThresholdCheckMinForMaxCountour", videoPath)
   
   hyperparameters["rectangularWellMinMaxXandYmethod"] = getConfig(config, "rectangularWellMinMaxXandYmethod", videoPath)
+  hyperparameters["rectangularWellMinMaxXandYmethodMargin"] = getConfig(config, "rectangularWellMinMaxXandYmethodMargin", videoPath)
   
   
   if hyperparameters["tailAnglesHeatMap"]:

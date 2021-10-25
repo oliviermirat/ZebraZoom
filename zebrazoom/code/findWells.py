@@ -119,7 +119,7 @@ def findRectangularWells(frame, videoPath, hyperparameters, rectangularWellsArea
             left   = point[0][0]
           if point[0][0] > right:
             right  = point[0][0]
-        well = {'topLeftX' : left, 'topLeftY' : top, 'lengthX' : right - left, 'lengthY': bottom - top}
+        well = {'topLeftX' : int(left-hyperparameters["rectangularWellMinMaxXandYmethodMargin"]), 'topLeftY' : int(top-hyperparameters["rectangularWellMinMaxXandYmethodMargin"]), 'lengthX' : int(right - left + 2*hyperparameters["rectangularWellMinMaxXandYmethodMargin"]), 'lengthY': int(bottom - top + 2*hyperparameters["rectangularWellMinMaxXandYmethodMargin"])}
       
       wellPositions.append(well)
   
