@@ -64,6 +64,7 @@
   
   "groupOfMultipleSameSizeAndShapeEquallySpacedWells" : 0,
   "wellsAreRectangles" : 0,
+  "rectangularWellMinMaxXandYmethod"     : 0,
   "findRectangleWellArea"                : 165000,
   "rectangleWellAreaImageThreshold"      : 105,
   "rectangleWellErodeDilateKernelSize"   : 20,

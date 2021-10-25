@@ -91,7 +91,7 @@ def findRectangularWells(frame, videoPath, hyperparameters, rectangularWellsArea
   for contour in contours:
     print("Possible Well Area:", cv2.contourArea(contour))
     if cv2.contourArea(contour) > minRectangleArea and cv2.contourArea(contour) < maxRectangleArea:
-      if True:
+      if not(hyperparameters["rectangularWellMinMaxXandYmethod"]):
         topLeftCoord          = [0, 0]
         bottomRightCoord      = [0, 0]
         topLeftDistToZero     = float("inf")
