@@ -36,6 +36,7 @@ def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, debugMode=0
         tk.videoName =  filedialog.askopenfilename(initialdir = os.path.expanduser("~"),title = "Select file",filetypes = (("video","*.*"),("all files","*.*")))
     tk.folderName = ''
     tk.headEmbedded = 0
+    tk.sbatchMode = 0
     
     tk.justExtractParams = int(justExtractParams)
     tk.noValidationVideo = int(noValidationVideo)
@@ -56,6 +57,7 @@ def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode
     
 def chooseFolderForTailExtremityHE(self):
     tk.folderName =  filedialog.askdirectory(initialdir = os.path.expanduser("~"),title = "Select folder")
+    tk.sbatchMode = 0
     tk.headEmbedded = 1
     tk.justExtractParams = 0
     tk.noValidationVideo = 0
@@ -65,6 +67,7 @@ def chooseFolderForTailExtremityHE(self):
 
 def chooseFolderForMultipleROIs(self):
     tk.folderName =  filedialog.askdirectory(initialdir = os.path.expanduser("~"),title = "Select folder")
+    tk.sbatchMode = 0
     tk.headEmbedded = 0
     tk.justExtractParams = 0
     tk.noValidationVideo = 0

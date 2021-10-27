@@ -1,0 +1,20 @@
+{
+  "minWellDistanceForWellDetection" : 250,
+  "wellOutputVideoDiameter" : 365,
+  "nbWells"    : 4,
+  "backCalculationStep"  : 100,
+  "thresForDetectMovementWithRawVideo" : 18,
+  "minNbPixelForDetectMovementWithRawVideo" : 1,
+  "frameGapComparision" : 1,
+  "halfDiameterRoiBoutDetect" : 100,
+  "step" : [7, 10, 5],
+  "nbList" : 20,
+  "expDecreaseFactor" : 1,
+  "minArea" : 400,
+  "maxArea" : 800,
+  "minAreaBody" : 400,
+  "maxAreaBody" : 800,
+  "headSize" : 15,
+  "windowForLocalBendMinMaxFind" : 3,
+  "noChecksForBoutSelectionInExtractParams" : 0
+}
