@@ -7,6 +7,7 @@ import cv2
 import re
 import os
 import json
+import shutil
 import sys
 import subprocess
 import matplotlib
@@ -43,11 +44,12 @@ def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, debugMode=0
     
     self.show_frame("ConfigFilePromp")
 
-def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo):
+def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode):
     tk.folderName =  filedialog.askdirectory(initialdir = os.path.expanduser("~"),title = "Select folder")
     tk.headEmbedded = 0
     tk.justExtractParams = int(justExtractParams)
     tk.noValidationVideo = int(noValidationVideo)
+    tk.sbatchMode        = int(sbatchMode)
     tk.debugMode = 0
     tk.findMultipleROIs = 0
     self.show_frame("ConfigFilePromp")
@@ -72,19 +74,19 @@ def chooseFolderForMultipleROIs(self):
 
 def chooseConfigFile(self):
     
-    cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-    path = Path(cur_dir_path)
-    path = path.parent.parent
-    path = os.path.join(path, 'configuration')
-    
-    if globalVariables["mac"]:
-        tk.configFile =  filedialog.askopenfilename(initialdir = path, title = "Select file")
-    else:
-        tk.configFile =  filedialog.askopenfilename(initialdir = path, title = "Select file", filetypes = (("json files","*.json"),("all files","*.*")))
-    if len(tk.folderName) or globalVariables["mac"] or globalVariables["lin"]:
-        self.show_frame("Patience")
-    else:
-        self.launchZebraZoom()
+  cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+  path = Path(cur_dir_path)
+  path = path.parent.parent
+  path = os.path.join(path, 'configuration')
+  
+  if globalVariables["mac"]:
+    tk.configFile =  filedialog.askopenfilename(initialdir = path, title = "Select file")
+  else:
+    tk.configFile =  filedialog.askopenfilename(initialdir = path, title = "Select file", filetypes = (("json files","*.json"),("all files","*.*")))
+  if len(tk.folderName) or globalVariables["mac"] or globalVariables["lin"]:
+    self.show_frame("Patience")
+  else:
+    self.launchZebraZoom()
 
 def findAllFilesRecursivelyInDirectories(folderName):
   
@@ -108,6 +110,10 @@ def launchZebraZoom(self):
   
   last = 0
   allVideos = []
+  
+  if tk.sbatchMode:
+    commandsFile = open("commands.txt", "w")
+    nbVideosToLaunch = 0
   
   if len(tk.folderName):
   
@@ -139,7 +145,11 @@ def launchZebraZoom(self):
       if tk.findMultipleROIs == 1:
         tabParams = tabParams + ["exitAfterWellsDetection", 1, "saveWellPositionsToBeReloadedNoMatterWhat", 1]
       try:
-        mainZZ(path, name, videoExt, tk.configFile, tabParams)
+        if tk.sbatchMode:
+          commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]) + ' configFile.json\n')
+          nbVideosToLaunch = nbVideosToLaunch + 1
+        else:
+          mainZZ(path, name, videoExt, tk.configFile, tabParams)
       except ValueError:
         print("moving on to the next video for ROIs identification")
       except NameError:
@@ -158,7 +168,48 @@ def launchZebraZoom(self):
   tk.debugMode         = 0
   tk.findMultipleROIs  = 0
   
-  self.show_frame("ZZoutro")
+  if tk.sbatchMode:
+    
+    commandsFile.close()
+    
+    with open(tk.configFile) as f:
+      jsonFile = json.load(f)
+    nbWells = jsonFile["nbWells"]
+    
+    launchFile = open("launchZZ.sh", "w")
+    linesToWrite = ['#!/bin/sh',
+                    '#SBATCH --ntasks=1',
+                    '#SBATCH --cpus-per-task='+str(nbWells),
+                    '#SBATCH --array=1-'+str(nbVideosToLaunch),
+                    '#SBATCH --mem=16G',
+                    '#SBATCH --time=23:00:00',
+                    '#SBATCH --partition=normal',
+                    '#SBATCH --job-name="ZebraZoom-protocole"',
+                    '',
+                    'module load python/3.8',
+                    'source activate zebrazoom',
+                    '',
+                    'date',
+                    '',
+                    'export CMD_FILE_PATH=./commands.txt',
+                    '',
+                    'export CMD=$(sed -n ${SLURM_ARRAY_TASK_ID}p ${CMD_FILE_PATH})',
+                    '',
+                    'echo $CMD',
+                    'eval $CMD',
+                    '',
+                    'date']
+    linesToWrite = [line + '\n' for line in linesToWrite]
+    launchFile.writelines(linesToWrite)
+    launchFile.close()
+    
+    shutil.copy(tk.configFile, 'configFile.json')
+    
+    self.show_frame("ZZoutroSbatch")
+    
+  else:
+    
+    self.show_frame("ZZoutro")
 
 
 def showValidationVideo(self, numWell, numAnimal, zoom, deb):

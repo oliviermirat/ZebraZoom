@@ -193,13 +193,17 @@ class FolderToAnalyze(tk.Frame):
         tk.Label(self, text="Look for the folder you want to analyze.").pack(side="top", fill="x", pady=10)
         justExtractParams = IntVar()
         noValidationVideo = IntVar()
-        button = tk.Button(self, text="Choose folder", bg="light yellow", command=lambda: controller.chooseFolderToAnalyze(justExtractParams.get(), noValidationVideo.get()))
+        sbatchMode        = IntVar()
+        button = tk.Button(self, text="Choose folder", bg="light yellow", command=lambda: controller.chooseFolderToAnalyze(justExtractParams.get(), noValidationVideo.get(), sbatchMode.get()))
         button.pack()
         
         Checkbutton(self, text="I ran the tracking already, I only want to redo the extraction of parameters.", variable=justExtractParams).pack()
         tk.Label(self, text="", pady=0).pack()
         
         Checkbutton(self, text="Don't (re)generate a validation video (for speed efficiency).", variable=noValidationVideo).pack()
+        tk.Label(self, text="", pady=0).pack()
+        
+        Checkbutton(self, text="Expert use (don't click here unless you know what you're doing): Only generate a script to launch all videos in parallel with sbatch.", variable=sbatchMode).pack()
         tk.Label(self, text="", pady=0).pack()
         
         tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
@@ -263,6 +267,19 @@ class ZZoutro(tk.Frame):
         button = tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage"))
         button.pack()
 
+
+class ZZoutroSbatch(tk.Frame):
+
+    def __init__(self, parent, controller):
+        tk.Frame.__init__(self, parent)
+        self.controller = controller
+        tk.Label(self, text="Three files have been generated in the current folder:").pack(side="top", fill="x", pady=10)
+        tk.Label(self, text="launchZZ.sh, commands.txt, configFile.json").pack(side="top", fill="x", pady=10)
+        tk.Label(self, text="Place these three files on your server and type: 'sbatch launchZZ.sh' to launch the analysis on all videos in parallel").pack(side="top", fill="x", pady=10)
+        tk.Label(self, text="Before launching the parrallel tracking with sbatch, you may need to type: 'chmod +x launchZZ.sh'").pack(side="top", fill="x", pady=10)
+        tk.Label(self, text="You can follow the progress with the commands 'squeueme' and by looking into the slurm* file being generated with 'cat slurm*'").pack(side="top", fill="x", pady=10)
+        button = tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage"))
+        button.pack()
 
 class ResultsVisualization(tk.Frame):
 
