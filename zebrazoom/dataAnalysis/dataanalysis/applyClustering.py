@@ -189,7 +189,7 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
   for i in range(0, nbCluster):
     labelX = labelX + "Cluster " + str(i+1) + " : \n"
     for j, cond in enumerate(np.unique(dfParam['Condition'].values)):
-      labelX = labelX + cond + ": " + str(round(proportions[j,i]*100*100)/100) + "%, "
+      labelX = labelX + str(cond) + ": " + str(round(proportions[j,i]*100*100)/100) + "%, "
       labelX = labelX + "\n"
     labelX = labelX + "\n"
   outF.write(labelX)
@@ -242,7 +242,7 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
   for i in range(0, nbCluster):
     labelX = "Cluster " + str(i+1) + "\n"
     for j, condName in enumerate(np.unique(dfParam['Condition'].values)):
-      labelX = labelX + "for " + condName + " :  " + str(round(proportions[j,i]*100*100)/100) + "%\n"
+      labelX = labelX + "for " + str(condName) + " :  " + str(round(proportions[j,i]*100*100)/100) + "%\n"
     tabAx[3, i].set_xlabel(labelX)
   plt.savefig(os.path.join(outputFolderResult, 'medianValuesUsedForClusteringForEachClusterAndCondition.png'))
   if showFigures:
@@ -276,7 +276,7 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
   for i in range(0, nbCluster):
     labelX = "Most representative bout of cluster "+ str(i+1) + ":\n"
     for j, condName in enumerate(np.unique(dfParam['Condition'].values)):
-      labelX = labelX + "for " + condName + " (in " + possibleColorsNames[j] + ")\n"
+      labelX = labelX + "for " + str(condName) + " (in " + possibleColorsNames[j] + ")\n"
     tabAx2[3, i].set_xlabel(labelX)
   plt.savefig(os.path.join(outputFolderResult, 'mostRepresentativeBoutForEachClusterAndCondition.png'))
   if showFigures:
