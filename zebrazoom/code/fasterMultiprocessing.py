@@ -34,7 +34,7 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
     trackingEyesAllAnimals = 0
   trackingDataList               = []
   
-  if not(hyperparameters["nbAnimalsPerWell"] > 1) and not(hyperparameters["forceBlobMethodForHeadTracking"]) and not(hyperparameters["headEmbeded"]) and (hyperparameters["findHeadPositionByUserInput"] == 0) and (hyperparameters["takeTheHeadClosestToTheCenter"] == 0):
+  if not(hyperparameters["nbAnimalsPerWell"] > 1) and not(hyperparameters["headEmbeded"]) and (hyperparameters["findHeadPositionByUserInput"] == 0) and (hyperparameters["takeTheHeadClosestToTheCenter"] == 0):
     trackingProbabilityOfGoodDetectionList = []
   else:
     trackingProbabilityOfGoodDetectionList = 0
@@ -44,7 +44,7 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
     trackingHeadingAllAnimalsList.append(np.zeros((hyperparameters["nbAnimalsPerWell"], lastFrame-firstFrame+1)))
     if hyperparameters["eyeTracking"]:
       trackingEyesAllAnimalsList.append(np.zeros((hyperparameters["nbAnimalsPerWell"], lastFrame-firstFrame+1, 8)))
-    if not(hyperparameters["nbAnimalsPerWell"] > 1) and not(hyperparameters["forceBlobMethodForHeadTracking"]) and not(hyperparameters["headEmbeded"]) and (hyperparameters["findHeadPositionByUserInput"] == 0) and (hyperparameters["takeTheHeadClosestToTheCenter"] == 0):
+    if not(hyperparameters["nbAnimalsPerWell"] > 1) and not(hyperparameters["headEmbeded"]) and (hyperparameters["findHeadPositionByUserInput"] == 0) and (hyperparameters["takeTheHeadClosestToTheCenter"] == 0):
       trackingProbabilityOfGoodDetectionList.append(np.zeros((hyperparameters["nbAnimalsPerWell"], lastFrame-firstFrame+1)))
   
   if hyperparameters["backgroundSubtractorKNN"]:
@@ -79,7 +79,7 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
         frame = fgbg.apply(frame)
         frame = 255 - frame
       
-      for wellNumber in range(0,hyperparameters["nbWells"]):
+      for wellNumber in range(0 if hyperparameters["onlyTrackThisOneWell"] == -1 else hyperparameters["onlyTrackThisOneWell"], hyperparameters["nbWells"] if hyperparameters["onlyTrackThisOneWell"] == -1 else hyperparameters["onlyTrackThisOneWell"] + 1):
         
         if hyperparameters["nbAnimalsPerWell"] == 1 and not(hyperparameters["forceBlobMethodForHeadTracking"]):
           minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtract"]
@@ -129,7 +129,11 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
           trackingEyesAllAnimalsList[wellNumber] = eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimalsList[wellNumber], trackingHeadTailAllAnimalsList[wellNumber], trackingEyesAllAnimalsList[wellNumber])
         
         debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimalsList[wellNumber], trackingHeadingAllAnimalsList[wellNumber], blur, hyperparameters)
-    
+        
+        if hyperparameters["freqAlgoPosFollow"]:
+          if i % hyperparameters["freqAlgoPosFollow"] == 0:
+            print("Tracking at frame", i)
+        
     if hyperparameters["adjustFreelySwimTracking"] == 1:
       [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getFreelySwimTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters)
       if len(organizationTabCur) == 0:
@@ -138,12 +142,13 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
     else:
       i = i + 1
     
-  for wellNumber in range(0,hyperparameters["nbWells"]):
+  for wellNumber in range(0 if hyperparameters["onlyTrackThisOneWell"] == -1 else hyperparameters["onlyTrackThisOneWell"], hyperparameters["nbWells"] if hyperparameters["onlyTrackThisOneWell"] == -1 else hyperparameters["onlyTrackThisOneWell"] + 1):
+    
     [trackingHeadingAllAnimalsList[wellNumber], trackingHeadTailAllAnimalsList[wellNumber], trackingEyesAllAnimals] = postProcessMultipleTrajectories(trackingHeadingAllAnimalsList[wellNumber], trackingHeadTailAllAnimalsList[wellNumber], [], trackingProbabilityOfGoodDetectionList[wellNumber], hyperparameters, wellPositions)
     
     trackingDataList.append([trackingHeadTailAllAnimalsList[wellNumber], trackingHeadingAllAnimalsList[wellNumber], [], 0, 0])
   
-  for wellNumber in range(0,hyperparameters["nbWells"]):
+  for wellNumber in range(0 if hyperparameters["onlyTrackThisOneWell"] == -1 else hyperparameters["onlyTrackThisOneWell"], hyperparameters["nbWells"] if hyperparameters["onlyTrackThisOneWell"] == -1 else hyperparameters["onlyTrackThisOneWell"] + 1):
     parameters = extractParameters(trackingDataList[wellNumber], wellNumber, hyperparameters, videoPath, wellPositions, background)
     output.append([wellNumber,parameters,[]])
   

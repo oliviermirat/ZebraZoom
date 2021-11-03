@@ -410,6 +410,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["rectangularWellMinMaxXandYmethod"] = getConfig(config, "rectangularWellMinMaxXandYmethod", videoPath)
   hyperparameters["rectangularWellMinMaxXandYmethodMargin"] = getConfig(config, "rectangularWellMinMaxXandYmethodMargin", videoPath)
   
+  hyperparameters["addOneFrameAtTheEndForBoutDetection"] = getConfig(config, "addOneFrameAtTheEndForBoutDetection", videoPath)
+  
   
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1

@@ -155,6 +155,11 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       elif hyperparameters["headingCalculationMethod"] == "simplyFromPreviousCalculations":
         heading[i] = trackingHeading[i]
         heading[i] = (heading[i] + math.pi) % (2*math.pi)
+      elif hyperparameters["headingCalculationMethod"] == "fromPreviousCalculationsAndAdjustWithPreviousFrame":
+        heading[i] = trackingHeading[i]
+        heading[i] = (heading[i] + math.pi) % (2*math.pi)
+        if i != 0 and distBetweenThetas(heading[i-1], ((heading[i] + math.pi) % (2*math.pi))) > distBetweenThetas(heading[i-1], heading[i]):
+          heading[i] = (heading[i] + math.pi) % (2*math.pi)
       else: # calculatedWithHead : THIS IS THE DEFAULT
         if not(math.isnan(trackingHeading[i])):
           heading[i] = trackingHeading[i]
@@ -295,7 +300,10 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       pos = finMouv
       while int(auDessus[pos]) == 0:
         pos = pos - 1
-      bouts[numBout][2] = pos
+      bouts[numBout][2] = pos    
+      if hyperparameters["addOneFrameAtTheEndForBoutDetection"]:
+        if bouts[numBout][2] + 1 < nbFrames:
+          bouts[numBout][2] = bouts[numBout][2] + 1
     
     for i in range(0,len(bouts)):
     

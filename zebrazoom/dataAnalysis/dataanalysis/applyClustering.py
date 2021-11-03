@@ -72,8 +72,8 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
   asymAxis = [0, 0.8]
   angAxis  = [0, 1.5]
 
-  possibleColors = ['b', 'r', 'g', 'k']
-  possibleColorsNames = ['blue', 'red', 'green', 'black']
+  possibleColors = ['b', 'r', 'g', 'k', 'c', 'm', 'y']
+  possibleColorsNames = ['blue', 'red', 'green', 'black', 'cyan', 'magenta', 'yellow']
   
   outputFolderResult = os.path.join(outputFolder, nameOfFile)
   

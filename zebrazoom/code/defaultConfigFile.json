@@ -187,6 +187,7 @@
   "addBlackCircleOfHalfDiamOnHeadForBoutDetect" : 0,
   "boutEdgesWhereZeros" : 0,
   "noBoutsDetection" : 0,
+  "addOneFrameAtTheEndForBoutDetection" : 0,
   
   "noChecksForBoutSelectionInExtractParams" : 1,
   "detectBoutMinNbFrames" : 2,
