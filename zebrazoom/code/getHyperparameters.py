@@ -412,6 +412,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["addOneFrameAtTheEndForBoutDetection"] = getConfig(config, "addOneFrameAtTheEndForBoutDetection", videoPath)
   
+  hyperparameters["boutsMinNbFrames"] = getConfig(config, "boutsMinNbFrames", videoPath)
+  
   
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1

@@ -274,7 +274,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       if (position == 1) and ((auDessus2[i] == 0) or (i == nbFrames-1)):
         curBout[0][2] = i-1
         position = 0
-        if curBout[0][2] - curBout[0][1] >= hyperparameters["detectBoutMinNbFrames"] or (hyperparameters["noChecksForBoutSelectionInExtractParams"] and curBout[0][2] - curBout[0][1] >= 1):
+        if curBout[0][2] - curBout[0][1] >= hyperparameters["detectBoutMinNbFrames"] or (hyperparameters["noChecksForBoutSelectionInExtractParams"] and curBout[0][2] - curBout[0][1] >= hyperparameters["boutsMinNbFrames"]):
           debMouv = int(curBout[0][1])
           endMouv = int(curBout[0][2])
           dist = math.sqrt( (head[debMouv,0]-head[endMouv,0])**2 + (head[debMouv,1]-head[endMouv,1])**2 )

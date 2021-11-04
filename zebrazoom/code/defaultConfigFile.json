@@ -189,6 +189,7 @@
   "noBoutsDetection" : 0,
   "addOneFrameAtTheEndForBoutDetection" : 0,
   
+  "boutsMinNbFrames" : 1,
   "noChecksForBoutSelectionInExtractParams" : 1,
   "detectBoutMinNbFrames" : 2,
   "detectBoutMinDist" : 4,
