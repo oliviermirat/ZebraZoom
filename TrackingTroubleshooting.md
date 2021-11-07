@@ -12,11 +12,13 @@ If none of this works, then click on "Troubleshoot" in the main menu of ZebraZoo
 
 [Problems on borders](#problemOnBorders)<br/>
 [Animals not detected](#animalsNotDetected)<br/>
+[Post-processing of trajectories](#trajectoriesPostProcessing)<br/>
 
 <H3 CLASS="western">Freely swimming zebrafish tracking issues:</H3>
 
 [Problems on borders](#problemOnBorders)<br/>
 [Animals not detected](#animalsNotDetected)<br/>
+[Post-processing of trajectories](#trajectoriesPostProcessing)<br/>
 [Zebrafish tail not tracked accurately](#zebrafishTailNotDetected)<br/>
 [Bout detection issues](#boutDetectionIssues)<br/>
 [Tail angle parameters calculation issues](#tailAngleParametersCalculationIssues)<br/>
@@ -44,13 +46,16 @@ If it looks like only the <b>small areas (made of non-white pixels)</b> represen
 
 If it looks like <b>too many non-white pixels are found close to the edge of the wells</b> then add a filter on the background extracted as explained in the previous section.<br/><br/>
 
-Finally, if some animals are sometimes not being detected at all no matter what, you can <b>add some post-processing of trajectories</b> to solve the problem. In order to do this, you will need to add the following parameters to your configuration file:<br/>
+NB: after extracting the background of the video, ZebraZoom extracts the foreground of a video (previously refered to as "non-white pixels") by finding the pixels of an image that have a value more than "minPixelDiffForBackExtract" different from the background. And when "adjustMinPixelDiffForBackExtract_nbBlackPixelsMax" is set to a value different than 0, then ZebraZoom will iteratively adjust the value of "minPixelDiffForBackExtract" in order to make the number of non-white pixels found as close as possible to the value of "adjustMinPixelDiffForBackExtract_nbBlackPixelsMax".<br/>
+
+<a name="trajectoriesPostProcessing"/>
+
+<H2 CLASS="western">Trajectories post-processing:</H2>
+If some animals are sometimes not being detected at all no matter what, you can <b>add some post-processing of trajectories</b> to solve the problem. In order to do this, you will need to add the following parameters to your configuration file:<br/>
 "postProcessMultipleTrajectories": 1, "postProcessMaxDistanceAuthorized" : 250, "postProcessMaxDisapearanceFrames" : 10<br/>
 The values 250 and 10 are just examples here, you will need to further adjust those. "postProcessMaxDistanceAuthorized" is the maximum distance accepted (in pixels) above which it is considered that an animal was detected incorrectly (and thus the trajectory post-processing will be applied), and "postProcessMaxDisapearanceFrames" is the maximum number of frames for which the post-processing will consider that an animal can be incorrectly detected.<br/>
 You also have the option of putting the parameter "postProcessMaxDistanceAuthorized" to a very high value which will have the effect of only modifying the values (x, y) for frames for which no detection occured at all.<br/>
 Additionnally, when adding this post-processing of trajectories, it's also usually better to also set the parameter "multipleHeadTrackingIterativelyRelaxAreaCriteria" to 0.<br/><br/>
-
-NB: after extracting the background of the video, ZebraZoom extracts the foreground of a video (previously refered to as "non-white pixels") by finding the pixels of an image that have a value more than "minPixelDiffForBackExtract" different from the background. And when "adjustMinPixelDiffForBackExtract_nbBlackPixelsMax" is set to a value different than 0, then ZebraZoom will iteratively adjust the value of "minPixelDiffForBackExtract" in order to make the number of non-white pixels found as close as possible to the value of "adjustMinPixelDiffForBackExtract_nbBlackPixelsMax".<br/>
 
 <a name="zebrafishTailNotDetected"/>
 
