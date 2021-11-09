@@ -23,7 +23,7 @@ class ChooseVideoToCreateConfigFileFor(tk.Frame):
     
     tk.Button(self, text="Select the video you want to create a configuration file for.", bg="light yellow", command=lambda: controller.chooseVideoToCreateConfigFileFor(controller, reloadConfigFile.get())).pack()
     
-    tk.Label(self, text='').pack()
+    tk.Label(self, text="").pack()
     tk.Label(self, text="(you will be able to use the configuration file you create for all videos that are similar to that video)").pack()
     tk.Label(self, text="").pack()
     
@@ -34,13 +34,53 @@ class ChooseVideoToCreateConfigFileFor(tk.Frame):
     tk.Label(self, text='You may not succeed at making a good configuration file to analyze your video.').pack()
     tk.Label(self, text="If you don't manage to get a good configuration file that fits your needs, email us at info@zebrazoom.org.").pack()
     tk.Label(self, text='').pack()
+
+
+class OptimizeConfigFile(tk.Frame):
+
+  def __init__(self, parent, controller):
+  
+    tk.Frame.__init__(self, parent)
+    self.controller = controller
+    label = tk.Label(self, text="Optimize previously created configuration file", font=controller.title_font)
+    label.pack(side="top", fill="x", pady=10)
+    
+    tk.Label(self, text="").pack()
+    tk.Label(self, text="In many cases, the configuration file previously generated will give good tracking results.").pack()
+    tk.Label(self, text="Always start by testing your newly created configuration file by using the 'Run ZebraZoom's Tracking on a video' option from the main menu of the GUI.").pack()
+    tk.Label(self, text="If after the test, you notice that the tracking has issues, you can use some of the options listed below to improve your configuration file.").pack()
+    tk.Label(self, text="").pack()
+    
+    tk.Button(self, text="Optimize fish freely swimming tail tracking configuration file parameters", bg="light yellow", command=lambda: controller.chooseVideoToCreateConfigFileFor(controller, True, True)).pack()
+    tk.Label(self, text="").pack()
+    
+    tk.Button(self, text="Optimize/Add bouts detection (only for one animal per well)", bg="light yellow", command=lambda: controller.chooseVideoToCreateConfigFileFor(controller, True, False, True)).pack()
+    tk.Label(self, text="").pack()
     
     def callback(url):
       webbrowser.open_new(url)
     
-    link2 = tk.Button(self, text="View Tracking Troubleshooting Tips", bg="gold")
+    link3 = tk.Button(self, text="Solve issues near the borders of the wells/tanks/arenas", bg="light yellow")
+    link3.pack()
+    link3.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md#problemOnBorders"))
+    tk.Label(self, text="").pack()
+    
+    link4 = tk.Button(self, text="Post-process animal center trajectories", bg="light yellow")
+    link4.pack()
+    link4.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md#trajectoriesPostProcessing"))
+    tk.Label(self, text="Trajectories post-processing can help solve problems with animal 'disapearing' and/or temporarily 'jumping' to a distant (and incorrect) location.").pack()
+    tk.Label(self, text="").pack()
+    
+    link2 = tk.Button(self, text="View More Tracking Troubleshooting Tips", bg="gold")
     link2.pack()
     link2.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md"))
+    
+    tk.Label(self, text="").pack()
+
+    tk.Label(self, text="If you don't manage to get a good configuration file that fits your needs, email us at info@zebrazoom.org.").pack()
+    tk.Label(self, text="").pack()
+    
+    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
 
 class ChooseGeneralExperiment(tk.Frame):

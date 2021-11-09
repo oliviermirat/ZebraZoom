@@ -26,9 +26,9 @@ import zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions as adjustParameterI
 import zebrazoom.code.GUI.dataAnalysisGUIFunctions as dataAnalysisGUIFunctions
 import zebrazoom.code.GUI.troubleshootingFunction as troubleshootingFunction
 from zebrazoom.code.GUI.GUI_InitialClasses import FullScreenApp, StartPage, SeveralVideos, VideoToAnalyze, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, ConfigFilePromp, Patience, ZZoutro, ZZoutroSbatch, ResultsVisualization, EnhanceZZOutput, ViewParameters, Error
-from zebrazoom.code.GUI.configFilePrepare import ChooseVideoToCreateConfigFileFor, ChooseGeneralExperiment, FreelySwimmingExperiment, WellOrganisation, NbRegionsOfInterest, CircularOrRectangularWells, HomegeneousWellsLayout, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings
+from zebrazoom.code.GUI.configFilePrepare import ChooseVideoToCreateConfigFileFor, OptimizeConfigFile, ChooseGeneralExperiment, FreelySwimmingExperiment, WellOrganisation, NbRegionsOfInterest, CircularOrRectangularWells, HomegeneousWellsLayout, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings
 from zebrazoom.code.GUI.configFileZebrafish import HeadEmbeded
-from zebrazoom.code.GUI.adjustParameterInsideAlgo import AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim
+from zebrazoom.code.GUI.adjustParameterInsideAlgo import AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim, AdujstParamInsideAlgoFreelySwimAutomaticParameters, AdujstBoutDetectionOnly
 from zebrazoom.code.GUI.dataAnalysisGUI import CreateExperimentOrganizationExcel, ChooseExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderPopulation, AnalysisOutputFolderClustering
 from zebrazoom.code.GUI.troubleshooting import ChooseVideoToTroubleshootSplitVideo, VideoToTroubleshootSplitVideo
 
@@ -73,7 +73,7 @@ class SampleApp(tk.Tk):
         container.grid_columnconfigure(0, weight=1) 
         self.container = container
         self.frames = {}
-        for F in (StartPage, SeveralVideos, VideoToAnalyze, ChooseVideoToCreateConfigFileFor, ChooseGeneralExperiment, FreelySwimmingExperiment, WellOrganisation, NbRegionsOfInterest, CircularOrRectangularWells, HomegeneousWellsLayout, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, ChooseCircularWellsLeft, ChooseCircularWellsRight, FinishConfig, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, ConfigFilePromp, Patience, ZZoutro, ZZoutroSbatch, ResultsVisualization, EnhanceZZOutput, ViewParameters, Error, HeadEmbeded, AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim, GoToAdvanceSettings, CreateExperimentOrganizationExcel, ChooseExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderPopulation, AnalysisOutputFolderClustering, ChooseVideoToTroubleshootSplitVideo, VideoToTroubleshootSplitVideo):
+        for F in (StartPage, SeveralVideos, VideoToAnalyze, ChooseVideoToCreateConfigFileFor, OptimizeConfigFile, ChooseGeneralExperiment, FreelySwimmingExperiment, WellOrganisation, NbRegionsOfInterest, CircularOrRectangularWells, HomegeneousWellsLayout, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, ChooseCircularWellsLeft, ChooseCircularWellsRight, FinishConfig, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, ConfigFilePromp, Patience, ZZoutro, ZZoutroSbatch, ResultsVisualization, EnhanceZZOutput, ViewParameters, Error, HeadEmbeded, AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim, AdujstParamInsideAlgoFreelySwimAutomaticParameters, AdujstBoutDetectionOnly, GoToAdvanceSettings, CreateExperimentOrganizationExcel, ChooseExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderPopulation, AnalysisOutputFolderClustering, ChooseVideoToTroubleshootSplitVideo, VideoToTroubleshootSplitVideo):
             page_name = F.__name__
             frame = F(parent=container, controller=self)
             self.frames[page_name] = frame
@@ -165,8 +165,8 @@ class SampleApp(tk.Tk):
         
     # Config File preparation functions
     
-    def chooseVideoToCreateConfigFileFor(self, controller):
-        configFilePrepareFunctions.chooseVideoToCreateConfigFileFor(self, controller)
+    def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile, freelySwimAutomaticParameters=False, boutDetectionsOnly=False):
+        configFilePrepareFunctions.chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile, freelySwimAutomaticParameters, boutDetectionsOnly)
     
     def chooseGeneralExperimentFirstStep(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, fastScreen):
         configFilePrepareFunctions.chooseGeneralExperimentFirstStep(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, fastScreen)
@@ -223,15 +223,18 @@ optionBackgroundExtractionOption):
     def adjustFreelySwimTracking(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo):
       adjustParameterInsideAlgoFunctions.adjustFreelySwimTracking(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo)
 
+    def adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo):
+      adjustParameterInsideAlgoFunctions.adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo)
+
     def calculateBackground(self, controller, nbImagesForBackgroundCalculation):
       adjustParameterInsideAlgoFunctions.calculateBackground(self, controller, nbImagesForBackgroundCalculation)
       
-    def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False):
-      adjustParameterInsideAlgoFunctions.calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen)
+    def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False):
+      adjustParameterInsideAlgoFunctions.calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen, automaticParameters, boutDetectionsOnly)
     
-    def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
-      configFilePrepareFunctions.chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile)
-
+    def updateFillGapFrameNb(self, fillGapFrameNb):
+      adjustParameterInsideAlgoFunctions.updateFillGapFrameNb(self, fillGapFrameNb)
+    
     def goToAdvanceSettings(self, controller, yes, no):
       configFilePrepareFunctions.goToAdvanceSettings(self, controller, yes, no)
       

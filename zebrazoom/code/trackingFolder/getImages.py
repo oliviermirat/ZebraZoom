@@ -29,7 +29,7 @@ def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPo
         [frame, thresh1] = headEmbededFrameBackExtract(videoPath, background, hyperparameters, i)
       gray = frame.copy()
   else:
-    if hyperparameters["adjustFreelySwimTracking"] == 0:
+    if hyperparameters["adjustFreelySwimTracking"] == 0 and hyperparameters["adjustFreelySwimTrackingAutomaticParameters"] == 0:
       if len(background):
         [frame, initialCurFrame, back] = getForegroundImageSequential(cap, videoPath, background, i, wellNumber, wellPositions, hyperparameters, alreadyExtractedImage)
       else:

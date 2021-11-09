@@ -18,7 +18,7 @@ from zebrazoom.code.trackingFolder.postProcessMultipleTrajectories import postPr
 from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from zebrazoom.code.getImage.headEmbededFrameBackExtract import headEmbededFrameBackExtract
 
-from zebrazoom.code.adjustHyperparameters import initializeAdjustHyperparametersWindows, adjustHyperparameters, getHeadEmbededTrackingParamsForHyperParamAdjusts, getFreelySwimTrackingParamsForHyperParamAdjusts
+from zebrazoom.code.adjustHyperparameters import initializeAdjustHyperparametersWindows, adjustHyperparameters, getHeadEmbededTrackingParamsForHyperParamAdjusts, getFreelySwimTrackingParamsForHyperParamAdjusts, getFreelySwimTrackingAutoParamsForHyperParamAdjusts
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.headEmbededTailTracking import adjustHeadEmbededHyperparameters
 
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.headEmbededTailTracking import headEmbededTailTrackFindMaxDepth
@@ -126,7 +126,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
       else:
         maxDepth = centerOfMassTailTrackFindMaxDepth(headPositionFirstFrame,nbTailPoints,firstFrame,headPositionFirstFrame[0],headPositionFirstFrame[1],thresh1,frame,hyperparameters,oppHeading,tailTipFirstFrame)
   
-  if hyperparameters["adjustHeadEmbededTracking"] == 1 or hyperparameters["adjustFreelySwimTracking"] == 1:
+  if hyperparameters["adjustHeadEmbededTracking"] == 1 or hyperparameters["adjustFreelySwimTracking"] == 1 or hyperparameters["adjustFreelySwimTrackingAutomaticParameters"] == 1:
     initializeAdjustHyperparametersWindows("Tracking")
   organizationTabCur = []
   
@@ -170,9 +170,39 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
       if len(organizationTabCur) == 0:
         organizationTabCur = organizationTab
       [i, hyperparameters, organizationTabCur] = adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTabCur)
+    elif hyperparameters["adjustFreelySwimTrackingAutomaticParameters"] == 1:
+      # Preparing image to show
+      if hyperparameters["recalculateForegroundImageBasedOnBodyArea"] == 1:
+        minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtractBody"]
+      else:
+        if hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"]:
+          minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtractHead"]
+          del hyperparameters["minPixelDiffForBackExtractHead"] # Not sure why this is necessary: need to check the code to make sure there isn't a bug somewhere
+        else:
+          minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtract"]
+      curFrame = initialCurFrame
+      putToWhite = (curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
+      curFrame[putToWhite] = 255
+      ret, frame2 = cv2.threshold(curFrame, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
+      # Showing current image and waiting for next parameter/frame change
+      [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getFreelySwimTrackingAutoParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters)
+      if len(organizationTabCur) == 0:
+        organizationTabCur = organizationTab
+      [i, hyperparameters, organizationTabCur] = adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTabCur)
+      # Puts hyperparameters values to accepted values
+      hyperparameters["recalculateForegroundImageBasedOnBodyArea"] = 0 if hyperparameters["recalculateForegroundImageBasedOnBodyArea"] < 0.5 else 1
+      if hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] < 0:
+        hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] = 0
+      if hyperparameters["minPixelDiffForBackExtract"] < 0:
+        hyperparameters["minPixelDiffForBackExtract"] = 0
+      else:
+        if hyperparameters["minPixelDiffForBackExtract"] > 255:
+          hyperparameters["minPixelDiffForBackExtract"] = 255
+      hyperparameters["minPixelDiffForBackExtract"] = int(hyperparameters["minPixelDiffForBackExtract"])
+          
     else:
       i = i + 1
-      
+  
   if hyperparameters["postProcessMultipleTrajectories"]:
     [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals] = postProcessMultipleTrajectories(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, trackingProbabilityOfGoodDetection, hyperparameters, wellPositions)
   

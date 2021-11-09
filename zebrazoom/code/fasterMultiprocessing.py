@@ -148,8 +148,9 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
     
     trackingDataList.append([trackingHeadTailAllAnimalsList[wellNumber], trackingHeadingAllAnimalsList[wellNumber], [], 0, 0])
   
-  for wellNumber in range(0 if hyperparameters["onlyTrackThisOneWell"] == -1 else hyperparameters["onlyTrackThisOneWell"], hyperparameters["nbWells"] if hyperparameters["onlyTrackThisOneWell"] == -1 else hyperparameters["onlyTrackThisOneWell"] + 1):
-    parameters = extractParameters(trackingDataList[wellNumber], wellNumber, hyperparameters, videoPath, wellPositions, background)
+  wellNumberBeginLoop = 0 if hyperparameters["onlyTrackThisOneWell"] == -1 else hyperparameters["onlyTrackThisOneWell"]
+  for wellNumber in range(wellNumberBeginLoop, hyperparameters["nbWells"] if hyperparameters["onlyTrackThisOneWell"] == -1 else hyperparameters["onlyTrackThisOneWell"] + 1):
+    parameters = extractParameters(trackingDataList[wellNumber-wellNumberBeginLoop], wellNumber, hyperparameters, videoPath, wellPositions, background)
     output.append([wellNumber,parameters,[]])
   
   return output

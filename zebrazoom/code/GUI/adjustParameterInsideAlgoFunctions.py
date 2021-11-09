@@ -119,6 +119,10 @@ def detectBouts(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWho
   [configFile, initialFirstFrameValue, initialLastFrameValue] = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrameParamAdjust, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
   
   configFile["noBoutsDetection"] = 0
+  if "trackTail" in configFile:
+    trackTailOriginalValue = configFile["trackTail"]
+  else:
+    trackTailOriginalValue = 1
   configFile["trackTail"]                   = 0
   configFile["adjustDetectMovWithRawVideo"] = 1
   configFile["reloadWellPositions"]         = 1
@@ -134,6 +138,8 @@ def detectBouts(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWho
     cvui.init(WINDOW_NAME)
     cv2.moveWindow(WINDOW_NAME, 0,0)
     r = cv2.waitKey(2)
+    if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
+      del configFile["lastFrame"]
     mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
     cv2.destroyAllWindows()
   except ValueError:
@@ -142,7 +148,7 @@ def detectBouts(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWho
       configFile[index] = newhyperparameters[index]
   
   configFile["onlyTrackThisOneWell"]        = -1
-  configFile["trackTail"]                   = 1
+  configFile["trackTail"]                   = trackTailOriginalValue
   configFile["adjustDetectMovWithRawVideo"] = 0
   configFile["reloadWellPositions"]         = 0
   
@@ -173,6 +179,8 @@ def adjustHeadEmbededTracking(self, controller, wellNumber, firstFrameParamAdjus
   configFile["adjustHeadEmbededTracking"] = 1
   
   try:
+    if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
+      del configFile["lastFrame"]
     mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
   except ValueError:
     newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
@@ -210,6 +218,8 @@ def adjustFreelySwimTracking(self, controller, wellNumber, firstFrameParamAdjust
   configFile["adjustFreelySwimTracking"] = 1
   
   try:
+    if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
+      del configFile["lastFrame"]
     mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
   except ValueError:
     newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
@@ -247,6 +257,8 @@ def adjustFastFreelySwimTracking(self, controller):
   configFile["reloadBackground"] = 1
   
   try:
+    if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
+      del configFile["lastFrame"]
     mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
   except ValueError:
     newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
@@ -273,6 +285,49 @@ def adjustFastFreelySwimTracking(self, controller):
   controller.show_frame("FinishConfig")
 
 
+def adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo):
+  
+  [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
+  
+  [configFile, initialFirstFrameValue, initialLastFrameValue] = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrameParamAdjust, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
+  
+  configFile["reloadWellPositions"] = 1
+  
+  if len(wellNumber) != 0:
+    configFile["onlyTrackThisOneWell"]    = int(wellNumber)
+  else:
+    configFile["onlyTrackThisOneWell"]    = 0
+  configFile["adjustFreelySwimTrackingAutomaticParameters"] = 1
+  
+  try:
+    if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
+      del configFile["lastFrame"]
+    mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+  except ValueError:
+    newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
+    for index in newhyperparameters:
+      configFile[index] = newhyperparameters[index]
+  except NameError:
+    print("Configuration file parameters changes discarded.")
+  
+  del configFile["onlyTrackThisOneWell"]
+  del configFile["adjustFreelySwimTrackingAutomaticParameters"]
+  if initialLastFrameValue == -1:
+    if 'firstFrame' in configFile:
+      del configFile['firstFrame']
+    if 'lastFrame' in configFile:
+      del configFile['lastFrame']
+  else:
+    configFile["firstFrame"]                  = initialFirstFrameValue
+    configFile["lastFrame"]                   = initialLastFrameValue
+  if "reloadBackground" in configFile:
+    del configFile["reloadBackground"]
+  if "reloadWellPositions" in configFile:
+    del configFile["reloadWellPositions"]
+  
+  self.configFile = configFile
+
+
 def calculateBackground(self, controller, nbImagesForBackgroundCalculation):
   
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
@@ -289,6 +344,8 @@ def calculateBackground(self, controller, nbImagesForBackgroundCalculation):
   cv2.moveWindow(WINDOW_NAME, 0,0)
   
   try:
+    if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
+      del configFile["lastFrame"]
     mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
   except ValueError:
     configFile["exitAfterBackgroundExtraction"] = 0
@@ -302,7 +359,7 @@ def calculateBackground(self, controller, nbImagesForBackgroundCalculation):
   controller.show_frame("AdujstParamInsideAlgo")
   
 
-def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False):
+def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False):
   
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
   
@@ -318,6 +375,8 @@ def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalcula
   cv2.moveWindow(WINDOW_NAME, 0,0)
   
   try:
+    if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
+      del configFile["lastFrame"]
     mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
   except ValueError:
     configFile["exitAfterBackgroundExtraction"] = 0
@@ -327,8 +386,46 @@ def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalcula
   del configFile["exitAfterBackgroundExtraction"] #  = 0
   del configFile["debugExtractBack"]              #  = 0
   del configFile["debugFindWells"]                #  = 0
+  if "firstFrame" in configFile:
+    del configFile["firstFrame"]
+  if "lastFrame" in configFile:
+    del configFile["lastFrame"]
+  if "onlyTrackThisOneWell" in configFile:
+    del configFile["onlyTrackThisOneWell"]
+  if "reloadBackground" in configFile:
+    del configFile["reloadBackground"]
+  if "adjustDetectMovWithRawVideo" in configFile:
+    del configFile["adjustDetectMovWithRawVideo"]
+  if "reloadWellPositions" in configFile:
+    del configFile["reloadWellPositions"]
   
-  if morePreciseFastScreen:
-    adjustFastFreelySwimTracking(self, controller)
+  
+  if boutDetectionsOnly:
+    controller.show_frame("AdujstBoutDetectionOnly")
   else:
-    controller.show_frame("AdujstParamInsideAlgoFreelySwim")
+    if automaticParameters:
+      controller.show_frame("AdujstParamInsideAlgoFreelySwimAutomaticParameters")
+    else:
+      if morePreciseFastScreen:
+        adjustFastFreelySwimTracking(self, controller)
+      else:
+        controller.show_frame("AdujstParamInsideAlgoFreelySwim")
+
+
+def updateFillGapFrameNb(self, fillGapFrameNb):
+  
+  if len(fillGapFrameNb):
+    self.configFile["fillGapFrameNb"] = int(fillGapFrameNb)
+    toShow = np.zeros((200, 1000))
+    toShow = cv2.putText(toShow, 'The parameter fillGapFrameNb has been updated to ' + str(fillGapFrameNb), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+    cv2.imshow("Done!", toShow)
+    cv2.waitKey(3000)
+    cv2.destroyAllWindows()
+  else:
+    toShow = np.zeros((200, 1000))
+    toShow = cv2.putText(toShow, 'Insert a number in the box', (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
+    cv2.imshow("Done!", toShow)
+    cv2.waitKey(3000)
+    cv2.destroyAllWindows()
+  
+  

@@ -51,21 +51,18 @@ class StartPage(tk.Frame):
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
         self.columnconfigure(2, weight=1)
-        
-        # tk.Label(self, text="Welcome to ZebraZoom!", font=controller.title_font).pack()
-        
-        # tk.Label(self, text="1 - Configuration File Creation", pady=10).pack()
-        
-        # tk.Button(self, text="Prepare configuration file for tracking", command=lambda: controller.show_frame("ChooseVideoToCreateConfigFileFor")).pack()
-        # tk.Label(self, text="You first need to create a configuration file for each 'type' of video you want to track.").pack(side=tk.RIGHT)
-        
-        # tk.Button(self, text="Open configuration file folder", command=lambda: controller.openConfigurationFileFolder(controller.homeDirectory)).pack(side=tk.BOTTOM)
-        # tk.Label(self, text="You can access the folder where configuration files are saved with this button.").pack(side=tk.RIGHT)
 
         tk.Label(self, text="Welcome to ZebraZoom!", font=controller.title_font, pady=20, fg="purple").grid(row=0,column=0, columnspan = 2)
         
         tk.Label(self, text="1 - Create a Configuration File:", font = "bold", pady=10, fg="blue").grid(row=1,column=0)
-        tk.Button(self, text="Prepare configuration file for tracking", command=lambda: controller.show_frame("ChooseVideoToCreateConfigFileFor"), bg="light yellow").grid(row=2,column=0)
+        
+        f1 = tk.Frame(self)
+        b1 = tk.Button(f1, text="Prepare initial configuration file for tracking", command=lambda: controller.show_frame("ChooseVideoToCreateConfigFileFor"), bg="light yellow")
+        b2 = tk.Button(f1, text="Optimize a previously created configuration file", command=lambda: controller.show_frame("OptimizeConfigFile"), bg="light yellow")
+        f1.grid(row=2,column=0, sticky="nsew")
+        b2.pack(side="right")
+        b1.pack(side="right")
+        
         tk.Label(self, text="You first need to create a configuration file for each 'type' of video you want to track.", pady=10, fg="green").grid(row=3,column=0)
         tk.Button(self, text="Open configuration file folder", command=lambda: controller.openConfigurationFileFolder(controller.homeDirectory), bg="light yellow").grid(row=4,column=0)
         tk.Label(self, text="Access the folder where configuration files are saved with the button above.", pady=10, fg="green").grid(row=5,column=0)
@@ -135,11 +132,6 @@ class SeveralVideos(tk.Frame):
         tk.Label(self, text="", font=controller.title_font).pack()
         
         tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
-        
-        tk.Label(self, text="", pady=0).pack()
-        link2 = tk.Button(self, text="View Tracking Troubleshooting Tips", bg="gold")
-        link2.pack()
-        link2.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md"))
 
 
 class VideoToAnalyze(tk.Frame):
@@ -162,6 +154,14 @@ class VideoToAnalyze(tk.Frame):
         tk.Label(self, text="In this mode you will need to click on any key on each visualization windows.", bg="red", pady=0).pack()
         tk.Label(self, text="", pady=0).pack()
         
+        tk.Label(self, text="Alternatively, to test a new configuration file, you can temporarily manually add the parameter:", pady=0).pack()
+        tk.Label(self, text="'lastFrame': someSmallValue(for example 100)", pady=0).pack()
+        tk.Label(self, text="as well as the parameter:", pady=0).pack()
+        tk.Label(self, text="'backgroundExtractionForceUseAllVideoFrames': 1", pady=0).pack()
+        tk.Label(self, text="inside your configuration file to run the tracking on a small portion of the video in order to test the tracking.", pady=0).pack()
+        tk.Label(self, text="(if necessary, you can also add the parameter 'firstFrame' in your configuration file)", pady=0).pack()
+        tk.Label(self, text="", pady=0).pack()
+        
         def callback(url):
           webbrowser.open_new(url)
         link1 = tk.Button(self, text="Click here if you prefer to run the tracking from the command line", bg="green")
@@ -175,11 +175,6 @@ class VideoToAnalyze(tk.Frame):
         tk.Label(self, text="", pady=0).pack()
         
         tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
-        
-        tk.Label(self, text="").pack()
-        link2 = tk.Button(self, text="View Tracking Troubleshooting Tips", bg="gold")
-        link2.pack()
-        link2.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md"))
 
 
 class FolderToAnalyze(tk.Frame):

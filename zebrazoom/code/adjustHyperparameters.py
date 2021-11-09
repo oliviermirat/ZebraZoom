@@ -49,7 +49,8 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
   frameCtrlLengthY = math.ceil((len(hyperparametersListNames) + 2)/2) * 70 + 20
   
   buttonclicked = False
-  while frameNum[0] == l and hyperparametersList == [[hyperparameters[name]] for name in hyperparametersListNames] and not(buttonclicked):
+  buttonclicked2 = False
+  while frameNum[0] == l and hyperparametersList == [[hyperparameters[name]] for name in hyperparametersListNames] and not(buttonclicked) and not(buttonclicked2):
     
     frameCtrl = np.full((frameCtrlLengthY, 1100), 100).astype('uint8')
     printStuffOnCtrlImg(frameCtrl, frameNum, 1, 35, 350, hyperparameters["firstFrame"], hyperparameters["lastFrame"], "Frame number", "You can also go through the video with the keys a or 4 (backward); d or 6 (forward); f or g (fast backward); h or j (fast forward)")
@@ -58,7 +59,8 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
       organizationTab[idx][3] = minn
       organizationTab[idx][4] = maxx
     
-    buttonclicked = cvui.button(frameCtrl, organizationTab[len(organizationTab)-1][0], organizationTab[len(organizationTab)-1][1], "Ok, done!")
+    buttonclicked = cvui.button(frameCtrl, organizationTab[len(organizationTab)-1][0], organizationTab[len(organizationTab)-1][1], "Done! Save changes!")
+    buttonclicked2 = cvui.button(frameCtrl, organizationTab[len(organizationTab)-1][0]+170, organizationTab[len(organizationTab)-1][1], "Discard changes.")
     # cvui.text(frameCtrl, 100, 245, 'Warning: for some of the "overwrite" parameters, you will need to change the initial value for the "overwrite" to take effect.')
     cvui.imshow(WINDOW_NAME, frameToShow)
     cvui.imshow(WINDOW_NAME_CTRL, frameCtrl)
@@ -82,6 +84,9 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
     pickle.dump(newhyperparameters, open('newhyperparameters', 'wb'))
     cv2.destroyAllWindows()
     raise ValueError
+  if buttonclicked2:
+    cv2.destroyAllWindows()
+    raise NameError
 
   return [l, hyperparameters, organizationTab]
 
@@ -164,6 +169,34 @@ def getFreelySwimTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame,
     organizationTab = [\
     [470,  marginX + 5, 350,  0,  20, "Increase this if some of the background is not completely white. Decrease if you can't see all of the fish. "],
     [1,   marginX + 71, -1,  -1, "Click here if you're done adjusting these parameters."]]
+  
+  WINDOW_NAME = "Tracking"
+  
+  frame2 = cv2.cvtColor(frame2,cv2.COLOR_GRAY2RGB)
+  for k in range(0, hyperparameters["nbAnimalsPerWell"]):
+    if hyperparameters["trackTail"] == 1:
+      for j in range(0, nbTailPoints):
+        x = int(output[k, i-firstFrame][j][0])
+        y = int(output[k, i-firstFrame][j][1])
+        cv2.circle(frame2, (x, y), 1, (0, 255, 0),   -1)
+    x = int(output[k, i-firstFrame][nbTailPoints-1][0])
+    y = int(output[k, i-firstFrame][nbTailPoints-1][1])
+    cv2.circle(frame2, (x, y), 2, (0, 0, 255),   -1)
+    x = output[k, i-firstFrame][0][0]
+    y = output[k, i-firstFrame][0][1]
+  
+  return [hyperparametersListNames, frame2, WINDOW_NAME, organizationTab]
+
+
+def getFreelySwimTrackingAutoParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, output, outputHeading, frame, frame2, hyperparameters):
+  
+  hyperparametersListNames = ["recalculateForegroundImageBasedOnBodyArea", "adjustMinPixelDiffForBackExtract_nbBlackPixelsMax", "minPixelDiffForBackExtract"]
+  marginX = 30
+  organizationTab = [\
+  [470,   marginX + 5, 350,  0,  20, "Set to 1 for Method 3 and to 0 for Method 1 or 2"],
+  [1,    marginX + 71, 350,  0,  20, "Set to 0 for Method 1. For method 2 and 3: increase if the tip of tail is detected to soon, decrease if the tracking looks messy."],
+  [470,  marginX + 71, 350,  0,  20, "For method 1: decrease if the tip of tail is detected to soon, increase if the tracking looks messy"],
+  [1,   marginX + 137, -1,  -1, "Click here if you're done adjusting these parameters."]]
   
   WINDOW_NAME = "Tracking"
   

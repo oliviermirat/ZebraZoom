@@ -264,6 +264,7 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["adjustHeadEmbededTracking"] = getConfig(config, "adjustHeadEmbededTracking", videoPath)
   hyperparameters["adjustFreelySwimTracking"] = getConfig(config, "adjustFreelySwimTracking", videoPath)
+  hyperparameters["adjustFreelySwimTrackingAutomaticParameters"] = getConfig(config, "adjustFreelySwimTrackingAutomaticParameters", videoPath)
   
   hyperparameters["overwriteFirstStepValue"] = getConfig(config, "overwriteFirstStepValue", videoPath)
   hyperparameters["overwriteLastStepValue"]  = getConfig(config, "overwriteLastStepValue", videoPath)

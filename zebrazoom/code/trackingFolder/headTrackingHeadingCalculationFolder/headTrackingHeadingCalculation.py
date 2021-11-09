@@ -44,7 +44,7 @@ def headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1
           takeTheHeadClosestToTheCenter = hyperparameters["takeTheHeadClosestToTheCenter"]
           if takeTheHeadClosestToTheCenter == 0:
             (minVal, maxVal, headPosition, maxLoc) = cv2.minMaxLoc(blur)
-            if type(trackingProbabilityOfGoodDetection) != int:
+            if type(trackingProbabilityOfGoodDetection) != int and len(trackingProbabilityOfGoodDetection) and i-firstFrame < len(trackingProbabilityOfGoodDetection[0]):
               trackingProbabilityOfGoodDetection[0, i-firstFrame] = np.sum(255 - blur)
           else:
             headPosition = headTrackingTakeHeadClosestToWellCenter(thresh1, thresh2, blur, erodeSize, hyperparameters["minArea"], hyperparameters["maxArea"], frame_width, frame_height)

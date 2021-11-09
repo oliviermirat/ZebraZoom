@@ -36,7 +36,7 @@ def getMainArguments(self):
   argv         = []
   return [pathToVideo, videoName, videoExt, configFile, argv]
 
-def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
+def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile, freelySwimAutomaticParameters=False, boutDetectionsOnly=False):
 
   if int(reloadConfigFile):
   
@@ -46,9 +46,9 @@ def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
     pathconf = os.path.join(pathconf, 'configuration/')
     
     if globalVariables["mac"]:
-      configFileName =  filedialog.askopenfilename(initialdir = pathconf, title = "Select file")
+      configFileName =  filedialog.askopenfilename(initialdir = pathconf, title = "Select configuration file")
     else:
-      configFileName =  filedialog.askopenfilename(initialdir = pathconf, title = "Select file", filetypes = (("json files","*.json"),("all files","*.*")))
+      configFileName =  filedialog.askopenfilename(initialdir = pathconf, title = "Select configuration file", filetypes = (("json files","*.json"),("all files","*.*")))
     with open(configFileName) as f:
       self.configFile = json.load(f)
 
@@ -56,7 +56,14 @@ def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
     self.videoToCreateConfigFileFor = filedialog.askopenfilename(initialdir = os.path.expanduser("~"),title = "Select video to create config file for")
   else:
     self.videoToCreateConfigFileFor = filedialog.askopenfilename(initialdir = os.path.expanduser("~"),title = "Select video to create config file for",filetypes = (("video","*.*"),("all files","*.*")))
-  controller.show_frame("ChooseGeneralExperiment")
+  
+  if boutDetectionsOnly:
+    controller.calculateBackgroundFreelySwim(controller, 0, False, False, True)
+  else:
+    if freelySwimAutomaticParameters:
+      controller.calculateBackgroundFreelySwim(controller, 0, False, True)
+    else:
+      controller.show_frame("ChooseGeneralExperiment")
 
 def chooseGeneralExperimentFirstStep(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, fastScreen):
   if int(fastScreen):
@@ -697,6 +704,12 @@ def finishConfig(self, controller, configFileNameToSave):
   cur_dir_path = cur_dir_path.parent.parent
   reference = os.path.join(cur_dir_path, os.path.join('configuration', configFileNameToSave + '.json'))
 
+  # Ideally would like to remove these four lines below, once the problem with wrong 'firstFrame' and 'lastFrame' being saved in the configuration file is solved
+  if "lastFrame" in self.configFile:
+    del self.configFile["lastFrame"]
+  if "firstFrame" in self.configFile:
+    del self.configFile["firstFrame"]
+  
   with open(reference, 'w') as outfile:
     json.dump(self.configFile, outfile)
   self.configFile = {}
