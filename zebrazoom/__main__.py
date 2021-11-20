@@ -154,6 +154,10 @@ if __name__ == '__main__':
         from zebrazoom.kinematicParametersAnalysis import kinematicParametersAnalysis
         kinematicParametersAnalysis(sys)
       
+      if sys.argv[2] == "kinematicParametersAnalysisWithMedianPerGenotype":
+        from zebrazoom.kinematicParametersAnalysis import kinematicParametersAnalysis
+        kinematicParametersAnalysis(sys, 1)
+      
       if sys.argv[2] == "clusteringAnalysis":
         from zebrazoom.clusteringAnalysis import clusteringAnalysis
         clusteringAnalysis(sys)

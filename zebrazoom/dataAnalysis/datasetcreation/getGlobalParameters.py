@@ -222,6 +222,13 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
       listOfParametersCalculated.append(IBI)
     
     
+
+    elif parameterToCalculate == 'BoutFrameNumberStart':
+      
+      BoutFrameNumberStart = curbout["BoutStart"]
+      listOfParametersCalculated.append(BoutFrameNumberStart)
+    
+    
     
     else:
       

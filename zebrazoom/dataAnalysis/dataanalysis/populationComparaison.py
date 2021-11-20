@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import json
 
-def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, medianPerWellFirstForEachKinematicParameter = 0, plotOutliersAndMean = True, saveDataPlottedInJson = 0):
+def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, medianPerWellFirstForEachKinematicParameter = 0, plotOutliersAndMean = True, saveDataPlottedInJson = 0, medianPerGenotypeFirstForEachKinematicParameter=0):
 
   outputFolderResult = os.path.join(outputFolder, nameOfFile)
   if not(os.path.exists(outputFolderResult)):
@@ -16,7 +16,10 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
   if medianPerWellFirstForEachKinematicParameter:
     outputFolderResult = os.path.join(outputFolderResult, 'medianPerWellFirst')
   else:
-    outputFolderResult = os.path.join(outputFolderResult, 'allBoutsMixed')
+    if medianPerGenotypeFirstForEachKinematicParameter:
+      outputFolderResult = os.path.join(outputFolderResult, 'medianPerGenotypeFirst')
+    else:
+      outputFolderResult = os.path.join(outputFolderResult, 'allBoutsMixed')
   
   if plotOutliersAndMean: # This is a little bit of a hack because the creation of folders relies on the order in which the populationComparaison function is called (relative to the plotOutliersAndMean parameter)
     if os.path.exists(outputFolderResult): 
@@ -54,6 +57,18 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
     dfParam = pd.concat([dfCondGeno, dfKinematicValues], axis=1)
     dfParam = pd.concat([dfParam, dfCount], axis=1)
     globParam = globParam + ['numberOfBouts_NoBoutsRemovedBasedOnBends']
+  elif medianPerGenotypeFirstForEachKinematicParameter:
+    dfKinematicValues = dfParam[columnsForRawDataExport]
+    dfKinematicValues = dfKinematicValues.astype({param: float for param in globParam})
+    dfKinematicValues = dfKinematicValues.groupby(['Genotype', 'Well_ID']).median()
+    dfCond = dfParam[['Genotype', 'Well_ID', 'Condition']]
+    dfCond = dfCond.groupby(['Genotype', 'Well_ID']).first()
+    dfCount = dfParam[['Genotype', 'Well_ID']].copy()
+    dfCount['numberOfBouts_NoBoutsRemovedBasedOnBends'] = [0 for i in range(len(dfCount['Genotype']))]
+    dfCount = dfCount.groupby(['Genotype', 'Well_ID']).count()
+    dfParam = pd.concat([dfCond, dfKinematicValues], axis=1)
+    dfParam = pd.concat([dfParam, dfCount], axis=1)
+    globParam = globParam + ['numberOfBouts_NoBoutsRemovedBasedOnBends']
   else:
     dfParam  = dfParam[columnsForRawDataExport]
   
@@ -71,14 +86,21 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
       print("plotting parameter:", parameter)
       concatenatedValues = []
       labels = []
-      for condition in conditions:
-        for genotype in genotypes:
+      if not(medianPerGenotypeFirstForEachKinematicParameter):
+        for condition in conditions:
+          for genotype in genotypes:
+            indicesCondition = dfParam.index[dfParam['Condition'] == condition].tolist()
+            indicesGenotype  = dfParam.index[dfParam['Genotype']  == genotype].tolist()
+            indices = [ind for ind in indicesCondition if ind in indicesGenotype]
+            values  = dfParam.loc[indices, parameter].values
+            concatenatedValues.append(values)
+            labels.append(str(condition) + '\n' + str(genotype))
+      else:
+        for condition in conditions:
           indicesCondition = dfParam.index[dfParam['Condition'] == condition].tolist()
-          indicesGenotype  = dfParam.index[dfParam['Genotype']  == genotype].tolist()
-          indices = [ind for ind in indicesCondition if ind in indicesGenotype]
-          values  = dfParam.loc[indices, parameter].values
+          values  = dfParam.loc[indicesCondition, parameter].values
           concatenatedValues.append(values)
-          labels.append(str(condition) + '\n' + str(genotype))
+          labels.append(str(condition))
       
       concatenatedValuesWithoutNans = []
       for toConcat in concatenatedValues:
@@ -94,21 +116,21 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
         if nbColumns == 1:
           tabAx.set_title(parameter)
           tabAx.boxplot(concatenatedValues, showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean)
-          if plotOutliersAndMean and (medianPerWellFirstForEachKinematicParameter or len(concatenatedValues[0]) < 100):
+          if plotOutliersAndMean and (medianPerWellFirstForEachKinematicParameter or medianPerGenotypeFirstForEachKinematicParameter or len(concatenatedValues[0]) < 100):
             for idx2, values in enumerate(concatenatedValues):
               tabAx.plot(np.random.normal(idx2+1, 0.005*len(concatenatedValues), size=len(values)), values, 'b.', alpha=0.3, c=color[idx2] if idx2 < len(color) else 'b')
           tabAx.set_xticklabels(labels)
         else:
           tabAx[idx%nbColumns].set_title(parameter)
           tabAx[idx%nbColumns].boxplot(concatenatedValues, showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean)
-          if plotOutliersAndMean and (medianPerWellFirstForEachKinematicParameter or len(concatenatedValues[0]) < 100):
+          if plotOutliersAndMean and (medianPerWellFirstForEachKinematicParameter or medianPerGenotypeFirstForEachKinematicParameter or len(concatenatedValues[0]) < 100):
             for idx2, values in enumerate(concatenatedValues):
               tabAx[idx%nbColumns].plot(np.random.normal(idx2+1, 0.005*len(concatenatedValues), size=len(values)), values, 'b.', alpha=0.3, c=color[idx2] if idx2 < len(color) else 'b')
           tabAx[idx%nbColumns].set_xticklabels(labels)
       else:
         tabAx[int(idx/nbColumns), idx%nbColumns].set_title(parameter)
         tabAx[int(idx/nbColumns), idx%nbColumns].boxplot(concatenatedValues, showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean)
-        if plotOutliersAndMean and (medianPerWellFirstForEachKinematicParameter or len(concatenatedValues[0]) < 100):
+        if plotOutliersAndMean and (medianPerWellFirstForEachKinematicParameter or medianPerGenotypeFirstForEachKinematicParameter or len(concatenatedValues[0]) < 100):
           for idx2, values in enumerate(concatenatedValues):
             tabAx[int(idx/nbColumns), idx%nbColumns].plot(np.random.normal(idx2+1, 0.005*len(concatenatedValues), size=len(values)), values, 'b.', alpha=0.3, c=color[idx2] if idx2 < len(color) else 'b')
         tabAx[int(idx/nbColumns), idx%nbColumns].set_xticklabels(labels)
