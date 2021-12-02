@@ -98,7 +98,7 @@ def findCenterByIterativelyDilating(initialContour, lenX, lenY):
   return [x, y]
    
 
-def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, hyperparameters, gray, i, firstFrame, thresh1, thresh3):
+def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, hyperparameters, gray, i, firstFrame, thresh1, xmin=0, ymin=0):
   
   headCoordinatesOptions      = []
   headCoordinatesAreasOptions = []
@@ -108,10 +108,11 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
   maxAreaCur = hyperparameters["maxArea"]
   meanArea   = (hyperparameters["minArea"] + hyperparameters["maxArea"]) / 2
   
-  ret,thresh2 = cv2.threshold(gray,hyperparameters["thresholdForBlobImg"],255,cv2.THRESH_BINARY)
+  thresh2 = thresh1.copy()
   erodeSize = hyperparameters["erodeSize"]
-  kernel  = np.ones((erodeSize,erodeSize), np.uint8)
-  thresh2 = cv2.dilate(thresh2, kernel, iterations=hyperparameters["dilateIter"])
+  if erodeSize:
+    kernel  = np.ones((erodeSize,erodeSize), np.uint8)
+    thresh2 = cv2.dilate(thresh2, kernel, iterations=hyperparameters["dilateIter"])
   
   thresh2[:,0] = 255
   thresh2[0,:] = 255
@@ -140,7 +141,7 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
             if hyperparameters["readjustCenterOfMassIfNotInsideContour"]:
               [x, y] = reajustCenterOfMassIfNecessary(contour, x, y, len(thresh2[0]), len(thresh2))
           if not([x, y] in headCoordinatesOptions):
-            headCoordinatesOptions.append([x, y])
+            headCoordinatesOptions.append([x+xmin, y+ymin])
             headCoordinatesAreasOptions.append(abs(area - (meanArea/2)))
       
       if areaDecreaseFactor:
@@ -167,7 +168,7 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
             y = 0
           if hyperparameters["readjustCenterOfMassIfNotInsideContour"]:
             [x, y] = reajustCenterOfMassIfNecessary(contour, x, y, len(thresh2[0]), len(thresh2))
-        headCoordinatesOptions.append([x, y])
+        headCoordinatesOptions.append([x+xmin, y+ymin])
         headCoordinatesAreasOptions.append(abs(area - (meanArea/2)))
 
   headCoordinatesAreasOptionsSorted = np.argsort(headCoordinatesAreasOptions)
@@ -249,7 +250,6 @@ def multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAn
           if math.sqrt((xCur - xBef)**2 + (yCur - yBef)**2) > maxDistanceAuthorized:
             trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][0] = 0
             trackingHeadTailAllAnimals[animal_Id, i-firstFrame][0][1] = 0
-  
   
   # for idxCoordinateOption, [idx_x_Option, idx_y_Option] in enumerate(headCoordinatesOptions):
     # print(i, idxCoordinateOption, idx_x_Option, idx_y_Option)

@@ -29,7 +29,8 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
   newHeading = -1
   
   dst = frame.copy()
-  dst = cv2.cvtColor(dst, cv2.COLOR_GRAY2RGB)
+  if type(dst[0][0]) == np.uint8:
+    dst = cv2.cvtColor(dst, cv2.COLOR_GRAY2RGB)
   firstFrame = hyperparameters["firstFrame"]
   lastFrame = hyperparameters["lastFrame"]
   

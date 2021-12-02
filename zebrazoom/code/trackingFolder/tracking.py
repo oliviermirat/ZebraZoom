@@ -5,6 +5,7 @@ import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.popUpAlgoFollow import prepend
 import math
 import os
+import queue
 
 from zebrazoom.code.trackingFolder.getImages import getImages
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.headTrackingHeadingCalculation import headTrackingHeadingCalculation
@@ -72,6 +73,11 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
   else:
     trackingProbabilityOfGoodDetection = 0
   
+  if hyperparameters["detectMovementWithRawVideoInsideTracking"]:
+    previousFrames   = queue.Queue(hyperparameters["frameGapComparision"])
+    previousXYCoords = queue.Queue(hyperparameters["frameGapComparision"])
+    auDessusPerAnimalId = [np.zeros((lastFrame-firstFrame+1, 1)) for nbAnimalsPerWell in range(0, hyperparameters["nbAnimalsPerWell"])]
+  
   threshForBlackFrames = getThresForBlackFrame(hyperparameters, videoPath) # For headEmbededTeresaNicolson 
   cap.set(1, firstFrame)
   
@@ -105,7 +111,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
         frameForManualPointSelection = getAccentuateFrameForManualPointSelect(frame, hyperparameters)
         headPositionFirstFrame = findHeadPositionByUserInput(frameForManualPointSelection, firstFrame, videoPath)
       else:
-        [frame, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back] = getImages(hyperparameters, cap, videoPath, firstFrame, background, wellNumber, wellPositions)
+        [frame, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back, xHead, yHead] = getImages(hyperparameters, cap, videoPath, firstFrame, background, wellNumber, wellPositions)
         cap.set(1, firstFrame)
         [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, firstFrame, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, headPositionFirstFrame, wellPositions[wellNumber]["lengthX"])
     if os.path.exists(videoPath+'.csv'):
@@ -143,21 +149,65 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     if hyperparameters["debugTracking"]:
       print("frame:",i)
     # Get images for frame i
-    [frame, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back] = getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPositions)
+    [frame, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back, xHead, yHead] = getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPositions, 0, trackingHeadTailAllAnimals)
     # Head tracking and heading calculation
-    [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, headPositionFirstFrame, wellPositions[wellNumber]["lengthX"])
+    [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, headPositionFirstFrame, wellPositions[wellNumber]["lengthX"], xHead, yHead)
     # Tail tracking for frame i
     if hyperparameters["trackTail"] == 1 :
       for animalId in range(0, hyperparameters["nbAnimalsPerWell"]):
-        [trackingHeadTailAllAnimals, trackingHeadingAllAnimals] = tailTracking(animalId, i, firstFrame, videoPath, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, lastFirstTheta, maxDepth, tailTipFirstFrame, initialCurFrame, back, wellNumber)
+        [trackingHeadTailAllAnimals, trackingHeadingAllAnimals] = tailTracking(animalId, i, firstFrame, videoPath, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, lastFirstTheta, maxDepth, tailTipFirstFrame, initialCurFrame, back, wellNumber, xHead, yHead)
     # Eye tracking for frame i
     if hyperparameters["eyeTracking"]:
       trackingEyesAllAnimals = eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals)
     # Debug functions
     if hyperparameters["nbAnimalsPerWell"] > 1 or hyperparameters["forceBlobMethodForHeadTracking"] or hyperparameters["headEmbeded"] == 1 or hyperparameters["fixedHeadPositionX"] != -1:
-      debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame2, hyperparameters)
+      debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, hyperparameters)
     else:
-      debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, blur, hyperparameters)
+      debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, hyperparameters)
+    # DetectMovementWithRawVideoInsideTracking
+    if hyperparameters["detectMovementWithRawVideoInsideTracking"]:
+        halfDiameterRoiBoutDetect = hyperparameters["halfDiameterRoiBoutDetect"]
+        if previousFrames.full():
+          previousFrame   = previousFrames.get()
+          curFrame        = initialCurFrame.copy()
+          previousXYCoord = previousXYCoords.get()
+          curXYCoord      = [xHead, yHead]
+          if previousXYCoord[0] < curXYCoord[0]:
+            previousFrame = previousFrame[:, (curXYCoord[0]-previousXYCoord[0]):]
+          elif previousXYCoord[0] > curXYCoord[0]:
+            curFrame      = curFrame[:, (previousXYCoord[0]-curXYCoord[0]):]
+          if previousXYCoord[1] < curXYCoord[1]:
+            previousFrame = previousFrame[(curXYCoord[1]-previousXYCoord[1]):, :]
+          elif previousXYCoord[1] > curXYCoord[1]:
+            curFrame      = curFrame[(previousXYCoord[1]-curXYCoord[1]):, :]
+          maxX = min(len(previousFrame[0]), len(curFrame[0]))
+          maxY = min(len(previousFrame), len(curFrame))
+          
+          previousFrame = previousFrame[:maxY, :maxX]
+          curFrame      = curFrame[:maxY, :maxX]
+          
+          # Possible optimization in the future: refine the ROI based on halfDiameterRoiBoutDetect !!!
+          
+          res = cv2.absdiff(previousFrame, curFrame)
+          ret, res = cv2.threshold(res,hyperparameters["thresForDetectMovementWithRawVideo"],255,cv2.THRESH_BINARY)
+          
+          totDiff = cv2.countNonZero(res)
+          for animalId in range(0, hyperparameters["nbAnimalsPerWell"]):
+            if totDiff > hyperparameters["minNbPixelForDetectMovementWithRawVideo"]:
+              auDessusPerAnimalId[animalId][i-firstFrame] = 1
+            else:
+              auDessusPerAnimalId[animalId][i-firstFrame] = 0
+        else:
+          auDessusPerAnimalId[animalId][i-firstFrame] = 0
+        previousFrames.put(initialCurFrame)
+        previousXYCoords.put([xHead, yHead])
+    
+    if hyperparameters["trackOnlyOnROI_halfDiameter"]:
+      if not(xHead == 0 and yHead == 0):
+        for animalId in range(0, hyperparameters["nbAnimalsPerWell"]):
+          for j in range(0, len(trackingHeadTailAllAnimals[animalId][i-firstFrame])): # Head Position should already shifted, only shifting tail positions now
+            trackingHeadTailAllAnimals[animalId][i-firstFrame][j][0] = trackingHeadTailAllAnimals[animalId][i-firstFrame][j][0] + xHead
+            trackingHeadTailAllAnimals[animalId][i-firstFrame][j][1] = trackingHeadTailAllAnimals[animalId][i-firstFrame][j][1] + yHead
     
     if hyperparameters["adjustHeadEmbededTracking"] == 1:
       [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getHeadEmbededTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters)
@@ -199,7 +249,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
         if hyperparameters["minPixelDiffForBackExtract"] > 255:
           hyperparameters["minPixelDiffForBackExtract"] = 255
       hyperparameters["minPixelDiffForBackExtract"] = int(hyperparameters["minPixelDiffForBackExtract"])
-          
+      
     else:
       i = i + 1
   
@@ -212,4 +262,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
   if hyperparameters["popUpAlgoFollow"]:
     prepend("Tracking done for well "+ str(wellNumber))
   
-  return [trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingEyesAllAnimals, headPositionFirstFrame, tailTipFirstFrame]
+  if hyperparameters["detectMovementWithRawVideoInsideTracking"]:
+    return [trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingEyesAllAnimals, headPositionFirstFrame, tailTipFirstFrame, auDessusPerAnimalId]
+  else:
+    return [trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingEyesAllAnimals, headPositionFirstFrame, tailTipFirstFrame]

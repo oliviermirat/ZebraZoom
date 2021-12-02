@@ -415,6 +415,9 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["boutsMinNbFrames"] = getConfig(config, "boutsMinNbFrames", videoPath)
   
+  hyperparameters["trackOnlyOnROI_halfDiameter"] = getConfig(config, "trackOnlyOnROI_halfDiameter", videoPath)
+  
+  hyperparameters["detectMovementWithRawVideoInsideTracking"] = getConfig(config, "detectMovementWithRawVideoInsideTracking", videoPath)
   
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1

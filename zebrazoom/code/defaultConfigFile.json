@@ -38,6 +38,7 @@
   "exitAfterBackgroundExtraction" : 0,
   "exitAfterWellsDetection" : 0,
   "fasterMultiprocessing" : 0,
+  "trackOnlyOnROI_halfDiameter" : 0,
   
   "setPixDiffBoutDetectParameters" : 0,
   
@@ -185,6 +186,7 @@
   "frameGapComparision" : 1,
   "halfDiameterRoiBoutDetect" : 100,
   "fillGapFrameNb" : 5,
+  "detectMovementWithRawVideoInsideTracking" : 0,
   "addBlackCircleOfHalfDiamOnHeadForBoutDetect" : 0,
   "boutEdgesWhereZeros" : 0,
   "noBoutsDetection" : 0,

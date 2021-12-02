@@ -2,7 +2,7 @@ from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
 
-def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNumber, wellPositions, hyperparameters, alreadyExtractedImage=0):
+def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNumber, wellPositions, hyperparameters, alreadyExtractedImage=0, trackingHeadTailAllAnimals=0):
   
   minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtract"]
   if "minPixelDiffForBackExtractHead" in hyperparameters:
@@ -37,9 +37,40 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
   
   grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
   curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
+  
+  if hyperparameters["trackOnlyOnROI_halfDiameter"] != 0 and frameNumber != hyperparameters["firstFrame"]:
+    xHead = trackingHeadTailAllAnimals[0][frameNumber - hyperparameters["firstFrame"] - 1][0][0]
+    yHead = trackingHeadTailAllAnimals[0][frameNumber - hyperparameters["firstFrame"] - 1][0][1]
+    xHeadMin = xHead
+    xHeadMax = xHead
+    yHeadMin = yHead
+    yHeadMax = yHead
+    for animalId in range(1, hyperparameters["nbAnimalsPerWell"]):
+      xHead = trackingHeadTailAllAnimals[animalId][frameNumber - hyperparameters["firstFrame"] - 1][0][0]
+      yHead = trackingHeadTailAllAnimals[animalId][frameNumber - hyperparameters["firstFrame"] - 1][0][1]
+      xHeadMin = xHeadMin if xHeadMin < xHead else xHead
+      xHeadMax = xHeadMax if xHeadMax > xHead else xHead
+      yHeadMin = yHeadMin if yHeadMin < yHead else yHead
+      yHeadMax = yHeadMax if yHeadMax > yHead else yHead
+    maxHalfDiameter = hyperparameters["trackOnlyOnROI_halfDiameter"]
+    xmin = int(xHeadMin - maxHalfDiameter) if xHeadMin - maxHalfDiameter >= 0 else 0
+    ymin = int(yHeadMin - maxHalfDiameter) if yHeadMin - maxHalfDiameter >= 0 else 0
+    xmax = int(xHeadMax + maxHalfDiameter) if xHeadMax + maxHalfDiameter < len(curFrame[0]) else len(curFrame[0]) - 1
+    ymax = int(yHeadMax + maxHalfDiameter) if yHeadMax + maxHalfDiameter < len(curFrame)    else len(curFrame) - 1
+    curFrameInitial = curFrame.copy()
+    backInitial     = back.copy()
+    initialCurFrameInitial = curFrame.copy()
+    curFrame = curFrame[ymin:ymax, xmin:xmax]
+    back     = back[ymin:ymax, xmin:xmax]
+  else:
+    xmin = 0
+    ymin = 0
+    initialCurFrameInitial = 0
+    curFrameInitial = 0
+    backInitial     = 0
+  
   initialCurFrame = curFrame.copy()
   
-  # if False:
   putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
   
   curFrame[putToWhite] = 255
@@ -52,6 +83,8 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
     while (minPixelDiffForBackExtract > 0) and (countTries < 30) and not(minPixelDiffForBackExtract in minPixel2nbBlackPixels):
       if countTries > 0:
         curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
+        if hyperparameters["trackOnlyOnROI_halfDiameter"] != 0 and frameNumber != hyperparameters["firstFrame"]:
+          curFrame = curFrame[ymin:ymax, xmin:xmax]
         putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
         curFrame[putToWhite] = 255
       ret, thresh1 = cv2.threshold(curFrame, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
@@ -81,6 +114,11 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
     minPixelDiffForBackExtract = best_minPixelDiffForBackExtract
     hyperparameters["minPixelDiffForBackExtractHead"] = minPixelDiffForBackExtract
     curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
+    if hyperparameters["trackOnlyOnROI_halfDiameter"] != 0 and frameNumber != hyperparameters["firstFrame"]:
+      curFrame = curFrame[ymin:ymax, xmin:xmax]
+      curFrameInitial = curFrame
+      backInitial     = back
+      initialCurFrameInitial = curFrame
     putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
     curFrame[putToWhite] = 255      
     
@@ -100,5 +138,19 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
     # cv2.imshow('Frame', curFrame)
     cv2.imshow('Frame', frame)
     cv2.waitKey(0)
-    
-  return [curFrame, initialCurFrame, back]
+  
+  if hyperparameters["trackOnlyOnROI_halfDiameter"] != 0:
+    ret, res = cv2.threshold(curFrame, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
+    if ret:
+      reinitialize = 1
+      contours, hierarchy = cv2.findContours(res, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+      for contour in contours:
+        contourArea = cv2.contourArea(contour)
+        if contourArea > hyperparameters["minAreaBody"] and contourArea < hyperparameters["maxAreaBody"]:
+          reinitialize = 0
+      if reinitialize and type(curFrameInitial) != int:
+        curFrame = curFrameInitial
+        initialCurFrame = initialCurFrameInitial
+        back = backInitial
+  
+  return [curFrame, initialCurFrame, back, xmin, ymin]

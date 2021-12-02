@@ -71,6 +71,11 @@ class OptimizeConfigFile(tk.Frame):
     tk.Label(self, text="Trajectories post-processing can help solve problems with animal 'disapearing' and/or temporarily 'jumping' to a distant (and incorrect) location.").pack()
     tk.Label(self, text="").pack()
     
+    link5 = tk.Button(self, text="Speed up tracking for 'Track heads and tails of freely swimming fish'", bg="light yellow")
+    link5.pack()
+    link5.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingSpeedOptimization.md"))
+    tk.Label(self, text="").pack()
+    
     link2 = tk.Button(self, text="View More Tracking Troubleshooting Tips", bg="gold")
     link2.pack()
     link2.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md"))

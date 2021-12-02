@@ -1,10 +1,12 @@
 import cv2
 import math
 from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
+import numpy as np
 
 def debugTracking(nbTailPoints, i, firstFrame, output, outputHeading, frame2, hyperparameters):
   if hyperparameters["debugTracking"]:
-    frame2 = cv2.cvtColor(frame2,cv2.COLOR_GRAY2RGB)
+    if type(frame2[0][0]) == int or type(frame2[0][0]) == np.uint8:
+      frame2 = cv2.cvtColor(frame2,cv2.COLOR_GRAY2RGB)
     
     [frame2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame2)
     

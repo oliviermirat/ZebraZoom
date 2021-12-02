@@ -10,7 +10,10 @@ from zebrazoom.code.getImage.headEmbededFrameSequential import headEmbededFrameS
 from zebrazoom.code.getImage.headEmbededFrameSequentialBackExtract import headEmbededFrameSequentialBackExtract
 from zebrazoom.code.getImage.headEmbededFrameBackExtract import headEmbededFrameBackExtract
 
-def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPositions, alreadyExtractedImage=0):
+def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPositions, alreadyExtractedImage=0, trackingHeadTailAllAnimals=0):
+  
+  xHead = 0
+  yHead = 0
   
   initialCurFrame = 0
   back = 0
@@ -31,7 +34,7 @@ def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPo
   else:
     if hyperparameters["adjustFreelySwimTracking"] == 0 and hyperparameters["adjustFreelySwimTrackingAutomaticParameters"] == 0:
       if len(background):
-        [frame, initialCurFrame, back] = getForegroundImageSequential(cap, videoPath, background, i, wellNumber, wellPositions, hyperparameters, alreadyExtractedImage)
+        [frame, initialCurFrame, back, xHead, yHead] = getForegroundImageSequential(cap, videoPath, background, i, wellNumber, wellPositions, hyperparameters, alreadyExtractedImage, trackingHeadTailAllAnimals)
       else:
         frame = getImageSequential(cap, videoPath, i, wellNumber, wellPositions, hyperparameters)
     else:
@@ -43,11 +46,6 @@ def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPo
     gray = frame.copy()
     
     ret,thresh1 = cv2.threshold(gray,hyperparameters["thresholdForBlobImg"],255,cv2.THRESH_BINARY)
-  
-  # if hyperparameters["invertBlackWhiteOnImages"]:
-    # frame   = 255 - frame
-    # gray    = 255 - gray
-    # thresh1 = 255 - thresh1
   
   
   coverHorizontalPortionBelowForHeadDetect = hyperparameters["coverHorizontalPortionBelowForHeadDetect"]
@@ -78,14 +76,23 @@ def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPo
     cv2.waitKey(0)
     cv2.destroyWindow('Frame')
   
-  paramGaussianBlur = int((hyperparameters["paramGaussianBlur"] / 2)) * 2 + 1
-  blur = cv2.GaussianBlur(gray, (paramGaussianBlur, paramGaussianBlur), 0)
-  frame2 = frame.copy()
-  erodeSize = hyperparameters["erodeSize"]
-  kernel  = np.ones((erodeSize,erodeSize), np.uint8)
+  # paramGaussianBlur = int((hyperparameters["paramGaussianBlur"] / 2)) * 2 + 1
+  # blur = cv2.GaussianBlur(gray, (paramGaussianBlur, paramGaussianBlur), 0)
+  blur = 0
   
-  thresh1 = cv2.erode(thresh1, kernel, iterations=hyperparameters["erodeIter"])
-  thresh2 = thresh1.copy()
-  thresh2 = cv2.dilate(thresh2, kernel, iterations=hyperparameters["dilateIter"])
+  frame2 = frame #frame.copy()
   
-  return [frame, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back]
+  if hyperparameters["erodeIter"] or hyperparameters["dilateIter"]:
+    erodeSize = hyperparameters["erodeSize"]
+    kernel  = np.ones((erodeSize,erodeSize), np.uint8)
+  
+  if hyperparameters["erodeIter"]:
+    thresh1 = cv2.erode(thresh1, kernel, iterations=hyperparameters["erodeIter"])
+  
+  if hyperparameters["dilateIter"]:
+    thresh2 = thresh1.copy()
+    thresh2 = cv2.dilate(thresh2, kernel, iterations=hyperparameters["dilateIter"])
+  else:
+    thresh2 = thresh1
+  
+  return [frame, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back, xHead, yHead]

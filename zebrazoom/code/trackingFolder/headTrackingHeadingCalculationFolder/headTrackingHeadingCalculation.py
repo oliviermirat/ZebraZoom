@@ -7,7 +7,7 @@ from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.multiple
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.multipleAnimalsHeadTrackingAdvance import multipleAnimalsHeadTrackingAdvance
 # from postProcessingMultiAnimalTrajectories import postProcessingMultiAnimalTrajectories
 
-def headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1, thresh2, gray, erodeSize, frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, headPosition, lengthX):
+def headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1, thresh2, gray, erodeSize, frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, headPosition, lengthX, xmin=0, ymin=0):
 
   xHB_TN = 0
   heading = 0
@@ -25,7 +25,7 @@ def headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1
     if hyperparameters["nbAnimalsPerWell"] > 1 or hyperparameters["forceBlobMethodForHeadTracking"]:
       
       if hyperparameters["multipleAnimalTrackingAdvanceAlgorithm"] == 0:
-        [trackingHeadingAllAnimals, trackingHeadTailAllAnimals] = multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, hyperparameters, gray, i, firstFrame, thresh1, thresh2)
+        [trackingHeadingAllAnimals, trackingHeadTailAllAnimals] = multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, hyperparameters, gray, i, firstFrame, thresh1, xmin, ymin)
       else:
         [trackingHeadingAllAnimals, trackingHeadTailAllAnimals] = multipleAnimalsHeadTrackingAdvance(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, hyperparameters, gray, i, firstFrame, thresh1, thresh2, lengthX)
       
@@ -40,6 +40,11 @@ def headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1
       if (hyperparameters["headEmbeded"] == 1 and i == firstFrame) or (hyperparameters["headEmbeded"] == 0) or (hyperparameters["headEmbededTeresaNicolson"] == 1):
         
         if hyperparameters["findHeadPositionByUserInput"] == 0:
+          
+          if type(blur) == int: # it won't be equal to int for images coming from the faster screen 'multiprocessing'
+            paramGaussianBlur = int((hyperparameters["paramGaussianBlur"] / 2)) * 2 + 1
+            blur = cv2.GaussianBlur(gray, (paramGaussianBlur, paramGaussianBlur), 0)
+          
           # Finds head position for frame i
           takeTheHeadClosestToTheCenter = hyperparameters["takeTheHeadClosestToTheCenter"]
           if takeTheHeadClosestToTheCenter == 0:
@@ -57,6 +62,15 @@ def headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1
           
           if (hyperparameters["headEmbededTeresaNicolson"] == 1):
             headPosition = [xHB_TN + 100, y]
+          
+          if type(headPosition) == tuple:
+            headPosition = list(headPosition)
+            headPosition[0] = headPosition[0] + xmin
+            headPosition[1] = headPosition[1] + ymin
+            headPosition = tuple(headPosition)
+          else:
+            headPosition[0] = headPosition[0] + xmin
+            headPosition[1] = headPosition[1] + ymin
           
           # Calculate heading for frame i
           if type(thresh1) != int:
