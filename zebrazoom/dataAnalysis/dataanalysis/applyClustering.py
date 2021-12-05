@@ -212,10 +212,16 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
       instaAsymtab  = dfTemp[instaAsym]
       tailAnglestab = dfTemp[tailAngles]
       color = possibleColors[idxCond]
-      tabAx[0, classed].plot(instaTBFtab.median().values,  color, label=cond)
-      tabAx[1, classed].plot(instaAmptab.median().values,  color)
-      tabAx[2, classed].plot(instaAsymtab.median().values, color)
-      tabAx[3, classed].plot(tailAnglestab.median().values, color)
+      if nbCluster == 1:
+        tabAx[0].plot(instaTBFtab.median().values,  color, label=cond)
+        tabAx[1].plot(instaAmptab.median().values,  color)
+        tabAx[2].plot(instaAsymtab.median().values, color)
+        tabAx[3].plot(tailAnglestab.median().values, color)
+      else:
+        tabAx[0, classed].plot(instaTBFtab.median().values,  color, label=cond)
+        tabAx[1, classed].plot(instaAmptab.median().values,  color)
+        tabAx[2, classed].plot(instaAsymtab.median().values, color)
+        tabAx[3, classed].plot(tailAnglestab.median().values, color)
       
       instaTBFmedian  = instaTBFtab.median().values
       instaAmpmedian  = instaAmptab.median().values
@@ -230,20 +236,36 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
   
   if scaleGraphs:
     for classed in range(0, len(proportions[0])):
-      tabAx[0, classed].scatter(xaxis, freqAxis, None, 'w')
-      tabAx[1, classed].scatter(xaxis, ampAxis, None, 'w')
-      tabAx[2, classed].scatter(xaxis, asymAxis, None, 'w')
-      tabAx[3, classed].scatter(xaxis, angAxis, None, 'w')
-  tabAx[0, 0].legend()
-  tabAx[0, 0].set_ylabel('Avg Insta Frequency')
-  tabAx[1, 0].set_ylabel('Avg Insta Amplitude')
-  tabAx[2, 0].set_ylabel('Avg Insta Asymetry')
-  tabAx[3, 0].set_ylabel('Avg Angle')
+      if nbCluster == 1:
+        tabAx[0].scatter(xaxis, freqAxis, None, 'w')
+        tabAx[1].scatter(xaxis, ampAxis, None, 'w')
+        tabAx[2].scatter(xaxis, asymAxis, None, 'w')
+        tabAx[3].scatter(xaxis, angAxis, None, 'w')    
+      else:
+        tabAx[0, classed].scatter(xaxis, freqAxis, None, 'w')
+        tabAx[1, classed].scatter(xaxis, ampAxis, None, 'w')
+        tabAx[2, classed].scatter(xaxis, asymAxis, None, 'w')
+        tabAx[3, classed].scatter(xaxis, angAxis, None, 'w')
+  if nbCluster == 1:
+    tabAx[0].legend()
+    tabAx[0].set_ylabel('Avg Insta Frequency')
+    tabAx[1].set_ylabel('Avg Insta Amplitude')
+    tabAx[2].set_ylabel('Avg Insta Asymetry')
+    tabAx[3].set_ylabel('Avg Angle')  
+  else:
+    tabAx[0, 0].legend()
+    tabAx[0, 0].set_ylabel('Avg Insta Frequency')
+    tabAx[1, 0].set_ylabel('Avg Insta Amplitude')
+    tabAx[2, 0].set_ylabel('Avg Insta Asymetry')
+    tabAx[3, 0].set_ylabel('Avg Angle')
   for i in range(0, nbCluster):
     labelX = "Cluster " + str(i+1) + "\n"
     for j, condName in enumerate(np.unique(dfParam['Condition'].values)):
       labelX = labelX + "for " + str(condName) + " :  " + str(round(proportions[j,i]*100*100)/100) + "%\n"
-    tabAx[3, i].set_xlabel(labelX)
+    if nbCluster == 1:
+      tabAx[3].set_xlabel(labelX)
+    else:
+      tabAx[3, i].set_xlabel(labelX)
   plt.savefig(os.path.join(outputFolderResult, 'medianValuesUsedForClusteringForEachClusterAndCondition.png'))
   if showFigures:
     plt.show()
@@ -259,25 +281,46 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
         instaAsymtab  = dfParam.loc[idMinDist, instaAsym]
         tailAnglestab = dfParam.loc[idMinDist, tailAngles]
         color = possibleColors[cond]
-        tabAx2[0, classed].plot(instaTBFtab.values,  color)
-        tabAx2[1, classed].plot(instaAmptab.values,  color)
-        tabAx2[2, classed].plot(instaAsymtab.values, color)
-        tabAx2[3, classed].plot(tailAnglestab.values, color)
+        if nbCluster == 1:
+          tabAx2[0].plot(instaTBFtab.values,  color)
+          tabAx2[1].plot(instaAmptab.values,  color)
+          tabAx2[2].plot(instaAsymtab.values, color)
+          tabAx2[3].plot(tailAnglestab.values, color)
+        else:
+          tabAx2[0, classed].plot(instaTBFtab.values,  color)
+          tabAx2[1, classed].plot(instaAmptab.values,  color)
+          tabAx2[2, classed].plot(instaAsymtab.values, color)
+          tabAx2[3, classed].plot(tailAnglestab.values, color)
   if scaleGraphs:
     for classed in range(0, len(proportions[0])):
-      tabAx2[0, classed].scatter(xaxis, freqAxis, None, 'w')
-      tabAx2[1, classed].scatter(xaxis, ampAxis, None, 'w')
-      tabAx2[2, classed].scatter(xaxis, asymAxis, None, 'w')
-      tabAx2[3, classed].scatter(xaxis, angAxis, None, 'w')
-  tabAx2[0, 0].set_ylabel('Avg Insta Frequency')
-  tabAx2[1, 0].set_ylabel('Avg Insta Amplitude')
-  tabAx2[2, 0].set_ylabel('Avg Insta Asymetry')
-  tabAx2[3, 0].set_ylabel('Avg Angle')
+      if nbCluster == 1:
+        tabAx2[0].scatter(xaxis, freqAxis, None, 'w')
+        tabAx2[1].scatter(xaxis, ampAxis, None, 'w')
+        tabAx2[2].scatter(xaxis, asymAxis, None, 'w')
+        tabAx2[3].scatter(xaxis, angAxis, None, 'w')      
+      else:
+        tabAx2[0, classed].scatter(xaxis, freqAxis, None, 'w')
+        tabAx2[1, classed].scatter(xaxis, ampAxis, None, 'w')
+        tabAx2[2, classed].scatter(xaxis, asymAxis, None, 'w')
+        tabAx2[3, classed].scatter(xaxis, angAxis, None, 'w')
+  if nbCluster == 1:
+    tabAx2[0].set_ylabel('Avg Insta Frequency')
+    tabAx2[1].set_ylabel('Avg Insta Amplitude')
+    tabAx2[2].set_ylabel('Avg Insta Asymetry')
+    tabAx2[3].set_ylabel('Avg Angle')  
+  else:
+    tabAx2[0, 0].set_ylabel('Avg Insta Frequency')
+    tabAx2[1, 0].set_ylabel('Avg Insta Amplitude')
+    tabAx2[2, 0].set_ylabel('Avg Insta Asymetry')
+    tabAx2[3, 0].set_ylabel('Avg Angle')
   for i in range(0, nbCluster):
     labelX = "Most representative bout of cluster "+ str(i+1) + ":\n"
     for j, condName in enumerate(np.unique(dfParam['Condition'].values)):
       labelX = labelX + "for " + str(condName) + " (in " + possibleColorsNames[j] + ")\n"
-    tabAx2[3, i].set_xlabel(labelX)
+    if nbCluster == 1:
+      tabAx2[3].set_xlabel(labelX)
+    else:
+      tabAx2[3, i].set_xlabel(labelX)
   plt.savefig(os.path.join(outputFolderResult, 'mostRepresentativeBoutForEachClusterAndCondition.png'))
   if showFigures:
     plt.show()
@@ -313,10 +356,19 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
     for j in range(0, nbOfMostRepresentativeBoutsToPlot):
       tailAnglestab = sortedRepresentativeBouts[classed].loc[indices[j]].values
       color = 'b'
-      tabAx3[classed].plot(tailAnglestab, color)
+      if nbCluster == 1:
+        tabAx3.plot(tailAnglestab, color)
+      else:
+        tabAx3[classed].plot(tailAnglestab, color)
   for i in range(0,len(proportions[0])):
-    tabAx3[i].set_ylabel('Cluster '+str(i+1))
-  tabAx3[len(proportions[0])-1].set_xlabel("Tail angle over time for the\n"+str(nbOfMostRepresentativeBoutsToPlot)+' most representative bouts for each cluster')
+    if nbCluster == 1:
+      tabAx3.set_ylabel('Cluster '+str(i+1))
+    else:
+      tabAx3[i].set_ylabel('Cluster '+str(i+1))
+  if nbCluster == 1:
+    tabAx3.set_xlabel("Tail angle over time for the\n"+str(nbOfMostRepresentativeBoutsToPlot)+' most representative bouts for each cluster')
+  else:
+    tabAx3[len(proportions[0])-1].set_xlabel("Tail angle over time for the\n"+str(nbOfMostRepresentativeBoutsToPlot)+' most representative bouts for each cluster')
   plt.savefig(os.path.join(outputFolderResult, str(nbOfMostRepresentativeBoutsToPlot) + 'mostRepresentativeBoutsForEachCluster.png'))
   if showFigures:
     plt.show()
@@ -332,11 +384,20 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
     for j in range(0, nbOfMostRepresentativeBoutsToPlot):
       tailAnglestab = sortedRepresentativeBouts[classed].loc[indices[j]].values
       color = 'b'
-      tabAx3[classed].plot(tailAnglestab, color)
+      if nbCluster == 1:
+        tabAx3.plot(tailAnglestab, color)
+      else:
+        tabAx3[classed].plot(tailAnglestab, color)
       
   for i in range(0,len(proportions[0])):
-    tabAx3[i].set_ylabel('Cluster '+str(i+1))
-  tabAx3[len(proportions[0])-1].set_xlabel("Tail angle over time for the most representative bouts for each cluster")
+    if nbCluster == 1:
+      tabAx3.set_ylabel('Cluster '+str(i+1))
+    else:
+      tabAx3[i].set_ylabel('Cluster '+str(i+1))
+  if nbCluster == 1:
+    tabAx3.set_xlabel("Tail angle over time for the most representative bouts for each cluster")
+  else:
+    tabAx3[len(proportions[0])-1].set_xlabel("Tail angle over time for the most representative bouts for each cluster")
   plt.savefig(os.path.join(outputFolderResult, 'mostRepresentativeBoutsForEachCluster.png'))
   if showFigures:
     plt.show()

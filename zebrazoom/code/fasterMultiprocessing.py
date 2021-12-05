@@ -107,7 +107,7 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
           thresh2 = 0
           gray    = 0
         else:
-          [frame2, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back] = getImages(hyperparameters, 0, videoPath, i, background, wellNumber, wellPositions, frame)
+          [frame2, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back, xHead, yHead] = getImages(hyperparameters, 0, videoPath, i, background, wellNumber, wellPositions, frame)
           headPositionFirstFrame = 0
         
         # Head tracking and heading calculation
