@@ -491,6 +491,8 @@ while putting the parameters:
 
 - nbClustersToFind (OPTIONAL): set to the number of clusters that you want the clustering algorithm to find. If you don't put anything for this parameter, it will be set to 3 by default.
 
+- minNbBendForBoutDetect (OPTIONAL): minimum number of bends a bout must have in order to be taken into account for the clustering, it will be set to 3 by default.
+
 </p>
 
 

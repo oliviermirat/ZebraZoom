@@ -10,6 +10,7 @@ def clusteringAnalysis(sys):
   
   freelySwimming   = int(sys.argv[4]) if len(sys.argv) >= 5 else 1
   nbClustersToFind = int(sys.argv[5]) if len(sys.argv) >= 6 else 3
+  minNbBendForBoutDetect = int(sys.argv[6]) if len(sys.argv) >= 7 else 3
   
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
   cur_dir_path = Path(cur_dir_path)
@@ -26,7 +27,7 @@ def clusteringAnalysis(sys):
     'smoothingFactorDynaParam'          : 0,   # 0.001
     'nbFramesTakenIntoAccount'          : -1, #28,
     'numberOfBendsIncludedForMaxDetect' : -1,
-    'minNbBendForBoutDetect'            : 3, # THIS NEEDS TO BE CHANGED IF FPS IS LOW (default: 3)
+    'minNbBendForBoutDetect'            : minNbBendForBoutDetect, # THIS NEEDS TO BE CHANGED IF FPS IS LOW (default: 3)
     'defaultZZoutputFolderPath'         : os.path.join(cur_dir_path, 'ZZoutput'),
     'tailAngleKinematicParameterCalculation' : 1,
     'getTailAngleSignMultNormalized'    : 1,
