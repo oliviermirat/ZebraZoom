@@ -114,8 +114,13 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
   controller.show_frame("AnalysisOutputFolderPopulation")
 
 
-def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded):
-
+def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3):
+  
+  if len(minNbBendForBoutDetect) == 0:
+    minNbBendForBoutDetect = 3
+  else:
+    minNbBendForBoutDetect = int(minNbBendForBoutDetect)
+  
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
   cur_dir_path = Path(cur_dir_path)
   cur_dir_path = cur_dir_path.parent.parent
@@ -134,7 +139,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
     'smoothingFactorDynaParam'          : 0,   # 0.001
     'nbFramesTakenIntoAccount'          : -1, #28,
     'numberOfBendsIncludedForMaxDetect' : -1,
-    'minNbBendForBoutDetect'            : 3, # THIS NEEDS TO BE CHANGED IF FPS IS LOW (default: 3)
+    'minNbBendForBoutDetect'            : minNbBendForBoutDetect,
     'defaultZZoutputFolderPath'         : ZZoutputLocation,
     'tailAngleKinematicParameterCalculation' : 1,
     'getTailAngleSignMultNormalized'    : 1,

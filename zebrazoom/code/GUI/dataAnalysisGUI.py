@@ -132,14 +132,22 @@ class BoutClustering(tk.Frame):
     tk.Label(self, text="Choose number of cluster to find:").pack()
     nbClustersToFind = tk.Entry(self)
     nbClustersToFind.pack()
+    tk.Label(self, text="").pack()
     
     tk.Label(self, text="Choose one of the options below:").pack()
     FreelySwimming = IntVar()
     Checkbutton(self, text="Freely swimming fish with tail tracking", variable=FreelySwimming).pack()
     HeadEmbeded = IntVar()
     Checkbutton(self, text="Head embeded fish with tail tracking", variable=HeadEmbeded).pack()
+    tk.Label(self, text="").pack()
     
-    tk.Button(self, text="Launch Analysis", bg="light yellow", command=lambda: controller.boutClustering(controller, nbClustersToFind.get(), FreelySwimming.get(), HeadEmbeded.get())).pack()
+    tk.Label(self, text="What's the minimum number of bends a bout should have to be taken into account for the analysis?", font=("Helvetica", 10)).pack(side="top", fill="x")
+    tk.Label(self, text="(the default value is 3) (put 0 if you want all bends to be taken into account)", font=("Helvetica", 10)).pack(side="top", fill="x")
+    minNbBendForBoutDetect = tk.Entry(self)
+    minNbBendForBoutDetect.pack()
+    tk.Label(self, text="").pack()
+    
+    tk.Button(self, text="Launch Analysis", bg="light yellow", command=lambda: controller.boutClustering(controller, nbClustersToFind.get(), FreelySwimming.get(), HeadEmbeded.get(), minNbBendForBoutDetect.get())).pack()
     
     tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
