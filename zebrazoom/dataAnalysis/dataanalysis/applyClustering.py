@@ -261,7 +261,7 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
   for i in range(0, nbCluster):
     labelX = "Cluster " + str(i+1) + "\n"
     for j, condName in enumerate(np.unique(dfParam['Condition'].values)):
-      labelX = labelX + "for " + str(condName) + " :  " + str(round(proportions[j,i]*100*100)/100) + "%\n"
+      labelX = labelX + str(condName) + ": " + str(round(proportions[j,i]*100*100)/100) + "% (in " + possibleColorsNames[j] + ")\n"
     if nbCluster == 1:
       tabAx[3].set_xlabel(labelX)
     else:

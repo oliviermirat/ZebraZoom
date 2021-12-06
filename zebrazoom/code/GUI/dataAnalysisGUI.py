@@ -147,7 +147,13 @@ class BoutClustering(tk.Frame):
     minNbBendForBoutDetect.pack()
     tk.Label(self, text="").pack()
     
-    tk.Button(self, text="Launch Analysis", bg="light yellow", command=lambda: controller.boutClustering(controller, nbClustersToFind.get(), FreelySwimming.get(), HeadEmbeded.get(), minNbBendForBoutDetect.get())).pack()
+    tk.Label(self, text="Optional: generate videos containing the most representative bouts for each cluster: enter below the number of bouts for each video:", font=("Helvetica", 10)).pack(side="top", fill="x")
+    tk.Label(self, text="(leave blank if you don't want any such cluster validation videos to be generated)", font=("Helvetica", 10)).pack(side="top", fill="x")
+    nbVideosToSave = tk.Entry(self)
+    nbVideosToSave.pack()
+    tk.Label(self, text="").pack()
+    
+    tk.Button(self, text="Launch Analysis", bg="light yellow", command=lambda: controller.boutClustering(controller, nbClustersToFind.get(), FreelySwimming.get(), HeadEmbeded.get(), minNbBendForBoutDetect.get(), nbVideosToSave.get())).pack()
     
     tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 

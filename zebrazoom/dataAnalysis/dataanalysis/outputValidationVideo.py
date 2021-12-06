@@ -5,16 +5,17 @@ import json
 import numpy as np
 import sys
 import tkinter as tk
+import os
 
 def outputValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, start, boutEnd, out, length, analyzeAllWellsAtTheSameTime):
 
-  # horizontal = GetSystemMetrics(0)
-  # vertical   = GetSystemMetrics(1)
-  root = tk.Tk()
-  horizontal = root.winfo_screenwidth()
-  vertical   = root.winfo_screenheight()
-
   plotAtTheSameTime = False
+  
+  if plotAtTheSameTime:
+    root = tk.Tk()
+    horizontal = root.winfo_screenwidth()
+    vertical   = root.winfo_screenheight()
+    root.destroy()
   
   if plotAtTheSameTime:
     cv2.namedWindow("press q to quit")
@@ -24,13 +25,13 @@ def outputValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, 
   s1  = videoPath
   s2  = folderName
   s3  = "/"
-  s3b = "/results_"
+  s3b = "results_"
   s4  = folderName
   s5  = ".avi"
   s5b = ".txt"
   
-  videoPath = s1 + s2 + s3 + s4 + s5
-  resultsPath = s1 + s2 + s3b + s4 + s5b
+  videoPath   = os.path.join(os.path.join(s1, s2),       s4 + s5)
+  resultsPath = os.path.join(os.path.join(s1, s2), s3b + s4 + s5b)
   
   cap = zzVideoReading.VideoCapture(videoPath)
   
@@ -52,7 +53,7 @@ def outputValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, 
     lastYpos = supstruct["wellPoissMouv"][numWell][0][0]["HeadY"][0]
     for k in range(0,len(supstruct["wellPoissMouv"][numWell][0])):
       beg = supstruct["wellPoissMouv"][numWell][0][k]["BoutStart"]
-      end = supstruct["wellPoissMouv"][numWell][0][k]["BoutEnd"]
+      end = len(supstruct["wellPoissMouv"][numWell][0][k]["HeadX"]) # supstruct["wellPoissMouv"][numWell][0][k]["BoutEnd"]
       for l in range(lastEnd, beg):
         HeadX[l] = lastXpos
         HeadY[l] = lastYpos
@@ -119,7 +120,7 @@ def outputValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, 
   
   imageWaitTime = 1
   
-  while (l < boutEnd):
+  while (l < boutEnd) and (l < max_l-1):
     
     cap.set(1, l )
     ret, img = cap.read()
