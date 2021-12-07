@@ -403,22 +403,22 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
     plt.show()
 
   # Creating validation videos: Beginning, middle, and end. (10 movements each)
-  if False:
-    length = 150
-    for boutCategory in range(0, nbCluster):
-      print("boutCategory:",boutCategory)
-      out = cv2.VideoWriter(os.path.join(outputFolderResult, 'cluster' + str(boutCategory) + '.avi'),cv2.VideoWriter_fourcc('M','J','P','G'), 10, (length,length))
-      indices = sortedRepresentativeBouts[boutCategory].index
-      print("total:",len(indices))
-      r = [i for i in range(0, 10)] + [i for i in range(int(len(indices)/2)-10, int(len(indices)/2))] + [i for i in range(len(indices)-10, len(indices))]
-      for num in r:
-        print("num:",num)
-        BoutStart = int(dfParam.loc[indices[num],'BoutStart'])
-        BoutEnd   = int(dfParam.loc[indices[num],'BoutEnd'])
-        Well_ID   = int(dfParam.loc[indices[num],'Well_ID']) - 1
-        Trial_ID  = dfParam.loc[indices[num],'Trial_ID']
-        out = outputValidationVideo(pathToVideos, Trial_ID, '.txt', Well_ID, 1, BoutStart, BoutEnd, out, length, analyzeAllWellsAtTheSameTime, ZZoutputLocation)
-      out.release()
+  # if False:
+    # length = 150
+    # for boutCategory in range(0, nbCluster):
+      # print("boutCategory:",boutCategory)
+      # out = cv2.VideoWriter(os.path.join(outputFolderResult, 'cluster' + str(boutCategory) + '.avi'),cv2.VideoWriter_fourcc('M','J','P','G'), 10, (length,length))
+      # indices = sortedRepresentativeBouts[boutCategory].index
+      # print("total:",len(indices))
+      # r = [i for i in range(0, 10)] + [i for i in range(int(len(indices)/2)-10, int(len(indices)/2))] + [i for i in range(len(indices)-10, len(indices))]
+      # for num in r:
+        # print("num:",num)
+        # BoutStart = int(dfParam.loc[indices[num],'BoutStart'])
+        # BoutEnd   = int(dfParam.loc[indices[num],'BoutEnd'])
+        # Well_ID   = int(dfParam.loc[indices[num],'Well_ID']) - 1
+        # Trial_ID  = dfParam.loc[indices[num],'Trial_ID']
+        # out = outputValidationVideo(pathToVideos, Trial_ID, '.txt', Well_ID, 1, BoutStart, BoutEnd, out, length, analyzeAllWellsAtTheSameTime, ZZoutputLocation)
+      # out.release()
       
   # Creating validation videos: Beginning (10 movements each)
   if videoSaveFirstTenBouts:
@@ -438,10 +438,9 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
         BoutEnd   = int(dfParam.loc[indices[num],'BoutEnd'])
         Well_ID   = int(dfParam.loc[indices[num],'Well_ID'])
         Trial_ID  = dfParam.loc[indices[num],'Trial_ID']
-        out = outputValidationVideo(pathToVideos, Trial_ID, '.txt', Well_ID, 1, BoutStart, BoutEnd, out, length, analyzeAllWellsAtTheSameTime, ZZoutputLocation)
-        blank = np.zeros((length, length, 3), np.uint8)
-        for k in range(0, 10):
-          out.write(blank)
+        NumBout   = dfParam.loc[indices[num],'NumBout']
+        out = outputValidationVideo(pathToVideos, Trial_ID, '.txt', Well_ID, NumBout, 1, BoutStart, BoutEnd, out, length, analyzeAllWellsAtTheSameTime, ZZoutputLocation)
+      
       out.release()
   
   # Looking into global parameters
