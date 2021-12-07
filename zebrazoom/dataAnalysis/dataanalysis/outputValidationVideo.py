@@ -6,8 +6,9 @@ import numpy as np
 import sys
 import tkinter as tk
 import os
+from pathlib import Path
 
-def outputValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, start, boutEnd, out, length, analyzeAllWellsAtTheSameTime):
+def outputValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, start, boutEnd, out, length, analyzeAllWellsAtTheSameTime, ZZoutputLocation=''):
 
   plotAtTheSameTime = False
   
@@ -30,8 +31,15 @@ def outputValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, 
   s5  = ".avi"
   s5b = ".txt"
   
-  videoPath   = os.path.join(os.path.join(s1, s2),       s4 + s5)
-  resultsPath = os.path.join(os.path.join(s1, s2), s3b + s4 + s5b)
+  cur_dir_path = os.path.dirname(os.path.realpath(__file__))
+  initialPath  = Path(cur_dir_path)
+  initialPath  = os.path.join(initialPath.parent.parent, 'ZZoutput')
+  initialPath  = os.path.join(initialPath, s1)
+  if len(ZZoutputLocation):
+    initialPath = ZZoutputLocation
+  
+  videoPath   = os.path.join(os.path.join(initialPath, s2),       s4 + s5)
+  resultsPath = os.path.join(os.path.join(initialPath, s2), s3b + s4 + s5b)
   
   cap = zzVideoReading.VideoCapture(videoPath)
   
@@ -54,15 +62,16 @@ def outputValidationVideo(videoPath, folderName, configFilePath, numWell, zoom, 
     for k in range(0,len(supstruct["wellPoissMouv"][numWell][0])):
       beg = supstruct["wellPoissMouv"][numWell][0][k]["BoutStart"]
       end = len(supstruct["wellPoissMouv"][numWell][0][k]["HeadX"]) # supstruct["wellPoissMouv"][numWell][0][k]["BoutEnd"]
-      for l in range(lastEnd, beg):
-        HeadX[l] = lastXpos
-        HeadY[l] = lastYpos
-      for l in range(beg, end):
-        HeadX[l]  = supstruct["wellPoissMouv"][numWell][0][k]["HeadX"][l-beg]
-        HeadY[l]  = supstruct["wellPoissMouv"][numWell][0][k]["HeadY"][l-beg]
-      lastEnd = end
-      lastXpos = supstruct["wellPoissMouv"][numWell][0][k]["HeadX"][end-1-beg]
-      lastYpos = supstruct["wellPoissMouv"][numWell][0][k]["HeadY"][end-1-beg]
+      if end-beg > 0:
+        for l in range(lastEnd, beg):
+          HeadX[l] = lastXpos
+          HeadY[l] = lastYpos
+        for l in range(beg, end):
+          HeadX[l]  = supstruct["wellPoissMouv"][numWell][0][k]["HeadX"][l-beg]
+          HeadY[l]  = supstruct["wellPoissMouv"][numWell][0][k]["HeadY"][l-beg]
+        lastEnd = end
+        lastXpos = supstruct["wellPoissMouv"][numWell][0][k]["HeadX"][end-1-beg]
+        lastYpos = supstruct["wellPoissMouv"][numWell][0][k]["HeadY"][end-1-beg]
     for l in range(lastEnd, max_l):
       HeadX[l] = lastXpos
       HeadY[l] = lastYpos

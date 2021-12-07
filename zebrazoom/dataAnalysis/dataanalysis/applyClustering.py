@@ -14,7 +14,7 @@ import os
 import shutil
 import pickle
 
-def applyClustering(clusteringOptions, classifier, outputFolder):
+def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocation=''):
 
   pca = 0
   kme = 0
@@ -417,7 +417,7 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
         BoutEnd   = int(dfParam.loc[indices[num],'BoutEnd'])
         Well_ID   = int(dfParam.loc[indices[num],'Well_ID']) - 1
         Trial_ID  = dfParam.loc[indices[num],'Trial_ID']
-        out = outputValidationVideo(pathToVideos, Trial_ID, '.txt', Well_ID, 1, BoutStart, BoutEnd, out, length, analyzeAllWellsAtTheSameTime)
+        out = outputValidationVideo(pathToVideos, Trial_ID, '.txt', Well_ID, 1, BoutStart, BoutEnd, out, length, analyzeAllWellsAtTheSameTime, ZZoutputLocation)
       out.release()
       
   # Creating validation videos: Beginning (10 movements each)
@@ -438,7 +438,10 @@ def applyClustering(clusteringOptions, classifier, outputFolder):
         BoutEnd   = int(dfParam.loc[indices[num],'BoutEnd'])
         Well_ID   = int(dfParam.loc[indices[num],'Well_ID'])
         Trial_ID  = dfParam.loc[indices[num],'Trial_ID']
-        out = outputValidationVideo(pathToVideos, Trial_ID, '.txt', Well_ID, 1, BoutStart, BoutEnd, out, length, analyzeAllWellsAtTheSameTime)
+        out = outputValidationVideo(pathToVideos, Trial_ID, '.txt', Well_ID, 1, BoutStart, BoutEnd, out, length, analyzeAllWellsAtTheSameTime, ZZoutputLocation)
+        blank = np.zeros((length, length, 3), np.uint8)
+        for k in range(0, 10):
+          out.write(blank)
       out.release()
   
   # Looking into global parameters

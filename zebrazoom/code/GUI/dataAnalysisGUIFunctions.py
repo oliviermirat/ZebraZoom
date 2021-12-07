@@ -185,7 +185,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
   if int(HeadEmbeded):
     clusteringOptions['useAngles'] = True
   # Applies the clustering
-  [allBouts, classifier] = applyClustering(clusteringOptions, 0, os.path.join(os.path.join(cur_dir_path, 'dataAnalysis'),'resultsClustering/'))
+  [allBouts, classifier] = applyClustering(clusteringOptions, 0, os.path.join(os.path.join(cur_dir_path, 'dataAnalysis'),'resultsClustering/'), self.ZZoutputLocation)
   # Saves the classifier
   controller.show_frame("AnalysisOutputFolderClustering")
 
