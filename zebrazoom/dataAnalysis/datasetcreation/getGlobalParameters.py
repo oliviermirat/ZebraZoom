@@ -244,7 +244,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
         TailAngle = [-elem for elem in TailAngle]
       maxTailAngle = max(TailAngle)
       minTailAngle = min(TailAngle)
-      tailAngleSymmetry = - minTailAngle / maxTailAngle
+      tailAngleSymmetry = - minTailAngle / maxTailAngle if maxTailAngle > 0 else 1
       # = 1 if perfect symetry OR if tail angle staying constant and always at 0
       # = 0 if tail beating only on one side, starting from the 0 position
       # < 0 but > 1 if tail beating only on one side, starting from the side it's beating (not from 0)
