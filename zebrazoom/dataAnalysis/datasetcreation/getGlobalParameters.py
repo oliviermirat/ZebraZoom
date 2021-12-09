@@ -230,6 +230,28 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
+    elif parameterToCalculate == 'tailAngleSymmetry':
+      if "TailAngle_smoothed" in curbout and len(curbout["TailAngle_smoothed"]):
+        TailAngle = curbout["TailAngle_smoothed"]
+      else:
+        if "TailAngle_Raw" in curbout and len(curbout["TailAngle_Raw"]):
+          TailAngle = curbout["TailAngle_Raw"]
+        else:
+          TailAngle = []
+      maxTailAngle = max(TailAngle)
+      minTailAngle = min(TailAngle)
+      if abs(maxTailAngle) < abs(minTailAngle):
+        TailAngle = [-elem for elem in TailAngle]
+      maxTailAngle = max(TailAngle)
+      minTailAngle = min(TailAngle)
+      tailAngleSymmetry = - minTailAngle / maxTailAngle
+      # = 1 if perfect symetry OR if tail angle staying constant and always at 0
+      # = 0 if tail beating only on one side, starting from the 0 position
+      # < 0 but > 1 if tail beating only on one side, starting from the side it's beating (not from 0)
+      listOfParametersCalculated.append(tailAngleSymmetry)
+    
+    
+    
     else:
       
       print("The parameter", parameterToCalculate, "is not specified")

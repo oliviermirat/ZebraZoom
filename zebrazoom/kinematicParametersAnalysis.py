@@ -4,7 +4,7 @@ from zebrazoom.dataAnalysis.postProcessingFromCommandLine.postProcessingFromComm
 import os
 from pathlib import Path
 
-def kinematicParametersAnalysis(sys, addMedianPerGenotype==0):
+def kinematicParametersAnalysis(sys, addMedianPerGenotype=0):
 
   pathToExcelFile                 = sys.argv[3]
   
@@ -52,7 +52,7 @@ def kinematicParametersAnalysis(sys, addMedianPerGenotype==0):
     'saveAllBoutsSuperStructuresInMatlabFormat' : saveAllBoutsSuperStructuresInMatlabFormat
   }
 
-  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, '', forcePandasDfRecreation, 1)
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, '', forcePandasDfRecreation, ['BoutFrameNumberStart', 'tailAngleSymmetry'])
   
   # Mixing up all the bouts
   populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, True)

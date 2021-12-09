@@ -17,7 +17,7 @@ from zebrazoom.dataAnalysis.datasetcreation.getTailAngleRecalculated2 import get
 from zebrazoom.dataAnalysis.datasetcreation.gatherInitialRawData import gatherInitialRawData
 import pickle
 
-def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecreation=0, addLatencyToGlobalParameters=0):
+def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecreation=0, addToGlobalParameters=0):
 
   # Gathering user-inputed information about how to create the dataframe of parameters for the whole set of videos
   
@@ -88,8 +88,10 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     globParam  = ['BoutDuration', 'TotalDistance', 'Speed', 'maxOfInstantaneousTBF', 'meanOfInstantaneousTBF', 'medianOfInstantaneousTBF', 'maxBendAmplitude', 'meanBendAmplitude', 'medianBendAmplitude', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude', 'deltaHead', 'firstBendTime', 'firstBendAmplitude', 'IBI', 'xmean', 'ymean', 'binaryClass25degMaxTailAngle']
   else:
     globParam  = ['BoutDuration', 'TotalDistance', 'Speed']
-  if addLatencyToGlobalParameters:
-    globParam = globParam + ['BoutFrameNumberStart']
+  
+  if type(addToGlobalParameters) == list:
+    globParam = globParam + addToGlobalParameters
+  
   # Initial raw data
   if saveRawDataInAllBoutsSuperStructure:
     if tailAngleKinematicParameterCalculation:
