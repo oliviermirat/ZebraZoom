@@ -461,6 +461,9 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
       plt.show()
   
   # Saves classifications
-  dfParam[['Trial_ID','Well_ID','NumBout','classification']].to_csv(os.path.join(os.path.join(outputFolder, clusteringOptions['nameOfFile']), 'classifications.txt'))
+  if 'classProba0' in dfParam.columns.tolist():
+    dfParam[['Trial_ID','Well_ID','NumBout','Condition', 'Genotype', 'classification'] + ['classProba' + str(j) for j in range(0, clusteringOptions['nbCluster'])]].to_csv(os.path.join(os.path.join(outputFolder, clusteringOptions['nameOfFile']), 'classifications.txt'))
+  else:
+    dfParam[['Trial_ID','Well_ID','NumBout','Condition', 'Genotype', 'classification']].to_csv(os.path.join(os.path.join(outputFolder, clusteringOptions['nameOfFile']), 'classifications.txt'))
   
   return [dfParam, [pca, model]]
