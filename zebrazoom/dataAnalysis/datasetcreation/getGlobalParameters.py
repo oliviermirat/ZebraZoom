@@ -252,6 +252,16 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
+    elif parameterToCalculate == 'secondBendAmpDividedByFirst':
+      
+      if len(curbout["Bend_Amplitude"]) >= 2 and curbout["Bend_Amplitude"][0]:
+        secondBendAmpDividedByFirst = curbout["Bend_Amplitude"][1] / curbout["Bend_Amplitude"][0]
+      else:
+        secondBendAmpDividedByFirst = float('Nan')
+      listOfParametersCalculated.append(secondBendAmpDividedByFirst)
+    
+    
+    
     else:
       
       print("The parameter", parameterToCalculate, "is not specified")
