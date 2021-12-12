@@ -114,7 +114,12 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
   controller.show_frame("AnalysisOutputFolderPopulation")
 
 
-def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0):
+def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering=0):
+  
+  if modelUsedForClustering == 0:
+    modelUsedForClustering = 'KMeans'
+  else:
+    modelUsedForClustering = 'GaussianMixture'
   
   if len(minNbBendForBoutDetect) == 0:
     minNbBendForBoutDetect = 3
@@ -178,7 +183,8 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
     'globalParametersCalculations' : True,
     'nbVideosToSave' : nbVideosToSave,
     'resFolder' : os.path.join(os.path.join(cur_dir_path, 'dataAnalysis'),'data/'),
-    'nameOfFile' : self.experimentOrganizationExcel.split(".")[0]
+    'nameOfFile' : self.experimentOrganizationExcel.split(".")[0],
+    'modelUsedForClustering' : modelUsedForClustering
   }
   if int(FreelySwimming):
     clusteringOptions['useAnglesSpeedHeading'] = True

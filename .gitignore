@@ -60,3 +60,5 @@ experimentWithAutomaticOptimalParamSearch.py
 pypiUpload.sh
 
 build
+
+zebrazoom/dataAnalysis/postProcessingClusteringResults

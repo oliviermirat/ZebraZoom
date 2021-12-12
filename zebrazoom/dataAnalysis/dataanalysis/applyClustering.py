@@ -124,7 +124,13 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
     allInstaValues = scaler.fit_transform(allInstaValues)
 
   allInstaValuesLenBef = len(allInstaValues)
-  dfParam = dfParam.drop([idx for idx, val in enumerate(~np.isnan(allInstaValues).any(axis=1)) if not(val)])
+  try:
+    dfParam = dfParam.drop([idx for idx, val in enumerate(~np.isnan(allInstaValues).any(axis=1)) if not(val)])
+  except:
+    scaler = StandardScaler()
+    allInstaValues = scaler.fit_transform(allInstaValues)
+    dfParam = dfParam.drop([idx for idx, val in enumerate(~np.isnan(allInstaValues).any(axis=1)) if not(val)])
+  
   allInstaValues = allInstaValues[~np.isnan(allInstaValues).any(axis=1)]
   allInstaValuesLenAft = len(allInstaValues)
   if allInstaValuesLenBef - allInstaValuesLenAft > 0:

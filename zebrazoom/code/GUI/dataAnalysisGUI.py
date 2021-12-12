@@ -153,7 +153,11 @@ class BoutClustering(tk.Frame):
     nbVideosToSave.pack()
     tk.Label(self, text="").pack()
     
-    tk.Button(self, text="Launch Analysis", bg="light yellow", command=lambda: controller.boutClustering(controller, nbClustersToFind.get(), FreelySwimming.get(), HeadEmbeded.get(), minNbBendForBoutDetect.get(), nbVideosToSave.get())).pack()
+    modelUsedForClustering = IntVar()
+    Checkbutton(self, text="Use GMM clustering method instead of Kmeans (clustering method used by default)", variable=modelUsedForClustering).pack()
+    tk.Label(self, text="")
+    
+    tk.Button(self, text="Launch Analysis", bg="light yellow", command=lambda: controller.boutClustering(controller, nbClustersToFind.get(), FreelySwimming.get(), HeadEmbeded.get(), minNbBendForBoutDetect.get(), nbVideosToSave.get(), modelUsedForClustering.get())).pack()
     
     tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
