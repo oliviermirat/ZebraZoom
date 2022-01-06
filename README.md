@@ -481,7 +481,7 @@ Please note that the parameters minimumNumberOfBendsPerBout, keepSpeedDistDurWhe
 <p>
 To launch from the command line, the same clustering analysis than what's available from the GUI, you can use the following command:
 
-python -m zebrazoom dataPostProcessing clusteringAnalysis pathToExcelFile freelySwimming nbClustersToFind
+python -m zebrazoom dataPostProcessing clusteringAnalysis pathToExcelFile freelySwimming nbClustersToFind minNbBendForBoutDetect modelUsedForClustering removeOutliers
 
 while putting the parameters: 
 
@@ -492,6 +492,10 @@ while putting the parameters:
 - nbClustersToFind (OPTIONAL): set to the number of clusters that you want the clustering algorithm to find. If you don't put anything for this parameter, it will be set to 3 by default.
 
 - minNbBendForBoutDetect (OPTIONAL): minimum number of bends a bout must have in order to be taken into account for the clustering, it will be set to 3 by default.
+
+- modelUsedForClustering (OPTIONAL): default is 'KMeans', can also be set to 'GaussianMixture'.
+
+- removeOutliers (OPTIONAL): default is False, can also be set to True. The removal of outliers is performed before the clustering analysis.
 
 </p>
 

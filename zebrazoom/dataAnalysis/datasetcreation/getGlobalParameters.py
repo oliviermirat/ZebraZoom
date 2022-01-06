@@ -262,6 +262,19 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
+    elif parameterToCalculate == 'tailAngleIntegral':
+      
+      if "TailAngle_smoothed" in curbout and len(curbout["TailAngle_smoothed"]):
+        tailAngleIntegral = np.sum([abs(ta) for ta in curbout["TailAngle_smoothed"]]) * (180 / math.pi)
+      else:
+        if "TailAngle_Raw" in curbout and len(curbout["TailAngle_Raw"]):
+          tailAngleIntegral = np.sum([abs(ta) for ta in curbout["TailAngle_Raw"]]) * (180 / math.pi) # Maybe this value should be "reduced" in some way to be consistent with the previous smoothed tail angle
+        else:
+          tailAngleIntegral = float('NaN')
+      listOfParametersCalculated.append(tailAngleIntegral)
+    
+    
+    
     else:
       
       print("The parameter", parameterToCalculate, "is not specified")

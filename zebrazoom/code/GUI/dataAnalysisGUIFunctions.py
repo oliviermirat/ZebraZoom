@@ -114,7 +114,7 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
   controller.show_frame("AnalysisOutputFolderPopulation")
 
 
-def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering=0):
+def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering=0, removeOutliers=False):
   
   if modelUsedForClustering == 0:
     modelUsedForClustering = 'KMeans'
@@ -161,7 +161,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
   if int(FreelySwimming):
     dataframeOptions['computeMassCenterParamForCluster'] = True
     
-  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions)
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", 0, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
   # Applying the clustering on this dataframe
   clusteringOptions = {
     'analyzeAllWellsAtTheSameTime' : 0, # put this to 1 for head-embedded videos, and to 0 for multi-well videos
@@ -184,7 +184,8 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
     'nbVideosToSave' : nbVideosToSave,
     'resFolder' : os.path.join(os.path.join(cur_dir_path, 'dataAnalysis'),'data/'),
     'nameOfFile' : self.experimentOrganizationExcel.split(".")[0],
-    'modelUsedForClustering' : modelUsedForClustering
+    'modelUsedForClustering' : modelUsedForClustering,
+    'removeOutliers'         : removeOutliers
   }
   if int(FreelySwimming):
     clusteringOptions['useAnglesSpeedHeading'] = True

@@ -62,3 +62,6 @@ pypiUpload.sh
 build
 
 zebrazoom/dataAnalysis/postProcessingClusteringResults
+
+scoresComparaison*.pkl
+scoresComparaison*.png

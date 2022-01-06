@@ -7,8 +7,11 @@ import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
+from zebrazoom.dataAnalysis.dataanalysis.visualizeClusters import visualizeClusters
 from zebrazoom.dataAnalysis.dataanalysis.readValidationVideoDataAnalysis import readValidationVideoDataAnalysis
 from zebrazoom.dataAnalysis.dataanalysis.outputValidationVideo import outputValidationVideo
+from zebrazoom.dataAnalysis.dataanalysis.activeLearning import prepareForActiveLearning
+from scipy.stats import chi2
 import cv2
 import os
 import shutil
@@ -41,16 +44,16 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
   useAnglesHeading               = clusteringOptions['useAnglesHeading']
   useAnglesHeadingDisp           = clusteringOptions['useAnglesHeadingDisp']
   useFreqAmpAsymSpeedHeadingDisp = clusteringOptions['useFreqAmpAsymSpeedHeadingDisp']
+  useAngleAnd3GlobalParameters   = clusteringOptions['useAngleAnd3GlobalParameters'] if 'useAngleAnd3GlobalParameters' in clusteringOptions else 0
   videoSaveFirstTenBouts         = clusteringOptions['videoSaveFirstTenBouts']
   nbVideosToSave                 = clusteringOptions['nbVideosToSave']
   resFolder                      = clusteringOptions['resFolder']
   nameOfFile                     = clusteringOptions['nameOfFile']
   globalParametersCalculations   = clusteringOptions['globalParametersCalculations']
   
-  if 'modelUsedForClustering' in clusteringOptions:
-    modelUsedForClustering = clusteringOptions['modelUsedForClustering']
-  else:
-    modelUsedForClustering = 'KMeans'
+  modelUsedForClustering = clusteringOptions['modelUsedForClustering'] if 'modelUsedForClustering' in clusteringOptions else 'KMeans'
+  
+  removeOutliers = clusteringOptions['removeOutliers'] if 'removeOutliers' in clusteringOptions else False
 
   instaTBF   = ['instaTBF'+str(i)  for i in range(1,nbFramesTakenIntoAccount+1)]
   instaAmp   = ['instaAmp'+str(i)  for i in range(1,nbFramesTakenIntoAccount+1)]
@@ -84,7 +87,7 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
   infile = open(os.path.join(resFolder, nameOfFile + '.pkl'),'rb')
   dfParam = pickle.load(infile)
   infile.close()
-
+  
   nbConditions = len(np.unique(dfParam['Condition'].values))
 
   # Applying PCA
@@ -118,10 +121,13 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
     
   if useFreqAmpAsymSpeedHeadingDisp:
     allInstaValues = dfParam[allInstas + instaSpeed + instaHeadingDiff + instaHorizDispl].values
-
-  if modelUsedForClustering == 'KMeans':
-    scaler = StandardScaler()
-    allInstaValues = scaler.fit_transform(allInstaValues)
+  
+  if useAngleAnd3GlobalParameters:
+    allInstaValues = dfParam[tailAngles].values
+  
+  # if modelUsedForClustering == 'KMeans':
+  scaler = StandardScaler()
+  allInstaValues = scaler.fit_transform(allInstaValues)
 
   allInstaValuesLenBef = len(allInstaValues)
   try:
@@ -137,14 +143,45 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
     print(allInstaValuesLenBef - allInstaValuesLenAft, " bouts (out of ", allInstaValuesLenBef, " ) were deleted because they contained NaN values")
   else:
     print("all bouts were kept (no nan values)")
-
+  
+  dfParam = dfParam.reset_index()
+  
+  if removeOutliers:
+    covariance  = np.cov(allInstaValues , rowvar=False)
+    covariance_pm1 = np.linalg.matrix_power(covariance, -1)
+    centerpoint = np.mean(allInstaValues , axis=0)
+    distances = []
+    for i, val in enumerate(allInstaValues):
+      p1 = val
+      p2 = centerpoint
+      distance = (p1-p2).T.dot(covariance_pm1).dot(p1-p2)
+      distances.append(distance)
+    distances = np.array(distances)
+    cutoff = chi2.ppf(0.95, allInstaValues.shape[1])
+    outlierIndexes = np.where(distances < cutoff )
+    nbBoutsBefore = len(dfParam)
+    print("Number of bouts before outliers removal:", len(dfParam))
+    dfParam = dfParam.drop([idx for idx, val in enumerate(distances >= cutoff) if val])
+    nbBoutsAfter = len(dfParam)
+    print("Number of bouts after outliers removal:", len(dfParam))
+    print("Percentage of bouts removed:", ((nbBoutsBefore-nbBoutsAfter)/nbBoutsBefore)*100, "%")
+    allInstaValues = allInstaValues[ distances < cutoff , :]
   if classifier == 0:
     print("creating pca transform and applying it on the data")
     pca_result = pca.fit_transform(allInstaValues)
   else:
     print("applying pca (reloaded)")
     pca_result = pca.transform(allInstaValues)
+    
+  dfParam = dfParam.drop(['level_0'], axis=1)
+  dfParam = dfParam.reset_index()
   
+  if useAngleAnd3GlobalParameters:
+    pca_result = pca_result[:, 0:3]
+    pca_result = np.concatenate((pca_result, dfParam[['deltaHead', 'Speed', 'tailAngleIntegral']].values), axis=1)
+    scaler     = StandardScaler()
+    pca_result = scaler.fit_transform(pca_result)  
+
   ind = []
   for i in range(0,nbConditions):
     ind.append(dfParam.loc[(dfParam['Condition'] == i)].index.values)
@@ -178,298 +215,16 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
     for j in range(0, nbLabels):
       probasClassJ = predictedProbas[:, sortedIndices[j]]
       dfParam['classProba' + str(j)] = probasClassJ
-
-  # Calculating proportions of each conditions in each class
-
-  df2 = dfParam[['Condition','classification']]
-  proportions = np.zeros((nbConditions, nbCluster))
-  for idxCond, cond in enumerate(np.unique(dfParam['Condition'].values)):
-    for classed in range(0, len(proportions[0])):
-      proportions[idxCond, classed] = len(df2.loc[(df2['Condition'] == cond) & (df2['classification'] == classed)])
-
-  for i in range(0, nbConditions):
-    proportions[i, :] = proportions[i, :] / sum(proportions[i, :])
-    
-  outF = open(os.path.join(outputFolderResult, 'proportions.txt'), "w")
-  labelX = ""
-  for i in range(0, nbCluster):
-    labelX = labelX + "Cluster " + str(i+1) + " : \n"
-    for j, cond in enumerate(np.unique(dfParam['Condition'].values)):
-      labelX = labelX + str(cond) + ": " + str(round(proportions[j,i]*100*100)/100) + "%, "
-      labelX = labelX + "\n"
-    labelX = labelX + "\n"
-  outF.write(labelX)
-  outF.write("\n")
-  outF.close()
-
-  # Plotting each cluster one by one
-
-  mostRepresentativeBout = np.zeros((nbConditions,nbCluster))
-
-  # fig2 = matplotlib.pyplot.figure(figsize=(8.0, 5.0))
-
-  fig, tabAx = plt.subplots(4, len(proportions[0]), figsize=(22.9, 8.8))
-
-  for idxCond, cond in enumerate(np.unique(dfParam['Condition'].values)):
-    for classed in range(0, len(proportions[0])):
-      dfTemp = dfParam.loc[(dfParam['Condition'] == cond) & (dfParam['classification'] == classed)]
-      instaTBFtab   = dfTemp[instaTBF]
-      instaAmptab   = dfTemp[instaAmp]
-      instaAsymtab  = dfTemp[instaAsym]
-      tailAnglestab = dfTemp[tailAngles]
-      color = possibleColors[idxCond]
-      if nbCluster == 1:
-        tabAx[0].plot(instaTBFtab.median().values,  color, label=cond)
-        tabAx[1].plot(instaAmptab.median().values,  color)
-        tabAx[2].plot(instaAsymtab.median().values, color)
-        tabAx[3].plot(tailAnglestab.median().values, color)
-      else:
-        tabAx[0, classed].plot(instaTBFtab.median().values,  color, label=cond)
-        tabAx[1, classed].plot(instaAmptab.median().values,  color)
-        tabAx[2, classed].plot(instaAsymtab.median().values, color)
-        tabAx[3, classed].plot(tailAnglestab.median().values, color)
-      
-      instaTBFmedian  = instaTBFtab.median().values
-      instaAmpmedian  = instaAmptab.median().values
-      instaAsymmedian = instaAsymtab.median().values
-      
-      dist = abs(instaTBFtab-instaTBFmedian).sum(axis=1)/abs(instaTBFmedian).sum() + abs(instaAmptab-instaAmpmedian).sum(axis=1)/abs(instaAmpmedian).sum() + abs(instaAsymtab-instaAsymmedian).sum(axis=1)/abs(instaAsymmedian).sum()
-      if len(dist):
-        idMinDist = dist.idxmin()
-      else:
-        idMinDist = -1
-      mostRepresentativeBout[idxCond, classed] = idMinDist
   
-  if scaleGraphs:
-    for classed in range(0, len(proportions[0])):
-      if nbCluster == 1:
-        tabAx[0].scatter(xaxis, freqAxis, None, 'w')
-        tabAx[1].scatter(xaxis, ampAxis, None, 'w')
-        tabAx[2].scatter(xaxis, asymAxis, None, 'w')
-        tabAx[3].scatter(xaxis, angAxis, None, 'w')    
-      else:
-        tabAx[0, classed].scatter(xaxis, freqAxis, None, 'w')
-        tabAx[1, classed].scatter(xaxis, ampAxis, None, 'w')
-        tabAx[2, classed].scatter(xaxis, asymAxis, None, 'w')
-        tabAx[3, classed].scatter(xaxis, angAxis, None, 'w')
-  if nbCluster == 1:
-    tabAx[0].legend()
-    tabAx[0].set_ylabel('Avg Insta Frequency')
-    tabAx[1].set_ylabel('Avg Insta Amplitude')
-    tabAx[2].set_ylabel('Avg Insta Asymetry')
-    tabAx[3].set_ylabel('Avg Angle')  
-  else:
-    tabAx[0, 0].legend()
-    tabAx[0, 0].set_ylabel('Avg Insta Frequency')
-    tabAx[1, 0].set_ylabel('Avg Insta Amplitude')
-    tabAx[2, 0].set_ylabel('Avg Insta Asymetry')
-    tabAx[3, 0].set_ylabel('Avg Angle')
-  for i in range(0, nbCluster):
-    labelX = "Cluster " + str(i+1) + "\n"
-    for j, condName in enumerate(np.unique(dfParam['Condition'].values)):
-      labelX = labelX + str(condName) + ": " + str(round(proportions[j,i]*100*100)/100) + "% (in " + possibleColorsNames[j] + ")\n"
-    if nbCluster == 1:
-      tabAx[3].set_xlabel(labelX)
-    else:
-      tabAx[3, i].set_xlabel(labelX)
-  plt.savefig(os.path.join(outputFolderResult, 'medianValuesUsedForClusteringForEachClusterAndCondition.png'))
-  if showFigures:
-    plt.show()
-
-  # Plot most representative bout for each cluster
-  fig, tabAx2 = plt.subplots(4, len(proportions[0]), figsize=(22.9, 8.8))
-  for cond in range(0, len(proportions)):
-    for classed in range(0, len(proportions[0])):
-      idMinDist = mostRepresentativeBout[cond, classed]
-      if idMinDist != -1 and not(np.isnan(idMinDist)):
-        instaTBFtab   = dfParam.loc[idMinDist, instaTBF]
-        instaAmptab   = dfParam.loc[idMinDist, instaAmp]
-        instaAsymtab  = dfParam.loc[idMinDist, instaAsym]
-        tailAnglestab = dfParam.loc[idMinDist, tailAngles]
-        color = possibleColors[cond]
-        if nbCluster == 1:
-          tabAx2[0].plot(instaTBFtab.values,  color)
-          tabAx2[1].plot(instaAmptab.values,  color)
-          tabAx2[2].plot(instaAsymtab.values, color)
-          tabAx2[3].plot(tailAnglestab.values, color)
-        else:
-          tabAx2[0, classed].plot(instaTBFtab.values,  color)
-          tabAx2[1, classed].plot(instaAmptab.values,  color)
-          tabAx2[2, classed].plot(instaAsymtab.values, color)
-          tabAx2[3, classed].plot(tailAnglestab.values, color)
-  if scaleGraphs:
-    for classed in range(0, len(proportions[0])):
-      if nbCluster == 1:
-        tabAx2[0].scatter(xaxis, freqAxis, None, 'w')
-        tabAx2[1].scatter(xaxis, ampAxis, None, 'w')
-        tabAx2[2].scatter(xaxis, asymAxis, None, 'w')
-        tabAx2[3].scatter(xaxis, angAxis, None, 'w')      
-      else:
-        tabAx2[0, classed].scatter(xaxis, freqAxis, None, 'w')
-        tabAx2[1, classed].scatter(xaxis, ampAxis, None, 'w')
-        tabAx2[2, classed].scatter(xaxis, asymAxis, None, 'w')
-        tabAx2[3, classed].scatter(xaxis, angAxis, None, 'w')
-  if nbCluster == 1:
-    tabAx2[0].set_ylabel('Avg Insta Frequency')
-    tabAx2[1].set_ylabel('Avg Insta Amplitude')
-    tabAx2[2].set_ylabel('Avg Insta Asymetry')
-    tabAx2[3].set_ylabel('Avg Angle')  
-  else:
-    tabAx2[0, 0].set_ylabel('Avg Insta Frequency')
-    tabAx2[1, 0].set_ylabel('Avg Insta Amplitude')
-    tabAx2[2, 0].set_ylabel('Avg Insta Asymetry')
-    tabAx2[3, 0].set_ylabel('Avg Angle')
-  for i in range(0, nbCluster):
-    labelX = "Most representative bout of cluster "+ str(i+1) + ":\n"
-    for j, condName in enumerate(np.unique(dfParam['Condition'].values)):
-      labelX = labelX + "for " + str(condName) + " (in " + possibleColorsNames[j] + ")\n"
-    if nbCluster == 1:
-      tabAx2[3].set_xlabel(labelX)
-    else:
-      tabAx2[3, i].set_xlabel(labelX)
-  plt.savefig(os.path.join(outputFolderResult, 'mostRepresentativeBoutForEachClusterAndCondition.png'))
-  if showFigures:
-    plt.show()
-
-  # Getting most representative sorted bouts
-  sortedRepresentativeBouts = []
-  for classed in range(0, len(proportions[0])):
-    dfTemp = dfParam.loc[(dfParam['classification'] == classed)]
-    instaTBFtab   = dfTemp[instaTBF]
-    instaAmptab   = dfTemp[instaAmp]
-    instaAsymtab  = dfTemp[instaAsym]
-    tailAnglestab = dfTemp[tailAngles]
-    
-    instaTBFmedian  = instaTBFtab.median().values
-    instaAmpmedian  = instaAmptab.median().values
-    instaAsymmedian = instaAsymtab.median().values
-
-    dist = abs(instaTBFtab-instaTBFmedian).sum(axis=1)/abs(instaTBFmedian).sum() + abs(instaAmptab-instaAmpmedian).sum(axis=1)/abs(instaAmpmedian).sum() + abs(instaAsymtab-instaAsymmedian).sum(axis=1)/abs(instaAsymmedian).sum()
-    
-    sortedRepresentativeBouts.append(dfParam.loc[dist.index.values[dist.values.argsort()], tailAngles])
-
-  # Plot most representative bouts
-  nbOfMostRepresentativeBoutsToPlot = 10000000000000
-  for classed in range(0, len(proportions[0])):
-    nb = len(sortedRepresentativeBouts[classed].index)
-    if nb < nbOfMostRepresentativeBoutsToPlot:
-      nbOfMostRepresentativeBoutsToPlot = nb
-  if nbOfMostRepresentativeBoutsToPlot > 100:
-    nbOfMostRepresentativeBoutsToPlot = 100
-  fig, tabAx3 = plt.subplots(len(proportions[0]),1, figsize=(22.9, 8.8))
-  for classed in range(0, len(proportions[0])):
-    indices = sortedRepresentativeBouts[classed].index
-    for j in range(0, nbOfMostRepresentativeBoutsToPlot):
-      tailAnglestab = sortedRepresentativeBouts[classed].loc[indices[j]].values
-      color = 'b'
-      if nbCluster == 1:
-        tabAx3.plot(tailAnglestab, color)
-      else:
-        tabAx3[classed].plot(tailAnglestab, color)
-  for i in range(0,len(proportions[0])):
-    if nbCluster == 1:
-      tabAx3.set_ylabel('Cluster '+str(i+1))
-    else:
-      tabAx3[i].set_ylabel('Cluster '+str(i+1))
-  if nbCluster == 1:
-    tabAx3.set_xlabel("Tail angle over time for the\n"+str(nbOfMostRepresentativeBoutsToPlot)+' most representative bouts for each cluster')
-  else:
-    tabAx3[len(proportions[0])-1].set_xlabel("Tail angle over time for the\n"+str(nbOfMostRepresentativeBoutsToPlot)+' most representative bouts for each cluster')
-  plt.savefig(os.path.join(outputFolderResult, str(nbOfMostRepresentativeBoutsToPlot) + 'mostRepresentativeBoutsForEachCluster.png'))
-  if showFigures:
-    plt.show()
-
-  # Plot most representative bouts - second plot
-  fig, tabAx3 = plt.subplots(len(proportions[0]),1, figsize=(22.9, 8.8))
-  for classed in range(0, len(proportions[0])):
-    nbOfMostRepresentativeBoutsToPlot = 10000000000000
-    nbOfMostRepresentativeBoutsToPlot = len(sortedRepresentativeBouts[classed].index)
-    if nbOfMostRepresentativeBoutsToPlot > 100:
-      nbOfMostRepresentativeBoutsToPlot = 100
-    indices = sortedRepresentativeBouts[classed].index
-    for j in range(0, nbOfMostRepresentativeBoutsToPlot):
-      tailAnglestab = sortedRepresentativeBouts[classed].loc[indices[j]].values
-      color = 'b'
-      if nbCluster == 1:
-        tabAx3.plot(tailAnglestab, color)
-      else:
-        tabAx3[classed].plot(tailAnglestab, color)
-      
-  for i in range(0,len(proportions[0])):
-    if nbCluster == 1:
-      tabAx3.set_ylabel('Cluster '+str(i+1))
-    else:
-      tabAx3[i].set_ylabel('Cluster '+str(i+1))
-  if nbCluster == 1:
-    tabAx3.set_xlabel("Tail angle over time for the most representative bouts for each cluster")
-  else:
-    tabAx3[len(proportions[0])-1].set_xlabel("Tail angle over time for the most representative bouts for each cluster")
-  plt.savefig(os.path.join(outputFolderResult, 'mostRepresentativeBoutsForEachCluster.png'))
-  if showFigures:
-    plt.show()
-
-  # Creating validation videos: Beginning, middle, and end. (10 movements each)
-  # if False:
-    # length = 150
-    # for boutCategory in range(0, nbCluster):
-      # print("boutCategory:",boutCategory)
-      # out = cv2.VideoWriter(os.path.join(outputFolderResult, 'cluster' + str(boutCategory) + '.avi'),cv2.VideoWriter_fourcc('M','J','P','G'), 10, (length,length))
-      # indices = sortedRepresentativeBouts[boutCategory].index
-      # print("total:",len(indices))
-      # r = [i for i in range(0, 10)] + [i for i in range(int(len(indices)/2)-10, int(len(indices)/2))] + [i for i in range(len(indices)-10, len(indices))]
-      # for num in r:
-        # print("num:",num)
-        # BoutStart = int(dfParam.loc[indices[num],'BoutStart'])
-        # BoutEnd   = int(dfParam.loc[indices[num],'BoutEnd'])
-        # Well_ID   = int(dfParam.loc[indices[num],'Well_ID']) - 1
-        # Trial_ID  = dfParam.loc[indices[num],'Trial_ID']
-        # out = outputValidationVideo(pathToVideos, Trial_ID, '.txt', Well_ID, 1, BoutStart, BoutEnd, out, length, analyzeAllWellsAtTheSameTime, ZZoutputLocation)
-      # out.release()
-      
-  # Creating validation videos: Beginning (10 movements each)
-  if videoSaveFirstTenBouts:
-    length = 150
-    for boutCategory in range(0, nbCluster):
-      print("boutCategory:",boutCategory+1)
-      out = cv2.VideoWriter(os.path.join(outputFolderResult, 'cluster' + str(boutCategory+1) + '.avi'),cv2.VideoWriter_fourcc('M','J','P','G'), 10, (length,length))
-      indices = sortedRepresentativeBouts[boutCategory].index
-      nbTemp = len(indices)
-      if nbTemp < nbVideosToSave:
-        nbVideosToSave = nbTemp
-      
-      r = [i for i in range(0, nbVideosToSave)]
-      for num in r:
-        print("num:",num)
-        BoutStart = int(dfParam.loc[indices[num],'BoutStart'])
-        BoutEnd   = int(dfParam.loc[indices[num],'BoutEnd'])
-        Well_ID   = int(dfParam.loc[indices[num],'Well_ID'])
-        Trial_ID  = dfParam.loc[indices[num],'Trial_ID']
-        NumBout   = dfParam.loc[indices[num],'NumBout']
-        out = outputValidationVideo(pathToVideos, Trial_ID, '.txt', Well_ID, NumBout, 1, BoutStart, BoutEnd, out, length, analyzeAllWellsAtTheSameTime, ZZoutputLocation)
-      
-      out.release()
+  [proportions, sortedRepresentativeBouts, sortedRepresentativeBoutsIndex] = visualizeClusters(dfParam, labels2, [], modelUsedForClustering, nbConditions, nbCluster, nbFramesTakenIntoAccount, scaleGraphs, showFigures, outputFolderResult, 0, 1)
   
-  # Looking into global parameters
-  if globalParametersCalculations:
-    globParam = ['BoutDuration', 'TotalDistance', 'Speed', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude']
-    fig, tabAx = plt.subplots(2, 3, figsize=(22.9, 8.8))
-    for idx, parameter in enumerate(globParam):
-      concatenatedValues = []
-      for boutCategory in range(0, nbCluster):
-        indices = sortedRepresentativeBouts[boutCategory].index
-        values  = dfParam.loc[indices[:],parameter].values
-        concatenatedValues.append(values)
-      tabAx[int(idx/3), idx%3].set_title(parameter)
-      tabAx[int(idx/3), idx%3].boxplot(concatenatedValues)
-    plt.savefig(os.path.join(outputFolderResult, 'globalParametersforEachCluster.png'))
-    if showFigures:
-      plt.plot()
-      plt.show()
-  
-  # Saves classifications
-  if 'classProba0' in dfParam.columns.tolist():
-    dfParam[['Trial_ID','Well_ID','NumBout','Condition', 'Genotype', 'classification'] + ['classProba' + str(j) for j in range(0, clusteringOptions['nbCluster'])]].to_csv(os.path.join(os.path.join(outputFolder, clusteringOptions['nameOfFile']), 'classifications.txt'))
+  if False:
+    prepareForActiveLearning(proportions, sortedRepresentativeBouts, outputFolderResult, nbCluster, pca_result, dfParam, sortedRepresentativeBoutsIndex, tailAngles)
   else:
-    dfParam[['Trial_ID','Well_ID','NumBout','Condition', 'Genotype', 'classification']].to_csv(os.path.join(os.path.join(outputFolder, clusteringOptions['nameOfFile']), 'classifications.txt'))
+    outputFolderResult2 = os.path.join(outputFolderResult, 'savedRawData')
+    if os.path.exists(outputFolderResult2):
+      shutil.rmtree(outputFolderResult2)
+    os.mkdir(outputFolderResult2)
+    pickle.dump({'pca_result': pca_result.tolist(), 'dfParam': dfParam}, open(os.path.join(outputFolderResult2, 'boutParameters.pkl'), 'wb'))
   
   return [dfParam, [pca, model]]

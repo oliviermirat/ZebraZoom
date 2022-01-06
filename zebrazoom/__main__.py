@@ -185,6 +185,23 @@ if __name__ == '__main__':
         readValidationVideo("", sys.argv[3], "", -1, -1, 0, 1, framesToShow)
     
     
+    elif sys.argv[1] == "otherScripts":
+      
+      if sys.argv[2] == "launchActiveLearning":
+        
+        from zebrazoom.otherScripts.launchActiveLearning import launchActiveLearning
+        launchActiveLearning()
+        
+      elif sys.argv[2] == "launchOptimalClusterNumberSearch":
+        
+        from zebrazoom.otherScripts.launchOptimalClusterNumberSearch import launchOptimalClusterNumberSearch
+        launchOptimalClusterNumberSearch()
+        
+      elif sys.argv[2] == "launchReapplyClustering":
+        
+        from zebrazoom.otherScripts.launchReapplyClustering import launchReapplyClustering
+        launchReapplyClustering()
+        
     else:
       
       print("The data produced by ZebraZoom can be found in the folder: " + os.path.join(dir_path,'ZZoutput'))

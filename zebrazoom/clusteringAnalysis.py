@@ -11,6 +11,8 @@ def clusteringAnalysis(sys):
   freelySwimming   = int(sys.argv[4]) if len(sys.argv) >= 5 else 1
   nbClustersToFind = int(sys.argv[5]) if len(sys.argv) >= 6 else 3
   minNbBendForBoutDetect = int(sys.argv[6]) if len(sys.argv) >= 7 else 3
+  modelUsedForClustering = sys.argv[7] if len(sys.argv) >= 8 else 'KMeans'
+  removeOutliers         = int(sys.argv[8]) if len(sys.argv) >= 9 else 0
   
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
   cur_dir_path = Path(cur_dir_path)
@@ -34,10 +36,12 @@ def clusteringAnalysis(sys):
     'computeTailAngleParamForCluster'   : True,
     'computeMassCenterParamForCluster'  : False
   }
+  
   if int(freelySwimming):
     dataframeOptions['computeMassCenterParamForCluster'] = True
-    
-  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions)
+  
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", 0, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
+  
   # Applying the clustering on this dataframe
   clusteringOptions = {
     'analyzeAllWellsAtTheSameTime' : 0, # put this to 1 for head-embedded videos, and to 0 for multi-well videos
@@ -59,10 +63,14 @@ def clusteringAnalysis(sys):
     'globalParametersCalculations' : True,
     'nbVideosToSave' : 10,
     'resFolder'  : os.path.join(os.path.join(cur_dir_path, 'dataAnalysis'),'data/'),
-    'nameOfFile' : os.path.splitext(nameWithExt)[0]
+    'nameOfFile' : os.path.splitext(nameWithExt)[0],
+    'modelUsedForClustering' : modelUsedForClustering,
+    'removeOutliers'  : removeOutliers
   }
   if int(freelySwimming):
     clusteringOptions['useAnglesSpeedHeading'] = True
+    # clusteringOptions['useAngleAnd3GlobalParameters'] = True
+    # clusteringOptions['useFreqAmpAsym'] = True
   else:
     clusteringOptions['useAngles'] = True
   
