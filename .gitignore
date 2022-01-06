@@ -17,6 +17,7 @@ zebrazoom/code/dataPostProcessing/__pycache__/
 zebrazoom/dataAnalysis/postProcessingFromCommandLine/__pycache__/
 zebrazoom/code/deepLearningFunctions/__pycache__
 zebrazoom/code/deepLearningFunctions/PyTorchFunctions/__pycache__/
+zebrazoom/otherScripts/__pycache__/
 
 zebrazoom/newhyperparameters
 zebrazoom/trace.txt
