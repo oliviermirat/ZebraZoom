@@ -3,7 +3,6 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
-from modAL.models import ActiveLearner
 from zebrazoom.dataAnalysis.dataanalysis.visualizeClusters import visualizeClusters
 import matplotlib.pyplot as plt
 from tkinter import simpledialog
@@ -89,6 +88,8 @@ def prepareForActiveLearning(proportions, sortedRepresentativeBouts, outputFolde
 
 
 def activeLearning(modelUsed, nbConditions, nbCluster, outputFolderResult, N_QUERIES, manualClassicationPath):
+  
+  from modAL.models import ActiveLearner
   
   nbFramesTakenIntoAccount = 24
   scaleGraphs   = 1
