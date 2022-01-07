@@ -95,7 +95,7 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
     'frameStepForDistanceCalculation'           : frameStepForDistanceCalculation
   }
 
-  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions)
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", 0, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
 
   # Plotting for the different conditions
   nameOfFile = dataframeOptions['nameOfFile']
