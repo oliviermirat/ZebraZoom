@@ -82,6 +82,53 @@ class StartPage(QWidget):
         self.setLayout(layout)
 
 
+class SeveralVideos(QWidget):
+    def __init__(self, controller):
+        super().__init__(controller.window)
+        self.controller = controller
+
+        layout = QVBoxLayout()
+        layout.addWidget(apply_style(QLabel("Run ZebraZoom on several videos", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+
+        button1 = apply_style(QPushButton("Run ZebraZoom on an entire folder", self), background_color=LIGHT_YELLOW)
+        button1.clicked.connect(lambda: controller.show_frame("FolderToAnalyze"))
+        layout.addWidget(button1, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        sublayout1 = QVBoxLayout()
+        button2 = apply_style(QPushButton("Manual first frame tail extremity for head embedded", self), background_color=LIGHT_YELLOW)
+        button2.clicked.connect(lambda: controller.show_frame("TailExtremityHE"))
+        sublayout1.addWidget(button2, alignment=Qt.AlignmentFlag.AlignCenter)
+        sublayout1.addWidget(QLabel("This button allows you to only manually select the tail extremities,", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        sublayout1.addWidget(QLabel("you will be able to run the tracking on multiple videos without interruptions with the 'Run ZebraZoom on an entire folder' button above afterwards.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        sublayout1.addWidget(apply_style(QLabel("", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addLayout(sublayout1)
+
+        sublayout2 = QVBoxLayout()
+        button3 = apply_style(QPushButton("Only select the regions of interest", self), background_color=LIGHT_YELLOW)
+        button3.clicked.connect(lambda: controller.show_frame("FolderMultipleROIInitialSelect"))
+        sublayout2.addWidget(button3, alignment=Qt.AlignmentFlag.AlignCenter)
+        sublayout2.addWidget(QLabel("This is for the 'Multiple rectangular regions of interest chosen at runtime' option.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        sublayout2.addWidget(QLabel("This button allows you to only select the ROIs,", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        sublayout2.addWidget(QLabel("you will be able to run the tracking on multiple videos without interruptions with the 'Run ZebraZoom on an entire folder' button above afterwards.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        sublayout2.addWidget(apply_style(QLabel("", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addLayout(sublayout2)
+
+        sublayout3 = QVBoxLayout()
+        button4 = apply_style(QPushButton("'Group of multiple same size and shape equally spaced wells' coordinates pre-selection", self), background_color=LIGHT_YELLOW)
+        button4.clicked.connect(lambda: controller.show_frame("FolderMultipleROIInitialSelect"))
+        sublayout3.addWidget(button4, alignment=Qt.AlignmentFlag.AlignCenter)
+        sublayout3.addWidget(QLabel("This button allows you to only select the coordinates,", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        sublayout3.addWidget(QLabel("you will be able to run the tracking on multiple videos without interruptions with the 'Run ZebraZoom on an entire folder' button above afterwards.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        sublayout3.addWidget(apply_style(QLabel("", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addLayout(sublayout3)
+
+        start_page_btn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+        start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))
+        layout.addWidget(start_page_btn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.setLayout(layout)
+
+
 class VideoToAnalyze(QWidget):
     def __init__(self, controller):
         super().__init__(controller.window)
@@ -124,6 +171,74 @@ class VideoToAnalyze(QWidget):
         no_validation_checkbox = apply_style(QCheckBox("Don't (re)generate a validation video (for speed efficiency).", self), color='purple')
         layout.addWidget(no_validation_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+        start_page_btn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+        start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))
+        layout.addWidget(start_page_btn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.setLayout(layout)
+
+
+class FolderToAnalyze(QWidget):
+    def __init__(self, controller):
+        super().__init__(controller.window)
+        self.controller = controller
+
+        layout = QVBoxLayout()
+        layout.addWidget(apply_style(QLabel("Choose folder.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("Look for the folder you want to analyze.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        button = apply_style(QPushButton("Choose folder", self), background_color=LIGHT_YELLOW)
+        button.clicked.connect(lambda: controller.chooseFolderToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), expert_checkbox.isChecked()))
+        layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+        just_extract_checkbox = QCheckBox("I ran the tracking already, I only want to redo the extraction of parameters.", self)
+        layout.addWidget(just_extract_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        no_validation_checkbox = QCheckBox("Don't (re)generate a validation video (for speed efficiency).", self)
+        layout.addWidget(no_validation_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        expert_checkbox = QCheckBox("Expert use (don't click here unless you know what you're doing): Only generate a script to launch all videos in parallel with sbatch.", self)
+        layout.addWidget(expert_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+        start_page_btn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+        start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))
+        layout.addWidget(start_page_btn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.setLayout(layout)
+
+
+class TailExtremityHE(QWidget):
+    def __init__(self, controller):
+        super().__init__(controller.window)
+        self.controller = controller
+
+        layout = QVBoxLayout()
+        layout.addWidget(apply_style(QLabel("Choose folder.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("Look for the folder of videos where you want to manually label tail extremities.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        button = apply_style(QPushButton("Choose folder", self), background_color=LIGHT_YELLOW)
+        button.clicked.connect(controller.chooseFolderForTailExtremityHE)
+        layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        start_page_btn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+        start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))
+        layout.addWidget(start_page_btn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        self.setLayout(layout)
+
+
+class FolderMultipleROIInitialSelect(QWidget):
+    def __init__(self, controller):
+        super().__init__(controller.window)
+        self.controller = controller
+
+        layout = QVBoxLayout()
+        layout.addWidget(apply_style(QLabel("Choose folder.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("Select the folder of videos for which you want to define the regions of interest.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        button = apply_style(QPushButton("Choose folder", self), background_color=LIGHT_YELLOW)
+        button.clicked.connect(controller.chooseFolderForMultipleROIs)
+        layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
 
         start_page_btn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
         start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))

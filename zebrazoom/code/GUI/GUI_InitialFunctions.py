@@ -44,7 +44,7 @@ def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, debugMode=0
     self.show_frame("ConfigFilePromp")
 
 def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode):
-    tk.folderName =  filedialog.askdirectory(initialdir = os.path.expanduser("~"),title = "Select folder")
+    tk.folderName =  QFileDialog.getExistingDirectory(self.window, 'Select folder', os.path.expanduser("~"))
     tk.headEmbedded = 0
     tk.justExtractParams = int(justExtractParams)
     tk.noValidationVideo = int(noValidationVideo)
@@ -54,7 +54,7 @@ def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode
     self.show_frame("ConfigFilePromp")
 
 def chooseFolderForTailExtremityHE(self):
-    tk.folderName =  filedialog.askdirectory(initialdir = os.path.expanduser("~"),title = "Select folder")
+    tk.folderName =  QFileDialog.getExistingDirectory(self.window, 'Select folder', os.path.expanduser("~"))
     tk.sbatchMode = 0
     tk.headEmbedded = 1
     tk.justExtractParams = 0
@@ -64,7 +64,7 @@ def chooseFolderForTailExtremityHE(self):
     self.show_frame("ConfigFilePromp")
 
 def chooseFolderForMultipleROIs(self):
-    tk.folderName =  filedialog.askdirectory(initialdir = os.path.expanduser("~"),title = "Select folder")
+    tk.folderName =  QFileDialog.getExistingDirectory(self.window, 'Select folder', os.path.expanduser("~"))
     tk.sbatchMode = 0
     tk.headEmbedded = 0
     tk.justExtractParams = 0
