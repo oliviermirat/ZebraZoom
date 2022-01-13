@@ -55,7 +55,7 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
       
       fig, tabAx = plt.subplots(1, len(proportions[0]), figsize=(22.9, 8.8))
       for classed in range(0, len(proportions[0])):
-        b = sns.boxplot(ax=tabAx[int(classed)], data=df2, x='Condition', y='classifiedAs' + str(classed), showmeans=1, showfliers=0)
+        b = sns.boxplot(ax=tabAx[int(classed)], data=df2, x='Condition', y='classifiedAs' + str(classed), showmeans=1, showfliers=1)
         c = sns.stripplot(ax=tabAx[int(classed)], data=df2, x='Condition', y='classifiedAs' + str(classed), color='red', size=7)
         b.set_ylabel('', fontsize=0)
         b.set_xlabel('', fontsize=0)

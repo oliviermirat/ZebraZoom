@@ -2,7 +2,8 @@ from zebrazoom.dataAnalysis.dataanalysis.reapplyClustering import reapplyCluster
 
 def launchReapplyClustering():
 
-  outputFolderResult = 'zebrazoom/dataAnalysis/resultsClustering/parkinsonFreelySwimForClustering_OutliersRemoved_BASSstyleParam2/activeLearning/'
+  # outputFolderResult = 'zebrazoom/dataAnalysis/resultsClustering/parkinsonFreelySwimForClustering_OutliersRemoved_BASSstyleParam2/activeLearning/'
+  outputFolderResult = 'zebrazoom/dataAnalysis/resultsClustering/copied/savedRawData/'
   nbConditions  = 2
   nbCluster     = 4
 
