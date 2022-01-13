@@ -42,9 +42,10 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
       df2 = df2.groupby(['Trial_ID', 'Well_ID', 'Condition']).sum()
       df2['Condition'] = [elem[2] for elem in df2.index]
       df2['totalNbOfBouts'] = df2['classifiedAs0']
-      if nbCluster > 2:
+      if nbCluster >= 2:
         for i in range(1, nbCluster):
           df2['totalNbOfBouts'] = df2['totalNbOfBouts'] + df2['classifiedAs' + str(i)]
+      df2['totalNbOfBouts'] = df2['totalNbOfBouts'].replace(0, 1)
       for i in range(0, nbCluster):
         df2['classifiedAs' + str(i)] = df2['classifiedAs' + str(i)] / df2['totalNbOfBouts']
       for idxCond, cond in enumerate(np.unique(dfParam['Condition'].values)):
