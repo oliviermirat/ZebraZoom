@@ -48,17 +48,28 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
       df2['totalNbOfBouts'] = df2['totalNbOfBouts'].replace(0, 1)
       for i in range(0, nbCluster):
         df2['classifiedAs' + str(i)] = df2['classifiedAs' + str(i)] / df2['totalNbOfBouts']
+      
       for idxCond, cond in enumerate(np.unique(dfParam['Condition'].values)):
         for classed in range(0, len(proportions[0])):
-          proportions[idxCond, classed] = np.sum(df2.loc[df2['Condition'] == cond]['classifiedAs' + str(classed)])
+          proportions[idxCond, classed] = np.median(df2.loc[df2['Condition'] == cond]['classifiedAs' + str(classed)])
+      
+      fig, tabAx = plt.subplots(1, len(proportions[0]), figsize=(22.9, 8.8))
+      for classed in range(0, len(proportions[0])):
+        b = sns.boxplot(ax=tabAx[int(classed)], data=df2, x='Condition', y='classifiedAs' + str(classed), showmeans=1, showfliers=0)
+        c = sns.stripplot(ax=tabAx[int(classed)], data=df2, x='Condition', y='classifiedAs' + str(classed), color='red', size=7)
+        b.set_ylabel('', fontsize=0)
+        b.set_xlabel('', fontsize=0)
+        b.axes.set_title('Cluster ' + str(classed), fontsize=30)
+      plt.savefig(os.path.join(outputFolderResult, 'clustersProportionsPerFish.png'))
+      
     else:
+      
       df2 = dfParam[['Condition','classification']]
       for idxCond, cond in enumerate(np.unique(dfParam['Condition'].values)):
         for classed in range(0, len(proportions[0])):
           proportions[idxCond, classed] = len(df2.loc[(df2['Condition'] == cond) & (df2['classification'] == classed)])
-    
-    for i in range(0, nbConditions):
-      proportions[i, :] = proportions[i, :] / sum(proportions[i, :])
+      for i in range(0, nbConditions):
+        proportions[i, :] = proportions[i, :] / sum(proportions[i, :])
     
     if clusterProportionsPerFish:
       outF = open(os.path.join(outputFolderResult, 'proportionsPerFish.txt'), "w")
