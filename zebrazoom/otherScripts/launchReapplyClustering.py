@@ -6,8 +6,15 @@ def launchReapplyClustering():
   nbConditions  = 2
   nbCluster     = 4
 
-  for modelUsed in ['KMeans', 'GaussianMixture', 'BIRCH', 'DBSCAN', 'MeanShift', 'SpectralClustering', 'Ward', 'AgglomerativeClustering', 'OPTICS', 'AffinityPropagation']:
-    try:
-      reapplyClustering(modelUsed, nbConditions, nbCluster, outputFolderResult)
-    except:
-      print(modelUsed, "failed")
+  if False:
+    
+    for modelUsed in ['KMeans', 'GaussianMixture', 'BIRCH', 'DBSCAN', 'MeanShift', 'SpectralClustering', 'Ward', 'AgglomerativeClustering', 'OPTICS', 'AffinityPropagation']:
+      try:
+        reapplyClustering(modelUsed, nbConditions, nbCluster, outputFolderResult)
+      except:
+        print(modelUsed, "failed")
+    
+  else:
+    
+    reapplyClustering('KMeans', nbConditions, nbCluster, outputFolderResult)
+    

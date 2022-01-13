@@ -32,27 +32,48 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
       # dfParam['classProba' + str(j)] = probasClassJ
   
   # Calculating proportions of each conditions in each class
-  
-  df2 = dfParam[['Condition','classification']]
-  proportions = np.zeros((nbConditions, nbCluster))
-  for idxCond, cond in enumerate(np.unique(dfParam['Condition'].values)):
-    for classed in range(0, len(proportions[0])):
-      proportions[idxCond, classed] = len(df2.loc[(df2['Condition'] == cond) & (df2['classification'] == classed)])
-  
-  for i in range(0, nbConditions):
-    proportions[i, :] = proportions[i, :] / sum(proportions[i, :])
+  for clusterProportionsPerFish in [True, False]:
+    proportions = np.zeros((nbConditions, nbCluster))
+    if clusterProportionsPerFish:
+      df2 = dfParam[['Trial_ID', 'Well_ID', 'Condition', 'classification']]
+      for i in range(0, nbCluster):
+        df2.loc[df2['classification'] == i, 'classifiedAs'+str(i)] = 1
+        df2.loc[df2['classification'] != i, 'classifiedAs'+str(i)] = 0
+      df2 = df2.groupby(['Trial_ID', 'Well_ID', 'Condition']).sum()
+      df2['Condition'] = [elem[2] for elem in df2.index]
+      df2['totalNbOfBouts'] = df2['classifiedAs0']
+      if nbCluster > 2:
+        for i in range(1, nbCluster):
+          df2['totalNbOfBouts'] = df2['totalNbOfBouts'] + df2['classifiedAs' + str(i)]
+      for i in range(0, nbCluster):
+        df2['classifiedAs' + str(i)] = df2['classifiedAs' + str(i)] / df2['totalNbOfBouts']
+      for idxCond, cond in enumerate(np.unique(dfParam['Condition'].values)):
+        for classed in range(0, len(proportions[0])):
+          proportions[idxCond, classed] = np.sum(df2.loc[df2['Condition'] == cond]['classifiedAs' + str(classed)])
+    else:
+      df2 = dfParam[['Condition','classification']]
+      for idxCond, cond in enumerate(np.unique(dfParam['Condition'].values)):
+        for classed in range(0, len(proportions[0])):
+          proportions[idxCond, classed] = len(df2.loc[(df2['Condition'] == cond) & (df2['classification'] == classed)])
     
-  outF = open(os.path.join(outputFolderResult, 'proportions.txt'), "w")
-  labelX = ""
-  for i in range(0, nbCluster):
-    labelX = labelX + "Cluster " + str(i+1) + " : \n"
-    for j, cond in enumerate(np.unique(dfParam['Condition'].values)):
-      labelX = labelX + str(cond) + ": " + str(round(proportions[j,i]*100*100)/100) + "%, "
+    for i in range(0, nbConditions):
+      proportions[i, :] = proportions[i, :] / sum(proportions[i, :])
+    
+    if clusterProportionsPerFish:
+      outF = open(os.path.join(outputFolderResult, 'proportionsPerFish.txt'), "w")
+    else:
+      outF = open(os.path.join(outputFolderResult, 'proportionsPerBout.txt'), "w")
+    
+    labelX = ""
+    for i in range(0, nbCluster):
+      labelX = labelX + "Cluster " + str(i+1) + " : \n"
+      for j, cond in enumerate(np.unique(dfParam['Condition'].values)):
+        labelX = labelX + str(cond) + ": " + str(round(proportions[j,i]*100*100)/100) + "%, "
+        labelX = labelX + "\n"
       labelX = labelX + "\n"
-    labelX = labelX + "\n"
-  outF.write(labelX)
-  outF.write("\n")
-  outF.close()
+    outF.write(labelX)
+    outF.write("\n")
+    outF.close()
   
   # Plotting each cluster one by one
   
@@ -126,6 +147,7 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
       tabAx[3].set_xlabel(labelX)
     else:
       tabAx[3, i].set_xlabel(labelX)
+  
   plt.savefig(os.path.join(outputFolderResult, 'medianValuesUsedForClusteringForEachClusterAndCondition.png'))
   
   if showFigures:
@@ -205,10 +227,13 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
     dist = abs(instaTBFtab-instaTBFmedian).sum(axis=1)/abs(instaTBFmedian).sum() + abs(instaAmptab-instaAmpmedian).sum(axis=1)/abs(instaAmpmedian).sum() + abs(instaAsymtab-instaAsymmedian).sum(axis=1)/abs(instaAsymmedian).sum()
     # if modelUsedForClustering == 'GaussianMixture':
       # dist = 1 - dfTemp['classProba' + str(classed)]
-
-    sortedRepresentativeBouts.append(dfParam.loc[dist.index.values[dist.values.argsort()], tailAngles])
-    sortedRepresentativeBoutsSpeed.append(dfParam.loc[dist.index.values[dist.values.argsort()], instaSpeed])
-    sortedRepresentativeBoutsHeadingDiff.append(dfParam.loc[dist.index.values[dist.values.argsort()], instaHeadingDiff])
+    
+    if tailAngles[0] in dfParam.columns:
+      sortedRepresentativeBouts.append(dfParam.loc[dist.index.values[dist.values.argsort()], tailAngles])
+    if instaSpeed[0] in dfParam.columns:
+      sortedRepresentativeBoutsSpeed.append(dfParam.loc[dist.index.values[dist.values.argsort()], instaSpeed])
+    if instaHeadingDiff[0] in dfParam.columns:
+      sortedRepresentativeBoutsHeadingDiff.append(dfParam.loc[dist.index.values[dist.values.argsort()], instaHeadingDiff])
     sortedRepresentativeBoutsIndex.append(dist.index.values[dist.values.argsort()])
   
   # Plot most representative bouts
@@ -273,67 +298,69 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
   
   
   # Plot most representative bouts: Speed
-  nbOfMostRepresentativeBoutsToPlot = 10000000000000
-  for classed in range(0, len(proportions[0])):
-    nb = len(sortedRepresentativeBoutsSpeed[classed].index)
-    if nb < nbOfMostRepresentativeBoutsToPlot:
-      nbOfMostRepresentativeBoutsToPlot = nb
-  if nbOfMostRepresentativeBoutsToPlot > 10:
-    nbOfMostRepresentativeBoutsToPlot = 10
-  fig, tabAx3 = plt.subplots(len(proportions[0]),1, figsize=(22.9, 8.8))
-  for classed in range(0, len(proportions[0])):
-    indices = sortedRepresentativeBoutsSpeed[classed].index
-    for j in range(0, nbOfMostRepresentativeBoutsToPlot):
-      tailAnglestab = sortedRepresentativeBoutsSpeed[classed].loc[indices[j]].values
-      color = 'b'
+  if len(sortedRepresentativeBoutsSpeed):
+    nbOfMostRepresentativeBoutsToPlot = 10000000000000
+    for classed in range(0, len(proportions[0])):
+      nb = len(sortedRepresentativeBoutsSpeed[classed].index)
+      if nb < nbOfMostRepresentativeBoutsToPlot:
+        nbOfMostRepresentativeBoutsToPlot = nb
+    if nbOfMostRepresentativeBoutsToPlot > 10:
+      nbOfMostRepresentativeBoutsToPlot = 10
+    fig, tabAx3 = plt.subplots(len(proportions[0]),1, figsize=(22.9, 8.8))
+    for classed in range(0, len(proportions[0])):
+      indices = sortedRepresentativeBoutsSpeed[classed].index
+      for j in range(0, nbOfMostRepresentativeBoutsToPlot):
+        tailAnglestab = sortedRepresentativeBoutsSpeed[classed].loc[indices[j]].values
+        color = 'b'
+        if nbCluster == 1:
+          tabAx3.plot(tailAnglestab, color)
+        else:
+          tabAx3[classed].plot(tailAnglestab, color)
+    for i in range(0,len(proportions[0])):
       if nbCluster == 1:
-        tabAx3.plot(tailAnglestab, color)
+        tabAx3.set_ylabel('Cluster '+str(i+1))
       else:
-        tabAx3[classed].plot(tailAnglestab, color)
-  for i in range(0,len(proportions[0])):
+        tabAx3[i].set_ylabel('Cluster '+str(i+1))
     if nbCluster == 1:
-      tabAx3.set_ylabel('Cluster '+str(i+1))
+      tabAx3.set_xlabel("Tail angle over time for the\n"+str(nbOfMostRepresentativeBoutsToPlot)+' most representative bouts for each cluster')
     else:
-      tabAx3[i].set_ylabel('Cluster '+str(i+1))
-  if nbCluster == 1:
-    tabAx3.set_xlabel("Tail angle over time for the\n"+str(nbOfMostRepresentativeBoutsToPlot)+' most representative bouts for each cluster')
-  else:
-    tabAx3[len(proportions[0])-1].set_xlabel("Tail angle over time for the\n"+str(nbOfMostRepresentativeBoutsToPlot)+' most representative bouts for each cluster')
-  plt.savefig(os.path.join(outputFolderResult, str(nbOfMostRepresentativeBoutsToPlot) + 'mostRepresentativeBoutsForEachClusterSpeed.png'))
-  if showFigures:
-    plt.show()
+      tabAx3[len(proportions[0])-1].set_xlabel("Tail angle over time for the\n"+str(nbOfMostRepresentativeBoutsToPlot)+' most representative bouts for each cluster')
+    plt.savefig(os.path.join(outputFolderResult, str(nbOfMostRepresentativeBoutsToPlot) + 'mostRepresentativeBoutsForEachClusterSpeed.png'))
+    if showFigures:
+      plt.show()
   
 
-  # Plot most representative bouts: Speed
-  nbOfMostRepresentativeBoutsToPlot = 10000000000000
-  for classed in range(0, len(proportions[0])):
-    nb = len(sortedRepresentativeBoutsHeadingDiff[classed].index)
-    if nb < nbOfMostRepresentativeBoutsToPlot:
-      nbOfMostRepresentativeBoutsToPlot = nb
-  if nbOfMostRepresentativeBoutsToPlot > 10:
-    nbOfMostRepresentativeBoutsToPlot = 10
-  fig, tabAx3 = plt.subplots(len(proportions[0]),1, figsize=(22.9, 8.8))
-  for classed in range(0, len(proportions[0])):
-    indices = sortedRepresentativeBoutsHeadingDiff[classed].index
-    for j in range(0, nbOfMostRepresentativeBoutsToPlot):
-      tailAnglestab = sortedRepresentativeBoutsHeadingDiff[classed].loc[indices[j]].values
-      color = 'b'
+  # Plot most representative bouts: Heading diff
+  if len(sortedRepresentativeBoutsHeadingDiff):
+    nbOfMostRepresentativeBoutsToPlot = 10000000000000
+    for classed in range(0, len(proportions[0])):
+      nb = len(sortedRepresentativeBoutsHeadingDiff[classed].index)
+      if nb < nbOfMostRepresentativeBoutsToPlot:
+        nbOfMostRepresentativeBoutsToPlot = nb
+    if nbOfMostRepresentativeBoutsToPlot > 10:
+      nbOfMostRepresentativeBoutsToPlot = 10
+    fig, tabAx3 = plt.subplots(len(proportions[0]),1, figsize=(22.9, 8.8))
+    for classed in range(0, len(proportions[0])):
+      indices = sortedRepresentativeBoutsHeadingDiff[classed].index
+      for j in range(0, nbOfMostRepresentativeBoutsToPlot):
+        tailAnglestab = sortedRepresentativeBoutsHeadingDiff[classed].loc[indices[j]].values
+        color = 'b'
+        if nbCluster == 1:
+          tabAx3.plot(tailAnglestab, color)
+        else:
+          tabAx3[classed].plot(tailAnglestab, color)
+    for i in range(0,len(proportions[0])):
       if nbCluster == 1:
-        tabAx3.plot(tailAnglestab, color)
+        tabAx3.set_ylabel('Cluster '+str(i+1))
       else:
-        tabAx3[classed].plot(tailAnglestab, color)
-  for i in range(0,len(proportions[0])):
+        tabAx3[i].set_ylabel('Cluster '+str(i+1))
     if nbCluster == 1:
-      tabAx3.set_ylabel('Cluster '+str(i+1))
+      tabAx3.set_xlabel("Tail angle over time for the\n"+str(nbOfMostRepresentativeBoutsToPlot)+' most representative bouts for each cluster')
     else:
-      tabAx3[i].set_ylabel('Cluster '+str(i+1))
-  if nbCluster == 1:
-    tabAx3.set_xlabel("Tail angle over time for the\n"+str(nbOfMostRepresentativeBoutsToPlot)+' most representative bouts for each cluster')
-  else:
-    tabAx3[len(proportions[0])-1].set_xlabel("Tail angle over time for the\n"+str(nbOfMostRepresentativeBoutsToPlot)+' most representative bouts for each cluster')
-  plt.savefig(os.path.join(outputFolderResult, str(nbOfMostRepresentativeBoutsToPlot) + 'mostRepresentativeBoutsForEachClusterHeadingDiff.png'))
-  if showFigures:
-    plt.show()
+      tabAx3[len(proportions[0])-1].set_xlabel("Tail angle over time for the\n"+str(nbOfMostRepresentativeBoutsToPlot)+' most representative bouts for each cluster')
+    plt.savefig(os.path.join(outputFolderResult, str(nbOfMostRepresentativeBoutsToPlot) + 'mostRepresentativeBoutsForEachClusterHeadingDiff.png'))
+    if showFigures:
+      plt.show()
   
   
   # Creating validation videos: Beginning (10 movements each)
@@ -390,22 +417,34 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
     globParam2 = ['maxOfInstantaneousTBF', 'meanOfInstantaneousTBF', 'medianOfInstantaneousTBF', 'maxBendAmplitude', 'meanBendAmplitude', 'medianBendAmplitude']
     globParam3 = ['deltaHead', 'firstBendTime', 'firstBendAmplitude', 'IBI', 'xmean', 'ymean']
     globParam4 = ['binaryClass25degMaxTailAngle', 'BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst']
-    for idxGlobParam, globParam in enumerate([globParam1, globParam2, globParam3, globParam4]):
-      fig, tabAx = plt.subplots(2, 3, figsize=(22.9, 8.8))
-      for idx, parameter in enumerate(globParam):
-        concatenatedValues = []
-        for boutCategory in range(0, nbCluster):
-          indices = sortedRepresentativeBouts[boutCategory].index
-          values  = dfParam.loc[indices[:],parameter].values
-          concatenatedValues.append(values)
-        # tabAx[int(idx/3), idx%3].set_title(parameter)
-        sns.boxplot(ax=tabAx[int(idx/3), idx%3], data=dfParam, x="classification", y=parameter, hue="Condition", showfliers = False)
-        # tabAx[int(idx/3), idx%3].boxplot(concatenatedValues, showmeans=1, showfliers=plotOutliersAndMean)
-      globParamFileName = 'globalParametersforEachCluster_Conditions_NoOutliers_' + str(idxGlobParam) + '.png'
-      plt.savefig(os.path.join(outputFolderResult, globParamFileName))
-      if showFigures:
-        plt.plot()
-        plt.show()
+    
+    for calculateKinematicParametersPerFish in [True, False]:
+    
+      if calculateKinematicParametersPerFish:
+        globParamTot = globParam1 + globParam2 + globParam3 + globParam4
+        dfKinematicInsideCluster = dfParam[['Trial_ID', 'Well_ID', 'classification', 'Condition'] + globParamTot].astype({col: 'float' for col in globParamTot}).groupby(['Trial_ID', 'Well_ID', 'classification', 'Condition']).median()
+        dfKinematicInsideCluster['classification'] = [elem[2] for elem in dfKinematicInsideCluster.index]
+        dfKinematicInsideCluster['Condition']      = [elem[3] for elem in dfKinematicInsideCluster.index]
+      else:
+        dfKinematicInsideCluster = dfParam
+      
+      for idxGlobParam, globParam in enumerate([globParam1, globParam2, globParam3, globParam4]):
+        fig, tabAx = plt.subplots(2, 3, figsize=(22.9, 8.8))
+        fig.tight_layout(pad=3.0)
+        for idx, parameter in enumerate(globParam):
+          b = sns.boxplot(ax=tabAx[int(idx/3), idx%3], data=dfKinematicInsideCluster, x="classification", y=parameter, hue="Condition", showfliers = False)
+          b.set_ylabel('', fontsize=0)
+          b.set_xlabel('', fontsize=0)
+          b.axes.set_title(parameter,fontsize=30)
+        globParamFileName = 'globalParametersforEachCluster_Conditions_NoOutliers_' + str(idxGlobParam)
+        if calculateKinematicParametersPerFish:
+          globParamFileName = globParamFileName + '_PerFish.png'
+        else:
+          globParamFileName = globParamFileName + '_PerBout.png'
+        plt.savefig(os.path.join(outputFolderResult, globParamFileName))
+        if showFigures:
+          plt.plot()
+          plt.show()
   
   
   # Saves classifications

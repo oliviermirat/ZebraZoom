@@ -189,6 +189,8 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
   }
   if int(FreelySwimming):
     clusteringOptions['useAnglesSpeedHeading'] = True
+    # clusteringOptions['useAngleAnd3GlobalParameters'] = True
+    # clusteringOptions['useFreqAmpAsym'] = True
   if int(HeadEmbeded):
     clusteringOptions['useAngles'] = True
   # Applies the clustering
