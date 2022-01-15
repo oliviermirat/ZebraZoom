@@ -49,6 +49,8 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
       for i in range(0, nbCluster):
         df2['classifiedAs' + str(i)] = df2['classifiedAs' + str(i)] / df2['totalNbOfBouts']
       
+      df2.to_excel(os.path.join(outputFolderResult, 'clusterProportionsPerAnimal.xlsx'))
+      
       for idxCond, cond in enumerate(np.unique(dfParam['Condition'].values)):
         for classed in range(0, len(proportions[0])):
           proportions[idxCond, classed] = np.median(df2.loc[df2['Condition'] == cond]['classifiedAs' + str(classed)])
