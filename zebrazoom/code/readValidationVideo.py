@@ -11,8 +11,9 @@ from PyQt6.QtWidgets import QApplication
 def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation=''):
 
   screen_size = QApplication.instance().primaryScreen().availableGeometry()
-  horizontal = screen_size.width()
-  vertical   = screen_size.height()
+  scaling = QApplication.instance().devicePixelRatio()
+  horizontal = screen_size.width() * scaling
+  vertical   = screen_size.height() * scaling
 
   cv2.namedWindow("press q to quit")
   cv2.moveWindow("press q to quit", 0, 0)
