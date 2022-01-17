@@ -239,7 +239,8 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
       imgResized2 = cv2.resize(img,(int(newX),int(newY)))
 
     else:
-      imgResized2 = img
+      height, width, _ = img.shape
+      imgResized2 = cv2.resize(img, (int(height * scaling), int(width * scaling)))
 
     cv2.imshow("press q to quit", imgResized2)
     r = cv2.waitKey(imageWaitTime)
