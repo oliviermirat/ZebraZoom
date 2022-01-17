@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QApplication
 
 def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation=''):
 
-  screen_size = QApplication.instance().primaryScreen().size()
+  screen_size = QApplication.instance().primaryScreen().availableGeometry()
   horizontal = screen_size.width()
   vertical   = screen_size.height()
 
