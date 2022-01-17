@@ -9,7 +9,7 @@ import zebrazoom.code.GUI.configFileZebrafishFunctions as configFileZebrafishFun
 import zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions as adjustParameterInsideAlgoFunctions
 import zebrazoom.code.GUI.dataAnalysisGUIFunctions as dataAnalysisGUIFunctions
 import zebrazoom.code.GUI.troubleshootingFunction as troubleshootingFunction
-from zebrazoom.code.GUI.GUI_InitialClasses import StartPage, VideoToAnalyze, ConfigFilePromp, Patience, ZZoutro, SeveralVideos, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect
+from zebrazoom.code.GUI.GUI_InitialClasses import StartPage, VideoToAnalyze, ConfigFilePromp, Patience, ZZoutro, SeveralVideos, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, ResultsVisualization, ViewParameters
 from zebrazoom.code.GUI.configFilePrepare import ChooseVideoToCreateConfigFileFor, OptimizeConfigFile, ChooseGeneralExperiment, FreelySwimmingExperiment, WellOrganisation, NbRegionsOfInterest, CircularOrRectangularWells, HomegeneousWellsLayout, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings
 from zebrazoom.code.GUI.configFileZebrafish import HeadEmbeded
 from zebrazoom.code.GUI.adjustParameterInsideAlgo import AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim, AdujstParamInsideAlgoFreelySwimAutomaticParameters, AdujstBoutDetectionOnly
@@ -27,7 +27,6 @@ def getCurrentResultFolder():
 class ZebraZoomApp(QApplication):
     def __init__(self, args):
         super().__init__(args)
-        self.currentResultFolder = "abc"
         self.homeDirectory = os.path.dirname(os.path.realpath(__file__))
 
         self.configFile = {}
@@ -42,19 +41,12 @@ class ZebraZoomApp(QApplication):
         curZZoutputPath = os.path.join(curZZoutputPath, 'ZZoutput')
         self.ZZoutputLocation = curZZoutputPath
 
-        self.numWell = 0
-        self.numPoiss = 0
-        self.numMouv = 0
-        self.visualization = 2
-        self.graphScaling = True
-        self.justEnteredViewParameter = 0
-        self.dataRef = {}
         self.title_font = QFont('Helvetica', 18, QFont.Weight.Bold, True)
 
         self.window = QMainWindow()
         layout = QStackedLayout()
         self.frames = {}
-        for idx, F in enumerate((StartPage, VideoToAnalyze, ConfigFilePromp, Patience, ZZoutro, SeveralVideos, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect)):
+        for idx, F in enumerate((StartPage, VideoToAnalyze, ConfigFilePromp, Patience, ZZoutro, SeveralVideos, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, ResultsVisualization, ViewParameters)):
             self.frames[F.__name__] = idx
             layout.addWidget(F(self))
         central_widget = QWidget(self.window)
@@ -91,52 +83,12 @@ class ZebraZoomApp(QApplication):
         GUI_InitialFunctions.launchZebraZoom(self)
 
     def showResultsVisualization(self):
-        self.frames['ResultsVisualization'].destroy()
-        frame = ResultsVisualization(parent=self.window, controller=self)
-        frame.grid(row=0, column=0, sticky="nsew")
-        self.frames['ResultsVisualization'] = frame
         self.show_frame("ResultsVisualization")
+        self.window.centralWidget().layout().currentWidget().refresh()
 
-    def showValidationVideo(self, numWell, numAnimal, zoom, deb):
-        GUI_InitialFunctions.showValidationVideo(self, numWell, numAnimal, zoom, deb)
-
-    def printSomeResults(self, numWell, numPoiss, numMouv, changeVisualization=False, changeScaling=False):
-        if changeVisualization:
-            self.visualization = int(self.visualization + 1) % 3
-        if changeScaling:
-            self.graphScaling = not(self.graphScaling)
-        self.numWell  = int(numWell)
-        self.numPoiss = int(numPoiss)
-        self.numMouv  = int(numMouv)
-        if self.numWell < 0:
-            self.numWell = 0
-        if self.numPoiss < 0:
-            self.numPoiss = 0
-        if self.numMouv < 0:
-            self.numMouv = 0
-        self.frames['ViewParameters'].destroy()
-        frame = ViewParameters(parent=self.window, controller=self)
-        frame.grid(row=0, column=0, sticky="nsew")
-        self.frames['ViewParameters']=frame
+    def showViewParameters(self, folder):
         self.show_frame("ViewParameters")
-
-    def showGraphForAllBoutsCombined(self, numWell, numPoiss, dataRef, visualization, graphScaling):
-        GUI_InitialFunctions.showGraphForAllBoutsCombined(self, numWell, numPoiss, dataRef, visualization, graphScaling)
-
-    def exploreResultFolder(self, currentResultFolder):
-        GUI_InitialFunctions.exploreResultFolder(self, currentResultFolder)
-
-    def printNextResults(self, numWell, numPoiss, numMouv, nbWells, nbPoiss, nbMouv):
-        GUI_InitialFunctions.printNextResults(self, numWell, numPoiss, numMouv, nbWells, nbPoiss, nbMouv)
-
-    def printPreviousResults(self, numWell, numPoiss, numMouv, nbWells, nbPoiss, nbMouv):
-        GUI_InitialFunctions.printPreviousResults(self, numWell, numPoiss, numMouv, nbWells, nbPoiss, nbMouv)
-
-    def flagMove(self, numWell, numPoiss, numMouv):
-        GUI_InitialFunctions.flagMove(self, numWell, numPoiss, numMouv)
-
-    def saveSuperStruct(self, numWell, numPoiss, numMouv):
-        GUI_InitialFunctions.saveSuperStruct(self, numWell, numPoiss, numMouv)
+        self.window.centralWidget().layout().currentWidget().setFolder(folder)
 
     def openConfigurationFileFolder(self, homeDirectory):
         GUI_InitialFunctions.openConfigurationFileFolder(self, homeDirectory)
