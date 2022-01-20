@@ -141,6 +141,8 @@ def detectBouts(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWho
     newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
     for index in newhyperparameters:
       configFile[index] = newhyperparameters[index]
+  except NameError:
+    print("Configuration file parameters changes discarded.")
 
   configFile["onlyTrackThisOneWell"]        = -1
   configFile["trackTail"]                   = trackTailOriginalValue
