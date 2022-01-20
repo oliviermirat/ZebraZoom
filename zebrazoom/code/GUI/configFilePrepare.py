@@ -1,535 +1,588 @@
 import os
-import tkinter as tk
-from tkinter import font  as tkfont
-from tkinter import filedialog
-from tkinter import ttk
-from tkinter import *
 import webbrowser
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtGui import QCursor, QFont, QIntValidator, QPixmap
+from PyQt6.QtWidgets import QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QRadioButton, QLineEdit, QButtonGroup
+
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
 
-class ChooseVideoToCreateConfigFileFor(tk.Frame):
+LIGHT_YELLOW = '#FFFFE0'
+LIGHT_CYAN = '#E0FFFF'
+GOLD = '#FFD700'
 
-  def __init__(self, parent, controller):
-  
-    tk.Frame.__init__(self, parent)
+
+def apply_style(widget, **kwargs):
+    if (font := kwargs.pop('font', None)) is not None:
+        widget.setFont(font)
+    widget.setStyleSheet(';'.join('%s: %s' % (prop.replace('_', '-'), val)  for prop, val in kwargs.items()))
+    return widget
+
+
+class ChooseVideoToCreateConfigFileFor(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
-    label.pack(side="top", fill="x", pady=10)
-    
-    reloadConfigFile = IntVar()
-    Checkbutton(self, text="Click here to start from a configuration file previously created (instead of from scratch).", variable=reloadConfigFile).pack()
-    
-    tk.Button(self, text="Select the video you want to create a configuration file for.", bg="light yellow", command=lambda: controller.chooseVideoToCreateConfigFileFor(controller, reloadConfigFile.get())).pack()
-    
-    tk.Label(self, text="").pack()
-    tk.Label(self, text="(you will be able to use the configuration file you create for all videos that are similar to that video)").pack()
-    tk.Label(self, text="").pack()
-    
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
-    
-    tk.Label(self, text='').pack()
-    tk.Label(self, text='Warning: This procedure to create configuration files is incomplete.').pack()
-    tk.Label(self, text='You may not succeed at making a good configuration file to analyze your video.').pack()
-    tk.Label(self, text="If you don't manage to get a good configuration file that fits your needs, email us at info@zebrazoom.org.").pack()
-    tk.Label(self, text='').pack()
+
+    layout = QVBoxLayout()
+    layout.addWidget(apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    reloadCheckbox = QCheckBox("Click here to start from a configuration file previously created (instead of from scratch).", self)
+    layout.addWidget(reloadCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    sublayout1 = QVBoxLayout()
+    selectVideoBtn = apply_style(QPushButton("Select the video you want to create a configuration file for.", self), background_color=LIGHT_YELLOW)
+    selectVideoBtn.clicked.connect(lambda: controller.chooseVideoToCreateConfigFileFor(controller, reloadCheckbox.isChecked()))
+    sublayout1.addWidget(selectVideoBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    sublayout1.addWidget(QLabel("(you will be able to use the configuration file you create for all videos that are similar to that video)", self), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addLayout(sublayout1)
+
+    sublayout2 = QVBoxLayout()
+    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    sublayout2.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    sublayout2.addWidget(QLabel('Warning: This procedure to create configuration files is incomplete.', self), alignment=Qt.AlignmentFlag.AlignCenter)
+    sublayout2.addWidget(QLabel('You may not succeed at making a good configuration file to analyze your video.', self), alignment=Qt.AlignmentFlag.AlignCenter)
+    sublayout2.addWidget(QLabel("If you don't manage to get a good configuration file that fits your needs, email us at info@zebrazoom.org.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addLayout(sublayout2)
+
+    self.setLayout(layout)
 
 
-class OptimizeConfigFile(tk.Frame):
-
-  def __init__(self, parent, controller):
-  
-    tk.Frame.__init__(self, parent)
+class OptimizeConfigFile(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    label = tk.Label(self, text="Optimize previously created configuration file", font=controller.title_font)
-    label.pack(side="top", fill="x", pady=10)
-    
-    tk.Label(self, text="").pack()
-    tk.Label(self, text="In many cases, the configuration file previously generated will give good tracking results.").pack()
-    tk.Label(self, text="Always start by testing your newly created configuration file by using the 'Run ZebraZoom's Tracking on a video' option from the main menu of the GUI.").pack()
-    tk.Label(self, text="If after the test, you notice that the tracking has issues, you can use some of the options listed below to improve your configuration file.").pack()
-    tk.Label(self, text="").pack()
-    
-    tk.Button(self, text="Optimize fish freely swimming tail tracking configuration file parameters", bg="light yellow", command=lambda: controller.chooseVideoToCreateConfigFileFor(controller, True, True)).pack()
-    tk.Label(self, text="").pack()
-    
-    tk.Button(self, text="Optimize/Add bouts detection (only for one animal per well)", bg="light yellow", command=lambda: controller.chooseVideoToCreateConfigFileFor(controller, True, False, True)).pack()
-    tk.Label(self, text="").pack()
-    
-    def callback(url):
-      webbrowser.open_new(url)
-    
-    link3 = tk.Button(self, text="Solve issues near the borders of the wells/tanks/arenas", bg="light yellow")
-    link3.pack()
-    link3.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md#problemOnBorders"))
-    tk.Label(self, text="").pack()
-    
-    link4 = tk.Button(self, text="Post-process animal center trajectories", bg="light yellow")
-    link4.pack()
-    link4.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md#trajectoriesPostProcessing"))
-    tk.Label(self, text="Trajectories post-processing can help solve problems with animal 'disapearing' and/or temporarily 'jumping' to a distant (and incorrect) location.").pack()
-    tk.Label(self, text="").pack()
-    
-    link5 = tk.Button(self, text="Speed up tracking for 'Track heads and tails of freely swimming fish'", bg="light yellow")
-    link5.pack()
-    link5.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingSpeedOptimization.md"))
-    tk.Label(self, text="").pack()
-    
-    link2 = tk.Button(self, text="View More Tracking Troubleshooting Tips", bg="gold")
-    link2.pack()
-    link2.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md"))
-    
-    tk.Label(self, text="").pack()
 
-    tk.Label(self, text="If you don't manage to get a good configuration file that fits your needs, email us at info@zebrazoom.org.").pack()
-    tk.Label(self, text="").pack()
-    
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+    layout = QVBoxLayout()
+    layout.addWidget(apply_style(QLabel("Optimize previously created configuration file", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    sublayout = QVBoxLayout()
+    sublayout.addWidget(QLabel("In many cases, the configuration file previously generated will give good tracking results.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+    sublayout.addWidget(QLabel("Always start by testing your newly created configuration file by using the 'Run ZebraZoom's Tracking on a video' option from the main menu of the GUI.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+    sublayout.addWidget(QLabel("If after the test, you notice that the tracking has issues, you can use some of the options listed below to improve your configuration file.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addLayout(sublayout)
+
+    optimizeFishBtn = apply_style(QPushButton("Optimize fish freely swimming tail tracking configuration file parameters", self), background_color=LIGHT_YELLOW)
+    optimizeFishBtn.clicked.connect(lambda: controller.chooseVideoToCreateConfigFileFor(controller, True, True))
+    layout.addWidget(optimizeFishBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    optimizeBoutBtn = apply_style(QPushButton("Optimize/Add bouts detection (only for one animal per well)", self), background_color=LIGHT_YELLOW)
+    optimizeBoutBtn.clicked.connect(lambda: controller.chooseVideoToCreateConfigFileFor(controller, True, False, True))
+    layout.addWidget(optimizeBoutBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    linkBtn1 = apply_style(QPushButton("Solve issues near the borders of the wells/tanks/arenas", self), background_color=LIGHT_YELLOW)
+    linkBtn1.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md#problemOnBorders"))
+    layout.addWidget(linkBtn1, alignment=Qt.AlignmentFlag.AlignCenter)
+    linkBtn2 = apply_style(QPushButton("Post-process animal center trajectories", self), background_color=LIGHT_YELLOW)
+    linkBtn2.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md#trajectoriesPostProcessing"))
+    layout.addWidget(linkBtn2, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel("Trajectories post-processing can help solve problems with animal 'disapearing' and/or temporarily 'jumping' to a distant (and incorrect) location.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+    linkBtn3 = apply_style(QPushButton("Speed up tracking for 'Track heads and tails of freely swimming fish'", self), background_color=LIGHT_YELLOW)
+    linkBtn3.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingSpeedOptimization.md"))
+    layout.addWidget(linkBtn3, alignment=Qt.AlignmentFlag.AlignCenter)
+    linkBtn4 = apply_style(QPushButton("View More Tracking Troubleshooting Tips", self), background_color=GOLD)
+    linkBtn4.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md"))
+    layout.addWidget(linkBtn4, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel("If you don't manage to get a good configuration file that fits your needs, email us at info@zebrazoom.org.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self.setLayout(layout)
 
 
-class ChooseGeneralExperiment(tk.Frame):
-
-  def __init__(self, parent, controller):
-  
-    tk.Frame.__init__(self, parent)
+class ChooseGeneralExperiment(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
-    label.pack(side="top", fill="x", pady=10)
-    
-    tk.Label(self, text="Choose only one of the options below:", font=("Helvetica", 12)).pack(side="top", fill="x", pady=10)
 
-    fastScreen = IntVar()
-    Checkbutton(self, text="Fast and easy screen for any kind of animal.", variable=fastScreen).pack()
-    tk.Label(self, text="Only one animal per well/tank/arena. Center of mass tracking only. Very fast Tracking. Good for genetic and drug screens.").pack()
-    tk.Label(self, text="").pack()
-    
-    freeZebra = IntVar()
-    Checkbutton(self, text="Track heads and tails of freely swimming fish.", variable=freeZebra).pack()
-    tk.Label(self, text="Multiple fish can be tracked in the same well but the tail tracking can be mediocre when fish collide. Each well should contain the same number of fish.").pack()
-    tk.Label(self, text="").pack()
-    
-    headEmbZebra = IntVar()
-    Checkbutton(self, text="Track tail of one head embedded zebrafish larva.", variable=headEmbZebra).pack()
-    tk.Label(self, text="").pack()
-    
-    drosophilia = IntVar()
-    rodent = IntVar()
-    other = IntVar()
-    Checkbutton(self, text="Track centers of mass of any kind of animal.", variable=other).pack()
-    tk.Label(self, text='Several animals can be tracked at once in the same well/tank/arena. Each well should contain the same number of animals.').pack()
-    tk.Label(self, text="").pack()
-    
-    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.chooseGeneralExperimentFirstStep(controller, freeZebra.get(), headEmbZebra.get(), drosophilia.get(), rodent.get(), other.get(), fastScreen.get())).pack()
-    
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+    layout = QVBoxLayout()
+    layout.addWidget(apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(apply_style(QLabel("Choose only one of the options below:", self), font=QFont("Helvetica", 12)), alignment=Qt.AlignmentFlag.AlignCenter)
+    fastScreenRadioButton = QRadioButton("Fast and easy screen for any kind of animal.", self)
+    fastScreenRadioButton.setChecked(True)
+    layout.addWidget(fastScreenRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel("Only one animal per well/tank/arena. Center of mass tracking only. Very fast Tracking. Good for genetic and drug screens.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+    freeZebraRadioButton = QRadioButton("Track heads and tails of freely swimming fish.", self)
+    layout.addWidget(freeZebraRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel("Multiple fish can be tracked in the same well but the tail tracking can be mediocre when fish collide. Each well should contain the same number of fish.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+    headEmbZebraRadioButton = QRadioButton("Track tail of one head embedded zebrafish larva.", self)
+    layout.addWidget(headEmbZebraRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
+    otherRadioButton = QRadioButton("Track centers of mass of any kind of animal.", self)
+    layout.addWidget(otherRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel('Several animals can be tracked at once in the same well/tank/arena. Each well should contain the same number of animals.', self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    nextBtn = apply_style(QPushButton("Next", self), background_color=LIGHT_YELLOW)
+    nextBtn.clicked.connect(lambda: controller.chooseGeneralExperimentFirstStep(controller, freeZebraRadioButton.isChecked(), headEmbZebraRadioButton.isChecked(), False, False, otherRadioButton.isChecked(), fastScreenRadioButton.isChecked()))
+    layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self.setLayout(layout)
 
 
-class FreelySwimmingExperiment(tk.Frame):
-
-  def __init__(self, parent, controller):
-  
-    tk.Frame.__init__(self, parent)
+class FreelySwimmingExperiment(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    label = tk.Label(self, text="Prepare Config File for Freely Swimming Fish:", font=controller.title_font)
-    label.pack(side="top", fill="x", pady=10)
-    
-    tk.Label(self, text="Choose only one of the options below:", font=("Helvetica", 12)).pack(side="top", fill="x", pady=10)
-    
-    freeZebra2 = IntVar()
-    Checkbutton(self, text="Recommended method: Automatic Parameters Setting", variable=freeZebra2).pack()
-    tk.Label(self, text="This method will work well on most videos. One exception can be for fish of very different sizes.").pack()
-    tk.Label(self, text="").pack()
-    
-    freeZebra = IntVar()
-    Checkbutton(self, text="Alternative method: Manual Parameters Setting", variable=freeZebra).pack()
-    tk.Label(self, text="It's more difficult to create a configuration file with this method, but it can sometimes be useful as an alternative.").pack()
-    tk.Label(self, text="").pack()
-    
-    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.chooseGeneralExperiment(controller, freeZebra.get(), 0, 0, 0, 0, freeZebra2.get())).pack()
-    
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+
+    layout = QVBoxLayout()
+    layout.addWidget(apply_style(QLabel("Prepare Config File for Freely Swimming Fish:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(apply_style(QLabel("Choose only one of the options below:", self), font=QFont("Helvetica", 12)), alignment=Qt.AlignmentFlag.AlignCenter)
+    freeZebra2RadioButton = QRadioButton("Recommended method: Automatic Parameters Setting", self)
+    freeZebra2RadioButton.setChecked(True)
+    layout.addWidget(freeZebra2RadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel("This method will work well on most videos. One exception can be for fish of very different sizes.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+    freeZebraRadioButton = QRadioButton("Alternative method: Manual Parameters Setting", self)
+    layout.addWidget(freeZebraRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel("It's more difficult to create a configuration file with this method, but it can sometimes be useful as an alternative.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    nextBtn = apply_style(QPushButton("Next", self), background_color=LIGHT_YELLOW)
+    nextBtn.clicked.connect(lambda: controller.chooseGeneralExperiment(controller, freeZebraRadioButton.isChecked(), 0, 0, 0, 0, freeZebra2RadioButton.isChecked()))
+    layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self.setLayout(layout)
 
 
-class WellOrganisation(tk.Frame):
-
-  def __init__(self, parent, controller):
-  
-    tk.Frame.__init__(self, parent)
+class WellOrganisation(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
-    label.pack(side="top", fill="x", pady=10)
-    
-    tk.Label(self, text="Choose only one of the options below:", font=("Helvetica", 12)).pack(side="top", fill="x", pady=10)
-    
-    multipleROIs = IntVar()
-    Checkbutton(self, text="Multiple rectangular regions of interest chosen at runtime", variable=multipleROIs).pack()
-    
-    other = IntVar()
-    Checkbutton(self, text="Whole video", variable=other).pack()
-    
-    roi = IntVar()
-    Checkbutton(self, text="One rectangular region of interest fixed in the configuration file", variable=roi).pack()
-    
-    groupSameSizeAndShapeEquallySpacedWells = IntVar()
-    Checkbutton(self, text="Group of multiple same size and shape equally spaced wells", variable=groupSameSizeAndShapeEquallySpacedWells).pack()
-    
-    circular = IntVar()
-    Checkbutton(self, text="Circular wells (beta version)", variable=circular).pack()
-    
-    rectangular = IntVar()
-    Checkbutton(self, text="Rectangular wells (beta version)", variable=rectangular).pack()
-    
-    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.wellOrganisation(controller, circular.get(), rectangular.get(), roi.get(), other.get(), multipleROIs.get(), groupSameSizeAndShapeEquallySpacedWells.get())).pack()
-    
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+
+    layout = QVBoxLayout()
+    layout.addWidget(apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(apply_style(QLabel("Choose only one of the options below:", self), font=QFont("Helvetica", 12)), alignment=Qt.AlignmentFlag.AlignCenter)
+    multipleROIsRadioButton = QRadioButton("Multiple rectangular regions of interest chosen at runtime", self)
+    multipleROIsRadioButton.setChecked(True)
+    layout.addWidget(multipleROIsRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    otherRadioButton = QRadioButton("Whole video", self)
+    layout.addWidget(otherRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    roiRadioButton = QRadioButton("One rectangular region of interest fixed in the configuration file", self)
+    layout.addWidget(roiRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    groupSameSizeAndShapeEquallySpacedWellsRadioButton = QRadioButton("Group of multiple same size and shape equally spaced wells", self)
+    layout.addWidget(groupSameSizeAndShapeEquallySpacedWellsRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    circularRadioButton = QRadioButton("Circular wells (beta version)", self)
+    layout.addWidget(circularRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    rectangularRadioButton = QRadioButton("Rectangular wells (beta version)", self)
+    layout.addWidget(rectangularRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    nextBtn = apply_style(QPushButton("Next", self), background_color=LIGHT_YELLOW)
+    nextBtn.clicked.connect(lambda: controller.wellOrganisation(controller, circularRadioButton.isChecked(), rectangularRadioButton.isChecked(), roiRadioButton.isChecked(), otherRadioButton.isChecked(), multipleROIsRadioButton.isChecked(), groupSameSizeAndShapeEquallySpacedWellsRadioButton.isChecked()))
+    layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self.setLayout(layout)
 
 
-class NbRegionsOfInterest(tk.Frame):
-
-  def __init__(self, parent, controller):
-  
-    tk.Frame.__init__(self, parent)
+class NbRegionsOfInterest(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
-    label.pack(side="top", fill="x", pady=10)
-    
-    tk.Label(self, text="How many regions of interest / wells are there in your video?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    nbwells = tk.Entry(self)
-    nbwells.pack()
-    
-    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.regionsOfInterest(controller, nbwells.get())).pack()
-    
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+
+    layout = QVBoxLayout()
+    layout.addWidget(apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(apply_style(QLabel("How many regions of interest / wells are there in your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    nbwells = QLineEdit(controller.window)
+    nbwells.setValidator(QIntValidator(nbwells))
+    nbwells.validator().setBottom(0)
+    layout.addWidget(nbwells, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    nextBtn = apply_style(QPushButton("Next", self), background_color=LIGHT_YELLOW)
+    nextBtn.clicked.connect(lambda: controller.regionsOfInterest(controller, int(nbwells.text())))
+    layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self.setLayout(layout)
 
 
-class HomegeneousWellsLayout(tk.Frame):
-
-  def __init__(self, parent, controller):
-    
-    tk.Frame.__init__(self, parent)
+class HomegeneousWellsLayout(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
-    label.pack(side="top", fill="x", pady=10)
-    
-    tk.Label(self, text="How many wells are there in your video?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    nbwells = tk.Entry(self)
-    nbwells.pack()
-    
-    tk.Label(self, text="How many rows of wells are there in your video? (leave blank for default of 1)", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    nbRowsOfWells = tk.Entry(self)
-    nbRowsOfWells.pack()
-    
-    tk.Label(self, text="How many wells are there per row on your video? (leave blank for default of 4)", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    nbWellsPerRows = tk.Entry(self)
-    nbWellsPerRows.pack()
-    
-    tk.Label(self, text='').pack()
-    tk.Button(self, text="Finish now", bg="light yellow", command=lambda: controller.homegeneousWellsLayout(controller, nbwells.get(), nbRowsOfWells.get(), nbWellsPerRows.get())).pack()
-    tk.Label(self, text='The tracking will work nicely in many cases when choosing this option.').pack()
 
-    tk.Label(self, text='').pack()
-    tk.Button(self, text="Adjust Parameters futher", bg="light yellow", command=lambda: controller.morePreciseFastScreen(controller, nbwells.get(), nbRowsOfWells.get(), nbWellsPerRows.get())).pack()
-    tk.Label(self, text='Choosing this option will lead to a higher probability that the tracking will work well.').pack()
-    tk.Label(self, text='').pack()
-    
-    def callback(url):
-      webbrowser.open_new(url)
-    link3 = tk.Button(self, text="Alternative", bg="gold")
-    link3.pack()
-    link3.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom/blob/master/FastScreenTrackingGuidlines.md"))
-    
-    tk.Label(self, text='').pack()
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+    layout = QVBoxLayout()
+    layout.addWidget(apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
+    layout.addWidget(apply_style(QLabel("How many wells are there in your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    nbwells = QLineEdit(controller.window)
+    nbwells.setValidator(QIntValidator(nbwells))
+    nbwells.validator().setBottom(0)
+    layout.addWidget(nbwells, alignment=Qt.AlignmentFlag.AlignCenter)
 
+    layout.addWidget(apply_style(QLabel("How many rows of wells are there in your video? (leave blank for default of 1)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    nbRowsOfWells = QLineEdit(controller.window)
+    nbRowsOfWells.setValidator(QIntValidator(nbRowsOfWells))
+    nbRowsOfWells.validator().setBottom(0)
+    layout.addWidget(nbRowsOfWells, alignment=Qt.AlignmentFlag.AlignCenter)
 
-class CircularOrRectangularWells(tk.Frame):
+    layout.addWidget(apply_style(QLabel("How many wells are there per row on your video? (leave blank for default of 4)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    nbWellsPerRows = QLineEdit(controller.window)
+    nbWellsPerRows.setValidator(QIntValidator(nbWellsPerRows))
+    nbWellsPerRows.validator().setBottom(0)
+    layout.addWidget(nbWellsPerRows, alignment=Qt.AlignmentFlag.AlignCenter)
 
-  def __init__(self, parent, controller):
-  
-    tk.Frame.__init__(self, parent)
+    finishBtn = apply_style(QPushButton("Finish now", self), background_color=LIGHT_YELLOW)
+    finishBtn.clicked.connect(lambda: controller.homegeneousWellsLayout(controller, nbwells.text(), nbRowsOfWells.text(), nbWellsPerRows.text()))
+    layout.addWidget(finishBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel('The tracking will work nicely in many cases when choosing this option.', self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    adjustBtn = apply_style(QPushButton("Adjust Parameters futher", self), background_color=LIGHT_YELLOW)
+    adjustBtn.clicked.connect(lambda: controller.morePreciseFastScreen(controller, nbwells.text(), nbRowsOfWells.text(), nbWellsPerRows.text()))
+    layout.addWidget(adjustBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel('Choosing this option will lead to a higher probability that the tracking will work well.', self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    linkBtn1 = apply_style(QPushButton("Alternative", self), background_color=GOLD)
+    linkBtn1.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/FastScreenTrackingGuidlines.md"))
+    layout.addWidget(linkBtn1, alignment=Qt.AlignmentFlag.AlignCenter)
+    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self.setLayout(layout)
+
+class CircularOrRectangularWells(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
-    label.pack(side="top", fill="x", pady=10)
-    
-    tk.Label(self, text="How many wells are there in your video?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    nbwells = tk.Entry(self)
-    nbwells.pack()
-    
-    tk.Label(self, text="How many rows of wells are there in your video? (leave blank for default of 1)", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    nbRowsOfWells = tk.Entry(self)
-    nbRowsOfWells.pack()
-    
-    tk.Label(self, text="How many wells are there per row on your video? (leave blank for default of 4)", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    nbWellsPerRows = tk.Entry(self)
-    nbWellsPerRows.pack()
-    
-    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.circularOrRectangularWells(controller, nbwells.get(), nbRowsOfWells.get(), nbWellsPerRows.get())).pack()
-    
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+
+    layout = QVBoxLayout()
+    layout.addWidget(apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(apply_style(QLabel("How many wells are there in your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    nbwells = QLineEdit(controller.window)
+    nbwells.setValidator(QIntValidator(nbwells))
+    nbwells.validator().setBottom(0)
+    layout.addWidget(nbwells, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(apply_style(QLabel("How many rows of wells are there in your video? (leave blank for default of 1)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    nbRowsOfWells = QLineEdit(controller.window)
+    nbRowsOfWells.setValidator(QIntValidator(nbRowsOfWells))
+    nbRowsOfWells.validator().setBottom(0)
+    layout.addWidget(nbRowsOfWells, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(apply_style(QLabel("How many wells are there per row on your video? (leave blank for default of 4)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    nbWellsPerRows = QLineEdit(controller.window)
+    nbWellsPerRows.setValidator(QIntValidator(nbWellsPerRows))
+    nbWellsPerRows.validator().setBottom(0)
+    layout.addWidget(nbWellsPerRows, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    nextBtn = apply_style(QPushButton("Next", self), background_color=LIGHT_YELLOW)
+    nextBtn.clicked.connect(lambda: controller.circularOrRectangularWells(controller, nbwells.text(), nbRowsOfWells.text(), nbWellsPerRows.text()))
+    layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self.setLayout(layout)
 
 
-class ChooseCircularWellsLeft(tk.Frame):
-
-  def __init__(self, parent, controller):
-  
-    tk.Frame.__init__(self, parent)
+class ChooseCircularWellsLeft(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
-    label.pack(side="top", fill="x", pady=10)
-    
-    tk.Button(self, text="Click on the left inner border of the top left well", command=lambda: controller.chooseCircularWellsLeft(controller)).pack()
-    
-    tk.Label(self, text="Example:", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    
-    canvas = Canvas(self, width=2500, height=2000)
-    canvas.pack()
+
+    layout = QVBoxLayout()
+    layout.addWidget(apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    button = QPushButton("Click on the left inner border of the top left well", self)
+    button.clicked.connect(lambda: controller.chooseCircularWellsLeft(controller))
+    layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(apply_style(QLabel("Example:", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-    img = PhotoImage(file=os.path.join(cur_dir_path, 'leftborder.png'))
-    self.img = img
-    canvas.create_image(20, 20, anchor=NW, image=img)
-    
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+    image = QLabel(self)
+    image.setPixmap(QPixmap(os.path.join(cur_dir_path, 'leftborder.png')))
+    layout.addWidget(image, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self.setLayout(layout)
 
 
-class ChooseCircularWellsRight(tk.Frame):
-
-  def __init__(self, parent, controller):
-  
-    tk.Frame.__init__(self, parent)
+class ChooseCircularWellsRight(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
-    label.pack(side="top", fill="x", pady=10)
-    
-    tk.Button(self, text="Click on the right inner border of the top left well", command=lambda: controller.chooseCircularWellsRight(controller)).pack()
-    
-    tk.Label(self, text="Example:", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    
-    canvas = Canvas(self, width=2500, height=2000)
-    canvas.pack()
+
+    layout = QVBoxLayout()
+    layout.addWidget(apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    button = QPushButton("Click on the right inner border of the top left well", self)
+    button.clicked.connect(lambda: controller.chooseCircularWellsRight(controller))
+    layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(apply_style(QLabel("Example:", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-    img = PhotoImage(file=os.path.join(cur_dir_path, 'rightborder.png'))
-    self.img = img
-    canvas.create_image(20, 20, anchor=NW, image=img)
-    
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+    image = QLabel(self)
+    image.setPixmap(QPixmap(os.path.join(cur_dir_path, 'rightborder.png')))
+    layout.addWidget(image, alignment=Qt.AlignmentFlag.AlignCenter)
 
+    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
-class NumberOfAnimals(tk.Frame):
+    self.setLayout(layout)
 
-  def __init__(self, parent, controller):
-  
-    tk.Frame.__init__(self, parent)
+class NumberOfAnimals(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
-    label.pack(side="top", fill="x", pady=10)
-    
-    tk.Label(self, text="What's the total number of animals in your video?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    
-    nbanimals = tk.Entry(self)
-    nbanimals.pack()
-    
-    tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    tk.Label(self, text="Are all of those animals ALWAYS visible throughout the video?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    
-    yes = IntVar()
-    Checkbutton(self, text="Yes", variable=yes).pack()
-    noo = IntVar()
-    Checkbutton(self, text="No", variable=noo).pack()
-    
-    tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    forceBlobMethodForHeadTracking = IntVar()
-    Checkbutton(self, text="Blob method for head tracking of fish", variable=forceBlobMethodForHeadTracking).pack()
-    tk.Label(self, text="Only click the box above if you tried the tracking without this option and the head tracking was suboptimal (an eye was detected instead of the head for example).", font=("Helvetica", 10)).pack(side="top", fill="x")
-    
-    
-    tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    tk.Button(self, text="Next", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), forceBlobMethodForHeadTracking.get(), 0, 0, 0, 0, 0, 0, 0)).pack()
-    tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
-    
-class NumberOfAnimals2(tk.Frame):
 
-  def __init__(self, parent, controller):
-  
-    tk.Frame.__init__(self, parent)
+    layout = QVBoxLayout()
+    layout.addWidget(apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(apply_style(QLabel("What's the total number of animals in your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    nbanimals = QLineEdit(controller.window)
+    nbanimals.setValidator(QIntValidator(nbanimals))
+    nbanimals.validator().setBottom(0)
+    layout.addWidget(nbanimals, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(apply_style(QLabel("Are all of those animals ALWAYS visible throughout the video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    yesRadioButton = QRadioButton("Yes", self)
+    yesRadioButton.setChecked(True)
+    layout.addWidget(yesRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    noRadioButton = QRadioButton("No", self)
+    layout.addWidget(noRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    forceBlobMethodForHeadTrackingCheckbox = QCheckBox("Blob method for head tracking of fish", self)
+    layout.addWidget(forceBlobMethodForHeadTrackingCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(apply_style(QLabel("Only click the box above if you tried the tracking without this option and the head tracking was suboptimal (an eye was detected instead of the head for example).", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    nextBtn = apply_style(QPushButton("Next", self), background_color=LIGHT_YELLOW)
+    nextBtn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text(), yesRadioButton.isChecked(), noRadioButton.isChecked(), forceBlobMethodForHeadTrackingCheckbox.isChecked(), 0, 0, 0, 0, 0, 0, 0))
+    layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self.setLayout(layout)
+
+
+class NumberOfAnimals2(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    
-    tk.Label(self, text="Prepare Config File", font=controller.title_font).grid(row=0, column=0, columnspan = 2, pady=10)
-    
-    tk.Label(self, text="What's the total number of animals in your video?", font = "bold").grid(row=1, column=0, pady=10)
-    nbanimals = tk.Entry(self)
-    nbanimals.grid(row=2, column=0)
-    
-    tk.Label(self, text="Are all of those animals ALWAYS visible throughout the video?", font = "bold").grid(row=1, column=1, pady=10)
-    yes = IntVar()
-    Checkbutton(self, text="Yes", variable=yes).grid(row=2, column=1)
-    noo = IntVar()
-    Checkbutton(self, text="No", variable=noo).grid(row=3, column=1)
-    
-    tk.Label(self, text="Do you want bouts of movement to be detected?", font = "bold").grid(row=4, column=0, pady=10)
-    tk.Label(self, text="Warning: at the moment, the parameters related to the bouts detection are a little challenging to set.").grid(row=5, column=0)
-    yesBouts = IntVar()
-    Checkbutton(self, text="Yes", variable=yesBouts).grid(row=6, column=0)
-    nooBouts = IntVar()
-    Checkbutton(self, text="No", variable=nooBouts).grid(row=7, column=0)
-    
-    tk.Label(self, text="Do you want bends and associated paramaters to be calculated?", font = "bold").grid(row=4, column=1, pady=10)
-    tk.Label(self, text="Bends are the local minimum and maximum of the tail angle.").grid(row=5, column=1)
-    tk.Label(self, text="Bends are used to calculate parameters such as tail beat frequency.").grid(row=6, column=1)
-    
-    def callback(url):
-      webbrowser.open_new(url)
-    
-    link1 = tk.Button(self, text="You may need to further adjust these parameters afterwards: see documentation.")
-    link1.grid(row=7, column=1)
-    link1.bind("<Button-1>", lambda e: callback("https://github.com/oliviermirat/ZebraZoom#hyperparametersTailAngleSmoothBoutsAndBendsDetect"))
-    
-    yesBends = IntVar()
-    Checkbutton(self, text="Yes", variable=yesBends).grid(row=8, column=1)
-    nooBends = IntVar()
-    Checkbutton(self, text="No", variable=nooBends).grid(row=9, column=1)
-    
-    tk.Label(self, text="Tail tracking: Choose an option below:", font = "bold").grid(row=8, column=0, pady=10)
-    recommendedMethod = IntVar()
-    Checkbutton(self, text="Recommended Method: Fast Tracking but tail tip might be detected too soon along the tail", variable=recommendedMethod).grid(row=9, column=0)
-    alternativeMethod = IntVar()
-    Checkbutton(self, text="Alternative Method: Slower Tracker but tail tip MIGHT be detected more acurately", variable=alternativeMethod).grid(row=10, column=0)
-    tk.Label(self, text="Once your configuration is created, you can switch from one method to the other", font=("Helvetica", 10)).grid(row=11, column=0)
-    tk.Label(self, text="by changing the value of the parameter recalculateForegroundImageBasedOnBodyArea", font=("Helvetica", 10)).grid(row=12, column=0)
-    tk.Label(self, text="in your config file between 0 and 1.", font=("Helvetica", 10)).grid(row=13, column=0)
-    
-    tk.Label(self, text="Tracking: Choose an option below:", font = "bold").grid(row=10, column=1, pady=10)
-    recommendedTrackingMethod = IntVar()
-    Checkbutton(self, text="Recommended Method in most cases: Slower Tracking but often more accurate.", variable=recommendedTrackingMethod).grid(row=11, column=1)
-    alternativeTrackingMethod = IntVar()
-    Checkbutton(self, text="Alternative Method: Faster tracking, sometimes less accurate.", variable=alternativeTrackingMethod).grid(row=12, column=1)
-    tk.Label(self, text="The alternative method can also work better for animals of different sizes.", font=("Helvetica", 10)).grid(row=13, column=1)
-    
-    tk.Button(self, text="Ok, next step", bg="light yellow", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, yesBouts.get(), nooBouts.get(), recommendedMethod.get(), alternativeMethod.get(), yesBends.get(), nooBends.get(), recommendedTrackingMethod.get())).grid(row=14, column=0, columnspan = 2)
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).grid(row=15, column=0, columnspan = 2)
+
+    layout = QGridLayout()
+    layout.addWidget(apply_style(QLabel("Prepare Config File", self), font=controller.title_font), 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(apply_style(QLabel("What's the total number of animals in your video?", self), font_size='16px'), 1, 0, Qt.AlignmentFlag.AlignCenter)
+    nbanimals = QLineEdit(controller.window)
+    nbanimals.setValidator(QIntValidator(nbanimals))
+    nbanimals.validator().setBottom(0)
+    layout.addWidget(nbanimals, 2, 0, Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(apply_style(QLabel("Are all of those animals ALWAYS visible throughout the video?", self), font_size='16px'), 1, 1, Qt.AlignmentFlag.AlignCenter)
+    btnGroup1 = QButtonGroup(self)
+    yesRadioButton = QRadioButton("Yes", self)
+    btnGroup1.addButton(yesRadioButton)
+    yesRadioButton.setChecked(True)
+    layout.addWidget(yesRadioButton, 2, 1, Qt.AlignmentFlag.AlignCenter)
+    noRadioButton = QRadioButton("No", self)
+    btnGroup1.addButton(noRadioButton)
+    layout.addWidget(noRadioButton, 3, 1, Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(apply_style(QLabel("Do you want bouts of movement to be detected?", self), font_size='16px'), 4, 0, Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel("Warning: at the moment, the parameters related to the bouts detection are a little challenging to set.", self), 5, 0, Qt.AlignmentFlag.AlignCenter)
+    btnGroup2 = QButtonGroup(self)
+    yesBoutsRadioButton = QRadioButton("Yes", self)
+    btnGroup2.addButton(yesBoutsRadioButton)
+    yesBoutsRadioButton.setChecked(True)
+    layout.addWidget(yesBoutsRadioButton, 6, 0, Qt.AlignmentFlag.AlignCenter)
+    noBoutsRadioButton = QRadioButton("No", self)
+    btnGroup2.addButton(noBoutsRadioButton)
+    layout.addWidget(noBoutsRadioButton, 7, 0, Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(apply_style(QLabel("Do you want bends and associated paramaters to be calculated?", self), font_size='16px'), 4, 1, Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel("Bends are the local minimum and maximum of the tail angle.", self), 5, 1, Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel("Bends are used to calculate parameters such as tail beat frequency.", self), 6, 1, Qt.AlignmentFlag.AlignCenter)
+
+    linkBtn1 = QPushButton("You may need to further adjust these parameters afterwards: see documentation.", self)
+    linkBtn1.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom#hyperparametersTailAngleSmoothBoutsAndBendsDetect"))
+    layout.addWidget(linkBtn1, 7, 1, Qt.AlignmentFlag.AlignCenter)
+    btnGroup3 = QButtonGroup(self)
+    yesBendsRadioButton = QRadioButton("Yes", self)
+    btnGroup3.addButton(yesBendsRadioButton)
+    yesBendsRadioButton.setChecked(True)
+    layout.addWidget(yesBendsRadioButton, 8, 1, Qt.AlignmentFlag.AlignCenter)
+    noBendsRadioButton = QRadioButton("No", self)
+    btnGroup3.addButton(noBendsRadioButton)
+    layout.addWidget(noBendsRadioButton, 9, 1, Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(apply_style(QLabel("Tail tracking: Choose an option below:", self), font_size='16px'), 8, 0, Qt.AlignmentFlag.AlignCenter)
+    btnGroup4 = QButtonGroup(self)
+    recommendedMethodRadioButton = QRadioButton("Recommended Method: Fast Tracking but tail tip might be detected too soon along the tail", self)
+    btnGroup4.addButton(recommendedMethodRadioButton)
+    recommendedMethodRadioButton.setChecked(True)
+    layout.addWidget(recommendedMethodRadioButton, 9, 0, Qt.AlignmentFlag.AlignCenter)
+    alternativeMethodRadioButton = QRadioButton("Alternative Method: Slower Tracker but tail tip MIGHT be detected more acurately", self)
+    btnGroup4.addButton(alternativeMethodRadioButton)
+    layout.addWidget(alternativeMethodRadioButton, 10, 0, Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(apply_style(QLabel("Once your configuration is created, you can switch from one method to the other", self), font=QFont("Helvetica", 10)), 11, 0, Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(apply_style(QLabel("by changing the value of the parameter recalculateForegroundImageBasedOnBodyArea", self), font=QFont("Helvetica", 10)), 12, 0, Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(apply_style(QLabel("in your config file between 0 and 1.", self), font=QFont("Helvetica", 10)), 13, 0, Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(apply_style(QLabel("Tracking: Choose an option below:", self), font_size='16px'), 10, 1, Qt.AlignmentFlag.AlignCenter)
+    btnGroup5 = QButtonGroup(self)
+    recommendedTrackingMethodRadioButton = QRadioButton("Recommended Method in most cases: Slower Tracking but often more accurate.", self)
+    btnGroup5.addButton(recommendedTrackingMethodRadioButton)
+    recommendedTrackingMethodRadioButton.setChecked(True)
+    layout.addWidget(recommendedTrackingMethodRadioButton, 11, 1, Qt.AlignmentFlag.AlignCenter)
+    alternativeTrackingMethodRadioButton = QRadioButton("Alternative Method: Faster tracking, sometimes less accurate.", self)
+    btnGroup5.addButton(alternativeTrackingMethodRadioButton)
+    layout.addWidget(alternativeTrackingMethodRadioButton, 12, 1, Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(apply_style(QLabel("The alternative method can also work better for animals of different sizes.", self), font=QFont("Helvetica", 10)), 13, 1, Qt.AlignmentFlag.AlignCenter)
+
+    nextBtn = apply_style(QPushButton("Ok, next step", self), background_color=LIGHT_YELLOW)
+    nextBtn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text(), yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, yesBoutsRadioButton.isChecked(), noBoutsRadioButton.isChecked(), recommendedMethodRadioButton.isChecked(), alternativeMethodRadioButton.isChecked(), yesBendsRadioButton.isChecked(), noBendsRadioButton.isChecked(), recommendedTrackingMethodRadioButton.isChecked()))
+    layout.addWidget(nextBtn, 14, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(startPageBtn, 15, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+
+    self.setLayout(layout)
 
 
-class NumberOfAnimalsCenterOfMass(tk.Frame):
-
-  def __init__(self, parent, controller):
-  
-    tk.Frame.__init__(self, parent)
+class NumberOfAnimalsCenterOfMass(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
-    label.pack(side="top", fill="x", pady=10)
-    
-    tk.Label(self, text="What's the total number of animals in your video?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    
-    nbanimals = tk.Entry(self)
-    nbanimals.pack()
-    
-    tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    tk.Label(self, text="Are all of those animals ALWAYS visible throughout the video?", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    
-    yes = IntVar()
-    Checkbutton(self, text="Yes", variable=yes).pack()
-    noo = IntVar()
-    Checkbutton(self, text="No", variable=noo).pack()
-    
-    tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    
-    tk.Button(self, text="Automatic Parameters Setting, Method 1: Slower tracking but often more accurate", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, 0, 0, 1, 0, 0, 0, 1)).pack()
-    tk.Button(self, text="Automatic Parameters Setting, Method 2: Faster tracking but often less accurate", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, 0, 0, 1, 0, 0, 0, 0)).pack()
-    tk.Label(self, text="", font=("Helvetica", 10)).pack()
-    tk.Button(self, text="Manual Parameters Setting: More control over the choice of parameters", command=lambda: controller.numberOfAnimals(controller, nbanimals.get(), yes.get(), noo.get(), 0, 0, 0, 0, 1, 0, 0, 0)).pack()
-    tk.Label(self, text="Try the 'Automatic Parameters Setting, Method 1' first. If it doesn't work, try the other methods.", font=("Helvetica", 10)).pack()
-    tk.Label(self, text="The 'Manual Parameter Settings' makes setting parameter slightly more challenging but offers more control over the choice of parameters.", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    
-    tk.Label(self, text="", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+
+    layout = QVBoxLayout()
+    layout.addWidget(apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(apply_style(QLabel("What's the total number of animals in your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    nbanimals = QLineEdit(controller.window)
+    nbanimals.setValidator(QIntValidator(nbanimals))
+    nbanimals.validator().setBottom(0)
+    layout.addWidget(nbanimals, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(apply_style(QLabel("Are all of those animals ALWAYS visible throughout the video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    yesRadioButton = QRadioButton("Yes", self)
+    yesRadioButton.setChecked(True)
+    layout.addWidget(yesRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    noRadioButton = QRadioButton("No", self)
+    layout.addWidget(noRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    method1Btn = QPushButton("Automatic Parameters Setting, Method 1: Slower tracking but often more accurate", self)
+    method1Btn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text(), yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, 0, 0, 1, 0, 0, 0, 1))
+    layout.addWidget(method1Btn, alignment=Qt.AlignmentFlag.AlignCenter)
+    method2Btn = QPushButton("Automatic Parameters Setting, Method 2: Faster tracking but often less accurate", self)
+    method2Btn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text(), yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, 0, 0, 1, 0, 0, 0, 0))
+    layout.addWidget(method2Btn, alignment=Qt.AlignmentFlag.AlignCenter)
+    manualBtn = QPushButton("Manual Parameters Setting: More control over the choice of parameters", self)
+    manualBtn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text(), yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, 0, 0, 0, 1, 0, 0, 0))
+    layout.addWidget(manualBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(apply_style(QLabel("Try the 'Automatic Parameters Setting, Method 1' first. If it doesn't work, try the other methods.", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(apply_style(QLabel("The 'Manual Parameter Settings' makes setting parameter slightly more challenging but offers more control over the choice of parameters.", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self.setLayout(layout)
 
 
-class IdentifyHeadCenter(tk.Frame):
-
-  def __init__(self, parent, controller):
-  
-    tk.Frame.__init__(self, parent)
+class IdentifyHeadCenter(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
-    label.pack(side="top", fill="x", pady=10)
-    
-    tk.Button(self, text="Click on the center of the head of a zebrafish", command=lambda: controller.chooseHeadCenter(controller)).pack()
-    
-    tk.Label(self, text="Example:", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    
-    canvas = Canvas(self, width=2500, height=2000)
-    canvas.pack()
+
+    layout = QVBoxLayout()
+    layout.addWidget(apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    button = QPushButton("Click on the center of the head of a zebrafish", self)
+    button.clicked.connect(lambda: controller.chooseHeadCenter(controller))
+    layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(apply_style(QLabel("Example:", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-    img = PhotoImage(file=os.path.join(cur_dir_path, 'blobCenter.png'))
-    self.img = img
-    canvas.create_image(20, 20, anchor=NW, image=img)
-    
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+    image = QLabel(self)
+    image.setPixmap(QPixmap(os.path.join(cur_dir_path, 'blobCenter.png')))
+    layout.addWidget(image, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    
-class IdentifyBodyExtremity(tk.Frame):
+    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
-  def __init__(self, parent, controller):
-  
-    tk.Frame.__init__(self, parent)
+    self.setLayout(layout)
+
+class IdentifyBodyExtremity(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
-    label.pack(side="top", fill="x", pady=10)
-    
-    tk.Button(self, text="Click on the tip of the tail of the same zebrafish.", command=lambda: controller.chooseBodyExtremity(controller)).pack()
-    
-    tk.Label(self, text="Example:", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    
-    canvas = Canvas(self, width=2500, height=2000)
-    canvas.pack()
+
+    layout = QVBoxLayout()
+    layout.addWidget(apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    button = QPushButton("Click on the tip of the tail of the same zebrafish.", self)
+    button.clicked.connect(lambda: controller.chooseBodyExtremity(controller))
+    layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(apply_style(QLabel("Example:", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-    img = PhotoImage(file=os.path.join(cur_dir_path, 'blobExtremity.png'))
-    self.img = img
-    canvas.create_image(20, 20, anchor=NW, image=img)
-    
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+    image = QLabel(self)
+    image.setPixmap(QPixmap(os.path.join(cur_dir_path, 'blobExtremity.png')))
+    layout.addWidget(image, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self.setLayout(layout)
 
 
-class GoToAdvanceSettings(tk.Frame):
-
-  def __init__(self, parent, controller):
-  
-    tk.Frame.__init__(self, parent)
+class GoToAdvanceSettings(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    label = tk.Label(self, text="Prepare Config File", font=controller.title_font)
-    label.pack(side="top", fill="x", pady=10)
-    
-    tk.Label(self, text="Do you want to detect bouts movements and/or further adjust tracking parameters?", font=("Helvetica", 12)).pack(side="top", fill="x", pady=10)
-    
-    yes = IntVar()
-    Checkbutton(self, text="Yes", variable=yes).pack()
-    tk.Label(self, text="").pack()
-    
-    no = IntVar()
-    Checkbutton(self, text="No", variable=no).pack()
-    tk.Label(self, text="").pack()
-    
-    tk.Button(self, text="Next", bg="light yellow", command=lambda: controller.goToAdvanceSettings(controller, yes.get(), no.get())).pack()
-    
-    tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
+
+    layout = QVBoxLayout()
+    layout.addWidget(apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(apply_style(QLabel("Do you want to detect bouts movements and/or further adjust tracking parameters?", self), font=QFont("Helvetica", 12)), alignment=Qt.AlignmentFlag.AlignCenter)
+    yesRadioButton = QRadioButton("Yes", self)
+    yesRadioButton.setChecked(True)
+    layout.addWidget(yesRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    noRadioButton = QRadioButton("No", self)
+    layout.addWidget(noRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    nextBtn = apply_style(QPushButton("Next", self), background_color=LIGHT_YELLOW)
+    nextBtn.clicked.connect(lambda: controller.goToAdvanceSettings(controller, yesRadioButton.isChecked(), noRadioButton.isChecked()))
+    layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self.setLayout(layout)
 
 
-class FinishConfig(tk.Frame):
-
-  def __init__(self, parent, controller):
-  
-    tk.Frame.__init__(self, parent)
+class FinishConfig(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
     self.controller = controller
-    
-    tk.Label(self, text="Choose a name for the config file you want to create. Don't put any file extension here. For example, you could type: myconfig", font=("Helvetica", 10)).pack(side="top", fill="x", pady=10)
-    
-    configFileNameToSave = tk.Entry(self)
-    configFileNameToSave.pack()
-    
+
+    layout = QVBoxLayout()
+    layout.addWidget(apply_style(QLabel("Choose a name for the config file you want to create. Don't put any file extension here. For example, you could type: myconfig", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    configFileNameToSave = QLineEdit(controller.window)
+    layout.addWidget(configFileNameToSave, alignment=Qt.AlignmentFlag.AlignCenter)
+
     if (globalVariables["mac"] or globalVariables["lin"]):
-      tk.Button(self, text="Save Config File (this will also close this window, restart it afterwards)", bg="light yellow", command=lambda: controller.finishConfig(controller, configFileNameToSave.get())).pack()
+      saveBtn = apply_style(QPushButton("Save Config File (this will also close this window, restart it afterwards)", self), background_color=LIGHT_YELLOW)
+      saveBtn.clicked.connect(lambda: controller.finishConfig(controller, configFileNameToSave.text()))
+      layout.addWidget(saveBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     else:
-      tk.Button(self, text="Save Config File", bg="light yellow", command=lambda: controller.finishConfig(controller, configFileNameToSave.get())).pack()
+      saveBtn = apply_style(QPushButton("Save Config File", self), background_color=LIGHT_YELLOW)
+      saveBtn.clicked.connect(lambda: controller.finishConfig(controller, configFileNameToSave.text()))
+      layout.addWidget(saveBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
+    self.setLayout(layout)

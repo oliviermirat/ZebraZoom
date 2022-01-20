@@ -10,7 +10,7 @@ import zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions as adjustParameterI
 import zebrazoom.code.GUI.dataAnalysisGUIFunctions as dataAnalysisGUIFunctions
 import zebrazoom.code.GUI.troubleshootingFunction as troubleshootingFunction
 from zebrazoom.code.GUI.GUI_InitialClasses import StartPage, VideoToAnalyze, ConfigFilePromp, Patience, ZZoutro, SeveralVideos, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, ResultsVisualization, ViewParameters
-from zebrazoom.code.GUI.configFilePrepare import ChooseVideoToCreateConfigFileFor, OptimizeConfigFile, ChooseGeneralExperiment, FreelySwimmingExperiment, WellOrganisation, NbRegionsOfInterest, CircularOrRectangularWells, HomegeneousWellsLayout, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings
+from zebrazoom.code.GUI.configFilePrepare import ChooseVideoToCreateConfigFileFor, OptimizeConfigFile, ChooseGeneralExperiment, WellOrganisation, FreelySwimmingExperiment, NbRegionsOfInterest, HomegeneousWellsLayout, CircularOrRectangularWells, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings
 from zebrazoom.code.GUI.configFileZebrafish import HeadEmbeded
 from zebrazoom.code.GUI.adjustParameterInsideAlgo import AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim, AdujstParamInsideAlgoFreelySwimAutomaticParameters, AdujstBoutDetectionOnly
 from zebrazoom.code.GUI.dataAnalysisGUI import CreateExperimentOrganizationExcel, ChooseExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderPopulation, AnalysisOutputFolderClustering
@@ -46,7 +46,7 @@ class ZebraZoomApp(QApplication):
         self.window = QMainWindow()
         layout = QStackedLayout()
         self.frames = {}
-        for idx, F in enumerate((StartPage, VideoToAnalyze, ConfigFilePromp, Patience, ZZoutro, SeveralVideos, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, ResultsVisualization, ViewParameters)):
+        for idx, F in enumerate((StartPage, VideoToAnalyze, ConfigFilePromp, Patience, ZZoutro, SeveralVideos, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, ResultsVisualization, ViewParameters, ChooseVideoToCreateConfigFileFor, OptimizeConfigFile, ChooseGeneralExperiment, WellOrganisation, FreelySwimmingExperiment, NbRegionsOfInterest, HomegeneousWellsLayout, CircularOrRectangularWells, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings, HeadEmbeded, AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim, AdujstParamInsideAlgoFreelySwimAutomaticParameters, AdujstBoutDetectionOnly)):
             self.frames[F.__name__] = idx
             layout.addWidget(F(self))
         central_widget = QWidget(self.window)

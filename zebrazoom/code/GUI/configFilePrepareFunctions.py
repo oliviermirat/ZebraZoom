@@ -1,10 +1,5 @@
 from pathlib import Path
 import numpy as np
-import tkinter as tk
-from tkinter import font  as tkfont
-from tkinter import filedialog
-from tkinter import ttk
-from tkinter import *
 import json
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
@@ -24,6 +19,9 @@ import os
 from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 globalVariables = getGlobalVariables()
 
+from PyQt6.QtWidgets import QFileDialog, QApplication
+
+
 def getMainArguments(self):
   s            = self.videoToCreateConfigFileFor
   arr          = s.split("/")
@@ -39,24 +37,18 @@ def getMainArguments(self):
 def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile, freelySwimAutomaticParameters=False, boutDetectionsOnly=False):
 
   if int(reloadConfigFile):
-  
+
     cur_dir_path = os.path.dirname(os.path.realpath(__file__))
     pathconf = Path(cur_dir_path)
     pathconf = pathconf.parent.parent
     pathconf = os.path.join(pathconf, 'configuration/')
-    
-    if globalVariables["mac"]:
-      configFileName =  filedialog.askopenfilename(initialdir = pathconf, title = "Select configuration file")
-    else:
-      configFileName =  filedialog.askopenfilename(initialdir = pathconf, title = "Select configuration file", filetypes = (("json files","*.json"),("all files","*.*")))
+
+    configFileName, _ =  QFileDialog.getOpenFileName(self.window, "Select configuration file", pathconf, "All files(*)")
     with open(configFileName) as f:
       self.configFile = json.load(f)
 
-  if globalVariables["mac"]:
-    self.videoToCreateConfigFileFor = filedialog.askopenfilename(initialdir = os.path.expanduser("~"),title = "Select video to create config file for")
-  else:
-    self.videoToCreateConfigFileFor = filedialog.askopenfilename(initialdir = os.path.expanduser("~"),title = "Select video to create config file for",filetypes = (("video","*.*"),("all files","*.*")))
-  
+  self.videoToCreateConfigFileFor, _ = QFileDialog.getOpenFileName(self.window, "Select video to create config file for", os.path.expanduser("~"), "All files(*)")
+
   if boutDetectionsOnly:
     controller.calculateBackgroundFreelySwim(controller, 0, False, False, True)
   else:
@@ -120,7 +112,7 @@ def wellOrganisation(self, controller, circular, rectangular, roi, other, multip
             ret, frame = cap.read()
             frame2 = frame.copy()
             [frame2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame2, True, 0.85)
-            
+
             WINDOW_NAME = "Click on the top left of the region of interest"
             cvui.init(WINDOW_NAME)
             cv2.moveWindow(WINDOW_NAME, 0,0)
@@ -135,7 +127,7 @@ def wellOrganisation(self, controller, circular, rectangular, roi, other, multip
                 break
             self.configFile["oneWellManuallyChosenTopLeft"] = [int(getRealValueCoefX * cursor.x), int(getRealValueCoefY * cursor.y)]
             cv2.destroyAllWindows()
-            
+
             WINDOW_NAME = "Click on the bottom right of the region of interest"
             cvui.init(WINDOW_NAME)
             cv2.moveWindow(WINDOW_NAME, 0,0)
@@ -150,7 +142,7 @@ def wellOrganisation(self, controller, circular, rectangular, roi, other, multip
                 break
             self.configFile["oneWellManuallyChosenBottomRight"] = [int(getRealValueCoefX * cursor.x), int(getRealValueCoefY * cursor.y)]
             cv2.destroyAllWindows()
-            
+
             self.configFile["nbWells"] = 1
             chooseBeginningAndEndOfVideo(self, controller)
           else:
@@ -160,19 +152,19 @@ def wellOrganisation(self, controller, circular, rectangular, roi, other, multip
 
 
 def regionsOfInterest(self, controller, nbwells):
-  
+
   self.configFile["multipleROIsDefinedDuringExecution"] = 1
   self.configFile["nbWells"] = int(nbwells)
-  
+
   chooseBeginningAndEndOfVideo(self, controller)
-  
+
 
 def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
-  
+
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
-  
+
   configFile["adjustRectangularWellsDetect"] = 1
-  
+
   try:
     WINDOW_NAME = "Please Wait"
     cvui.init(WINDOW_NAME)
@@ -184,30 +176,30 @@ def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
     newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
     for index in newhyperparameters:
       configFile[index] = newhyperparameters[index]
-  
+
   configFile["adjustRectangularWellsDetect"] = 0
-  
+
   self.configFile = configFile
-  
+
   chooseBeginningAndEndOfVideo(self, controller)
 
 
 def homegeneousWellsLayout(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
 
   self.configFile = {"nbAnimalsPerWell": 1, "nbWells": 8, "nbRowsOfWells": 2, "nbWellsPerRows": 4, "groupOfMultipleSameSizeAndShapeEquallySpacedWells": 1, "postProcessMultipleTrajectories": 1,   "postProcessRemoveLowProbabilityDetection" : 1, "postProcessLowProbabilityDetectionPercentOfMaximum" : 0.2, "trackingPointSizeDisplay": 4, "extractAdvanceZebraParameters": 0,  "validationVideoPlotHeading": 0, "trackTail": 0, "freqAlgoPosFollow": 100, "fasterMultiprocessing": 1, "copyOriginalVideoToOutputFolderForValidation": 0, "backgroundSubtractorKNN": 1}
-  
+
   self.configFile["nbWells"]          = int(nbwells)
-  
+
   if len(nbRowsOfWells):
     self.configFile["nbRowsOfWells"]  = int(nbRowsOfWells)
   else:
     self.configFile["nbRowsOfWells"]  = 1
-    
+
   if len(nbWellsPerRows):
     self.configFile["nbWellsPerRows"]  = int(nbWellsPerRows)
   else:
     self.configFile["nbWellsPerRows"]  = 4
-  
+
   controller.show_frame("FinishConfig")
 
 
@@ -215,39 +207,39 @@ def morePreciseFastScreen(self, controller, nbwells, nbRowsOfWells, nbWellsPerRo
 
   # The gaussian image filtering should be added here in the future
   self.configFile = {"minPixelDiffForBackExtract": 20, "backgroundPreProcessParameters": [[3]], "backgroundPreProcessMethod": ["erodeThenMin"], "trackingPointSizeDisplay": 1, "nbAnimalsPerWell": 1, "extractAdvanceZebraParameters": 0, "trackTail": 0, "nbWells": 1, "noWellDetection": 1, "backgroundExtractionForceUseAllVideoFrames": 1, "headSize": 2, "createValidationVideo": 0, "lastFrame": 1000}
-  
+
   self.configFile["nbAnimalsPerWell"] = int(nbwells)
-  
+
   # self.configFile["nbWells"]          = int(nbwells)
-  
+
   if len(nbRowsOfWells):
     self.configFile["nbRowsOfWells"]  = int(nbRowsOfWells)
   else:
     self.configFile["nbRowsOfWells"]  = 1
-    
+
   if len(nbWellsPerRows):
     self.configFile["nbWellsPerRows"]  = int(nbWellsPerRows)
   else:
     self.configFile["nbWellsPerRows"]  = 4
-  
+
   self.calculateBackgroundFreelySwim(controller, 0, True)
-  
+
   # controller.show_frame("FinishConfig")
 
 
 def circularOrRectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
   self.configFile["nbWells"]        = int(nbwells)
-  
+
   if len(nbRowsOfWells):
     self.configFile["nbRowsOfWells"]  = int(nbRowsOfWells)
   else:
     self.configFile["nbRowsOfWells"]  = 1
-    
+
   if len(nbWellsPerRows):
     self.configFile["nbWellsPerRows"]  = int(nbWellsPerRows)
   else:
     self.configFile["nbWellsPerRows"]  = 4
-  
+
   if self.shape == 'circular':
     controller.show_frame("ChooseCircularWellsLeft")
   else:
@@ -264,7 +256,7 @@ def chooseCircularWellsLeft(self, controller):
   self.wellLeftBorderX = x
   self.wellLeftBorderY = y
   controller.show_frame("ChooseCircularWellsRight")
-  
+
 def chooseCircularWellsRight(self, controller):
   cap = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
   ret, frame = cap.read()
@@ -279,7 +271,7 @@ def chooseCircularWellsRight(self, controller):
 def chooseBeginningAndEndOfVideo(self, controller):
   cap = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
   max_l = int(cap.get(7)) - 2
-  
+
   cap.set(1, 1)
   ret, frame = cap.read()
   WINDOW_NAME = "Choose where the analysis of your video should start."
@@ -310,10 +302,10 @@ def chooseBeginningAndEndOfVideo(self, controller):
       cvui.trackbar(frameCtrl, widgetX, widgetY+10, widgetL, value, 0, max_l)
       cvui.counter(frameCtrl, widgetX, widgetY+60, value)
       buttonclicked = cvui.button(frameCtrl, widgetX, widgetY+90, "Ok, I want the tracking to start at this frame!")
-      
+
       cvui.text(frameCtrl, widgetX+350, widgetY+1, 'No, this is unecessary:')
       buttonEntireVideo = cvui.button(frameCtrl, widgetX+350, widgetY+40, "I want the tracking to run on the entire video!")
-      
+
       cvui.text(frameCtrl, widgetX, widgetY+130, 'Keys: 4 or a: move backwards; 6 or d: move forward')
       cvui.text(frameCtrl, widgetX, widgetY+160, 'Keys: g or f: fast backwards; h or j: fast forward')
       frame2 = frame.copy()
@@ -334,7 +326,7 @@ def chooseBeginningAndEndOfVideo(self, controller):
       elif (r == 106):
         value[0] = value[0] + 100
   cv2.destroyAllWindows()
-  
+
   if not(buttonEntireVideo):
     self.configFile["firstFrame"] = int(value[0])
     cap.set(1, max_l)
@@ -391,7 +383,7 @@ def chooseBeginningAndEndOfVideo(self, controller):
           value[0] = value[0] + 100
     self.configFile["lastFrame"] = int(value[0])
     cv2.destroyAllWindows()
-  
+
   if int(self.configFile["headEmbeded"]) == 1:
     controller.show_frame("HeadEmbeded")
   else:
@@ -402,17 +394,17 @@ def chooseBeginningAndEndOfVideo(self, controller):
     else:
       controller.show_frame("NumberOfAnimalsCenterOfMass")
 
-  
+
 def getImageForMultipleAnimalGUI(l, vertical, horizontal, nx, ny, max_l, videoToCreateConfigFileFor, background, wellPositions, hyperparameters):
-  
+
   [frame, a1, a2] = getForegroundImage(videoToCreateConfigFileFor, background, l, 0, [], hyperparameters)
-  
+
   lengthX = nx * 2
   lengthY = ny
-  
+
   newX = lengthX
   newY = lengthY
-  
+
   vertical2   = vertical   - vertical   * 0.12
   horizontal2 = horizontal - horizontal * 0.01
   if ( (lengthX > horizontal2) or (lengthY > vertical2) ):
@@ -425,7 +417,7 @@ def getImageForMultipleAnimalGUI(l, vertical, horizontal, nx, ny, max_l, videoTo
       sinkFactor = sinkFactorX
     newX = lengthX * sinkFactor
     newY = lengthY * sinkFactor
-  
+
   frame2 = frame
   ret,thresh2 = cv2.threshold(frame2,hyperparameters["thresholdForBlobImg"],255,cv2.THRESH_BINARY)
   kernel  = np.ones((hyperparameters["erodeSize"],hyperparameters["erodeSize"]), np.uint8)
@@ -453,18 +445,18 @@ def getImageForMultipleAnimalGUI(l, vertical, horizontal, nx, ny, max_l, videoTo
       else:
         x = 0
         y = 0
-  
-  frame = cv2.line(frame, (len(frame[0])-5, 0), (len(frame[0])-5, len(frame)), (255, 0, 0), 5) 
-  
+
+  frame = cv2.line(frame, (len(frame[0])-5, 0), (len(frame[0])-5, len(frame)), (255, 0, 0), 5)
+
   frame = np.concatenate((frame, thresh2), axis=1)
-  
+
   frame = cv2.resize(frame,(int(newX),int(newY)))
-  
+
   if len(areaList):
     maxToReturn = int((max(areaList)+2)*2)
   else:
     maxToReturn = (len(thresh) * len(thresh[0]))/5
-  
+
   return [frame, maxToReturn]
 
 def printStuffOnCtrlImg(frameCtrl, frameNum, x, y, l, minn, maxx, name):
@@ -473,14 +465,16 @@ def printStuffOnCtrlImg(frameCtrl, frameNum, x, y, l, minn, maxx, name):
   cvui.counter(frameCtrl,  x+l+10, y+20,    frameNum)
 
 def identifyMultipleHead(self, controller, nbanimals):
-  
+
   self.configFile["videoName"] = "configFilePrep"
 
   tempConfig = self.configFile
-  
-  horizontal = self.winfo_screenwidth()
-  vertical   = self.winfo_screenheight()
-  
+
+  screen_size = QApplication.instance().primaryScreen().availableGeometry()
+  scaling = QApplication.instance().devicePixelRatio()
+  horizontal = int(screen_size.width() * scaling)
+  vertical   = int(screen_size.height() * scaling)
+
   # Wait image
   WINDOW_NAME = "Please Wait"
   cv2.destroyAllWindows()
@@ -490,10 +484,10 @@ def identifyMultipleHead(self, controller, nbanimals):
   hyperparameters = getHyperparametersSimple(tempConfig)
   wellPositions = findWells(self.videoToCreateConfigFileFor, hyperparameters)
   background    = getBackground(self.videoToCreateConfigFileFor, hyperparameters)
-  
+
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
   cur_dir_path = Path(cur_dir_path)
-  
+
   tab = [1]
   img = cv2.imread(os.path.join(cur_dir_path, 'no1.png'))
   img = cv2.resize(img,(int(horizontal*0.95),int(vertical*0.8)))
@@ -528,7 +522,7 @@ def identifyMultipleHead(self, controller, nbanimals):
     count = count + 1
     if count > 100:
       buttonclicked = True
-  
+
   WINDOW_NAME = "Adjust Parameters: As much as possible, you must see red points on and only on animals on the right image."
   WINDOW_NAME_CTRL = "Adjust Parameters."
   cv2.destroyAllWindows()
@@ -537,21 +531,21 @@ def identifyMultipleHead(self, controller, nbanimals):
   nx         = int(cap.get(3))
   ny         = int(cap.get(4))
   max_l      = int(cap.get(7))
-  
+
   hyperparameters["minArea"] = 5
   hyperparameters["maxArea"] = 800
 
   [frame, maxAreaBlobs] = getImageForMultipleAnimalGUI(1, vertical, horizontal, nx, ny, max_l, self.videoToCreateConfigFileFor, background, wellPositions, hyperparameters)
   frameCtrl = np.full((200, 1100), 100).astype('uint8')
-  
+
   cvui.init(WINDOW_NAME)
   cv2.moveWindow(WINDOW_NAME, 0, 0)
   cvui.imshow(WINDOW_NAME, frame)
-  
+
   cvui.init(WINDOW_NAME_CTRL)
   cv2.moveWindow(WINDOW_NAME_CTRL, 0, vertical-290)
   cvui.imshow(WINDOW_NAME_CTRL, frameCtrl)
-  
+
   frameNum = [hyperparameters["firstFrame"]] if "firstFrame" in hyperparameters else [ 1 ]
   curFrameNum = frameNum[0] + 1
   minPixelDiffForBackExtract = [hyperparameters["minPixelDiffForBackExtract"]]
@@ -561,40 +555,40 @@ def identifyMultipleHead(self, controller, nbanimals):
   maxArea                    = [hyperparameters["maxArea"]]
   firstFrame = hyperparameters["firstFrame"] if "firstFrame" in hyperparameters else 1
   lastFrame  = hyperparameters["lastFrame"]-1 if "lastFrame" in hyperparameters else max_l - 10
-  
+
   buttonclicked = False
   while not(buttonclicked):
     if curFrameNum != frameNum[0] or hyperparameters["minPixelDiffForBackExtract"] != minPixelDiffForBackExtract[0] or hyperparameters["thresholdForBlobImg"] != thresholdForBlobImg[0] or hyperparameters["dilateIter"] != dilateIter[0] or hyperparameters["minArea"] != minArea[0] or hyperparameters["maxArea"] != maxArea[0]:
-      
+
       curFrameNum = frameNum[0]
       hyperparameters["minPixelDiffForBackExtract"] = int(minPixelDiffForBackExtract[0])
       hyperparameters["thresholdForBlobImg"] = int(thresholdForBlobImg[0])
       hyperparameters["dilateIter"] = int(dilateIter[0])
       hyperparameters["minArea"] = int(minArea[0])
       hyperparameters["maxArea"] = int(maxArea[0])
-      
+
       [frame, maxAreaBlobs] = getImageForMultipleAnimalGUI(curFrameNum, vertical, horizontal, nx, ny, max_l, self.videoToCreateConfigFileFor, background, wellPositions, hyperparameters)
-      
+
     frameCtrl = np.full((200, 1100), 100).astype('uint8')
-    
+
     printStuffOnCtrlImg(frameCtrl, frameNum,                     1, 5,  350,  firstFrame, lastFrame, "Frame number")
     printStuffOnCtrlImg(frameCtrl, minPixelDiffForBackExtract, 470, 5,  350,  0, 255, "Threshold left image")
     printStuffOnCtrlImg(frameCtrl, thresholdForBlobImg,          1, 71,  350, 0, 255, "Threshold right image")
     printStuffOnCtrlImg(frameCtrl, dilateIter,                 470, 71,  350, 0, 15, "Area dilatation")
     printStuffOnCtrlImg(frameCtrl, minArea,                      1, 137, 350, 0, maxAreaBlobs, "Minimum area")
     printStuffOnCtrlImg(frameCtrl, maxArea,                    470, 137, 350, 0, maxAreaBlobs, "Maximum area")
-    
+
     buttonclicked = cvui.button(frameCtrl, 940, 10, "Ok, done!")
-    
+
     cvui.imshow(WINDOW_NAME, frame)
     cvui.imshow(WINDOW_NAME_CTRL, frameCtrl)
-    
+
     if cv2.waitKey(20) == 27:
         break
   cv2.destroyAllWindows()
-  
+
   del self.configFile["videoName"]
-  
+
   self.configFile["minPixelDiffForBackExtract"] = int(hyperparameters["minPixelDiffForBackExtract"])
   self.configFile["thresholdForBlobImg"]        = int(hyperparameters["thresholdForBlobImg"])
   self.configFile["dilateIter"]                 = int(hyperparameters["dilateIter"])
@@ -609,10 +603,10 @@ def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHea
   self.configFile["noChecksForBoutSelectionInExtractParams"] = 1
   self.configFile["trackingPointSizeDisplay"] = 4
   self.configFile["validationVideoPlotHeading"] = 0
-  
+
   if int(yesBends):
     self.configFile["extractAdvanceZebraParameters"] = 1
-  
+
   nbanimals = int(nbanimals)
   if nbanimals == self.configFile["nbWells"]:
     self.configFile["nbAnimalsPerWell"] = 1
@@ -622,11 +616,11 @@ def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHea
       self.configFile["multipleHeadTrackingIterativelyRelaxAreaCriteria"] = 0
     else:
       self.configFile["multipleHeadTrackingIterativelyRelaxAreaCriteria"] = 1
-      
+
   self.forceBlobMethodForHeadTracking = int(forceBlobMethodForHeadTracking)
   if self.forceBlobMethodForHeadTracking:
     self.configFile["forceBlobMethodForHeadTracking"] = self.forceBlobMethodForHeadTracking
-  
+
   if self.organism == 'zebrafish':
     controller.show_frame("IdentifyHeadCenter")
   elif self.organism == 'zebrafishNew':
@@ -658,7 +652,7 @@ def chooseBodyExtremity(self, controller):
   headCenterX = self.headCenterX
   headCenterY = self.headCenterY
   dist = math.sqrt((extX - headCenterX)**2 + (extY - headCenterY)**2)
-  
+
   if self.organism == 'zebrafish':
     minArea = int(dist * (dist * 0.1))
     maxArea = int(dist * (dist * 0.4))
@@ -678,14 +672,14 @@ def chooseBodyExtremity(self, controller):
     self.configFile["minAreaBody"] = minArea
     self.configFile["maxAreaBody"] = maxArea
     self.configFile["headSize"]    = int(dist * 2)
-  
+
   self.configFile["extractBackWhiteBackground"] = 1
-  
+
   self.configFile["noBoutsDetection"] = 1
-  
+
   if int(self.configFile["nbAnimalsPerWell"]) > 1 or self.forceBlobMethodForHeadTracking:
     identifyMultipleHead(self, controller, int(self.configFile["nbAnimalsPerWell"]))
-    
+
   controller.show_frame("GoToAdvanceSettings")
 
 
@@ -709,7 +703,7 @@ def finishConfig(self, controller, configFileNameToSave):
     del self.configFile["lastFrame"]
   if "firstFrame" in self.configFile:
     del self.configFile["firstFrame"]
-  
+
   with open(reference, 'w') as outfile:
     json.dump(self.configFile, outfile)
   self.configFile = {}
@@ -719,7 +713,7 @@ def finishConfig(self, controller, configFileNameToSave):
   self.headCenterX = 0
   self.headCenterY = 0
   self.organism = ''
-  
+
   if (globalVariables["mac"] or globalVariables["lin"]):
     self.destroy()
   else:
