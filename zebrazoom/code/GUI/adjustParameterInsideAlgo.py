@@ -126,7 +126,7 @@ class AdujstParamInsideAlgoFreelySwimAutomaticParameters(QWidget):
     layout.addWidget(adjustOnWholeVideoCheckbox, 4, 0, Qt.AlignmentFlag.AlignCenter)
 
     adjustTrackingBtn = QPushButton("Adjust Tracking", self)
-    adjustTrackingBtn.clicked.connect(lambda: controller.adjustFreelySwimTrackingAutomaticParameters(controller, wellNumber.text(), firstFrameParamAdjust.isChecked(), adjustOnWholeVideo.isChecked()))
+    adjustTrackingBtn.clicked.connect(lambda: controller.adjustFreelySwimTrackingAutomaticParameters(controller, wellNumber.text(), firstFrameParamAdjustCheckbox.isChecked(), adjustOnWholeVideoCheckbox.isChecked()))
     layout.addWidget(adjustTrackingBtn, 7, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
     layout.addWidget(QLabel("The tracking of ZebraZoom can rely on three different background extraction methods:", self), 9, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
