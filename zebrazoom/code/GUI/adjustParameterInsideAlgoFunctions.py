@@ -183,6 +183,8 @@ def adjustHeadEmbededTracking(self, controller, wellNumber, firstFrameParamAdjus
     newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
     for index in newhyperparameters:
       configFile[index] = newhyperparameters[index]
+  except NameError:
+    print("Configuration file parameters changes discarded.")
 
   configFile["onlyTrackThisOneWell"]      = -1
   configFile["adjustHeadEmbededTracking"] = 0
@@ -222,6 +224,8 @@ def adjustFreelySwimTracking(self, controller, wellNumber, firstFrameParamAdjust
     newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
     for index in newhyperparameters:
       configFile[index] = newhyperparameters[index]
+  except NameError:
+    print("Configuration file parameters changes discarded.")
 
   configFile["onlyTrackThisOneWell"]      = -1
   configFile["adjustFreelySwimTracking"] = 0
