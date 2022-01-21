@@ -1,10 +1,5 @@
 from pathlib import Path
 import numpy as np
-import tkinter as tk
-from tkinter import font  as tkfont
-from tkinter import filedialog
-from tkinter import ttk
-from tkinter import *
 import json
 import cv2
 import math
@@ -16,6 +11,8 @@ import subprocess
 import sys
 import pandas as pd
 globalVariables = getGlobalVariables()
+
+from PyQt6.QtWidgets import QFileDialog
 
 from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
 from zebrazoom.dataAnalysis.dataanalysis.populationComparaison import populationComparaison
@@ -30,7 +27,7 @@ def openExperimentOrganizationExcelFolder(self, homeDirectory):
   else:
     opener ="open" if sys.platform == "darwin" else "xdg-open"
     subprocess.call([opener, dir_path])
-    
+
 
 def openAnalysisFolder(self, homeDirectory, specificDirectory):
   dir_path = os.path.join(os.path.join(homeDirectory,'dataAnalysis'), specificDirectory)
@@ -42,21 +39,18 @@ def openAnalysisFolder(self, homeDirectory, specificDirectory):
 
 
 def chooseExperimentOrganizationExcel(self, controller):
-  
+
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
   cur_dir_path = Path(cur_dir_path)
   cur_dir_path = cur_dir_path.parent.parent
-  
-  if globalVariables["mac"]:
-    experimentOrganizationExcel = filedialog.askopenfilename(initialdir = os.path.join(cur_dir_path, 'dataAnalysis/experimentOrganizationExcel/'), title = "Select the excel file describing your experiments")
-  else:
-    experimentOrganizationExcel = filedialog.askopenfilename(initialdir = os.path.join(cur_dir_path, 'dataAnalysis/experimentOrganizationExcel/'), title = "Select the excel file describing your experiments",filetypes = (("video","*.*"),("all files","*.*")))
-  
+
+  experimentOrganizationExcel, _ =  QFileDialog.getOpenFileName(self.window, "Select the excel file describing your experiments", os.path.join(cur_dir_path, 'dataAnalysis/experimentOrganizationExcel/'), "All files(*)")
+
   array = os.path.split(experimentOrganizationExcel)
-  
+
   self.experimentOrganizationExcel = array[len(array)-1]
   self.experimentOrganizationExcelFileAndFolder = ''.join(array[0:len(array)-1])
-  
+
   controller.show_frame("ChooseDataAnalysisMethod")
 
 
@@ -67,10 +61,10 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
   
   if discard == 0 and keep == 0:
     keep = 1
-  
+
   if len(minNbBendForBoutDetect) == 0:
     minNbBendForBoutDetect = 3
-  
+
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
   cur_dir_path = Path(cur_dir_path)
   cur_dir_path = cur_dir_path.parent.parent
@@ -108,17 +102,17 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
   # Plotting for the different conditions
   nameOfFile = dataframeOptions['nameOfFile']
   resFolder  = dataframeOptions['resFolder']
-  
+
   # Mixing up all the bouts
   populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, True)
-  
+
   populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, False)
-  
+
   # First median per well for each kinematic parameter
   populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 1, True)
-  
+
   populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 1, False)
-  
+
   controller.show_frame("AnalysisOutputFolderPopulation")
 
 
@@ -131,19 +125,19 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
     modelUsedForClustering = 'KMeans'
   else:
     modelUsedForClustering = 'GaussianMixture'
-  
+
   if len(minNbBendForBoutDetect) == 0:
     minNbBendForBoutDetect = 3
   else:
     minNbBendForBoutDetect = int(minNbBendForBoutDetect)
-  
+
   if len(nbVideosToSave) == 0:
     nbVideosToSave = 0
   else:
     nbVideosToSave = int(nbVideosToSave)
-  
+
   videoSaveFirstTenBouts = True if nbVideosToSave else False
-  
+
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
   cur_dir_path = Path(cur_dir_path)
   cur_dir_path = cur_dir_path.parent.parent

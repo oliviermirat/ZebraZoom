@@ -1,8 +1,3 @@
-import tkinter as tk
-from tkinter import font  as tkfont
-from tkinter import filedialog
-from tkinter import ttk
-from tkinter import *
 import cv2
 import re
 import os
@@ -10,7 +5,6 @@ import json
 import shutil
 import sys
 import subprocess
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
 import math
 import scipy.io as sio
@@ -28,46 +22,46 @@ from PyQt6.QtWidgets import QFileDialog
 LARGE_FONT= ("Verdana", 12)
 
 def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, debugMode=0):
-    tk.videoName, _ = QFileDialog.getOpenFileName(self.window, 'Select file', os.path.expanduser("~"))
-    tk.folderName = ''
-    tk.headEmbedded = 0
-    tk.sbatchMode = 0
+    self.videoName, _ = QFileDialog.getOpenFileName(self.window, 'Select file', os.path.expanduser("~"))
+    self.folderName = ''
+    self.headEmbedded = 0
+    self.sbatchMode = 0
 
-    tk.justExtractParams = int(justExtractParams)
-    tk.noValidationVideo = int(noValidationVideo)
-    tk.debugMode         = int(debugMode)
-    tk.findMultipleROIs = 0
+    self.justExtractParams = int(justExtractParams)
+    self.noValidationVideo = int(noValidationVideo)
+    self.debugMode         = int(debugMode)
+    self.findMultipleROIs = 0
 
     self.show_frame("ConfigFilePromp")
 
 def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode):
-    tk.folderName =  QFileDialog.getExistingDirectory(self.window, 'Select folder', os.path.expanduser("~"))
-    tk.headEmbedded = 0
-    tk.justExtractParams = int(justExtractParams)
-    tk.noValidationVideo = int(noValidationVideo)
-    tk.sbatchMode        = int(sbatchMode)
-    tk.debugMode = 0
-    tk.findMultipleROIs = 0
+    self.folderName =  QFileDialog.getExistingDirectory(self.window, 'Select folder', os.path.expanduser("~"))
+    self.headEmbedded = 0
+    self.justExtractParams = int(justExtractParams)
+    self.noValidationVideo = int(noValidationVideo)
+    self.sbatchMode        = int(sbatchMode)
+    self.debugMode = 0
+    self.findMultipleROIs = 0
     self.show_frame("ConfigFilePromp")
 
 def chooseFolderForTailExtremityHE(self):
-    tk.folderName =  QFileDialog.getExistingDirectory(self.window, 'Select folder', os.path.expanduser("~"))
-    tk.sbatchMode = 0
-    tk.headEmbedded = 1
-    tk.justExtractParams = 0
-    tk.noValidationVideo = 0
-    tk.debugMode = 0
-    tk.findMultipleROIs = 0
+    self.folderName =  QFileDialog.getExistingDirectory(self.window, 'Select folder', os.path.expanduser("~"))
+    self.sbatchMode = 0
+    self.headEmbedded = 1
+    self.justExtractParams = 0
+    self.noValidationVideo = 0
+    self.debugMode = 0
+    self.findMultipleROIs = 0
     self.show_frame("ConfigFilePromp")
 
 def chooseFolderForMultipleROIs(self):
-    tk.folderName =  QFileDialog.getExistingDirectory(self.window, 'Select folder', os.path.expanduser("~"))
-    tk.sbatchMode = 0
-    tk.headEmbedded = 0
-    tk.justExtractParams = 0
-    tk.noValidationVideo = 0
-    tk.debugMode = 0
-    tk.findMultipleROIs = 1
+    self.folderName =  QFileDialog.getExistingDirectory(self.window, 'Select folder', os.path.expanduser("~"))
+    self.sbatchMode = 0
+    self.headEmbedded = 0
+    self.justExtractParams = 0
+    self.noValidationVideo = 0
+    self.debugMode = 0
+    self.findMultipleROIs = 1
     self.show_frame("ConfigFilePromp")
 
 def chooseConfigFile(self):
@@ -77,8 +71,8 @@ def chooseConfigFile(self):
   path = path.parent.parent
   path = os.path.join(path, 'configuration')
 
-  tk.configFile, _ = QFileDialog.getOpenFileName(self.window, 'Select file', path, "json files (*.json);;All files(*)")
-  if len(tk.folderName) or globalVariables["mac"] or globalVariables["lin"]:
+  self.configFile, _ = QFileDialog.getOpenFileName(self.window, 'Select file', path, "json files (*.json);;All files(*)")
+  if len(self.folderName) or globalVariables["mac"] or globalVariables["lin"]:
     self.show_frame("Patience")
   else:
     self.launchZebraZoom()
@@ -106,16 +100,16 @@ def launchZebraZoom(self):
   last = 0
   allVideos = []
 
-  if tk.sbatchMode:
+  if self.sbatchMode:
     commandsFile = open("commands.txt", "w")
     nbVideosToLaunch = 0
 
-  if len(tk.folderName):
+  if len(self.folderName):
 
-    allVideos = findAllFilesRecursivelyInDirectories(tk.folderName)
+    allVideos = findAllFilesRecursivelyInDirectories(self.folderName)
 
   else:
-    allVideos = [tk.videoName]
+    allVideos = [self.videoName]
 
   print("allVideos:", allVideos)
 
@@ -126,48 +120,48 @@ def launchZebraZoom(self):
     name        = os.path.splitext(nameWithExt)[0]
     videoExt    = os.path.splitext(nameWithExt)[1][1:]
 
-    if tk.headEmbedded == 0:
+    if self.headEmbedded == 0:
       if len(allVideos) == 1:
-        tabParams = ["mainZZ", path, name, videoExt, tk.configFile, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1, "outputFolder", self.ZZoutputLocation]
+        tabParams = ["mainZZ", path, name, videoExt, self.configFile, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1, "outputFolder", self.ZZoutputLocation]
       else:
-        tabParams = ["mainZZ", path, name, videoExt, tk.configFile, "freqAlgoPosFollow", 100, "outputFolder", self.ZZoutputLocation]
-      if tk.justExtractParams == 1:
+        tabParams = ["mainZZ", path, name, videoExt, self.configFile, "freqAlgoPosFollow", 100, "outputFolder", self.ZZoutputLocation]
+      if self.justExtractParams == 1:
         tabParams = tabParams + ["reloadWellPositions", 1, "reloadBackground", 1, "debugPauseBetweenTrackAndParamExtract", "justExtractParamFromPreviousTrackData"]
-      if tk.noValidationVideo == 1:
+      if self.noValidationVideo == 1:
           tabParams = tabParams + ["createValidationVideo", 0]
-      if tk.debugMode == 1:
+      if self.debugMode == 1:
         tabParams = tabParams + ["debugTracking", 1, "debugExtractBack", 1, "onlyTrackThisOneWell", 0, "lastFrame", 5, "backgroundExtractionForceUseAllVideoFrames", 1, "noBoutsDetection", 1, "thresForDetectMovementWithRawVideo", 0, "noChecksForBoutSelectionInExtractParams", 1]
-      if tk.findMultipleROIs == 1:
+      if self.findMultipleROIs == 1:
         tabParams = tabParams + ["exitAfterWellsDetection", 1, "saveWellPositionsToBeReloadedNoMatterWhat", 1]
       try:
-        if tk.sbatchMode:
+        if self.sbatchMode:
           commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]) + ' configFile.json\n')
           nbVideosToLaunch = nbVideosToLaunch + 1
         else:
-          mainZZ(path, name, videoExt, tk.configFile, tabParams)
+          mainZZ(path, name, videoExt, self.configFile, tabParams)
       except ValueError:
         print("moving on to the next video for ROIs identification")
       except NameError:
         self.show_frame("Error")
         return
     else:
-      if tk.debugMode == 1:
-        tabParams = ["mainZZ", path, name, videoExt, tk.configFile, "freqAlgoPosFollow", 100, "debugTracking", 1, "debugExtractBack", 1, "onlyDoTheTrackingForThisNumberOfFrames", 3, "onlyTrackThisOneWell", 0, "outputFolder", self.ZZoutputLocation]
+      if self.debugMode == 1:
+        tabParams = ["mainZZ", path, name, videoExt, self.configFile, "freqAlgoPosFollow", 100, "debugTracking", 1, "debugExtractBack", 1, "onlyDoTheTrackingForThisNumberOfFrames", 3, "onlyTrackThisOneWell", 0, "outputFolder", self.ZZoutputLocation]
       else:
         tabParams = ["outputFolder", self.ZZoutputLocation]
-      getTailExtremityFirstFrame(path, name, videoExt, tk.configFile, tabParams)
+      getTailExtremityFirstFrame(path, name, videoExt, self.configFile, tabParams)
 
-  tk.headEmbedded      = 0
-  tk.justExtractParams = 0
-  tk.noValidationVideo = 0
-  tk.debugMode         = 0
-  tk.findMultipleROIs  = 0
+  self.headEmbedded      = 0
+  self.justExtractParams = 0
+  self.noValidationVideo = 0
+  self.debugMode         = 0
+  self.findMultipleROIs  = 0
 
-  if tk.sbatchMode:
+  if self.sbatchMode:
 
     commandsFile.close()
 
-    with open(tk.configFile) as f:
+    with open(self.configFile) as f:
       jsonFile = json.load(f)
     nbWells = jsonFile["nbWells"]
 
@@ -198,7 +192,7 @@ def launchZebraZoom(self):
     launchFile.writelines(linesToWrite)
     launchFile.close()
 
-    shutil.copy(tk.configFile, 'configFile.json')
+    shutil.copy(self.configFile, 'configFile.json')
 
     self.show_frame("ZZoutroSbatch")
 

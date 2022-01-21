@@ -318,6 +318,24 @@ class ZZoutro(QWidget):
         self.setLayout(layout)
 
 
+class ZZoutroSbatch(QWidget):
+    def __init__(self, controller):
+        super().__init__(controller.window)
+        self.controller = controller
+
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("Three files have been generated in the current folder:", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("launchZZ.sh, commands.txt, configFile.json", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("Place these three files on your server and type: 'sbatch launchZZ.sh' to launch the analysis on all videos in parallel", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("Before launching the parrallel tracking with sbatch, you may need to type: 'chmod +x launchZZ.sh'", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("You can follow the progress with the commands 'squeueme' and by looking into the slurm* file being generated with 'cat slurm*'", self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+        startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+        startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+        layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.setLayout(layout)
+
+
 class ResultsVisualization(QWidget):
     def __init__(self, controller):
         super().__init__(controller.window)
@@ -354,6 +372,45 @@ class ResultsVisualization(QWidget):
         button = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_YELLOW)
         button.clicked.connect(lambda: self.controller.show_frame("StartPage"))
         layout.addWidget(button, curLine, curCol, Qt.AlignmentFlag.AlignCenter)
+
+        self.setLayout(layout)
+
+
+class EnhanceZZOutput(QWidget):
+    def __init__(self, controller):
+        super().__init__(controller.window)
+
+        layout = QVBoxLayout()
+        layout.addWidget(apply_style(QLabel("Tips on how to correct/enhance ZebraZoom's output when necessary", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+        linkBtn1 = apply_style(QPushButton("View Tracking Troubleshooting Tips", self), background_color=GOLD)
+        linkBtn1.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md"))
+        layout.addWidget(linkBtn1, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        layout.addWidget(apply_style(QLabel("Movement Flagging System:", self), font_size='16px'), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("You can see the results obtained from ZebraZoom's tracking thanks to the button 'Visualize ZebraZoom's output' in the main menu.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("If one of the movements detected by ZebraZoom seems false or if you want to ignore it, you can click on the 'flag' button for that movement:", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("that will save a flag for that movement in the raw data obtained for that video,", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("and if you use 'Analyze ZebraZoom's outputs' (in the main menu) each movement flagged will be ignored from that analysis.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+        layout.addWidget(apply_style(QLabel("Speed and Distance traveled Parameter Check:", self), font_size='16px'), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("If you are interested in comparing the speed and distance traveled between different populations,", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("then you need to make sure that the (x, y) coordinates were correctly calculated for every frame.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("To do this, from the 'Analyze ZebraZoom's outputs' menu, you can click on 'Change Right Side Plot' until you see the 'Body Coordinates' plot.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("You can then check on this plot that the body coordinates never goes to the (0, 0) coordinate (in which case a error occurred).", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("If an error occurred, one option can be to use the flagging system described above to ignore that movement.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+        layout.addWidget(apply_style(QLabel("Bend detection for zebrafish:", self), font_size='16px'), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("If you are tracking zebrafish larvae and trying to detect local maximums and minimums of the tail angle (called 'bends'),", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("then you might need to further adjust the parameters related to the bends detection (if these bends are not being detected right).", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("You can check if the bends are being detected right with the 'Visualize ZebraZoom's output' in the main menu.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+        linkBtn2 = QPushButton("View tips on bends detection", self)
+        linkBtn2.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom#hyperparametersTailAngleSmoothBoutsAndBendsDetect"))
+        layout.addWidget(linkBtn2, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.setLayout(layout)
+        startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+        startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+        layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
         self.setLayout(layout)
 
@@ -758,3 +815,18 @@ class ViewParameters(QWidget):
     def _mouvChanged(self):
         self._updateGraph()
         self._updateWidgets()
+
+
+class Error(QWidget):
+    def __init__(self, controller):
+        super().__init__(controller.window)
+        self.controller = controller
+
+        layout = QVBoxLayout()
+        layout.addWidget(QLabel("There was an error somewhere.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("Check the command line to see what the error was.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+        startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+        startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+        layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.setLayout(layout)

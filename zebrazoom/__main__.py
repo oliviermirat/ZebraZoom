@@ -19,10 +19,10 @@ if __name__ == '__main__':
     if sys.argv[1] == "selectZZoutput":
 
       print("The data produced by ZebraZoom can be found in the folder: " + os.path.join(dir_path,'ZZoutput'))
-      from zebrazoom.GUIAllPy import SampleApp
-      app = SampleApp()
+      from zebrazoom.GUIAllPy import ZebraZoomApp
+      app = ZebraZoomApp(sys.argv)
       app.askForZZoutputLocation()
-      app.mainloop()
+      sys.exit(app.exec())
 
     elif sys.argv[1] == "getTailExtremityFirstFrame":
 
