@@ -98,8 +98,9 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     print("Error: The parameter 'lastFrame' in your configuration file is too small")
     raise NameError("Error: The parameter 'lastFrame' in your configuration file is too small")
   if hyperparameters["lastFrame"] > nbFrames:
-    print("Error: The parameter 'lastFrame' in your configuration file is too big")
-    raise NameError("Error: The parameter 'lastFrame' in your configuration file is too big")
+    print("Warning: The parameter 'lastFrame' in your configuration file is too big so we adjusted it to the value:", nbFrames-2, "it was originally set to", hyperparameters["lastFrame"])
+    hyperparameters["lastFrame"] = nbFrames - 2
+    # raise NameError("Error: The parameter 'lastFrame' in your configuration file is too big")
   
   # Setting output folder
   outputFolderVideo = os.path.join(hyperparameters["outputFolder"], videoName)
