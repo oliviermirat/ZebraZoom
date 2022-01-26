@@ -170,7 +170,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     raise ValueError
     
   # Getting background
-  if hyperparameters["backgroundSubtractorKNN"] or (hyperparameters["headEmbeded"] and hyperparameters["headEmbededRemoveBack"] == 0 and hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0 and hyperparameters["adjustHeadEmbededTracking"] == 0) or hyperparameters["trackingDL"]:
+  if hyperparameters["backgroundSubtractorKNN"] or (hyperparameters["headEmbeded"] and hyperparameters["headEmbededRemoveBack"] == 0 and hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0 and hyperparameters["adjustHeadEmbededTracking"] == 0) or hyperparameters["trackingDL"] or hyperparameters["fishTailTrackingDifficultBackground"]:
     background = []
   else:
     print("start get background")

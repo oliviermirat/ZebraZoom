@@ -37,6 +37,11 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     [trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingEyesAllAnimals, headPositionFirstFrame, tailTipFirstFrame] = trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName, dlModel, device)
     return [trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingEyesAllAnimals, headPositionFirstFrame, tailTipFirstFrame]
   
+  if hyperparameters["fishTailTrackingDifficultBackground"]:
+    from zebrazoom.code.trackingFolder.fishTailTrackingDifficultBackground import fishTailTrackingDifficultBackground
+    [trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingEyesAllAnimals] = fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hyperparameters, videoName)
+    return [trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingEyesAllAnimals, 0, 0]
+  
   firstFrame = hyperparameters["firstFrame"]
   if hyperparameters["firstFrameForTracking"] != -1:
     firstFrame = hyperparameters["firstFrameForTracking"]
