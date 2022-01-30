@@ -72,7 +72,9 @@ class ZebraZoomApp(QApplication):
 
         self.title_font = QFont('Helvetica', 18, QFont.Weight.Bold, True)
 
+        self._windows = set()
         self.window = QMainWindow()
+        self.window.closeEvent = self._windowClosed(self.window, self.window.closeEvent)
         layout = QStackedLayout()
         self.frames = {}
         for idx, F in enumerate((StartPage, VideoToAnalyze, ConfigFilePromp, Patience, ZZoutro, ZZoutroSbatch, SeveralVideos, FolderToAnalyze, EnhanceZZOutput, TailExtremityHE, FolderMultipleROIInitialSelect, ResultsVisualization, ViewParameters, Error, ChooseVideoToCreateConfigFileFor, OptimizeConfigFile, ChooseGeneralExperiment, WellOrganisation, FreelySwimmingExperiment, NbRegionsOfInterest, HomegeneousWellsLayout, CircularOrRectangularWells, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings, HeadEmbeded, AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim, AdujstParamInsideAlgoFreelySwimAutomaticParameters, AdujstBoutDetectionOnly, CreateExperimentOrganizationExcel, ChooseExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderPopulation, AnalysisOutputFolderClustering, ChooseVideoToTroubleshootSplitVideo, VideoToTroubleshootSplitVideo)):
@@ -90,6 +92,20 @@ class ZebraZoomApp(QApplication):
     def show_frame(self, page_name):
         '''Show a frame for the given page name'''
         self.window.centralWidget().layout().setCurrentIndex(self.frames[page_name])
+
+    def _windowClosed(self, window, fn):
+        def inner(*args, **kwargs):
+            if window is self.window:
+                for win in tuple(self._windows):
+                    win.close()
+            else:
+                self._windows.remove(window)
+            return fn(*args, **kwargs)
+        return inner
+
+    def registerWindow(self, window):
+        self._windows.add(window)
+        window.closeEvent = self._windowClosed(window, window.closeEvent)
 
     def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, debugMode):
         GUI_InitialFunctions.chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, debugMode)
