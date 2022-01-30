@@ -1,7 +1,10 @@
+import contextlib
 import os
+import sys
+import traceback
 
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QWidget, QFileDialog, QApplication, QMainWindow, QStackedLayout
+from PyQt6.QtWidgets import QWidget, QFileDialog, QApplication, QMainWindow, QStackedLayout, QMessageBox, QTextEdit, QSpacerItem
 
 import zebrazoom.code.GUI.configFilePrepareFunctions as configFilePrepareFunctions
 import zebrazoom.code.GUI.GUI_InitialFunctions as GUI_InitialFunctions
@@ -22,6 +25,32 @@ LARGE_FONT= ("Verdana", 12)
 
 def getCurrentResultFolder():
   return currentResultFolder
+
+
+def excepthook(excType, excValue, traceback_):
+  errorMessage = QMessageBox(QApplication.instance().window)
+  errorMessage.setIcon(QMessageBox.Icon.Critical)
+  errorMessage.setWindowTitle("An exception has ocurred.")
+  errorMessage.setText("An exception has ocurred.")
+  errorMessage.setInformativeText('Please report the issue <a href="https://github.com/oliviermirat/ZebraZoom/issues)">here</a>.')
+  errorMessage.setDetailedText("    %s" % "    ".join(traceback.format_exception(excType, excValue, traceback_)))
+  errorMessage.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel);
+  errorMessage.setDefaultButton(QMessageBox.StandardButton.Cancel);
+  errorMessage.button(QMessageBox.StandardButton.Ok).setText("Continue")
+  errorMessage.button(QMessageBox.StandardButton.Cancel).setText("Exit")
+  textEdit = errorMessage.findChild(QTextEdit)
+  textEdit.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
+  textEdit.setMarkdown(textEdit.toPlainText())
+  layout = errorMessage.layout()
+  layout.addItem(QSpacerItem(600, 0), layout.rowCount(), 0, 1, layout.columnCount())
+  try:
+    if errorMessage.exec() != QMessageBox.StandardButton.Ok:
+      sys.exit(1)
+  finally:
+    sys.__excepthook__(excType, excValue, traceback_)
+
+
+sys.excepthook = excepthook
 
 
 class ZebraZoomApp(QApplication):
