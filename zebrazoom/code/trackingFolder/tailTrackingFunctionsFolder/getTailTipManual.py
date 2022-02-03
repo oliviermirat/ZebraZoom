@@ -54,7 +54,7 @@ def findTailTipByUserInput(frame, frameNumber, videoPath, hyperparameters):
   cv2.destroyWindow(WINDOW_NAME)
   return [cursor.x, cursor.y]
   
-def findHeadPositionByUserInput(frame, frameNumber, videoPath):
+def findHeadPositionByUserInput(frame, frameNumber, videoPath, hyperparameters={}):
   
   WINDOW_NAME = "Click on the base of the tail"
   cvui.init(WINDOW_NAME)
