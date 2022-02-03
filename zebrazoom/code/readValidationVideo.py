@@ -7,113 +7,10 @@ import os
 import cv2
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QImage, QPixmap
-from PyQt6.QtWidgets import QApplication, QLabel, QSlider, QVBoxLayout, QWidget
+from PyQt6.QtCore import Qt, QSize, QTimer
+from PyQt6.QtWidgets import QLabel, QSlider, QVBoxLayout
 
-
-class VideoWindow(QWidget):
-  def __init__(self, cap, l, max_l, x, y, lengthX, lengthY, frameToPosToPlot, numWell, zoom, HeadX, HeadY, supstruct):
-    super().__init__()
-    self.cap = cap
-    self.xOriginal = x
-    self.x = x
-    self.yOriginal = y
-    self.y = y
-    self.lengthX = lengthX
-    self.lengthY = lengthY
-    self.frameToPosToPlot = frameToPosToPlot
-    self.numWell = numWell
-    self.zoom = zoom
-    self.HeadX = HeadX
-    self.HeadY = HeadY
-    self.supstruct = supstruct
-
-    layout = QVBoxLayout()
-
-    self.video = QLabel(self)
-    self.video.setMinimumSize(1, 1)
-    layout.addWidget(self.video, alignment=Qt.AlignmentFlag.AlignCenter)
-
-    self.frameSlider = QSlider(Qt.Orientation.Horizontal, self)
-    self.frameSlider.setRange(0, max_l - 1)
-    self.frameSlider.setValue(l)
-    self.frameSlider.valueChanged.connect(self._refreshVideo)
-    layout.addWidget(self.frameSlider)
-
-    self.setLayout(layout)
-
-    self.stopTimer = False
-    self.timer = QTimer(self)
-    self.timer.setInterval(1)
-    self.timer.timeout.connect(lambda: setattr(self, "stopTimer", False) or self.frameSlider.setValue(self.frameSlider.value() + 1) or setattr(self, "stopTimer", True))
-    self._refreshVideo()
-
-    self.setWindowTitle("Video")
-    self.setWindowModality(Qt.WindowModality.ApplicationModal)
-    self.move(0, 0)
-    layoutSize = layout.totalSizeHint()
-    screenSize = QApplication.instance().primaryScreen().availableSize()
-    if layoutSize.width() > screenSize.width() or layoutSize.height() > screenSize.height():
-      layoutSize.scale(screenSize, Qt.AspectRatioMode.KeepAspectRatio)
-    self.setFixedSize(layoutSize)
-
-    self.show()
-    self.timer.start()
-
-  def _refreshVideo(self):
-    l = self.frameSlider.value()
-    if self.timer.isActive() and (l == self.frameSlider.maximum() or self.stopTimer):
-      self.timer.stop()
-
-    self.cap.set(1, l)
-    ret, img = self.cap.read()
-
-    if self.frameToPosToPlot is not None:
-      if l in self.frameToPosToPlot:
-        for pos in self.frameToPosToPlot[l]:
-          cv2.circle(img, (pos[0], pos[1]), self.hyperparameters["trackingPointSizeDisplay"], (0, 255, 0), -1)
-
-    if self.numWell != -1 and self.zoom:
-      length = 250
-      xmin = int(self.HeadX[l + self.supstruct["firstFrame"] - 1] - length/2)
-      xmax = int(self.HeadX[l + self.supstruct["firstFrame"] - 1] + length/2)
-      ymin = int(self.HeadY[l + self.supstruct["firstFrame"] - 1] - length/2)
-      ymax = int(self.HeadY[l + self.supstruct["firstFrame"] - 1] + length/2)
-
-      self.x = max(xmin + self.xOriginal, 0)
-      self.y = max(ymin + self.yOriginal, 0)
-      self.lengthX = xmax - xmin
-      self.lengthY = ymax - ymin
-
-      if self.y + self.lengthY >= len(img):
-        self.lengthY = len(img) - self.y - 1
-      if self.x + self.lengthX >= len(img[0]):
-        self.lengthX = len(img[0]) - self.x - 1
-
-    if (self.numWell != -1):
-      img = img[self.y:self.y+self.lengthY, self.x:self.x+self.lengthX]
-
-    if self.lengthX > 100 and self.lengthY > 100:
-      font = cv2.FONT_HERSHEY_SIMPLEX
-      cv2.putText(img,str(l + self.supstruct["firstFrame"] - 1),(int(self.lengthX-110), int(self.lengthY-30)),font,1,(0,255,0))
-    else:
-      blank_image = np.zeros((len(img)+30, len(img[0]), 3), np.uint8)
-      blank_image[0:len(img), 0:len(img[0])] = img
-      img = blank_image
-      font = cv2.FONT_HERSHEY_SIMPLEX
-      cv2.putText(img, str(l + self.supstruct["firstFrame"] - 1), (int(0), int(self.lengthY+25)), font, 1, (0,255,0))
-
-    scaling = self.devicePixelRatio()
-    if self.video.isVisible():
-      size = self.video.size()
-      img = cv2.resize(img, (int(size.width() * scaling), int(size.height() * scaling)))
-    height, width, channels = img.shape
-    bytesPerLine = channels * width
-    pixmap = QPixmap.fromImage(QImage(img.data.tobytes(), width, height, bytesPerLine, QImage.Format.Format_RGB888))
-    if self.video.isVisible():
-      pixmap.setDevicePixelRatio(scaling)
-    self.video.setPixmap(pixmap)
+import zebrazoom.code.util as util
 
 
 def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation=''):
@@ -259,5 +156,82 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
 
   l = start - supstruct["firstFrame"] + 1 if start > 0 else 0
 
-  app = QApplication.instance()
-  app.registerWindow(VideoWindow(cap, l, max_l, x, y, lengthX, lengthY, frameToPosToPlot, numWell, zoom, HeadX, HeadY, supstruct))
+  xOriginal = x
+  yOriginal = y
+
+  def getFrame():
+    nonlocal x
+    nonlocal y
+    nonlocal lengthX
+    nonlocal lengthY
+
+    l = frameSlider.value()
+    if timer.isActive() and (l == frameSlider.maximum() or stopTimer):
+      timer.stop()
+
+    cap.set(1, l)
+    ret, img = cap.read()
+
+    if frameToPosToPlot is not None:
+      if l in frameToPosToPlot:
+        for pos in frameToPosToPlot[l]:
+          cv2.circle(img, (pos[0], pos[1]), hyperparameters["trackingPointSizeDisplay"], (0, 255, 0), -1)
+
+    if numWell != -1 and zoom:
+      length = 250
+      xmin = int(HeadX[l + supstruct["firstFrame"] - 1] - length/2)
+      xmax = int(HeadX[l + supstruct["firstFrame"] - 1] + length/2)
+      ymin = int(HeadY[l + supstruct["firstFrame"] - 1] - length/2)
+      ymax = int(HeadY[l + supstruct["firstFrame"] - 1] + length/2)
+
+      x = max(xmin + xOriginal, 0)
+      y = max(ymin + yOriginal, 0)
+      lengthX = xmax - xmin
+      lengthY = ymax - ymin
+
+      if y + lengthY >= len(img):
+        lengthY = len(img) - y - 1
+      if x + lengthX >= len(img[0]):
+        lengthX = len(img[0]) - x - 1
+
+    if (numWell != -1):
+      img = img[y:y+lengthY, x:x+lengthX]
+
+    if lengthX > 100 and lengthY > 100:
+      font = cv2.FONT_HERSHEY_SIMPLEX
+      cv2.putText(img,str(l + supstruct["firstFrame"] - 1),(int(lengthX-110), int(lengthY-30)),font,1,(0,255,0))
+    else:
+      blank_image = np.zeros((len(img)+30, len(img[0]), 3), np.uint8)
+      blank_image[0:len(img), 0:len(img[0])] = img
+      img = blank_image
+      font = cv2.FONT_HERSHEY_SIMPLEX
+      cv2.putText(img, str(l + supstruct["firstFrame"] - 1), (int(0), int(lengthY+25)), font, 1, (0,255,0))
+
+    return img
+
+  layout = QVBoxLayout()
+
+  video = QLabel()
+  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
+
+  frameSlider = QSlider(Qt.Orientation.Horizontal)
+  frameSlider.setRange(0, max_l - 1)
+  frameSlider.setValue(l)
+  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video))
+  layout.addWidget(frameSlider)
+
+  stopTimer = True
+  timer = QTimer()
+  timer.setInterval(1)
+
+  def nextFrame():
+    nonlocal stopTimer
+    stopTimer = False
+    frameSlider.setValue(frameSlider.value() + 1)
+    stopTimer = True
+  timer.timeout.connect(nextFrame)
+  timer.start()
+
+  startFrame = getFrame()
+  util.pageOrDialog(layout, title="Video", dialog=True, labelInfo=(startFrame, video))
+  timer.stop()

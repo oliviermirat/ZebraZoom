@@ -9,7 +9,6 @@ from matplotlib.figure import Figure
 import math
 import scipy.io as sio
 from pathlib import Path
-from zebrazoom.code.readValidationVideo import readValidationVideo
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 

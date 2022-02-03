@@ -3,7 +3,12 @@ from zebrazoom.mainZZ import mainZZ
 import pickle
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
-import cvui
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QApplication, QDialog, QLabel, QPushButton, QVBoxLayout
+
+import zebrazoom.code.util as util
+
 
 def getMainArguments(self):
   s            = self.videoToCreateConfigFileFor
@@ -30,54 +35,8 @@ def prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFramePar
   cap = zzVideoReading.VideoCapture(videoToCreateConfigFileFor)
   max_l = int(cap.get(7))
   if int(firstFrameParamAdjust):
-    cap.set(1, 1)
-    ret, frame = cap.read()
-    WINDOW_NAME = "Choose where you want to start the procedure to adjust parameters."
-    WINDOW_NAME_CTRL = "Control"
-    cvui.init(WINDOW_NAME)
-    cv2.moveWindow(WINDOW_NAME, 0,0)
-    cvui.init(WINDOW_NAME_CTRL)
-    cv2.moveWindow(WINDOW_NAME_CTRL, 0, 300)
-    value = [1]
-    curValue = value[0]
-    buttonclicked = False
-    widgetX = 40
-    widgetY = 50
-    widgetL = 300
-    while not(buttonclicked):
-      value[0] = int(value[0])
-      if curValue != value[0]:
-        cap.set(1, value[0])
-        frameOld = frame
-        ret, frame = cap.read()
-        if not(ret):
-          frame = frameOld
-        curValue = value[0]
-      frameCtrl = np.full((200, 400), 100).astype('uint8')
-      frameCtrl[widgetY:widgetY+60, widgetX:widgetX+widgetL] = 0
-      cvui.text(frameCtrl, widgetX, widgetY, 'Frame')
-      cvui.trackbar(frameCtrl, widgetX, widgetY+10, widgetL, value, 0, max_l-1)
-      cvui.counter(frameCtrl, widgetX, widgetY+60, value)
-      buttonclicked = cvui.button(frameCtrl, widgetX, widgetY+90, "Ok, I want the procedure to start at this frame.")
-      cvui.text(frameCtrl, widgetX, widgetY+130, 'Keys: 4 or a: move backwards; 6 or d: move forward')
-      cvui.text(frameCtrl, widgetX, widgetY+160, 'Keys: g or f: fast backwards; h or j: fast forward')
-      cvui.imshow(WINDOW_NAME, frame)
-      cvui.imshow(WINDOW_NAME_CTRL, frameCtrl)
-      r = cv2.waitKey(20)
-      if (r == 54) or (r == 100) or (r == 0):
-        value[0] = value[0] + 1
-      elif (r == 52) or (r == 97) or (r == 113):
-        value[0] = value[0] - 1
-      elif (r == 103):
-        value[0] = value[0] - 30
-      elif (r == 104):
-        value[0] = value[0] + 30
-      elif (r == 102):
-        value[0] = value[0] - 100
-      elif (r == 106):
-        value[0] = value[0] + 100
-    configFile["firstFrame"] = int(value[0])
-    cv2.destroyAllWindows()
+    util.chooseBeginning(QApplication.instance(), videoToCreateConfigFileFor, "Choose where you want to start the procedure to adjust parameters.", "Ok, I want the procedure to start at this frame.")
+
     if not(int(adjustOnWholeVideo)):
       if ("lastFrame" in configFile):
         if (configFile["lastFrame"] - configFile["firstFrame"] > 500):
@@ -108,7 +67,6 @@ def prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFramePar
 
 
 def detectBouts(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo):
-
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
 
   [configFile, initialFirstFrameValue, initialLastFrameValue] = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrameParamAdjust, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
@@ -128,21 +86,18 @@ def detectBouts(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWho
   else:
     configFile["thresForDetectMovementWithRawVideo"] = 1
 
-  try:
-    WINDOW_NAME = "Please Wait"
-    cvui.init(WINDOW_NAME)
-    cv2.moveWindow(WINDOW_NAME, 0,0)
-    r = cv2.waitKey(2)
-    if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
-      del configFile["lastFrame"]
-    mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
-    cv2.destroyAllWindows()
-  except ValueError:
-    newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
-    for index in newhyperparameters:
-      configFile[index] = newhyperparameters[index]
-  except NameError:
-    print("Configuration file parameters changes discarded.")
+  app = QApplication.instance()
+  with app.busyCursor():
+    try:
+      if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
+        del configFile["lastFrame"]
+      mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+    except ValueError:
+      newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
+      for index in newhyperparameters:
+        configFile[index] = newhyperparameters[index]
+    except NameError:
+      print("Configuration file parameters changes discarded.")
 
   configFile["onlyTrackThisOneWell"]        = -1
   configFile["trackTail"]                   = trackTailOriginalValue
@@ -265,6 +220,8 @@ def adjustFastFreelySwimTracking(self, controller):
     newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
     for index in newhyperparameters:
       configFile[index] = newhyperparameters[index]
+  except NameError:
+    print("Configuration file parameters changes discarded.")
 
   del configFile["reloadBackground"]
   del configFile["reloadWellPositions"]
@@ -340,18 +297,14 @@ def calculateBackground(self, controller, nbImagesForBackgroundCalculation):
   if int(nbImagesForBackgroundCalculation):
     configFile["nbImagesForBackgroundCalculation"] = int(nbImagesForBackgroundCalculation)
 
-  WINDOW_NAME = "Please Wait"
-  cvui.init(WINDOW_NAME)
-  cv2.moveWindow(WINDOW_NAME, 0,0)
-
-  try:
-    if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
-      del configFile["lastFrame"]
-    mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
-  except ValueError:
-    configFile["exitAfterBackgroundExtraction"] = 0
-
-  cv2.destroyAllWindows()
+  app = QApplication.instance()
+  with app.busyCursor():
+    try:
+      if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
+        del configFile["lastFrame"]
+      mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+    except ValueError:
+      configFile["exitAfterBackgroundExtraction"] = 0
 
   configFile["exitAfterBackgroundExtraction"]   = 0
   configFile["headEmbededRemoveBack"]           = 0
@@ -371,18 +324,14 @@ def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalcula
   if int(nbImagesForBackgroundCalculation):
     configFile["nbImagesForBackgroundCalculation"] = int(nbImagesForBackgroundCalculation)
 
-  WINDOW_NAME = "Please Wait"
-  cvui.init(WINDOW_NAME)
-  cv2.moveWindow(WINDOW_NAME, 0,0)
-
-  try:
-    if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
-      del configFile["lastFrame"]
-    mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
-  except ValueError:
-    configFile["exitAfterBackgroundExtraction"] = 0
-
-  cv2.destroyAllWindows()
+  app = QApplication.instance()
+  with app.busyCursor():
+    try:
+      if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
+        del configFile["lastFrame"]
+      mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+    except ValueError:
+      configFile["exitAfterBackgroundExtraction"] = 0
 
   del configFile["exitAfterBackgroundExtraction"] #  = 0
   del configFile["debugExtractBack"]              #  = 0
@@ -414,17 +363,17 @@ def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalcula
 
 
 def updateFillGapFrameNb(self, fillGapFrameNb):
-
+  dialog = QDialog()
+  dialog.setWindowTitle("Done!")
   if len(fillGapFrameNb):
     self.configFile["fillGapFrameNb"] = int(fillGapFrameNb)
-    toShow = np.zeros((200, 1000))
-    toShow = cv2.putText(toShow, 'The parameter fillGapFrameNb has been updated to ' + str(fillGapFrameNb), (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-    cv2.imshow("Done!", toShow)
-    cv2.waitKey(3000)
-    cv2.destroyAllWindows()
+    text = 'The parameter fillGapFrameNb has been updated to %s' % fillGapFrameNb
   else:
-    toShow = np.zeros((200, 1000))
-    toShow = cv2.putText(toShow, 'Insert a number in the box', (10, 40), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
-    cv2.imshow("Done!", toShow)
-    cv2.waitKey(3000)
-    cv2.destroyAllWindows()
+    text = 'Insert a number in the box'
+  layout = QVBoxLayout()
+  layout.addWidget(QLabel(text, dialog), alignment=Qt.AlignmentFlag.AlignCenter)
+  button = QPushButton("Ok", dialog)
+  button.clicked.connect(lambda: dialog.accept())
+  layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
+  dialog.setLayout(layout)
+  dialog.exec()

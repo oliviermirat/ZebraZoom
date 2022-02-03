@@ -3,9 +3,11 @@ import os
 import sys
 import traceback
 
+from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QWidget, QFileDialog, QApplication, QMainWindow, QStackedLayout, QMessageBox, QTextEdit, QSpacerItem
+from PyQt6.QtWidgets import QWidget, QDialog, QFileDialog, QApplication, QLabel, QMainWindow, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem
 
+import zebrazoom.code.util as util
 import zebrazoom.code.GUI.configFilePrepareFunctions as configFilePrepareFunctions
 import zebrazoom.code.GUI.GUI_InitialFunctions as GUI_InitialFunctions
 import zebrazoom.code.GUI.configFileZebrafishFunctions as configFileZebrafishFunctions
@@ -30,10 +32,11 @@ def getCurrentResultFolder():
 def excepthook(excType, excValue, traceback_):
   errorMessage = QMessageBox(QApplication.instance().window)
   errorMessage.setIcon(QMessageBox.Icon.Critical)
-  errorMessage.setWindowTitle("An exception has ocurred.")
-  errorMessage.setText("An exception has ocurred.")
-  errorMessage.setInformativeText('Please report the issue <a href="https://github.com/oliviermirat/ZebraZoom/issues)">here</a>.')
-  errorMessage.setDetailedText("    %s" % "    ".join(traceback.format_exception(excType, excValue, traceback_)))
+  errorMessage.setWindowTitle("Error")
+  formattedTraceback = traceback.format_exception(excType, excValue, traceback_)
+  errorMessage.setText("An error has ocurred: %s" % formattedTraceback[-1])
+  errorMessage.setInformativeText('Please report the issue on <a href="https://github.com/oliviermirat/ZebraZoom/issues">Github</a>.')
+  errorMessage.setDetailedText("    %s" % "    ".join(formattedTraceback))
   errorMessage.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel);
   errorMessage.setDefaultButton(QMessageBox.StandardButton.Cancel);
   errorMessage.button(QMessageBox.StandardButton.Ok).setText("Continue")
@@ -72,6 +75,8 @@ class ZebraZoomApp(QApplication):
 
         self.title_font = QFont('Helvetica', 18, QFont.Weight.Bold, True)
 
+        self._busyCursor = False
+
         self._windows = set()
         self.window = QMainWindow()
         self.window.closeEvent = self._windowClosed(self.window, self.window.closeEvent)
@@ -98,6 +103,7 @@ class ZebraZoomApp(QApplication):
             if window is self.window:
                 for win in tuple(self._windows):
                     win.close()
+                sys.exit(0)
             else:
                 self._windows.remove(window)
             return fn(*args, **kwargs)
@@ -106,6 +112,22 @@ class ZebraZoomApp(QApplication):
     def registerWindow(self, window):
         self._windows.add(window)
         window.closeEvent = self._windowClosed(window, window.closeEvent)
+
+    @contextlib.contextmanager
+    def busyCursor(self):
+        self.setOverrideCursor(Qt.CursorShape.BusyCursor)
+        self._busyCursor = True
+        yield
+        self.restoreOverrideCursor()
+        self._busyCursor = False
+
+    @contextlib.contextmanager
+    def suppressBusyCursor(self):
+        if self._busyCursor:
+            self.restoreOverrideCursor()
+        yield
+        if self._busyCursor:
+            self.setOverrideCursor(Qt.CursorShape.BusyCursor)
 
     def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, debugMode):
         GUI_InitialFunctions.chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, debugMode)

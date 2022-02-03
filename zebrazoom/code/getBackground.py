@@ -3,7 +3,12 @@ import cv2
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 from zebrazoom.code.preprocessImage import preprocessImage, preprocessBackgroundImage
 from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
+from zebrazoom.code.util import pageOrDialog
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QApplication, QLabel, QVBoxLayout
+
 
 def getBackground(videoPath, hyperparameters):
   
@@ -123,14 +128,22 @@ def getBackground(videoPath, hyperparameters):
     back[:, :] = np.median(back)
   
   if (debugExtractBack):
-    back2 = back.copy()
-    [back2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(back2)
-    cv2.imshow('Background extracted: Click on any key to proceed!', back2)
-    if hyperparameters["exitAfterBackgroundExtraction"]:
-      cv2.waitKey(3000)
+    if QApplication.instance() is None:
+      back2 = back.copy()
+      [back2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(back2)
+      cv2.imshow('Background extracted: Click on any key to proceed!', back2)
+      if hyperparameters["exitAfterBackgroundExtraction"]:
+        cv2.waitKey(3000)
+      else:
+        cv2.waitKey(0)
+      cv2.destroyAllWindows()
     else:
-      cv2.waitKey(0)
-    cv2.destroyAllWindows()
+      label = QLabel()
+      label.setMinimumSize(1, 1)
+      layout = QVBoxLayout()
+      layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+      timeout = 3000 if hyperparameters["exitAfterBackgroundExtraction"] else None
+      pageOrDialog(layout, title="Background Extracted", dialog=True, labelInfo=(back, label), timeout=timeout)
   cap.release()
   
   print("Background Extracted")

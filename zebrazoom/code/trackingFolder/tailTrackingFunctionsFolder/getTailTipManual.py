@@ -11,6 +11,11 @@ import os.path
 import csv
 from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 
+from PyQt6.QtWidgets import QApplication
+
+import zebrazoom.code.util as util
+
+
 def getAccentuateFrameForManualPointSelect(image, hyperparameters):
   if hyperparameters["accentuateFrameForManualTailExtremityFind"]:
     frame = image.copy()
@@ -28,8 +33,21 @@ def getAccentuateFrameForManualPointSelect(image, hyperparameters):
   else:
     return image
 
+
+def _findTailTipByUserInputQt(frame, frameNumber, videoPath, hyperparameters):
+  plus = 0
+
+  def tailNotStraight(frameWidget):
+    nonlocal plus
+    plus += 1
+    util.setPixmapFromCv(headEmbededFrame(videoPath, frameNumber + plus, hyperparameters)[0], frameWidget)
+  return list(util.getPoint(np.uint8(frame * 255), "Click on tail tip", extraButtons=(("Tail is not straight", tailNotStraight, False),)))
+
+
 def findTailTipByUserInput(frame, frameNumber, videoPath, hyperparameters):
-  
+  if QApplication.instance() is not None:
+    return _findTailTipByUserInputQt(frame, frameNumber, videoPath, hyperparameters)
+
   WINDOW_NAME = "Click on tail tip"
   cvui.init(WINDOW_NAME)
   cv2.moveWindow(WINDOW_NAME, 0, 0)
@@ -53,9 +71,22 @@ def findTailTipByUserInput(frame, frameNumber, videoPath, hyperparameters):
   
   cv2.destroyWindow(WINDOW_NAME)
   return [cursor.x, cursor.y]
-  
+
+
+def _findHeadPositionByUserInputQt(frame, frameNumber, videoPath, hyperparameters):
+  plus = 0
+
+  def tailNotStraight(frameWidget):
+    nonlocal plus
+    plus += 1
+    util.setPixmapFromCv(headEmbededFrame(videoPath, frameNumber + plus, hyperparameters)[0], frameWidget)
+  return list(util.getPoint(np.uint8(frame * 255), "Click on the base of the tail", extraButtons=(("Tail is not straight", tailNotStraight, False),)))
+
+
 def findHeadPositionByUserInput(frame, frameNumber, videoPath, hyperparameters={}):
-  
+  if QApplication.instance() is not None:
+    return _findHeadPositionByUserInputQt(frame, frameNumber, videoPath, hyperparameters)
+
   WINDOW_NAME = "Click on the base of the tail"
   cvui.init(WINDOW_NAME)
   cv2.moveWindow(WINDOW_NAME, 0,0)

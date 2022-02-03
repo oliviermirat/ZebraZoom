@@ -16,10 +16,12 @@ from zebrazoom.code.vars import getGlobalVariables
 from zebrazoom.mainZZ import mainZZ
 import json
 import os
-from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 globalVariables = getGlobalVariables()
 
-from PyQt6.QtWidgets import QFileDialog, QApplication
+from PyQt6.QtCore import Qt, QTimer
+from PyQt6.QtWidgets import QApplication, QFileDialog, QGridLayout, QLabel, QVBoxLayout
+
+import zebrazoom.code.util as util
 
 
 def getMainArguments(self):
@@ -107,42 +109,11 @@ def wellOrganisation(self, controller, circular, rectangular, roi, other, multip
         else:
           self.shape = 'other'
           if roi:
-            cap = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
+            cap = zzVideoReading.VideoCapture(controller.videoToCreateConfigFileFor)
             cap.set(1, 10)
             ret, frame = cap.read()
-            frame2 = frame.copy()
-            [frame2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame2, True, 0.85)
-
-            WINDOW_NAME = "Click on the top left of the region of interest"
-            cvui.init(WINDOW_NAME)
-            cv2.moveWindow(WINDOW_NAME, 0,0)
-            cvui.imshow(WINDOW_NAME, frame2)
-            while not(cvui.mouse(cvui.CLICK)):
-              cursor = cvui.mouse()
-              frame3 = frame2.copy()
-              frame3 = cv2.line(frame3, (cursor.x - 2000, cursor.y), (cursor.x + 2000, cursor.y), (0, 0, 255), 2)
-              frame3 = cv2.line(frame3, (cursor.x, cursor.y - 2000), (cursor.x, cursor.y + 2000), (0, 0, 255), 2)
-              cvui.imshow(WINDOW_NAME, frame3)
-              if cv2.waitKey(20) == 27:
-                break
-            self.configFile["oneWellManuallyChosenTopLeft"] = [int(getRealValueCoefX * cursor.x), int(getRealValueCoefY * cursor.y)]
-            cv2.destroyAllWindows()
-
-            WINDOW_NAME = "Click on the bottom right of the region of interest"
-            cvui.init(WINDOW_NAME)
-            cv2.moveWindow(WINDOW_NAME, 0,0)
-            cvui.imshow(WINDOW_NAME, frame2)
-            while not(cvui.mouse(cvui.CLICK)):
-              cursor = cvui.mouse()
-              frame3 = frame2.copy()
-              frame3 = cv2.line(frame3, (cursor.x - 2000, cursor.y), (cursor.x + 2000, cursor.y), (0, 0, 255), 2)
-              frame3 = cv2.line(frame3, (cursor.x, cursor.y - 2000), (cursor.x, cursor.y + 2000), (0, 0, 255), 2)
-              cvui.imshow(WINDOW_NAME, frame3)
-              if cv2.waitKey(20) == 27:
-                break
-            self.configFile["oneWellManuallyChosenBottomRight"] = [int(getRealValueCoefX * cursor.x), int(getRealValueCoefY * cursor.y)]
-            cv2.destroyAllWindows()
-
+            rect = util.getRectangle(frame, "Click on the top left and bottom right of the region of interest")
+            self.configFile["oneWellManuallyChosenTopLeft"], self.configFile["oneWellManuallyChosenBottomRight"] = rect
             self.configFile["nbWells"] = 1
             chooseBeginningAndEndOfVideo(self, controller)
           else:
@@ -165,17 +136,16 @@ def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
 
   configFile["adjustRectangularWellsDetect"] = 1
 
-  try:
-    WINDOW_NAME = "Please Wait"
-    cvui.init(WINDOW_NAME)
-    cv2.moveWindow(WINDOW_NAME, 0,0)
-    r = cv2.waitKey(2)
-    mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
-    cv2.destroyAllWindows()
-  except ValueError:
-    newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
-    for index in newhyperparameters:
-      configFile[index] = newhyperparameters[index]
+  app = QApplication.instance()
+  with app.busyCursor():
+    try:
+      mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+    except ValueError:
+      newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
+      for index in newhyperparameters:
+        configFile[index] = newhyperparameters[index]
+    except NameError:
+      print("Configuration file parameters changes discarded.")
 
   configFile["adjustRectangularWellsDetect"] = 0
 
@@ -269,120 +239,8 @@ def chooseCircularWellsRight(self, controller):
   chooseBeginningAndEndOfVideo(self, controller)
 
 def chooseBeginningAndEndOfVideo(self, controller):
-  cap = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
-  max_l = int(cap.get(7)) - 2
-
-  cap.set(1, 1)
-  ret, frame = cap.read()
-  WINDOW_NAME = "Choose where the analysis of your video should start."
-  WINDOW_NAME_CTRL = "Control"
-  cvui.init(WINDOW_NAME)
-  cv2.moveWindow(WINDOW_NAME, 0,0)
-  cvui.init(WINDOW_NAME_CTRL)
-  cv2.moveWindow(WINDOW_NAME_CTRL, 0, 300)
-  value = [1]
-  curValue = value[0]
-  buttonclicked = False
-  buttonEntireVideo = False
-  widgetX = 40
-  widgetY = 20
-  widgetL = 300
-  while not(buttonclicked) and not(buttonEntireVideo):
-      value[0] = int(value[0])
-      if curValue != value[0]:
-        cap.set(1, value[0])
-        frameOld = frame
-        ret, frame = cap.read()
-        if not(ret):
-          frame = frameOld
-        curValue = value[0]
-      frameCtrl = np.full((200, 750), 100).astype('uint8')
-      frameCtrl[widgetY:widgetY+60, widgetX:widgetX+widgetL] = 0
-      cvui.text(frameCtrl, widgetX, widgetY, 'Frame')
-      cvui.trackbar(frameCtrl, widgetX, widgetY+10, widgetL, value, 0, max_l)
-      cvui.counter(frameCtrl, widgetX, widgetY+60, value)
-      buttonclicked = cvui.button(frameCtrl, widgetX, widgetY+90, "Ok, I want the tracking to start at this frame!")
-
-      cvui.text(frameCtrl, widgetX+350, widgetY+1, 'No, this is unecessary:')
-      buttonEntireVideo = cvui.button(frameCtrl, widgetX+350, widgetY+40, "I want the tracking to run on the entire video!")
-
-      cvui.text(frameCtrl, widgetX, widgetY+130, 'Keys: 4 or a: move backwards; 6 or d: move forward')
-      cvui.text(frameCtrl, widgetX, widgetY+160, 'Keys: g or f: fast backwards; h or j: fast forward')
-      frame2 = frame.copy()
-      [frame2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame2, True, 0.85)
-      cvui.imshow(WINDOW_NAME, frame2)
-      cvui.imshow(WINDOW_NAME_CTRL, frameCtrl)
-      r = cv2.waitKey(20)
-      if (r == 54) or (r == 100) or (r == 0):
-        value[0] = value[0] + 1
-      elif (r == 52) or (r == 97) or (r == 113):
-        value[0] = value[0] - 1
-      elif (r == 103):
-        value[0] = value[0] - 30
-      elif (r == 104):
-        value[0] = value[0] + 30
-      elif (r == 102):
-        value[0] = value[0] - 100
-      elif (r == 106):
-        value[0] = value[0] + 100
-  cv2.destroyAllWindows()
-
-  if not(buttonEntireVideo):
-    self.configFile["firstFrame"] = int(value[0])
-    cap.set(1, max_l)
-    ret, frame = cap.read()
-    while not(ret):
-      max_l = max_l - 1
-      cap.set(1, max_l)
-      ret, frame = cap.read()
-    WINDOW_NAME = "Choose where the analysis of your video should end."
-    WINDOW_NAME_CTRL = "Control"
-    cvui.init(WINDOW_NAME)
-    cv2.moveWindow(WINDOW_NAME, 0,0)
-    cvui.init(WINDOW_NAME_CTRL)
-    cv2.moveWindow(WINDOW_NAME_CTRL, 0, 300)
-    value = [max_l]
-    curValue = value[0]
-    buttonclicked = False
-    widgetX = 40
-    widgetY = 20
-    widgetL = 300
-    while not(buttonclicked):
-        value[0] = int(value[0])
-        if curValue != value[0]:
-          cap.set(1, value[0])
-          frameOld = frame
-          ret, frame = cap.read()
-          if not(ret):
-            frame = frameOld
-          curValue = value[0]
-        frameCtrl = np.full((200, 400), 100).astype('uint8')
-        frameCtrl[widgetY:widgetY+60, widgetX:widgetX+widgetL] = 0
-        cvui.text(frameCtrl, widgetX, widgetY, 'Frame')
-        cvui.trackbar(frameCtrl, widgetX, widgetY+10, widgetL, value, 0, max_l-1)
-        cvui.counter(frameCtrl, widgetX, widgetY+60, value)
-        buttonclicked = cvui.button(frameCtrl, widgetX, widgetY+90, "Ok, I want the tracking to end at this frame!")
-        cvui.text(frameCtrl, widgetX, widgetY+130, 'Keys: 4 or a: move backwards; 6 or d: move forward')
-        cvui.text(frameCtrl, widgetX, widgetY+160, 'Keys: g or f: fast backwards; h or j: fast forward')
-        frame2 = frame.copy()
-        [frame2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame2, True, 0.85)
-        cvui.imshow(WINDOW_NAME, frame2)
-        cvui.imshow(WINDOW_NAME_CTRL, frameCtrl)
-        r = cv2.waitKey(20)
-        if (r == 54) or (r == 100) or (r == 0):
-          value[0] = value[0] + 1
-        elif (r == 52) or (r == 97) or (r == 113):
-          value[0] = value[0] - 1
-        elif (r == 103):
-          value[0] = value[0] - 30
-        elif (r == 104):
-          value[0] = value[0] + 30
-        elif (r == 102):
-          value[0] = value[0] - 100
-        elif (r == 106):
-          value[0] = value[0] + 100
-    self.configFile["lastFrame"] = int(value[0])
-    cv2.destroyAllWindows()
+  if util.chooseBeginning(controller, controller.videoToCreateConfigFileFor, "Choose where the analysis of your video should start.", "Ok, I want the tracking to start at this frame!", allowWholeVideo=True):
+    util.chooseEnd(controller, controller.videoToCreateConfigFileFor, "Choose where the analysis of your video should end.", "Ok, I want the tracking to end at this frame!")
 
   if int(self.configFile["headEmbeded"]) == 1:
     controller.show_frame("HeadEmbeded")
@@ -394,29 +252,12 @@ def chooseBeginningAndEndOfVideo(self, controller):
     else:
       controller.show_frame("NumberOfAnimalsCenterOfMass")
 
-
-def getImageForMultipleAnimalGUI(l, vertical, horizontal, nx, ny, max_l, videoToCreateConfigFileFor, background, wellPositions, hyperparameters):
+def getImageForMultipleAnimalGUI(l, nx, ny, max_l, videoToCreateConfigFileFor, background, wellPositions, hyperparameters):
 
   [frame, a1, a2] = getForegroundImage(videoToCreateConfigFileFor, background, l, 0, [], hyperparameters)
 
   lengthX = nx * 2
   lengthY = ny
-
-  newX = lengthX
-  newY = lengthY
-
-  vertical2   = vertical   - vertical   * 0.12
-  horizontal2 = horizontal - horizontal * 0.01
-  if ( (lengthX > horizontal2) or (lengthY > vertical2) ):
-    sinkFactor = 1
-    sinkFactorX = horizontal2 / lengthX
-    sinkFactorY = vertical2   / lengthY
-    if (sinkFactorX > sinkFactorY):
-      sinkFactor = sinkFactorY
-    else:
-      sinkFactor = sinkFactorX
-    newX = lengthX * sinkFactor
-    newY = lengthY * sinkFactor
 
   frame2 = frame
   ret,thresh2 = cv2.threshold(frame2,hyperparameters["thresholdForBlobImg"],255,cv2.THRESH_BINARY)
@@ -450,8 +291,6 @@ def getImageForMultipleAnimalGUI(l, vertical, horizontal, nx, ny, max_l, videoTo
 
   frame = np.concatenate((frame, thresh2), axis=1)
 
-  frame = cv2.resize(frame,(int(newX),int(newY)))
-
   if len(areaList):
     maxToReturn = int((max(areaList)+2)*2)
   else:
@@ -459,73 +298,61 @@ def getImageForMultipleAnimalGUI(l, vertical, horizontal, nx, ny, max_l, videoTo
 
   return [frame, maxToReturn]
 
-def printStuffOnCtrlImg(frameCtrl, frameNum, x, y, l, minn, maxx, name):
-  cvui.text(frameCtrl,     x,         y,    name)
-  cvui.trackbar(frameCtrl, x,      y+10, l, frameNum, minn, maxx)
-  cvui.counter(frameCtrl,  x+l+10, y+20,    frameNum)
+def _createWidget(layout, values, key, minn, maxx, name, updateFrame):
+  sublayout = QVBoxLayout()
+
+  sublayout.addWidget(QLabel(name), alignment=Qt.AlignmentFlag.AlignCenter)
+  slider = util.SliderWithSpinbox(values[key], minn, maxx)
+
+  def valueChanged():
+    values[key] = slider.value()
+    updateFrame()
+  slider.valueChanged.connect(valueChanged)
+  sublayout.addWidget(slider, alignment=Qt.AlignmentFlag.AlignCenter)
+
+  if name != "Frame number":
+    elements = layout.count() - 2  # frame, frameSlider
+    row = elements // 2 + 2
+    col = elements % 2
+    layout.addLayout(sublayout, row, col, Qt.AlignmentFlag.AlignLeft if col else Qt.AlignmentFlag.AlignRight)
+  else:
+    layout.addLayout(sublayout, 1, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+
+  return slider
 
 def identifyMultipleHead(self, controller, nbanimals):
-
   self.configFile["videoName"] = "configFilePrep"
 
   tempConfig = self.configFile
 
-  screen_size = QApplication.instance().primaryScreen().availableGeometry()
-  scaling = QApplication.instance().devicePixelRatio()
-  horizontal = int(screen_size.width() * scaling)
-  vertical   = int(screen_size.height() * scaling)
-
-  # Wait image
-  WINDOW_NAME = "Please Wait"
-  cv2.destroyAllWindows()
-  cvui.init(WINDOW_NAME)
-  cv2.moveWindow(WINDOW_NAME, 0,0)
-  # Getting hyperparameters, wellPositions, and background
-  hyperparameters = getHyperparametersSimple(tempConfig)
-  wellPositions = findWells(self.videoToCreateConfigFileFor, hyperparameters)
-  background    = getBackground(self.videoToCreateConfigFileFor, hyperparameters)
+  app = QApplication.instance()
+  with app.busyCursor():
+    # Getting hyperparameters, wellPositions, and background
+    hyperparameters = getHyperparametersSimple(tempConfig)
+    wellPositions = findWells(self.videoToCreateConfigFileFor, hyperparameters)
+    background    = getBackground(self.videoToCreateConfigFileFor, hyperparameters)
 
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
   cur_dir_path = Path(cur_dir_path)
 
-  tab = [1]
-  img = cv2.imread(os.path.join(cur_dir_path, 'no1.png'))
-  img = cv2.resize(img,(int(horizontal*0.95),int(vertical*0.8)))
-  buttonclicked = False
-  count = 0
-  while not(buttonclicked):
-    buttonclicked = cvui.button(img, 10, 10, "Ok, I understand!")
-    cvui.imshow(WINDOW_NAME, img)
-    cv2.waitKey(20)
-    count = count + 1
-    if count > 100:
-      buttonclicked = True
-  img = cv2.imread(os.path.join(cur_dir_path, 'no2.png'))
-  img = cv2.resize(img,(int(horizontal*0.95),int(vertical*0.8)))
-  buttonclicked = False
-  count = 0
-  while not(buttonclicked):
-    buttonclicked = cvui.button(img, 10, 10, "Ok, I understand!")
-    cvui.imshow(WINDOW_NAME, img)
-    cv2.waitKey(20)
-    count = count + 1
-    if count > 100:
-      buttonclicked = True
-  img = cv2.imread(os.path.join(cur_dir_path, 'ok1.png'))
-  img = cv2.resize(img,(int(horizontal*0.95),int(vertical*0.8)))
-  buttonclicked = False
-  count = 0
-  while not(buttonclicked):
-    buttonclicked = cvui.button(img, 10, 10, "Ok, I understand!")
-    cvui.imshow(WINDOW_NAME, img)
-    cv2.waitKey(20)
-    count = count + 1
-    if count > 100:
-      buttonclicked = True
+  def imagesGenerator():
+    images = (cv2.imread(os.path.join(cur_dir_path, 'no1.png')),
+              cv2.imread(os.path.join(cur_dir_path, 'no2.png')),
+              cv2.imread(os.path.join(cur_dir_path, 'ok1.png')))
+    while True:
+      yield from images
+  images = imagesGenerator()
 
-  WINDOW_NAME = "Adjust Parameters: As much as possible, you must see red points on and only on animals on the right image."
-  WINDOW_NAME_CTRL = "Adjust Parameters."
-  cv2.destroyAllWindows()
+  label = QLabel()
+  label.setMinimumSize(1, 1)
+  layout = QVBoxLayout()
+  layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+  timer = QTimer()
+  timer.setInterval(2000)
+  timer.timeout.connect(lambda: util.setPixmapFromCv(next(images), label))
+  timer.start()
+  util.pageOrDialog(layout, title="", dialog=False, buttons=(("Ok, I understand!", lambda: timer.stop()),), labelInfo=(next(images), label))
+
   # Manual parameters adjustements
   cap        = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
   nx         = int(cap.get(3))
@@ -535,19 +362,7 @@ def identifyMultipleHead(self, controller, nbanimals):
   hyperparameters["minArea"] = 5
   hyperparameters["maxArea"] = 800
 
-  [frame, maxAreaBlobs] = getImageForMultipleAnimalGUI(1, vertical, horizontal, nx, ny, max_l, self.videoToCreateConfigFileFor, background, wellPositions, hyperparameters)
-  frameCtrl = np.full((200, 1100), 100).astype('uint8')
-
-  cvui.init(WINDOW_NAME)
-  cv2.moveWindow(WINDOW_NAME, 0, 0)
-  cvui.imshow(WINDOW_NAME, frame)
-
-  cvui.init(WINDOW_NAME_CTRL)
-  cv2.moveWindow(WINDOW_NAME_CTRL, 0, vertical-290)
-  cvui.imshow(WINDOW_NAME_CTRL, frameCtrl)
-
-  frameNum = [hyperparameters["firstFrame"]] if "firstFrame" in hyperparameters else [ 1 ]
-  curFrameNum = frameNum[0] + 1
+  frameNum = {"frameNum": hyperparameters.get("firstFrame", 1)}
   minPixelDiffForBackExtract = [hyperparameters["minPixelDiffForBackExtract"]]
   thresholdForBlobImg        = [hyperparameters["thresholdForBlobImg"]]
   dilateIter                 = [hyperparameters["dilateIter"]]
@@ -556,36 +371,27 @@ def identifyMultipleHead(self, controller, nbanimals):
   firstFrame = hyperparameters["firstFrame"] if "firstFrame" in hyperparameters else 1
   lastFrame  = hyperparameters["lastFrame"]-1 if "lastFrame" in hyperparameters else max_l - 10
 
-  buttonclicked = False
-  while not(buttonclicked):
-    if curFrameNum != frameNum[0] or hyperparameters["minPixelDiffForBackExtract"] != minPixelDiffForBackExtract[0] or hyperparameters["thresholdForBlobImg"] != thresholdForBlobImg[0] or hyperparameters["dilateIter"] != dilateIter[0] or hyperparameters["minArea"] != minArea[0] or hyperparameters["maxArea"] != maxArea[0]:
+  frame, maxAreaBlobs = getImageForMultipleAnimalGUI(frameNum["frameNum"], nx, ny, max_l, self.videoToCreateConfigFileFor, background, wellPositions, hyperparameters)
 
-      curFrameNum = frameNum[0]
-      hyperparameters["minPixelDiffForBackExtract"] = int(minPixelDiffForBackExtract[0])
-      hyperparameters["thresholdForBlobImg"] = int(thresholdForBlobImg[0])
-      hyperparameters["dilateIter"] = int(dilateIter[0])
-      hyperparameters["minArea"] = int(minArea[0])
-      hyperparameters["maxArea"] = int(maxArea[0])
+  label = QLabel()
+  label.setMinimumSize(1, 1)
+  layout = QGridLayout()
+  layout.addWidget(label, 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
-      [frame, maxAreaBlobs] = getImageForMultipleAnimalGUI(curFrameNum, vertical, horizontal, nx, ny, max_l, self.videoToCreateConfigFileFor, background, wellPositions, hyperparameters)
+  def updateFrame():
+    frame, maxAreaBlobs = getImageForMultipleAnimalGUI(frameNum["frameNum"], nx, ny, max_l, self.videoToCreateConfigFileFor, background, wellPositions, hyperparameters)
+    util.setPixmapFromCv(frame, label)
+    minAreaWidget.setMaximum(maxAreaBlobs)
+    maxAreaWidget.setMaximum(maxAreaBlobs)
 
-    frameCtrl = np.full((200, 1100), 100).astype('uint8')
+  _createWidget(layout, frameNum, "frameNum", firstFrame, lastFrame, "Frame number", updateFrame)
+  _createWidget(layout, hyperparameters, "minPixelDiffForBackExtract", 0, 255, "Threshold left image", updateFrame)
+  _createWidget(layout, hyperparameters, "thresholdForBlobImg", 0, 255, "Threshold right image", updateFrame)
+  _createWidget(layout, hyperparameters, "dilateIter", 0, 15, "Area dilatation", updateFrame)
+  minAreaWidget = _createWidget(layout, hyperparameters, "minArea", 0, maxAreaBlobs, "Minimum area", updateFrame)
+  maxAreaWidget = _createWidget(layout, hyperparameters, "maxArea", 0, maxAreaBlobs, "Maximum area", updateFrame)
 
-    printStuffOnCtrlImg(frameCtrl, frameNum,                     1, 5,  350,  firstFrame, lastFrame, "Frame number")
-    printStuffOnCtrlImg(frameCtrl, minPixelDiffForBackExtract, 470, 5,  350,  0, 255, "Threshold left image")
-    printStuffOnCtrlImg(frameCtrl, thresholdForBlobImg,          1, 71,  350, 0, 255, "Threshold right image")
-    printStuffOnCtrlImg(frameCtrl, dilateIter,                 470, 71,  350, 0, 15, "Area dilatation")
-    printStuffOnCtrlImg(frameCtrl, minArea,                      1, 137, 350, 0, maxAreaBlobs, "Minimum area")
-    printStuffOnCtrlImg(frameCtrl, maxArea,                    470, 137, 350, 0, maxAreaBlobs, "Maximum area")
-
-    buttonclicked = cvui.button(frameCtrl, 940, 10, "Ok, done!")
-
-    cvui.imshow(WINDOW_NAME, frame)
-    cvui.imshow(WINDOW_NAME_CTRL, frameCtrl)
-
-    if cv2.waitKey(20) == 27:
-        break
-  cv2.destroyAllWindows()
+  util.pageOrDialog(layout, title="Adjust Parameters: As much as possible, you must see red points on and only on animals on the right image.", dialog=False, buttons=(("Ok, done!", None),), labelInfo=(frame, label))
 
   del self.configFile["videoName"]
 

@@ -1,11 +1,9 @@
 import numpy as np
 import json
-import cv2
 import math
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
 from zebrazoom.mainZZ import mainZZ
-import cvui
 import pickle
 import json
 import os

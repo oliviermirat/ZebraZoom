@@ -31,4 +31,3 @@ tweakTrackingParamsNo):
   else:
     self.configFile["noBoutsDetection"] = 1
     controller.show_frame("FinishConfig")
-
