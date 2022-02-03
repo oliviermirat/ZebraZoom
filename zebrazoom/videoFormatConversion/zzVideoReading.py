@@ -133,7 +133,7 @@ class ZzVideoReading():
         
       elif numImage > self.lastFrameRead:
         
-        justToMove = self.f.read(24 * (numImage - self.lastFrameRead - 1))
+        justToMove = self.f.read(24 * (int(numImage) - int(self.lastFrameRead) - 1))
         self.lastFrameRead = numImage - 1  
         
       elif numImage < self.lastFrameRead:
