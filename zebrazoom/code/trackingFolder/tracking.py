@@ -99,7 +99,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     
     # Setting hyperparameters in order to add line on image
     if hyperparameters["addBlackLineToImg_Width"]:
-      hyperparameters = addBlackLineToImgSetParameters(hyperparameters, frame)
+      hyperparameters = addBlackLineToImgSetParameters(hyperparameters, frame, videoName)
     
     # if hyperparameters["invertBlackWhiteOnImages"]:
       # frame   = 255 - frame
