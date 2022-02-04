@@ -4,7 +4,7 @@ import cv2
 
 from PyQt6.QtCore import pyqtSignal, Qt, QEventLoop, QPointF, QRectF, QSize, QSizeF, QTimer
 from PyQt6.QtGui import QColor, QFont, QImage, QPainter, QPixmap, QPolygonF, QTransform
-from PyQt6.QtWidgets import QApplication, QLabel, QLayout, QHBoxLayout, QPushButton, QSlider, QSpinBox, QToolTip, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QApplication, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QSlider, QSpinBox, QToolTip, QVBoxLayout, QWidget
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 
@@ -69,6 +69,7 @@ def pageOrDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, s
       dialog.close()
     else:
       loop.exit()
+
   for text, *args in buttons:
     if len(args) == 1:
       cb, = args
@@ -180,23 +181,32 @@ class SliderWithSpinbox(QWidget):
 
   def __init__(self, value, minimum, maximum):
     super().__init__()
+    minimum = int(minimum)
+    maximum = int(maximum)
 
-    layout = QHBoxLayout()
-    layout.addStretch()
+    layout = QGridLayout()
+    layout.setRowStretch(0, 1)
+    layout.setColumnStretch(0, 1)
+    layout.setRowStretch(3, 1)
+    layout.setColumnStretch(4, 1)
+    layout.setVerticalSpacing(0)
 
+    minLabel = QLabel(str(minimum))
+    layout.addWidget(minLabel, 1, 1, Qt.AlignmentFlag.AlignLeft)
+    maxLabel = QLabel(str(maximum))
+    layout.addWidget(maxLabel, 1, 2, Qt.AlignmentFlag.AlignRight)
     slider = QSlider(Qt.Orientation.Horizontal)
     slider.setMinimumWidth(350)
     slider.setRange(minimum, maximum)
     slider.setValue(value)
-    layout.addWidget(slider, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(slider, 2, 1, 1, 2)
 
     spinbox = QSpinBox()
     spinbox.setStyleSheet(SPINBOX_STYLESHEET)
     spinbox.setMinimumWidth(70)
     spinbox.setRange(minimum, maximum)
     spinbox.setValue(value)
-    layout.addWidget(spinbox, alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addStretch()
+    layout.addWidget(spinbox, 2, 3)
 
     def spinboxValueChanged():
       value = spinbox.value()
@@ -208,8 +218,8 @@ class SliderWithSpinbox(QWidget):
     self.setLayout(layout)
 
     self.value = spinbox.value
-    self.setMinimum = lambda min_: spinbox.setMinimum(min_) or slider.setMinimum(min_)
-    self.setMaximum = lambda max_: spinbox.setMaximum(max_) or slider.setMaximum(max_)
+    self.setMinimum = lambda min_: spinbox.setMinimum(min_) or slider.setMinimum(min_) or minLabel.setText(str(int(min_)))
+    self.setMaximum = lambda max_: spinbox.setMaximum(max_) or slider.setMaximum(max_) or maxLabel.setText(str(int(max_)))
     self.setRange = lambda min_, max_: spinbox.setRange(min_, max_) or slider.setRange(min_, max_)
 
 
