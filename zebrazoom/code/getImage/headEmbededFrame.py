@@ -13,7 +13,7 @@ def headEmbededFrame(videoPath, frameNumber, hyperparameters):
   ret, frame = cap.read()
   
   while not(ret):
-    print("WARNING: last frame had a value that was too high!")
+    print("WARNING: couldn't read the frameNumber", frameNumber, "for the video", hyperparameters["videoName"])
     frameNumber = frameNumber - 1
     cap.set(1, frameNumber)
     ret, frame = cap.read()

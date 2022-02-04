@@ -89,14 +89,14 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
   nbFrames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
   cap.release()
   if hyperparameters["firstFrame"] < 0:
-    print("Error: The parameter 'firstFrame' in your configuration file is too small")
-    raise NameError("Error: The parameter 'firstFrame' in your configuration file is too small")
+    print("Error for video " + videoName + ": The parameter 'firstFrame' in your configuration file is too small" + " (firstFrame value is " + str(hyperparameters["firstFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
+    raise NameError("Error for video " + videoName + ": The parameter 'firstFrame' in your configuration file is too small" + " (firstFrame value is " + str(hyperparameters["firstFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
   if hyperparameters["firstFrame"] > nbFrames:
-    print("Error: The parameter 'firstFrame' in your configuration file is too big")
-    raise NameError("Error: The parameter 'firstFrame' in your configuration file is too big")
+    print("Error for video " + videoName + ": The parameter 'firstFrame' in your configuration file is too big" + " (firstFrame value is " + str(hyperparameters["firstFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
+    raise NameError("Error for video " + videoName + ": The parameter 'firstFrame' in your configuration file is too big" + " (firstFrame value is " + str(hyperparameters["firstFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
   if (hyperparameters["lastFrame"] < 0) or (hyperparameters["lastFrame"] <= hyperparameters["firstFrame"]):
-    print("Error: The parameter 'lastFrame' in your configuration file is too small")
-    raise NameError("Error: The parameter 'lastFrame' in your configuration file is too small")
+    print("Error for video " + videoName + ": The parameter 'lastFrame' in your configuration file is too small" + " (lastFrame value is " + str(hyperparameters["lastFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
+    raise NameError("Error for video " + videoName + ": The parameter 'lastFrame' in your configuration file is too small" + " (lastFrame value is " + str(hyperparameters["lastFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
   if hyperparameters["lastFrame"] > nbFrames:
     print("Warning: The parameter 'lastFrame' in your configuration file is too big so we adjusted it to the value:", nbFrames-2, "it was originally set to", hyperparameters["lastFrame"])
     hyperparameters["lastFrame"] = nbFrames - 2

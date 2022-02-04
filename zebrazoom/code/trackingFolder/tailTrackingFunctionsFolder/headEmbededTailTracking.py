@@ -202,6 +202,11 @@ def findNextPoints(depth,x,y,frame,points,angle,maxDepth,steps,nbList,initialIma
   if distSubsquentPoints > 0 and depth + distSubsquentPoints < maxDepth and ((pixSur < pixSurMax) or (depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth)):
     (points,nop) = findNextPoints(depth+distSubsquentPoints,xTot,yTot,frame,points,newTheta,maxDepth,steps,nbList,initialImage,debug, hyperparameters)
   
+  if depth == 0:
+    lenPoints = len(points[0]) - 1
+    if points[0, lenPoints-1] == points[0, lenPoints] and points[1, lenPoints-1] == points[1, lenPoints]:
+      points = points[:, :len(points[0])-1]
+  
   return (points,newTheta)
 
 
