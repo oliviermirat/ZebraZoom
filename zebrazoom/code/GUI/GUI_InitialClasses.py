@@ -419,10 +419,6 @@ class ViewParameters(QWidget):
         self.zoomed_video_btn = QPushButton("", self)
         self.zoomed_video_btn.clicked.connect(lambda: self.showValidationVideo(self.numWell(), self.numPoiss(), 1, -1))
         layout.addWidget(self.zoomed_video_btn, 3, 2, Qt.AlignmentFlag.AlignCenter)
-        link1 = util.apply_style(QPushButton("Video viewing tips", self), background_color='red')
-        link1.setCursor(QCursor(Qt.CursorShape.PointingHandCursor))
-        link1.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/validationVideoReading.html"))
-        layout.addWidget(link1, 3, 4, Qt.AlignmentFlag.AlignCenter)
 
         layout.addWidget(QLabel("Fish number:", self), 4, 1, Qt.AlignmentFlag.AlignCenter)
         self.spinbox2 = QSpinBox(self)
