@@ -4,7 +4,7 @@ import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import math
 from zebrazoom.code.getImage.getImageSequential import getImageSequential
 from zebrazoom.code.getImage.getImage import getImage
-from zebrazoom.code.adjustHyperparameters import initializeAdjustHyperparametersWindows, adjustHyperparameters, getDetectMouvRawVideosParamsForHyperParamAdjusts
+from zebrazoom.code.adjustHyperparameters import adjustDetectMouvRawVideosParams
 
 def putTabIntoBoundaries(img, tab):
   if tab[0] < 0:
@@ -125,8 +125,7 @@ def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparisi
 def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumber, wellPositions, head, headPositionFirstFrame, tailTipFirstFrame):
   
   if hyperparameters["adjustDetectMovWithRawVideo"]:
-    initializeAdjustHyperparametersWindows("Red dot must appear only when movement is occuring")
-  organizationTabCur = []
+    widgets = None
   
   if hyperparameters["debugDetectMovWithRawVideo"]:
     print("detectMovementWithRawVideo")
@@ -186,14 +185,10 @@ def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumbe
         mouvement[l-firstFrame] = 0
       
       if hyperparameters["adjustDetectMovWithRawVideo"]:
-        
-        [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getDetectMouvRawVideosParamsForHyperParamAdjusts(img, res, l, totDiff, hyperparameters)
-        if len(organizationTabCur) == 0:
-          organizationTabCur = organizationTab
       
         if l + hyperparameters["frameGapComparision"] > hyperparameters["lastFrame"]:
           l = int(hyperparameters["lastFrame"] - hyperparameters["frameGapComparision"] - 3)
-        [l, hyperparameters, organizationTabCur] = adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTabCur)
+        l, widgets = adjustDetectMouvRawVideosParams(img, res, l, totDiff, hyperparameters, widgets)
         if l + hyperparameters["frameGapComparision"] > hyperparameters["lastFrame"]:
           l = int(hyperparameters["lastFrame"] - hyperparameters["frameGapComparision"] - 3)
           

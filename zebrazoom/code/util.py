@@ -51,10 +51,8 @@ def _dialogClosed(loop, fn):
   return inner
 
 
-def pageOrDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, signalsForExit=(), timeout=None):
+def pageOrDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, timeout=None):
   loop = QEventLoop()
-  for signal in signalsForExit:
-    signal.connect(lambda *args, **kwargs: loop.exit())
   mainLayout = QVBoxLayout()
   if title is not None and not dialog:
     mainLayout.addWidget(apply_style(QLabel(title), font=TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -82,9 +80,9 @@ def pageOrDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, s
       assert len(args) == 3
       cb, exitLoop, enabledSignal = args
     button = QPushButton(text)
-    if enabledSignal:
+    if enabledSignal is not None:
       button.setEnabled(False)
-      enabledSignal.connect(lambda enabled: button.setEnabled(enabled))
+      enabledSignal.connect(lambda enabled, btn=button: btn.setEnabled(enabled))
     if exitLoop:
       button.clicked.connect(lambda *args, cb=cb: callback(cb))
     else:
@@ -215,12 +213,19 @@ class SliderWithSpinbox(QWidget):
     spinbox.valueChanged.connect(spinboxValueChanged)
     slider.valueChanged.connect(lambda: spinbox.setValue(slider.value()))
 
+    layout.setContentsMargins(0, 0, 0, 0)
     self.setLayout(layout)
 
     self.value = spinbox.value
+    self.minimum = spinbox.minimum
+    self.maximum = spinbox.maximum
+    self.setValue = lambda value: spinbox.setValue(value) or slider.setValue(value)
     self.setMinimum = lambda min_: spinbox.setMinimum(min_) or slider.setMinimum(min_) or minLabel.setText(str(int(min_)))
     self.setMaximum = lambda max_: spinbox.setMaximum(max_) or slider.setMaximum(max_) or maxLabel.setText(str(int(max_)))
     self.setRange = lambda min_, max_: spinbox.setRange(min_, max_) or slider.setRange(min_, max_)
+    self.isSliderDown = slider.isSliderDown
+    self.sliderWidth = slider.width
+    self.setPosition = slider.setSliderPosition
 
 
 def _chooseFrameLayout(cap, spinboxValues):
@@ -324,9 +329,9 @@ def getPoint(frame, title, extraButtons=()):
   layout = QVBoxLayout()
 
   video = _InteractiveLabelPoint(width, height)
-  extraButtons = tuple((text, lambda: cb(video), exitLoop, video.pointSelected) for text, cb, exitLoop in extraButtons)
+  extraButtons = tuple((text, lambda: cb(video), exitLoop) for text, cb, exitLoop in extraButtons)
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
-  pageOrDialog(layout, title=title, buttons=(("Next", None),) + extraButtons, labelInfo=(frame, video))
+  pageOrDialog(layout, title=title, buttons=(("Next", None, True, video.pointSelected),) + extraButtons, labelInfo=(frame, video))
 
   return video.getCoordinates()
 

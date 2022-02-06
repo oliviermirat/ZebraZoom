@@ -9,7 +9,7 @@ import sys
 import os
 from scipy import interpolate
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
-from zebrazoom.code.adjustHyperparameters import initializeAdjustHyperparametersWindows, adjustHyperparameters
+from zebrazoom.code.adjustHyperparameters import adjustHyperparameters
 import tkinter as tk
 from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 
@@ -155,26 +155,17 @@ def findRectangularWells(frame, videoPath, hyperparameters, rectangularWellsArea
           frame2 = cv2.rectangle(frame2, topLeft, bottomRight, color, rectangleTickness)
     
     hyperparametersListNames = ["rectangleWellAreaImageThreshold", "rectangleWellErodeDilateKernelSize","findRectangleWellArea", "rectangularWellsInvertBlackWhite"]
-    if QApplication.instance() is None:
-      marginX = 30
-      organizationTab = [\
-      [470,  marginX + 5,  350,  0, 255,   "Adjust this threshold in order to get the inside of the wells as white as possible and the well's borders as black as possible."],
-      [1,    marginX + 71, 350,  0, 75,    "Increase the value of this parameter if some sections of the well's borders are not black (if there are some 'holes' in the borders)."],
-      [470,  marginX + 71, 350,  0, 50000, "Only change the value of this parameter as a last resort (and change it 'slowly' if you do). This parameter represents the mean area of the wells to detect."],
-      [1,   marginX + 137, 350,  0, 1,     "Put this value to 1 if and only if the inside of your wells are darker than the well's borders in your video."],
-      [470, marginX + 137,  -1, -1, -1,    "Click here once all wells are detected on the image on the right."]]
-    else:
-      organizationTab = [
-      [0, 255, "Adjust this threshold in order to get the inside of the wells as white as possible and the well's borders as black as possible."],
-      [0, 75, "Increase the value of this parameter if some sections of the well's borders are not black (if there are some 'holes' in the borders)."],
-      [0, 50000, "Only change the value of this parameter as a last resort (and change it 'slowly' if you do). This parameter represents the mean area of the wells to detect."],
-      [0, 1, "Put this value to 1 if and only if the inside of your wells are darker than the well's borders in your video."],]
+    organizationTab = [
+    [0, 255, "Adjust this threshold in order to get the inside of the wells as white as possible and the well's borders as black as possible."],
+    [0, 75, "Increase the value of this parameter if some sections of the well's borders are not black (if there are some 'holes' in the borders)."],
+    [0, 50000, "Only change the value of this parameter as a last resort (and change it 'slowly' if you do). This parameter represents the mean area of the wells to detect."],
+    [0, 1, "Put this value to 1 if and only if the inside of your wells are darker than the well's borders in your video."],]
     WINDOW_NAME = "Rectangular Wells Detection: Adjust parameters until you get the right number of wells detected (on the right side)"
     frameToShow = np.concatenate((gray, frame2), axis=1)
     
     cv2.putText(frameToShow, "Wells detected:" + str(len(wellPositions)), (int(len(frameToShow[0])/2), 80), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 255), 8)
   
-    [l, hyperparameters, organizationTab] = adjustHyperparameters(0, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab)
+    l, widgets = adjustHyperparameters(0, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab, None)
     
     for param in hyperparametersListNames:
       hyperparameters[param] = int(hyperparameters[param])
@@ -488,7 +479,6 @@ def findWells(videoPath, hyperparameters):
   if hyperparameters["wellsAreRectangles"]:
     if hyperparameters["adjustRectangularWellsDetect"]:
       rectangularWellsArea = findRectangularWellsArea(frame, videoPath, hyperparameters)
-      initializeAdjustHyperparametersWindows("Rectangular Wells Detection: Adjust parameters until you get the right number of wells detected (on the right side)")
     else:
       rectangularWellsArea = hyperparameters["findRectangleWellArea"]
       

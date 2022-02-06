@@ -300,6 +300,7 @@ def getImageForMultipleAnimalGUI(l, nx, ny, max_l, videoToCreateConfigFileFor, b
 
 def _createWidget(layout, values, key, minn, maxx, name, updateFrame):
   sublayout = QVBoxLayout()
+  sublayout.setSpacing(0)
 
   sublayout.addWidget(QLabel(name), alignment=Qt.AlignmentFlag.AlignCenter)
   slider = util.SliderWithSpinbox(values[key], minn, maxx)
@@ -377,6 +378,7 @@ def identifyMultipleHead(self, controller, nbanimals):
   label.setMinimumSize(1, 1)
   layout = QGridLayout()
   layout.addWidget(label, 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+  layout.setRowStretch(0, 1)
 
   def updateFrame():
     frame, maxAreaBlobs = getImageForMultipleAnimalGUI(frameNum["frameNum"], nx, ny, max_l, self.videoToCreateConfigFileFor, background, wellPositions, hyperparameters)
