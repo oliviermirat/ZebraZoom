@@ -299,25 +299,20 @@ def getImageForMultipleAnimalGUI(l, nx, ny, max_l, videoToCreateConfigFileFor, b
   return [frame, maxToReturn]
 
 def _createWidget(layout, values, key, minn, maxx, name, updateFrame):
-  sublayout = QVBoxLayout()
-  sublayout.setSpacing(0)
-
-  sublayout.addWidget(QLabel(name), alignment=Qt.AlignmentFlag.AlignCenter)
-  slider = util.SliderWithSpinbox(values[key], minn, maxx)
+  slider = util.SliderWithSpinbox(values[key], minn, maxx, name=name)
 
   def valueChanged():
     values[key] = slider.value()
     updateFrame()
   slider.valueChanged.connect(valueChanged)
-  sublayout.addWidget(slider, alignment=Qt.AlignmentFlag.AlignCenter)
 
   if name != "Frame number":
     elements = layout.count() - 2  # frame, frameSlider
     row = elements // 2 + 2
     col = elements % 2
-    layout.addLayout(sublayout, row, col, Qt.AlignmentFlag.AlignLeft if col else Qt.AlignmentFlag.AlignRight)
+    layout.addWidget(slider, row, col, Qt.AlignmentFlag.AlignLeft if col else Qt.AlignmentFlag.AlignRight)
   else:
-    layout.addLayout(sublayout, 1, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(slider, 1, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
   return slider
 

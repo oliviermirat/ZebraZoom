@@ -177,7 +177,7 @@ def setPixmapFromCv(img, label, preferredSize=None):
 class SliderWithSpinbox(QWidget):
   valueChanged = pyqtSignal(int)
 
-  def __init__(self, value, minimum, maximum):
+  def __init__(self, value, minimum, maximum, name=None):
     super().__init__()
     minimum = int(minimum)
     maximum = int(maximum)
@@ -186,25 +186,27 @@ class SliderWithSpinbox(QWidget):
     layout.setRowStretch(0, 1)
     layout.setColumnStretch(0, 1)
     layout.setRowStretch(3, 1)
-    layout.setColumnStretch(4, 1)
+    layout.setColumnStretch(5, 1)
     layout.setVerticalSpacing(0)
 
     minLabel = QLabel(str(minimum))
     layout.addWidget(minLabel, 1, 1, Qt.AlignmentFlag.AlignLeft)
+    if name is not None:
+      layout.addWidget(QLabel(name), 1, 2, Qt.AlignmentFlag.AlignCenter)
     maxLabel = QLabel(str(maximum))
-    layout.addWidget(maxLabel, 1, 2, Qt.AlignmentFlag.AlignRight)
+    layout.addWidget(maxLabel, 1, 3, Qt.AlignmentFlag.AlignRight)
     slider = QSlider(Qt.Orientation.Horizontal)
     slider.setMinimumWidth(350)
     slider.setRange(minimum, maximum)
     slider.setValue(value)
-    layout.addWidget(slider, 2, 1, 1, 2)
+    layout.addWidget(slider, 2, 1, 1, 3)
 
     spinbox = QSpinBox()
     spinbox.setStyleSheet(SPINBOX_STYLESHEET)
     spinbox.setMinimumWidth(70)
     spinbox.setRange(minimum, maximum)
     spinbox.setValue(value)
-    layout.addWidget(spinbox, 2, 3)
+    layout.addWidget(spinbox, 2, 4)
 
     def spinboxValueChanged():
       value = spinbox.value()
@@ -233,9 +235,9 @@ def _chooseFrameLayout(cap, spinboxValues):
 
   video = QLabel()
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
-  layout.addWidget(QLabel("Frame:"), alignment=Qt.AlignmentFlag.AlignCenter)
+  layout.setStretch(0, 1)
 
-  sliderWithSpinbox = SliderWithSpinbox(*spinboxValues)
+  sliderWithSpinbox = SliderWithSpinbox(*spinboxValues, name="Frame")
 
   def valueChanged():
     value = sliderWithSpinbox.value()

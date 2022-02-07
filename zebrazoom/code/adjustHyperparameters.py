@@ -14,11 +14,7 @@ MAX_INT32 = 2 ** 31 - 1
 
 def _createWidget(layout, status, values, info, name, widgets):
   minn, maxx, hint = info
-  sublayout = QVBoxLayout()
-  sublayout.setSpacing(0)
-
-  sublayout.addWidget(QLabel(name), alignment=Qt.AlignmentFlag.AlignCenter)
-  slider = util.SliderWithSpinbox(values[name], minn, maxx)
+  slider = util.SliderWithSpinbox(values[name], minn, maxx, name=name)
 
   def showHint(fn):
     def inner(evt):
@@ -38,20 +34,19 @@ def _createWidget(layout, status, values, info, name, widgets):
     values[name] = slider.value()
     widgets['loop'].exit()
   slider.valueChanged.connect(valueChanged)
-  sublayout.addWidget(slider, alignment=Qt.AlignmentFlag.AlignCenter)
 
   if name != "Frame number":
     elements = layout.count() - 3  # frame, status, frameSlider
     row = elements // 2 + 3
     col = elements % 2
     if len(values) == 1:
-      layout.addLayout(sublayout, row, col, 1, 2, Qt.AlignmentFlag.AlignCenter)
+      layout.addWidget(slider, row, col, 1, 2, Qt.AlignmentFlag.AlignCenter)
     else:
-      layout.addLayout(sublayout, row, col, Qt.AlignmentFlag.AlignLeft if col else Qt.AlignmentFlag.AlignRight)
+      layout.addWidget(slider, row, col, Qt.AlignmentFlag.AlignLeft if col else Qt.AlignmentFlag.AlignRight)
     widgets[name] = slider
   else:
     widgets['frameSlider'] = slider
-    layout.addLayout(sublayout, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(slider, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
 
 def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, title, organizationTab, widgets):
