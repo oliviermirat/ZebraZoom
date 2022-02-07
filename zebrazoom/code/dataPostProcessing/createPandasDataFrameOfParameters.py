@@ -11,7 +11,7 @@ def createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension
     
   excelFileDataFrame = pd.DataFrame(data=[["defaultZZoutputFolder", videoName, hyperparameters["videoFPS"], hyperparameters["videoPixelSize"], str([1 for i in range(nbWells)]), str([1 for i in range(nbWells)]), str([1 for i in range(nbWells)])]], columns=['path', 'trial_id', 'fq', 'pixelsize', 'condition', 'genotype', 'include'])
   
-  if hyperparameters["frameStepForDistanceCalculation"]:
+  if hyperparameters["frameStepForDistanceCalculation"] and hyperparameters["frameStepForDistanceCalculation"] != -1:
     frameStepForDistanceCalculation = int(hyperparameters["frameStepForDistanceCalculation"])
   else:
     frameStepForDistanceCalculation = int(hyperparameters["videoFPS"] / 100) * 4 if int(hyperparameters["videoFPS"]) >= 100 else 2
@@ -35,6 +35,7 @@ def createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension
     'minNbBendForBoutDetect'            : -1,
     'keepSpeedDistDurWhenLowNbBends'    : 1,
     'defaultZZoutputFolderPath'         : cur_dir_path,
+    'getTailAngleSignMultNormalized'    : 1,
     'computeTailAngleParamForCluster'   : True,
     'computeMassCenterParamForCluster'  : True,
     'frameStepForDistanceCalculation'   : str(frameStepForDistanceCalculation),
@@ -42,6 +43,6 @@ def createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension
     'saveRawDataInAllBoutsSuperStructure'       : 1,
     'saveAllBoutsSuperStructuresInMatlabFormat' : 0
   }
-
-  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, excelFileDataFrame)
+  
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, excelFileDataFrame, 1, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
   

@@ -1,6 +1,7 @@
 from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
 from zebrazoom.dataAnalysis.dataanalysis.populationComparaison import populationComparaison
 from zebrazoom.dataAnalysis.postProcessingFromCommandLine.postProcessingFromCommandLine import calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold
+from zebrazoom.dataAnalysis.datasetcreation.generatePklDataFileForVideo import generatePklDataFileForVideo
 import os
 from pathlib import Path
 
@@ -51,7 +52,9 @@ def kinematicParametersAnalysis(sys, addMedianPerGenotype=0):
     'saveRawDataInAllBoutsSuperStructure'       : saveRawDataInAllBoutsSuperStructure,
     'saveAllBoutsSuperStructuresInMatlabFormat' : saveAllBoutsSuperStructuresInMatlabFormat
   }
-
+  
+  generatePklDataFileForVideo(os.path.join(os.path.split(pathToExcelFile)[0], nameWithExt), os.path.join(cur_dir_path, 'ZZoutput'), frameStepForDistanceCalculation)
+  
   [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, '', forcePandasDfRecreation, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst'])
   
   # Mixing up all the bouts

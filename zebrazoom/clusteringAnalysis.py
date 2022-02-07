@@ -1,5 +1,6 @@
 from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
 from zebrazoom.dataAnalysis.dataanalysis.applyClustering import applyClustering
+from zebrazoom.dataAnalysis.datasetcreation.generatePklDataFileForVideo import generatePklDataFileForVideo
 
 import os
 from pathlib import Path
@@ -39,6 +40,8 @@ def clusteringAnalysis(sys):
   
   if int(freelySwimming):
     dataframeOptions['computeMassCenterParamForCluster'] = True
+  
+  generatePklDataFileForVideo(os.path.join(os.path.split(pathToExcelFile)[0], nameWithExt), os.path.join(cur_dir_path, 'ZZoutput'), frameStepForDistanceCalculation)
   
   [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", 0, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
   

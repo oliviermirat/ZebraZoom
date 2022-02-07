@@ -128,7 +128,7 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
   # if modelUsedForClustering == 'KMeans':
   scaler = StandardScaler()
   allInstaValues = scaler.fit_transform(allInstaValues)
-
+  
   allInstaValuesLenBef = len(allInstaValues)
   try:
     dfParam = dfParam.drop([idx for idx, val in enumerate(~np.isnan(allInstaValues).any(axis=1)) if not(val)])
@@ -143,6 +143,9 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
     print(allInstaValuesLenBef - allInstaValuesLenAft, " bouts (out of ", allInstaValuesLenBef, " ) were deleted because they contained NaN values")
   else:
     print("all bouts were kept (no nan values)")
+  
+  if 'level_0' in dfParam.columns:
+    dfParam = dfParam.drop(['level_0'], axis=1)
   
   dfParam = dfParam.reset_index()
   

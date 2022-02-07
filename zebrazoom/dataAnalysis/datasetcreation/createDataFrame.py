@@ -55,6 +55,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     excelFile = excelFileDataFrame
   else:
     print("You must provide either an excel file or a video name to create a dataframe of parameters.")
+  
   if nbFramesTakenIntoAccount == -1:
     boutNbFrames = []
     boutTakenIntoAcccount = 0
@@ -154,7 +155,6 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     include   = excelFile.loc[videoId, 'include']
     include = eval('[' + include + ']')
     include = include[0]
-    
     if (not(os.path.exists(os.path.join(path, trial_id + '.pkl'))) or forcePandasDfRecreation):
       with open(os.path.join(path, 'results_' + trial_id + '.txt')) as f:
         supstruct = json.load(f)
@@ -287,13 +287,19 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
         # Adding dataframe created for the current frame to the dataframe for the whole set of videos
         dfParam = pd.concat([dfParam, dfParamForWell])
   
-  # Saving the dataframe
+  # Saving the dataframe  
+  if 'level_0' in dfParam.columns:
+    dfParam = dfParam.drop(['level_0'], axis=1)
   dfParam = dfParam.reset_index()
   
   # Saving dataframe for the whole set of videos as a pickle file
   outfile = open(os.path.join(resFolder, nameOfFile + '.pkl'), 'wb')
   pickle.dump(dfParam,outfile)
   outfile.close()
+  
+  file1 = open(os.path.join(resFolder, 'frameStepForDistanceCalculationUsed.json'), "w")
+  file1.write(str(frameStepForDistanceCalculation))
+  file1.close()
   
   # Saving dataframe for the whole set of videos as a matlab file
   if saveAllBoutsSuperStructuresInMatlabFormat:

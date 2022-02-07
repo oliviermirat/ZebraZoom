@@ -14,11 +14,14 @@ import json
 import os
 import subprocess
 import sys
+import pandas as pd
 globalVariables = getGlobalVariables()
 
 from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
 from zebrazoom.dataAnalysis.dataanalysis.populationComparaison import populationComparaison
 from zebrazoom.dataAnalysis.dataanalysis.applyClustering import applyClustering
+
+from zebrazoom.dataAnalysis.datasetcreation.generatePklDataFileForVideo import generatePklDataFileForVideo
 
 def openExperimentOrganizationExcelFolder(self, homeDirectory):
   dir_path = os.path.join(homeDirectory,'dataAnalysis/experimentOrganizationExcel/')
@@ -94,9 +97,11 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
     'saveAllBoutsSuperStructuresInMatlabFormat' : saveRawData,
     'frameStepForDistanceCalculation'           : frameStepForDistanceCalculation
   }
-
+  
+  generatePklDataFileForVideo(os.path.join(self.experimentOrganizationExcelFileAndFolder, self.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation)
+  
   [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", 0, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
-
+  
   # Plotting for the different conditions
   nameOfFile = dataframeOptions['nameOfFile']
   resFolder  = dataframeOptions['resFolder']
@@ -160,6 +165,8 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
   }
   if int(FreelySwimming):
     dataframeOptions['computeMassCenterParamForCluster'] = True
+    
+  generatePklDataFileForVideo(os.path.join(self.experimentOrganizationExcelFileAndFolder, self.experimentOrganizationExcel), ZZoutputLocation, -1) # -1 is frameStepForDistanceCalculation here, need to improve this in the future
     
   [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", 0, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
   # Applying the clustering on this dataframe
