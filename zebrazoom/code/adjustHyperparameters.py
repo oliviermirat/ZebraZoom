@@ -103,6 +103,7 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
   else:
     for name in hyperparametersListNames:
       slider = widgets[name]
+      slider.setValue(hyperparameters[name])
       minn = slider.minimum()
       maxx = slider.maximum()
       if name == "frameGapComparision" and maxx == hyperparameters["lastFrame"] - hyperparameters["firstFrame"] - 1:
