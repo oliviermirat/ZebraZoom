@@ -16,7 +16,8 @@ def generatePklDataFileForVideo(excelFileName, ZZoutputLocation, frameStepForDis
     else:
       frameStepForDistanceCalculationUsed = frameStepForDistanceCalculation
     # Generates the .pkl data file if it doesn't already exist OR if a frameStepForDistanceCalculationUsed different than before is requested
-    if not(os.path.exists(os.path.join(os.path.join(ZZoutputLocation if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder" else excelFile.loc[videoId, 'path'], excelFile.loc[videoId, 'trial_id']), excelFile.loc[videoId, 'trial_id'] + '.pkl'))) or frameStepForDistanceCalculation != frameStepForDistanceCalculationUsed:
+    
+    if not(os.path.exists(os.path.join(os.path.join(ZZoutputLocation if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder" else excelFile.loc[videoId, 'path'], excelFile.loc[videoId, 'trial_id']), excelFile.loc[videoId, 'trial_id'] + '.pkl'))) or int(frameStepForDistanceCalculation) != int(frameStepForDistanceCalculationUsed):
       videoName      = excelFile.loc[videoId, 'trial_id']
       videoExtension = os.path.splitext(os.path.split(excelFileName)[1])[1]
       hyperparameters = {}

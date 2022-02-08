@@ -60,8 +60,11 @@ def chooseExperimentOrganizationExcel(self, controller):
   controller.show_frame("ChooseDataAnalysisMethod")
 
 
-def populationComparison(self, controller, TailTrackingParameters=0, saveInMatlabFormat=0, saveRawData=0, minNbBendForBoutDetect=3, discard=0, keep=1, frameStepForDistanceCalculation=4):
-
+def populationComparison(self, controller, TailTrackingParameters=0, saveInMatlabFormat=0, saveRawData=0, minNbBendForBoutDetect=3, discard=0, keep=1, frameStepForDistanceCalculation='4'):
+  
+  if len(frameStepForDistanceCalculation) == 0:
+    frameStepForDistanceCalculation = '4'
+  
   if discard == 0 and keep == 0:
     keep = 1
   
@@ -119,7 +122,10 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
   controller.show_frame("AnalysisOutputFolderPopulation")
 
 
-def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering=0, removeOutliers=False):
+def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering=0, removeOutliers=False, frameStepForDistanceCalculation='4'):
+
+  if len(frameStepForDistanceCalculation) == 0:
+    frameStepForDistanceCalculation = '4'
   
   if modelUsedForClustering == 0:
     modelUsedForClustering = 'KMeans'
@@ -166,7 +172,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
   if int(FreelySwimming):
     dataframeOptions['computeMassCenterParamForCluster'] = True
     
-  generatePklDataFileForVideo(os.path.join(self.experimentOrganizationExcelFileAndFolder, self.experimentOrganizationExcel), ZZoutputLocation, -1) # -1 is frameStepForDistanceCalculation here, need to improve this in the future
+  generatePklDataFileForVideo(os.path.join(self.experimentOrganizationExcelFileAndFolder, self.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation)
     
   [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", 0, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
   # Applying the clustering on this dataframe

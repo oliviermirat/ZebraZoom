@@ -161,7 +161,12 @@ class BoutClustering(tk.Frame):
     Checkbutton(self, text="Remove outliers before clustering", variable=removeOutliers).pack()
     tk.Label(self, text="")
     
-    tk.Button(self, text="Launch Analysis", bg="light yellow", command=lambda: controller.boutClustering(controller, nbClustersToFind.get(), FreelySwimming.get(), HeadEmbeded.get(), minNbBendForBoutDetect.get(), nbVideosToSave.get(), modelUsedForClustering.get(), removeOutliers.get())).pack()
+    tk.Label(self, text="Number of frames between each frame used for distance calculation (to avoid noise due to close-by subsequent points) (default value is 4):", font=("Helvetica", 10)).pack(side="top", fill="x")
+    frameStepForDistanceCalculation = tk.Entry(self)
+    frameStepForDistanceCalculation.pack()
+    tk.Label(self, text="").pack()
+    
+    tk.Button(self, text="Launch Analysis", bg="light yellow", command=lambda: controller.boutClustering(controller, nbClustersToFind.get(), FreelySwimming.get(), HeadEmbeded.get(), minNbBendForBoutDetect.get(), nbVideosToSave.get(), modelUsedForClustering.get(), removeOutliers.get(), frameStepForDistanceCalculation.get())).pack()
     
     tk.Button(self, text="Go to the start page", bg="light cyan", command=lambda: controller.show_frame("StartPage")).pack()
 
