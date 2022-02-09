@@ -280,11 +280,21 @@ def chooseEnd(app, videoPath, title, chooseFrameBtnText):
 class _InteractiveLabelPoint(QLabel):
   pointSelected = pyqtSignal(bool)
 
-  def __init__(self, width, height):
+  def __init__(self, width, height, selectingRegion):
     super().__init__()
     self._width = width
     self._height = height
     self._point = None
+    self._selectingRegion = selectingRegion
+    self._currentPosition = None
+    self._tooltipShown = False
+    if self._selectingRegion:
+      self.setMouseTracking(True)
+
+  def mouseMoveEvent(self, evt):
+    if self._selectingRegion:
+      self._currentPosition = evt.pos()
+      self.update()
 
   def mousePressEvent(self, evt):
     self._point = evt.pos()
@@ -292,24 +302,32 @@ class _InteractiveLabelPoint(QLabel):
     self.pointSelected.emit(True)
 
   def mouseReleaseEvent(self, evt):
-    if self._point is not None:
-      QToolTip.showText(self.mapToGlobal(self._point), "If you aren't satisfied with the selection, click again.", msecShowTime=2000)
+    if self._point is not None and not self._tooltipShown:
+      QToolTip.showText(self.mapToGlobal(self._point), "If you aren't satisfied with the selection, click again.", msecShowTime=5000)
+      self._tooltipShown = True
 
   def enterEvent(self, evt):
     QApplication.setOverrideCursor(Qt.CursorShape.CrossCursor)
 
   def leaveEvent(self, evt):
     QApplication.restoreOverrideCursor()
+    self._currentPosition = None
+    self.update()
 
   def paintEvent(self, evt):
     super().paintEvent(evt)
-    if self._point is None:
+    if self._currentPosition is None and self._point is None:
       return
     qp = QPainter()
     qp.begin(self)
-    qp.setBrush(QColor(255, 0, 0))
-    qp.setPen(Qt.PenStyle.NoPen)
-    qp.drawEllipse(self._point, 2, 2)
+    if self._currentPosition is not None:
+      qp.setPen(QColor(255, 0, 0))
+      qp.drawLine(0, self._currentPosition.y(), self.width(), self._currentPosition.y())
+      qp.drawLine(self._currentPosition.x(), 0, self._currentPosition.x(), self.height())
+    if self._point is not None:
+      qp.setBrush(QColor(255, 0, 0))
+      qp.setPen(Qt.PenStyle.NoPen)
+      qp.drawEllipse(self._point, 2, 2)
     qp.end()
 
   def resizeEvent(self, evt):
@@ -325,12 +343,12 @@ class _InteractiveLabelPoint(QLabel):
     return point.x(), point.y()
 
 
-def getPoint(frame, title, extraButtons=()):
+def getPoint(frame, title, extraButtons=(), selectingRegion=False):
   height, width = frame.shape[:2]
 
   layout = QVBoxLayout()
 
-  video = _InteractiveLabelPoint(width, height)
+  video = _InteractiveLabelPoint(width, height, selectingRegion)
   extraButtons = tuple((text, lambda: cb(video), exitLoop) for text, cb, exitLoop in extraButtons)
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
   pageOrDialog(layout, title=title, buttons=(("Next", None, True, video.pointSelected),) + extraButtons, labelInfo=(frame, video))
@@ -346,16 +364,17 @@ class _InteractiveLabelRect(QLabel):
     self._width = width
     self._height = height
     self._topLeft = None
-    self._tmpBottomRight = None
+    self._currentPosition = None
     self._bottomRight = None
     self._size = None
+    self._tooltipShown = False
     self.setMouseTracking(True)
 
   def mousePressEvent(self, evt):
     if self._topLeft is None or self._bottomRight is not None:
       self._topLeft = evt.pos()
       self._bottomRight = None
-      self._tmpBottomRight = None
+      self._currentPosition = None
       self.regionSelected.emit(False)
     else:
       self._bottomRight = evt.pos()
@@ -363,13 +382,12 @@ class _InteractiveLabelRect(QLabel):
     self.update()
 
   def mouseReleaseEvent(self, evt):
-    if self._bottomRight is not None:
-      QToolTip.showText(self.mapToGlobal(self._bottomRight), "If you aren't satisfied with the selection, click again.", msecShowTime=2000)
+    if self._bottomRight is not None and not self._tooltipShown:
+      QToolTip.showText(self.mapToGlobal(self._bottomRight), "If you aren't satisfied with the selection, click again.", msecShowTime=5000)
+      self._tooltipShown = True
 
   def mouseMoveEvent(self, evt):
-    if self._topLeft is None or self._bottomRight is not None or self._tmpBottomRight == evt.pos():
-      return
-    self._tmpBottomRight = evt.pos()
+    self._currentPosition = evt.pos()
     self.update()
 
   def enterEvent(self, evt):
@@ -377,25 +395,31 @@ class _InteractiveLabelRect(QLabel):
 
   def leaveEvent(self, evt):
     QApplication.restoreOverrideCursor()
-    self._tmpBottomRight = None
+    self._currentPosition = None
     self.update()
 
   def paintEvent(self, evt):
     super().paintEvent(evt)
-    if self._topLeft is None:
+    if self._currentPosition is None and self._topLeft is None:
       return
     qp = QPainter()
     qp.begin(self)
-    qp.setPen(QColor(0, 0, 255))
-    x = self._topLeft.x()
-    y = self._topLeft.y()
-    bottomRight = self._bottomRight or self._tmpBottomRight
-    if bottomRight is None:
-      qp.drawPoint(x, y)
-    else:
-      width = bottomRight.x() - x
-      height = bottomRight.y() - y
-      qp.drawRect(x, y, width, height)
+    if self._currentPosition is not None and \
+        (self._topLeft is None and self._bottomRight is None or self._bottomRight is not None):
+      qp.setPen(QColor(255, 0, 0))
+      qp.drawLine(0, self._currentPosition.y(), self.width(), self._currentPosition.y())
+      qp.drawLine(self._currentPosition.x(), 0, self._currentPosition.x(), self.height())
+    if self._topLeft is not None:
+      qp.setPen(QColor(0, 0, 255))
+      x = self._topLeft.x()
+      y = self._topLeft.y()
+      bottomRight = self._bottomRight or self._currentPosition
+      if bottomRight is None:
+        qp.drawPoint(x, y)
+      else:
+        width = bottomRight.x() - x
+        height = bottomRight.y() - y
+        qp.drawRect(x, y, width, height)
     qp.end()
 
   def resizeEvent(self, evt):

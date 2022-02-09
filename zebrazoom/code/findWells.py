@@ -241,7 +241,7 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
 
   accepted = False
   while not accepted:
-    posCoord = {pos: np.array(list(util.getPoint(frame, "Click on the " + pos + " of the group of wells")))
+    posCoord = {pos: np.array(list(util.getPoint(frame, "Click on the " + pos + " of the group of wells", selectingRegion=True)))
                 for pos in ("top left", "top right", "bottom left")}
 
     nbWellsPerRows = hyperparameters["nbWellsPerRows"]
