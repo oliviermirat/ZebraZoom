@@ -562,17 +562,14 @@ class FinishConfig(QWidget):
     self.controller = controller
 
     layout = QVBoxLayout()
-    layout.addWidget(util.apply_style(QLabel("Choose a name for the config file you want to create. Don't put any file extension here. For example, you could type: myconfig", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    configFileNameToSave = QLineEdit(controller.window)
-    layout.addWidget(configFileNameToSave, alignment=Qt.AlignmentFlag.AlignCenter)
 
     if (globalVariables["mac"] or globalVariables["lin"]):
       saveBtn = util.apply_style(QPushButton("Save Config File (this will also close this window, restart it afterwards)", self), background_color=util.LIGHT_YELLOW)
-      saveBtn.clicked.connect(lambda: controller.finishConfig(controller, configFileNameToSave.text()))
+      saveBtn.clicked.connect(lambda: controller.finishConfig())
       layout.addWidget(saveBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     else:
       saveBtn = util.apply_style(QPushButton("Save Config File", self), background_color=util.LIGHT_YELLOW)
-      saveBtn.clicked.connect(lambda: controller.finishConfig(controller, configFileNameToSave.text()))
+      saveBtn.clicked.connect(lambda: controller.finishConfig())
       layout.addWidget(saveBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     self.setLayout(layout)

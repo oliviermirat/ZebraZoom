@@ -230,8 +230,8 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
     frameSlider.setValue(frameSlider.value() + 1)
     stopTimer = True
   timer.timeout.connect(nextFrame)
-  timer.start()
 
   startFrame = getFrame()
+  timer.start()
   util.pageOrDialog(layout, title="Video", dialog=True, labelInfo=(startFrame, video))
   timer.stop()

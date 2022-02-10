@@ -494,12 +494,7 @@ def goToAdvanceSettings(self, controller, yes, no):
     self.configFile["noBoutsDetection"] = 0
     self.calculateBackgroundFreelySwim(controller, 0)
 
-def finishConfig(self, controller, configFileNameToSave):
-
-  cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-  cur_dir_path = Path(cur_dir_path)
-  cur_dir_path = cur_dir_path.parent.parent
-  reference = os.path.join(cur_dir_path, os.path.join('configuration', configFileNameToSave + '.json'))
+def finishConfig(self, controller, reference):
 
   # Ideally would like to remove these four lines below, once the problem with wrong 'firstFrame' and 'lastFrame' being saved in the configuration file is solved
   if "lastFrame" in self.configFile:
