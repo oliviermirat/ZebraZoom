@@ -17,6 +17,7 @@ class AdujstParamInsideAlgo(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
+    self.preferredSize = (1152, 768)
 
     layout = QVBoxLayout()
     layout.addWidget(apply_style(QLabel("Advanced Parameter adjustment", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)

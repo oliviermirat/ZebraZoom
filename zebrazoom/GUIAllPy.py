@@ -3,7 +3,7 @@ import os
 import sys
 import traceback
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QWidget, QDialog, QFileDialog, QApplication, QLabel, QMainWindow, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem
 
@@ -84,7 +84,16 @@ class ZebraZoomApp(QApplication):
         self.frames = {}
         for idx, F in enumerate((StartPage, VideoToAnalyze, ConfigFilePromp, Patience, ZZoutro, ZZoutroSbatch, SeveralVideos, FolderToAnalyze, EnhanceZZOutput, TailExtremityHE, FolderMultipleROIInitialSelect, ResultsVisualization, ViewParameters, Error, ChooseVideoToCreateConfigFileFor, OptimizeConfigFile, ChooseGeneralExperiment, WellOrganisation, FreelySwimmingExperiment, NbRegionsOfInterest, HomegeneousWellsLayout, CircularOrRectangularWells, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings, HeadEmbeded, AdujstParamInsideAlgo, AdujstParamInsideAlgoFreelySwim, AdujstParamInsideAlgoFreelySwimAutomaticParameters, AdujstBoutDetectionOnly, CreateExperimentOrganizationExcel, ChooseExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderPopulation, AnalysisOutputFolderClustering, ChooseVideoToTroubleshootSplitVideo, VideoToTroubleshootSplitVideo)):
             self.frames[F.__name__] = idx
-            layout.addWidget(F(self))
+            page = F(self)
+            if hasattr(page, 'preferredSize'):
+                page.sizeHint = lambda *args, page=page: QSize(*page.preferredSize)
+                wrapperWidget = QWidget(self.window)
+                wrapperLayout = QVBoxLayout()
+                wrapperLayout.addWidget(page, alignment=Qt.AlignmentFlag.AlignCenter)
+                wrapperWidget.setLayout(wrapperLayout)
+                layout.addWidget(wrapperWidget)
+            else:
+                layout.addWidget(page)
         central_widget = QWidget(self.window)
         central_widget.setLayout(layout)
         self.window.setWindowTitle('ZebraZoom')

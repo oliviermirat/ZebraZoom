@@ -20,6 +20,7 @@ class ChooseVideoToTroubleshootSplitVideo(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
+    self.preferredSize = (750, 500)
 
     layout = QVBoxLayout()
     layout.addWidget(apply_style(QLabel("Troubleshooting.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)

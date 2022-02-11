@@ -215,7 +215,7 @@ class SliderWithSpinbox(QWidget):
     spinbox.valueChanged.connect(spinboxValueChanged)
     slider.valueChanged.connect(lambda: spinbox.setValue(slider.value()))
 
-    layout.setContentsMargins(0, 0, 0, 0)
+    layout.setContentsMargins(20, 5, 20, 5)
     self.setLayout(layout)
 
     self.value = spinbox.value

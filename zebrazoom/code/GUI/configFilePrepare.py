@@ -15,6 +15,7 @@ class ChooseVideoToCreateConfigFileFor(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
+    self.preferredSize = (350, 350)
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -44,6 +45,7 @@ class OptimizeConfigFile(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
+    self.preferredSize = (1152, 768)
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Optimize previously created configuration file", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -87,6 +89,7 @@ class ChooseGeneralExperiment(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
+    self.preferredSize = (1152, 768)
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -119,6 +122,7 @@ class FreelySwimmingExperiment(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
+    self.preferredSize = (750, 500)
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File for Freely Swimming Fish:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -145,6 +149,7 @@ class WellOrganisation(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
+    self.preferredSize = (1152, 768)
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -177,6 +182,7 @@ class NbRegionsOfInterest(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
+    self.preferredSize = (450, 300)
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -200,6 +206,7 @@ class HomegeneousWellsLayout(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
+    self.preferredSize = (1152, 768)
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -245,6 +252,7 @@ class CircularOrRectangularWells(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
+    self.preferredSize = (750, 500)
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -324,10 +332,12 @@ class ChooseCircularWellsRight(QWidget):
 
     self.setLayout(layout)
 
+
 class NumberOfAnimals(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
+    self.preferredSize = (750, 500)
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -363,6 +373,7 @@ class NumberOfAnimals2(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
+    self.preferredSize = (1152, 768)
 
     layout = QGridLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
@@ -448,6 +459,7 @@ class NumberOfAnimalsCenterOfMass(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
+    self.preferredSize = (1152, 768)
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -507,6 +519,7 @@ class IdentifyHeadCenter(QWidget):
 
     self.setLayout(layout)
 
+
 class IdentifyBodyExtremity(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
@@ -535,6 +548,7 @@ class GoToAdvanceSettings(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
+    self.preferredSize = (450, 300)
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)

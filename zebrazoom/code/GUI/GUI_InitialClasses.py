@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 
-from PyQt6.QtCore import Qt
+from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QCursor, QFont
 from PyQt6.QtWidgets import QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox
 
@@ -24,6 +24,7 @@ class StartPage(QWidget):
     def __init__(self, controller):
         super().__init__(controller.window)
         self.controller = controller
+        self.preferredSize = (1152, 768)
 
         layout = QGridLayout()
         # Add widgets to the layout
@@ -88,6 +89,7 @@ class SeveralVideos(QWidget):
     def __init__(self, controller):
         super().__init__(controller.window)
         self.controller = controller
+        self.preferredSize = (900, 600)
 
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Run ZebraZoom on several videos", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -135,6 +137,7 @@ class VideoToAnalyze(QWidget):
     def __init__(self, controller):
         super().__init__(controller.window)
         self.controller = controller
+        self.preferredSize = (900, 600)
 
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Choose video.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -253,6 +256,7 @@ class ConfigFilePromp(QWidget):
     def __init__(self, controller):
         super().__init__(controller.window)
         self.controller = controller
+        self.preferredSize = (300, 300)
 
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Choose configuration file.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -480,7 +484,12 @@ class ViewParameters(QWidget):
         self.canvas = FigureCanvas(f)
         layout.addWidget(self.canvas, 2, 7, 7, 1, Qt.AlignmentFlag.AlignCenter)
 
-        self.setLayout(layout)
+        centralWidget = QWidget()
+        centralWidget.sizeHint = lambda *args: QSize(1152, 768)
+        centralWidget.setLayout(layout)
+        wrapperLayout = QVBoxLayout()
+        wrapperLayout.addWidget(centralWidget, alignment=Qt.AlignmentFlag.AlignCenter)
+        self.setLayout(wrapperLayout)
 
     def setFolder(self, name):
         self.title_label.setText(name)
