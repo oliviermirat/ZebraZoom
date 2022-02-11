@@ -2,12 +2,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont
 from PyQt6.QtWidgets import QLabel, QWidget, QPushButton, QVBoxLayout, QRadioButton, QButtonGroup
 
-
-def apply_style(widget, **kwargs):
-    if (font := kwargs.pop('font', None)) is not None:
-        widget.setFont(font)
-    widget.setStyleSheet(';'.join('%s: %s' % (prop.replace('_', '-'), val)  for prop, val in kwargs.items()))
-    return widget
+import zebrazoom.code.util as util
 
 
 class HeadEmbeded(QWidget):
@@ -17,9 +12,9 @@ class HeadEmbeded(QWidget):
     self.preferredSize = (1152, 768)
 
     layout = QVBoxLayout()
-    layout.addWidget(apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(apply_style(QLabel("Choose only one of the options below:", self), font=QFont("Helvetica", 12)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Choose only one of the options below:", self), font=QFont("Helvetica", 12)), alignment=Qt.AlignmentFlag.AlignCenter)
     btnGroup1 = QButtonGroup(self)
     blackBackRadioButton = QRadioButton("Black background, white zebrafish.", self)
     btnGroup1.addButton(blackBackRadioButton)
@@ -29,7 +24,7 @@ class HeadEmbeded(QWidget):
     btnGroup1.addButton(whiteBackRadioButton)
     layout.addWidget(whiteBackRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(apply_style(QLabel("Do you want ZebraZoom to detect bouts of movement?", self), font=QFont("Helvetica", 12)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Do you want ZebraZoom to detect bouts of movement?", self), font=QFont("Helvetica", 12)), alignment=Qt.AlignmentFlag.AlignCenter)
     btnGroup2 = QButtonGroup(self)
     noBoutDetectRadioButton = QRadioButton("No. I want the tracking data for all frames of the videos.", self)
     btnGroup2.addButton(noBoutDetectRadioButton)
@@ -39,7 +34,7 @@ class HeadEmbeded(QWidget):
     btnGroup2.addButton(boutDetectionRadioButton)
     layout.addWidget(boutDetectionRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(apply_style(QLabel("Do you want to try to tweak tracking parameters further?", self), font=QFont("Helvetica", 12)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Do you want to try to tweak tracking parameters further?", self), font=QFont("Helvetica", 12)), alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(QLabel("Warning: further tweaking tracking parameters could make tracking results worse; please try without this option first.", self), alignment=Qt.AlignmentFlag.AlignCenter)
     btnGroup3 = QButtonGroup(self)
     tweakTrackingParamsYesRadioButton = QRadioButton("Yes", self)

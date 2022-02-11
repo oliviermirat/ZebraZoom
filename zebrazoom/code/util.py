@@ -31,7 +31,8 @@ QSpinBox::up-button  {
 
 
 def apply_style(widget, **kwargs):
-    if (font := kwargs.pop('font', None)) is not None:
+    font = kwargs.pop('font', None)
+    if font is not None:
         widget.setFont(font)
     widget.setStyleSheet(';'.join('%s: %s' % (prop.replace('_', '-'), val)  for prop, val in kwargs.items()))
     return widget

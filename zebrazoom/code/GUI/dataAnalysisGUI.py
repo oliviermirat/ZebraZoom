@@ -4,16 +4,7 @@ from PyQt6.QtCore import Qt
 from PyQt6.QtGui import QFont, QIntValidator
 from PyQt6.QtWidgets import QLabel, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup
 
-
-LIGHT_YELLOW = '#FFFFE0'
-LIGHT_CYAN = '#E0FFFF'
-
-
-def apply_style(widget, **kwargs):
-    if (font := kwargs.pop('font', None)) is not None:
-        widget.setFont(font)
-    widget.setStyleSheet(';'.join('%s: %s' % (prop.replace('_', '-'), val)  for prop, val in kwargs.items()))
-    return widget
+import zebrazoom.code.util as util
 
 
 class CreateExperimentOrganizationExcel(QWidget):
@@ -22,7 +13,7 @@ class CreateExperimentOrganizationExcel(QWidget):
     self.controller = controller
 
     layout = QVBoxLayout()
-    layout.addWidget(apply_style(QLabel("Prepare experiment organization excel file:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Prepare experiment organization excel file:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
     layout.addWidget(QLabel("To further analyze the outputs of ZebraZoom you must create an excel file to describe how you organized your experiments.", self), alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(QLabel("Click on the button below to open the folder where you should store that excel file.", self), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -40,18 +31,18 @@ class CreateExperimentOrganizationExcel(QWidget):
     layout.addWidget(QLabel("You have to create an excel file describing the organization of your experiment and you should place it inside the folder opened with the button above.", self), alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(QLabel("Once this is done, click on the button below:", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    okBtn = apply_style(QPushButton("Ok done!", self), background_color=LIGHT_YELLOW)
+    okBtn = util.apply_style(QPushButton("Ok done!", self), background_color=util.LIGHT_YELLOW)
     okBtn.clicked.connect(lambda: controller.show_frame("ChooseExperimentOrganizationExcel"))
     layout.addWidget(okBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     layout.addWidget(QLabel("If you already analyzed data and you just want to view previous results, click on one of the button above:", self), alignment=Qt.AlignmentFlag.AlignCenter)
-    previousParameterResultsBtn = apply_style(QPushButton("View previous kinematic parameter analysis results", self), background_color=LIGHT_YELLOW)
+    previousParameterResultsBtn = util.apply_style(QPushButton("View previous kinematic parameter analysis results", self), background_color=util.LIGHT_YELLOW)
     previousParameterResultsBtn.clicked.connect(lambda: controller.show_frame("AnalysisOutputFolderPopulation"))
     layout.addWidget(previousParameterResultsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    previousClusteringResultsBtn = apply_style(QPushButton("View previous clustering analysis results", self), background_color=LIGHT_YELLOW)
+    previousClusteringResultsBtn = util.apply_style(QPushButton("View previous clustering analysis results", self), background_color=util.LIGHT_YELLOW)
     previousClusteringResultsBtn.clicked.connect(lambda: controller.show_frame("AnalysisOutputFolderClustering"))
     layout.addWidget(previousClusteringResultsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -64,11 +55,11 @@ class ChooseExperimentOrganizationExcel(QWidget):
     self.controller = controller
 
     layout = QVBoxLayout()
-    layout.addWidget(apply_style(QLabel("Choose organization excel file:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-    selectFileBtn = apply_style(QPushButton("Select the excel file describing the organization of your experiment.", self), background_color=LIGHT_YELLOW)
+    layout.addWidget(util.apply_style(QLabel("Choose organization excel file:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    selectFileBtn = util.apply_style(QPushButton("Select the excel file describing the organization of your experiment.", self), background_color=util.LIGHT_YELLOW)
     selectFileBtn.clicked.connect(lambda: controller.chooseExperimentOrganizationExcel(controller))
     layout.addWidget(selectFileBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -81,16 +72,16 @@ class ChooseDataAnalysisMethod(QWidget):
     self.controller = controller
 
     layout = QVBoxLayout()
-    layout.addWidget(apply_style(QLabel("Choose the analysis you want to perform:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Choose the analysis you want to perform:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    compareBtn = apply_style(QPushButton("Compare populations with kinematic parameters", self), background_color=LIGHT_YELLOW)
+    compareBtn = util.apply_style(QPushButton("Compare populations with kinematic parameters", self), background_color=util.LIGHT_YELLOW)
     compareBtn.clicked.connect(lambda: controller.show_frame("PopulationComparison"))
     layout.addWidget(compareBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    clusterBtn = apply_style(QPushButton("Cluster bouts of movements  (for zebrafish only)", self), background_color=LIGHT_YELLOW)
+    clusterBtn = util.apply_style(QPushButton("Cluster bouts of movements  (for zebrafish only)", self), background_color=util.LIGHT_YELLOW)
     clusterBtn.clicked.connect(lambda: controller.show_frame("BoutClustering"))
     layout.addWidget(clusterBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -103,7 +94,7 @@ class PopulationComparison(QWidget):
     self.controller = controller
 
     layout = QVBoxLayout()
-    layout.addWidget(apply_style(QLabel("Population Comparison:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Population Comparison:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
     tailTrackingParametersCheckbox = QCheckBox("I want fish tail tracking related kinematic parameters (number of oscillation, tail beat frequency, etc..) to be calculated.", self)
     layout.addWidget(tailTrackingParametersCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -112,33 +103,33 @@ class PopulationComparison(QWidget):
     saveRawDataCheckbox = QCheckBox("Save original raw data in result structure.", self)
     layout.addWidget(saveRawDataCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(apply_style(QLabel("Number of frames between each frame used for distance calculation (to avoid noise due to close-by subsequent points) (default value is 4):", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Number of frames between each frame used for distance calculation (to avoid noise due to close-by subsequent points) (default value is 4):", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     frameStepForDistanceCalculation = QLineEdit(controller.window)
     frameStepForDistanceCalculation.setValidator(QIntValidator(frameStepForDistanceCalculation))
     frameStepForDistanceCalculation.validator().setBottom(0)
     layout.addWidget(frameStepForDistanceCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(apply_style(QLabel("If you are calculating fish tail tracking related kinematic parameters:", self), font_size="16px"), alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(apply_style(QLabel("What's the minimum number of bends a bout should have to be taken into account for the analysis?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(apply_style(QLabel("(the default value is 3) (put 0 if you want all bends to be taken into account)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("If you are calculating fish tail tracking related kinematic parameters:", self), font_size="16px"), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("What's the minimum number of bends a bout should have to be taken into account for the analysis?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("(the default value is 3) (put 0 if you want all bends to be taken into account)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     minNbBendForBoutDetect = QLineEdit(controller.window)
     minNbBendForBoutDetect.setValidator(QIntValidator(minNbBendForBoutDetect))
     minNbBendForBoutDetect.validator().setBottom(0)
     layout.addWidget(minNbBendForBoutDetect, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(apply_style(QLabel("If, for a bout, the tail tracking related kinematic parameters are being discarded because of a low amount of bends,", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(apply_style(QLabel("should the BoutDuration, TotalDistance, Speed and IBI also be discarded for that bout?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("If, for a bout, the tail tracking related kinematic parameters are being discarded because of a low amount of bends,", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("should the BoutDuration, TotalDistance, Speed and IBI also be discarded for that bout?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     discardRadioButton = QRadioButton("Yes, discard BoutDuration, TotalDistance, Speed and IBI in that situation", self)
     discardRadioButton.setChecked(True)
     layout.addWidget(discardRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
     keepRadioButton = QRadioButton("No, keep BoutDuration, TotalDistance, Speed and IBI in that situation", self)
     layout.addWidget(keepRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(apply_style(QLabel("Please ignore the two questions above if you're only looking at BoutDuration, TotalDistance, Speed and IBI.", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Please ignore the two questions above if you're only looking at BoutDuration, TotalDistance, Speed and IBI.", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    launchBtn = apply_style(QPushButton("Launch Analysis", self), background_color=LIGHT_YELLOW)
+    launchBtn = util.apply_style(QPushButton("Launch Analysis", self), background_color=util.LIGHT_YELLOW)
     launchBtn.clicked.connect(lambda: controller.populationComparison(controller, tailTrackingParametersCheckbox.isChecked(), saveInMatlabFormatCheckbox.isChecked(), saveRawDataCheckbox.isChecked(), minNbBendForBoutDetect.text(), discardRadioButton.isChecked(), keepRadioButton.isChecked(), frameStepForDistanceCalculation.text()))
     layout.addWidget(launchBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -151,7 +142,7 @@ class BoutClustering(QWidget):
     self.controller = controller
 
     layout = QVBoxLayout()
-    layout.addWidget(apply_style(QLabel("Bout Clustering:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Bout Clustering:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
     layout.addWidget(QLabel("Choose number of cluster to find:", self), alignment=Qt.AlignmentFlag.AlignCenter)
     nbClustersToFind = QLineEdit(controller.window)
@@ -167,15 +158,15 @@ class BoutClustering(QWidget):
     layout.addWidget(headEmbeddedRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
 
-    layout.addWidget(apply_style(QLabel("What's the minimum number of bends a bout should have to be taken into account for the analysis?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(apply_style(QLabel("(the default value is 3) (put 0 if you want all bends to be taken into account)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("What's the minimum number of bends a bout should have to be taken into account for the analysis?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("(the default value is 3) (put 0 if you want all bends to be taken into account)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     minNbBendForBoutDetect = QLineEdit(controller.window)
     minNbBendForBoutDetect.setValidator(QIntValidator(minNbBendForBoutDetect))
     minNbBendForBoutDetect.validator().setBottom(0)
     layout.addWidget(minNbBendForBoutDetect, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(apply_style(QLabel("Optional: generate videos containing the most representative bouts for each cluster: enter below the number of bouts for each video:", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(apply_style(QLabel("(leave blank if you don't want any such cluster validation videos to be generated)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Optional: generate videos containing the most representative bouts for each cluster: enter below the number of bouts for each video:", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("(leave blank if you don't want any such cluster validation videos to be generated)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     nbVideosToSave = QLineEdit(controller.window)
     nbVideosToSave.setValidator(QIntValidator(nbVideosToSave))
     nbVideosToSave.validator().setBottom(0)
@@ -186,16 +177,16 @@ class BoutClustering(QWidget):
     removeOutliersCheckbox = QCheckBox("Remove outliers before clustering", self)
     layout.addWidget(removeOutliersCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(apply_style(QLabel("Number of frames between each frame used for distance calculation (to avoid noise due to close-by subsequent points) (default value is 4):", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Number of frames between each frame used for distance calculation (to avoid noise due to close-by subsequent points) (default value is 4):", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     frameStepForDistanceCalculation = QLineEdit(controller.window)
     frameStepForDistanceCalculation.setValidator(QIntValidator(frameStepForDistanceCalculation))
     frameStepForDistanceCalculation.validator().setBottom(0)
     layout.addWidget(frameStepForDistanceCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    launchBtn = apply_style(QPushButton("Launch Analysis", self), background_color=LIGHT_YELLOW)
+    launchBtn = util.apply_style(QPushButton("Launch Analysis", self), background_color=util.LIGHT_YELLOW)
     launchBtn.clicked.connect(lambda: controller.boutClustering(controller, nbClustersToFind.text(), freelySwimmingRadioButton.isChecked(), headEmbeddedRadioButton.isChecked(), minNbBendForBoutDetect.text(), nbVideosToSave.text(), modelUsedForClusteringCheckbox.isChecked(), removeOutliersCheckbox.isChecked(), frameStepForDistanceCalculation.text()))
     layout.addWidget(launchBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -208,20 +199,20 @@ class AnalysisOutputFolderPopulation(QWidget):
     self.controller = controller
 
     layout = QVBoxLayout()
-    layout.addWidget(apply_style(QLabel("View Analysis Output:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("View Analysis Output:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(QLabel("Click the button below to open the folder that contains the results of the analysis.", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    viewProcessedBtn = apply_style(QPushButton("View 'plots and processed data' folders", self), background_color=LIGHT_YELLOW)
+    viewProcessedBtn = util.apply_style(QPushButton("View 'plots and processed data' folders", self), background_color=util.LIGHT_YELLOW)
     viewProcessedBtn.clicked.connect(lambda: controller.openAnalysisFolder(controller.homeDirectory, 'resultsKinematic'))
     layout.addWidget(viewProcessedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    viewRawBtn = apply_style(QPushButton("View raw data", self), background_color=LIGHT_YELLOW)
+    viewRawBtn = util.apply_style(QPushButton("View raw data", self), background_color=util.LIGHT_YELLOW)
     viewRawBtn.clicked.connect(lambda: controller.openAnalysisFolder(controller.homeDirectory, 'data'))
     layout.addWidget(viewRawBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    linkBtn = apply_style(QPushButton("Video data analysis online documentation", self), background_color=LIGHT_YELLOW)
+    linkBtn = util.apply_style(QPushButton("Video data analysis online documentation", self), background_color=util.LIGHT_YELLOW)
     linkBtn.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom#GUIanalysis"))
     layout.addWidget(linkBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(QLabel("(read the 'Further analyzing ZebraZoom's output through the Graphical User Interface' section)", self), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -235,17 +226,17 @@ class AnalysisOutputFolderClustering(QWidget):
     self.controller = controller
 
     layout = QVBoxLayout()
-    layout.addWidget(apply_style(QLabel("View Analysis Output:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("View Analysis Output:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(QLabel("Click the button below to open the folder that contains the results of the analysis.", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    viewProcessedBtn = apply_style(QPushButton("View plots and processed data folder", self), background_color=LIGHT_YELLOW)
+    viewProcessedBtn = util.apply_style(QPushButton("View plots and processed data folder", self), background_color=util.LIGHT_YELLOW)
     viewProcessedBtn.clicked.connect(lambda: controller.openAnalysisFolder(controller.homeDirectory, 'resultsClustering'))
     layout.addWidget(viewProcessedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    viewRawBtn = apply_style(QPushButton("View raw data folders", self), background_color=LIGHT_YELLOW)
+    viewRawBtn = util.apply_style(QPushButton("View raw data folders", self), background_color=util.LIGHT_YELLOW)
     viewRawBtn.clicked.connect(lambda: controller.openAnalysisFolder(controller.homeDirectory, 'data'))
     layout.addWidget(viewRawBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    startPageBtn = apply_style(QPushButton("Go to the start page", self), background_color=LIGHT_CYAN)
+    startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
