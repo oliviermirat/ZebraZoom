@@ -234,6 +234,7 @@
   "additionalOutputFolderOverwriteIfAlreadyExist" : 0,
   "outputValidationVideoContrastImprovement" : 0,
   "outputValidationVideoContrastImprovementQuartile" : 0.01,
+  "outputValidationVideoFps" : -1,
   
   "computeEyesHeadingPlot": 0,
   
