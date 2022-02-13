@@ -12,11 +12,9 @@ from zebrazoom.code.getBackground import getBackground
 from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
 import cvui
 import pickle
-from zebrazoom.code.vars import getGlobalVariables
 from zebrazoom.mainZZ import mainZZ
 import json
 import os
-globalVariables = getGlobalVariables()
 
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtWidgets import QApplication, QFileDialog, QGridLayout, QLabel, QVBoxLayout
@@ -512,7 +510,4 @@ def finishConfig(self, controller, reference):
   self.headCenterY = 0
   self.organism = ''
 
-  if (globalVariables["mac"] or globalVariables["lin"]):
-    self.destroy()
-  else:
-    controller.show_frame("StartPage")
+  controller.show_frame("StartPage")

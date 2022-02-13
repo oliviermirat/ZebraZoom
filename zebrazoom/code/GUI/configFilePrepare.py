@@ -7,8 +7,6 @@ from PyQt6.QtWidgets import QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayo
 
 import zebrazoom.code.util as util
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
-from zebrazoom.code.vars import getGlobalVariables
-globalVariables = getGlobalVariables()
 
 
 class ChooseVideoToCreateConfigFileFor(QWidget):
@@ -576,14 +574,8 @@ class FinishConfig(QWidget):
     self.controller = controller
 
     layout = QVBoxLayout()
-
-    if (globalVariables["mac"] or globalVariables["lin"]):
-      saveBtn = util.apply_style(QPushButton("Save Config File (this will also close this window, restart it afterwards)", self), background_color=util.LIGHT_YELLOW)
-      saveBtn.clicked.connect(lambda: controller.finishConfig())
-      layout.addWidget(saveBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    else:
-      saveBtn = util.apply_style(QPushButton("Save Config File", self), background_color=util.LIGHT_YELLOW)
-      saveBtn.clicked.connect(lambda: controller.finishConfig())
-      layout.addWidget(saveBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    saveBtn = util.apply_style(QPushButton("Save Config File", self), background_color=util.LIGHT_YELLOW)
+    saveBtn.clicked.connect(lambda: controller.finishConfig())
+    layout.addWidget(saveBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     self.setLayout(layout)
