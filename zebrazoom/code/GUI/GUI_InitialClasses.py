@@ -274,6 +274,7 @@ class Patience(QWidget):
     def __init__(self, controller):
         super().__init__(controller.window)
         self.controller = controller
+        self.preferredSize = (300, 100)
 
         layout = QVBoxLayout()
         button = util.apply_style(QPushButton("Launch ZebraZoom on your video(s)", self), background_color=util.LIGHT_YELLOW)
@@ -288,6 +289,7 @@ class ZZoutro(QWidget):
     def __init__(self, controller):
         super().__init__(controller.window)
         self.controller = controller
+        self.preferredSize = (150, 100)
 
         layout = QVBoxLayout()
         layout.addWidget(QLabel("Finished.", self), alignment=Qt.AlignmentFlag.AlignCenter)

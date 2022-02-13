@@ -70,7 +70,7 @@ def chooseConfigFile(self):
   path = path.parent.parent
   path = os.path.join(path, 'configuration')
 
-  self.configFile, _ = QFileDialog.getOpenFileName(self.window, 'Select file', path, "json files (*.json);;All files(*)")
+  self.configFileName, _ = QFileDialog.getOpenFileName(self.window, 'Select file', path, "json files (*.json);;All files(*)")
   if len(self.folderName) or globalVariables["mac"] or globalVariables["lin"]:
     self.show_frame("Patience")
   else:
@@ -121,9 +121,9 @@ def launchZebraZoom(self):
 
     if self.headEmbedded == 0:
       if len(allVideos) == 1:
-        tabParams = ["mainZZ", path, name, videoExt, self.configFile, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1, "outputFolder", self.ZZoutputLocation]
+        tabParams = ["mainZZ", path, name, videoExt, self.configFileName, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1, "outputFolder", self.ZZoutputLocation]
       else:
-        tabParams = ["mainZZ", path, name, videoExt, self.configFile, "freqAlgoPosFollow", 100, "outputFolder", self.ZZoutputLocation]
+        tabParams = ["mainZZ", path, name, videoExt, self.configFileName, "freqAlgoPosFollow", 100, "outputFolder", self.ZZoutputLocation]
       if self.justExtractParams == 1:
         tabParams = tabParams + ["reloadWellPositions", 1, "reloadBackground", 1, "debugPauseBetweenTrackAndParamExtract", "justExtractParamFromPreviousTrackData"]
       if self.noValidationVideo == 1:
@@ -137,7 +137,7 @@ def launchZebraZoom(self):
           commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]) + ' configFile.json\n')
           nbVideosToLaunch = nbVideosToLaunch + 1
         else:
-          mainZZ(path, name, videoExt, self.configFile, tabParams)
+          mainZZ(path, name, videoExt, self.configFileName, tabParams)
       except ValueError:
         print("moving on to the next video for ROIs identification")
       except NameError:
@@ -145,10 +145,10 @@ def launchZebraZoom(self):
         return
     else:
       if self.debugMode == 1:
-        tabParams = ["mainZZ", path, name, videoExt, self.configFile, "freqAlgoPosFollow", 100, "debugTracking", 1, "debugExtractBack", 1, "onlyDoTheTrackingForThisNumberOfFrames", 3, "onlyTrackThisOneWell", 0, "outputFolder", self.ZZoutputLocation]
+        tabParams = ["mainZZ", path, name, videoExt, self.configFileName, "freqAlgoPosFollow", 100, "debugTracking", 1, "debugExtractBack", 1, "onlyDoTheTrackingForThisNumberOfFrames", 3, "onlyTrackThisOneWell", 0, "outputFolder", self.ZZoutputLocation]
       else:
         tabParams = ["outputFolder", self.ZZoutputLocation]
-      getTailExtremityFirstFrame(path, name, videoExt, self.configFile, tabParams)
+      getTailExtremityFirstFrame(path, name, videoExt, self.configFileName, tabParams)
 
   self.headEmbedded      = 0
   self.justExtractParams = 0
@@ -160,7 +160,7 @@ def launchZebraZoom(self):
 
     commandsFile.close()
 
-    with open(self.configFile) as f:
+    with open(self.configFileName) as f:
       jsonFile = json.load(f)
     nbWells = jsonFile["nbWells"]
 
@@ -191,7 +191,7 @@ def launchZebraZoom(self):
     launchFile.writelines(linesToWrite)
     launchFile.close()
 
-    shutil.copy(self.configFile, 'configFile.json')
+    shutil.copy(self.configFileName, 'configFile.json')
 
     self.show_frame("ZZoutroSbatch")
 
