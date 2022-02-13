@@ -421,6 +421,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["fishTailTrackingDifficultBackground"] = getConfig(config, "fishTailTrackingDifficultBackground", videoPath)
   
+  hyperparameters["tryCreatingFolderUntilSuccess"] =  getConfig(config, "tryCreatingFolderUntilSuccess", videoPath)
+  
   
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1

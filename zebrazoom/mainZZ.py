@@ -120,17 +120,25 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     if not(hyperparameters["reloadWellPositions"]) and not(hyperparameters["reloadBackground"]) and not(os.path.exists(os.path.join(outputFolderVideo, 'intermediaryWellPositionReloadNoMatterWhat.txt'))) and not(hyperparameters["dontDeleteOutputFolderIfAlreadyExist"]):
       if os.path.exists(outputFolderVideo):
         shutil.rmtree(outputFolderVideo)
-      while True:
+      if hyperparameters["tryCreatingFolderUntilSuccess"]:
+        while True:
+          try:
+            os.mkdir(outputFolderVideo)
+            break
+          except OSError as e:
+            print("waiting inside except")
+            time.sleep(0.1)
+          else:
+            print("waiting")
+            time.sleep(0.1)
+      else:
         try:
           os.mkdir(outputFolderVideo)
-          break
         except OSError as e:
-          print("waiting inside except")
           time.sleep(0.1)
         else:
-          print("waiting")
           time.sleep(0.1)
-    
+  
   # Saving the configuration file used
   with open(os.path.join(outputFolderVideo, 'configUsed.json'), 'w') as outfile:
     json.dump(configFile, outfile)
