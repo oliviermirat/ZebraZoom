@@ -7,7 +7,7 @@ from zebrazoom.code.trackingFolder.postProcessMultipleTrajectories import postPr
 from zebrazoom.code.trackingFolder.getImages import getImages
 from zebrazoom.code.trackingFolder.debugTracking import debugTracking
 from zebrazoom.code.popUpAlgoFollow import prepend
-from zebrazoom.code.adjustHyperparameters import adjustHyperparameters, getFreelySwimTrackingParamsForHyperParamAdjusts
+from zebrazoom.code.adjustHyperparameters import adjustFreelySwimTrackingParams
 import multiprocessing as mp
 from multiprocessing import Process
 import cv2
@@ -61,6 +61,7 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
   if firstFrame:
     cap.set(1, firstFrame)
   
+  widgets = None
   while (i < lastFrame + 1):
     
     if (hyperparameters["freqAlgoPosFollow"] != 0) and (i % hyperparameters["freqAlgoPosFollow"] == 0):
@@ -135,10 +136,7 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
             print("Tracking at frame", i)
         
     if hyperparameters["adjustFreelySwimTracking"] == 1:
-      [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getFreelySwimTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters)
-      if len(organizationTabCur) == 0:
-        organizationTabCur = organizationTab
-      [i, hyperparameters, organizationTabCur] = adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTabCur)
+      i, widgets = adjustFreelySwimTrackingParams(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters, widgets)
     else:
       i = i + 1
     

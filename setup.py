@@ -14,7 +14,7 @@ setup(
     "scikit-learn",
     "h5py",
     "numpy",
-    "matplotlib",
+    "matplotlib>=3.5.0",
     "scipy",
     "pandas",
     "openpyxl",
@@ -22,7 +22,8 @@ setup(
     "cvui",
     "opencv-python<=4.5.1.48",
     "xlrd",
-    "seaborn"
+    "seaborn",
+    "PyQt6",
   ],
   packages=setuptools.find_packages(),
   data_files=[

@@ -1,37 +1,28 @@
 import numpy as np
-import tkinter as tk
-from tkinter import font  as tkfont
-from tkinter import filedialog
-from tkinter import ttk
-from tkinter import *
-from tkinter import filedialog
 import json
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import math
 import cvui
-from zebrazoom.code.vars import getGlobalVariables
 import json
 import os
-globalVariables = getGlobalVariables()
+
+from PyQt6.QtWidgets import QFileDialog
+
 
 def chooseVideoToTroubleshootSplitVideo(self, controller):
 
   # Choosing video to split
+  self.videoToTroubleshootSplitVideo, _ =  QFileDialog.getOpenFileName(self.window, "Select video", os.path.expanduser("~"), "All files(*)")
 
-  if globalVariables["mac"]:
-    self.videoToTroubleshootSplitVideo = filedialog.askopenfilename(initialdir = os.path.expanduser("~"),title = "Select video")
-  else:
-    self.videoToTroubleshootSplitVideo = filedialog.askopenfilename(initialdir = os.path.expanduser("~"),title = "Select video",filetypes = (("video","*.*"),("all files","*.*")))
-  
   # User input of beginning and end of subvideo
-  
+
   firstFrame = 1
   lastFrame  = 1000
-  
+
   cap = zzVideoReading.VideoCapture(self.videoToTroubleshootSplitVideo)
   max_l = int(cap.get(7)) - 2
-  
+
   cap.set(1, 1)
   ret, frame = cap.read()
   WINDOW_NAME = "Choose where the beginning of your sub-video should be."
@@ -61,7 +52,7 @@ def chooseVideoToTroubleshootSplitVideo(self, controller):
       cvui.trackbar(frameCtrl, widgetX, widgetY+10, widgetL, value, 0, max_l)
       cvui.counter(frameCtrl, widgetX, widgetY+60, value)
       buttonclicked = cvui.button(frameCtrl, widgetX, widgetY+90, "Ok, I want the sub-video to start at this frame!")
-      
+
       cvui.text(frameCtrl, widgetX, widgetY+130, 'Keys: 4 or a: move backwards; 6 or d: move forward')
       cvui.text(frameCtrl, widgetX, widgetY+160, 'Keys: g or f: fast backwards; h or j: fast forward')
       cvui.imshow(WINDOW_NAME, frame)
@@ -80,7 +71,7 @@ def chooseVideoToTroubleshootSplitVideo(self, controller):
       elif (r == 106):
         value[0] = value[0] + 100
   cv2.destroyAllWindows()
-  
+
   firstFrame = int(value[0])
   cap.set(1, max_l)
   ret, frame = cap.read()
@@ -132,20 +123,20 @@ def chooseVideoToTroubleshootSplitVideo(self, controller):
         value[0] = value[0] - 100
       elif (r == 106):
         value[0] = value[0] + 100
-  
+
   lastFrame = int(value[0])
   cv2.destroyAllWindows()
   cap.release()
-  
+
   # Choosing directory to save sub-video
-  directoryChosen = filedialog.askdirectory(title='Choose in which folder you want to save the sub-video.')
-  
+  directoryChosen = QFileDialog.getExistingDirectory(self.window, 'Choose in which folder you want to save the sub-video.')
+
   # Extracting sub-video
 
   cap = zzVideoReading.VideoCapture(self.videoToTroubleshootSplitVideo)
-  if (cap.isOpened()== False): 
+  if (cap.isOpened()== False):
     print("Error opening video stream or file")
-    
+
   frame_width  = int(cap.get(3))
   frame_height = int(cap.get(4))
   xmin = 0
@@ -155,7 +146,7 @@ def chooseVideoToTroubleshootSplitVideo(self, controller):
 
   out = cv2.VideoWriter(os.path.join(directoryChosen, 'subvideo.avi'), cv2.VideoWriter_fourcc('M','J','P','G'), 10, (xmax-xmin,ymax-ymin))
   # out = cv2.VideoWriter(os.path.join(directoryChosen, 'subvideo.avi'), cv2.VideoWriter_fourcc('H','F','Y','U'), 10, (xmax-xmin,ymax-ymin))
-   
+
   i = firstFrame
   maxx = lastFrame
   cap.set(1, i)
@@ -168,7 +159,7 @@ def chooseVideoToTroubleshootSplitVideo(self, controller):
         frame2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
         frame2 = cv2.cvtColor(frame2, cv2.COLOR_GRAY2BGR)
       out.write(frame2)
-    else: 
+    else:
       break
   cap.release()
 

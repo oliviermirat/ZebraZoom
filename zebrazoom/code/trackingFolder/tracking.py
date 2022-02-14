@@ -19,7 +19,7 @@ from zebrazoom.code.trackingFolder.postProcessMultipleTrajectories import postPr
 from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from zebrazoom.code.getImage.headEmbededFrameBackExtract import headEmbededFrameBackExtract
 
-from zebrazoom.code.adjustHyperparameters import initializeAdjustHyperparametersWindows, adjustHyperparameters, getHeadEmbededTrackingParamsForHyperParamAdjusts, getFreelySwimTrackingParamsForHyperParamAdjusts, getFreelySwimTrackingAutoParamsForHyperParamAdjusts
+from zebrazoom.code.adjustHyperparameters import adjustHeadEmbededTrackingParams, adjustFreelySwimTrackingParams, adjustFreelySwimTrackingAutoParams
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.headEmbededTailTracking import adjustHeadEmbededHyperparameters
 
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.headEmbededTailTracking import headEmbededTailTrackFindMaxDepth
@@ -138,8 +138,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
         maxDepth = centerOfMassTailTrackFindMaxDepth(headPositionFirstFrame,nbTailPoints,firstFrame,headPositionFirstFrame[0],headPositionFirstFrame[1],thresh1,frame,hyperparameters,oppHeading,tailTipFirstFrame)
   
   if hyperparameters["adjustHeadEmbededTracking"] == 1 or hyperparameters["adjustFreelySwimTracking"] == 1 or hyperparameters["adjustFreelySwimTrackingAutomaticParameters"] == 1:
-    initializeAdjustHyperparametersWindows("Tracking")
-  organizationTabCur = []
+    widgets = None
   
   # Performing the tracking on each frame
   i = firstFrame
@@ -215,16 +214,10 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
             trackingHeadTailAllAnimals[animalId][i-firstFrame][j][1] = trackingHeadTailAllAnimals[animalId][i-firstFrame][j][1] + yHead
     
     if hyperparameters["adjustHeadEmbededTracking"] == 1:
-      [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getHeadEmbededTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters)
-      if len(organizationTabCur) == 0:
-        organizationTabCur = organizationTab
-      [i, hyperparameters, organizationTabCur] = adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTabCur)
+      i, widgets = adjustHeadEmbededTrackingParams(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters, widgets)
       hyperparameters = adjustHeadEmbededHyperparameters(hyperparameters, frame, headPositionFirstFrame, tailTipFirstFrame)
     elif hyperparameters["adjustFreelySwimTracking"] == 1:
-      [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getFreelySwimTrackingParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters)
-      if len(organizationTabCur) == 0:
-        organizationTabCur = organizationTab
-      [i, hyperparameters, organizationTabCur] = adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTabCur)
+      i, widgets = adjustFreelySwimTrackingParams(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters, widgets)
     elif hyperparameters["adjustFreelySwimTrackingAutomaticParameters"] == 1:
       # Preparing image to show
       if hyperparameters["recalculateForegroundImageBasedOnBodyArea"] == 1:
@@ -240,10 +233,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
       curFrame[putToWhite] = 255
       ret, frame2 = cv2.threshold(curFrame, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
       # Showing current image and waiting for next parameter/frame change
-      [hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab] = getFreelySwimTrackingAutoParamsForHyperParamAdjusts(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters)
-      if len(organizationTabCur) == 0:
-        organizationTabCur = organizationTab
-      [i, hyperparameters, organizationTabCur] = adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTabCur)
+      i, widgets = adjustFreelySwimTrackingAutoParams(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters, widgets)
       # Puts hyperparameters values to accepted values
       hyperparameters["recalculateForegroundImageBasedOnBodyArea"] = 0 if hyperparameters["recalculateForegroundImageBasedOnBodyArea"] < 0.5 else 1
       if hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] < 0:

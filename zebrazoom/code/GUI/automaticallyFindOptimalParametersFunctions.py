@@ -6,7 +6,6 @@ import math
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
 from zebrazoom.mainZZ import mainZZ
-import cvui
 import pickle
 import json
 import os
@@ -16,6 +15,10 @@ from zebrazoom.code.findWells import findWells
 from zebrazoom.code.trackingFolder.tracking import tracking
 from zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions import prepareConfigFileForParamsAdjustements
 from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
+import zebrazoom.code.util as util
+
+from PyQt6.QtWidgets import QApplication
+
 
 def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack):
   
@@ -77,45 +80,9 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
       lenY  = wellPositions[wellNumber]['lengthY']
       frame = frame[ytop:ytop+lenY, xtop:xtop+lenX]
       
-      if zebrafishToTrack:
-        WINDOW_NAME_1 = "Click on the center of the head of one animal"
-      else:
-        WINDOW_NAME_1 = "Click on the center of mass of an animal"
-      
-      [frame, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame, True)
-      
-      cvui.init(WINDOW_NAME_1)
-      cv2.moveWindow(WINDOW_NAME_1, 0, 0)
-      cvui.imshow(WINDOW_NAME_1, frame)
-      
-      while not(cvui.mouse(cvui.CLICK)):
-        cursor = cvui.mouse()
-        if cv2.waitKey(20) == 27:
-          break
-        headCoordinates = [int(getRealValueCoefX * cursor.x), int(getRealValueCoefY * cursor.y)]
-      cv2.destroyAllWindows()
-      
-      if zebrafishToTrack:
-        WINDOW_NAME_2 = "Click on the tip of the tail of the same animal"
-      else:
-        WINDOW_NAME_2 = "Click on a point on the border of the same animal"
-      
-      frame2 = frame.copy()
-      frame2 = cv2.circle(frame, (int(headCoordinates[0] / getRealValueCoefX), int(headCoordinates[1] / getRealValueCoefY)), 2, (0, 0, 255), -1)
-      
-      cvui.init(WINDOW_NAME_2)
-      cv2.moveWindow(WINDOW_NAME_2, 0, 0)
-      cvui.imshow(WINDOW_NAME_2, frame2)
-      
-      while not(cvui.mouse(cvui.CLICK)):
-        cursor = cvui.mouse()
-        if cv2.waitKey(20) == 27:
-          break
-        tailTipCoordinates = [int(getRealValueCoefX * cursor.x), int(getRealValueCoefY * cursor.y)]
-      frame2 = cv2.circle(frame, (int(tailTipCoordinates[0] / getRealValueCoefX), int(tailTipCoordinates[1] / getRealValueCoefY)), 2, (0, 0, 255), -1)  
-      cvui.imshow(WINDOW_NAME_2, frame2)
-      cv2.waitKey(2000)
-      cv2.destroyAllWindows()
+      headCoordinates = list(util.getPoint(frame, "Click on the center of the head of one animal" if zebrafishToTrack else "Click on the center of mass of an animal"))
+      frame2 = cv2.circle(frame, tuple(headCoordinates), 2, (0, 0, 255), -1)
+      tailTipCoordinates = list(util.getPoint(frame2, "Click on the tip of the tail of the same animal" if zebrafishToTrack else "Click on a point on the border of the same animal"))
       
       if True: # Centered on the animal
         minX = min(headCoordinates[0], tailTipCoordinates[0])
@@ -288,22 +255,12 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
   configFile["debugExtractBack"]              = 1
   configFile["debugFindWells"]                = 1
   
-  WINDOW_NAME = "Please Wait"
-  cvui.init(WINDOW_NAME)
-  cv2.moveWindow(WINDOW_NAME, 0,0)
-  img = np.zeros((400, 900, 3), np.uint8)
-  lineType               = 2
-  img = cv2.putText(img,'In the next window, you will need to adjust parameters in order', (5, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), lineType)
-  cv2.putText(img,'for the red dot to appear when and only when the animal is moving.', (5, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), lineType)
-  cv2.imshow(WINDOW_NAME, img)
-  r = cv2.waitKey(10)
-  
-  try:
-    mainZZ(pathToVideo, videoName, videoExt, configFile, [])
-  except ValueError:
-    configFile["exitAfterBackgroundExtraction"] = 0
-  
-  cv2.destroyAllWindows()
+  app = QApplication.instance()
+  with app.busyCursor():
+    try:
+      mainZZ(pathToVideo, videoName, videoExt, configFile, [])
+    except ValueError:
+      configFile["exitAfterBackgroundExtraction"] = 0
   
   del configFile["exitAfterBackgroundExtraction"]
   del configFile["debugExtractBack"]
@@ -384,22 +341,15 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
   else:
     configFile["thresForDetectMovementWithRawVideo"] = 1
   
-  try:
-    WINDOW_NAME = "Please Wait"
-    cvui.init(WINDOW_NAME)
-    cv2.moveWindow(WINDOW_NAME, 0,0)
-    img = np.zeros((400, 900, 3), np.uint8)
-    lineType               = 2
-    img = cv2.putText(img,'In the next window, you will need to adjust parameters in order', (5, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), lineType)
-    cv2.putText(img,'for the red dot to appear when and only when the animal is moving.', (5, 150), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255,255,255), lineType)
-    cv2.imshow(WINDOW_NAME, img)
-    r = cv2.waitKey(10)
-    mainZZ(pathToVideo, videoName, videoExt, configFile, [])
-    cv2.destroyAllWindows()
-  except ValueError:
-    newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
-    for index in newhyperparameters:
-      configFile[index] = newhyperparameters[index]
+  with app.busyCursor():
+    try:
+      mainZZ(pathToVideo, videoName, videoExt, configFile, [])
+    except ValueError:
+      newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
+      for index in newhyperparameters:
+        configFile[index] = newhyperparameters[index]
+    except NameError:
+      print("Configuration file parameters changes discarded.")
   
   del configFile["onlyTrackThisOneWell"]
   del configFile["trackTail"]

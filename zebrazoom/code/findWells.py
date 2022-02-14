@@ -9,11 +9,24 @@ import sys
 import os
 from scipy import interpolate
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
-from zebrazoom.code.adjustHyperparameters import initializeAdjustHyperparametersWindows, adjustHyperparameters
+from zebrazoom.code.adjustHyperparameters import adjustHyperparameters
 import tkinter as tk
 from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QApplication, QLabel, QVBoxLayout
+
+import zebrazoom.code.util as util
+
+
+def _findRectangularWellsAreaQt(frame, videoPath, hyperparameters):
+  topLeft, bottomRight = util.getRectangle(frame, "Select one of the wells")
+  return abs(topLeft[0] - bottomRight[0]) * abs(topLeft[1] - bottomRight[1])
+
+
 def findRectangularWellsArea(frame, videoPath, hyperparameters):
+  if QApplication.instance() is not None:
+    return _findRectangularWellsAreaQt(frame, videoPath, hyperparameters)
   
   frame2 = frame.copy()
   
@@ -142,19 +155,17 @@ def findRectangularWells(frame, videoPath, hyperparameters, rectangularWellsArea
           frame2 = cv2.rectangle(frame2, topLeft, bottomRight, color, rectangleTickness)
     
     hyperparametersListNames = ["rectangleWellAreaImageThreshold", "rectangleWellErodeDilateKernelSize","findRectangleWellArea", "rectangularWellsInvertBlackWhite"]
-    marginX = 30
-    organizationTab = [\
-    [470,  marginX + 5,  350,  0, 255,   "Adjust this threshold in order to get the inside of the wells as white as possible and the well's borders as black as possible."],
-    [1,    marginX + 71, 350,  0, 75,    "Increase the value of this parameter if some sections of the well's borders are not black (if there are some 'holes' in the borders)."],
-    [470,  marginX + 71, 350,  0, 50000, "Only change the value of this parameter as a last resort (and change it 'slowly' if you do). This parameter represents the mean area of the wells to detect."],
-    [1,   marginX + 137, 350,  0, 1,     "Put this value to 1 if and only if the inside of your wells are darker than the well's borders in your video."],
-    [470, marginX + 137,  -1, -1, -1,    "Click here once all wells are detected on the image on the right."]]
+    organizationTab = [
+    [0, 255, "Adjust this threshold in order to get the inside of the wells as white as possible and the well's borders as black as possible."],
+    [0, 75, "Increase the value of this parameter if some sections of the well's borders are not black (if there are some 'holes' in the borders)."],
+    [0, 50000, "Only change the value of this parameter as a last resort (and change it 'slowly' if you do). This parameter represents the mean area of the wells to detect."],
+    [0, 1, "Put this value to 1 if and only if the inside of your wells are darker than the well's borders in your video."],]
     WINDOW_NAME = "Rectangular Wells Detection: Adjust parameters until you get the right number of wells detected (on the right side)"
     frameToShow = np.concatenate((gray, frame2), axis=1)
     
     cv2.putText(frameToShow, "Wells detected:" + str(len(wellPositions)), (int(len(frameToShow[0])/2), 80), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 255), 8)
   
-    [l, hyperparameters, organizationTab] = adjustHyperparameters(0, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab)
+    l, widgets = adjustHyperparameters(0, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab, None)
     
     for param in hyperparametersListNames:
       hyperparameters[param] = int(hyperparameters[param])
@@ -220,6 +231,79 @@ def saveWellsRepartitionImage(wellPositions, frame, hyperparameters):
   cv2.imwrite(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), "repartition.jpg"), frame )
   return frame
 
+
+def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparameters):
+  cap = zzVideoReading.VideoCapture(videoPath)
+  if (cap.isOpened()== False):
+    print("Error opening video stream or file")
+  ret, frame = cap.read()
+  frameForRepartitionJPG = frame.copy()
+
+  accepted = False
+  while not accepted:
+    posCoord = {pos: np.array(list(util.getPoint(frame, "Click on the " + pos + " of the group of wells", selectingRegion=True)))
+                for pos in ("top left", "top right", "bottom left")}
+
+    nbWellsPerRows = hyperparameters["nbWellsPerRows"]
+    nbRowsOfWells  = hyperparameters["nbRowsOfWells"]
+
+    l = []
+
+    vectorX = (posCoord["top right"] - posCoord["top left"]) / nbWellsPerRows
+    vectorY = (posCoord["bottom left"] - posCoord["top left"]) / nbRowsOfWells
+
+    for row in range(0, nbRowsOfWells):
+      for col in range(0, nbWellsPerRows):
+
+        wellTopLeft     = posCoord["top left"] + col * vectorX + row * vectorY
+        wellTopRight    = wellTopLeft + vectorX
+        wellBottomLeft  = wellTopLeft + vectorY
+        wellBottomRight = wellTopLeft + vectorX + vectorY
+
+        minX = min([wellTopLeft[0], wellTopRight[0], wellBottomLeft[0], wellBottomRight[0]])
+        minY = min([wellTopLeft[1], wellTopRight[1], wellBottomLeft[1], wellBottomRight[1]])
+        maxX = max([wellTopLeft[0], wellTopRight[0], wellBottomLeft[0], wellBottomRight[0]])
+        maxY = max([wellTopLeft[1], wellTopRight[1], wellBottomLeft[1], wellBottomRight[1]])
+
+        well = {'topLeftX' : int(minX), 'topLeftY' : int(minY), 'lengthX' : int(maxX - minX), 'lengthY': int(maxY - minY)}
+        l.append(well)
+
+    possibleRepartition = saveWellsRepartitionImage(l, frameForRepartitionJPG.copy(), hyperparameters)
+
+    label = QLabel()
+    label.setMinimumSize(1, 1)
+    layout = QVBoxLayout()
+    layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    def accept():
+      nonlocal accepted
+      accepted = True
+    buttons = (("Yes, this is a good repartition.", accept), ("No, I want to try again.", None))
+    util.pageOrDialog(layout, title="Is this a good repartition of wells?", buttons=buttons, dialog=False, labelInfo=(possibleRepartition, label))
+
+  cap.release()
+  return l
+
+
+def _multipleROIsDefinedDuringExecutionQt(videoPath, hyperparameters):
+    l = []
+    cap = zzVideoReading.VideoCapture(videoPath)
+    if (cap.isOpened()== False):
+      print("Error opening video stream or file")
+    ret, frame = cap.read()
+    frameForRepartitionJPG = frame.copy()
+    for i in range(0, int(hyperparameters["nbWells"])):
+      topLeft, bottomRight = util.getRectangle(frame, "Select one of the regions of interest")
+      frame = cv2.rectangle(frame, (topLeft[0], topLeft[1]), (bottomRight[0], bottomRight[1]), (255, 0, 0), 1)
+      frame_width  = bottomRight[0] - topLeft[0]
+      frame_height = bottomRight[1] - topLeft[1]
+      well = {'topLeftX' : topLeft[0], 'topLeftY' : topLeft[1], 'lengthX' : frame_width, 'lengthY': frame_height}
+      l.append(well)
+    saveWellsRepartitionImage(l, frameForRepartitionJPG, hyperparameters)
+    cap.release()
+    return l
+
+
 def findWells(videoPath, hyperparameters):
 
   if hyperparameters["noWellDetection"]:
@@ -240,6 +324,8 @@ def findWells(videoPath, hyperparameters):
   # Group of multiple same size and shape equally spaced wells
   
   if int(hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"]):
+    if QApplication.instance() is not None:
+      return _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparameters)
     
     cap = zzVideoReading.VideoCapture(videoPath)
     if (cap.isOpened()== False): 
@@ -312,6 +398,8 @@ def findWells(videoPath, hyperparameters):
   # Multiple ROIs defined by user during the execution
   
   if int(hyperparameters["multipleROIsDefinedDuringExecution"]):
+    if QApplication.instance() is not None:
+      return _multipleROIsDefinedDuringExecutionQt(videoPath, hyperparameters)
     
     l = []
     cap = zzVideoReading.VideoCapture(videoPath)
@@ -391,7 +479,6 @@ def findWells(videoPath, hyperparameters):
   if hyperparameters["wellsAreRectangles"]:
     if hyperparameters["adjustRectangularWellsDetect"]:
       rectangularWellsArea = findRectangularWellsArea(frame, videoPath, hyperparameters)
-      initializeAdjustHyperparametersWindows("Rectangular Wells Detection: Adjust parameters until you get the right number of wells detected (on the right side)")
     else:
       rectangularWellsArea = hyperparameters["findRectangleWellArea"]
       
@@ -456,16 +543,24 @@ def findWells(videoPath, hyperparameters):
   saveWellsRepartitionImage(wellPositions, frame, hyperparameters)
   
   if hyperparameters["debugFindWells"]:
-  
-    frame2 = frame.copy()
-    [frame2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame2)
-  
-    cv2.imshow('Wells Detection', frame2)
-    if hyperparameters["exitAfterBackgroundExtraction"]:
-      cv2.waitKey(3000)
+
+    if QApplication.instance() is None:
+      frame2 = frame.copy()
+      [frame2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame2)
+    
+      cv2.imshow('Wells Detection', frame2)
+      if hyperparameters["exitAfterBackgroundExtraction"]:
+        cv2.waitKey(3000)
+      else:
+        cv2.waitKey(0)
+      cv2.destroyWindow('Wells Detection')
     else:
-      cv2.waitKey(0)
-    cv2.destroyWindow('Wells Detection')
+      label = QLabel()
+      label.setMinimumSize(1, 1)
+      layout = QVBoxLayout()
+      layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+      timeout = 3000 if hyperparameters["exitAfterBackgroundExtraction"] else None
+      util.pageOrDialog(layout, title='Wells Detection', dialog=True, labelInfo=(frame, label), timeout=timeout)
   
   print("Wells found")
   
