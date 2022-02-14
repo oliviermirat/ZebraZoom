@@ -27,10 +27,15 @@ def getForegroundImage(videoPath, background, frameNumber, wellNumber, wellPosit
   cap.set(1, frameNumber)
   ret, frame = cap.read()
   
-  while not(ret) and frameNumber:
-    frameNumber = frameNumber - 1
-    cap.set(1, frameNumber)
-    ret, frame = cap.read()
+  if not(ret):
+    if hyperparameters["searchPreviousFramesIfCurrentFrameIsCorrupted"]:
+      currentFrameNum = int(cap.get(1))
+      while not(ret) and currentFrameNum:
+        currentFrameNum = currentFrameNum - 1
+        cap.set(1, currentFrameNum)
+        ret, frame = cap.read()
+    else:
+      frame = back.copy()
   
   if hyperparameters["invertBlackWhiteOnImages"]:
     frame = 255 - frame

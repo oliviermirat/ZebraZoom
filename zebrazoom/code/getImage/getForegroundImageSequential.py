@@ -23,11 +23,14 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
     ret, frame = cap.read()
   
   if not(ret):
-    currentFrameNum = int(cap.get(1))
-    while not(ret):
-      currentFrameNum = currentFrameNum - 1
-      cap.set(1, currentFrameNum)
-      ret, frame = cap.read()
+    if hyperparameters["searchPreviousFramesIfCurrentFrameIsCorrupted"]:
+      currentFrameNum = int(cap.get(1))
+      while not(ret) and currentFrameNum:
+        currentFrameNum = currentFrameNum - 1
+        cap.set(1, currentFrameNum)
+        ret, frame = cap.read()
+    else:
+      frame = back.copy()
       
   if hyperparameters["invertBlackWhiteOnImages"]:
     frame = 255 - frame

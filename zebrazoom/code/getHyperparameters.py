@@ -423,6 +423,7 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["tryCreatingFolderUntilSuccess"] =  getConfig(config, "tryCreatingFolderUntilSuccess", videoPath)
   
+  hyperparameters["searchPreviousFramesIfCurrentFrameIsCorrupted"] =  getConfig(config, "searchPreviousFramesIfCurrentFrameIsCorrupted", videoPath)
   
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1
