@@ -18,6 +18,7 @@ import time
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import json
+import subprocess
 
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
@@ -266,6 +267,14 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     
     # Various post-processing options depending on configuration file choices
     dataPostProcessing(outputFolderVideo, superStruct, hyperparameters, videoName, videoExt)
+  
+  try:
+    with open(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'ZebraZoomVersionUsed.txt'), 'w') as fp:
+      subprocess.run(["pip", "show",  "zebrazoom"], stdout=fp)
+  except:
+    fileVersionUsed = open(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'ZebraZoomVersionUsed.txt'), 'w')
+    fileVersionUsed.write("Was not able to retrive the version number used.")
+    fileVersionUsed.close()
   
   # Copying output result folder in another folder
   if len(hyperparameters["additionalOutputFolder"]):
