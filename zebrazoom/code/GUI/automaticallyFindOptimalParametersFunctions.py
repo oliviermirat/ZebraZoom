@@ -17,7 +17,10 @@ from zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions import prepareConfigF
 from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 import zebrazoom.code.util as util
 
-from PyQt6.QtWidgets import QApplication
+try:
+  from PyQt6.QtWidgets import QApplication
+except ImportError:
+  from PyQt5.QtWidgets import QApplication
 
 
 def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack):

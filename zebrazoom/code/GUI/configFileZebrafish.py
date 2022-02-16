@@ -1,6 +1,11 @@
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QLabel, QWidget, QPushButton, QVBoxLayout, QRadioButton, QButtonGroup
+try:
+  from PyQt6.QtCore import Qt
+  from PyQt6.QtGui import QFont
+  from PyQt6.QtWidgets import QLabel, QWidget, QPushButton, QVBoxLayout, QRadioButton, QButtonGroup
+except ImportError:
+  from PyQt5.QtCore import Qt
+  from PyQt5.QtGui import QFont
+  from PyQt5.QtWidgets import QLabel, QWidget, QPushButton, QVBoxLayout, QRadioButton, QButtonGroup
 
 import zebrazoom.code.util as util
 

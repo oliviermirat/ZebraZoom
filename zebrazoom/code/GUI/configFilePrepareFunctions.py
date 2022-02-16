@@ -16,8 +16,12 @@ from zebrazoom.mainZZ import mainZZ
 import json
 import os
 
-from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtWidgets import QApplication, QFileDialog, QGridLayout, QLabel, QVBoxLayout
+try:
+  from PyQt6.QtCore import Qt, QTimer
+  from PyQt6.QtWidgets import QApplication, QFileDialog, QGridLayout, QLabel, QVBoxLayout
+except ImportError:
+  from PyQt5.QtCore import Qt, QTimer
+  from PyQt5.QtWidgets import QApplication, QFileDialog, QGridLayout, QLabel, QVBoxLayout
 
 import zebrazoom.code.util as util
 

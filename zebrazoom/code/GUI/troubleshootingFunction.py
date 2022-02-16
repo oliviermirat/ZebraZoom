@@ -7,7 +7,10 @@ import cvui
 import json
 import os
 
-from PyQt6.QtWidgets import QFileDialog
+try:
+  from PyQt6.QtWidgets import QFileDialog
+except ImportError:
+  from PyQt5.QtWidgets import QFileDialog
 
 
 def chooseVideoToTroubleshootSplitVideo(self, controller):

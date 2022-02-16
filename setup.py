@@ -23,7 +23,7 @@ setup(
     "opencv-python<=4.5.1.48",
     "xlrd",
     "seaborn",
-    "PyQt6",
+    "PyQt5",
   ],
   packages=setuptools.find_packages(),
   data_files=[

@@ -6,8 +6,12 @@ from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 from zebrazoom.code.util import pageOrDialog
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QLabel, QVBoxLayout
+try:
+  from PyQt6.QtCore import Qt
+  from PyQt6.QtWidgets import QApplication, QLabel, QVBoxLayout
+except ImportError:
+  from PyQt5.QtCore import Qt
+  from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout
 
 
 def getBackground(videoPath, hyperparameters):

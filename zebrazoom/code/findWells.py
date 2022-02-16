@@ -13,8 +13,12 @@ from zebrazoom.code.adjustHyperparameters import adjustHyperparameters
 import tkinter as tk
 from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QLabel, QVBoxLayout
+try:
+  from PyQt6.QtCore import Qt
+  from PyQt6.QtWidgets import QApplication, QLabel, QVBoxLayout
+except ImportError:
+  from PyQt5.QtCore import Qt
+  from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout
 
 import zebrazoom.code.util as util
 

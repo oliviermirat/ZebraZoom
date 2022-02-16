@@ -3,9 +3,17 @@ import os
 import sys
 import traceback
 
-from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QFont
-from PyQt6.QtWidgets import QWidget, QDialog, QFileDialog, QApplication, QLabel, QMainWindow, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem
+try:
+  from PyQt6.QtCore import Qt, QSize
+  from PyQt6.QtGui import QFont
+  from PyQt6.QtWidgets import QWidget, QDialog, QFileDialog, QApplication, QLabel, QMainWindow, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem
+except ImportError:
+  from PyQt5.QtCore import Qt, QSize
+  from PyQt5.QtGui import QFont
+  from PyQt5.QtWidgets import QWidget, QDialog, QFileDialog, QApplication, QLabel, QMainWindow, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem
+  QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+  QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+  QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
 
 import zebrazoom.code.util as util
 import zebrazoom.code.GUI.configFilePrepareFunctions as configFilePrepareFunctions
@@ -114,7 +122,8 @@ class ZebraZoomApp(QApplication):
                     win.close()
                 sys.exit(0)
             else:
-                self._windows.remove(window)
+                if window in self._windows:
+                    self._windows.remove(window)
             return fn(*args, **kwargs)
         return inner
 
