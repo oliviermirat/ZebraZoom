@@ -4,8 +4,12 @@ import pickle
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 
-from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QDialog, QLabel, QPushButton, QVBoxLayout
+try:
+  from PyQt6.QtCore import Qt
+  from PyQt6.QtWidgets import QApplication, QDialog, QLabel, QPushButton, QVBoxLayout
+except ImportError:
+  from PyQt5.QtCore import Qt
+  from PyQt5.QtWidgets import QApplication, QDialog, QLabel, QPushButton, QVBoxLayout
 
 import zebrazoom.code.util as util
 

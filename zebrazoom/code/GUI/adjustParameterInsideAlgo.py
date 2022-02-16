@@ -1,7 +1,13 @@
-from PyQt6.QtCore import Qt
-from PyQt6.QtGui import QFont, QIntValidator
-from PyQt6.QtWidgets import QLabel, QGridLayout, QLineEdit, QWidget, QCheckBox, QPushButton, QVBoxLayout, QRadioButton, QButtonGroup
+try:
+  from PyQt6.QtCore import Qt, pyqtSignal, QPointF, QRect, QRectF, QSizeF
+  from PyQt6.QtGui import QColor, QFont, QIntValidator, QPainter, QPolygon, QPolygonF, QTransform
+  from PyQt6.QtWidgets import QApplication, QLabel, QGridLayout, QLineEdit, QWidget, QCheckBox, QPushButton, QVBoxLayout, QRadioButton, QButtonGroup, QSlider
+except ImportError:
+  from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QRect, QRectF, QSizeF
+  from PyQt5.QtGui import QColor, QFont, QIntValidator, QPainter, QPolygon, QPolygonF, QTransform
+  from PyQt5.QtWidgets import QApplication, QLabel, QGridLayout, QLineEdit, QWidget, QCheckBox, QPushButton, QVBoxLayout, QRadioButton, QButtonGroup, QSlider
 
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.util as util
 
 

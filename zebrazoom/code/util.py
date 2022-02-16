@@ -2,9 +2,16 @@ import sys
 
 import cv2
 
-from PyQt6.QtCore import pyqtSignal, Qt, QEventLoop, QPointF, QRectF, QSize, QSizeF, QTimer
-from PyQt6.QtGui import QColor, QFont, QImage, QPainter, QPixmap, QPolygonF, QTransform
-from PyQt6.QtWidgets import QApplication, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QSlider, QSpinBox, QToolTip, QVBoxLayout, QWidget
+try:
+  from PyQt6.QtCore import pyqtSignal, Qt, QEventLoop, QPointF, QRectF, QSize, QSizeF, QTimer
+  from PyQt6.QtGui import QColor, QFont, QImage, QPainter, QPixmap, QPolygonF, QTransform
+  from PyQt6.QtWidgets import QApplication, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QSlider, QSpinBox, QToolTip, QVBoxLayout, QWidget
+  PYQT6 = True
+except ImportError:
+  from PyQt5.QtCore import pyqtSignal, Qt, QEventLoop, QPointF, QRectF, QSize, QSizeF, QTimer
+  from PyQt5.QtGui import QColor, QFont, QImage, QPainter, QPixmap, QPolygonF, QTransform
+  from PyQt5.QtWidgets import QApplication, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QSlider, QSpinBox, QToolTip, QVBoxLayout, QWidget
+  PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 
@@ -126,7 +133,6 @@ def pageOrDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, t
       label.setMinimumSize(width, height)
       layoutSize = mainLayout.totalSizeHint()
       label.setMinimumSize(1, 1)
-      pixmapSize = label.pixmap().size()
       extraWidth = layoutSize.width() - width
       extraHeight = layoutSize.height() - height
     else:
@@ -161,8 +167,8 @@ def setPixmapFromCv(img, label, preferredSize=None):
   if not label.isVisible():
     label.setPixmap(_cvToPixmap(img))
     return
-  scaling = label.devicePixelRatio()
-  if label.pixmap().isNull():
+  scaling = label.devicePixelRatio() if PYQT6 else label.devicePixelRatioF()
+  if label.pixmap() is None or label.pixmap().isNull():
     label.hide()
     label.setPixmap(_cvToPixmap(img))
     label.show()
@@ -304,7 +310,7 @@ class _InteractiveLabelPoint(QLabel):
 
   def mouseReleaseEvent(self, evt):
     if self._point is not None and not self._tooltipShown:
-      QToolTip.showText(self.mapToGlobal(self._point), "If you aren't satisfied with the selection, click again.", msecShowTime=5000)
+      QToolTip.showText(self.mapToGlobal(self._point), "If you aren't satisfied with the selection, click again.", self, self.rect(), 5000)
       self._tooltipShown = True
 
   def enterEvent(self, evt):
@@ -384,7 +390,7 @@ class _InteractiveLabelRect(QLabel):
 
   def mouseReleaseEvent(self, evt):
     if self._bottomRight is not None and not self._tooltipShown:
-      QToolTip.showText(self.mapToGlobal(self._bottomRight), "If you aren't satisfied with the selection, click again.", msecShowTime=5000)
+      QToolTip.showText(self.mapToGlobal(self._bottomRight), "If you aren't satisfied with the selection, click again.", self, self.rect(), 5000)
       self._tooltipShown = True
 
   def mouseMoveEvent(self, evt):

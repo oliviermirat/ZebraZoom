@@ -9,9 +9,14 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 
-from PyQt6.QtCore import Qt, QSize
-from PyQt6.QtGui import QCursor, QFont
-from PyQt6.QtWidgets import QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox
+try:
+  from PyQt6.QtCore import Qt, QSize
+  from PyQt6.QtGui import QCursor, QFont
+  from PyQt6.QtWidgets import QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox
+except ImportError:
+  from PyQt5.QtCore import Qt, QSize
+  from PyQt5.QtGui import QCursor, QFont
+  from PyQt5.QtWidgets import QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox
 
 import zebrazoom.code.util as util
 from zebrazoom.code.readValidationVideo import readValidationVideo

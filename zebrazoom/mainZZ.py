@@ -20,6 +20,11 @@ import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import json
 import subprocess
 
+try:
+  from PyQt6.QtWidgets import QApplication
+except ImportError:
+  from PyQt5.QtWidgets import QApplication
+
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
