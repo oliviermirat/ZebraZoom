@@ -489,6 +489,7 @@ class ViewParameters(QWidget):
         f = Figure(figsize=(5,5), dpi=100)
         self.a = f.add_subplot(111)
         self.canvas = FigureCanvas(f)
+        self.canvas.setMinimumSize(self.canvas.size())
         layout.addWidget(self.canvas, 2, 7, 7, 1, Qt.AlignmentFlag.AlignCenter)
 
         centralWidget = QWidget()
