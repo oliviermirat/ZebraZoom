@@ -71,9 +71,6 @@ Restart your computer.<br/>
 Open the "Anaconda Prompt" or any other terminal.<br/>
 Type:<br/>
 <I>pip install zebrazoom</I><br/>
-If you are on Mac, type:<br/>
-<I>pip uninstall opencv-python</I><br/>
-<I>pip install opencv-python-headless</I><br/>
 That's it! ZebraZoom is now installed on your computer!<br/><br/>
 If you want to upgrade to the latest release of ZebraZoom later on, you can type:<br/>
 <I>pip install zebrazoom --upgrade</I><br/><br/>
