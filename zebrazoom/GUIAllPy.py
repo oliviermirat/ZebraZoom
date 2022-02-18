@@ -7,6 +7,7 @@ try:
   from PyQt6.QtCore import Qt, QSize
   from PyQt6.QtGui import QFont
   from PyQt6.QtWidgets import QWidget, QDialog, QFileDialog, QApplication, QLabel, QMainWindow, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem
+  PYQT6 = True
 except ImportError:
   from PyQt5.QtCore import Qt, QSize
   from PyQt5.QtGui import QFont
@@ -14,6 +15,7 @@ except ImportError:
   QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
   QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
   QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+  PYQT6 = False
 
 import zebrazoom.code.util as util
 import zebrazoom.code.GUI.configFilePrepareFunctions as configFilePrepareFunctions
@@ -67,6 +69,9 @@ sys.excepthook = excepthook
 class ZebraZoomApp(QApplication):
     def __init__(self, args):
         super().__init__(args)
+        if not PYQT6 and sys.platform.startswith('win'):  # qt5 uses deprecated windows API to determine the system font, this works around that issuue
+            self.setFont(QApplication.font("QMessageBox"))
+
         self.homeDirectory = os.path.dirname(os.path.realpath(__file__))
 
         self.configFile = {}
