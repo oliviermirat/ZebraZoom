@@ -326,10 +326,8 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
   # Launching the interactive adjustement of hyperparameters related to the detection of bouts
   
   wellNumber = str(data[0]["wellNumber"])
-  firstFrameParamAdjust = 0
-  adjustOnWholeVideo    = 0
   
-  [configFile, initialFirstFrameValue, initialLastFrameValue] = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrameParamAdjust, videoPath, adjustOnWholeVideo)
+  initialFirstFrameValue, initialLastFrameValue = prepareConfigFileForParamsAdjustements(configFile, wellNumber, configFile.get("firstFrame", 1), videoPath, False)
   configFile["firstFrame"] = lastFrameNum - 500 if lastFrameNum - 500 > 0 else 0
   configFile["lastFrame"]  = (configFile["firstFrame"] + 500) if (configFile["firstFrame"] + 500) < (max_l - 1) else (max_l - 1)
   

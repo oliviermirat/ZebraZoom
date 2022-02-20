@@ -184,6 +184,15 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
         pickle.dump(wellPositions, outfile2)
         outfile2.close()
     outfile.close()
+    app = QApplication.instance()
+    if hasattr(app, "wellPositions"):
+      app.wellPositions[:] = [(position['topLeftX'], position['topLeftY'], position['lengthX'], position['lengthY'])
+                              for idx, position in enumerate(wellPositions)]
+      if hyperparameters["wellsAreRectangles"] or len(hyperparameters["oneWellManuallyChosenTopLeft"]) or int(hyperparameters["multipleROIsDefinedDuringExecution"]) or hyperparameters["noWellDetection"] or hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"]:
+        app.wellShape = 'rectangle'
+      else:
+        app.wellShape = 'circle'
+
   if int(hyperparameters["exitAfterWellsDetection"]):
     print("exitAfterWellsDetection")
     if hyperparameters["popUpAlgoFollow"]:
