@@ -60,13 +60,43 @@ def reajustCenterOfMassIfNecessary(contour, x, y, lenX, lenY):
     y = testCenter[1]
   
   return [x, y]
-
+  
+def fillWhiteHoles(frame):
+  
+  frameBeforeWhiteFill = frame.copy()
+  im_floodfill = frame.copy()
+  h, w = frame.shape[:2]
+  mask = np.zeros((h+2, w+2), np.uint8)
+  cv2.floodFill(im_floodfill, mask, (0,0), 255);
+  im_floodfill_inv = cv2.bitwise_not(im_floodfill)
+  frame = frame | im_floodfill_inv
+  
+  if cv2.countNonZero(frame) > (len(frame) * len(frame[0])) * 0.95:
+    frame = frameBeforeWhiteFill
+    print("BACK TO IMAGE BEFORE WHITE FILL")
+  
+  return frame
+  
+def erodeThenAddWhiteBorders(frame, kernel):
+  frame = cv2.erode(frame, kernel, iterations=1)
+  frame[0,:] = 255
+  frame[len(frame)-1,:] = 255
+  frame[:,0] = 255
+  frame[:,len(frame[0])-1] = 255
+  return frame
 
 def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hyperparameters, videoName):
 
-  # videoName = "jimmy.mp4"
   showInitialVideo = True
-  ROIHalfDiam = 150
+  iterativelyErodeEachImage = False
+  dist2Threshold = 400 #5000
+  reduceImageResolutionPercentage = hyperparameters["reduceImageResolutionPercentage"]
+  
+  kernel  = np.ones((3, 3), np.uint8)
+  ROIHalfDiam = -1
+  
+  class CustomError(Exception):
+    pass
 
   cap = zzVideoReading.VideoCapture(videoPath)
   if (cap.isOpened()== False): 
@@ -83,11 +113,14 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
   trackingEyesAllAnimals     = 0
   trackingProbabilityOfGoodDetection = 0
   
-  fgbg = cv2.createBackgroundSubtractorKNN()
+  fgbg = cv2.createBackgroundSubtractorKNN(dist2Threshold = dist2Threshold)
+  
   for i in range(0, min(lastFrame - 1, 500), int(min(lastFrame - 1, 500) / 10)):
     cap.set(1, min(lastFrame - 1, 500) - i)
     ret, frame = cap.read()
-    fgmask = fgbg.apply(frame)
+    if ret:
+      frame = cv2.resize(frame, (int(frame_width * reduceImageResolutionPercentage), int(frame_height * reduceImageResolutionPercentage)), interpolation = cv2.INTER_AREA)
+      fgmask = fgbg.apply(frame)
   cap.release()
   
   cap = zzVideoReading.VideoCapture(videoPath)
@@ -102,6 +135,9 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
     ret, frame = cap.read()
     
     if ret:
+      
+      if hyperparameters["reduceImageResolutionPercentage"]:
+        frame = cv2.resize(frame, (int(frame_width * hyperparameters["reduceImageResolutionPercentage"]), int(frame_height * hyperparameters["reduceImageResolutionPercentage"])), interpolation = cv2.INTER_AREA)
     
       if i == firstFrame:
         
@@ -116,6 +152,46 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
         cv2.destroyAllWindows()
         previousCenterDetectedX = cursor.x
         previousCenterDetectedY = cursor.y
+        
+        WINDOW_NAME = "Click on the tip of the tail of the same animal"
+        cvui.init(WINDOW_NAME)
+        cv2.moveWindow(WINDOW_NAME, 0,0)
+        cvui.imshow(WINDOW_NAME, frame)
+        while not(cvui.mouse(cvui.CLICK)):
+          cursor = cvui.mouse()
+          if cv2.waitKey(20) == 27:
+            break
+        cv2.destroyAllWindows()
+        tailTipX = cursor.x
+        tailTipY = cursor.y
+        
+        frame2 = frame.copy()
+        frame2 = fgbg.apply(frame2)
+        ret, frame2 = cv2.threshold(frame2, 0, 255, cv2.THRESH_BINARY)
+        frame2 = fillWhiteHoles(frame2)
+        frame2 = 255 - frame2
+        if iterativelyErodeEachImage:
+          frame2 = erodeThenAddWhiteBorders(frame2, kernel)
+        contours, hierarchy = cv2.findContours(frame2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        for contour in contours:
+          if cv2.pointPolygonTest(contour, (previousCenterDetectedX, previousCenterDetectedY), False) >= 0:
+            animalBodyArea = cv2.contourArea(contour)
+            ROIHalfDiam = int(math.sqrt(animalBodyArea) * 4)
+        
+        print("animalBodyArea:", animalBodyArea)
+        print("ROIHalfDiam:", ROIHalfDiam)   
+      
+      if ROIHalfDiam == -1:
+        raise CustomError("An error occurred")
+      
+      diffAreaAuthorized = 0.5
+      hyperparameters["minAreaBody"] = int(animalBodyArea - animalBodyArea * diffAreaAuthorized)
+      hyperparameters["maxAreaBody"] = int(animalBodyArea + animalBodyArea * diffAreaAuthorized)
+      hyperparameters["minArea"] = int(animalBodyArea - animalBodyArea * diffAreaAuthorized)
+      hyperparameters["maxArea"] = int(animalBodyArea + animalBodyArea * diffAreaAuthorized)
+      hyperparameters["headSize"]    = int(math.sqrt(animalBodyArea) * 2)
+      hyperparameters["minTailSize"] = int(math.sqrt(animalBodyArea) * 0.5)
+      hyperparameters["maxTailSize"] = int(math.sqrt(animalBodyArea) * 4)
       
       xmin = previousCenterDetectedX - ROIHalfDiam if previousCenterDetectedX - ROIHalfDiam > 0 else 0
       xmax = previousCenterDetectedX + ROIHalfDiam if previousCenterDetectedX + ROIHalfDiam < len(frame[0]) else len(frame[0]) - 1
@@ -134,16 +210,9 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
       
       ret, frame = cv2.threshold(frame, 0, 255, cv2.THRESH_BINARY)
       
-      im_floodfill = frame.copy()
-      h, w = frame.shape[:2]
-      mask = np.zeros((h+2, w+2), np.uint8)
-      cv2.floodFill(im_floodfill, mask, (0,0), 255);
-      im_floodfill_inv = cv2.bitwise_not(im_floodfill)
-      frame = frame | im_floodfill_inv
+      frame = fillWhiteHoles(frame)
       
       frame = 255 - frame
-      
-      kernel  = np.ones((3, 3), np.uint8)
       
       countNbOfRightArea = 0
       distanceToPreviousCenterDetected = 100000000000000000000
@@ -153,16 +222,14 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
       mostLikelyContour = 0
       while countNbOfRightArea == 0 and countNbTries < 10:
         countNbTries = countNbTries + 1
-        frame = cv2.erode(frame, kernel, iterations=1)
-        frame[0,:] = 255
-        frame[len(frame)-1,:] = 255
-        frame[:,0] = 255
-        frame[:,len(frame[0])-1] = 255
+        if iterativelyErodeEachImage:
+          frame = erodeThenAddWhiteBorders(frame, kernel)
+        if False:
+          cv2.imshow("frame", frame)
+          cv2.waitKey(0)
         contours, hierarchy = cv2.findContours(frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         for contour in contours:
           contourArea = cv2.contourArea(contour)
-          if contourArea > 500 and contourArea < 10000:
-            print("contourArea:", contourArea, "; min, max:", hyperparameters["minAreaBody"], hyperparameters["maxAreaBody"])
           if contourArea > hyperparameters["minAreaBody"] and contourArea < hyperparameters["maxAreaBody"]:
             countNbOfRightArea = countNbOfRightArea + 1
             M = cv2.moments(contour)
@@ -174,7 +241,9 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
               newCenterDetectedY_ROICordinates = cy
               mostLikelyContour = contour
         
-        print("First: newCenterDetectedX_ROICordinates, newCenterDetectedY_ROICordinates:", newCenterDetectedX_ROICordinates, newCenterDetectedY_ROICordinates)
+        if not(iterativelyErodeEachImage):
+          countNbTries = 10
+        # print("First: newCenterDetectedX_ROICordinates, newCenterDetectedY_ROICordinates:", newCenterDetectedX_ROICordinates, newCenterDetectedY_ROICordinates)
         
         if type(mostLikelyContour) != int:
           
@@ -261,7 +330,7 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
               largestContourArea = 0
               for contour in contours:
                 contourArea = cv2.contourArea(contour)
-                if contourArea > largestContourArea and contourArea < ((2 * ROIHalfDiam)**2) * 0.8:
+                if contourArea > largestContourArea and contourArea < (len(blankPreviousIteration)*len(blankPreviousIteration[0])) * 0.8:
                   largestContourArea = contourArea
                   M = cv2.moments(contour)
                   x = int(M['m10']/M['m00'])
@@ -271,7 +340,7 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
                   newCenterDetectedX_ROICordinates = x
                   newCenterDetectedY_ROICordinates = y
       
-      print("Second: newCenterDetectedX_ROICordinates, newCenterDetectedY_ROICordinates:", newCenterDetectedX_ROICordinates, newCenterDetectedY_ROICordinates)
+      # print("Second: newCenterDetectedX_ROICordinates, newCenterDetectedY_ROICordinates:", newCenterDetectedX_ROICordinates, newCenterDetectedY_ROICordinates)
       
       trackingHeadTailAllAnimals[0, i-firstFrame][0][0] = newCenterDetectedX_ROICordinates
       trackingHeadTailAllAnimals[0, i-firstFrame][0][1] = newCenterDetectedY_ROICordinates

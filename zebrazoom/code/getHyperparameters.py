@@ -425,6 +425,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["searchPreviousFramesIfCurrentFrameIsCorrupted"] =  getConfig(config, "searchPreviousFramesIfCurrentFrameIsCorrupted", videoPath)
   
+  hyperparameters["reduceImageResolutionPercentage"] = getConfig(config, "reduceImageResolutionPercentage", videoPath)
+  
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1
   

@@ -179,7 +179,7 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
   if hyperparameters["outputValidationVideoFps"] > 0:
     outputFps = int(hyperparameters["outputValidationVideoFps"])
   
-  out = cv2.VideoWriter(outputName,cv2.VideoWriter_fourcc('M','J','P','G'), outputFps, (frame_width,frame_height))
+  out = cv2.VideoWriter(outputName,cv2.VideoWriter_fourcc('M','J','P','G'), outputFps, (int(frame_width * hyperparameters["reduceImageResolutionPercentage"]), int(frame_height * hyperparameters["reduceImageResolutionPercentage"])))
   
   if int(hyperparameters["onlyDoTheTrackingForThisNumberOfFrames"]) != 0:
     lastFrame = min(lastFrame, firstFrame + int(hyperparameters["onlyDoTheTrackingForThisNumberOfFrames"]))
@@ -196,6 +196,8 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
       ret, frame = cap.read()
       
       if ret:
+        if hyperparameters["reduceImageResolutionPercentage"]:
+          frame = cv2.resize(frame, (int(frame_width * hyperparameters["reduceImageResolutionPercentage"]), int(frame_height * hyperparameters["reduceImageResolutionPercentage"])), interpolation = cv2.INTER_AREA)
         if hyperparameters["outputValidationVideoContrastImprovement"]:
           frame = 255 - frame
           frame  = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)

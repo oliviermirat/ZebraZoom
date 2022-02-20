@@ -41,6 +41,7 @@
   "trackOnlyOnROI_halfDiameter" : 0,
   "tryCreatingFolderUntilSuccess" : 1,
   "searchPreviousFramesIfCurrentFrameIsCorrupted" : 1,
+  "reduceImageResolutionPercentage" : 1,
   
   "setPixDiffBoutDetectParameters" : 0,
   
