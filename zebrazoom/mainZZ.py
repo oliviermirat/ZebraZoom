@@ -125,7 +125,10 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     # Creating output folder
     if not(hyperparameters["reloadWellPositions"]) and not(hyperparameters["reloadBackground"]) and not(os.path.exists(os.path.join(outputFolderVideo, 'intermediaryWellPositionReloadNoMatterWhat.txt'))) and not(hyperparameters["dontDeleteOutputFolderIfAlreadyExist"]):
       if os.path.exists(outputFolderVideo):
-        shutil.rmtree(outputFolderVideo)
+        pastNumbersTaken = 1
+        while os.path.exists(outputFolderVideo + '_PastTracking_' + str(pastNumbersTaken)) and pastNumbersTaken < 99:
+          pastNumbersTaken += 1
+        shutil.move(outputFolderVideo, outputFolderVideo + '_PastTracking_' + str(pastNumbersTaken))
       if hyperparameters["tryCreatingFolderUntilSuccess"]:
         while True:
           try:

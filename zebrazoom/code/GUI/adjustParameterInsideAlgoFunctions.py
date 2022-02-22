@@ -83,7 +83,12 @@ def detectBouts(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWho
   configFile["trackTail"]                   = 0
   configFile["adjustDetectMovWithRawVideo"] = 1
   configFile["reloadWellPositions"]         = 1
-
+  if "freqAlgoPosFollow" in configFile:
+    freqAlgoPosFollowInitial = configFile["freqAlgoPosFollow"]
+  else:
+    freqAlgoPosFollowInitial = -1
+  configFile["freqAlgoPosFollow"] = 10
+  
   if "thresForDetectMovementWithRawVideo" in configFile:
     if configFile["thresForDetectMovementWithRawVideo"] == 0:
       configFile["thresForDetectMovementWithRawVideo"] = 1
@@ -116,9 +121,14 @@ def detectBouts(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWho
   else:
     configFile["firstFrame"]                  = initialFirstFrameValue
     configFile["lastFrame"]                   = initialLastFrameValue
-
+  
+  if freqAlgoPosFollowInitial == -1:
+    del configFile["freqAlgoPosFollow"]
+  else:
+    configFile["freqAlgoPosFollow"] = freqAlgoPosFollowInitial
+  
   configFile["reloadBackground"] = 0
-
+  
   self.configFile = configFile
 
 

@@ -275,6 +275,13 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
+    elif parameterToCalculate == 'videoDuration':
+      
+      videoDuration =  / fps
+      listOfParametersCalculated.append()
+    
+    
+    
     else:
       
       print("The parameter", parameterToCalculate, "is not specified")

@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import json
 import seaborn as sns
+import pdb
 
 def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, medianPerWellFirstForEachKinematicParameter = 0, plotOutliersAndMean = True, saveDataPlottedInJson = 0, medianPerGenotypeFirstForEachKinematicParameter=0):
 
