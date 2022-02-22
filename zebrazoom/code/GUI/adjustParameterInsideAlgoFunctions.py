@@ -357,20 +357,3 @@ def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalcula
         adjustFastFreelySwimTracking(self, controller)
       else:
         adjustParamInsideAlgoFreelySwimPage()
-
-
-def updateFillGapFrameNb(self, fillGapFrameNb):
-  dialog = QDialog()
-  dialog.setWindowTitle("Done!")
-  if len(fillGapFrameNb):
-    self.configFile["fillGapFrameNb"] = int(fillGapFrameNb)
-    text = 'The parameter fillGapFrameNb has been updated to %s' % fillGapFrameNb
-  else:
-    text = 'Insert a number in the box'
-  layout = QVBoxLayout()
-  layout.addWidget(QLabel(text, dialog), alignment=Qt.AlignmentFlag.AlignCenter)
-  button = QPushButton("Ok", dialog)
-  button.clicked.connect(lambda: dialog.accept())
-  layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
-  dialog.setLayout(layout)
-  dialog.exec()

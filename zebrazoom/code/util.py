@@ -210,7 +210,7 @@ class SliderWithSpinbox(QWidget):
 
     spinbox = QSpinBox()
     spinbox.setStyleSheet(SPINBOX_STYLESHEET)
-    spinbox.setMinimumWidth(70)
+    spinbox.setMinimumWidth(90)
     spinbox.setRange(minimum, maximum)
     spinbox.setValue(value)
     layout.addWidget(spinbox, 2, 4)

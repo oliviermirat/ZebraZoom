@@ -255,9 +255,6 @@ class ZebraZoomApp(QApplication):
     def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False):
       adjustParameterInsideAlgoFunctions.calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen, automaticParameters, boutDetectionsOnly)
 
-    def updateFillGapFrameNb(self, fillGapFrameNb):
-      adjustParameterInsideAlgoFunctions.updateFillGapFrameNb(self, fillGapFrameNb)
-
     def goToAdvanceSettings(self, controller, yes, no):
       configFilePrepareFunctions.goToAdvanceSettings(self, controller, yes, no)
 

@@ -1,11 +1,11 @@
 try:
   from PyQt6.QtCore import Qt, QPointF, QRect, QRectF, QSizeF
   from PyQt6.QtGui import QColor, QFont, QIntValidator, QPainter, QPolygon, QPolygonF, QTransform
-  from PyQt6.QtWidgets import QApplication, QLabel, QLineEdit, QCheckBox, QPushButton, QVBoxLayout, QWidget
+  from PyQt6.QtWidgets import QApplication, QLabel, QLineEdit, QCheckBox, QPushButton, QHBoxLayout, QVBoxLayout, QWidget
 except ImportError:
   from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QRect, QRectF, QSizeF
   from PyQt5.QtGui import QColor, QFont, QIntValidator, QPainter, QPolygon, QPolygonF, QTransform
-  from PyQt5.QtWidgets import QApplication, QLabel, QLineEdit, QCheckBox, QPushButton, QVBoxLayout, QWidget
+  from PyQt5.QtWidgets import QApplication, QLabel, QLineEdit, QCheckBox, QPushButton, QHBoxLayout, QVBoxLayout, QWidget
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.util as util
@@ -140,12 +140,12 @@ def adjustParamInsideAlgoPage():
   app = QApplication.instance()
 
   layout = QVBoxLayout()
-  layout.addWidget(util.apply_style(QLabel("Advanced Parameter adjustment"), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
+  layout.addWidget(util.apply_style(QLabel("Select well and first frame for advanced parameter adjustment"), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
 
   cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
 
   firstFrame = app.configFile.get("firstFrame", 1)
-  frameSlider = util.SliderWithSpinbox(firstFrame, 0, cap.get(7) - 1, name="Frame")
+  frameSlider = util.SliderWithSpinbox(firstFrame, 0, cap.get(7) - 1, name="First frame")
 
   def getFrame():
     cap.set(1, frameSlider.value())
@@ -156,37 +156,62 @@ def adjustParamInsideAlgoPage():
   img = getFrame()
   height, width = img.shape[:2]
   video = _WellSelectionLabel(width, height)
-  layout.setStretch(1, 1)
-  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
-  layout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
 
-  layout.addWidget(util.apply_style(QLabel("Recalculate background using this number of images: (default is 60)"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+  sublayout = QHBoxLayout()
+  sublayout.addStretch(1)
+  sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+  adjustLayout = QVBoxLayout()
+  adjustLayout.setSpacing(0)
+  adjustLayout.addStretch()
+  adjustOnWholeVideoCheckbox = QCheckBox("Adjust over the entire video")
+  adjustOnWholeVideoCheckbox.setToolTip("By default, adjustment is peformed over 500 frames. Check this to adjust on the whole video.")
+  adjustLayout.addWidget(QLabel())
+  adjustLayout.addWidget(adjustOnWholeVideoCheckbox, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
+  adjustLayout.addStretch()
+  sublayout.addLayout(adjustLayout, stretch=1)
+  layout.addLayout(sublayout)
+
+  recalculateLayout = QHBoxLayout()
+  recalculateLayout.addStretch()
+  recalculateLayout.addWidget(util.apply_style(QLabel("Recalculate background using this number of images:"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
   nbImagesForBackgroundCalculation = QLineEdit()
   nbImagesForBackgroundCalculation.setValidator(QIntValidator(nbImagesForBackgroundCalculation))
   nbImagesForBackgroundCalculation.validator().setBottom(0)
-  layout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
+  nbImagesForBackgroundCalculation.setText("60")
+  nbImagesForBackgroundCalculation.setFixedWidth(50)
+  recalculateLayout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
   recalculateBtn = QPushButton("Recalculate")
-  recalculateBtn.clicked.connect(lambda: app.calculateBackground(app, nbImagesForBackgroundCalculation.text()))
-  layout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text()))
+  recalculateLayout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  recalculateLayout.addStretch()
+  layout.addLayout(recalculateLayout)
 
-  adjustOnWholeVideoCheckbox = QCheckBox("I want to adjust parameters over the entire video, not only on 500 frames at a time.")
-  layout.addWidget(adjustOnWholeVideoCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
-
+  adjustButtonsLayout = QHBoxLayout()
+  adjustButtonsLayout.addStretch()
   adjustBoutsBtn = QPushButton("Adjust Bouts Detection")
   adjustBoutsBtn.clicked.connect(lambda: app.detectBouts(app, video.getWell(), frameSlider.value(), adjustOnWholeVideoCheckbox.isChecked()))
-  layout.addWidget(adjustBoutsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-  layout.addWidget(util.apply_style(QLabel("The aim here is to adjust parameters in order for the red dot on the top left of the image to appear when and only when movement is occurring."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-  layout.addWidget(util.apply_style(QLabel("WARNING: if you don't want ZebraZoom to detect bouts, don't click on the button above."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-
+  adjustBoutsBtn.setToolTip("The aim here is to adjust parameters in order for the red dot on the top left of the image to appear when and only when movement is occurring.\n"
+                            "WARNING: if you don't want ZebraZoom to detect bouts, don't click on this button.")
+  adjustButtonsLayout.addWidget(adjustBoutsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   adjustTrackingBtn = QPushButton("Adjust Tracking")
   adjustTrackingBtn.clicked.connect(lambda: app.adjustHeadEmbededTracking(app, video.getWell(), frameSlider.value(), adjustOnWholeVideoCheckbox.isChecked()))
-  layout.addWidget(adjustTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-  layout.addWidget(util.apply_style(QLabel("WARNING: only click the button above if you've tried to track without adjusting these parameters first. Trying to adjust these could make the tracking worse."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-  layout.addWidget(util.apply_style(QLabel('Warning: for some of the "overwrite" parameters, you will need to change the initial value for the "overwrite" to take effect.'), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+  adjustTrackingBtn.setToolTip('WARNING: only click this button if you\'ve tried to track without adjusting these parameters first. Trying to adjust these could make the tracking worse.\n'
+                               'Warning: for some of the "overwrite" parameters, you will need to change the initial value for the "overwrite" to take effect.')
+  adjustButtonsLayout.addWidget(adjustTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  adjustButtonsLayout.addStretch()
+  layout.addLayout(adjustButtonsLayout)
 
+  buttonsLayout = QHBoxLayout()
+  buttonsLayout.addStretch()
+  startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
+  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
+  buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   nextBtn = QPushButton("Next")
   nextBtn.clicked.connect(lambda: app.show_frame("FinishConfig"))
-  layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  buttonsLayout.addStretch()
+  layout.addLayout(buttonsLayout)
 
   _showPage(layout, (img, video), (nextBtn,))
 
@@ -195,12 +220,12 @@ def adjustParamInsideAlgoFreelySwimPage():
   app = QApplication.instance()
 
   layout = QVBoxLayout()
-  layout.addWidget(util.apply_style(QLabel("Advanced Parameter adjustment"), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
+  layout.addWidget(util.apply_style(QLabel("Select well and first frame for advanced parameter adjustment"), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
 
   cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
 
   firstFrame = app.configFile.get("firstFrame", 1)
-  frameSlider = util.SliderWithSpinbox(firstFrame, 0, cap.get(7) - 1, name="Frame")
+  frameSlider = util.SliderWithSpinbox(firstFrame, 0, cap.get(7) - 1, name="First frame")
 
   def getFrame():
     cap.set(1, frameSlider.value())
@@ -211,36 +236,61 @@ def adjustParamInsideAlgoFreelySwimPage():
   img = getFrame()
   height, width = img.shape[:2]
   video = _WellSelectionLabel(width, height)
-  layout.setStretch(1, 1)
-  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
-  layout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
 
-  layout.addWidget(util.apply_style(QLabel("Recalculate background using this number of images: (default is 60)"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+  sublayout = QHBoxLayout()
+  sublayout.addStretch(1)
+  sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+  adjustLayout = QVBoxLayout()
+  adjustLayout.setSpacing(0)
+  adjustLayout.addStretch()
+  adjustOnWholeVideoCheckbox = QCheckBox("Adjust over the entire video")
+  adjustOnWholeVideoCheckbox.setToolTip("By default, adjustment is peformed over 500 frames. Check this to adjust on the whole video.")
+  adjustLayout.addWidget(QLabel())
+  adjustLayout.addWidget(adjustOnWholeVideoCheckbox, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
+  adjustLayout.addStretch()
+  sublayout.addLayout(adjustLayout, stretch=1)
+  layout.addLayout(sublayout)
+
+  recalculateLayout = QHBoxLayout()
+  recalculateLayout.addStretch()
+  recalculateLayout.addWidget(util.apply_style(QLabel("Recalculate background using this number of images:"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
   nbImagesForBackgroundCalculation = QLineEdit()
   nbImagesForBackgroundCalculation.setValidator(QIntValidator(nbImagesForBackgroundCalculation))
   nbImagesForBackgroundCalculation.validator().setBottom(0)
-  layout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
+  nbImagesForBackgroundCalculation.setText("60")
+  nbImagesForBackgroundCalculation.setFixedWidth(50)
+  recalculateLayout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
   recalculateBtn = QPushButton("Recalculate")
   recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text()))
-  layout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  recalculateLayout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  recalculateLayout.addStretch()
+  layout.addLayout(recalculateLayout)
 
-  adjustOnWholeVideoCheckbox = QCheckBox("I want to adjust parameters over the entire video, not only on 500 frames at a time.")
-  layout.addWidget(adjustOnWholeVideoCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
-
+  adjustButtonsLayout = QHBoxLayout()
+  adjustButtonsLayout.addStretch()
   adjustBoutsBtn = QPushButton("Adjust Bouts Detection")
   adjustBoutsBtn.clicked.connect(lambda: app.detectBouts(app, video.getWell(), frameSlider.value(), adjustOnWholeVideoCheckbox.isChecked()))
-  layout.addWidget(adjustBoutsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-  layout.addWidget(util.apply_style(QLabel("The aim here is to adjust parameters in order for the red dot on the top left of the image to appear when and only when movement is occurring."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-  layout.addWidget(util.apply_style(QLabel("WARNING: if you don't want ZebraZoom to detect bouts, don't click on the button above."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-
+  adjustBoutsBtn.setToolTip("The aim here is to adjust parameters in order for the red dot on the top left of the image to appear when and only when movement is occurring.\n"
+                            "WARNING: if you don't want ZebraZoom to detect bouts, don't click on this button.")
+  adjustButtonsLayout.addWidget(adjustBoutsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   adjustTrackingBtn = QPushButton("Adjust Tracking")
   adjustTrackingBtn.clicked.connect(lambda: app.adjustFreelySwimTracking(app, video.getWell(), frameSlider.value(), adjustOnWholeVideoCheckbox.isChecked()))
-  layout.addWidget(adjustTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-  layout.addWidget(util.apply_style(QLabel("WARNING: only click the button above if you've tried to track without adjusting these parameters first. Trying to adjust these could make the tracking worse."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+  adjustTrackingBtn.setToolTip("WARNING: only click this button if you've tried to track without adjusting these parameters first. Trying to adjust these could make the tracking worse.")
+  adjustButtonsLayout.addWidget(adjustTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  adjustButtonsLayout.addStretch()
+  layout.addLayout(adjustButtonsLayout)
 
+  buttonsLayout = QHBoxLayout()
+  buttonsLayout.addStretch()
+  startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
+  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
+  buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   nextBtn = QPushButton("Next")
   nextBtn.clicked.connect(lambda: app.show_frame("FinishConfig"))
-  layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  buttonsLayout.addStretch()
+  layout.addLayout(buttonsLayout)
 
   _showPage(layout, (img, video), (nextBtn,))
 
@@ -249,12 +299,12 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage():
   app = QApplication.instance()
 
   layout = QVBoxLayout()
-  layout.addWidget(util.apply_style(QLabel("Fish tail tracking parameters adjustment"), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
+  layout.addWidget(util.apply_style(QLabel("Select well and first frame for fish tail tracking parameters adjustment"), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
 
   cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
 
   firstFrame = app.configFile.get("firstFrame", 1)
-  frameSlider = util.SliderWithSpinbox(firstFrame, 0, cap.get(7) - 1, name="Frame")
+  frameSlider = util.SliderWithSpinbox(firstFrame, 0, cap.get(7) - 1, name="First frame")
 
   def getFrame():
     cap.set(1, frameSlider.value())
@@ -265,33 +315,51 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage():
   img = getFrame()
   height, width = img.shape[:2]
   video = _WellSelectionLabel(width, height)
-  layout.setStretch(1, 1)
-  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
-  layout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
 
-  layout.addWidget(util.apply_style(QLabel("Recalculate background using this number of images: (default is 60)"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+  sublayout = QHBoxLayout()
+  sublayout.addStretch(1)
+  sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+  adjustLayout = QVBoxLayout()
+  adjustLayout.setSpacing(0)
+  adjustLayout.addStretch()
+  adjustOnWholeVideoCheckbox = QCheckBox("Adjust over the entire video")
+  adjustOnWholeVideoCheckbox.setToolTip("By default, adjustment is peformed over 500 frames. Check this to adjust on the whole video.")
+  adjustLayout.addWidget(QLabel())
+  adjustLayout.addWidget(adjustOnWholeVideoCheckbox, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
+  adjustLayout.addStretch()
+  sublayout.addLayout(adjustLayout, stretch=1)
+  layout.addLayout(sublayout)
+
+  recalculateLayout = QHBoxLayout()
+  recalculateLayout.addStretch()
+  recalculateLayout.addWidget(util.apply_style(QLabel("Recalculate background using this number of images:"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
   nbImagesForBackgroundCalculation = QLineEdit()
   nbImagesForBackgroundCalculation.setValidator(QIntValidator(nbImagesForBackgroundCalculation))
   nbImagesForBackgroundCalculation.validator().setBottom(0)
-  layout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
+  nbImagesForBackgroundCalculation.setText("60")
+  nbImagesForBackgroundCalculation.setFixedWidth(50)
+  recalculateLayout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
   recalculateBtn = QPushButton("Recalculate")
   recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text(), False, True))
-  layout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-
-  adjustOnWholeVideoCheckbox = QCheckBox("I want to adjust parameters over the entire video, not only on 500 frames at a time.")
-  layout.addWidget(adjustOnWholeVideoCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+  recalculateLayout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  recalculateLayout.addStretch()
+  layout.addLayout(recalculateLayout)
 
   adjustTrackingBtn = QPushButton("Adjust Tracking")
   adjustTrackingBtn.clicked.connect(lambda: app.adjustFreelySwimTrackingAutomaticParameters(app, video.getWell(), frameSlider.value(), adjustOnWholeVideoCheckbox.isChecked()))
   layout.addWidget(adjustTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
-  nextBtn = QPushButton("Save New Configuration File")
-  nextBtn.clicked.connect(lambda: app.show_frame("FinishConfig"))
-  layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-
+  buttonsLayout = QHBoxLayout()
+  buttonsLayout.addStretch()
   startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
   startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
-  layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  nextBtn = QPushButton("Save New Configuration File")
+  nextBtn.clicked.connect(lambda: app.show_frame("FinishConfig"))
+  buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  buttonsLayout.addStretch()
+  layout.addLayout(buttonsLayout)
 
   _showPage(layout, (img, video), (nextBtn, startPageBtn))
 
@@ -300,12 +368,12 @@ def adjustBoutDetectionOnlyPage():
   app = QApplication.instance()
 
   layout = QVBoxLayout()
-  layout.addWidget(util.apply_style(QLabel("Bout detection configuration file parameters adjustments"), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
+  layout.addWidget(util.apply_style(QLabel("Select well and first frame for bout detection parameters adjustments"), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
 
   cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
 
   firstFrame = app.configFile.get("firstFrame", 1)
-  frameSlider = util.SliderWithSpinbox(firstFrame, 0, cap.get(7) - 1, name="Frame")
+  frameSlider = util.SliderWithSpinbox(firstFrame, 0, cap.get(7) - 1, name="First frame")
 
   def getFrame():
     cap.set(1, frameSlider.value())
@@ -316,41 +384,74 @@ def adjustBoutDetectionOnlyPage():
   img = getFrame()
   height, width = img.shape[:2]
   video = _WellSelectionLabel(width, height)
-  layout.setStretch(1, 1)
-  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
-  layout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
 
-  layout.addWidget(util.apply_style(QLabel("Recalculate background using this number of images: (default is 60)"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+  sublayout = QHBoxLayout()
+  sublayout.addStretch(1)
+  sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+  adjustLayout = QVBoxLayout()
+  adjustLayout.setSpacing(0)
+  adjustLayout.addStretch()
+  adjustOnWholeVideoCheckbox = QCheckBox("Adjust over the entire video")
+  adjustOnWholeVideoCheckbox.setToolTip("By default, adjustment is peformed over 500 frames. Check this to adjust on the whole video.")
+  adjustLayout.addWidget(QLabel())
+  adjustLayout.addWidget(adjustOnWholeVideoCheckbox, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
+  adjustLayout.addStretch()
+  sublayout.addLayout(adjustLayout, stretch=1)
+  layout.addLayout(sublayout)
+
+  recalculateLayout = QHBoxLayout()
+  recalculateLayout.addStretch()
+  recalculateLayout.addWidget(util.apply_style(QLabel("Recalculate background using this number of images:"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
   nbImagesForBackgroundCalculation = QLineEdit()
   nbImagesForBackgroundCalculation.setValidator(QIntValidator(nbImagesForBackgroundCalculation))
   nbImagesForBackgroundCalculation.validator().setBottom(0)
-  layout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
+  nbImagesForBackgroundCalculation.setText("60")
+  nbImagesForBackgroundCalculation.setFixedWidth(50)
+  recalculateLayout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
   recalculateBtn = QPushButton("Recalculate")
-  recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text(), False, False, True))
-  layout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-
-  adjustOnWholeVideoCheckbox = QCheckBox("I want to adjust parameters over the entire video, not only on 500 frames at a time.")
-  layout.addWidget(adjustOnWholeVideoCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+  recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text(), False, True))
+  recalculateLayout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  recalculateLayout.addStretch()
+  layout.addLayout(recalculateLayout)
 
   adjustBoutsBtn = QPushButton("Adjust Bouts Detection")
+  adjustBoutsBtn.setToolTip("The aim here is to adjust parameters in order for the red dot on the top left of the image to appear when and only when movement is occurring.")
   adjustBoutsBtn.clicked.connect(lambda: app.detectBouts(app, video.getWell(), frameSlider.value(), adjustOnWholeVideoCheckbox.isChecked()))
   layout.addWidget(adjustBoutsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-  layout.addWidget(util.apply_style(QLabel("The aim here is to adjust parameters in order for the red dot on the top left of the image to appear when and only when movement is occurring."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
 
-  layout.addWidget(util.apply_style(QLabel("Important: Bouts Merging:"), font=QFont("Helvetica", 0)), alignment=Qt.AlignmentFlag.AlignCenter)
+  fillGapLayout = QHBoxLayout()
+  fillGapLayout.addStretch()
+  fillGapLabel = util.apply_style(QLabel("Important: Bouts Merging: fillGapFrameNb:"), font=QFont("Helvetica", 0))
+  fillGapLabel.setToolTip("'fillGapFrameNb' parameter controls the distance (in number frames) under which two subsequent bouts are merged into one.")
+  fillGapLayout.addWidget(fillGapLabel, alignment=Qt.AlignmentFlag.AlignCenter)
   fillGapFrameNb = QLineEdit()
-  fillGapFrameNb.setValidator(QIntValidator(fillGapFrameNb))
+  fillGapFrameNb.setValidator(QIntValidator(nbImagesForBackgroundCalculation))
   fillGapFrameNb.validator().setBottom(0)
-  layout.addWidget(fillGapFrameNb, alignment=Qt.AlignmentFlag.AlignCenter)
-  updateFillGapBtn = QPushButton("With the box above, update the 'fillGapFrameNb' parameter that controls the distance (in number frames) under which two subsquent bouts are merged into one.")
-  updateFillGapBtn.clicked.connect(lambda: app.updateFillGapFrameNb(fillGapFrameNb.text()))
-  layout.addWidget(updateFillGapBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  if "fillGapFrameNb" in app.configFile:
+    fillGapFrameNb.setText(str(app.configFile["fillGapFrameNb"]))
+  fillGapFrameNb.setFixedWidth(50)
 
-  nextBtn = QPushButton("Next")
-  nextBtn.clicked.connect(lambda: app.show_frame("FinishConfig"))
-  layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  def updateFillGapFrameNb(text):
+    if not text:
+      del app.configFile["fillGapFrameNb"]
+    else:
+      app.configFile["fillGapFrameNb"] = int(text)
+  fillGapFrameNb.textChanged.connect(updateFillGapFrameNb)
+  fillGapFrameNb.setToolTip("'fillGapFrameNb' parameter controls the distance (in number frames) under which two subsequent bouts are merged into one.")
+  fillGapLayout.addWidget(fillGapFrameNb, alignment=Qt.AlignmentFlag.AlignCenter)
+  fillGapLayout.addStretch()
+  layout.addLayout(fillGapLayout)
+
+  buttonsLayout = QHBoxLayout()
+  buttonsLayout.addStretch()
   startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
   startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
-  layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  nextBtn = QPushButton("Next")
+  nextBtn.clicked.connect(lambda: app.show_frame("FinishConfig"))
+  buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  buttonsLayout.addStretch()
+  layout.addLayout(buttonsLayout)
 
   _showPage(layout, (img, video), (nextBtn, startPageBtn))
