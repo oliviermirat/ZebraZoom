@@ -378,28 +378,12 @@ def adjustBoutDetectionOnlyPage():
 
   firstFrame = app.configFile.get("firstFrame", 1)
   frameSlider = util.SliderWithSpinbox(firstFrame, 0, cap.get(7) - 1, name="First frame")
-  preciseFrameSlider = util.SliderWithSpinbox(firstFrame, 0, cap.get(7) - 1)
-
-  def updatePreciseFrameSlider(value):
-    minimum = value - 250
-    maximum = value + 250
-    if minimum < 0:
-      maximum = 500
-      minimum = 0
-    if maximum > frameSlider.maximum():
-      maximum = frameSlider.maximum()
-      minimum = maximum - 500
-    preciseFrameSlider.setMinimum(max(0, minimum))
-    preciseFrameSlider.setMaximum(min(frameSlider.maximum(), maximum))
-    preciseFrameSlider.setValue(value)
-  frameSlider.valueChanged.connect(updatePreciseFrameSlider)
-  updatePreciseFrameSlider(firstFrame)
 
   def getFrame():
-    cap.set(1, preciseFrameSlider.value())
+    cap.set(1, frameSlider.value())
     ret, img = cap.read()
     return img
-  preciseFrameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video))
+  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video))
 
   img = getFrame()
   height, width = img.shape[:2]
@@ -419,7 +403,6 @@ def adjustBoutDetectionOnlyPage():
   adjustLayout.addStretch()
   sublayout.addLayout(adjustLayout, stretch=1)
   layout.addLayout(sublayout)
-  layout.addWidget(preciseFrameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
 
   recalculateLayout = QHBoxLayout()
   recalculateLayout.addStretch()
@@ -438,7 +421,7 @@ def adjustBoutDetectionOnlyPage():
 
   adjustBoutsBtn = QPushButton("Adjust Bouts Detection")
   adjustBoutsBtn.setToolTip("The aim here is to adjust parameters in order for the red dot on the top left of the image to appear when and only when movement is occurring.")
-  adjustBoutsBtn.clicked.connect(lambda: app.detectBouts(app, video.getWell(), preciseFrameSlider.value(), adjustOnWholeVideoCheckbox.isChecked()))
+  adjustBoutsBtn.clicked.connect(lambda: app.detectBouts(app, video.getWell(), frameSlider.value(), adjustOnWholeVideoCheckbox.isChecked()))
   layout.addWidget(adjustBoutsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
   fillGapLayout = QHBoxLayout()
