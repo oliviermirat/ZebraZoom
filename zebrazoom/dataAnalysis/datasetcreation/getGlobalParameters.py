@@ -3,7 +3,7 @@ import numpy as np
 from scipy.interpolate import UnivariateSpline
 import math
 
-def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation, previousBoutEnd, listOfParametersToCalculate):
+def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation, previousBoutEnd, listOfParametersToCalculate, firstFrame, lastFrame):
   
   listOfParametersCalculated = []
   
@@ -272,13 +272,6 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
         else:
           tailAngleIntegral = float('NaN')
       listOfParametersCalculated.append(tailAngleIntegral)
-    
-    
-    
-    elif parameterToCalculate == 'videoDuration':
-      
-      videoDuration =  / fps
-      listOfParametersCalculated.append()
     
     
     

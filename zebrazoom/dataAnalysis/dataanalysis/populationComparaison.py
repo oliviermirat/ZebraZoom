@@ -7,7 +7,6 @@ import numpy as np
 import pandas as pd
 import json
 import seaborn as sns
-import pdb
 
 def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, medianPerWellFirstForEachKinematicParameter = 0, plotOutliersAndMean = True, saveDataPlottedInJson = 0, medianPerGenotypeFirstForEachKinematicParameter=0):
 
@@ -45,20 +44,23 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
   dfParam = pickle.load(infile)
   infile.close()
   
-  columnsForRawDataExport = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype'] + globParam
+  columnsForRawDataExport = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'] + globParam
   
   if medianPerWellFirstForEachKinematicParameter:
     dfKinematicValues = dfParam[columnsForRawDataExport]
-    dfKinematicValues = dfKinematicValues.astype({param: float for param in globParam})
+    dfKinematicValues = dfKinematicValues.astype({param: float for param in globParam + ['videoDuration']})
     dfKinematicValues = dfKinematicValues.groupby(['Trial_ID', 'Well_ID']).median()
     dfCondGeno = dfParam[['Trial_ID', 'Well_ID', 'Condition', 'Genotype']]
     dfCondGeno = dfCondGeno.groupby(['Trial_ID', 'Well_ID']).first()
     dfCount = dfParam[['Trial_ID', 'Well_ID']].copy()
     dfCount['numberOfBouts_NoBoutsRemovedBasedOnBends'] = [0 for i in range(len(dfCount['Trial_ID']))]
-    dfCount = dfCount.groupby(['Trial_ID', 'Well_ID']).count()
+    dfCount = dfCount.groupby(['Trial_ID', 'Well_ID']).count()    
+    dfTotalTimeMove = dfParam[['Trial_ID', 'Well_ID', 'BoutDuration']].copy()
+    dfTotalTimeMove = dfTotalTimeMove.groupby(['Trial_ID', 'Well_ID']).sum()
+    dfKinematicValues['percentTimeSpentSwimming'] = (dfTotalTimeMove['BoutDuration'] / dfKinematicValues['videoDuration']) * 100
     dfParam = pd.concat([dfCondGeno, dfKinematicValues], axis=1)
     dfParam = pd.concat([dfParam, dfCount], axis=1)
-    globParam = globParam + ['numberOfBouts_NoBoutsRemovedBasedOnBends']
+    globParam = globParam + ['percentTimeSpentSwimming', 'numberOfBouts_NoBoutsRemovedBasedOnBends']
   elif medianPerGenotypeFirstForEachKinematicParameter:
     dfKinematicValues = dfParam[columnsForRawDataExport]
     dfKinematicValues = dfKinematicValues.astype({param: float for param in globParam})
@@ -68,9 +70,12 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
     dfCount = dfParam[['Genotype', 'Well_ID']].copy()
     dfCount['numberOfBouts_NoBoutsRemovedBasedOnBends'] = [0 for i in range(len(dfCount['Genotype']))]
     dfCount = dfCount.groupby(['Genotype', 'Well_ID']).count()
+    dfTotalTimeMove = dfParam[['Trial_ID', 'Well_ID', 'BoutDuration']].copy()
+    dfTotalTimeMove = dfTotalTimeMove.groupby(['Trial_ID', 'Well_ID']).sum()
+    dfKinematicValues['percentTimeSpentSwimming'] = (dfTotalTimeMove['BoutDuration'] / dfKinematicValues['videoDuration']) * 100
     dfParam = pd.concat([dfCond, dfKinematicValues], axis=1)
     dfParam = pd.concat([dfParam, dfCount], axis=1)
-    globParam = globParam + ['numberOfBouts_NoBoutsRemovedBasedOnBends']
+    globParam = globParam + ['percentTimeSpentSwimming', 'numberOfBouts_NoBoutsRemovedBasedOnBends']
   else:
     dfParam  = dfParam[columnsForRawDataExport]
   
