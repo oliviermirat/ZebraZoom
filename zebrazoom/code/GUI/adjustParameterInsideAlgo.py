@@ -140,7 +140,8 @@ def adjustParamInsideAlgoPage():
   app = QApplication.instance()
 
   layout = QVBoxLayout()
-  layout.addWidget(util.apply_style(QLabel("Select well and first frame for advanced parameter adjustment"), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
+  title = "Select %sfirst frame for advanced parameter adjustment" % ("well and " if app.wellPositions else "")
+  layout.addWidget(util.apply_style(QLabel(title), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
 
   cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
 
@@ -220,7 +221,8 @@ def adjustParamInsideAlgoFreelySwimPage():
   app = QApplication.instance()
 
   layout = QVBoxLayout()
-  layout.addWidget(util.apply_style(QLabel("Select well and first frame for advanced parameter adjustment"), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
+  title = "Select %sfirst frame for advanced parameter adjustment" % ("well and " if app.wellPositions else "")
+  layout.addWidget(util.apply_style(QLabel(title), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
 
   cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
 
@@ -299,7 +301,8 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage():
   app = QApplication.instance()
 
   layout = QVBoxLayout()
-  layout.addWidget(util.apply_style(QLabel("Select well and first frame for fish tail tracking parameters adjustment"), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
+  title = "Select %sfirst frame for fish tail tracking parameters adjustment" % ("well and " if app.wellPositions else "")
+  layout.addWidget(util.apply_style(QLabel(title), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
 
   cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
 
@@ -368,7 +371,8 @@ def adjustBoutDetectionOnlyPage():
   app = QApplication.instance()
 
   layout = QVBoxLayout()
-  layout.addWidget(util.apply_style(QLabel("Select well and first frame for bout detection parameters adjustments"), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
+  title = "Select %sfirst frame for bout detection parameters adjustments" % ("well and " if app.wellPositions else "")
+  layout.addWidget(util.apply_style(QLabel(title), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
 
   cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
 
