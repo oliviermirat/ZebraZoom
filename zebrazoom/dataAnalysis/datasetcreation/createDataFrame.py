@@ -175,7 +175,11 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
           if not(condition[idx] in conditions):
             conditions.append(condition[idx])
         else:
-          dfReloadedVid.drop([idx2 for idx2, belongsToWell in enumerate(indForWellId) if belongsToWell])
+          dfReloadedVid = dfReloadedVid.drop([idx2 for idx2, belongsToWell in enumerate(indForWellId) if belongsToWell])
+          if 'level_0' in dfReloadedVid.columns:
+            dfReloadedVid = dfReloadedVid.drop(['level_0'], axis=1)
+          dfReloadedVid = dfReloadedVid.reset_index()
+          
       dfParam = pd.concat([dfParam, dfReloadedVid])
     
     # Going through each well of the video

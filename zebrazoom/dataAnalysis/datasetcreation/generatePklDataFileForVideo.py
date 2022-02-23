@@ -23,6 +23,6 @@ def generatePklDataFileForVideo(excelFileName, ZZoutputLocation, frameStepForDis
       hyperparameters = {}
       hyperparameters["nbWells"] = len(excelFile.loc[0, 'condition'][1:-1].split(','))
       hyperparameters["frameStepForDistanceCalculation"] = frameStepForDistanceCalculation
-      hyperparameters["videoFPS"]       = int(excelFile.loc[videoId, 'fq'])
-      hyperparameters["videoPixelSize"] = int(excelFile.loc[videoId, 'pixelsize'])
+      hyperparameters["videoFPS"]       = float(excelFile.loc[videoId, 'fq'])
+      hyperparameters["videoPixelSize"] = float(excelFile.loc[videoId, 'pixelsize'])
       createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension, ZZoutputLocation)
