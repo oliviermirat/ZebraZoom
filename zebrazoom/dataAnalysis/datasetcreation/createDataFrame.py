@@ -83,15 +83,14 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   
   # Creating labels of columns of dataframe
   # General basic information
-  basicInformation = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype']
+  basicInformation = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration']
   # Global parameters
   if tailAngleKinematicParameterCalculation:
     globParam  = ['BoutDuration', 'TotalDistance', 'Speed', 'maxOfInstantaneousTBF', 'meanOfInstantaneousTBF', 'medianOfInstantaneousTBF', 'maxBendAmplitude', 'meanBendAmplitude', 'medianBendAmplitude', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude', 'deltaHead', 'firstBendTime', 'firstBendAmplitude', 'IBI', 'xmean', 'ymean', 'binaryClass25degMaxTailAngle']
+    if type(addToGlobalParameters) == list:
+      globParam = globParam + addToGlobalParameters
   else:
     globParam  = ['BoutDuration', 'TotalDistance', 'Speed']
-  
-  if type(addToGlobalParameters) == list:
-    globParam = globParam + addToGlobalParameters
   
   # Initial raw data
   if saveRawDataInAllBoutsSuperStructure:
@@ -158,6 +157,8 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     if (not(os.path.exists(os.path.join(path, trial_id + '.pkl'))) or forcePandasDfRecreation):
       with open(os.path.join(path, 'results_' + trial_id + '.txt')) as f:
         supstruct = json.load(f)
+        firstFrame = supstruct["firstFrame"]
+        lastFrame  = supstruct["lastFrame"]
     else:
       print("reloading previously calculated parameters")
       dfReloadedVid = pd.read_pickle(os.path.join(path, trial_id + '.pkl'))
@@ -195,7 +196,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
                 # Initial basic information
                 
                 toPutInDataFrameColumn = basicInformation
-                toPutInDataFrame       = [trial_id, Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID]]
+                toPutInDataFrame       = [trial_id, Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], (lastFrame - firstFrame) / fq]
                 
                 if not(genotype[Well_ID] in genotypes):
                   genotypes.append(genotype[Well_ID])
@@ -205,7 +206,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
                 # Calculates the global kinematic parameters and stores them the dataframe
                 
                 previousBoutEnd = supstruct["wellPoissMouv"][Well_ID][fishId][NumBout-1]["BoutEnd"] if NumBout > 0 else 0
-                listOfGlobalParameters = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation, previousBoutEnd, globParam)
+                listOfGlobalParameters = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation, previousBoutEnd, globParam, firstFrame, lastFrame)
                 
                 toPutInDataFrameColumn = toPutInDataFrameColumn + globParam
                 toPutInDataFrame       = toPutInDataFrame       + listOfGlobalParameters
@@ -262,7 +263,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
                 # Initial basic information
                 
                 toPutInDataFrameColumn = basicInformation
-                toPutInDataFrame       = [trial_id, Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID]]
+                toPutInDataFrame       = [trial_id, Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], (lastFrame - firstFrame) / fq]
                 
                 if not(genotype[Well_ID] in genotypes):
                   genotypes.append(genotype[Well_ID])
@@ -274,7 +275,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
                   # Calculating the global kinematic parameters and more and stores them the dataframe
                   
                   previousBoutEnd = supstruct["wellPoissMouv"][Well_ID][fishId][NumBout-1]["BoutEnd"] if NumBout > 0 else 0
-                  listOfGlobalParameters = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation, previousBoutEnd, ['BoutDuration', 'TotalDistance', 'Speed', 'IBI'])
+                  listOfGlobalParameters = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation, previousBoutEnd, ['BoutDuration', 'TotalDistance', 'Speed', 'IBI'], firstFrame, lastFrame)
                   
                   toPutInDataFrameColumn = toPutInDataFrameColumn + ['BoutDuration', 'TotalDistance', 'Speed', 'IBI']
                   toPutInDataFrame       = toPutInDataFrame       + listOfGlobalParameters
