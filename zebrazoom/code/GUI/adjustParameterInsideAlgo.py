@@ -146,7 +146,8 @@ def adjustParamInsideAlgoPage():
   cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
 
   firstFrame = app.configFile.get("firstFrame", 1)
-  frameSlider = util.SliderWithSpinbox(firstFrame, 0, cap.get(7) - 1, name="First frame")
+  maxFrame = cap.get(7) - 1
+  frameSlider = util.SliderWithSpinbox(firstFrame, 0, maxFrame, name="First frame")
 
   def getFrame():
     cap.set(1, frameSlider.value())
@@ -162,15 +163,48 @@ def adjustParamInsideAlgoPage():
   sublayout = QHBoxLayout()
   sublayout.addStretch(1)
   sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
-  adjustLayout = QVBoxLayout()
-  adjustLayout.setSpacing(0)
-  adjustLayout.addStretch()
-  adjustOnWholeVideoCheckbox = QCheckBox("Adjust over the entire video")
-  adjustOnWholeVideoCheckbox.setToolTip("By default, adjustment is peformed over 500 frames. Check this to adjust on the whole video.")
-  adjustLayout.addWidget(QLabel())
-  adjustLayout.addWidget(adjustOnWholeVideoCheckbox, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
-  adjustLayout.addStretch()
-  sublayout.addLayout(adjustLayout, stretch=1)
+  if maxFrame > 1000:
+    adjustLayout = QVBoxLayout()
+    adjustLayout.setSpacing(0)
+    adjustLayout.addStretch()
+    zoomInSliderBtn = QPushButton("Zoom in slider")
+
+    def updatePreciseFrameSlider(value):
+      if frameSlider.minimum() == value and frameSlider.minimum():
+        frameSlider.setMinimum(frameSlider.minimum() - 1)
+        frameSlider.setMaximum(frameSlider.maximum() - 1)
+      elif value == frameSlider.maximum() and frameSlider.maximum() != maxFrame:
+        frameSlider.setMinimum(frameSlider.minimum() + 1)
+        frameSlider.setMaximum(frameSlider.maximum() + 1)
+
+    def zoomInButtonClicked():
+      if "in" in zoomInSliderBtn.text():
+        zoomInSliderBtn.setText("Zoom out slider")
+        value = frameSlider.value()
+        minimum = value - 250
+        maximum = value + 250
+        if minimum < 0:
+          maximum = 500
+          minimum = 0
+        if maximum > frameSlider.maximum():
+          maximum = frameSlider.maximum()
+          minimum = maximum - 500
+        frameSlider.setMinimum(max(0, minimum))
+        frameSlider.setMaximum(min(frameSlider.maximum(), maximum))
+        frameSlider.setValue(value)
+        frameSlider.valueChanged.connect(updatePreciseFrameSlider)
+      else:
+        zoomInSliderBtn.setText("Zoom in slider")
+        frameSlider.setMinimum(0)
+        frameSlider.setMaximum(maxFrame)
+        frameSlider.valueChanged.disconnect(updatePreciseFrameSlider)
+    zoomInSliderBtn.clicked.connect(zoomInButtonClicked)
+    adjustLayout.addWidget(QLabel())
+    adjustLayout.addWidget(zoomInSliderBtn, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
+    adjustLayout.addStretch()
+    sublayout.addLayout(adjustLayout, stretch=1)
+  else:
+    sublayout.addStretch(1)
   layout.addLayout(sublayout)
 
   recalculateLayout = QHBoxLayout()
@@ -191,12 +225,12 @@ def adjustParamInsideAlgoPage():
   adjustButtonsLayout = QHBoxLayout()
   adjustButtonsLayout.addStretch()
   adjustBoutsBtn = QPushButton("Adjust Bouts Detection")
-  adjustBoutsBtn.clicked.connect(lambda: app.detectBouts(app, video.getWell(), frameSlider.value(), adjustOnWholeVideoCheckbox.isChecked()))
+  adjustBoutsBtn.clicked.connect(lambda: app.detectBouts(app, video.getWell(), frameSlider.value(), False))
   adjustBoutsBtn.setToolTip("The aim here is to adjust parameters in order for the red dot on the top left of the image to appear when and only when movement is occurring.\n"
                             "WARNING: if you don't want ZebraZoom to detect bouts, don't click on this button.")
   adjustButtonsLayout.addWidget(adjustBoutsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   adjustTrackingBtn = QPushButton("Adjust Tracking")
-  adjustTrackingBtn.clicked.connect(lambda: app.adjustHeadEmbededTracking(app, video.getWell(), frameSlider.value(), adjustOnWholeVideoCheckbox.isChecked()))
+  adjustTrackingBtn.clicked.connect(lambda: app.adjustHeadEmbededTracking(app, video.getWell(), frameSlider.value(), False))
   adjustTrackingBtn.setToolTip('WARNING: only click this button if you\'ve tried to track without adjusting these parameters first. Trying to adjust these could make the tracking worse.\n'
                                'Warning: for some of the "overwrite" parameters, you will need to change the initial value for the "overwrite" to take effect.')
   adjustButtonsLayout.addWidget(adjustTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -227,7 +261,8 @@ def adjustParamInsideAlgoFreelySwimPage():
   cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
 
   firstFrame = app.configFile.get("firstFrame", 1)
-  frameSlider = util.SliderWithSpinbox(firstFrame, 0, cap.get(7) - 1, name="First frame")
+  maxFrame = cap.get(7) - 1
+  frameSlider = util.SliderWithSpinbox(firstFrame, 0, maxFrame, name="First frame")
 
   def getFrame():
     cap.set(1, frameSlider.value())
@@ -243,15 +278,48 @@ def adjustParamInsideAlgoFreelySwimPage():
   sublayout = QHBoxLayout()
   sublayout.addStretch(1)
   sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
-  adjustLayout = QVBoxLayout()
-  adjustLayout.setSpacing(0)
-  adjustLayout.addStretch()
-  adjustOnWholeVideoCheckbox = QCheckBox("Adjust over the entire video")
-  adjustOnWholeVideoCheckbox.setToolTip("By default, adjustment is peformed over 500 frames. Check this to adjust on the whole video.")
-  adjustLayout.addWidget(QLabel())
-  adjustLayout.addWidget(adjustOnWholeVideoCheckbox, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
-  adjustLayout.addStretch()
-  sublayout.addLayout(adjustLayout, stretch=1)
+  if maxFrame > 1000:
+    adjustLayout = QVBoxLayout()
+    adjustLayout.setSpacing(0)
+    adjustLayout.addStretch()
+    zoomInSliderBtn = QPushButton("Zoom in slider")
+
+    def updatePreciseFrameSlider(value):
+      if frameSlider.minimum() == value and frameSlider.minimum():
+        frameSlider.setMinimum(frameSlider.minimum() - 1)
+        frameSlider.setMaximum(frameSlider.maximum() - 1)
+      elif value == frameSlider.maximum() and frameSlider.maximum() != maxFrame:
+        frameSlider.setMinimum(frameSlider.minimum() + 1)
+        frameSlider.setMaximum(frameSlider.maximum() + 1)
+
+    def zoomInButtonClicked():
+      if "in" in zoomInSliderBtn.text():
+        zoomInSliderBtn.setText("Zoom out slider")
+        value = frameSlider.value()
+        minimum = value - 250
+        maximum = value + 250
+        if minimum < 0:
+          maximum = 500
+          minimum = 0
+        if maximum > frameSlider.maximum():
+          maximum = frameSlider.maximum()
+          minimum = maximum - 500
+        frameSlider.setMinimum(max(0, minimum))
+        frameSlider.setMaximum(min(frameSlider.maximum(), maximum))
+        frameSlider.setValue(value)
+        frameSlider.valueChanged.connect(updatePreciseFrameSlider)
+      else:
+        zoomInSliderBtn.setText("Zoom in slider")
+        frameSlider.setMinimum(0)
+        frameSlider.setMaximum(maxFrame)
+        frameSlider.valueChanged.disconnect(updatePreciseFrameSlider)
+    zoomInSliderBtn.clicked.connect(zoomInButtonClicked)
+    adjustLayout.addWidget(QLabel())
+    adjustLayout.addWidget(zoomInSliderBtn, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
+    adjustLayout.addStretch()
+    sublayout.addLayout(adjustLayout, stretch=1)
+  else:
+    sublayout.addStretch(1)
   layout.addLayout(sublayout)
 
   recalculateLayout = QHBoxLayout()
@@ -272,12 +340,12 @@ def adjustParamInsideAlgoFreelySwimPage():
   adjustButtonsLayout = QHBoxLayout()
   adjustButtonsLayout.addStretch()
   adjustBoutsBtn = QPushButton("Adjust Bouts Detection")
-  adjustBoutsBtn.clicked.connect(lambda: app.detectBouts(app, video.getWell(), frameSlider.value(), adjustOnWholeVideoCheckbox.isChecked()))
+  adjustBoutsBtn.clicked.connect(lambda: app.detectBouts(app, video.getWell(), frameSlider.value(), False))
   adjustBoutsBtn.setToolTip("The aim here is to adjust parameters in order for the red dot on the top left of the image to appear when and only when movement is occurring.\n"
                             "WARNING: if you don't want ZebraZoom to detect bouts, don't click on this button.")
   adjustButtonsLayout.addWidget(adjustBoutsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   adjustTrackingBtn = QPushButton("Adjust Tracking")
-  adjustTrackingBtn.clicked.connect(lambda: app.adjustFreelySwimTracking(app, video.getWell(), frameSlider.value(), adjustOnWholeVideoCheckbox.isChecked()))
+  adjustTrackingBtn.clicked.connect(lambda: app.adjustFreelySwimTracking(app, video.getWell(), frameSlider.value(), False))
   adjustTrackingBtn.setToolTip("WARNING: only click this button if you've tried to track without adjusting these parameters first. Trying to adjust these could make the tracking worse.")
   adjustButtonsLayout.addWidget(adjustTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   adjustButtonsLayout.addStretch()
@@ -307,7 +375,8 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage():
   cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
 
   firstFrame = app.configFile.get("firstFrame", 1)
-  frameSlider = util.SliderWithSpinbox(firstFrame, 0, cap.get(7) - 1, name="First frame")
+  maxFrame = cap.get(7) - 1
+  frameSlider = util.SliderWithSpinbox(firstFrame, 0, maxFrame, name="First frame")
 
   def getFrame():
     cap.set(1, frameSlider.value())
@@ -323,15 +392,48 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage():
   sublayout = QHBoxLayout()
   sublayout.addStretch(1)
   sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
-  adjustLayout = QVBoxLayout()
-  adjustLayout.setSpacing(0)
-  adjustLayout.addStretch()
-  adjustOnWholeVideoCheckbox = QCheckBox("Adjust over the entire video")
-  adjustOnWholeVideoCheckbox.setToolTip("By default, adjustment is peformed over 500 frames. Check this to adjust on the whole video.")
-  adjustLayout.addWidget(QLabel())
-  adjustLayout.addWidget(adjustOnWholeVideoCheckbox, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
-  adjustLayout.addStretch()
-  sublayout.addLayout(adjustLayout, stretch=1)
+  if maxFrame > 1000:
+    adjustLayout = QVBoxLayout()
+    adjustLayout.setSpacing(0)
+    adjustLayout.addStretch()
+    zoomInSliderBtn = QPushButton("Zoom in slider")
+
+    def updatePreciseFrameSlider(value):
+      if frameSlider.minimum() == value and frameSlider.minimum():
+        frameSlider.setMinimum(frameSlider.minimum() - 1)
+        frameSlider.setMaximum(frameSlider.maximum() - 1)
+      elif value == frameSlider.maximum() and frameSlider.maximum() != maxFrame:
+        frameSlider.setMinimum(frameSlider.minimum() + 1)
+        frameSlider.setMaximum(frameSlider.maximum() + 1)
+
+    def zoomInButtonClicked():
+      if "in" in zoomInSliderBtn.text():
+        zoomInSliderBtn.setText("Zoom out slider")
+        value = frameSlider.value()
+        minimum = value - 250
+        maximum = value + 250
+        if minimum < 0:
+          maximum = 500
+          minimum = 0
+        if maximum > frameSlider.maximum():
+          maximum = frameSlider.maximum()
+          minimum = maximum - 500
+        frameSlider.setMinimum(max(0, minimum))
+        frameSlider.setMaximum(min(frameSlider.maximum(), maximum))
+        frameSlider.setValue(value)
+        frameSlider.valueChanged.connect(updatePreciseFrameSlider)
+      else:
+        zoomInSliderBtn.setText("Zoom in slider")
+        frameSlider.setMinimum(0)
+        frameSlider.setMaximum(maxFrame)
+        frameSlider.valueChanged.disconnect(updatePreciseFrameSlider)
+    zoomInSliderBtn.clicked.connect(zoomInButtonClicked)
+    adjustLayout.addWidget(QLabel())
+    adjustLayout.addWidget(zoomInSliderBtn, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
+    adjustLayout.addStretch()
+    sublayout.addLayout(adjustLayout, stretch=1)
+  else:
+    sublayout.addStretch(1)
   layout.addLayout(sublayout)
 
   recalculateLayout = QHBoxLayout()
@@ -350,7 +452,7 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage():
   layout.addLayout(recalculateLayout)
 
   adjustTrackingBtn = QPushButton("Adjust Tracking")
-  adjustTrackingBtn.clicked.connect(lambda: app.adjustFreelySwimTrackingAutomaticParameters(app, video.getWell(), frameSlider.value(), adjustOnWholeVideoCheckbox.isChecked()))
+  adjustTrackingBtn.clicked.connect(lambda: app.adjustFreelySwimTrackingAutomaticParameters(app, video.getWell(), frameSlider.value(), False))
   layout.addWidget(adjustTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
   buttonsLayout = QHBoxLayout()
