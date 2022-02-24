@@ -3,6 +3,7 @@ from zebrazoom.mainZZ import mainZZ
 import pickle
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+from zebrazoom.code.GUI.adjustParameterInsideAlgo import adjustParamInsideAlgoPage, adjustBoutDetectionOnlyPage, adjustParamInsideAlgoFreelySwimPage, adjustParamInsideAlgoFreelySwimAutomaticParametersPage
 
 try:
   from PyQt6.QtCore import Qt
@@ -27,7 +28,7 @@ def getMainArguments(self):
   return [pathToVideo, videoName, videoExt, configFile, argv]
 
 
-def prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrameParamAdjust, videoToCreateConfigFileFor, adjustOnWholeVideo):
+def prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrame, videoToCreateConfigFileFor, adjustOnWholeVideo):
 
   initialFirstFrameValue = -1
   initialLastFrameValue  = -1
@@ -38,42 +39,30 @@ def prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFramePar
 
   cap = zzVideoReading.VideoCapture(videoToCreateConfigFileFor)
   max_l = int(cap.get(7))
-  if int(firstFrameParamAdjust):
-    util.chooseBeginning(QApplication.instance(), videoToCreateConfigFileFor, "Choose where you want to start the procedure to adjust parameters.", "Ok, I want the procedure to start at this frame.")
 
-    if not(int(adjustOnWholeVideo)):
-      if ("lastFrame" in configFile):
-        if (configFile["lastFrame"] - configFile["firstFrame"] > 500):
-          configFile["lastFrame"] = configFile["firstFrame"] + 500
-      else:
-        configFile["lastFrame"]  = min(configFile["firstFrame"] + 500, max_l-10)
-  else:
-    if not(int(adjustOnWholeVideo)):
-      if ("firstFrame" in configFile) and ("lastFrame" in configFile):
-        if configFile["lastFrame"] - configFile["firstFrame"] > 500:
-          configFile["lastFrame"] = configFile["firstFrame"] + 500
-      else:
-        configFile["firstFrame"] = 1
-        configFile["lastFrame"]  = min(max_l-10, 500)
+  configFile["firstFrame"] = firstFrame
+  if not adjustOnWholeVideo:
+    if ("lastFrame" in configFile):
+      if (configFile["lastFrame"] - configFile["firstFrame"] > 500):
+        configFile["lastFrame"] = configFile["firstFrame"] + 500
+    else:
+      configFile["lastFrame"]  = min(configFile["firstFrame"] + 500, max_l-10)
 
   if "lastFrame" in configFile:
     if configFile["lastFrame"] > initialLastFrameValue and initialLastFrameValue != -1:
       configFile["lastFrame"] = initialLastFrameValue
 
-  if len(wellNumber) != 0:
-    configFile["onlyTrackThisOneWell"] = int(wellNumber)
-  else:
-    configFile["onlyTrackThisOneWell"] = 0
+  configFile["onlyTrackThisOneWell"] = wellNumber
 
   configFile["reloadBackground"] = 1
 
-  return [configFile, initialFirstFrameValue, initialLastFrameValue]
+  return initialFirstFrameValue, initialLastFrameValue
 
 
-def detectBouts(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo):
+def detectBouts(self, controller, wellNumber, firstFrame, adjustOnWholeVideo):
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
 
-  [configFile, initialFirstFrameValue, initialLastFrameValue] = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrameParamAdjust, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
+  initialFirstFrameValue, initialLastFrameValue = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrame, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
 
   configFile["noBoutsDetection"] = 0
   if "trackTail" in configFile:
@@ -132,16 +121,12 @@ def detectBouts(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWho
   self.configFile = configFile
 
 
-def adjustHeadEmbededTracking(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo):
+def adjustHeadEmbededTracking(self, controller, wellNumber, firstFrame, adjustOnWholeVideo):
 
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
 
-  [configFile, initialFirstFrameValue, initialLastFrameValue] = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrameParamAdjust, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
+  initialFirstFrameValue, initialLastFrameValue = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrame, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
 
-  if len(wellNumber) != 0:
-    configFile["onlyTrackThisOneWell"]    = int(wellNumber)
-  else:
-    configFile["onlyTrackThisOneWell"]    = 0
   configFile["adjustHeadEmbededTracking"] = 1
 
   try:
@@ -171,18 +156,13 @@ def adjustHeadEmbededTracking(self, controller, wellNumber, firstFrameParamAdjus
   self.configFile = configFile
 
 
-def adjustFreelySwimTracking(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo):
+def adjustFreelySwimTracking(self, controller, wellNumber, firstFrame, adjustOnWholeVideo):
 
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
 
-  [configFile, initialFirstFrameValue, initialLastFrameValue] = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrameParamAdjust, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
+  initialFirstFrameValue, initialLastFrameValue = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrame, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
 
   configFile["reloadWellPositions"] = 1
-
-  if len(wellNumber) != 0:
-    configFile["onlyTrackThisOneWell"]    = int(wellNumber)
-  else:
-    configFile["onlyTrackThisOneWell"]    = 0
   configFile["adjustFreelySwimTracking"] = 1
 
   try:
@@ -214,13 +194,19 @@ def adjustFreelySwimTracking(self, controller, wellNumber, firstFrameParamAdjust
 
 def adjustFastFreelySwimTracking(self, controller):
 
-  wellNumber = ''
-  firstFrameParamAdjust = 1
-  adjustOnWholeVideo = 1
+  wellNumber = 0
+  adjustOnWholeVideo = True
 
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
 
-  [configFile, initialFirstFrameValue, initialLastFrameValue] = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrameParamAdjust, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
+  oldFirstFrame = self.configFile.get("firstFrame")
+  util.chooseBeginning(QApplication.instance(), self.videoToCreateConfigFileFor, "Choose where you want to start the procedure to adjust parameters.", "Ok, I want the procedure to start at this frame.")
+  firstFrame = self.configFile["firstFrame"]
+  if oldFirstFrame is not None:
+    self.configFile["firstFrame"] = oldFirstFrame
+  else:
+    del self.configFile["firstFrame"]
+  initialFirstFrameValue, initialLastFrameValue = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrame, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
 
   configFile["reloadWellPositions"] = 1
   configFile["adjustFreelySwimTracking"] = 1
@@ -257,18 +243,13 @@ def adjustFastFreelySwimTracking(self, controller):
   controller.show_frame("FinishConfig")
 
 
-def adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo):
+def adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, firstFrame, adjustOnWholeVideo):
 
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
 
-  [configFile, initialFirstFrameValue, initialLastFrameValue] = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrameParamAdjust, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
+  initialFirstFrameValue, initialLastFrameValue = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrame, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
 
   configFile["reloadWellPositions"] = 1
-
-  if len(wellNumber) != 0:
-    configFile["onlyTrackThisOneWell"]    = int(wellNumber)
-  else:
-    configFile["onlyTrackThisOneWell"]    = 0
   configFile["adjustFreelySwimTrackingAutomaticParameters"] = 1
 
   try:
@@ -312,6 +293,7 @@ def calculateBackground(self, controller, nbImagesForBackgroundCalculation):
     configFile["nbImagesForBackgroundCalculation"] = int(nbImagesForBackgroundCalculation)
 
   app = QApplication.instance()
+  app.wellPositions = []
   with app.busyCursor():
     try:
       if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
@@ -324,7 +306,7 @@ def calculateBackground(self, controller, nbImagesForBackgroundCalculation):
   configFile["headEmbededRemoveBack"]           = 0
   configFile["debugExtractBack"]                = 0
 
-  controller.show_frame("AdujstParamInsideAlgo")
+  adjustParamInsideAlgoPage()
 
 
 def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False):
@@ -339,6 +321,7 @@ def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalcula
     configFile["nbImagesForBackgroundCalculation"] = int(nbImagesForBackgroundCalculation)
 
   app = QApplication.instance()
+  app.wellPositions = []
   with app.busyCursor():
     try:
       if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
@@ -365,29 +348,12 @@ def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalcula
 
 
   if boutDetectionsOnly:
-    controller.show_frame("AdujstBoutDetectionOnly")
+    adjustBoutDetectionOnlyPage()
   else:
     if automaticParameters:
-      controller.show_frame("AdujstParamInsideAlgoFreelySwimAutomaticParameters")
+      adjustParamInsideAlgoFreelySwimAutomaticParametersPage()
     else:
       if morePreciseFastScreen:
         adjustFastFreelySwimTracking(self, controller)
       else:
-        controller.show_frame("AdujstParamInsideAlgoFreelySwim")
-
-
-def updateFillGapFrameNb(self, fillGapFrameNb):
-  dialog = QDialog()
-  dialog.setWindowTitle("Done!")
-  if len(fillGapFrameNb):
-    self.configFile["fillGapFrameNb"] = int(fillGapFrameNb)
-    text = 'The parameter fillGapFrameNb has been updated to %s' % fillGapFrameNb
-  else:
-    text = 'Insert a number in the box'
-  layout = QVBoxLayout()
-  layout.addWidget(QLabel(text, dialog), alignment=Qt.AlignmentFlag.AlignCenter)
-  button = QPushButton("Ok", dialog)
-  button.clicked.connect(lambda: dialog.accept())
-  layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
-  dialog.setLayout(layout)
-  dialog.exec()
+        adjustParamInsideAlgoFreelySwimPage()
