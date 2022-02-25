@@ -267,8 +267,8 @@ class ZebraZoomApp(QApplication):
     def populationComparison(self, controller, TailTrackingParameters, saveInMatlabFormat, saveRawData, minNbBendForBoutDetect, discard, keep, frameStepForDistanceCalculation):
       dataAnalysisGUIFunctions.populationComparison(self, controller, TailTrackingParameters, saveInMatlabFormat, saveRawData, minNbBendForBoutDetect, discard, keep, frameStepForDistanceCalculation)
       
-    def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering='', removeOutliers=False, frameStepForDistanceCalculation='4'):
-      dataAnalysisGUIFunctions.boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect, nbVideosToSave, modelUsedForClustering, removeOutliers, frameStepForDistanceCalculation)
+    def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering='', removeOutliers=False, frameStepForDistanceCalculation='4', removeBoutsContainingNanValuesInParametersUsedForClustering=True):
+      dataAnalysisGUIFunctions.boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect, nbVideosToSave, modelUsedForClustering, removeOutliers, frameStepForDistanceCalculation, removeBoutsContainingNanValuesInParametersUsedForClustering)
 
     def openAnalysisFolder(self, homeDirectory, specificDirectory):
       dataAnalysisGUIFunctions.openAnalysisFolder(self, homeDirectory, specificDirectory)

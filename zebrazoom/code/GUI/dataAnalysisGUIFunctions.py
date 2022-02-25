@@ -119,7 +119,7 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
   controller.show_frame("AnalysisOutputFolderPopulation")
 
 
-def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering=0, removeOutliers=False, frameStepForDistanceCalculation='4'):
+def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering=0, removeOutliers=False, frameStepForDistanceCalculation='4', removeBoutsContainingNanValuesInParametersUsedForClustering=True):
 
   if len(frameStepForDistanceCalculation) == 0:
     frameStepForDistanceCalculation = '4'
@@ -195,7 +195,8 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
     'resFolder' : os.path.join(os.path.join(cur_dir_path, 'dataAnalysis'),'data/'),
     'nameOfFile' : self.experimentOrganizationExcel.split(".")[0],
     'modelUsedForClustering' : modelUsedForClustering,
-    'removeOutliers'         : removeOutliers
+    'removeOutliers'         : removeOutliers,
+    'removeBoutsContainingNanValuesInParametersUsedForClustering' : removeBoutsContainingNanValuesInParametersUsedForClustering
   }
   if int(FreelySwimming):
     clusteringOptions['useAnglesSpeedHeading'] = True

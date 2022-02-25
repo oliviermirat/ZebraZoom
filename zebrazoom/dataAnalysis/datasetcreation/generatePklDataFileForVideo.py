@@ -25,4 +25,4 @@ def generatePklDataFileForVideo(excelFileName, ZZoutputLocation, frameStepForDis
       hyperparameters["frameStepForDistanceCalculation"] = frameStepForDistanceCalculation
       hyperparameters["videoFPS"]       = float(excelFile.loc[videoId, 'fq'])
       hyperparameters["videoPixelSize"] = float(excelFile.loc[videoId, 'pixelsize'])
-      createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension, ZZoutputLocation)
+      createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension, ZZoutputLocation if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder" else excelFile.loc[videoId, 'path'])

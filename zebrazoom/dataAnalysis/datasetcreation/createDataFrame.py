@@ -56,7 +56,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   else:
     print("You must provide either an excel file or a video name to create a dataframe of parameters.")
   
-  if nbFramesTakenIntoAccount == -1:
+  if nbFramesTakenIntoAccount <= -1:
     boutNbFrames = []
     boutTakenIntoAcccount = 0
     videoId = 0
@@ -79,7 +79,10 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
             break;
       if boutTakenIntoAcccount > 100:
         break;
-    nbFramesTakenIntoAccount = int(np.median(boutNbFrames))
+    if nbFramesTakenIntoAccount == -1:
+      nbFramesTakenIntoAccount = int(np.median(boutNbFrames))
+    else:
+      nbFramesTakenIntoAccount = 3 * int(np.median(boutNbFrames)) if 3 * int(np.median(boutNbFrames)) >= 100 else 100
   
   # Creating labels of columns of dataframe
   # General basic information
@@ -162,6 +165,11 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     else:
       print("reloading previously calculated parameters")
       dfReloadedVid = pd.read_pickle(os.path.join(path, trial_id + '.pkl'))
+      
+      nbFramesTakenIntoAccountReloaded = max([np.sum(['instaTBF' in param for param in dfReloadedVid.columns.tolist()]), np.sum(['tailAnglesRecalculated' in param for param in dfReloadedVid.columns.tolist()]), np.sum(['instaSpeed' in param for param in dfReloadedVid.columns.tolist()])])
+      if nbFramesTakenIntoAccountReloaded < nbFramesTakenIntoAccount:
+        raise ValueError("nbFramesTakenIntoAccount was too low when pre-generating the pkl file of a video:" + str(np.sum(['instaTBF' in param for param in dfReloadedVid.columns.tolist()])) + " , " + str(np.sum(['tailAnglesRecalculated' in param for param in dfReloadedVid.columns.tolist()])) + " , " + str(np.sum(['instaSpeed' in param for param in dfReloadedVid.columns.tolist()])) + " ; nbFramesTakenIntoAccount :" + str(nbFramesTakenIntoAccount))
+        
       for idx, cond in enumerate(condition):
         indForWellId = (dfReloadedVid['Well_ID'] == idx)
         if include[idx]:

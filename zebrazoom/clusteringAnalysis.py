@@ -14,6 +14,8 @@ def clusteringAnalysis(sys):
   minNbBendForBoutDetect = int(sys.argv[6]) if len(sys.argv) >= 7 else 3
   modelUsedForClustering = sys.argv[7] if len(sys.argv) >= 8 else 'KMeans'
   removeOutliers         = int(sys.argv[8]) if len(sys.argv) >= 9 else 0
+  frameStepForDistanceCalculation = int(sys.argv[9]) if len(sys.argv) >= 10 else 4
+  removeBoutsContainingNanValuesInParametersUsedForClustering = int(sys.argv[10]) if len(sys.argv) >= 11 else 1
   
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
   cur_dir_path = Path(cur_dir_path)
@@ -68,7 +70,8 @@ def clusteringAnalysis(sys):
     'resFolder'  : os.path.join(os.path.join(cur_dir_path, 'dataAnalysis'),'data/'),
     'nameOfFile' : os.path.splitext(nameWithExt)[0],
     'modelUsedForClustering' : modelUsedForClustering,
-    'removeOutliers'  : removeOutliers
+    'removeOutliers'  : removeOutliers,
+    'removeBoutsContainingNanValuesInParametersUsedForClustering' : removeBoutsContainingNanValuesInParametersUsedForClustering
   }
   if int(freelySwimming):
     clusteringOptions['useAnglesSpeedHeading'] = True

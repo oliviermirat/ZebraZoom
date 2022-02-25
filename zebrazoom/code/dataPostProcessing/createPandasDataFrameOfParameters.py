@@ -30,7 +30,7 @@ def createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension
     'resFolder'                         : os.path.join(cur_dir_path, videoName),
     'nameOfFile'                        : videoName,
     'smoothingFactorDynaParam'          : 0,
-    'nbFramesTakenIntoAccount'          : 28,
+    'nbFramesTakenIntoAccount'          : -2, ## nbFramesTakenIntoAccount will be 100 minimum
     'numberOfBendsIncludedForMaxDetect' : -1,
     'minNbBendForBoutDetect'            : -1,
     'keepSpeedDistDurWhenLowNbBends'    : 1,

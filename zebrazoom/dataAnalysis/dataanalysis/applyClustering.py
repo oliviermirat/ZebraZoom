@@ -54,7 +54,9 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
   modelUsedForClustering = clusteringOptions['modelUsedForClustering'] if 'modelUsedForClustering' in clusteringOptions else 'KMeans'
   
   removeOutliers = clusteringOptions['removeOutliers'] if 'removeOutliers' in clusteringOptions else False
-
+  
+  removeBoutsContainingNanValuesInParametersUsedForClustering = clusteringOptions['removeBoutsContainingNanValuesInParametersUsedForClustering'] if 'removeBoutsContainingNanValuesInParametersUsedForClustering' in clusteringOptions else True
+  
   instaTBF   = ['instaTBF'+str(i)  for i in range(1,nbFramesTakenIntoAccount+1)]
   instaAmp   = ['instaAmp'+str(i)  for i in range(1,nbFramesTakenIntoAccount+1)]
   instaAsym  = ['instaAsym'+str(i) for i in range(1,nbFramesTakenIntoAccount+1)]
@@ -129,26 +131,29 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
   scaler = StandardScaler()
   allInstaValues = scaler.fit_transform(allInstaValues)
   
-  allInstaValuesLenBef = len(allInstaValues)
-  try:
-    dfParam = dfParam.drop([idx for idx, val in enumerate(~np.isnan(allInstaValues).any(axis=1)) if not(val)])
-  except:
-    scaler = StandardScaler()
-    allInstaValues = scaler.fit_transform(allInstaValues)
-    dfParam = dfParam.drop([idx for idx, val in enumerate(~np.isnan(allInstaValues).any(axis=1)) if not(val)])
-  
-  allInstaValues = allInstaValues[~np.isnan(allInstaValues).any(axis=1)]
-  allInstaValuesLenAft = len(allInstaValues)
-  if allInstaValuesLenBef - allInstaValuesLenAft > 0:
-    print(allInstaValuesLenBef - allInstaValuesLenAft, " bouts (out of ", allInstaValuesLenBef, " ) were deleted because they contained NaN values")
+  if removeBoutsContainingNanValuesInParametersUsedForClustering:
+    allInstaValuesLenBef = len(allInstaValues)
+    try:
+      dfParam = dfParam.drop([idx for idx, val in enumerate(~np.isnan(allInstaValues).any(axis=1)) if not(val)])
+    except:
+      scaler = StandardScaler()
+      allInstaValues = scaler.fit_transform(allInstaValues)
+      dfParam = dfParam.drop([idx for idx, val in enumerate(~np.isnan(allInstaValues).any(axis=1)) if not(val)])
+    allInstaValues = allInstaValues[~np.isnan(allInstaValues).any(axis=1)]
+    allInstaValuesLenAft = len(allInstaValues)
+    if allInstaValuesLenBef - allInstaValuesLenAft > 0:
+      print(allInstaValuesLenBef - allInstaValuesLenAft, " bouts (out of ", allInstaValuesLenBef, " ) were deleted because they contained NaN values")
+    else:
+      print("all bouts were kept (no nan values)")
   else:
-    print("all bouts were kept (no nan values)")
+    dfParam = dfParam.fillna(0)
+    allInstaValues = np.nan_to_num(allInstaValues)
+    print("nan values replaced by zeros")
   
   if 'level_0' in dfParam.columns:
     dfParam = dfParam.drop(['level_0'], axis=1)
   
   dfParam = dfParam.reset_index()
-  
   if removeOutliers:
     covariance  = np.cov(allInstaValues , rowvar=False)
     covariance_pm1 = np.linalg.matrix_power(covariance, -1)
