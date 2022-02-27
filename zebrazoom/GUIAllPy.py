@@ -6,12 +6,12 @@ import traceback
 try:
   from PyQt6.QtCore import Qt, QSize
   from PyQt6.QtGui import QFont
-  from PyQt6.QtWidgets import QWidget, QDialog, QFileDialog, QApplication, QLabel, QMainWindow, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem
+  from PyQt6.QtWidgets import QWidget, QDialog, QFileDialog, QApplication, QLabel, QMainWindow, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem, QPushButton
   PYQT6 = True
 except ImportError:
   from PyQt5.QtCore import Qt, QSize
   from PyQt5.QtGui import QFont
-  from PyQt5.QtWidgets import QWidget, QDialog, QFileDialog, QApplication, QLabel, QMainWindow, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem
+  from PyQt5.QtWidgets import QWidget, QDialog, QFileDialog, QApplication, QLabel, QMainWindow, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem, QPushButton
   QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
   QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
   QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
@@ -81,6 +81,8 @@ class ZebraZoomApp(QApplication):
         self.headCenterY = 0
         self.organism = ''
 
+        self.configFileHistory = []
+
         curZZoutputPath = os.path.dirname(os.path.realpath(__file__))
         curZZoutputPath = os.path.join(curZZoutputPath, 'ZZoutput')
         self.ZZoutputLocation = curZZoutputPath
@@ -110,13 +112,26 @@ class ZebraZoomApp(QApplication):
         central_widget.setLayout(layout)
         self.window.setWindowTitle('ZebraZoom')
         self.window.setCentralWidget(central_widget)
+        layout.currentChanged.connect(self._currentPageChanged)
         self.window.showMaximized()
 
     def askForZZoutputLocation(self):
         self.ZZoutputLocation = QFileDialog.getExistingDirectory(self.window, "Select ZZoutput folder", os.path.expanduser("~"))
 
+    def _currentPageChanged(self):
+        backBtn = self.window.centralWidget().layout().currentWidget().findChild(QPushButton, "back")
+        if backBtn is not None:
+            try:
+                backBtn.clicked.disconnect()
+            except TypeError:  # nothing connected
+                pass
+            backBtn.clicked.connect(self.configFileHistory[-2])
+
     def show_frame(self, page_name):
         '''Show a frame for the given page name'''
+        if page_name == "StartPage":
+            self.configFile.clear()
+            del self.configFileHistory[:]
         self.window.centralWidget().layout().setCurrentIndex(self.frames[page_name])
 
     def _windowClosed(self, window, fn):
@@ -230,9 +245,6 @@ class ZebraZoomApp(QApplication):
 
     def chooseBodyExtremity(self, controller):
         configFilePrepareFunctions.chooseBodyExtremity(self, controller)
-
-    def chooseBeginningAndEndOfVideo(self, controller):
-        configFilePrepareFunctions.chooseBeginningAndEndOfVideo(self, controller)
 
     def headEmbededGUI(self, controller, blackBack, whiteBack, noBoutDetect, boutDetection, optionExtendedDescentSearchOption, optionBackgroundExtractionOption):
         configFileZebrafishFunctions.headEmbededGUI(self, controller, blackBack, whiteBack, noBoutDetect, boutDetection, optionExtendedDescentSearchOption, optionBackgroundExtractionOption)

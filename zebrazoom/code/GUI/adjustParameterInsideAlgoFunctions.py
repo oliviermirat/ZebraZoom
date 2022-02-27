@@ -192,15 +192,13 @@ def adjustFreelySwimTracking(self, controller, wellNumber, firstFrame, adjustOnW
 
   self.configFile = configFile
 
-def adjustFastFreelySwimTracking(self, controller):
 
+def _adjustFastFreelySwimTracking(self, controller, oldFirstFrame):
   wellNumber = 0
   adjustOnWholeVideo = True
 
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
 
-  oldFirstFrame = self.configFile.get("firstFrame")
-  util.chooseBeginning(QApplication.instance(), self.videoToCreateConfigFileFor, "Choose where you want to start the procedure to adjust parameters.", "Ok, I want the procedure to start at this frame.")
   firstFrame = self.configFile["firstFrame"]
   if oldFirstFrame is not None:
     self.configFile["firstFrame"] = oldFirstFrame
@@ -240,7 +238,13 @@ def adjustFastFreelySwimTracking(self, controller):
     self.configFile["nbAnimalsPerWell"] = 1
     self.configFile["minPixelDiffForBackExtract"] = configFile["minPixelDiffForBackExtract"]
 
-  controller.show_frame("FinishConfig")
+  util.addToHistory(controller.show_frame)("FinishConfig")
+
+
+def adjustFastFreelySwimTracking(self, controller):
+  oldFirstFrame = self.configFile.get("firstFrame")
+  util.chooseBeginningPage(QApplication.instance(), self.videoToCreateConfigFileFor, "Choose where you want to start the procedure to adjust parameters.", "Ok, I want the procedure to start at this frame.",
+                           lambda: _adjustFastFreelySwimTracking(self, controller, oldFirstFrame))
 
 
 def adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, firstFrame, adjustOnWholeVideo):

@@ -41,7 +41,9 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
   initialHyperparameters = getHyperparametersSimple(initialConfigFile)
   initialHyperparameters["videoName"]      = videoName
   wellPositions = findWells(os.path.join(pathToVideo, videoNameWithExt), initialHyperparameters)
-  
+  if wellPositions is None:
+    return None
+
   cap   = zzVideoReading.VideoCapture(videoPath)
   max_l = int(cap.get(7))
   
@@ -68,46 +70,68 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
   wellNumber = np.argmax(pixelsChange)
   
   backCalculationStep = int(max_l / nbOfImagesToManuallyClassify)
-  data = []
+  data = [None] * ((max_l - 1) // backCalculationStep + 1)
   
-  for k in range(0, max_l):
-    
-    if (k % backCalculationStep == 0):
+  k = 0
+  while k < max_l:
       
-      cap.set(1, k)
-      ret, frame = cap.read()
+    cap.set(1, k)
+    ret, frame = cap.read()
+
+    xtop  = wellPositions[wellNumber]['topLeftX']
+    ytop  = wellPositions[wellNumber]['topLeftY']
+    lenX  = wellPositions[wellNumber]['lengthX']
+    lenY  = wellPositions[wellNumber]['lengthY']
+    frame = frame[ytop:ytop+lenY, xtop:xtop+lenX]
+
+    def callback():
+      nonlocal k
+      k -= backCalculationStep
+    oldk = k
+    if data[k//backCalculationStep] is None:
+      headCoordinates = list(util.getPoint(frame, "Click on the center of the head of one animal" if zebrafishToTrack else "Click on the center of mass of an animal",
+                                           backBtnCb=callback))
+    else:
+      headCoordinates = data[k//backCalculationStep]["headCoordinates"]
+    if oldk != k:
+      if k >= 0:
+        continue
+      elif initialHyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"] or initialHyperparameters["multipleROIsDefinedDuringExecution"]:
+        return getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack)
+      else:
+        QApplication.instance().configFileHistory[-2]()
+        return None
+    frame2 = cv2.circle(frame, tuple(headCoordinates), 2, (0, 0, 255), -1)
+    tailTipCoordinates = list(util.getPoint(frame2, "Click on the tip of the tail of the same animal" if zebrafishToTrack else "Click on a point on the border of the same animal",
+                              backBtnCb=callback))
+    if oldk != k:
+      k = oldk
+      if data[k//backCalculationStep] is not None:
+        data[k//backCalculationStep] = None
+      continue
+
+    if True: # Centered on the animal
+      minX = min(headCoordinates[0], tailTipCoordinates[0])
+      maxX = max(headCoordinates[0], tailTipCoordinates[0])
+      minY = min(headCoordinates[1], tailTipCoordinates[1])
+      maxY = max(headCoordinates[1], tailTipCoordinates[1])
+      lengthX = maxX - minX
+      lengthY = maxY - minY
       
-      xtop  = wellPositions[wellNumber]['topLeftX']
-      ytop  = wellPositions[wellNumber]['topLeftY']
-      lenX  = wellPositions[wellNumber]['lengthX']
-      lenY  = wellPositions[wellNumber]['lengthY']
-      frame = frame[ytop:ytop+lenY, xtop:xtop+lenX]
+      widdeningFactor = 2
+      minX = minX - int(widdeningFactor * lengthX)
+      maxX = maxX + int(widdeningFactor * lengthX)
+      minY = minY - int(widdeningFactor * lengthY)
+      maxY = maxY + int(widdeningFactor * lengthY)
       
-      headCoordinates = list(util.getPoint(frame, "Click on the center of the head of one animal" if zebrafishToTrack else "Click on the center of mass of an animal"))
-      frame2 = cv2.circle(frame, tuple(headCoordinates), 2, (0, 0, 255), -1)
-      tailTipCoordinates = list(util.getPoint(frame2, "Click on the tip of the tail of the same animal" if zebrafishToTrack else "Click on a point on the border of the same animal"))
-      
-      if True: # Centered on the animal
-        minX = min(headCoordinates[0], tailTipCoordinates[0])
-        maxX = max(headCoordinates[0], tailTipCoordinates[0])
-        minY = min(headCoordinates[1], tailTipCoordinates[1])
-        maxY = max(headCoordinates[1], tailTipCoordinates[1])
-        lengthX = maxX - minX
-        lengthY = maxY - minY
-        
-        widdeningFactor = 2
-        minX = minX - int(widdeningFactor * lengthX)
-        maxX = maxX + int(widdeningFactor * lengthX)
-        minY = minY - int(widdeningFactor * lengthY)
-        maxY = maxY + int(widdeningFactor * lengthY)
-        
-        oneWellManuallyChosenTopLeft     = [minX, minY]
-        oneWellManuallyChosenBottomRight = [maxX, maxY]
-      else: # Focused on the initial well
-        oneWellManuallyChosenTopLeft     = [xtop, ytop]
-        oneWellManuallyChosenBottomRight = [xtop + lenX, ytop + lenY]          
-      
-      data.append({"image": frame, "headCoordinates": headCoordinates, "tailTipCoordinates": tailTipCoordinates, "oneWellManuallyChosenTopLeft": oneWellManuallyChosenTopLeft, "oneWellManuallyChosenBottomRight": oneWellManuallyChosenBottomRight, "frameNumber": k, "wellNumber": wellNumber})
+      oneWellManuallyChosenTopLeft     = [minX, minY]
+      oneWellManuallyChosenBottomRight = [maxX, maxY]
+    else: # Focused on the initial well
+      oneWellManuallyChosenTopLeft     = [xtop, ytop]
+      oneWellManuallyChosenBottomRight = [xtop + lenX, ytop + lenY]
+
+    data[k//backCalculationStep] = {"image": frame, "headCoordinates": headCoordinates, "tailTipCoordinates": tailTipCoordinates, "oneWellManuallyChosenTopLeft": oneWellManuallyChosenTopLeft, "oneWellManuallyChosenBottomRight": oneWellManuallyChosenBottomRight, "frameNumber": k, "wellNumber": wellNumber}
+    k += backCalculationStep
 
   if saveIntermediary:
     toSave    = [initialConfigFile, videoPath, data, wellPositions, pathToVideo, videoNameWithExt, videoName, videoExt, zebrafishToTrack]
@@ -325,7 +349,7 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
   
   # Launching the interactive adjustement of hyperparameters related to the detection of bouts
   
-  wellNumber = str(data[0]["wellNumber"])
+  wellNumber = int(data[0]["wellNumber"])
   
   initialFirstFrameValue, initialLastFrameValue = prepareConfigFileForParamsAdjustements(configFile, wellNumber, configFile.get("firstFrame", 1), videoPath, False)
   configFile["firstFrame"] = lastFrameNum - 500 if lastFrameNum - 500 > 0 else 0

@@ -1,21 +1,32 @@
+try:
+  from PyQt6.QtWidgets import QApplication
+except ImportError:
+  from PyQt5.QtWidgets import QApplication
+
 import zebrazoom.code.util as util
 
 
-def getXYCoordinates(frame, text):
-  return list(util.getPoint(frame, text))
+def _getXYCoordinates(frame, text):
+  back = False
+  def backClicked():
+    nonlocal back
+    back = True
+  coords = util.getPoint(frame, text, backBtnCb=backClicked)
+  if coords is not None and not back:
+    return list(coords)
+  app = QApplication.instance()
+  app.window.centralWidget().layout().setCurrentIndex(0)
+  app.configFileHistory[-2]()
+  return None
 
 def findWellLeft(frame):
-  [x, y] = getXYCoordinates(frame, "Click on left border")
-  return [x, y]
+  return _getXYCoordinates(frame, "Click on left border")
 
 def findWellRight(frame):
-  [x, y] = getXYCoordinates(frame, "Click on right border")
-  return [x, y]
+  return _getXYCoordinates(frame, "Click on right border")
 
 def findHeadCenter(frame):
-  [x, y] = getXYCoordinates(frame, "Click on a head center")
-  return [x, y]
+  return _getXYCoordinates(frame, "Click on a head center")
 
 def findBodyExtremity(frame):
-  [x, y] = getXYCoordinates(frame, "Click on the tip of the tail of the same zebrafish")
-  return [x, y]
+  return _getXYCoordinates(frame, "Click on the tip of the tail of the same zebrafish")

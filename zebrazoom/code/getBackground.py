@@ -3,7 +3,7 @@ import cv2
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 from zebrazoom.code.preprocessImage import preprocessImage, preprocessBackgroundImage
 from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
-from zebrazoom.code.util import pageOrDialog
+import zebrazoom.code.util as util
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 
 try:
@@ -147,7 +147,7 @@ def getBackground(videoPath, hyperparameters):
       layout = QVBoxLayout()
       layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
       timeout = 3000 if hyperparameters["exitAfterBackgroundExtraction"] else None
-      pageOrDialog(layout, title="Background Extracted", dialog=True, labelInfo=(back, label), timeout=timeout)
+      util.showDialog(layout, title="Background Extracted", labelInfo=(back, label), timeout=timeout)
   cap.release()
   
   print("Background Extracted")
