@@ -8,6 +8,7 @@ import pickle
 import json
 import os
 import re
+import zebrazoom.code.util as util
 from zebrazoom.code.getBackground import getBackground
 from zebrazoom.code.findWells import findWells
 from zebrazoom.code.trackingFolder.tracking import tracking
@@ -24,7 +25,10 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, det
   
   if realExecThroughGUI:
     zebrafishToTrack = (self.organism == 'zebrafishNew')
-    [initialConfigFile, videoPath, data, wellPositions, pathToVideo, videoNameWithExt, videoName, videoExt] = getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack)
+    groundTruth = getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack)
+    if groundTruth is None:
+      return
+    [initialConfigFile, videoPath, data, wellPositions, pathToVideo, videoNameWithExt, videoName, videoExt] = groundTruth
   else:
     toSave = pickle.load(open(self, 'rb'))
     initialConfigFile = toSave[0]
@@ -193,7 +197,7 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, det
   
   if realExecThroughGUI:
     self.configFile = configFile
-    controller.show_frame("FinishConfig")
+    util.addToHistory(controller.show_frame)("FinishConfig")
   else:  
     reference = videoName + '_config.json'
     with open(reference, 'w') as outfile:

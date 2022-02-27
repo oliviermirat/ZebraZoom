@@ -59,19 +59,14 @@ def _dialogClosed(loop, fn):
   return inner
 
 
-def pageOrDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, timeout=None):
-  loop = QEventLoop()
-  mainLayout = QVBoxLayout()
-  if title is not None and not dialog:
-    mainLayout.addWidget(apply_style(QLabel(title), font=TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
-  mainLayout.addLayout(layout)
+def _getButtonsLayout(buttons, loop, dialog=None):
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
 
   def callback(cb):
     if cb is not None:
       cb()
-    if dialog:
+    if dialog is not None:
       dialog.close()
     else:
       loop.exit()
@@ -97,58 +92,71 @@ def pageOrDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, t
       button.clicked.connect(cb)
     buttonsLayout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
   buttonsLayout.addStretch()
-  mainLayout.addLayout(buttonsLayout)
+  return buttonsLayout
 
+
+def showBlockingPage(layout, title=None, buttons=(), dialog=False, labelInfo=None):
+  loop = QEventLoop()
+  mainLayout = QVBoxLayout()
+  if title is not None:
+    mainLayout.addWidget(apply_style(QLabel(title), font=TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
+  mainLayout.addLayout(layout)
+  mainLayout.addLayout(_getButtonsLayout(buttons, loop))
   app = QApplication.instance()
-  if not dialog:
-    assert app is not None
-    temporaryPage = QWidget()
-    temporaryPage.setLayout(mainLayout)
-    stackedLayout = app.window.centralWidget().layout()
-    stackedLayout.addWidget(temporaryPage)
-    oldWidget = stackedLayout.currentWidget()
-    with app.suppressBusyCursor():
-      stackedLayout.setCurrentWidget(temporaryPage)
-      if labelInfo is not None:
-        img, label = labelInfo
-        label.setMinimumSize(1, 1)
-        label.show()
-        setPixmapFromCv(img, label)
-      loop.exec()
-      stackedLayout.setCurrentWidget(oldWidget)
-    stackedLayout.removeWidget(temporaryPage)
-  else:
-    dialog = QWidget()
-    if app is not None:
-      app.registerWindow(dialog)
-    else:
-      app = QApplication(sys.argv)
-    dialog.setWindowTitle(title)
-    dialog.move(0, 0)
-    dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
-    dialog.setLayout(mainLayout)
+  assert app is not None
+  temporaryPage = QWidget()
+  temporaryPage.setLayout(mainLayout)
+  stackedLayout = app.window.centralWidget().layout()
+  stackedLayout.addWidget(temporaryPage)
+  oldWidget = stackedLayout.currentWidget()
+  with app.suppressBusyCursor():
+    stackedLayout.setCurrentWidget(temporaryPage)
     if labelInfo is not None:
       img, label = labelInfo
-      height, width = img.shape[:2]
-      label.setMinimumSize(width, height)
-      layoutSize = mainLayout.totalSizeHint()
       label.setMinimumSize(1, 1)
-      extraWidth = layoutSize.width() - width
-      extraHeight = layoutSize.height() - height
-    else:
-      layoutSize = mainLayout.totalSizeHint()
-    screenSize = QApplication.instance().primaryScreen().availableSize()
-    if layoutSize.width() > screenSize.width() or layoutSize.height() > screenSize.height():
-      layoutSize.scale(screenSize, Qt.AspectRatioMode.KeepAspectRatio)
-    dialog.setFixedSize(layoutSize)
-    dialog.show()
-    if labelInfo is not None:
-      setPixmapFromCv(*labelInfo, QSize(layoutSize.width() - extraWidth, layoutSize.height() - extraHeight))
-    dialog.closeEvent = _dialogClosed(loop, dialog.closeEvent)
-    if timeout is not None:
-      QTimer.singleShot(timeout, lambda: dialog.close())
+      label.show()
+      setPixmapFromCv(img, label)
     loop.exec()
+    stackedLayout.setCurrentWidget(oldWidget)
+  stackedLayout.removeWidget(temporaryPage)
 
+
+def showDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, timeout=None):
+  app = QApplication.instance()
+  dialog = QWidget()
+  loop = QEventLoop()
+  mainLayout = QVBoxLayout()
+  mainLayout.addLayout(layout)
+  mainLayout.addLayout(_getButtonsLayout(buttons, loop, dialog=dialog))
+  if app is not None:
+    app.registerWindow(dialog)
+  else:
+    app = QApplication(sys.argv)
+  dialog.setWindowTitle(title)
+  dialog.move(0, 0)
+  dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
+  dialog.setLayout(mainLayout)
+  if labelInfo is not None:
+    img, label = labelInfo
+    height, width = img.shape[:2]
+    label.setMinimumSize(width, height)
+    layoutSize = mainLayout.totalSizeHint()
+    label.setMinimumSize(1, 1)
+    extraWidth = layoutSize.width() - width
+    extraHeight = layoutSize.height() - height
+  else:
+    layoutSize = mainLayout.totalSizeHint()
+  screenSize = QApplication.instance().primaryScreen().availableSize()
+  if layoutSize.width() > screenSize.width() or layoutSize.height() > screenSize.height():
+    layoutSize.scale(screenSize, Qt.AspectRatioMode.KeepAspectRatio)
+  dialog.setFixedSize(layoutSize)
+  dialog.show()
+  if labelInfo is not None:
+    setPixmapFromCv(*labelInfo, QSize(layoutSize.width() - extraWidth, layoutSize.height() - extraHeight))
+  dialog.closeEvent = _dialogClosed(loop, dialog.closeEvent)
+  if timeout is not None:
+    QTimer.singleShot(timeout, lambda: dialog.close())
+    loop.exec()
 
 def _cvToPixmap(img):
   if len(img.shape) == 2:
@@ -256,32 +264,87 @@ def _chooseFrameLayout(cap, spinboxValues):
 
   return layout, video, sliderWithSpinbox
 
-def chooseBeginning(app, videoPath, title, chooseFrameBtnText, allowWholeVideo=False):
+def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb, extraButtonInfo=None):
   cap = zzVideoReading.VideoCapture(videoPath)
   cap.set(1, 1)
   ret, frame = cap.read()
   layout, label, valueWidget = _chooseFrameLayout(cap, (1, 0, cap.get(7) - 2))
-  buttons = [(chooseFrameBtnText, lambda: app.configFile.update({"firstFrame": valueWidget.value()}))]
 
-  wholeVideo = False
+  chooseEnd = True
+  def back():
+    nonlocal chooseEnd
+    chooseEnd = None
   def trackWholeVideo():
-    nonlocal wholeVideo
-    wholeVideo = True
+    nonlocal chooseEnd
+    chooseEnd = False
+  buttonsLayout = QHBoxLayout()
+  buttonsLayout.addStretch()
+  backBtn = QPushButton("Back")
+  backBtn.setObjectName("back")
+  buttonsLayout.addWidget(backBtn)
+  chooseFrameBtn = QPushButton(chooseFrameBtnText)
+  def chooseFrameBtnClicked():
+    app.configFile["firstFrame"] = valueWidget.value()
+    chooseFrameBtnCb()
+  chooseFrameBtn.clicked.connect(chooseFrameBtnClicked)
+  buttonsLayout.addWidget(chooseFrameBtn)
+  extraBtn = None
+  if extraButtonInfo is not None:
+    text, cb = extraButtonInfo
+    extraBtn = QPushButton(text)
+    extraBtn.clicked.connect(cb)
+    buttonsLayout.addWidget(extraBtn)
+  buttonsLayout.addStretch()
+  layout.addLayout(buttonsLayout)
+  page = QWidget()
+  page.setLayout(layout)
+  stackedLayout = app.window.centralWidget().layout()
+  stackedLayout.addWidget(page)
+  oldWidget = stackedLayout.currentWidget()
+  with app.suppressBusyCursor():
+    stackedLayout.setCurrentWidget(page)
+    label.setMinimumSize(1, 1)
+    label.show()
+    setPixmapFromCv(frame, label)
+  for btn in (backBtn, chooseFrameBtn) + () if extraBtn is None else (extraBtn,):
+    btn.clicked.connect(lambda: stackedLayout.removeWidget(page))
 
-  if allowWholeVideo:
-    buttons.append(("I want the tracking to run on the entire video!", trackWholeVideo))
-  pageOrDialog(layout, title=title, buttons=buttons, dialog=False, labelInfo=(frame, label))
-  return not wholeVideo
 
-
-def chooseEnd(app, videoPath, title, chooseFrameBtnText):
+def chooseEndPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb):
   cap = zzVideoReading.VideoCapture(videoPath)
   maximum = cap.get(7) - 2
   cap.set(1, maximum)
   ret, frame = cap.read()
   layout, label, valueWidget = _chooseFrameLayout(cap, (maximum, app.configFile["firstFrame"] + 1, maximum))
-  buttons = [(chooseFrameBtnText, lambda: app.configFile.update({"lastFrame": valueWidget.value()}))]
-  pageOrDialog(layout, title=title, buttons=buttons, dialog=False, labelInfo=(frame, label))
+  proceed = True
+  def back():
+    nonlocal proceed
+    proceed = False
+  buttonsLayout = QHBoxLayout()
+  buttonsLayout.addStretch()
+  backBtn = QPushButton("Back")
+  backBtn.setObjectName("back")
+  buttonsLayout.addWidget(backBtn)
+  chooseFrameBtn = QPushButton(chooseFrameBtnText)
+  def chooseFrameBtnClicked():
+    app.configFile["lastFrame"] = valueWidget.value()
+    chooseFrameBtnCb()
+  chooseFrameBtn.clicked.connect(chooseFrameBtnClicked)
+  buttonsLayout.addWidget(chooseFrameBtn)
+  buttonsLayout.addStretch()
+  layout.addLayout(buttonsLayout)
+  page = QWidget()
+  page.setLayout(layout)
+  stackedLayout = app.window.centralWidget().layout()
+  stackedLayout.addWidget(page)
+  oldWidget = stackedLayout.currentWidget()
+  with app.suppressBusyCursor():
+    stackedLayout.setCurrentWidget(page)
+    label.setMinimumSize(1, 1)
+    label.show()
+    setPixmapFromCv(frame, label)
+  for btn in (backBtn, chooseFrameBtn):
+    btn.clicked.connect(lambda: stackedLayout.removeWidget(page))
 
 
 class _InteractiveLabelPoint(QLabel):
@@ -350,15 +413,19 @@ class _InteractiveLabelPoint(QLabel):
     return point.x(), point.y()
 
 
-def getPoint(frame, title, extraButtons=(), selectingRegion=False):
+def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=None):
   height, width = frame.shape[:2]
 
   layout = QVBoxLayout()
 
   video = _InteractiveLabelPoint(width, height, selectingRegion)
   extraButtons = tuple((text, lambda: cb(video), exitLoop) for text, cb, exitLoop in extraButtons)
+  if backBtnCb is not None:
+    buttons = (("Back", backBtnCb, True), ("Next", None, True, video.pointSelected))
+  else:
+    buttons = (("Next", None, True, video.pointSelected),)
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
-  pageOrDialog(layout, title=title, buttons=(("Next", None, True, video.pointSelected),) + extraButtons, labelInfo=(frame, video))
+  showBlockingPage(layout, title=title, buttons=buttons + extraButtons, labelInfo=(frame, video))
 
   return video.getCoordinates()
 
@@ -442,13 +509,31 @@ class _InteractiveLabelRect(QLabel):
     return ([point.x(), point.y()] for point in points)
 
 
-def getRectangle(frame, title):
+def getRectangle(frame, title, backBtnCb=None):
   height, width, _ = frame.shape
 
   layout = QVBoxLayout()
 
   video = _InteractiveLabelRect(width, height)
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
-  pageOrDialog(layout, title=title, buttons=(("Next", None, True, video.regionSelected),), labelInfo=(frame, video))
+  if backBtnCb is not None:
+    buttons = (("Back", backBtnCb, True), ("Next", None, True, video.regionSelected))
+  else:
+    buttons = (("Next", None, True, video.regionSelected),)
+  showBlockingPage(layout, title=title, buttons=buttons, labelInfo=(frame, video))
 
   return video.getCoordinates()
+
+
+def addToHistory(fn):
+  def inner(*args, **kwargs):
+    app = QApplication.instance()
+    configFileState = app.configFile.copy()
+    def restoreState():
+      app.configFile.clear()
+      app.configFile.update(configFileState)
+      del app.configFileHistory[-1:]
+      fn(*args, **kwargs)
+    app.configFileHistory.append(restoreState)
+    return fn(*args, **kwargs)
+  return inner

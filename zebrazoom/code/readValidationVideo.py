@@ -237,5 +237,5 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
 
   startFrame = getFrame()
   timer.start()
-  util.pageOrDialog(layout, title="Video", dialog=True, labelInfo=(startFrame, video))
+  util.showDialog(layout, title="Video", labelInfo=(startFrame, video))
   timer.stop()

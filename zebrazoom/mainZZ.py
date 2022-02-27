@@ -186,6 +186,8 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     outfile.close()
     app = QApplication.instance()
     if hasattr(app, "wellPositions"):
+      if wellPositions is None:
+        return
       app.wellPositions[:] = [(position['topLeftX'], position['topLeftY'], position['lengthX'], position['lengthY'])
                               for idx, position in enumerate(wellPositions)]
       if hyperparameters["wellsAreRectangles"] or len(hyperparameters["oneWellManuallyChosenTopLeft"]) or int(hyperparameters["multipleROIsDefinedDuringExecution"]) or hyperparameters["noWellDetection"] or hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"]:

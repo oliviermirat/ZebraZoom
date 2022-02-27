@@ -14,10 +14,10 @@ import tkinter as tk
 from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 
 try:
-  from PyQt6.QtCore import Qt
+  from PyQt6.QtCore import Qt, QTimer
   from PyQt6.QtWidgets import QApplication, QLabel, QVBoxLayout
 except ImportError:
-  from PyQt5.QtCore import Qt
+  from PyQt5.QtCore import Qt, QTimer
   from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout
 
 import zebrazoom.code.util as util
@@ -245,8 +245,25 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
 
   accepted = False
   while not accepted:
-    posCoord = {pos: np.array(list(util.getPoint(frame, "Click on the " + pos + " of the group of wells", selectingRegion=True)))
-                for pos in ("top left", "top right", "bottom left")}
+    positions = ("top left", "top right", "bottom left")
+    idx = 0
+    posCoord = {}
+    app = QApplication.instance()
+    if app.configFileHistory:
+      def back():
+        nonlocal idx
+        idx -= 1
+    else:
+      back = None
+    while idx < len(positions):
+      oldidx = idx
+      posCoord[positions[idx]] = np.array(list(util.getPoint(frame, "Click on the " + positions[idx] + " of the group of wells", selectingRegion=True, backBtnCb=back)))
+      if idx != oldidx:
+        if idx >= 0:
+          continue
+        QTimer.singleShot(0, app.configFileHistory[-2])
+        return None
+      idx += 1
 
     nbWellsPerRows = hyperparameters["nbWellsPerRows"]
     nbRowsOfWells  = hyperparameters["nbRowsOfWells"]
@@ -283,26 +300,47 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
       nonlocal accepted
       accepted = True
     buttons = (("Yes, this is a good repartition.", accept), ("No, I want to try again.", None))
-    util.pageOrDialog(layout, title="Is this a good repartition of wells?", buttons=buttons, dialog=False, labelInfo=(possibleRepartition, label))
+    util.showBlockingPage(layout, title="Is this a good repartition of wells?", buttons=buttons, labelInfo=(possibleRepartition, label))
 
   cap.release()
   return l
 
 
 def _multipleROIsDefinedDuringExecutionQt(videoPath, hyperparameters):
-    l = []
+    l = [None] * hyperparameters["nbWells"]
+    frames = l[:]
     cap = zzVideoReading.VideoCapture(videoPath)
     if (cap.isOpened()== False):
       print("Error opening video stream or file")
     ret, frame = cap.read()
     frameForRepartitionJPG = frame.copy()
-    for i in range(0, int(hyperparameters["nbWells"])):
-      topLeft, bottomRight = util.getRectangle(frame, "Select one of the regions of interest")
+    i = 0
+    app = QApplication.instance()
+    if app.configFileHistory:
+      def back():
+        nonlocal i
+        i -= 1
+    else:
+      back = None
+    while i < hyperparameters["nbWells"]:
+      oldi = i
+      if frames[i] is not None:
+        frame = frames[i].copy()
+      else:
+        frames[i] = frame.copy()
+      topLeft, bottomRight = util.getRectangle(frame, "Select one of the regions of interest", backBtnCb=back)
+      if oldi != i:
+        if i >= 0:
+          frames[oldi] = None
+          continue
+        QTimer.singleShot(0, app.configFileHistory[-2])
+        return None
       frame = cv2.rectangle(frame, (topLeft[0], topLeft[1]), (bottomRight[0], bottomRight[1]), (255, 0, 0), 1)
       frame_width  = bottomRight[0] - topLeft[0]
       frame_height = bottomRight[1] - topLeft[1]
       well = {'topLeftX' : topLeft[0], 'topLeftY' : topLeft[1], 'lengthX' : frame_width, 'lengthY': frame_height}
-      l.append(well)
+      l[i] = well
+      i += 1
     saveWellsRepartitionImage(l, frameForRepartitionJPG, hyperparameters)
     cap.release()
     return l
@@ -564,7 +602,7 @@ def findWells(videoPath, hyperparameters):
       layout = QVBoxLayout()
       layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
       timeout = 3000 if hyperparameters["exitAfterBackgroundExtraction"] else None
-      util.pageOrDialog(layout, title='Wells Detection', dialog=True, labelInfo=(frame, label), timeout=timeout)
+      util.showDialog(layout, title='Wells Detection', labelInfo=(frame, label), timeout=timeout)
   
   print("Wells found")
   

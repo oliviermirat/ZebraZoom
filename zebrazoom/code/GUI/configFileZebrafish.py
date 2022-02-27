@@ -1,11 +1,11 @@
 try:
   from PyQt6.QtCore import Qt
   from PyQt6.QtGui import QFont
-  from PyQt6.QtWidgets import QLabel, QWidget, QPushButton, QVBoxLayout, QRadioButton, QButtonGroup
+  from PyQt6.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QRadioButton, QButtonGroup
 except ImportError:
   from PyQt5.QtCore import Qt
   from PyQt5.QtGui import QFont
-  from PyQt5.QtWidgets import QLabel, QWidget, QPushButton, QVBoxLayout, QRadioButton, QButtonGroup
+  from PyQt5.QtWidgets import QLabel, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QRadioButton, QButtonGroup
 
 import zebrazoom.code.util as util
 
@@ -50,11 +50,18 @@ class HeadEmbeded(QWidget):
     btnGroup3.addButton(tweakTrackingParamsNoRadioButton)
     layout.addWidget(tweakTrackingParamsNoRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    nextBtn = QPushButton("Next", self)
-    nextBtn.clicked.connect(lambda: controller.headEmbededGUI(controller, blackBackRadioButton.isChecked(), whiteBackRadioButton.isChecked(), noBoutDetectRadioButton.isChecked(), boutDetectionRadioButton.isChecked(), tweakTrackingParamsYesRadioButton.isChecked(), tweakTrackingParamsNoRadioButton.isChecked()))
-    layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = QPushButton("Go to the start page", self)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    nextBtn = QPushButton("Next", self)
+    nextBtn.clicked.connect(lambda: controller.headEmbededGUI(controller, blackBackRadioButton.isChecked(), whiteBackRadioButton.isChecked(), noBoutDetectRadioButton.isChecked(), boutDetectionRadioButton.isChecked(), tweakTrackingParamsYesRadioButton.isChecked(), tweakTrackingParamsNoRadioButton.isChecked()))
+    buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)

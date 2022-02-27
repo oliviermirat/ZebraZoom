@@ -1,6 +1,9 @@
 import numpy as np
 
+import zebrazoom.code.util as util
 
+
+@util.addToHistory
 def headEmbededGUI(self, controller, blackBack, whiteBack, noBoutDetect, boutDetection, tweakTrackingParamsYes,
 tweakTrackingParamsNo):
 

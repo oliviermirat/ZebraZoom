@@ -111,12 +111,19 @@ class ChooseGeneralExperiment(QWidget):
     layout.addWidget(otherRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(QLabel('Several animals can be tracked at once in the same well/tank/arena. Each well should contain the same number of animals.', self), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
-    nextBtn.clicked.connect(lambda: controller.chooseGeneralExperimentFirstStep(controller, freeZebraRadioButton.isChecked(), headEmbZebraRadioButton.isChecked(), False, False, otherRadioButton.isChecked(), fastScreenRadioButton.isChecked()))
-    layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
+    nextBtn.clicked.connect(lambda: controller.chooseGeneralExperimentFirstStep(controller, freeZebraRadioButton.isChecked(), headEmbZebraRadioButton.isChecked(), False, False, otherRadioButton.isChecked(), fastScreenRadioButton.isChecked()))
+    buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
 
@@ -138,12 +145,19 @@ class FreelySwimmingExperiment(QWidget):
     layout.addWidget(freeZebraRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(QLabel("It's more difficult to create a configuration file with this method, but it can sometimes be useful as an alternative.", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
-    nextBtn.clicked.connect(lambda: controller.chooseGeneralExperiment(controller, freeZebraRadioButton.isChecked(), 0, 0, 0, 0, freeZebra2RadioButton.isChecked()))
-    layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
+    nextBtn.clicked.connect(lambda: util.addToHistory(controller.chooseGeneralExperiment)(controller, freeZebraRadioButton.isChecked(), 0, 0, 0, 0, freeZebra2RadioButton.isChecked()))
+    buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
 
@@ -171,12 +185,19 @@ class WellOrganisation(QWidget):
     rectangularRadioButton = QRadioButton("Rectangular wells (beta version)", self)
     layout.addWidget(rectangularRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
-    nextBtn.clicked.connect(lambda: controller.wellOrganisation(controller, circularRadioButton.isChecked(), rectangularRadioButton.isChecked(), roiRadioButton.isChecked(), otherRadioButton.isChecked(), multipleROIsRadioButton.isChecked(), groupSameSizeAndShapeEquallySpacedWellsRadioButton.isChecked()))
-    layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
+    nextBtn.clicked.connect(lambda: controller.wellOrganisation(controller, circularRadioButton.isChecked(), rectangularRadioButton.isChecked(), roiRadioButton.isChecked(), otherRadioButton.isChecked(), multipleROIsRadioButton.isChecked(), groupSameSizeAndShapeEquallySpacedWellsRadioButton.isChecked()))
+    buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
 
@@ -195,12 +216,19 @@ class NbRegionsOfInterest(QWidget):
     nbwells.validator().setBottom(0)
     layout.addWidget(nbwells, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
-    nextBtn.clicked.connect(lambda: controller.regionsOfInterest(controller, int(nbwells.text())))
-    layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
+    nextBtn.clicked.connect(lambda: controller.regionsOfInterest(controller, int(nbwells.text())))
+    buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
 
@@ -245,11 +273,20 @@ class HomegeneousWellsLayout(QWidget):
     linkBtn1 = util.apply_style(QPushButton("Alternative", self), background_color=util.GOLD)
     linkBtn1.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/FastScreenTrackingGuidlines.md"))
     layout.addWidget(linkBtn1, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
+
 
 class CircularOrRectangularWells(QWidget):
   def __init__(self, controller):
@@ -278,12 +315,19 @@ class CircularOrRectangularWells(QWidget):
     nbWellsPerRows.validator().setBottom(0)
     layout.addWidget(nbWellsPerRows, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
-    nextBtn.clicked.connect(lambda: controller.circularOrRectangularWells(controller, nbwells.text(), nbRowsOfWells.text(), nbWellsPerRows.text()))
-    layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
+    nextBtn.clicked.connect(lambda: controller.circularOrRectangularWells(controller, nbwells.text(), nbRowsOfWells.text(), nbWellsPerRows.text()))
+    buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
 
@@ -305,9 +349,16 @@ class ChooseCircularWellsLeft(QWidget):
     image.setPixmap(QPixmap(os.path.join(cur_dir_path, 'leftborder.png')))
     layout.addWidget(image, alignment=Qt.AlignmentFlag.AlignCenter)
 
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
 
@@ -329,9 +380,16 @@ class ChooseCircularWellsRight(QWidget):
     image.setPixmap(QPixmap(os.path.join(cur_dir_path, 'rightborder.png')))
     layout.addWidget(image, alignment=Qt.AlignmentFlag.AlignCenter)
 
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
 
@@ -362,12 +420,19 @@ class NumberOfAnimals(QWidget):
     layout.addWidget(forceBlobMethodForHeadTrackingCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(util.apply_style(QLabel("Only click the box above if you tried the tracking without this option and the head tracking was suboptimal (an eye was detected instead of the head for example).", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
-    nextBtn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text(), yesRadioButton.isChecked(), noRadioButton.isChecked(), forceBlobMethodForHeadTrackingCheckbox.isChecked(), 0, 0, 0, 0, 0, 0, 0))
-    layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
+    nextBtn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text(), yesRadioButton.isChecked(), noRadioButton.isChecked(), forceBlobMethodForHeadTrackingCheckbox.isChecked(), 0, 0, 0, 0, 0, 0, 0))
+    buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
 
@@ -448,12 +513,19 @@ class NumberOfAnimals2(QWidget):
     layout.addWidget(alternativeTrackingMethodRadioButton, 12, 1, Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(util.apply_style(QLabel("The alternative method can also work better for animals of different sizes.", self), font=QFont("Helvetica", 10)), 13, 1, Qt.AlignmentFlag.AlignCenter)
 
-    nextBtn = util.apply_style(QPushButton("Ok, next step", self), background_color=util.LIGHT_YELLOW)
-    nextBtn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text(), yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, yesBoutsRadioButton.isChecked(), noBoutsRadioButton.isChecked(), recommendedMethodRadioButton.isChecked(), alternativeMethodRadioButton.isChecked(), yesBendsRadioButton.isChecked(), noBendsRadioButton.isChecked(), recommendedTrackingMethodRadioButton.isChecked()))
-    layout.addWidget(nextBtn, 14, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, 15, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    nextBtn = util.apply_style(QPushButton("Ok, next step", self), background_color=util.LIGHT_YELLOW)
+    nextBtn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text(), yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, yesBoutsRadioButton.isChecked(), noBoutsRadioButton.isChecked(), recommendedMethodRadioButton.isChecked(), alternativeMethodRadioButton.isChecked(), yesBendsRadioButton.isChecked(), noBendsRadioButton.isChecked(), recommendedTrackingMethodRadioButton.isChecked()))
+    buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout, 14, 0, 1, 2)
 
     self.setLayout(layout)
 
@@ -492,9 +564,16 @@ class NumberOfAnimalsCenterOfMass(QWidget):
     layout.addWidget(util.apply_style(QLabel("Try the 'Automatic Parameters Setting, Method 1' first. If it doesn't work, try the other methods.", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(util.apply_style(QLabel("The 'Manual Parameter Settings' makes setting parameter slightly more challenging but offers more control over the choice of parameters.", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
 
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
 
@@ -516,9 +595,16 @@ class IdentifyHeadCenter(QWidget):
     image.setPixmap(QPixmap(os.path.join(cur_dir_path, 'blobCenter.png')))
     layout.addWidget(image, alignment=Qt.AlignmentFlag.AlignCenter)
 
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
 
@@ -540,9 +626,16 @@ class IdentifyBodyExtremity(QWidget):
     image.setPixmap(QPixmap(os.path.join(cur_dir_path, 'blobExtremity.png')))
     layout.addWidget(image, alignment=Qt.AlignmentFlag.AlignCenter)
 
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
 
@@ -563,12 +656,19 @@ class GoToAdvanceSettings(QWidget):
     noRadioButton = QRadioButton("No", self)
     layout.addWidget(noRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
-    nextBtn.clicked.connect(lambda: controller.goToAdvanceSettings(controller, yesRadioButton.isChecked(), noRadioButton.isChecked()))
-    layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
+    nextBtn.clicked.connect(lambda: controller.goToAdvanceSettings(controller, yesRadioButton.isChecked(), noRadioButton.isChecked()))
+    buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
 
@@ -579,8 +679,13 @@ class FinishConfig(QWidget):
     self.controller = controller
 
     layout = QVBoxLayout()
+    layout.addStretch()
     saveBtn = util.apply_style(QPushButton("Save Config File", self), background_color=util.LIGHT_YELLOW)
     saveBtn.clicked.connect(lambda: controller.finishConfig())
     layout.addWidget(saveBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    layout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addStretch()
 
     self.setLayout(layout)

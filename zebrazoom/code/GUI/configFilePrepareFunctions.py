@@ -38,6 +38,7 @@ def getMainArguments(self):
   argv         = []
   return [pathToVideo, videoName, videoExt, configFile, argv]
 
+
 def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile, freelySwimAutomaticParameters=False, boutDetectionsOnly=False):
 
   if int(reloadConfigFile):
@@ -54,13 +55,15 @@ def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile, freelyS
   self.videoToCreateConfigFileFor, _ = QFileDialog.getOpenFileName(self.window, "Select video to create config file for", os.path.expanduser("~"), "All files(*)")
 
   if boutDetectionsOnly:
-    controller.calculateBackgroundFreelySwim(controller, 0, False, False, True)
+    util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, False, False, True)
   else:
     if freelySwimAutomaticParameters:
-      controller.calculateBackgroundFreelySwim(controller, 0, False, True)
+      util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, False, True)
     else:
-      controller.show_frame("ChooseGeneralExperiment")
+      util.addToHistory(controller.show_frame)("ChooseGeneralExperiment")
 
+
+@util.addToHistory
 def chooseGeneralExperimentFirstStep(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, fastScreen):
   if int(fastScreen):
     controller.show_frame("HomegeneousWellsLayout")
@@ -70,6 +73,7 @@ def chooseGeneralExperimentFirstStep(self, controller, freeZebra, headEmbZebra, 
       controller.show_frame("FreelySwimmingExperiment")
     else:
       chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, 0)
+
 
 def chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, freeZebra2):
   self.configFile["extractAdvanceZebraParameters"] = 0
@@ -91,6 +95,24 @@ def chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophil
     self.configFile["freeSwimmingTailTrackingMethod"] = "none"
     controller.show_frame("WellOrganisation")
 
+
+def _getRegion(controller):
+  cap = zzVideoReading.VideoCapture(controller.videoToCreateConfigFileFor)
+  cap.set(1, 10)
+  ret, frame = cap.read()
+  back = False
+  def backClicked():
+    nonlocal back
+    back = True
+  rect = util.getRectangle(frame, "Click on the top left and bottom right of the region of interest", backBtnCb=backClicked)
+  if back:
+    controller.window.centralWidget().layout().setCurrentIndex(0)
+    controller.configFileHistory[-2]()
+    return None
+  return rect
+
+
+@util.addToHistory
 def wellOrganisation(self, controller, circular, rectangular, roi, other, multipleROIs, groupSameSizeAndShapeEquallySpacedWells):
   if multipleROIs:
     controller.show_frame("NbRegionsOfInterest")
@@ -111,19 +133,19 @@ def wellOrganisation(self, controller, circular, rectangular, roi, other, multip
         else:
           self.shape = 'other'
           if roi:
-            cap = zzVideoReading.VideoCapture(controller.videoToCreateConfigFileFor)
-            cap.set(1, 10)
-            ret, frame = cap.read()
-            rect = util.getRectangle(frame, "Click on the top left and bottom right of the region of interest")
+            rect = _getRegion(controller)
+            if rect is None:
+              return
             self.configFile["oneWellManuallyChosenTopLeft"], self.configFile["oneWellManuallyChosenBottomRight"] = rect
             self.configFile["nbWells"] = 1
-            chooseBeginningAndEndOfVideo(self, controller)
+            util.addToHistory(chooseBeginningAndEndOfVideo)(self, controller)
           else:
             self.configFile["noWellDetection"] = 1
             self.configFile["nbWells"] = 1
             chooseBeginningAndEndOfVideo(self, controller)
 
 
+@util.addToHistory
 def regionsOfInterest(self, controller, nbwells):
 
   self.configFile["multipleROIsDefinedDuringExecution"] = 1
@@ -156,6 +178,7 @@ def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
   chooseBeginningAndEndOfVideo(self, controller)
 
 
+@util.addToHistory
 def homegeneousWellsLayout(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
 
   self.configFile = {"nbAnimalsPerWell": 1, "nbWells": 8, "nbRowsOfWells": 2, "nbWellsPerRows": 4, "groupOfMultipleSameSizeAndShapeEquallySpacedWells": 1, "postProcessMultipleTrajectories": 1,   "postProcessRemoveLowProbabilityDetection" : 1, "postProcessLowProbabilityDetectionPercentOfMaximum" : 0.2, "trackingPointSizeDisplay": 4, "extractAdvanceZebraParameters": 0,  "validationVideoPlotHeading": 0, "trackTail": 0, "freqAlgoPosFollow": 100, "fasterMultiprocessing": 1, "copyOriginalVideoToOutputFolderForValidation": 0, "backgroundSubtractorKNN": 1}
@@ -175,6 +198,7 @@ def homegeneousWellsLayout(self, controller, nbwells, nbRowsOfWells, nbWellsPerR
   controller.show_frame("FinishConfig")
 
 
+@util.addToHistory
 def morePreciseFastScreen(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
 
   # The gaussian image filtering should be added here in the future
@@ -199,6 +223,7 @@ def morePreciseFastScreen(self, controller, nbwells, nbRowsOfWells, nbWellsPerRo
   # controller.show_frame("FinishConfig")
 
 
+@util.addToHistory
 def circularOrRectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
   self.configFile["nbWells"]        = int(nbwells)
 
@@ -221,38 +246,57 @@ def circularOrRectangularWells(self, controller, nbwells, nbRowsOfWells, nbWells
       rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows)
 
 
+@util.addToHistory
 def chooseCircularWellsLeft(self, controller):
   cap = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
   ret, frame = cap.read()
-  [x, y] = findWellLeft(frame)
+  wellLeft = findWellLeft(frame)
+  if wellLeft is None:
+    return
+  [x, y] = wellLeft
   self.wellLeftBorderX = x
   self.wellLeftBorderY = y
-  controller.show_frame("ChooseCircularWellsRight")
+  util.addToHistory(controller.show_frame)("ChooseCircularWellsRight")
 
+@util.addToHistory
 def chooseCircularWellsRight(self, controller):
   cap = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
   ret, frame = cap.read()
-  [xRight, yRight] = findWellRight(frame)
+  wellRight = findWellRight(frame)
+  if wellRight is None:
+    return
+  [xRight, yRight] = wellRight
   xLeft = self.wellLeftBorderX
   yLeft = self.wellLeftBorderY
   dist = math.sqrt((xLeft - xRight)**2 + (yLeft - yRight)**2)
   self.configFile["minWellDistanceForWellDetection"] = int(dist)
   self.configFile["wellOutputVideoDiameter"]         = int(dist + dist * 0.2)
-  chooseBeginningAndEndOfVideo(self, controller)
+  util.addToHistory(chooseBeginningAndEndOfVideo)(self, controller)
 
-def chooseBeginningAndEndOfVideo(self, controller):
-  if util.chooseBeginning(controller, controller.videoToCreateConfigFileFor, "Choose where the analysis of your video should start.", "Ok, I want the tracking to start at this frame!", allowWholeVideo=True):
-    util.chooseEnd(controller, controller.videoToCreateConfigFileFor, "Choose where the analysis of your video should end.", "Ok, I want the tracking to end at this frame!")
 
-  if int(self.configFile["headEmbeded"]) == 1:
+@util.addToHistory
+def _beginningAndEndChosen(controller):
+  controller.window.centralWidget().layout().setCurrentIndex(0)
+  if int(controller.configFile["headEmbeded"]) == 1:
     controller.show_frame("HeadEmbeded")
   else:
-    if self.organism == 'zebrafishNew':
+    if controller.organism == 'zebrafishNew':
       controller.show_frame("NumberOfAnimals2")
-    elif self.organism == 'zebrafish':
+    elif controller.organism == 'zebrafish':
       controller.show_frame("NumberOfAnimals")
     else:
       controller.show_frame("NumberOfAnimalsCenterOfMass")
+
+
+@util.addToHistory
+def _chooseEnd(controller):
+  util.chooseEndPage(controller, controller.videoToCreateConfigFileFor, "Choose where the analysis of your video should end.", "Ok, I want the tracking to end at this frame!", lambda: _beginningAndEndChosen(controller))
+
+
+def chooseBeginningAndEndOfVideo(self, controller):
+  util.chooseBeginningPage(controller, controller.videoToCreateConfigFileFor, "Choose where the analysis of your video should start.", "Ok, I want the tracking to start at this frame!", lambda: _chooseEnd(controller),
+                           extraButtonInfo=("I want the tracking to run on the entire video!", lambda: _beginningAndEndChosen(controller)))
+
 
 def getImageForMultipleAnimalGUI(l, nx, ny, max_l, videoToCreateConfigFileFor, background, wellPositions, hyperparameters):
 
@@ -300,6 +344,7 @@ def getImageForMultipleAnimalGUI(l, nx, ny, max_l, videoToCreateConfigFileFor, b
 
   return [frame, maxToReturn]
 
+
 def _createWidget(layout, values, key, minn, maxx, name, updateFrame):
   slider = util.SliderWithSpinbox(values[key], minn, maxx, name=name)
 
@@ -318,6 +363,7 @@ def _createWidget(layout, values, key, minn, maxx, name, updateFrame):
 
   return slider
 
+
 def identifyMultipleHead(self, controller, nbanimals):
   self.configFile["videoName"] = "configFilePrep"
 
@@ -327,7 +373,7 @@ def identifyMultipleHead(self, controller, nbanimals):
   with app.busyCursor():
     # Getting hyperparameters, wellPositions, and background
     hyperparameters = getHyperparametersSimple(tempConfig)
-    wellPositions = findWells(self.videoToCreateConfigFileFor, hyperparameters)
+    wellPositions = util.addToHistory(findWells)(self.videoToCreateConfigFileFor, hyperparameters)
     background    = getBackground(self.videoToCreateConfigFileFor, hyperparameters)
 
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -349,7 +395,7 @@ def identifyMultipleHead(self, controller, nbanimals):
   timer.setInterval(2000)
   timer.timeout.connect(lambda: util.setPixmapFromCv(next(images), label))
   timer.start()
-  util.pageOrDialog(layout, title="", dialog=False, buttons=(("Ok, I understand!", lambda: timer.stop()),), labelInfo=(next(images), label))
+  util.showBlockingPage(layout, title="", buttons=(("Ok, I understand!", lambda: timer.stop()),), labelInfo=(next(images), label))
 
   # Manual parameters adjustements
   cap        = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
@@ -390,7 +436,7 @@ def identifyMultipleHead(self, controller, nbanimals):
   minAreaWidget = _createWidget(layout, hyperparameters, "minArea", 0, maxAreaBlobs, "Minimum area", updateFrame)
   maxAreaWidget = _createWidget(layout, hyperparameters, "maxArea", 0, maxAreaBlobs, "Maximum area", updateFrame)
 
-  util.pageOrDialog(layout, title="Adjust Parameters: As much as possible, you must see red points on and only on animals on the right image.", dialog=False, buttons=(("Ok, done!", None),), labelInfo=(frame, label))
+  util.showBlockingPage(layout, title="Adjust Parameters: As much as possible, you must see red points on and only on animals on the right image.", buttons=(("Ok, done!", None),), labelInfo=(frame, label))
 
   del self.configFile["videoName"]
 
@@ -402,6 +448,7 @@ def identifyMultipleHead(self, controller, nbanimals):
   self.configFile["headSize"]        = math.sqrt((int(hyperparameters["minArea"]) + int(hyperparameters["maxArea"])) / 2)
 
 
+@util.addToHistory
 def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHeadTracking, yesBouts, nooBouts, recommendedMethod, alternativeMethod, yesBends, nooBends, adjustBackgroundExtractionBasedOnNumberOfBlackPixels):
 
   self.configFile["noBoutsDetection"] = 1
@@ -440,20 +487,30 @@ def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHea
     automaticallyFindOptimalParameters(self, controller, True, 0, 0, int(noo), int(adjustBackgroundExtractionBasedOnNumberOfBlackPixels))
   else:
     identifyMultipleHead(self, controller, nbanimals)
-    controller.show_frame("FinishConfig")
+    util.addToHistory(controller.show_frame)("FinishConfig")
 
+
+@util.addToHistory
 def chooseHeadCenter(self, controller):
   cap = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
   ret, frame = cap.read()
-  [x, y] = findHeadCenter(frame)
+  headCenter = findHeadCenter(frame)
+  if headCenter is None:
+    return
+  [x, y] = headCenter
   self.headCenterX = x
   self.headCenterY = y
-  controller.show_frame("IdentifyBodyExtremity")
+  util.addToHistory(controller.show_frame)("IdentifyBodyExtremity")
 
+
+@util.addToHistory
 def chooseBodyExtremity(self, controller):
   cap = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor)
   ret, frame = cap.read()
-  [extX, extY] = findBodyExtremity(frame)
+  bodyExtremity = findBodyExtremity(frame)
+  if bodyExtremity is None:
+    return
+  [extX, extY] = bodyExtremity
   headCenterX = self.headCenterX
   headCenterY = self.headCenterY
   dist = math.sqrt((extX - headCenterX)**2 + (extY - headCenterY)**2)
@@ -485,9 +542,10 @@ def chooseBodyExtremity(self, controller):
   if int(self.configFile["nbAnimalsPerWell"]) > 1 or self.forceBlobMethodForHeadTracking:
     identifyMultipleHead(self, controller, int(self.configFile["nbAnimalsPerWell"]))
 
-  controller.show_frame("GoToAdvanceSettings")
+  util.addToHistory(controller.show_frame)("GoToAdvanceSettings")
 
 
+@util.addToHistory
 def goToAdvanceSettings(self, controller, yes, no):
 
   if int(no):
@@ -495,6 +553,7 @@ def goToAdvanceSettings(self, controller, yes, no):
   else:
     self.configFile["noBoutsDetection"] = 0
     self.calculateBackgroundFreelySwim(controller, 0)
+
 
 def finishConfig(self, controller, reference):
 
