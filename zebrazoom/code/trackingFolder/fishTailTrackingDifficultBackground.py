@@ -104,10 +104,10 @@ def addWhiteBorders(frame):
   return frame
 
 def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hyperparameters, videoName):
-  print("videoName:", videoName)
+  
   showInitialVideo = True # This is not used anymore, should be removed soon
   iterativelyErodeEachImage = False
-  showFramesForDebugging = True
+  showFramesForDebugging = hyperparameters["debugTracking"]
   dist2Threshold = 400
   historyLength  = 1000
   reduceImageResolutionPercentage = hyperparameters["reduceImageResolutionPercentage"]
@@ -147,15 +147,33 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
       fgmask = fgbg.apply(frame)
   else:
     print("Background calculation starting")
+    
     listOfFramesToSave = []
-    for i in range(0, lastFrame - 1, int((lastFrame - 1) / historyLength if (lastFrame - 1) / historyLength >= 1 else 1)):
-      cap.set(1, lastFrame - 1 - i)
-      print("calculating background, currently at frame:", lastFrame - 1 - i)
+    framesToKeep = [i for i in range(0, lastFrame - 1, int((lastFrame - 1) / historyLength if (lastFrame - 1) / historyLength >= 1 else 1))]
+    cap.set(1, 0)
+    for i in range(0, lastFrame):
       ret, frame = cap.read()
-      if ret:
+      if i in framesToKeep and ret:
+        print(i, lastFrame)
         frame = cv2.resize(frame, (int(frame_width * reduceImageResolutionPercentage), int(frame_height * reduceImageResolutionPercentage)), interpolation = cv2.INTER_AREA)
-        fgmask = fgbg.apply(frame)
         listOfFramesToSave.append(frame)
+    
+    listOfFramesToSave.reverse()
+    
+    for i in range(0, len(listOfFramesToSave)):
+      print("calculating background, currently at frame:", i)
+      frame = listOfFramesToSave[i]
+      fgmask = fgbg.apply(frame)
+    
+    # listOfFramesToSave = []
+    # for i in range(0, lastFrame - 1, int((lastFrame - 1) / historyLength if (lastFrame - 1) / historyLength >= 1 else 1))]
+      # cap.set(1, lastFrame - 1 - i)
+      # print("calculating background, currently at frame:", lastFrame - 1 - i)
+      # ret, frame = cap.read()
+      # if ret:
+        # frame = cv2.resize(frame, (int(frame_width * reduceImageResolutionPercentage), int(frame_height * reduceImageResolutionPercentage)), interpolation = cv2.INTER_AREA)
+        # fgmask = fgbg.apply(frame)
+        # listOfFramesToSave.append(frame)
     cap.release()
     with open(os.path.join(pathToVideo, videoName + '_BackgroundKNN_' + str(historyLength) + '.pkl'), 'wb') as handle:
       pickle.dump(listOfFramesToSave, handle) #, protocol=pickle.HIGHEST_PROTOCOL)
