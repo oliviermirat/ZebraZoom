@@ -12,11 +12,11 @@ from matplotlib.figure import Figure
 try:
   from PyQt6.QtCore import Qt, QSize
   from PyQt6.QtGui import QCursor, QFont
-  from PyQt6.QtWidgets import QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox
+  from PyQt6.QtWidgets import QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QComboBox
 except ImportError:
   from PyQt5.QtCore import Qt, QSize
   from PyQt5.QtGui import QCursor, QFont
-  from PyQt5.QtWidgets import QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox
+  from PyQt5.QtWidgets import QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QComboBox
 
 import zebrazoom.code.util as util
 from zebrazoom.code.readValidationVideo import readValidationVideo
@@ -431,6 +431,11 @@ class ViewParameters(QWidget):
         self.zoomed_video_btn.clicked.connect(lambda: self.showValidationVideo(self.numWell(), self.numPoiss(), 1, -1))
         layout.addWidget(self.zoomed_video_btn, 3, 2, Qt.AlignmentFlag.AlignCenter)
 
+        self._plotComboBox = QComboBox(self)
+        self._plotComboBox.addItems(("Tail angle smoothed", "Tail angle raw", "Body coordinates"))
+        self._plotComboBox.currentIndexChanged.connect(lambda idx: setattr(self, "visualization", idx) or self._printSomeResults())
+        layout.addWidget(self._plotComboBox, 3, 4, Qt.AlignmentFlag.AlignCenter)
+
         layout.addWidget(QLabel("Fish number:", self), 4, 1, Qt.AlignmentFlag.AlignCenter)
         self.spinbox2 = QSpinBox(self)
         self.spinbox2.setStyleSheet(util.SPINBOX_STYLESHEET)
@@ -448,7 +453,7 @@ class ViewParameters(QWidget):
         layout.addWidget(self.spinbox3, 5, 2, Qt.AlignmentFlag.AlignCenter)
 
         button1 = QPushButton("View bout's angle", self)
-        button1.clicked.connect(lambda: self.printSomeResults())
+        button1.clicked.connect(lambda: self._printSomeResults())
         layout.addWidget(button1, 6, 2, Qt.AlignmentFlag.AlignCenter)
 
         self.flag_movement_btn = QPushButton("", self)
@@ -465,12 +470,9 @@ class ViewParameters(QWidget):
         back_btn = QPushButton("Go to the previous page", self)
         back_btn.clicked.connect(lambda: controller.show_frame("ResultsVisualization"))
         layout.addWidget(back_btn, 8, 1, Qt.AlignmentFlag.AlignCenter)
-        change_btn = util.apply_style(QPushButton("Change Right Side Plot", self), background_color=util.LIGHT_GREEN)
-        change_btn.clicked.connect(lambda: self.printSomeResults(True))
-        layout.addWidget(change_btn, 8, 2, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
         self.zoom_btn = util.apply_style(QPushButton("", self), background_color=util.LIGHT_GREEN)
-        self.zoom_btn.clicked.connect(lambda: self.printSomeResults(False, True))
+        self.zoom_btn.clicked.connect(lambda: setattr(self, "graphScaling", not self.graphScaling) or self._printSomeResults())
         layout.addWidget(self.zoom_btn, 8, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
         self.well_video_btn = QPushButton("", self)
@@ -527,13 +529,15 @@ class ViewParameters(QWidget):
         self.nbWells = len(self.dataRef["wellPoissMouv"])
         self.nbPoiss = len(self.dataRef["wellPoissMouv"][self.numWell()])
         self.nbMouv = len(self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()])
-        self.visualization = 2
-        self.graphScaling = True
+        self.graphScaling = False
         self.spinbox1.setRange(0, self.nbWells - 1)
         self.spinbox2.setRange(0, self.nbPoiss - 1)
         self.spinbox3.setRange(0, self.nbMouv - 1)
         self.superstruct_btn.hide()
-        self.printSomeResults()
+        if self._plotComboBox.currentIndex() == 2:
+            self._printSomeResults()
+        else:
+            self._plotComboBox.setCurrentIndex(2)
 
     def _updateGraph(self):
         self.a.clear()
@@ -541,11 +545,17 @@ class ViewParameters(QWidget):
             self.begMove = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["BoutStart"]
             endMove = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["BoutEnd"]
 
-            if self.visualization == 0 and not("TailAngle_smoothed" in self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]):
-                self.visualization = 1
+            self._plotComboBox.model().item(0).setEnabled("TailAngle_smoothed" in self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()])
+            self._plotComboBox.model().item(1).setEnabled("TailAngle_Raw" in self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()])
 
-            if self.visualization == 1 and not("TailAngle_Raw" in self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]):
-                self.visualization = 2
+            newIndex = self.visualization
+            while not self._plotComboBox.model().item(newIndex).isEnabled():
+                newIndex += 1
+            if newIndex != self.visualization:
+                block = self._plotComboBox.blockSignals(True)
+                self._plotComboBox.setCurrentIndex(newIndex)
+                self.visualization = newIndex
+                self._plotComboBox.blockSignals(block)
 
             # if self.visualization == 2 and not((len(np.unique(self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["HeadX"])) > 1) and (len(np.unique(self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["HeadY"])) > 1)):
                 # self.visualization = 0
@@ -661,11 +671,7 @@ class ViewParameters(QWidget):
             util.apply_style(self.flag_movement_btn).setText("Flag Movement")
         self.superstruct_btn.show()
 
-    def printSomeResults(self, changeVisualization=False, changeScaling=False):
-        if changeVisualization:
-            self.visualization = int(self.visualization + 1) % 3
-        if changeScaling:
-            self.graphScaling = not self.graphScaling
+    def _printSomeResults(self):
         buttonLabel = "View "
         if self.graphScaling:
           buttonLabel = buttonLabel + "Zoomed In "
