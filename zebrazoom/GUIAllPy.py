@@ -210,8 +210,9 @@ class ZebraZoomApp(QApplication):
         configFilePrepareFunctions.circularOrRectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows)
 
     def finishConfig(self):
-        config_dir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'configuration')
-        reference, _ = QFileDialog.getSaveFileName(self.window, "Save config", config_dir, "JSON (*.json)")
+        suggestedName = os.path.splitext(os.path.basename(self.videoToCreateConfigFileFor))[0]
+        configDir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'configuration')
+        reference, _ = QFileDialog.getSaveFileName(self.window, "Save config", os.path.join(configDir, suggestedName), "JSON (*.json)")
         if not reference:
           return
         configFilePrepareFunctions.finishConfig(self, self, reference)
