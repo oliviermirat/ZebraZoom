@@ -105,6 +105,7 @@ def addWhiteBorders(frame):
 
 def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hyperparameters, videoName):
   
+  chooseValueForAnimalBodyArea = -1 #600 # -1
   showInitialVideo = True # This is not used anymore, should be removed soon
   iterativelyErodeEachImage = False
   showFramesForDebugging = hyperparameters["debugTracking"]
@@ -237,9 +238,14 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
           if cv2.pointPolygonTest(contour, (previousCenterDetectedX, previousCenterDetectedY), False) >= 0:
             animalBodyArea = cv2.contourArea(contour)
             ROIHalfDiam = int(math.sqrt(animalBodyArea) * 4)
-        
         print("animalBodyArea:", animalBodyArea)
-        print("ROIHalfDiam:", ROIHalfDiam)   
+        print("ROIHalfDiam:", ROIHalfDiam)
+        if showFramesForDebugging:
+          cv2.imshow("frame0", frame2)
+          cv2.waitKey(0)        
+      
+      if chooseValueForAnimalBodyArea > 0:
+        animalBodyArea = chooseValueForAnimalBodyArea
       
       if ROIHalfDiam == -1:
         raise CustomError("An error occurred")
