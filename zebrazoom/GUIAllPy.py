@@ -2,6 +2,9 @@ import contextlib
 import os
 import sys
 import traceback
+from datetime import datetime
+
+import json
 
 try:
   from PyQt6.QtCore import Qt, QSize
@@ -39,15 +42,24 @@ def getCurrentResultFolder():
 
 
 def excepthook(excType, excValue, traceback_):
-  errorMessage = QMessageBox(QApplication.instance().window)
+  app = QApplication.instance()
+  errorMessage = QMessageBox(app.window)
   errorMessage.setIcon(QMessageBox.Icon.Critical)
   errorMessage.setWindowTitle("Error")
   formattedTraceback = traceback.format_exception(excType, excValue, traceback_)
   errorMessage.setText("An error has ocurred: %s" % formattedTraceback[-1])
-  errorMessage.setInformativeText('Please report the issue on <a href="https://github.com/oliviermirat/ZebraZoom/issues">Github</a>.')
+  informativeText = 'Please report the issue on <a href="https://github.com/oliviermirat/ZebraZoom/issues">Github</a>.'
+  if app.configFile and app.savedConfigFile != {k: v for k, v in app.configFile.items() if k != "firstFrame" and k != "lastFrame"}:
+    configDir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'configuration')
+    videoName = os.path.splitext(os.path.basename(app.videoToCreateConfigFileFor))[0]
+    configFilename = os.path.join(configDir, '%s_%s_unfinished.json' % (videoName, datetime.now().strftime("%Y_%m_%d-%H_%M_%S")))
+    with open(configFilename, 'w') as f:
+      json.dump({k: v for k, v in app.configFile.items() if k != "firstFrame" and k != "lastFrame"}, f)
+    informativeText += '\nConfig file that was being modified when the error happened was saved to %s.' % configFilename
+  errorMessage.setInformativeText(informativeText)
   errorMessage.setDetailedText("    %s" % "    ".join(formattedTraceback))
-  errorMessage.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel);
-  errorMessage.setDefaultButton(QMessageBox.StandardButton.Cancel);
+  errorMessage.setStandardButtons(QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Cancel)
+  errorMessage.setDefaultButton(QMessageBox.StandardButton.Cancel)
   errorMessage.button(QMessageBox.StandardButton.Ok).setText("Continue")
   errorMessage.button(QMessageBox.StandardButton.Cancel).setText("Exit")
   textEdit = errorMessage.findChild(QTextEdit)
