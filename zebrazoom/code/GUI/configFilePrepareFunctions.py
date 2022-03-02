@@ -1,6 +1,5 @@
 from pathlib import Path
 import numpy as np
-import json
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.GUI.getCoordinates import findWellLeft, findWellRight, findHeadCenter, findBodyExtremity
@@ -553,24 +552,3 @@ def goToAdvanceSettings(self, controller, yes, no):
   else:
     self.configFile["noBoutsDetection"] = 0
     self.calculateBackgroundFreelySwim(controller, 0)
-
-
-def finishConfig(self, controller, reference):
-
-  # Ideally would like to remove these four lines below, once the problem with wrong 'firstFrame' and 'lastFrame' being saved in the configuration file is solved
-  if "lastFrame" in self.configFile:
-    del self.configFile["lastFrame"]
-  if "firstFrame" in self.configFile:
-    del self.configFile["firstFrame"]
-
-  with open(reference, 'w') as outfile:
-    json.dump(self.configFile, outfile)
-  self.configFile = {}
-  self.videoToCreateConfigFileFor = ''
-  self.wellLeftBorderX = 0
-  self.wellLeftBorderY = 0
-  self.headCenterX = 0
-  self.headCenterY = 0
-  self.organism = ''
-
-  controller.show_frame("StartPage")

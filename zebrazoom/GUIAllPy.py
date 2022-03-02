@@ -85,6 +85,7 @@ class ZebraZoomApp(QApplication):
 
         self.homeDirectory = os.path.dirname(os.path.realpath(__file__))
 
+        self.savedConfigFile = None
         self.configFile = {}
         self.videoToCreateConfigFileFor = ''
         self.wellLeftBorderX = 0
@@ -142,7 +143,20 @@ class ZebraZoomApp(QApplication):
     def show_frame(self, page_name):
         '''Show a frame for the given page name'''
         if page_name == "StartPage":
+            if self.configFile and self.savedConfigFile != {k: v for k, v in self.configFile.items() if k != "firstFrame" and k != "lastFrame"}:
+                reply = QMessageBox.question(self.window, "Unsaved Changes",
+                                             "Are you sure you want to go back to the start page? Changes made to the config will be lost.",
+                                             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+                if reply != QMessageBox.StandardButton.Yes:
+                    return True
             self.configFile.clear()
+            self.savedConfigFile = None
+            self.videoToCreateConfigFileFor = ''
+            self.wellLeftBorderX = 0
+            self.wellLeftBorderY = 0
+            self.headCenterX = 0
+            self.headCenterY = 0
+            self.organism = ''
             del self.configFileHistory[:]
         self.window.centralWidget().layout().setCurrentIndex(self.frames[page_name])
 
@@ -242,7 +256,16 @@ class ZebraZoomApp(QApplication):
         reference, _ = QFileDialog.getSaveFileName(self.window, "Save config", os.path.join(configDir, suggestedName), "JSON (*.json)")
         if not reference:
           return
-        configFilePrepareFunctions.finishConfig(self, self, reference)
+        # Ideally would like to remove these four lines below, once the problem with wrong 'firstFrame' and 'lastFrame' being saved in the configuration file is solved
+        if "lastFrame" in self.configFile:
+          del self.configFile["lastFrame"]
+        if "firstFrame" in self.configFile:
+          del self.configFile["firstFrame"]
+
+        with open(reference, 'w') as outfile:
+          json.dump(self.configFile, outfile)
+
+        self.savedConfigFile = self.configFile.copy()
 
     def chooseCircularWellsLeft(self, controller):
         configFilePrepareFunctions.chooseCircularWellsLeft(self, controller)
