@@ -83,7 +83,7 @@ class StartPage(QWidget):
         prepare_initial_config_btn.clicked.connect(lambda: util.addToHistory(controller.show_frame)("ChooseVideoToCreateConfigFileFor"))
         hbox.addWidget(prepare_initial_config_btn, alignment=Qt.AlignmentFlag.AlignCenter)
         optimize_config_file_btn = util.apply_style(QPushButton("Optimize a previously created configuration file", self), background_color=util.LIGHT_YELLOW)
-        optimize_config_file_btn.clicked.connect(lambda: util.addToHistory(controller.show_frame)("OptimizeConfigFile"))
+        optimize_config_file_btn.clicked.connect(lambda: controller.chooseVideoToCreateConfigFileFor(controller, True) or util.addToHistory(controller.optimizeConfigFile)())
         hbox.addWidget(optimize_config_file_btn, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addLayout(hbox, 2, 0, Qt.AlignmentFlag.AlignCenter)
         # Set the layout on the application's window
@@ -467,13 +467,35 @@ class ViewParameters(QWidget):
         self.next_btn.clicked.connect(self.printNextResults)
         layout.addWidget(self.next_btn, 7, 2, Qt.AlignmentFlag.AlignCenter)
 
-        back_btn = QPushButton("Go to the previous page", self)
-        back_btn.clicked.connect(lambda: controller.show_frame("ResultsVisualization"))
-        layout.addWidget(back_btn, 8, 1, Qt.AlignmentFlag.AlignCenter)
+
+        startPageBtn = QPushButton("Go to the start page", self)
+        startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+        layout.addWidget(startPageBtn, 8, 1, Qt.AlignmentFlag.AlignCenter)
+        backBtn = QPushButton("Go to the previous page", self)
+        backBtn.clicked.connect(lambda: controller.showResultsVisualization())
+        layout.addWidget(backBtn, 8, 1, Qt.AlignmentFlag.AlignCenter)
+        saveBtn = QPushButton("Save config", self)
+        saveBtn.clicked.connect(lambda: controller.finishConfig())
+        layout.addWidget(saveBtn, 8, 2, Qt.AlignmentFlag.AlignCenter)
+        optimizeBtn = QPushButton("Optimize config", self)
+        optimizeBtn.clicked.connect(lambda: util.addToHistory(controller.optimizeConfigFile)())
+        layout.addWidget(optimizeBtn, 8, 3, Qt.AlignmentFlag.AlignCenter)
+
+        def _updateButtons():
+          otherButtons = (startPageBtn, saveBtn, optimizeBtn)
+          if controller.configFile:  # page shown while testing config
+            backBtn.hide()
+            for btn in otherButtons:
+              btn.show()
+          else:
+            backBtn.show()
+            for btn in otherButtons:
+              btn.hide()
+        self._updateButtons = _updateButtons
 
         self.zoom_btn = util.apply_style(QPushButton("", self), background_color=util.LIGHT_GREEN)
         self.zoom_btn.clicked.connect(lambda: setattr(self, "graphScaling", not self.graphScaling) or self._printSomeResults())
-        layout.addWidget(self.zoom_btn, 8, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.zoom_btn, 8, 4, Qt.AlignmentFlag.AlignCenter)
 
         self.well_video_btn = QPushButton("", self)
         self.well_video_btn.clicked.connect(lambda: self.showValidationVideo(self.numWell(), self.numPoiss(), 0, self.begMove))
@@ -687,6 +709,7 @@ class ViewParameters(QWidget):
         self.zoom_btn.setText("Zoom out Graph" if self.graphScaling else "Zoom in Graph")
         self._updateGraph()
         self._updateWidgets()
+        self._updateButtons()
 
     def showValidationVideo(self, numWell, numAnimal, zoom, deb):
         cur_dir_path = os.path.dirname(os.path.realpath(__file__))

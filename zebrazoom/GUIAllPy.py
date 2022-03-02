@@ -133,7 +133,7 @@ class ZebraZoomApp(QApplication):
 
     def _currentPageChanged(self):
         backBtn = self.window.centralWidget().layout().currentWidget().findChild(QPushButton, "back")
-        if backBtn is not None:
+        if backBtn is not None and self.configFileHistory:
             try:
                 backBtn.clicked.disconnect()
             except TypeError:  # nothing connected
@@ -221,13 +221,17 @@ class ZebraZoomApp(QApplication):
     def openConfigurationFileFolder(self, homeDirectory):
         GUI_InitialFunctions.openConfigurationFileFolder(self, homeDirectory)
 
+    def optimizeConfigFile(self):
+        self.show_frame("OptimizeConfigFile")
+        self.window.centralWidget().layout().currentWidget().refresh()
+
     def openZZOutputFolder(self, homeDirectory):
         GUI_InitialFunctions.openZZOutputFolder(self, homeDirectory)
 
     # Config File preparation functions
 
-    def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile, freelySwimAutomaticParameters=False, boutDetectionsOnly=False):
-        configFilePrepareFunctions.chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile, freelySwimAutomaticParameters, boutDetectionsOnly)
+    def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
+        configFilePrepareFunctions.chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile)
 
     def chooseGeneralExperimentFirstStep(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, fastScreen):
         configFilePrepareFunctions.chooseGeneralExperimentFirstStep(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, fastScreen)

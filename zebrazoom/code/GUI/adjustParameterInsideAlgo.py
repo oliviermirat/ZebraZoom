@@ -118,7 +118,7 @@ def _cleanup(app, page):
     del app.wellShape
 
 
-def _showPage(layout, labelInfo, exitButtons):
+def _showPage(layout, labelInfo):
   app = QApplication.instance()
   page = QWidget()
   page.setLayout(layout)
@@ -132,13 +132,7 @@ def _showPage(layout, labelInfo, exitButtons):
       label.setMinimumSize(1, 1)
       label.show()
       util.setPixmapFromCv(img, label)
-  for btn in exitButtons:
-    btn.clicked.connect(lambda: _cleanup(app, page))
-
-
-@util.addToHistory
-def _finishConfig(app):
-  app.show_frame("FinishConfig")
+  return page
 
 
 def adjustParamInsideAlgoPage():
@@ -246,17 +240,18 @@ def adjustParamInsideAlgoPage():
   buttonsLayout.addStretch()
   backBtn = QPushButton("Back")
   backBtn.setObjectName("back")
+  backBtn.clicked.connect(lambda: _cleanup(app, page))
   buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
-  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
+  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage") or _cleanup(app, page))
   buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   nextBtn = QPushButton("Next")
-  nextBtn.clicked.connect(lambda: _finishConfig(app))
+  nextBtn.clicked.connect(lambda: util.addToHistory(app.show_frame)("FinishConfig") or _cleanup(app, page))
   buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   buttonsLayout.addStretch()
   layout.addLayout(buttonsLayout)
 
-  _showPage(layout, (img, video), (nextBtn, backBtn, startPageBtn))
+  page = _showPage(layout, (img, video))
 
 
 def adjustParamInsideAlgoFreelySwimPage():
@@ -363,17 +358,18 @@ def adjustParamInsideAlgoFreelySwimPage():
   buttonsLayout.addStretch()
   backBtn = QPushButton("Back")
   backBtn.setObjectName("back")
+  backBtn.clicked.connect(lambda: _cleanup(app, page))
   buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
-  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
+  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage") or _cleanup(app, page))
   buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   nextBtn = QPushButton("Next")
-  nextBtn.clicked.connect(lambda: _finishConfig(app))
+  nextBtn.clicked.connect(lambda: util.addToHistory(app.show_frame)("FinishConfig") or _cleanup(app, page))
   buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   buttonsLayout.addStretch()
   layout.addLayout(buttonsLayout)
 
-  _showPage(layout, (img, video), (nextBtn, backBtn, startPageBtn))
+  page = _showPage(layout, (img, video))
 
 
 def adjustParamInsideAlgoFreelySwimAutomaticParametersPage():
@@ -470,17 +466,18 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage():
   buttonsLayout.addStretch()
   backBtn = QPushButton("Back")
   backBtn.setObjectName("back")
+  backBtn.clicked.connect(lambda: _cleanup(app, page))
   buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
-  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
+  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage") or _cleanup(app, page))
   buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-  nextBtn = QPushButton("Save New Configuration File")
-  nextBtn.clicked.connect(lambda: _finishConfig(app))
+  nextBtn = QPushButton("Next")
+  nextBtn.clicked.connect(lambda: util.addToHistory(app.show_frame)("FinishConfig") or _cleanup(app, page))
   buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   buttonsLayout.addStretch()
   layout.addLayout(buttonsLayout)
 
-  _showPage(layout, (img, video), (nextBtn, startPageBtn, backBtn))
+  page = _showPage(layout, (img, video))
 
 
 def adjustBoutDetectionOnlyPage():
@@ -601,14 +598,15 @@ def adjustBoutDetectionOnlyPage():
   buttonsLayout.addStretch()
   backBtn = QPushButton("Back")
   backBtn.setObjectName("back")
+  backBtn.clicked.connect(lambda: _cleanup(app, page))
   buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
-  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
+  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage") or _cleanup(app, page))
   buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   nextBtn = QPushButton("Next")
-  nextBtn.clicked.connect(lambda: _finishConfig(app))
+  nextBtn.clicked.connect(lambda: util.addToHistory(app.show_frame)("FinishConfig") or _cleanup(app, page))
   buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   buttonsLayout.addStretch()
   layout.addLayout(buttonsLayout)
 
-  _showPage(layout, (img, video), (nextBtn, startPageBtn, backBtn))
+  page = _showPage(layout, (img, video))

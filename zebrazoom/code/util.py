@@ -154,7 +154,7 @@ def showDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, tim
   dialog.closeEvent = _dialogClosed(loop, dialog.closeEvent)
   if timeout is not None:
     QTimer.singleShot(timeout, lambda: dialog.close())
-    loop.exec()
+  loop.exec()
 
 def _cvToPixmap(img):
   if len(img.shape) == 2:
@@ -268,13 +268,6 @@ def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBt
   ret, frame = cap.read()
   layout, label, valueWidget = _chooseFrameLayout(cap, (1, 0, cap.get(7) - 2))
 
-  chooseEnd = True
-  def back():
-    nonlocal chooseEnd
-    chooseEnd = None
-  def trackWholeVideo():
-    nonlocal chooseEnd
-    chooseEnd = False
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
   backBtn = QPushButton("Back")
@@ -314,10 +307,7 @@ def chooseEndPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb):
   cap.set(1, maximum)
   ret, frame = cap.read()
   layout, label, valueWidget = _chooseFrameLayout(cap, (maximum, app.configFile["firstFrame"] + 1, maximum))
-  proceed = True
-  def back():
-    nonlocal proceed
-    proceed = False
+
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
   backBtn = QPushButton("Back")

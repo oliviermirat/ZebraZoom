@@ -239,3 +239,4 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   timer.start()
   util.showDialog(layout, title="Video", labelInfo=(startFrame, video))
   timer.stop()
+  cap.release()

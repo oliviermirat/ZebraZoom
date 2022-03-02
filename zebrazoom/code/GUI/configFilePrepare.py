@@ -1,17 +1,19 @@
 import os
+import tempfile
 import webbrowser
 
 try:
-  from PyQt6.QtCore import Qt
+  from PyQt6.QtCore import Qt, QSize
   from PyQt6.QtGui import QCursor, QFont, QIntValidator, QPixmap
-  from PyQt6.QtWidgets import QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QRadioButton, QLineEdit, QButtonGroup
+  from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup
 except ImportError:
-  from PyQt5.QtCore import Qt
+  from PyQt5.QtCore import Qt, QSize
   from PyQt5.QtGui import QCursor, QFont, QIntValidator, QPixmap
-  from PyQt5.QtWidgets import QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QRadioButton, QLineEdit, QButtonGroup
+  from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup
 
 import zebrazoom.code.util as util
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+from zebrazoom.mainZZ import mainZZ
 
 
 class ChooseVideoToCreateConfigFileFor(QWidget):
@@ -27,7 +29,7 @@ class ChooseVideoToCreateConfigFileFor(QWidget):
 
     sublayout1 = QVBoxLayout()
     selectVideoBtn = util.apply_style(QPushButton("Select the video you want to create a configuration file for.", self), background_color=util.LIGHT_YELLOW)
-    selectVideoBtn.clicked.connect(lambda: controller.chooseVideoToCreateConfigFileFor(controller, reloadCheckbox.isChecked()))
+    selectVideoBtn.clicked.connect(lambda: controller.chooseVideoToCreateConfigFileFor(controller, reloadCheckbox.isChecked()) or util.addToHistory(controller.show_frame)("ChooseGeneralExperiment"))
     sublayout1.addWidget(selectVideoBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     sublayout1.addWidget(QLabel("(you will be able to use the configuration file you create for all videos that are similar to that video)", self), alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addLayout(sublayout1)
@@ -683,9 +685,53 @@ class FinishConfig(QWidget):
     saveBtn = util.apply_style(QPushButton("Save Config File", self), background_color=util.LIGHT_YELLOW)
     saveBtn.clicked.connect(lambda: controller.finishConfig())
     layout.addWidget(saveBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    testBtn = util.apply_style(QPushButton("Test Tracking", self), background_color=util.LIGHT_YELLOW)
+    testBtn.clicked.connect(self._testConfig)
+    layout.addWidget(testBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
     backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
     backBtn.setObjectName("back")
-    layout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
     layout.addStretch()
 
     self.setLayout(layout)
+
+  def _testConfig(self):
+    app = QApplication.instance()
+    pathToVideo  = os.path.dirname(app.videoToCreateConfigFileFor)
+    videoName, videoExt = os.path.splitext(os.path.basename(app.videoToCreateConfigFileFor))
+    videoExt = videoExt.lstrip('.')
+
+    def callback():
+      app.configFile["lastFrame"] = min(app.configFile["firstFrame"] + 500, int(zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor).get(7)) - 1)
+      tempDir = tempfile.TemporaryDirectory()
+      outputLocation = app.ZZoutputLocation
+      app.ZZoutputLocation = tempDir.name
+      del app.configFileHistory[:]
+      configFile = app.configFile.copy()
+      with app.busyCursor():
+        try:
+          tabParams = ["mainZZ", pathToVideo, videoName, videoExt, app.configFile, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1, "outputFolder", app.ZZoutputLocation]
+          mainZZ(pathToVideo, videoName, videoExt, app.configFile, tabParams)
+        except NameError:
+          app.show_frame("Error")
+          app.ZZoutputLocation = outputLocation
+          tempDir.cleanup()
+        finally:
+          app.configFile = configFile
+      util.addToHistory(app.showViewParameters)(videoName)
+      layout = app.window.centralWidget().layout()
+      def cleanup():
+        app.ZZoutputLocation = outputLocation
+        tempDir.cleanup()
+        layout.currentChanged.disconnect(cleanup)
+      layout.currentChanged.connect(cleanup)
+    util.addToHistory(util.chooseBeginningPage)(app, app.videoToCreateConfigFileFor,
+                                                "Choose where the analysis of your video should start.",
+                                                "Ok, I want the tracking to start at this frame!", callback)
