@@ -1,5 +1,3 @@
-import sys
-
 import cv2
 
 try:
@@ -95,8 +93,10 @@ def _getButtonsLayout(buttons, loop, dialog=None):
   return buttonsLayout
 
 
-def showBlockingPage(layout, title=None, buttons=(), dialog=False, labelInfo=None):
+def showBlockingPage(layout, title=None, buttons=(), dialog=False, labelInfo=None, exitSignals=()):
   loop = QEventLoop()
+  for signal in exitSignals:
+    signal.connect(lambda *args: loop.exit())
   mainLayout = QVBoxLayout()
   if title is not None:
     mainLayout.addWidget(apply_style(QLabel(title), font=TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -122,16 +122,14 @@ def showBlockingPage(layout, title=None, buttons=(), dialog=False, labelInfo=Non
 
 
 def showDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, timeout=None):
-  app = QApplication.instance()
   dialog = QWidget()
   loop = QEventLoop()
   mainLayout = QVBoxLayout()
   mainLayout.addLayout(layout)
   mainLayout.addLayout(_getButtonsLayout(buttons, loop, dialog=dialog))
+  app = QApplication.instance()
   if app is not None:
     app.registerWindow(dialog)
-  else:
-    app = QApplication(sys.argv)
   dialog.setWindowTitle(title)
   dialog.move(0, 0)
   dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
@@ -146,7 +144,7 @@ def showDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, tim
     extraHeight = layoutSize.height() - height
   else:
     layoutSize = mainLayout.totalSizeHint()
-  screenSize = QApplication.instance().primaryScreen().availableSize()
+  screenSize = QApplication.primaryScreen().availableSize()
   if layoutSize.width() > screenSize.width() or layoutSize.height() > screenSize.height():
     layoutSize.scale(screenSize, Qt.AspectRatioMode.KeepAspectRatio)
   dialog.setFixedSize(layoutSize)
@@ -413,20 +411,19 @@ class _InteractiveLabelPoint(QLabel):
     return point.x(), point.y()
 
 
-def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=None):
+def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=None, useNext=True):
   height, width = frame.shape[:2]
 
   layout = QVBoxLayout()
 
   video = _InteractiveLabelPoint(width, height, selectingRegion)
   extraButtons = tuple((text, lambda: cb(video), exitLoop) for text, cb, exitLoop in extraButtons)
-  if backBtnCb is not None:
-    buttons = (("Back", backBtnCb, True), ("Next", None, True, video.pointSelected))
-  else:
-    buttons = (("Next", None, True, video.pointSelected),)
+  buttons = (("Back", backBtnCb, True),) if backBtnCb is not None else ()
+  buttons += (("Next", None, True, video.pointSelected),) if useNext else ()
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
-  showBlockingPage(layout, title=title, buttons=buttons + extraButtons, labelInfo=(frame, video))
-
+  if not useNext:
+    video.pointSelected.connect(lambda: QApplication.restoreOverrideCursor())
+  showBlockingPage(layout, title=title, buttons=buttons + extraButtons, labelInfo=(frame, video), exitSignals=() if useNext else (video.pointSelected,))
   return video.getCoordinates()
 
 
