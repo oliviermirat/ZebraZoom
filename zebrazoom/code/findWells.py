@@ -257,7 +257,8 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
       back = None
     while idx < len(positions):
       oldidx = idx
-      posCoord[positions[idx]] = np.array(list(util.getPoint(frame, "Click on the " + positions[idx] + " of the group of wells", selectingRegion=True, backBtnCb=back)))
+      posCoord[positions[idx]] = np.array(list(util.getPoint(frame, "Click on the " + positions[idx] + " of the group of wells",
+                                                             selectingRegion=True, backBtnCb=back, useNext=False)))
       if idx != oldidx:
         if idx >= 0:
           continue
