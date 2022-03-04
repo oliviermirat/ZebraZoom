@@ -11,8 +11,9 @@ def kinematicParametersAnalysisCenterOfMassOnlyNoBoutsDetection(sys):
   saveRawDataInAllBoutsSuperStructure       = int(sys.argv[4]) if len(sys.argv) > 4 else 0
   saveAllBoutsSuperStructuresInMatlabFormat = int(sys.argv[5]) if len(sys.argv) > 5 else 0
   forcePandasDfRecreation                   = int(sys.argv[6]) if len(sys.argv) > 6 else 0
-  frameStepForDistanceCalculation           = int(sys.argv[7]) if len(sys.argv) > 7 else 4
-  minimumFrameToFrameDistanceToBeConsideredAsMoving = float(sys.argv[8]) if len(sys.argv) > 8 else 1
+  ZZoutputLocation                          =     sys.argv[7]  if len(sys.argv) > 7 else ""
+  frameStepForDistanceCalculation           = int(sys.argv[8]) if len(sys.argv) > 8 else 4
+  minimumFrameToFrameDistanceToBeConsideredAsMoving = float(sys.argv[9]) if len(sys.argv) > 9 else 1
   
   addMedianPerGenotype = 0
   
@@ -32,7 +33,7 @@ def kinematicParametersAnalysisCenterOfMassOnlyNoBoutsDetection(sys):
     'numberOfBendsIncludedForMaxDetect' : -1,
     'minNbBendForBoutDetect'            : 0,
     'keepSpeedDistDurWhenLowNbBends'    : 1,
-    'defaultZZoutputFolderPath'         : os.path.join(cur_dir_path, 'ZZoutput'),
+    'defaultZZoutputFolderPath'         : os.path.join(cur_dir_path, 'ZZoutput') if ZZoutputLocation == "" else ZZoutputLocation,
     'computeTailAngleParamForCluster'   : False,
     'computeMassCenterParamForCluster'  : False,
     'frameStepForDistanceCalculation'   : str(frameStepForDistanceCalculation),
@@ -42,7 +43,7 @@ def kinematicParametersAnalysisCenterOfMassOnlyNoBoutsDetection(sys):
     'minimumFrameToFrameDistanceToBeConsideredAsMoving' : minimumFrameToFrameDistanceToBeConsideredAsMoving
   }
   
-  generatePklDataFileForVideo(os.path.join(os.path.split(pathToExcelFile)[0], nameWithExt), os.path.join(cur_dir_path, 'ZZoutput'), frameStepForDistanceCalculation)
+  generatePklDataFileForVideo(os.path.join(os.path.split(pathToExcelFile)[0], nameWithExt), os.path.join(cur_dir_path, 'ZZoutput') if ZZoutputLocation == "" else ZZoutputLocation, frameStepForDistanceCalculation)
   
   [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, '', forcePandasDfRecreation, ['percentOfMovingFramesBasedOnDistance'], minimumFrameToFrameDistanceToBeConsideredAsMoving)
   
