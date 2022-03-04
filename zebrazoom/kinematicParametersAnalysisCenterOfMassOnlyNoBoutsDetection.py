@@ -43,7 +43,8 @@ def kinematicParametersAnalysisCenterOfMassOnlyNoBoutsDetection(sys):
     'minimumFrameToFrameDistanceToBeConsideredAsMoving' : minimumFrameToFrameDistanceToBeConsideredAsMoving
   }
   
-  generatePklDataFileForVideo(os.path.join(os.path.split(pathToExcelFile)[0], nameWithExt), os.path.join(cur_dir_path, 'ZZoutput') if ZZoutputLocation == "" else ZZoutputLocation, frameStepForDistanceCalculation)
+  # The line below should be added again in the future !!!
+  # generatePklDataFileForVideo(os.path.join(os.path.split(pathToExcelFile)[0], nameWithExt), os.path.join(cur_dir_path, 'ZZoutput') if ZZoutputLocation == "" else ZZoutputLocation, frameStepForDistanceCalculation)
   
   [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, '', forcePandasDfRecreation, ['percentOfMovingFramesBasedOnDistance'], minimumFrameToFrameDistanceToBeConsideredAsMoving)
   
