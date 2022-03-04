@@ -3,7 +3,7 @@ import numpy as np
 from scipy.interpolate import UnivariateSpline
 import math
 
-def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation, previousBoutEnd, listOfParametersToCalculate, firstFrame, lastFrame):
+def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation, previousBoutEnd, listOfParametersToCalculate, firstFrame, lastFrame, minimumFrameToFrameDistanceToBeConsideredAsMoving=0):
   
   listOfParametersCalculated = []
   
@@ -34,6 +34,24 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
           TotalDistance = TotalDistance + math.sqrt((posX[j+1] - posX[j])**2 + (posY[j+1] - posY[j])**2)
       TotalDistance = TotalDistance * pixelSize
       listOfParametersCalculated.append(TotalDistance)
+    
+    
+    
+    elif parameterToCalculate == 'percentOfMovingFramesBasedOnDistance':
+      
+      posX = curbout["HeadX"]
+      posY = curbout["HeadY"]
+      # rangeUsedForDistanceCalculation   = [frameStepForDistanceCalculation*i for i in range(0, int(len(posX)/frameStepForDistanceCalculation))]
+      # if len(rangeUsedForDistanceCalculation) == 0:
+        # rangeUsedForDistanceCalculation = [0, len(posX) - 1]
+      # else:
+        # rangeUsedForDistanceCalculation = rangeUsedForDistanceCalculation + [len(posX) - 1]
+      # posX = [posX[i] for i in rangeUsedForDistanceCalculation]
+      # posY = [posY[i] for i in rangeUsedForDistanceCalculation]
+      distance = np.array([math.sqrt((posX[j+1] - posX[j])**2 + (posY[j+1] - posY[j])**2) * pixelSize for j in range(0, len(posX)-1)])
+      numberOfMovingFrames   = int(np.sum(distance > minimumFrameToFrameDistanceToBeConsideredAsMoving))
+      percentOfMovingFrames = (numberOfMovingFrames / (lastFrame - firstFrame + 1)) * 100
+      listOfParametersCalculated.append(percentOfMovingFrames)
     
     
     

@@ -17,7 +17,7 @@ from zebrazoom.dataAnalysis.datasetcreation.getTailAngleRecalculated2 import get
 from zebrazoom.dataAnalysis.datasetcreation.gatherInitialRawData import gatherInitialRawData
 import pickle
 
-def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecreation=0, addToGlobalParameters=0):
+def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecreation=0, addToGlobalParameters=0, minimumFrameToFrameDistanceToBeConsideredAsMoving=0):
 
   # Gathering user-inputed information about how to create the dataframe of parameters for the whole set of videos
   
@@ -90,10 +90,11 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   # Global parameters
   if tailAngleKinematicParameterCalculation:
     globParam  = ['BoutDuration', 'TotalDistance', 'Speed', 'maxOfInstantaneousTBF', 'meanOfInstantaneousTBF', 'medianOfInstantaneousTBF', 'maxBendAmplitude', 'meanBendAmplitude', 'medianBendAmplitude', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude', 'deltaHead', 'firstBendTime', 'firstBendAmplitude', 'IBI', 'xmean', 'ymean', 'binaryClass25degMaxTailAngle']
-    if type(addToGlobalParameters) == list:
-      globParam = globParam + addToGlobalParameters
   else:
     globParam  = ['BoutDuration', 'TotalDistance', 'Speed']
+  
+  if type(addToGlobalParameters) == list:
+    globParam = globParam + addToGlobalParameters  
   
   # Initial raw data
   if saveRawDataInAllBoutsSuperStructure:
@@ -218,7 +219,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
                 # Calculates the global kinematic parameters and stores them the dataframe
                 
                 previousBoutEnd = supstruct["wellPoissMouv"][Well_ID][fishId][NumBout-1]["BoutEnd"] if NumBout > 0 else 0
-                listOfGlobalParameters = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation, previousBoutEnd, globParam, firstFrame, lastFrame)
+                listOfGlobalParameters = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation, previousBoutEnd, globParam, firstFrame, lastFrame, minimumFrameToFrameDistanceToBeConsideredAsMoving)
                 
                 toPutInDataFrameColumn = toPutInDataFrameColumn + globParam
                 toPutInDataFrame       = toPutInDataFrame       + listOfGlobalParameters
@@ -287,7 +288,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
                   # Calculating the global kinematic parameters and more and stores them the dataframe
                   
                   previousBoutEnd = supstruct["wellPoissMouv"][Well_ID][fishId][NumBout-1]["BoutEnd"] if NumBout > 0 else 0
-                  listOfGlobalParameters = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation, previousBoutEnd, ['BoutDuration', 'TotalDistance', 'Speed', 'IBI'], firstFrame, lastFrame)
+                  listOfGlobalParameters = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation, previousBoutEnd, ['BoutDuration', 'TotalDistance', 'Speed', 'IBI'], firstFrame, lastFrame, minimumFrameToFrameDistanceToBeConsideredAsMoving)
                   
                   toPutInDataFrameColumn = toPutInDataFrameColumn + ['BoutDuration', 'TotalDistance', 'Speed', 'IBI']
                   toPutInDataFrame       = toPutInDataFrame       + listOfGlobalParameters

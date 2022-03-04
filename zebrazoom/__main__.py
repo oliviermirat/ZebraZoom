@@ -166,6 +166,9 @@ if __name__ == '__main__':
         from zebrazoom.clusteringAnalysisPerFrame import clusteringAnalysisPerFrame
         clusteringAnalysisPerFrame(sys)
 
+      if sys.argv[2] == "kinematicParametersAnalysisCenterOfMassOnlyNoBoutsDetection":
+        from zebrazoom.kinematicParametersAnalysisCenterOfMassOnlyNoBoutsDetection import kinematicParametersAnalysisCenterOfMassOnlyNoBoutsDetection
+        kinematicParametersAnalysisCenterOfMassOnlyNoBoutsDetection(sys)
 
     elif sys.argv[1] == "visualizeMovingAndSleepingTime":
 
