@@ -288,9 +288,9 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
                   # Calculating the global kinematic parameters and more and stores them the dataframe
                   
                   previousBoutEnd = supstruct["wellPoissMouv"][Well_ID][fishId][NumBout-1]["BoutEnd"] if NumBout > 0 else 0
-                  listOfGlobalParameters = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation, previousBoutEnd, ['BoutDuration', 'TotalDistance', 'Speed', 'IBI'], firstFrame, lastFrame, minimumFrameToFrameDistanceToBeConsideredAsMoving)
+                  listOfGlobalParameters = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation, previousBoutEnd, ['BoutDuration', 'TotalDistance', 'Speed', 'IBI'] + addToGlobalParameters, firstFrame, lastFrame, minimumFrameToFrameDistanceToBeConsideredAsMoving)
                   
-                  toPutInDataFrameColumn = toPutInDataFrameColumn + ['BoutDuration', 'TotalDistance', 'Speed', 'IBI']
+                  toPutInDataFrameColumn = toPutInDataFrameColumn + ['BoutDuration', 'TotalDistance', 'Speed', 'IBI'] + addToGlobalParameters
                   toPutInDataFrame       = toPutInDataFrame       + listOfGlobalParameters
                   
                 # Adding bout parameters to the dataframe created for the current well
