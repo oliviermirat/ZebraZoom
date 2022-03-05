@@ -37,6 +37,8 @@ def checkConsistencyOfParameters(listOfVideosToCheckConsistencyOn):
     vidTab  = ["defaultZZoutputFolder", videoName, videoFPS, videoPixelSize, str([1 for i in range(nbWells)]), str(['Your data' for i in range(nbWells)]), str([1 for i in range(nbWells)])]
     data.append(vidTab)
   
+  data.append(["defaultZZoutputFolder", 'standardValueFreelySwimZebrafishLarvae', 25, 1, str([1, 1, 1]), str(['StandardValue' for i in range(3)]), str([1 for i in range(3)])])
+  
   excelFileDataFrame = pd.DataFrame(data=data, columns=['path', 'trial_id', 'fq', 'pixelsize', 'condition', 'genotype', 'include'])
   
   excelFileDataFrame.to_excel(os.path.join(os.path.join(os.path.join(zebrazoom_path, 'dataAnalysis'), 'experimentOrganizationExcel'), 'tempExcelFileForParametersConsistencyCheck.xls'))

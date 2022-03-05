@@ -23,6 +23,7 @@ zebrazoom/newhyperparameters
 zebrazoom/trace.txt
 
 zebrazoom/ZZoutput/
+!zebrazoom/ZZoutput/standardValueFreelySwimZebrafishLarvae
 
 MANIFEST
 dist/

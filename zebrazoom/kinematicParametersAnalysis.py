@@ -40,7 +40,7 @@ def kinematicParametersAnalysis(sys, addMedianPerGenotype=0, checkConsistencyOfP
     'resFolder'                         : os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'data')),
     'nameOfFile'                        : os.path.splitext(nameWithExt)[0],
     'smoothingFactorDynaParam'          : 0,
-    'nbFramesTakenIntoAccount'          : 28,
+    'nbFramesTakenIntoAccount'          : 0,
     'numberOfBendsIncludedForMaxDetect' : -1,
     'minNbBendForBoutDetect'            : minNbBendForBoutDetect,
     'keepSpeedDistDurWhenLowNbBends'    : keep,

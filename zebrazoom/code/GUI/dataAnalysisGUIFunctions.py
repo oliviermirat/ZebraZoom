@@ -85,7 +85,7 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
     'resFolder'                         : os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'data')),
     'nameOfFile'                        : self.experimentOrganizationExcel.split(".")[0],
     'smoothingFactorDynaParam'          : 0,   # 0.001
-    'nbFramesTakenIntoAccount'          : 28,
+    'nbFramesTakenIntoAccount'          : 0,
     'numberOfBendsIncludedForMaxDetect' : -1,
     'minNbBendForBoutDetect'            : int(minNbBendForBoutDetect),
     'keepSpeedDistDurWhenLowNbBends'    : int(keep),
