@@ -277,11 +277,11 @@ class ZebraZoomApp(QApplication):
     def chooseExperimentOrganizationExcel(self, controller):
       dataAnalysisGUIFunctions.chooseExperimentOrganizationExcel(self, controller)
 
-    def populationComparison(self, controller, TailTrackingParameters, saveInMatlabFormat, saveRawData, minNbBendForBoutDetect, discard, keep, frameStepForDistanceCalculation):
-      dataAnalysisGUIFunctions.populationComparison(self, controller, TailTrackingParameters, saveInMatlabFormat, saveRawData, minNbBendForBoutDetect, discard, keep, frameStepForDistanceCalculation)
+    def populationComparison(self, controller, TailTrackingParameters, saveInMatlabFormat, saveRawData, forcePandasRecreation, minNbBendForBoutDetect, discard, keep, frameStepForDistanceCalculation):
+      dataAnalysisGUIFunctions.populationComparison(self, controller, TailTrackingParameters, saveInMatlabFormat, saveRawData, forcePandasRecreation, minNbBendForBoutDetect, discard, keep, frameStepForDistanceCalculation)
       
-    def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering='', removeOutliers=False, frameStepForDistanceCalculation='4', removeBoutsContainingNanValuesInParametersUsedForClustering=True):
-      dataAnalysisGUIFunctions.boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect, nbVideosToSave, modelUsedForClustering, removeOutliers, frameStepForDistanceCalculation, removeBoutsContainingNanValuesInParametersUsedForClustering)
+    def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering='', removeOutliers=False, frameStepForDistanceCalculation='4', removeBoutsContainingNanValuesInParametersUsedForClustering=True, forcePandasRecreation=0):
+      dataAnalysisGUIFunctions.boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect, nbVideosToSave, modelUsedForClustering, removeOutliers, frameStepForDistanceCalculation, removeBoutsContainingNanValuesInParametersUsedForClustering, forcePandasRecreation)
 
     def openAnalysisFolder(self, homeDirectory, specificDirectory):
       dataAnalysisGUIFunctions.openAnalysisFolder(self, homeDirectory, specificDirectory)

@@ -107,6 +107,8 @@ class PopulationComparison(QWidget):
     layout.addWidget(saveInMatlabFormatCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
     saveRawDataCheckbox = QCheckBox("Save original raw data in result structure.", self)
     layout.addWidget(saveRawDataCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+    forcePandasRecreation = QCheckBox("Force recalculation of all parameters even they have already been calculated and saved.", self)
+    layout.addWidget(forcePandasRecreation, alignment=Qt.AlignmentFlag.AlignCenter)
 
     layout.addWidget(util.apply_style(QLabel("Number of frames between each frame used for distance calculation (to avoid noise due to close-by subsequent points) (default value is 4):", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     frameStepForDistanceCalculation = QLineEdit(controller.window)
@@ -132,7 +134,7 @@ class PopulationComparison(QWidget):
     layout.addWidget(util.apply_style(QLabel("Please ignore the two questions above if you're only looking at BoutDuration, TotalDistance, Speed and IBI.", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
 
     launchBtn = util.apply_style(QPushButton("Launch Analysis", self), background_color=util.LIGHT_YELLOW)
-    launchBtn.clicked.connect(lambda: controller.populationComparison(controller, tailTrackingParametersCheckbox.isChecked(), saveInMatlabFormatCheckbox.isChecked(), saveRawDataCheckbox.isChecked(), minNbBendForBoutDetect.text(), discardRadioButton.isChecked(), keepRadioButton.isChecked(), frameStepForDistanceCalculation.text()))
+    launchBtn.clicked.connect(lambda: controller.populationComparison(controller, tailTrackingParametersCheckbox.isChecked(), saveInMatlabFormatCheckbox.isChecked(), saveRawDataCheckbox.isChecked(), forcePandasRecreation.isChecked(), minNbBendForBoutDetect.text(), discardRadioButton.isChecked(), keepRadioButton.isChecked(), frameStepForDistanceCalculation.text()))
     layout.addWidget(launchBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
@@ -192,9 +194,12 @@ class BoutClustering(QWidget):
     removeBoutsContainingNanValuesInParametersUsedForClustering.setChecked(True)
     layout.addWidget(removeBoutsContainingNanValuesInParametersUsedForClustering, alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(util.apply_style(QLabel("If the box above is un-checked, the nan values will be replaced by zeros and no bouts will be removed.", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    
+    forcePandasRecreation = QCheckBox("Force recalculation of all parameters even they have already been calculated and saved.", self)
+    layout.addWidget(forcePandasRecreation, alignment=Qt.AlignmentFlag.AlignCenter)
 
     launchBtn = util.apply_style(QPushButton("Launch Analysis", self), background_color=util.LIGHT_YELLOW)
-    launchBtn.clicked.connect(lambda: controller.boutClustering(controller, nbClustersToFind.text(), freelySwimmingRadioButton.isChecked(), headEmbeddedRadioButton.isChecked(), minNbBendForBoutDetect.text(), nbVideosToSave.text(), modelUsedForClusteringCheckbox.isChecked(), removeOutliersCheckbox.isChecked(), frameStepForDistanceCalculation.text(), removeBoutsContainingNanValuesInParametersUsedForClustering.isChecked()))
+    launchBtn.clicked.connect(lambda: controller.boutClustering(controller, nbClustersToFind.text(), freelySwimmingRadioButton.isChecked(), headEmbeddedRadioButton.isChecked(), minNbBendForBoutDetect.text(), nbVideosToSave.text(), modelUsedForClusteringCheckbox.isChecked(), removeOutliersCheckbox.isChecked(), frameStepForDistanceCalculation.text(), removeBoutsContainingNanValuesInParametersUsedForClustering.isChecked(), forcePandasRecreation.isChecked()))
     layout.addWidget(launchBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))

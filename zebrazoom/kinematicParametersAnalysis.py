@@ -53,7 +53,7 @@ def kinematicParametersAnalysis(sys, addMedianPerGenotype=0):
     'saveAllBoutsSuperStructuresInMatlabFormat' : saveAllBoutsSuperStructuresInMatlabFormat
   }
   
-  generatePklDataFileForVideo(os.path.join(os.path.split(pathToExcelFile)[0], nameWithExt), os.path.join(cur_dir_path, 'ZZoutput'), frameStepForDistanceCalculation)
+  generatePklDataFileForVideo(os.path.join(os.path.split(pathToExcelFile)[0], nameWithExt), os.path.join(cur_dir_path, 'ZZoutput'), frameStepForDistanceCalculation, forcePandasDfRecreation)
   
   [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, '', forcePandasDfRecreation, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst'])
   

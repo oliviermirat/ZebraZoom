@@ -2,7 +2,7 @@ from zebrazoom.code.dataPostProcessing.createPandasDataFrameOfParameters import 
 import pandas as pd
 import os
 
-def generatePklDataFileForVideo(excelFileName, ZZoutputLocation, frameStepForDistanceCalculation):
+def generatePklDataFileForVideo(excelFileName, ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation=0):
   
   # Generate .pkl data file inside the result video folder if it doesn't already exist
   excelFile = pd.read_excel(excelFileName)
@@ -16,8 +16,7 @@ def generatePklDataFileForVideo(excelFileName, ZZoutputLocation, frameStepForDis
     else:
       frameStepForDistanceCalculationUsed = frameStepForDistanceCalculation
     # Generates the .pkl data file if it doesn't already exist OR if a frameStepForDistanceCalculationUsed different than before is requested
-    
-    if not(os.path.exists(os.path.join(os.path.join(ZZoutputLocation if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder" else excelFile.loc[videoId, 'path'], excelFile.loc[videoId, 'trial_id']), excelFile.loc[videoId, 'trial_id'] + '.pkl'))) or int(frameStepForDistanceCalculation) != int(frameStepForDistanceCalculationUsed):
+    if not(os.path.exists(os.path.join(os.path.join(ZZoutputLocation if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder" else excelFile.loc[videoId, 'path'], excelFile.loc[videoId, 'trial_id']), excelFile.loc[videoId, 'trial_id'] + '.pkl'))) or int(frameStepForDistanceCalculation) != int(frameStepForDistanceCalculationUsed) or forcePandasRecreation:
       videoName      = excelFile.loc[videoId, 'trial_id']
       videoExtension = os.path.splitext(os.path.split(excelFileName)[1])[1]
       hyperparameters = {}

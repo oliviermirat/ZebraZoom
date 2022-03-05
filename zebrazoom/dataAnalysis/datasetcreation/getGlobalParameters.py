@@ -119,6 +119,16 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
+    elif parameterToCalculate == 'maxBendAmplitudeSigned':
+      
+      if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
+        maxBendAmplitudeSigned = curbout["Bend_Amplitude"][np.argmax(abs(np.array(curbout["Bend_Amplitude"])))]
+      else:
+        maxBendAmplitudeSigned = float('NaN')
+      listOfParametersCalculated.append(maxBendAmplitudeSigned)
+    
+    
+    
     elif parameterToCalculate == 'medianBendAmplitude':
       
       if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
@@ -272,7 +282,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     elif parameterToCalculate == 'secondBendAmpDividedByFirst':
       
-      if len(curbout["Bend_Amplitude"]) >= 2 and curbout["Bend_Amplitude"][0]:
+      if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]) >= 2 and curbout["Bend_Amplitude"][0]:
         secondBendAmpDividedByFirst = curbout["Bend_Amplitude"][1] / curbout["Bend_Amplitude"][0]
       else:
         secondBendAmpDividedByFirst = float('Nan')
