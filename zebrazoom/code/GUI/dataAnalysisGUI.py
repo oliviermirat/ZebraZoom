@@ -107,7 +107,7 @@ class PopulationComparison(QWidget):
     layout.addWidget(saveInMatlabFormatCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
     saveRawDataCheckbox = QCheckBox("Save original raw data in result structure.", self)
     layout.addWidget(saveRawDataCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
-    forcePandasRecreation = QCheckBox("Force recalculation of all parameters even they have already been calculated and saved.", self)
+    forcePandasRecreation = QCheckBox("Force recalculation of all parameters even if they have already been calculated and saved.", self)
     layout.addWidget(forcePandasRecreation, alignment=Qt.AlignmentFlag.AlignCenter)
 
     layout.addWidget(util.apply_style(QLabel("Number of frames between each frame used for distance calculation (to avoid noise due to close-by subsequent points) (default value is 4):", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -195,7 +195,7 @@ class BoutClustering(QWidget):
     layout.addWidget(removeBoutsContainingNanValuesInParametersUsedForClustering, alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(util.apply_style(QLabel("If the box above is un-checked, the nan values will be replaced by zeros and no bouts will be removed.", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     
-    forcePandasRecreation = QCheckBox("Force recalculation of all parameters even they have already been calculated and saved.", self)
+    forcePandasRecreation = QCheckBox("Force recalculation of all parameters even if they have already been calculated and saved.", self)
     layout.addWidget(forcePandasRecreation, alignment=Qt.AlignmentFlag.AlignCenter)
 
     launchBtn = util.apply_style(QPushButton("Launch Analysis", self), background_color=util.LIGHT_YELLOW)
