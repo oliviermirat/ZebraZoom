@@ -142,33 +142,17 @@ class VideoToAnalyze(QWidget):
     def __init__(self, controller):
         super().__init__(controller.window)
         self.controller = controller
-        self.preferredSize = (900, 600)
+        self.preferredSize = (900, 450)
 
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Choose video.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("Look for the video you want to analyze.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        testCheckbox = QCheckBox("Test on only 500 frames", self)
+        layout.addWidget(testCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
         button = util.apply_style(QPushButton("Choose file", self), background_color=util.LIGHT_YELLOW)
-        button.clicked.connect(lambda: controller.chooseVideoToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), debug_checkbox.isChecked()))
+        button.clicked.connect(lambda: controller.chooseVideoToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), testCheckbox.isChecked()))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
-        debug_sublayout = QVBoxLayout()
-        debug_checkbox = util.apply_style(QCheckBox("Run in debug mode.", self), background_color='red')
-        debug_sublayout.addWidget(debug_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
-        debug_sublayout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        debug_sublayout.addWidget(util.apply_style(QLabel("This option can be useful to test a new configuration file.", self), background_color='red'), alignment=Qt.AlignmentFlag.AlignCenter)
-        debug_sublayout.addWidget(util.apply_style(QLabel("In this mode you will need to click on any key on each visualization windows.", self), background_color='red'), alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addLayout(debug_sublayout)
-        layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
-
-        text_sublayout = QVBoxLayout()
-        text_sublayout.addWidget(QLabel("Alternatively, to test a new configuration file, you can temporarily manually add the parameter:", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        text_sublayout.addWidget(QLabel("'lastFrame': someSmallValue(for example 100)", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        text_sublayout.addWidget(QLabel("as well as the parameter:", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        text_sublayout.addWidget(QLabel("'backgroundExtractionForceUseAllVideoFrames': 1", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        text_sublayout.addWidget(QLabel("inside your configuration file to run the tracking on a small portion of the video in order to test the tracking.", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        text_sublayout.addWidget(QLabel("(if necessary, you can also add the parameter 'firstFrame' in your configuration file)", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addLayout(text_sublayout)
         layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
         button = util.apply_style(QPushButton("Click here if you prefer to run the tracking from the command line", self), background_color='green')
@@ -413,9 +397,9 @@ class ViewParameters(QWidget):
         button.clicked.connect(lambda: self.showValidationVideo(-1, self.numPoiss(), 0, -1))
         layout.addWidget(button, 1, 1, Qt.AlignmentFlag.AlignCenter)
 
-        self.view_btn = QPushButton("", self)
-        self.view_btn.clicked.connect(lambda: self.showGraphForAllBoutsCombined(self.numWell(), self.numPoiss(), self.dataRef, self.visualization, self.graphScaling))
-        layout.addWidget(self.view_btn, 1, 2, 1, 5, Qt.AlignmentFlag.AlignCenter)
+        self._viewBtn = QPushButton("", self)
+        self._viewBtn.clicked.connect(lambda: self.showGraphForAllBoutsCombined(self.numWell(), self.numPoiss(), self.dataRef, self.visualization, self.graphScaling))
+        layout.addWidget(self._viewBtn, 1, 2, 1, 5, Qt.AlignmentFlag.AlignCenter)
 
         self.title_label = util.apply_style(QLabel('', self), font_size='16px')
         layout.addWidget(self.title_label, 0, 0, 1, 8, Qt.AlignmentFlag.AlignCenter)
@@ -444,6 +428,10 @@ class ViewParameters(QWidget):
         self.numPoiss = self.spinbox2.value
         layout.addWidget(self.spinbox2, 4, 2, Qt.AlignmentFlag.AlignCenter)
 
+        self._zoomBtn = util.apply_style(QPushButton("", self), background_color=util.LIGHT_GREEN)
+        self._zoomBtn.clicked.connect(lambda: setattr(self, "graphScaling", not self.graphScaling) or self._printSomeResults())
+        layout.addWidget(self._zoomBtn, 4, 4, Qt.AlignmentFlag.AlignCenter)
+
         layout.addWidget(QLabel("Bout number:", self), 5, 1, Qt.AlignmentFlag.AlignCenter)
         self.spinbox3 = QSpinBox(self)
         self.spinbox3.setStyleSheet(util.SPINBOX_STYLESHEET)
@@ -468,21 +456,18 @@ class ViewParameters(QWidget):
         layout.addWidget(self.next_btn, 7, 2, Qt.AlignmentFlag.AlignCenter)
 
 
-        startPageBtn = QPushButton("Go to the start page", self)
+        startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_YELLOW)
         startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
         layout.addWidget(startPageBtn, 8, 1, Qt.AlignmentFlag.AlignCenter)
-        backBtn = QPushButton("Go to the previous page", self)
+        backBtn = util.apply_style(QPushButton("Go to the previous page", self), background_color=util.LIGHT_YELLOW)
         backBtn.clicked.connect(lambda: controller.showResultsVisualization())
         layout.addWidget(backBtn, 8, 1, Qt.AlignmentFlag.AlignCenter)
-        saveBtn = QPushButton("Save config", self)
-        saveBtn.clicked.connect(lambda: controller.finishConfig())
-        layout.addWidget(saveBtn, 8, 2, Qt.AlignmentFlag.AlignCenter)
-        optimizeBtn = QPushButton("Optimize config", self)
+        optimizeBtn = util.apply_style(QPushButton("Optimize config", self), background_color=util.LIGHT_YELLOW)
         optimizeBtn.clicked.connect(lambda: util.addToHistory(controller.optimizeConfigFile)())
-        layout.addWidget(optimizeBtn, 8, 3, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(optimizeBtn, 8, 2, Qt.AlignmentFlag.AlignCenter)
 
         def _updateButtons():
-          otherButtons = (startPageBtn, saveBtn, optimizeBtn)
+          otherButtons = (startPageBtn, optimizeBtn)
           if controller.configFile:  # page shown while testing config
             backBtn.hide()
             for btn in otherButtons:
@@ -492,10 +477,6 @@ class ViewParameters(QWidget):
             for btn in otherButtons:
               btn.hide()
         self._updateButtons = _updateButtons
-
-        self.zoom_btn = util.apply_style(QPushButton("", self), background_color=util.LIGHT_GREEN)
-        self.zoom_btn.clicked.connect(lambda: setattr(self, "graphScaling", not self.graphScaling) or self._printSomeResults())
-        layout.addWidget(self.zoom_btn, 8, 4, Qt.AlignmentFlag.AlignCenter)
 
         self.well_video_btn = QPushButton("", self)
         self.well_video_btn.clicked.connect(lambda: self.showValidationVideo(self.numWell(), self.numPoiss(), 0, self.begMove))
@@ -705,8 +686,8 @@ class ViewParameters(QWidget):
           buttonLabel = buttonLabel + "tail angle raw"
         else:
           buttonLabel = buttonLabel + "body coordinates"
-        self.view_btn.setText(buttonLabel + " for all bouts combined")
-        self.zoom_btn.setText("Zoom out Graph" if self.graphScaling else "Zoom in Graph")
+        self._viewBtn.setText(buttonLabel + " for all bouts combined")
+        self._zoomBtn.setText("Zoom out Graph" if self.graphScaling else "Zoom in Graph")
         self._updateGraph()
         self._updateWidgets()
         self._updateButtons()

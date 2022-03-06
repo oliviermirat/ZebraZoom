@@ -1,19 +1,16 @@
 import os
-import tempfile
 import webbrowser
 
 try:
   from PyQt6.QtCore import Qt, QSize
   from PyQt6.QtGui import QCursor, QFont, QIntValidator, QPixmap
-  from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup
+  from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup
 except ImportError:
   from PyQt5.QtCore import Qt, QSize
   from PyQt5.QtGui import QCursor, QFont, QIntValidator, QPixmap
-  from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup
+  from PyQt5.QtWidgets import QApplication, QFrame, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup
 
 import zebrazoom.code.util as util
-import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
-from zebrazoom.mainZZ import mainZZ
 
 
 class ChooseVideoToCreateConfigFileFor(QWidget):
@@ -50,11 +47,12 @@ class OptimizeConfigFile(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
-    self.originalBackgroundPreProcessMethod = None
-    self.originalBackgroundPreProcessParameters = None
-    self.originalPostProcessMultipleTrajectories = None
-    self.originalPostProcessMaxDistanceAuthorized = None
-    self.originalPostProcessMaxDisapearanceFrames = None
+    self._originalBackgroundPreProcessMethod = None
+    self._originalBackgroundPreProcessParameters = None
+    self._originalPostProcessMultipleTrajectories = None
+    self._originalPostProcessMaxDistanceAuthorized = None
+    self._originalPostProcessMaxDisapearanceFrames = None
+    self._originalOutputValidationVideoContrastImprovement = None
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Optimize previously created configuration file", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -65,19 +63,37 @@ class OptimizeConfigFile(QWidget):
     sublayout.addWidget(QLabel("If after the test, you notice that the tracking has issues, you can use some of the options listed below to improve your configuration file.", self), alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addLayout(sublayout)
 
-    optimizeFishBtn = util.apply_style(QPushButton("Optimize fish freely swimming tail tracking configuration file parameters", self), background_color=util.LIGHT_YELLOW)
-    optimizeFishBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, False, True))
-    layout.addWidget(optimizeFishBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._optimizeFreelySwimmingBtn = util.apply_style(QPushButton("Optimize fish freely swimming tail tracking configuration file parameters", self), background_color=util.LIGHT_YELLOW)
+    self._optimizeFreelySwimmingBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, automaticParameters=True, useNext=False))
+    layout.addWidget(self._optimizeFreelySwimmingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._optimizeHeadEmbeddedBtn = util.apply_style(QPushButton("Optimize head embedded tracking configuration file parameters", self), background_color=util.LIGHT_YELLOW)
+    self._optimizeHeadEmbeddedBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackground)(controller, 0, useNext=False))
+    layout.addWidget(self._optimizeHeadEmbeddedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     optimizeBoutBtn = util.apply_style(QPushButton("Optimize/Add bouts detection (only for one animal per well)", self), background_color=util.LIGHT_YELLOW)
-    optimizeBoutBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, False, False, True))
+    optimizeBoutBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, boutDetectionsOnly=True, useNext=False))
     layout.addWidget(optimizeBoutBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    gridLayout = QGridLayout()
+    def updateOutputValidationVideoContrastImprovement(checked):
+      if checked:
+        controller.configFile["outputValidationVideoContrastImprovement"] = 1
+      elif self._originalOutputValidationVideoContrastImprovement is None:
+        del controller.configFile["outputValidationVideoContrastImprovement"]
+      else:
+        controller.configFile["outputValidationVideoContrastImprovement"] = 0
+
+    self._improveContrastCheckbox = QCheckBox("Improve contrast on validation video", self)
+    self._improveContrastCheckbox.toggled.connect(updateOutputValidationVideoContrastImprovement)
+    layout.addWidget(self._improveContrastCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self._problemSolvingLayout = gridLayout = QGridLayout()
     gridLayout.setColumnStretch(0, 1)
-    gridLayout.setColumnStretch(5, 1)
+    gridLayout.setColumnStretch(6, 1)
+    frame = QFrame(self)
+    frame.setFrameShape(QFrame.Shape.VLine)
+    gridLayout.addWidget(frame, 0, 3, 3, 1)
 
     gridLayout.addWidget(util.apply_style(QLabel("Solve issues near the borders of the wells/tanks/arenas"), font_size='16px'), 0, 1, 1, 2, Qt.AlignmentFlag.AlignLeft)
-    self.backgroundPreProcessParameters = backgroundPreProcessParameters = QLineEdit(controller.window)
+    self._backgroundPreProcessParameters = backgroundPreProcessParameters = QLineEdit(controller.window)
     backgroundPreProcessParameters.setValidator(QIntValidator(backgroundPreProcessParameters))
     backgroundPreProcessParameters.validator().setBottom(0)
 
@@ -86,20 +102,22 @@ class OptimizeConfigFile(QWidget):
         controller.configFile["backgroundPreProcessMethod"] = ["erodeThenMin"]
         controller.configFile["backgroundPreProcessParameters"] = [[int(text)]]
       else:
-        if self.originalBackgroundPreProcessMethod is not None:
-          controller.configFile["backgroundPreProcessParameters"] = self.originalBackgroundPreProcessMethod
+        if self._originalBackgroundPreProcessMethod is not None:
+          controller.configFile["backgroundPreProcessParameters"] = self._originalBackgroundPreProcessMethod
         elif "backgroundPreProcessMethod" in controller.configFile:
           del controller.configFile["backgroundPreProcessMethod"]
-        if self.originalBackgroundPreProcessParameters is not None:
-          controller.configFile["backgroundPreProcessParameters"] = self.originalBackgroundPreProcessParameters
+        if self._originalBackgroundPreProcessParameters is not None:
+          controller.configFile["backgroundPreProcessParameters"] = self._originalBackgroundPreProcessParameters
         elif "backgroundPreProcessParameters" in controller.configFile:
           del controller.configFile["backgroundPreProcessParameters"]
     backgroundPreProcessParameters.textChanged.connect(updateBackgroundPreProcessParameters)
     gridLayout.addWidget(QLabel("backgroundPreProcessParameters:"), 1, 1, Qt.AlignmentFlag.AlignCenter)
     gridLayout.addWidget(backgroundPreProcessParameters, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
-    gridLayout.addWidget(util.apply_style(QLabel("Post-process animal center trajectories"), font_size='16px'), 0, 3, 1, 2, Qt.AlignmentFlag.AlignLeft)
-    self.postProcessMaxDistanceAuthorized = postProcessMaxDistanceAuthorized = QLineEdit(controller.window)
+    postProcessTrajectoriesLabel = util.apply_style(QLabel("Post-process animal center trajectories"), font_size='16px')
+    postProcessTrajectoriesLabel.setToolTip("Trajectories post-processing can help solve problems with animal 'disapearing' and/or temporarily 'jumping' to a distant (and incorrect) location.")
+    gridLayout.addWidget(postProcessTrajectoriesLabel, 0, 4, 1, 2, Qt.AlignmentFlag.AlignLeft)
+    self._postProcessMaxDistanceAuthorized = postProcessMaxDistanceAuthorized = QLineEdit(controller.window)
     postProcessMaxDistanceAuthorized.setValidator(QIntValidator(postProcessMaxDistanceAuthorized))
     postProcessMaxDistanceAuthorized.validator().setBottom(0)
 
@@ -109,19 +127,19 @@ class OptimizeConfigFile(QWidget):
         controller.configFile["postProcessMultipleTrajectories"] = 1
       else:
         if not postProcessMaxDisapearanceFrames.text():
-          if self.originalPostProcessMultipleTrajectories is not None:
-            controller.configFile["postProcessMultipleTrajectories"] = self.originalPostProcessMultipleTrajectories
+          if self._originalPostProcessMultipleTrajectories is not None:
+            controller.configFile["postProcessMultipleTrajectories"] = self._originalPostProcessMultipleTrajectories
           elif "postProcessMultipleTrajectories" in controller.configFile:
             del controller.configFile["postProcessMultipleTrajectories"]
-        if self.originalPostProcessMaxDistanceAuthorized is not None:
-          controller.configFile["postProcessMaxDistanceAuthorized"] = self.originalPostProcessMaxDistanceAuthorized
+        if self._originalPostProcessMaxDistanceAuthorized is not None:
+          controller.configFile["postProcessMaxDistanceAuthorized"] = self._originalPostProcessMaxDistanceAuthorized
         elif "postProcessMaxDistanceAuthorized" in controller.configFile:
           del controller.configFile["postProcessMaxDistanceAuthorized"]
     postProcessMaxDistanceAuthorized.textChanged.connect(updatePostProcessMaxDistanceAuthorized)
-    gridLayout.addWidget(QLabel("postProcessMaxDistanceAuthorized:"), 1, 3, Qt.AlignmentFlag.AlignCenter)
-    gridLayout.addWidget(postProcessMaxDistanceAuthorized, 1, 4, Qt.AlignmentFlag.AlignCenter)
+    gridLayout.addWidget(QLabel("postProcessMaxDistanceAuthorized:"), 1, 4, Qt.AlignmentFlag.AlignCenter)
+    gridLayout.addWidget(postProcessMaxDistanceAuthorized, 1, 5, Qt.AlignmentFlag.AlignCenter)
 
-    self.postProcessMaxDisapearanceFrames = postProcessMaxDisapearanceFrames = QLineEdit(controller.window)
+    self._postProcessMaxDisapearanceFrames = postProcessMaxDisapearanceFrames = QLineEdit(controller.window)
     postProcessMaxDisapearanceFrames.setValidator(QIntValidator(postProcessMaxDisapearanceFrames))
     postProcessMaxDisapearanceFrames.validator().setBottom(0)
 
@@ -131,20 +149,26 @@ class OptimizeConfigFile(QWidget):
         controller.configFile["postProcessMultipleTrajectories"] = 1
       else:
         if not postProcessMaxDistanceAuthorized.text():
-          if self.originalPostProcessMultipleTrajectories is not None:
-            controller.configFile["postProcessMultipleTrajectories"] = self.originalPostProcessMultipleTrajectories
+          if self._originalPostProcessMultipleTrajectories is not None:
+            controller.configFile["postProcessMultipleTrajectories"] = self._originalPostProcessMultipleTrajectories
           elif "postProcessMultipleTrajectories" in controller.configFile:
             del controller.configFile["postProcessMultipleTrajectories"]
-        if self.originalPostProcessMaxDisapearanceFrames is not None:
-          controller.configFile["postProcessMaxDisapearanceFrames"] = self.originalPostProcessMaxDisapearanceFrames
+        if self._originalPostProcessMaxDisapearanceFrames is not None:
+          controller.configFile["postProcessMaxDisapearanceFrames"] = self._originalPostProcessMaxDisapearanceFrames
         elif "postProcessMaxDisapearanceFrames" in controller.configFile:
           del controller.configFile["postProcessMaxDisapearanceFrames"]
     postProcessMaxDisapearanceFrames.textChanged.connect(updatePostProcessMaxDisapearanceFrames)
-    gridLayout.addWidget(QLabel("postProcessMaxDisapearanceFrames:"), 2, 3, Qt.AlignmentFlag.AlignCenter)
-    gridLayout.addWidget(postProcessMaxDisapearanceFrames, 2, 4, Qt.AlignmentFlag.AlignCenter)
+    gridLayout.addWidget(QLabel("postProcessMaxDisapearanceFrames:"), 2, 4, Qt.AlignmentFlag.AlignCenter)
+    gridLayout.addWidget(postProcessMaxDisapearanceFrames, 2, 5, Qt.AlignmentFlag.AlignCenter)
     layout.addLayout(gridLayout)
 
-    layout.addWidget(QLabel("Trajectories post-processing can help solve problems with animal 'disapearing' and/or temporarily 'jumping' to a distant (and incorrect) location.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+    testBtn = util.apply_style(QPushButton("Test Tracking", self), background_color=util.LIGHT_YELLOW)
+    testBtn.clicked.connect(lambda: controller.testConfig())
+    layout.addWidget(testBtn, alignment=Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignBottom)
+    saveBtn = util.apply_style(QPushButton("Save Config File", self), background_color=util.LIGHT_YELLOW)
+    saveBtn.clicked.connect(lambda: controller.finishConfig(testCheckbox.isChecked()))
+    layout.addWidget(saveBtn, alignment=Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+
     linkBtn3 = util.apply_style(QPushButton("Speed up tracking for 'Track heads and tails of freely swimming fish'", self), background_color=util.LIGHT_YELLOW)
     linkBtn3.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingSpeedOptimization.md"))
     layout.addWidget(linkBtn3, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -166,23 +190,41 @@ class OptimizeConfigFile(QWidget):
 
   def refresh(self):
     app = QApplication.instance()
-    self.originalBackgroundPreProcessMethod = app.configFile.get("backgroundPreProcessMethod")
-    self.originalBackgroundPreProcessParameters = app.configFile.get("backgroundPreProcessParameters")
-    if self.originalBackgroundPreProcessParameters is not None:
-      self.backgroundPreProcessParameters.setText(str(self.originalBackgroundPreProcessParameters[0][0]))
+    if app.configFile.get("headEmbeded", False):
+      self._improveContrastCheckbox.show()
+      self._optimizeFreelySwimmingBtn.hide()
+      self._optimizeHeadEmbeddedBtn.show()
+      for idx in range(self._problemSolvingLayout.count()):
+        self._problemSolvingLayout.itemAt(idx).widget().hide()
     else:
-      self.backgroundPreProcessParameters.setText('')
-    self.originalPostProcessMultipleTrajectories = app.configFile.get("postProcessMultipleTrajectories")
-    self.originalPostProcessMaxDistanceAuthorized = app.configFile.get("postProcessMaxDistanceAuthorized")
-    if self.originalPostProcessMaxDistanceAuthorized is not None:
-      self.postProcessMaxDistanceAuthorized.setText(str(self.originalPostProcessMaxDistanceAuthorized))
+      self._improveContrastCheckbox.hide()
+      self._optimizeFreelySwimmingBtn.show()
+      self._optimizeHeadEmbeddedBtn.hide()
+      for idx in range(self._problemSolvingLayout.count()):
+        self._problemSolvingLayout.itemAt(idx).widget().show()
+
+    self._originalBackgroundPreProcessMethod = app.configFile.get("backgroundPreProcessMethod")
+    self._originalBackgroundPreProcessParameters = app.configFile.get("backgroundPreProcessParameters")
+    if self._originalBackgroundPreProcessParameters is not None:
+      self._backgroundPreProcessParameters.setText(str(self._originalBackgroundPreProcessParameters[0][0]))
     else:
-      self.postProcessMaxDistanceAuthorized.setText('')
-    self.originalPostProcessMaxDisapearanceFrames = app.configFile.get("postProcessMaxDisapearanceFrames")
-    if self.originalPostProcessMaxDisapearanceFrames is not None:
-      self.postProcessMaxDisapearanceFrames.setText(str(self.originalPostProcessMaxDisapearanceFrames))
+      self._backgroundPreProcessParameters.setText('')
+    self._originalPostProcessMultipleTrajectories = app.configFile.get("postProcessMultipleTrajectories")
+    self._originalPostProcessMaxDistanceAuthorized = app.configFile.get("postProcessMaxDistanceAuthorized")
+    if self._originalPostProcessMaxDistanceAuthorized is not None:
+      self._postProcessMaxDistanceAuthorized.setText(str(self._originalPostProcessMaxDistanceAuthorized))
     else:
-      self.postProcessMaxDisapearanceFrames.setText('')
+      self._postProcessMaxDistanceAuthorized.setText('')
+    self._originalPostProcessMaxDisapearanceFrames = app.configFile.get("postProcessMaxDisapearanceFrames")
+    if self._originalPostProcessMaxDisapearanceFrames is not None:
+      self._postProcessMaxDisapearanceFrames.setText(str(self._originalPostProcessMaxDisapearanceFrames))
+    else:
+      self._postProcessMaxDisapearanceFrames.setText('')
+    self._originalOutputValidationVideoContrastImprovement = app.configFile.get("outputValidationVideoContrastImprovement")
+    if self._originalOutputValidationVideoContrastImprovement is not None:
+      self._improveContrastCheckbox.setChecked(bool(self._originalOutputValidationVideoContrastImprovement))
+    else:
+      self._improveContrastCheckbox.setChecked(False)
 
 class ChooseGeneralExperiment(QWidget):
   def __init__(self, controller):
@@ -776,12 +818,13 @@ class FinishConfig(QWidget):
 
     layout = QVBoxLayout()
     layout.addStretch()
+    testCheckbox = QCheckBox("Test tracking after saving config", self)
+    testCheckbox.setChecked(True)
+    testCheckbox.clearFocus()
+    layout.addWidget(testCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
     saveBtn = util.apply_style(QPushButton("Save Config File", self), background_color=util.LIGHT_YELLOW)
-    saveBtn.clicked.connect(lambda: controller.finishConfig())
+    saveBtn.clicked.connect(lambda: controller.finishConfig(testCheckbox.isChecked()))
     layout.addWidget(saveBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    testBtn = util.apply_style(QPushButton("Test Tracking", self), background_color=util.LIGHT_YELLOW)
-    testBtn.clicked.connect(self._testConfig)
-    layout.addWidget(testBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch()
     backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
@@ -791,41 +834,7 @@ class FinishConfig(QWidget):
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch()
-    layout.addLayout(buttonsLayout)
     layout.addStretch()
+    layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
-
-  def _testConfig(self):
-    app = QApplication.instance()
-    pathToVideo  = os.path.dirname(app.videoToCreateConfigFileFor)
-    videoName, videoExt = os.path.splitext(os.path.basename(app.videoToCreateConfigFileFor))
-    videoExt = videoExt.lstrip('.')
-
-    def callback():
-      app.configFile["lastFrame"] = min(app.configFile["firstFrame"] + 500, int(zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor).get(7)) - 1)
-      tempDir = tempfile.TemporaryDirectory()
-      outputLocation = app.ZZoutputLocation
-      app.ZZoutputLocation = tempDir.name
-      del app.configFileHistory[:]
-      configFile = app.configFile.copy()
-      with app.busyCursor():
-        try:
-          tabParams = ["mainZZ", pathToVideo, videoName, videoExt, app.configFile, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1, "outputFolder", app.ZZoutputLocation]
-          mainZZ(pathToVideo, videoName, videoExt, app.configFile, tabParams)
-        except NameError:
-          app.show_frame("Error")
-          app.ZZoutputLocation = outputLocation
-          tempDir.cleanup()
-        finally:
-          app.configFile = configFile
-      util.addToHistory(app.showViewParameters)(videoName)
-      layout = app.window.centralWidget().layout()
-      def cleanup():
-        app.ZZoutputLocation = outputLocation
-        tempDir.cleanup()
-        layout.currentChanged.disconnect(cleanup)
-      layout.currentChanged.connect(cleanup)
-    util.addToHistory(util.chooseBeginningPage)(app, app.videoToCreateConfigFileFor,
-                                                "Choose where the analysis of your video should start.",
-                                                "Ok, I want the tracking to start at this frame!", callback)

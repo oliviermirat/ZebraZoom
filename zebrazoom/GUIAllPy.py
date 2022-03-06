@@ -2,6 +2,7 @@ import contextlib
 import os
 import sys
 import traceback
+import tempfile
 from datetime import datetime
 
 import json
@@ -20,6 +21,7 @@ except ImportError:
   QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
   PYQT6 = False
 
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.util as util
 import zebrazoom.code.GUI.configFilePrepareFunctions as configFilePrepareFunctions
 import zebrazoom.code.GUI.GUI_InitialFunctions as GUI_InitialFunctions
@@ -27,6 +29,7 @@ import zebrazoom.code.GUI.configFileZebrafishFunctions as configFileZebrafishFun
 import zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions as adjustParameterInsideAlgoFunctions
 import zebrazoom.code.GUI.dataAnalysisGUIFunctions as dataAnalysisGUIFunctions
 import zebrazoom.code.GUI.troubleshootingFunction as troubleshootingFunction
+from zebrazoom.mainZZ import mainZZ
 from zebrazoom.code.GUI.GUI_InitialClasses import StartPage, VideoToAnalyze, ConfigFilePromp, Patience, ZZoutro, ZZoutroSbatch, SeveralVideos, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, EnhanceZZOutput, ResultsVisualization, ViewParameters, Error
 from zebrazoom.code.GUI.configFilePrepare import ChooseVideoToCreateConfigFileFor, OptimizeConfigFile, ChooseGeneralExperiment, WellOrganisation, FreelySwimmingExperiment, NbRegionsOfInterest, HomegeneousWellsLayout, CircularOrRectangularWells, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings
 from zebrazoom.code.GUI.configFileZebrafish import HeadEmbeded
@@ -192,8 +195,8 @@ class ZebraZoomApp(QApplication):
         if self._busyCursor:
             self.setOverrideCursor(Qt.CursorShape.BusyCursor)
 
-    def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, debugMode):
-        GUI_InitialFunctions.chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, debugMode)
+    def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, testMode):
+        GUI_InitialFunctions.chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, testMode)
 
     def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode):
         GUI_InitialFunctions.chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode)
@@ -254,7 +257,7 @@ class ZebraZoomApp(QApplication):
     def circularOrRectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
         configFilePrepareFunctions.circularOrRectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows)
 
-    def finishConfig(self):
+    def finishConfig(self, testConfig=False):
         suggestedName = os.path.splitext(os.path.basename(self.videoToCreateConfigFileFor))[0]
         configDir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'configuration')
         reference, _ = QFileDialog.getSaveFileName(self.window, "Save config", os.path.join(configDir, suggestedName), "JSON (*.json)")
@@ -270,6 +273,11 @@ class ZebraZoomApp(QApplication):
           json.dump(self.configFile, outfile)
 
         self.savedConfigFile = self.configFile.copy()
+
+        if testConfig:
+          self.testConfig()
+        else:
+          self.show_frame("StartPage")
 
     def chooseCircularWellsLeft(self, controller):
         configFilePrepareFunctions.chooseCircularWellsLeft(self, controller)
@@ -301,11 +309,11 @@ class ZebraZoomApp(QApplication):
     def adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo):
       adjustParameterInsideAlgoFunctions.adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo)
 
-    def calculateBackground(self, controller, nbImagesForBackgroundCalculation):
-      adjustParameterInsideAlgoFunctions.calculateBackground(self, controller, nbImagesForBackgroundCalculation)
+    def calculateBackground(self, controller, nbImagesForBackgroundCalculation, useNext=True):
+      adjustParameterInsideAlgoFunctions.calculateBackground(self, controller, nbImagesForBackgroundCalculation, useNext)
 
-    def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False):
-      adjustParameterInsideAlgoFunctions.calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen, automaticParameters, boutDetectionsOnly)
+    def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False, useNext=True):
+      adjustParameterInsideAlgoFunctions.calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen, automaticParameters, boutDetectionsOnly, useNext)
 
     def goToAdvanceSettings(self, controller, yes, no):
       configFilePrepareFunctions.goToAdvanceSettings(self, controller, yes, no)
@@ -327,3 +335,44 @@ class ZebraZoomApp(QApplication):
 
     def chooseVideoToTroubleshootSplitVideo(self, controller):
       troubleshootingFunction.chooseVideoToTroubleshootSplitVideo(self, controller)
+
+    def testConfig(self, addToHistory=True):
+      videoPath = self.videoToCreateConfigFileFor
+      pathToVideo  = os.path.dirname(videoPath)
+      videoName, videoExt = os.path.splitext(os.path.basename(videoPath))
+      videoExt = videoExt.lstrip('.')
+
+      def callback():
+        firstFrame = self.configFile["firstFrame"]
+        self.configFile.clear()
+        self.configFile.update(configFile)
+        lastFrame = min(firstFrame + 500, int(zzVideoReading.VideoCapture(videoPath).get(7)) - 1)
+        tempDir = tempfile.TemporaryDirectory()
+        outputLocation = self.ZZoutputLocation
+        self.ZZoutputLocation = tempDir.name
+        del self.configFileHistory[:]
+        with self.busyCursor():
+          try:
+            tabParams = ["mainZZ", pathToVideo, videoName, videoExt, self.configFile,
+                         "firstFrame", firstFrame, "lastFrame", lastFrame, "freqAlgoPosFollow", 100,
+                         "popUpAlgoFollow", 1, "outputFolder", self.ZZoutputLocation]
+            mainZZ(pathToVideo, videoName, videoExt, self.configFile, tabParams)
+          except NameError:
+            self.show_frame("Error")
+            self.ZZoutputLocation = outputLocation
+            tempDir.cleanup()
+            return
+          finally:
+            self.configFile.clear()
+            self.configFile.update(configFile)
+        (self.showViewParameters if not addToHistory else util.addToHistory(self.showViewParameters))(videoName)
+        layout = self.window.centralWidget().layout()
+        def cleanup():
+          self.ZZoutputLocation = outputLocation
+          tempDir.cleanup()
+          layout.currentChanged.disconnect(cleanup)
+        layout.currentChanged.connect(cleanup)
+      configFile = self.configFile.copy()
+      cb = util.chooseBeginningPage if not addToHistory else util.addToHistory(util.chooseBeginningPage)
+      cb(self, videoPath, "Choose where the tracking should be performed",
+         "Ok, I want the tracking to start at this frame!", callback)

@@ -270,9 +270,10 @@ def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBt
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
-  backBtn = QPushButton("Back")
-  backBtn.setObjectName("back")
-  buttonsLayout.addWidget(backBtn)
+  if app.configFileHistory:
+    backBtn = QPushButton("Back")
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn)
   chooseFrameBtn = QPushButton(chooseFrameBtnText)
   def chooseFrameBtnClicked():
     app.configFile["firstFrame"] = valueWidget.value()
@@ -297,7 +298,13 @@ def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBt
     label.setMinimumSize(1, 1)
     label.show()
     setPixmapFromCv(frame, label)
-  for btn in (backBtn, chooseFrameBtn) + () if extraBtn is None else (extraBtn,):
+  buttons = []
+  if app.configFileHistory:
+    buttons.append(backBtn)
+  buttons.append(chooseFrameBtn)
+  if extraBtn is not None:
+    buttons.append(extraBtn)
+  for btn in buttons:
     btn.clicked.connect(lambda: stackedLayout.removeWidget(page))
 
 
@@ -516,9 +523,10 @@ def addToHistory(fn):
   def inner(*args, **kwargs):
     app = QApplication.instance()
     configFileState = app.configFile.copy()
-    def restoreState():
-      app.configFile.clear()
-      app.configFile.update(configFileState)
+    def restoreState(restoreConfig=True):
+      if restoreConfig:
+        app.configFile.clear()
+        app.configFile.update(configFileState)
       del app.configFileHistory[-1:]
       fn(*args, **kwargs)
     app.configFileHistory.append(restoreState)
