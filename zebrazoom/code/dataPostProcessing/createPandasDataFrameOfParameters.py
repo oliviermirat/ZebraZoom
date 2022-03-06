@@ -44,5 +44,6 @@ def createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension
     'saveAllBoutsSuperStructuresInMatlabFormat' : 0
   }
   
+  # forcePandasDfRecreation (third parameter) is set to True here
   [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, excelFileDataFrame, 1, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
   
