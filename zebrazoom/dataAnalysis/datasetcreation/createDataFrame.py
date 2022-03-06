@@ -89,7 +89,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   basicInformation = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration']
   # Global parameters
   if tailAngleKinematicParameterCalculation:
-    globParam  = ['BoutDuration', 'TotalDistance', 'Speed', 'maxOfInstantaneousTBF', 'meanOfInstantaneousTBF', 'medianOfInstantaneousTBF', 'maxBendAmplitude', 'maxBendAmplitudeSigned', 'meanBendAmplitude', 'medianBendAmplitude', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude', 'deltaHead', 'firstBendTime', 'firstBendAmplitude', 'IBI', 'xmean', 'ymean', 'binaryClass25degMaxTailAngle']
+    globParam  = ['BoutDuration', 'TotalDistance', 'Speed', 'maxOfInstantaneousTBF', 'meanOfInstantaneousTBF', 'medianOfInstantaneousTBF', 'maxBendAmplitude', 'maxBendAmplitudeSigned', 'meanBendAmplitude', 'medianBendAmplitude', 'medianBendAmplitudeSigned', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude', 'deltaHead', 'firstBendTime', 'firstBendAmplitude', 'firstBendAmplitudeSigned', 'IBI', 'xmean', 'ymean', 'binaryClass25degMaxTailAngle', 'tailAngleIntegralSigned']
   else:
     globParam  = ['BoutDuration', 'TotalDistance', 'Speed']
   

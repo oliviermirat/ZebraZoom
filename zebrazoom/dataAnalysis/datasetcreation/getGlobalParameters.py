@@ -136,9 +136,19 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
       else:
         medianBendAmplitude = float('NaN')
       listOfParametersCalculated.append(medianBendAmplitude)
-    
-    
-    
+
+
+
+    elif parameterToCalculate == 'medianBendAmplitudeSigned':
+      
+      if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
+        medianBendAmplitude = np.median(curbout["Bend_Amplitude"]) * (180 / math.pi)
+      else:
+        medianBendAmplitude = float('NaN')
+      listOfParametersCalculated.append(medianBendAmplitude)
+
+
+
     elif parameterToCalculate == 'meanBendAmplitude':
       
       if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
@@ -241,9 +251,19 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
       else:
         firstBendAmplitude = float('NaN')
       listOfParametersCalculated.append(firstBendAmplitude)
-    
-    
-    
+
+
+
+    elif parameterToCalculate == 'firstBendAmplitudeSigned':
+      
+      if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
+        firstBendAmplitude = curbout["Bend_Amplitude"][0] * (180 / math.pi)
+      else:
+        firstBendAmplitude = float('NaN')
+      listOfParametersCalculated.append(firstBendAmplitude)
+
+
+
     elif parameterToCalculate == 'IBI':
       
       IBI = (curbout["BoutStart"] - previousBoutEnd) / fps
@@ -300,9 +320,22 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
         else:
           tailAngleIntegral = float('NaN')
       listOfParametersCalculated.append(tailAngleIntegral)
-    
-    
-    
+
+
+
+    elif parameterToCalculate == 'tailAngleIntegralSigned':
+      
+      if "TailAngle_smoothed" in curbout and len(curbout["TailAngle_smoothed"]):
+        tailAngleIntegral = np.sum([ta for ta in curbout["TailAngle_smoothed"]]) * (180 / math.pi)
+      else:
+        if "TailAngle_Raw" in curbout and len(curbout["TailAngle_Raw"]):
+          tailAngleIntegral = np.sum([ta for ta in curbout["TailAngle_Raw"]]) * (180 / math.pi) # Maybe this value should be "reduced" in some way to be consistent with the previous smoothed tail angle
+        else:
+          tailAngleIntegral = float('NaN')
+      listOfParametersCalculated.append(tailAngleIntegral)
+
+
+
     else:
       
       print("The parameter", parameterToCalculate, "is not specified")
