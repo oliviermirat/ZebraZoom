@@ -36,8 +36,14 @@ def checkConsistencyOfParameters(listOfVideosToCheckConsistencyOn):
       raise ValueError("videoFPS or videoPixelSize undefined: videoFPS:", str(videoFPS), ", videoPixelSize:", str(videoPixelSize))
     vidTab  = ["defaultZZoutputFolder", videoName, videoFPS, videoPixelSize, str([1 for i in range(nbWells)]), str(['Your data' for i in range(nbWells)]), str([1 for i in range(nbWells)])]
     data.append(vidTab)
+    
+  # IMPORTANT:
+  # Here need to ask user for confirmation about the videoFPS and the videoPixelSize for every video
+  # WHILE PRECISING THE UNITS OF the videoFPS and videoPixelSize
+  # Which should be HZ (1/second) for videoFPS and (mm) for videoPixelSize
   
-  data.append(["defaultZZoutputFolder", 'standardValueFreelySwimZebrafishLarvae', 1, 1, str([1, 1, 1]), str(['StandardValue' for i in range(3)]), str([1 for i in range(3)])])
+  nbWellsStandardValues = 100
+  data.append(["defaultZZoutputFolder", 'standardValueFreelySwimZebrafishLarvae', 1, 1, str([1 for i in range(nbWellsStandardValues)]), str(['StandardValue' for i in range(nbWellsStandardValues)]), str([1 for i in range(nbWellsStandardValues)])])
   
   excelFileDataFrame = pd.DataFrame(data=data, columns=['path', 'trial_id', 'fq', 'pixelsize', 'condition', 'genotype', 'include'])
   

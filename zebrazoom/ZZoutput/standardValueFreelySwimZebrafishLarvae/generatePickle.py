@@ -7,8 +7,8 @@ nbWells = 100
 # tbf           = [24.29, 0.03]
 boutDuration  = [0.1895, 0.05]
 # heading       = [51.14, 0.18]
-distance      = [2.49*1000, 2*500]
-speed         = [13.35*1000, 20*100]
+distance      = [2.49, 2]
+speed         = [13.35, 20]
 # boutFrequency = [0.4495, 0.0117]
 
 boutDurationValues = np.random.normal(boutDuration[0], boutDuration[1], 100)

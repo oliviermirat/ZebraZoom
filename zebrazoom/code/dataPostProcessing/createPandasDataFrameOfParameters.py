@@ -45,5 +45,5 @@ def createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension
   }
   
   # forcePandasDfRecreation (third parameter) is set to True here
-  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, excelFileDataFrame, 1, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, excelFileDataFrame, 1, [])
   
