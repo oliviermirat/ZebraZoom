@@ -57,7 +57,7 @@ def chooseExperimentOrganizationExcel(self, controller):
   controller.show_frame("ChooseDataAnalysisMethod")
 
 
-def populationComparison(self, controller, TailTrackingParameters=0, saveInMatlabFormat=0, saveRawData=0, minNbBendForBoutDetect=3, discard=0, keep=1, frameStepForDistanceCalculation='4'):
+def populationComparison(self, controller, TailTrackingParameters=0, saveInMatlabFormat=0, saveRawData=0, forcePandasRecreation=0, minNbBendForBoutDetect=3, discard=0, keep=1, frameStepForDistanceCalculation='4'):
   
   if len(frameStepForDistanceCalculation) == 0:
     frameStepForDistanceCalculation = '4'
@@ -98,9 +98,9 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
     'frameStepForDistanceCalculation'           : frameStepForDistanceCalculation
   }
   
-  generatePklDataFileForVideo(os.path.join(self.experimentOrganizationExcelFileAndFolder, self.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation)
+  generatePklDataFileForVideo(os.path.join(self.experimentOrganizationExcelFileAndFolder, self.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation)
   
-  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", 0, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", forcePandasRecreation, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
   
   # Plotting for the different conditions
   nameOfFile = dataframeOptions['nameOfFile']
@@ -119,7 +119,7 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
   controller.show_frame("AnalysisOutputFolderPopulation")
 
 
-def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering=0, removeOutliers=False, frameStepForDistanceCalculation='4', removeBoutsContainingNanValuesInParametersUsedForClustering=True):
+def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering=0, removeOutliers=False, frameStepForDistanceCalculation='4', removeBoutsContainingNanValuesInParametersUsedForClustering=True, forcePandasRecreation=0):
 
   if len(frameStepForDistanceCalculation) == 0:
     frameStepForDistanceCalculation = '4'
@@ -169,9 +169,9 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
   if int(FreelySwimming):
     dataframeOptions['computeMassCenterParamForCluster'] = True
     
-  generatePklDataFileForVideo(os.path.join(self.experimentOrganizationExcelFileAndFolder, self.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation)
+  generatePklDataFileForVideo(os.path.join(self.experimentOrganizationExcelFileAndFolder, self.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation)
     
-  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", 0, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", forcePandasRecreation, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
   # Applying the clustering on this dataframe
   clusteringOptions = {
     'analyzeAllWellsAtTheSameTime' : 0, # put this to 1 for head-embedded videos, and to 0 for multi-well videos

@@ -3,7 +3,7 @@ import numpy as np
 from scipy.interpolate import UnivariateSpline
 import math
 
-def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation, previousBoutEnd, listOfParametersToCalculate, firstFrame, lastFrame):
+def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation, previousBoutEnd, listOfParametersToCalculate, firstFrame, lastFrame, minimumFrameToFrameDistanceToBeConsideredAsMoving=0):
   
   listOfParametersCalculated = []
   
@@ -34,6 +34,24 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
           TotalDistance = TotalDistance + math.sqrt((posX[j+1] - posX[j])**2 + (posY[j+1] - posY[j])**2)
       TotalDistance = TotalDistance * pixelSize
       listOfParametersCalculated.append(TotalDistance)
+    
+    
+    
+    elif parameterToCalculate == 'percentOfMovingFramesBasedOnDistance':
+      
+      posX = curbout["HeadX"]
+      posY = curbout["HeadY"]
+      # rangeUsedForDistanceCalculation   = [frameStepForDistanceCalculation*i for i in range(0, int(len(posX)/frameStepForDistanceCalculation))]
+      # if len(rangeUsedForDistanceCalculation) == 0:
+        # rangeUsedForDistanceCalculation = [0, len(posX) - 1]
+      # else:
+        # rangeUsedForDistanceCalculation = rangeUsedForDistanceCalculation + [len(posX) - 1]
+      # posX = [posX[i] for i in rangeUsedForDistanceCalculation]
+      # posY = [posY[i] for i in rangeUsedForDistanceCalculation]
+      distance = np.array([math.sqrt((posX[j+1] - posX[j])**2 + (posY[j+1] - posY[j])**2) * pixelSize for j in range(0, len(posX)-1)])
+      numberOfMovingFrames   = int(np.sum(distance > minimumFrameToFrameDistanceToBeConsideredAsMoving))
+      percentOfMovingFrames = (numberOfMovingFrames / (lastFrame - firstFrame + 1)) * 100
+      listOfParametersCalculated.append(percentOfMovingFrames)
     
     
     
@@ -101,6 +119,16 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
+    elif parameterToCalculate == 'maxBendAmplitudeSigned':
+      
+      if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
+        maxBendAmplitudeSigned = curbout["Bend_Amplitude"][np.argmax(abs(np.array(curbout["Bend_Amplitude"])))]
+      else:
+        maxBendAmplitudeSigned = float('NaN')
+      listOfParametersCalculated.append(maxBendAmplitudeSigned)
+    
+    
+    
     elif parameterToCalculate == 'medianBendAmplitude':
       
       if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
@@ -108,9 +136,19 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
       else:
         medianBendAmplitude = float('NaN')
       listOfParametersCalculated.append(medianBendAmplitude)
-    
-    
-    
+
+
+
+    elif parameterToCalculate == 'medianBendAmplitudeSigned':
+      
+      if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
+        medianBendAmplitude = np.median(curbout["Bend_Amplitude"]) * (180 / math.pi)
+      else:
+        medianBendAmplitude = float('NaN')
+      listOfParametersCalculated.append(medianBendAmplitude)
+
+
+
     elif parameterToCalculate == 'meanBendAmplitude':
       
       if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
@@ -213,9 +251,19 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
       else:
         firstBendAmplitude = float('NaN')
       listOfParametersCalculated.append(firstBendAmplitude)
-    
-    
-    
+
+
+
+    elif parameterToCalculate == 'firstBendAmplitudeSigned':
+      
+      if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
+        firstBendAmplitude = curbout["Bend_Amplitude"][0] * (180 / math.pi)
+      else:
+        firstBendAmplitude = float('NaN')
+      listOfParametersCalculated.append(firstBendAmplitude)
+
+
+
     elif parameterToCalculate == 'IBI':
       
       IBI = (curbout["BoutStart"] - previousBoutEnd) / fps
@@ -254,7 +302,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     elif parameterToCalculate == 'secondBendAmpDividedByFirst':
       
-      if len(curbout["Bend_Amplitude"]) >= 2 and curbout["Bend_Amplitude"][0]:
+      if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]) >= 2 and curbout["Bend_Amplitude"][0]:
         secondBendAmpDividedByFirst = curbout["Bend_Amplitude"][1] / curbout["Bend_Amplitude"][0]
       else:
         secondBendAmpDividedByFirst = float('Nan')
@@ -272,9 +320,22 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
         else:
           tailAngleIntegral = float('NaN')
       listOfParametersCalculated.append(tailAngleIntegral)
-    
-    
-    
+
+
+
+    elif parameterToCalculate == 'tailAngleIntegralSigned':
+      
+      if "TailAngle_smoothed" in curbout and len(curbout["TailAngle_smoothed"]):
+        tailAngleIntegral = np.sum([ta for ta in curbout["TailAngle_smoothed"]]) * (180 / math.pi)
+      else:
+        if "TailAngle_Raw" in curbout and len(curbout["TailAngle_Raw"]):
+          tailAngleIntegral = np.sum([ta for ta in curbout["TailAngle_Raw"]]) * (180 / math.pi) # Maybe this value should be "reduced" in some way to be consistent with the previous smoothed tail angle
+        else:
+          tailAngleIntegral = float('NaN')
+      listOfParametersCalculated.append(tailAngleIntegral)
+
+
+
     else:
       
       print("The parameter", parameterToCalculate, "is not specified")

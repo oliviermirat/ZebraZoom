@@ -2,6 +2,8 @@ import cv2
 import cvui
 import numpy as np
 import math
+import pickle
+import os
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.headTrackingHeadingCalculation import headTrackingHeadingCalculation
@@ -85,12 +87,33 @@ def erodeThenAddWhiteBorders(frame, kernel):
   frame[:,len(frame[0])-1] = 255
   return frame
 
-def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hyperparameters, videoName):
+def erodeThenDilateThenAddWhiteBorders(frame, kernel, nbOfIterations):
+  frame = cv2.erode(frame, kernel, iterations=nbOfIterations)
+  frame = cv2.dilate(frame, kernel, iterations=nbOfIterations)
+  frame[0,:] = 255
+  frame[len(frame)-1,:] = 255
+  frame[:,0] = 255
+  frame[:,len(frame[0])-1] = 255
+  return frame
 
-  showInitialVideo = True
+def addWhiteBorders(frame):
+  frame[0,:] = 255
+  frame[len(frame)-1,:] = 255
+  frame[:,0] = 255
+  frame[:,len(frame[0])-1] = 255
+  return frame
+
+def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hyperparameters, videoName):
+  
+  chooseValueForAnimalBodyArea = -1 #600 # -1
+  showInitialVideo = True # This is not used anymore, should be removed soon
   iterativelyErodeEachImage = False
-  dist2Threshold = 400 #5000
+  showFramesForDebugging = hyperparameters["debugTracking"]
+  dist2Threshold = 400
+  historyLength  = 1000
   reduceImageResolutionPercentage = hyperparameters["reduceImageResolutionPercentage"]
+  
+  pathToVideo = os.path.split(videoPath)[0]
   
   kernel  = np.ones((3, 3), np.uint8)
   ROIHalfDiam = -1
@@ -113,15 +136,48 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
   trackingEyesAllAnimals     = 0
   trackingProbabilityOfGoodDetection = 0
   
-  fgbg = cv2.createBackgroundSubtractorKNN(dist2Threshold = dist2Threshold)
+  fgbg = cv2.createBackgroundSubtractorKNN(dist2Threshold = dist2Threshold, history = historyLength)
   
-  for i in range(0, min(lastFrame - 1, 500), int(min(lastFrame - 1, 500) / 10)):
-    cap.set(1, min(lastFrame - 1, 500) - i)
-    ret, frame = cap.read()
-    if ret:
-      frame = cv2.resize(frame, (int(frame_width * reduceImageResolutionPercentage), int(frame_height * reduceImageResolutionPercentage)), interpolation = cv2.INTER_AREA)
+  if os.path.exists(os.path.join(pathToVideo, videoName + '_BackgroundKNN_' + str(historyLength) + '.pkl')):
+    print("Background already pre-calculated")
+    with open(os.path.join(pathToVideo, videoName + '_BackgroundKNN_' + str(historyLength) + '.pkl'), 'rb') as handle:
+      listOfFramesToSave = pickle.load(handle)
+    for i in range(0, len(listOfFramesToSave)):
+      print("calculating background, currently at frame:", i)
+      frame = listOfFramesToSave[i]
       fgmask = fgbg.apply(frame)
-  cap.release()
+  else:
+    print("Background calculation starting")
+    
+    listOfFramesToSave = []
+    framesToKeep = [i for i in range(0, lastFrame - 1, int((lastFrame - 1) / historyLength if (lastFrame - 1) / historyLength >= 1 else 1))]
+    cap.set(1, 0)
+    for i in range(0, lastFrame):
+      ret, frame = cap.read()
+      if i in framesToKeep and ret:
+        print(i, lastFrame)
+        frame = cv2.resize(frame, (int(frame_width * reduceImageResolutionPercentage), int(frame_height * reduceImageResolutionPercentage)), interpolation = cv2.INTER_AREA)
+        listOfFramesToSave.append(frame)
+    
+    listOfFramesToSave.reverse()
+    
+    for i in range(0, len(listOfFramesToSave)):
+      print("calculating background, currently at frame:", i)
+      frame = listOfFramesToSave[i]
+      fgmask = fgbg.apply(frame)
+    
+    # listOfFramesToSave = []
+    # for i in range(0, lastFrame - 1, int((lastFrame - 1) / historyLength if (lastFrame - 1) / historyLength >= 1 else 1))]
+      # cap.set(1, lastFrame - 1 - i)
+      # print("calculating background, currently at frame:", lastFrame - 1 - i)
+      # ret, frame = cap.read()
+      # if ret:
+        # frame = cv2.resize(frame, (int(frame_width * reduceImageResolutionPercentage), int(frame_height * reduceImageResolutionPercentage)), interpolation = cv2.INTER_AREA)
+        # fgmask = fgbg.apply(frame)
+        # listOfFramesToSave.append(frame)
+    cap.release()
+    with open(os.path.join(pathToVideo, videoName + '_BackgroundKNN_' + str(historyLength) + '.pkl'), 'wb') as handle:
+      pickle.dump(listOfFramesToSave, handle) #, protocol=pickle.HIGHEST_PROTOCOL)
   
   cap = zzVideoReading.VideoCapture(videoPath)
   
@@ -135,10 +191,13 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
     ret, frame = cap.read()
     
     if ret:
+    
+      frameInitialImage = frame.copy()
       
       if hyperparameters["reduceImageResolutionPercentage"]:
         frame = cv2.resize(frame, (int(frame_width * hyperparameters["reduceImageResolutionPercentage"]), int(frame_height * hyperparameters["reduceImageResolutionPercentage"])), interpolation = cv2.INTER_AREA)
-    
+        frameInitialImage = frame.copy()
+      
       if i == firstFrame:
         
         WINDOW_NAME = "Click on the center of the head of the animal"
@@ -172,14 +231,21 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
         frame2 = 255 - frame2
         if iterativelyErodeEachImage:
           frame2 = erodeThenAddWhiteBorders(frame2, kernel)
+        else:
+          frame2 = addWhiteBorders(frame2)
         contours, hierarchy = cv2.findContours(frame2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         for contour in contours:
           if cv2.pointPolygonTest(contour, (previousCenterDetectedX, previousCenterDetectedY), False) >= 0:
             animalBodyArea = cv2.contourArea(contour)
             ROIHalfDiam = int(math.sqrt(animalBodyArea) * 4)
-        
         print("animalBodyArea:", animalBodyArea)
-        print("ROIHalfDiam:", ROIHalfDiam)   
+        print("ROIHalfDiam:", ROIHalfDiam)
+        if showFramesForDebugging:
+          cv2.imshow("frame0", frame2)
+          cv2.waitKey(0)        
+      
+      if chooseValueForAnimalBodyArea > 0:
+        animalBodyArea = chooseValueForAnimalBodyArea
       
       if ROIHalfDiam == -1:
         raise CustomError("An error occurred")
@@ -224,9 +290,31 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
         countNbTries = countNbTries + 1
         if iterativelyErodeEachImage:
           frame = erodeThenAddWhiteBorders(frame, kernel)
-        if False:
-          cv2.imshow("frame", frame)
+        else:
+          frame = addWhiteBorders(frame)
+        if showFramesForDebugging:
+          cv2.imshow("frame1", frame)
           cv2.waitKey(0)
+        
+        nbOfIterations = 1
+        while cv2.countNonZero(255 - frame) < animalBodyArea and nbOfIterations < 10:
+          print("try " + str(nbOfIterations))
+          frame = erodeThenDilateThenAddWhiteBorders(frame, kernel, nbOfIterations)
+          nbOfIterations += 1
+          if showFramesForDebugging:
+            cv2.imshow("frame" + str(nbOfIterations), frame)
+            cv2.waitKey(0)
+        
+        if nbOfIterations > 1:
+          dist2t = fgbg.getDist2Threshold()
+          fgbg.setDist2Threshold(dist2t - dist2t * 0.1)
+          print("dist2t set to a smaller value:", dist2t - dist2t * 0.1)
+        else:
+          if cv2.countNonZero(255 - frame) > 1.5 * animalBodyArea:
+            dist2t = fgbg.getDist2Threshold()
+            fgbg.setDist2Threshold(dist2t + dist2t * 0.1)
+            print("dist2t set to a bigger value:", dist2t + dist2t * 0.1)
+        
         contours, hierarchy = cv2.findContours(frame, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         for contour in contours:
           contourArea = cv2.contourArea(contour)

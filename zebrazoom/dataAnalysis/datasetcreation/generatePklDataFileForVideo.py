@@ -3,7 +3,7 @@ import pandas as pd
 import json
 import os
 
-def generatePklDataFileForVideo(excelFileName, ZZoutputLocation, frameStepForDistanceCalculation):
+def generatePklDataFileForVideo(excelFileName, ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation=0):
   
   # Generate .pkl data file inside the result video folder if it doesn't already exist
   excelFile = pd.read_excel(excelFileName)
@@ -18,6 +18,7 @@ def generatePklDataFileForVideo(excelFileName, ZZoutputLocation, frameStepForDis
     
     # Generates the .pkl data file if it doesn't already exist OR if a frameStepForDistanceCalculationUsed different than before is requested or if a videoFPS or videoPixelSize different than before is used
     if not(os.path.exists(os.path.join(os.path.join(ZZoutputLocation if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder" else excelFile.loc[videoId, 'path'], excelFile.loc[videoId, 'trial_id']), excelFile.loc[videoId, 'trial_id'] + '.pkl'))) or not(len(parametersUsedForCalculation)) or int(frameStepForDistanceCalculation) != int(parametersUsedForCalculation['frameStepForDistanceCalculation']) or float(excelFile.loc[videoId, 'fq']) != float(parametersUsedForCalculation['videoFPS']) or float(excelFile.loc[videoId, 'pixelsize']) != float(parametersUsedForCalculation['videoFPS']):
+      
       videoName      = excelFile.loc[videoId, 'trial_id']
       videoExtension = os.path.splitext(os.path.split(excelFileName)[1])[1]
       hyperparameters = {}

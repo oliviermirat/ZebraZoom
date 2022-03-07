@@ -9,13 +9,14 @@ def clusteringAnalysis(sys):
 
   pathToExcelFile                 = sys.argv[3]
   
-  freelySwimming   = int(sys.argv[4]) if len(sys.argv) >= 5 else 1
-  nbClustersToFind = int(sys.argv[5]) if len(sys.argv) >= 6 else 3
-  minNbBendForBoutDetect = int(sys.argv[6]) if len(sys.argv) >= 7 else 3
-  modelUsedForClustering = sys.argv[7] if len(sys.argv) >= 8 else 'KMeans'
-  removeOutliers         = int(sys.argv[8]) if len(sys.argv) >= 9 else 0
-  frameStepForDistanceCalculation = int(sys.argv[9]) if len(sys.argv) >= 10 else 4
-  removeBoutsContainingNanValuesInParametersUsedForClustering = int(sys.argv[10]) if len(sys.argv) >= 11 else 1
+  freelySwimming   = int(sys.argv[4]) if len(sys.argv) > 4 else 1
+  nbClustersToFind = int(sys.argv[5]) if len(sys.argv) > 5 else 3
+  minNbBendForBoutDetect = int(sys.argv[6]) if len(sys.argv) > 6 else 3
+  modelUsedForClustering = sys.argv[7] if len(sys.argv) > 7 else 'KMeans'
+  removeOutliers         = int(sys.argv[8]) if len(sys.argv) > 8 else 0
+  frameStepForDistanceCalculation = int(sys.argv[9]) if len(sys.argv) > 9 else 4
+  removeBoutsContainingNanValuesInParametersUsedForClustering = int(sys.argv[10]) if len(sys.argv) > 10 else 1
+  forcePandasRecreation = int(sys.argv[11]) if len(sys.argv) > 11 else 0
   
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
   cur_dir_path = Path(cur_dir_path)
@@ -43,9 +44,9 @@ def clusteringAnalysis(sys):
   if int(freelySwimming):
     dataframeOptions['computeMassCenterParamForCluster'] = True
   
-  generatePklDataFileForVideo(os.path.join(os.path.split(pathToExcelFile)[0], nameWithExt), os.path.join(cur_dir_path, 'ZZoutput'), frameStepForDistanceCalculation)
+  generatePklDataFileForVideo(os.path.join(os.path.split(pathToExcelFile)[0], nameWithExt), os.path.join(cur_dir_path, 'ZZoutput'), frameStepForDistanceCalculation, forcePandasRecreation)
   
-  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", 0, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", forcePandasRecreation, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
   
   # Applying the clustering on this dataframe
   clusteringOptions = {
