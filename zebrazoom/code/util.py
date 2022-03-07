@@ -243,12 +243,12 @@ class SliderWithSpinbox(QWidget):
     self.setPosition = slider.setSliderPosition
 
 
-def _chooseFrameLayout(cap, spinboxValues):
+def _chooseFrameLayout(cap, spinboxValues, title):
   layout = QVBoxLayout()
-
+  layout.addWidget(apply_style(QLabel(title), font=TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
   video = QLabel()
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
-  layout.setStretch(0, 1)
+  layout.setStretch(1, 1)
 
   sliderWithSpinbox = SliderWithSpinbox(*spinboxValues, name="Frame")
 
@@ -266,7 +266,7 @@ def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBt
   cap = zzVideoReading.VideoCapture(videoPath)
   cap.set(1, 1)
   ret, frame = cap.read()
-  layout, label, valueWidget = _chooseFrameLayout(cap, (1, 0, cap.get(7) - 2))
+  layout, label, valueWidget = _chooseFrameLayout(cap, (1, 0, cap.get(7) - 2), title)
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
@@ -313,7 +313,7 @@ def chooseEndPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb):
   maximum = cap.get(7) - 2
   cap.set(1, maximum)
   ret, frame = cap.read()
-  layout, label, valueWidget = _chooseFrameLayout(cap, (maximum, app.configFile["firstFrame"] + 1, maximum))
+  layout, label, valueWidget = _chooseFrameLayout(cap, (maximum, app.configFile["firstFrame"] + 1, maximum), title)
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()

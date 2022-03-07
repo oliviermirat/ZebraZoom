@@ -162,24 +162,31 @@ class OptimizeConfigFile(QWidget):
     gridLayout.addWidget(postProcessMaxDisapearanceFrames, 2, 5, Qt.AlignmentFlag.AlignCenter)
     layout.addLayout(gridLayout)
 
-    testBtn = util.apply_style(QPushButton("Test Tracking", self), background_color=util.LIGHT_YELLOW)
-    testBtn.clicked.connect(lambda: controller.testConfig())
-    layout.addWidget(testBtn, alignment=Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignBottom)
-    saveBtn = util.apply_style(QPushButton("Save Config File", self), background_color=util.LIGHT_YELLOW)
-    saveBtn.clicked.connect(lambda: controller.finishConfig(testCheckbox.isChecked()))
-    layout.addWidget(saveBtn, alignment=Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
-
-    linkBtn3 = util.apply_style(QPushButton("Speed up tracking for 'Track heads and tails of freely swimming fish'", self), background_color=util.LIGHT_YELLOW)
-    linkBtn3.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingSpeedOptimization.md"))
-    layout.addWidget(linkBtn3, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._speedUpTrackingBtn = util.apply_style(QPushButton("Speed up tracking for 'Track heads and tails of freely swimming fish'", self), background_color=util.LIGHT_YELLOW)
+    self._speedUpTrackingBtn.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingSpeedOptimization.md"))
+    layout.addWidget(self._speedUpTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     linkBtn4 = util.apply_style(QPushButton("View More Tracking Troubleshooting Tips", self), background_color=util.GOLD)
     linkBtn4.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md"))
     layout.addWidget(linkBtn4, alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(QLabel("If you don't manage to get a good configuration file that fits your needs, email us at info@zebrazoom.org.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    frame = QFrame()
+    frame.setFrameShadow(QFrame.Shadow.Raised)
+    frame.setFrameShape(QFrame.Shape.Box)
+    frameLayout = QVBoxLayout()
+    testCheckbox = QCheckBox("Test tracking after saving config", self)
+    testCheckbox.setChecked(True)
+    testCheckbox.clearFocus()
+    frameLayout.addWidget(testCheckbox, alignment=Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignBottom)
+    saveBtn = util.apply_style(QPushButton("Save Config File", self), background_color=util.LIGHT_YELLOW)
+    saveBtn.clicked.connect(lambda: controller.finishConfig(testCheckbox.isChecked()))
+    frameLayout.addWidget(saveBtn, alignment=Qt.AlignmentFlag.AlignCenter | Qt.AlignmentFlag.AlignTop)
+    frame.setLayout(frameLayout)
+    layout.addWidget(frame, alignment=Qt.AlignmentFlag.AlignCenter)
 
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel("If you don't manage to get a good configuration file that fits your needs, email us at info@zebrazoom.org.", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
     centralWidget = QWidget()
     centralWidget.sizeHint = lambda *args: QSize(1152, 768)
@@ -196,12 +203,14 @@ class OptimizeConfigFile(QWidget):
       self._optimizeHeadEmbeddedBtn.show()
       for idx in range(self._problemSolvingLayout.count()):
         self._problemSolvingLayout.itemAt(idx).widget().hide()
+      self._speedUpTrackingBtn.hide()
     else:
       self._improveContrastCheckbox.hide()
       self._optimizeFreelySwimmingBtn.show()
       self._optimizeHeadEmbeddedBtn.hide()
       for idx in range(self._problemSolvingLayout.count()):
         self._problemSolvingLayout.itemAt(idx).widget().show()
+      self._speedUpTrackingBtn.show()
 
     self._originalBackgroundPreProcessMethod = app.configFile.get("backgroundPreProcessMethod")
     self._originalBackgroundPreProcessParameters = app.configFile.get("backgroundPreProcessParameters")

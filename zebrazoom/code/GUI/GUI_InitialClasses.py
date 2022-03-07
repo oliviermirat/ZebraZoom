@@ -12,11 +12,11 @@ from matplotlib.figure import Figure
 try:
   from PyQt6.QtCore import Qt, QSize
   from PyQt6.QtGui import QCursor, QFont
-  from PyQt6.QtWidgets import QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QComboBox
+  from PyQt6.QtWidgets import QLabel, QWidget, QFrame, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QComboBox
 except ImportError:
   from PyQt5.QtCore import Qt, QSize
   from PyQt5.QtGui import QCursor, QFont
-  from PyQt5.QtWidgets import QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QComboBox
+  from PyQt5.QtWidgets import QLabel, QWidget, QFrame, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QComboBox
 
 import zebrazoom.code.util as util
 from zebrazoom.code.readValidationVideo import readValidationVideo
@@ -392,104 +392,115 @@ class ViewParameters(QWidget):
         self.controller = controller
 
         layout = QGridLayout()
-        layout.addWidget(util.apply_style(QLabel("    ", self), font=LARGE_FONT), 1, 6, Qt.AlignmentFlag.AlignCenter)
+
+        optimizeLayout = QHBoxLayout()
+        message = QLabel("Tracking completed successfully. On this page you can check the results. If you don't like them, click on the button to try improving the config.", self)
+        optimizeLayout.addWidget(message, alignment=Qt.AlignmentFlag.AlignLeft)
+        optimizeBtn = util.apply_style(QPushButton("Optimize config", self), background_color=util.LIGHT_YELLOW)
+        optimizeBtn.clicked.connect(lambda: util.addToHistory(controller.optimizeConfigFile)())
+        optimizeLayout.addWidget(optimizeBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout.addLayout(optimizeLayout, 1, 1, 1, 7)
+        line = QFrame()
+        line.setFrameShape(QFrame.Shape.HLine)
+        layout.addWidget(line, 2, 1, 1, 7)
         button = QPushButton("View video for all wells together", self)
         button.clicked.connect(lambda: self.showValidationVideo(-1, self.numPoiss(), 0, -1))
-        layout.addWidget(button, 1, 1, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(button, 3, 1, Qt.AlignmentFlag.AlignCenter)
 
         self._viewBtn = QPushButton("", self)
         self._viewBtn.clicked.connect(lambda: self.showGraphForAllBoutsCombined(self.numWell(), self.numPoiss(), self.dataRef, self.visualization, self.graphScaling))
-        layout.addWidget(self._viewBtn, 1, 2, 1, 5, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self._viewBtn, 3, 2, 1, 5, Qt.AlignmentFlag.AlignCenter)
 
         self.title_label = util.apply_style(QLabel('', self), font_size='16px')
         layout.addWidget(self.title_label, 0, 0, 1, 8, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QLabel("Well number:", self), 2, 1, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("Well number:", self), 4, 1, Qt.AlignmentFlag.AlignCenter)
         self.spinbox1 = QSpinBox(self)
         self.spinbox1.setStyleSheet(util.SPINBOX_STYLESHEET)
         self.spinbox1.setMinimumWidth(70)
         self.spinbox1.valueChanged.connect(self._wellChanged)
         self.numWell = self.spinbox1.value
-        layout.addWidget(self.spinbox1, 2, 2, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.spinbox1, 4, 2, Qt.AlignmentFlag.AlignCenter)
 
         self.zoomed_video_btn = QPushButton("", self)
         self.zoomed_video_btn.clicked.connect(lambda: self.showValidationVideo(self.numWell(), self.numPoiss(), 1, -1))
-        layout.addWidget(self.zoomed_video_btn, 3, 2, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.zoomed_video_btn, 5, 2, Qt.AlignmentFlag.AlignCenter)
 
         self._plotComboBox = QComboBox(self)
         self._plotComboBox.addItems(("Tail angle smoothed", "Tail angle raw", "Body coordinates"))
         self._plotComboBox.currentIndexChanged.connect(lambda idx: setattr(self, "visualization", idx) or self._printSomeResults())
-        layout.addWidget(self._plotComboBox, 3, 4, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self._plotComboBox, 5, 4, Qt.AlignmentFlag.AlignCenter)
 
-        layout.addWidget(QLabel("Fish number:", self), 4, 1, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("Fish number:", self), 6, 1, Qt.AlignmentFlag.AlignCenter)
         self.spinbox2 = QSpinBox(self)
         self.spinbox2.setStyleSheet(util.SPINBOX_STYLESHEET)
         self.spinbox2.setMinimumWidth(70)
         self.spinbox2.valueChanged.connect(self._poissChanged)
         self.numPoiss = self.spinbox2.value
-        layout.addWidget(self.spinbox2, 4, 2, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.spinbox2, 6, 2, Qt.AlignmentFlag.AlignCenter)
 
         self._zoomBtn = util.apply_style(QPushButton("", self), background_color=util.LIGHT_GREEN)
         self._zoomBtn.clicked.connect(lambda: setattr(self, "graphScaling", not self.graphScaling) or self._printSomeResults())
-        layout.addWidget(self._zoomBtn, 4, 4, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self._zoomBtn, 6, 4, Qt.AlignmentFlag.AlignCenter)
 
-        layout.addWidget(QLabel("Bout number:", self), 5, 1, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("Bout number:", self), 7, 1, Qt.AlignmentFlag.AlignCenter)
         self.spinbox3 = QSpinBox(self)
         self.spinbox3.setStyleSheet(util.SPINBOX_STYLESHEET)
         self.spinbox3.setMinimumWidth(70)
         self.spinbox3.valueChanged.connect(self._mouvChanged)
         self.numMouv = self.spinbox3.value
-        layout.addWidget(self.spinbox3, 5, 2, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.spinbox3, 7, 2, Qt.AlignmentFlag.AlignCenter)
 
         button1 = QPushButton("View bout's angle", self)
         button1.clicked.connect(lambda: self._printSomeResults())
-        layout.addWidget(button1, 6, 2, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(button1, 8, 2, Qt.AlignmentFlag.AlignCenter)
 
         self.flag_movement_btn = QPushButton("", self)
         self.flag_movement_btn.clicked.connect(self.flagMove)
-        layout.addWidget(self.flag_movement_btn, 6, 4, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.flag_movement_btn, 8, 4, Qt.AlignmentFlag.AlignCenter)
 
         self.prev_btn = QPushButton("Previous Bout", self)
         self.prev_btn.clicked.connect(self.printPreviousResults)
-        layout.addWidget(self.prev_btn, 7, 1, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.prev_btn, 9, 1, Qt.AlignmentFlag.AlignCenter)
         self.next_btn = QPushButton("Next Bout", self)
         self.next_btn.clicked.connect(self.printNextResults)
-        layout.addWidget(self.next_btn, 7, 2, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.next_btn, 9, 2, Qt.AlignmentFlag.AlignCenter)
 
 
         startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_YELLOW)
         startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-        layout.addWidget(startPageBtn, 8, 1, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(startPageBtn, 10, 1, Qt.AlignmentFlag.AlignCenter)
         backBtn = util.apply_style(QPushButton("Go to the previous page", self), background_color=util.LIGHT_YELLOW)
         backBtn.clicked.connect(lambda: controller.showResultsVisualization())
-        layout.addWidget(backBtn, 8, 1, Qt.AlignmentFlag.AlignCenter)
-        optimizeBtn = util.apply_style(QPushButton("Optimize config", self), background_color=util.LIGHT_YELLOW)
-        optimizeBtn.clicked.connect(lambda: util.addToHistory(controller.optimizeConfigFile)())
-        layout.addWidget(optimizeBtn, 8, 2, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(backBtn, 10, 1, Qt.AlignmentFlag.AlignCenter)
 
-        def _updateButtons():
+        def _updateConfigWidgets():
           otherButtons = (startPageBtn, optimizeBtn)
           if controller.configFile:  # page shown while testing config
+            message.show()
+            line.show()
             backBtn.hide()
             for btn in otherButtons:
               btn.show()
           else:
+            message.hide()
+            line.hide()
             backBtn.show()
             for btn in otherButtons:
               btn.hide()
-        self._updateButtons = _updateButtons
+        self._updateConfigWidgets = _updateConfigWidgets
 
         self.well_video_btn = QPushButton("", self)
         self.well_video_btn.clicked.connect(lambda: self.showValidationVideo(self.numWell(), self.numPoiss(), 0, self.begMove))
-        layout.addWidget(self.well_video_btn, 3, 1, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.well_video_btn, 5, 1, Qt.AlignmentFlag.AlignCenter)
         self.bout_video_btn = QPushButton("View bout's video" , self)
         self.bout_video_btn.clicked.connect(lambda: self.showValidationVideo(self.numWell(), self.numPoiss(), 1, self.begMove))
-        layout.addWidget(self.bout_video_btn, 6, 1, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.bout_video_btn, 8, 1, Qt.AlignmentFlag.AlignCenter)
         self.graph_title_label = util.apply_style(QLabel('', font=LARGE_FONT))
-        layout.addWidget(self.graph_title_label, 1, 7, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.graph_title_label, 3, 7, Qt.AlignmentFlag.AlignCenter)
 
         self.superstruct_btn = util.apply_style(QPushButton("Save SuperStruct" , self), background_color='orange')
         self.superstruct_btn.clicked.connect(self.saveSuperStruct)
-        layout.addWidget(self.superstruct_btn, 7, 4, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(self.superstruct_btn, 9, 4, Qt.AlignmentFlag.AlignCenter)
 
         f = Figure(figsize=(5,5), dpi=100)
         self.a = f.add_subplot(111)
@@ -500,11 +511,11 @@ class ViewParameters(QWidget):
         canvasWrapper.setLayout(canvasWrapperLayout)
         canvasSize = self.canvas.size()
         canvasWrapper.sizeHint = lambda *args: canvasSize
-        layout.addWidget(canvasWrapper, 2, 7, 7, 1, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(canvasWrapper, 4, 7, 7, 1, Qt.AlignmentFlag.AlignCenter)
         sizeHint = layout.totalSizeHint().width() + canvasSize.width()
 
         centralWidget = QWidget()
-        centralWidget.sizeHint = lambda *args: QSize(sizeHint + 200, 768)
+        centralWidget.sizeHint = lambda *args: QSize(sizeHint, 768)
         centralWidget.setLayout(layout)
         wrapperLayout = QVBoxLayout()
         wrapperLayout.addWidget(centralWidget, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -690,7 +701,7 @@ class ViewParameters(QWidget):
         self._zoomBtn.setText("Zoom out Graph" if self.graphScaling else "Zoom in Graph")
         self._updateGraph()
         self._updateWidgets()
-        self._updateButtons()
+        self._updateConfigWidgets()
 
     def showValidationVideo(self, numWell, numAnimal, zoom, deb):
         cur_dir_path = os.path.dirname(os.path.realpath(__file__))
