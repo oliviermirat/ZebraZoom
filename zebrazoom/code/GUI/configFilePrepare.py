@@ -3,11 +3,11 @@ import webbrowser
 
 try:
   from PyQt6.QtCore import Qt, QSize
-  from PyQt6.QtGui import QCursor, QFont, QIntValidator, QPixmap
+  from PyQt6.QtGui import QCursor, QFont, QIcon, QIntValidator, QPixmap
   from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup
 except ImportError:
   from PyQt5.QtCore import Qt, QSize
-  from PyQt5.QtGui import QCursor, QFont, QIntValidator, QPixmap
+  from PyQt5.QtGui import QCursor, QFont, QIcon, QIntValidator, QPixmap
   from PyQt5.QtWidgets import QApplication, QFrame, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup
 
 import zebrazoom.code.util as util
@@ -53,25 +53,31 @@ class OptimizeConfigFile(QWidget):
     self._originalPostProcessMaxDistanceAuthorized = None
     self._originalPostProcessMaxDisapearanceFrames = None
     self._originalOutputValidationVideoContrastImprovement = None
+    self._originalRecalculateForegroundImageBasedOnBodyArea = None
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Optimize previously created configuration file", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
+    optimizeButtonsLayout = QHBoxLayout()
+    optimizeButtonsLayout.addStretch()
     self._optimizeFreelySwimmingBtn = util.apply_style(QPushButton("Optimize fish freely swimming tail tracking configuration file parameters", self), background_color=util.LIGHT_YELLOW)
     self._optimizeFreelySwimmingBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, automaticParameters=True, useNext=False))
-    layout.addWidget(self._optimizeFreelySwimmingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    optimizeButtonsLayout.addWidget(self._optimizeFreelySwimmingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     self._optimizeHeadEmbeddedBtn = util.apply_style(QPushButton("Optimize head embedded tracking configuration file parameters", self), background_color=util.LIGHT_YELLOW)
     self._optimizeHeadEmbeddedBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackground)(controller, 0, useNext=False))
-    layout.addWidget(self._optimizeHeadEmbeddedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    optimizeButtonsLayout.addWidget(self._optimizeHeadEmbeddedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     optimizeBoutBtn = util.apply_style(QPushButton("Optimize/Add bouts detection (only for one animal per well)", self), background_color=util.LIGHT_YELLOW)
     optimizeBoutBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, boutDetectionsOnly=True, useNext=False))
-    layout.addWidget(optimizeBoutBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    optimizeButtonsLayout.addWidget(optimizeBoutBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    optimizeButtonsLayout.addStretch()
+    layout.addLayout(optimizeButtonsLayout)
 
     def updateOutputValidationVideoContrastImprovement(checked):
       if checked:
         controller.configFile["outputValidationVideoContrastImprovement"] = 1
       elif self._originalOutputValidationVideoContrastImprovement is None:
-        del controller.configFile["outputValidationVideoContrastImprovement"]
+        if outputValidationVideoContrastImprovement in controller.configFile:
+          del controller.configFile["outputValidationVideoContrastImprovement"]
       else:
         controller.configFile["outputValidationVideoContrastImprovement"] = 0
 
@@ -107,6 +113,20 @@ class OptimizeConfigFile(QWidget):
     backgroundPreProcessParameters.textChanged.connect(updateBackgroundPreProcessParameters)
     gridLayout.addWidget(QLabel("backgroundPreProcessParameters:"), 1, 1, Qt.AlignmentFlag.AlignCenter)
     gridLayout.addWidget(backgroundPreProcessParameters, 1, 2, Qt.AlignmentFlag.AlignCenter)
+
+    self._recalculateForegroundImageBasedOnBodyArea = QCheckBox("recalculateForegroundImageBasedOnBodyArea")
+
+    def updateRecalculateForegroundImageBasedOnBodyArea(checked):
+      if checked:
+        controller.configFile["recalculateForegroundImageBasedOnBodyArea"] = 1
+      elif self._originalRecalculateForegroundImageBasedOnBodyArea is None:
+        if recalculateForegroundImageBasedOnBodyArea in controller.configFile:
+          del controll.configFile["recalculateForegroundImageBasedOnBodyArea"]
+      else:
+        controller.configFile["recalculateForegroundImageBasedOnBodyArea"] = 0
+    self._recalculateForegroundImageBasedOnBodyArea.toggled.connect(updateRecalculateForegroundImageBasedOnBodyArea)
+    self._recalculateForegroundImageBasedOnBodyArea.setLayoutDirection(Qt.RightToLeft)
+    gridLayout.addWidget(self._recalculateForegroundImageBasedOnBodyArea, 2, 1, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
     postProcessTrajectoriesLabel = util.apply_style(QLabel("Post-process animal center trajectories"), font_size='16px')
     postProcessTrajectoriesLabel.setToolTip("Trajectories post-processing can help solve problems with animal 'disapearing' and/or temporarily 'jumping' to a distant (and incorrect) location.")
@@ -225,6 +245,11 @@ class OptimizeConfigFile(QWidget):
       self._improveContrastCheckbox.setChecked(bool(self._originalOutputValidationVideoContrastImprovement))
     else:
       self._improveContrastCheckbox.setChecked(False)
+    self._originalRecalculateForegroundImageBasedOnBodyArea = app.configFile.get("recalculateForegroundImageBasedOnBodyArea")
+    if self._originalRecalculateForegroundImageBasedOnBodyArea is not None:
+      self._recalculateForegroundImageBasedOnBodyArea.setChecked(bool(self._originalRecalculateForegroundImageBasedOnBodyArea))
+    else:
+      self._recalculateForegroundImageBasedOnBodyArea.setChecked(False)
 
 class ChooseGeneralExperiment(QWidget):
   def __init__(self, controller):
@@ -232,22 +257,51 @@ class ChooseGeneralExperiment(QWidget):
     self.controller = controller
     self.preferredSize = (1152, 768)
 
-    layout = QVBoxLayout()
-    layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(util.apply_style(QLabel("Choose only one of the options below:", self), font=QFont("Helvetica", 12)), alignment=Qt.AlignmentFlag.AlignCenter)
-    fastScreenRadioButton = QRadioButton("Fast and easy screen for any kind of animal.", self)
-    fastScreenRadioButton.setChecked(True)
-    layout.addWidget(fastScreenRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(QLabel("Only one animal per well/tank/arena. Center of mass tracking only. Very fast Tracking. Good for genetic and drug screens.", self), alignment=Qt.AlignmentFlag.AlignCenter)
-    freeZebraRadioButton = QRadioButton("Track heads and tails of freely swimming fish.", self)
-    layout.addWidget(freeZebraRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(QLabel("Multiple fish can be tracked in the same well but the tail tracking can be mediocre when fish collide. Each well should contain the same number of fish.", self), alignment=Qt.AlignmentFlag.AlignCenter)
-    headEmbZebraRadioButton = QRadioButton("Track tail of one head embedded zebrafish larva.", self)
-    layout.addWidget(headEmbZebraRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
-    otherRadioButton = QRadioButton("Track centers of mass of any kind of animal.", self)
-    layout.addWidget(otherRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(QLabel('Several animals can be tracked at once in the same well/tank/arena. Each well should contain the same number of animals.', self), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout = QGridLayout()
+    layout.setSpacing(20)
+    curDirPath = os.path.dirname(os.path.realpath(__file__))
+
+    layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Head and tail tracking of freely swimming fish", self), font=util.TITLE_FONT), 1, 0)
+    freelySwimmingLabel = QLabel("Multiple fish can be tracked in the same well but the tail tracking can be mediocre when fish collide. Each well should contain the same number of fish.", self)
+    freelySwimmingLabel.setWordWrap(True)
+    layout.addWidget(freelySwimmingLabel, 2, 0)
+    freelySwimmingBtn = QPushButton(self)
+    freelySwimmingBtn.setMinimumSize(1, 1)
+    pixmap = QPixmap(os.path.join(curDirPath, 'freelySwimming.png'))
+    freelySwimmingBtn.resizeEvent = lambda evt: freelySwimmingBtn.setIcon(QIcon(pixmap)) or freelySwimmingBtn.setIconSize(pixmap.size().boundedTo(freelySwimmingBtn.size()))
+    freelySwimmingBtn.clicked.connect(lambda: controller.chooseGeneralExperimentFirstStep(controller, True, False, False, False, False, False))
+    layout.addWidget(freelySwimmingBtn, 3, 0, Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(util.apply_style(QLabel("Tail tracking of head-embedded fish", self), font=util.TITLE_FONT), 1, 1)
+    headEmbeddedBtn = QPushButton(self)
+    headEmbeddedBtn.setMinimumSize(1, 1)
+    pixmap2 = QPixmap(os.path.join(curDirPath, 'headEmbedded.png'))
+    headEmbeddedBtn.resizeEvent = lambda evt: headEmbeddedBtn.setIcon(QIcon(pixmap2)) or headEmbeddedBtn.setIconSize(pixmap2.size().boundedTo(headEmbeddedBtn.size()))
+    headEmbeddedBtn.clicked.connect(lambda: controller.chooseGeneralExperimentFirstStep(controller, False, True, False, False, False, False))
+    layout.addWidget(headEmbeddedBtn, 3, 1, Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(util.apply_style(QLabel("Fast center of mass tracking for any kind of animal", self), font=util.TITLE_FONT), 4, 0)
+    fastCenterOfMassLabel = QLabel("Only one animal per well, very useful for videos acquired at low frequency", self)
+    fastCenterOfMassLabel.setWordWrap(True)
+    layout.addWidget(fastCenterOfMassLabel, 5, 0)
+    fastCenterOfMassBtn = QPushButton(self)
+    fastCenterOfMassBtn.setMinimumSize(1, 1)
+    pixmap3 = QPixmap(os.path.join(curDirPath, 'screen.png'))
+    fastCenterOfMassBtn.resizeEvent = lambda evt: fastCenterOfMassBtn.setIcon(QIcon(pixmap3)) or fastCenterOfMassBtn.setIconSize(pixmap3.size().boundedTo(fastCenterOfMassBtn.size()))
+    fastCenterOfMassBtn.clicked.connect(lambda: controller.chooseGeneralExperimentFirstStep(controller, False, False, False, False, False, True))
+    layout.addWidget(fastCenterOfMassBtn, 6, 0, Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(util.apply_style(QLabel("Center of mass tracking for any kind of animal", self), font=util.TITLE_FONT), 4, 1)
+    centerOfMassLabel = QLabel("Several animals can be tracked in the same well/tank/arena. Each well should contain the same number of animals.", self)
+    centerOfMassLabel.setWordWrap(True)
+    layout.addWidget(centerOfMassLabel, 5, 1)
+    centerOfMassBtn = QPushButton(self)
+    centerOfMassBtn.setMinimumSize(1, 1)
+    pixmap4 = QPixmap(os.path.join(curDirPath, 'centerOfMassAnyAnimal.png'))
+    centerOfMassBtn.resizeEvent = lambda evt: centerOfMassBtn.setIcon(QIcon(pixmap4)) or centerOfMassBtn.setIconSize(pixmap4.size().boundedTo(centerOfMassBtn.size()))
+    centerOfMassBtn.clicked.connect(lambda: controller.chooseGeneralExperimentFirstStep(controller, False, False, False, False, True, False))
+    layout.addWidget(centerOfMassBtn, 6, 1, Qt.AlignmentFlag.AlignCenter)
 
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch()
@@ -257,11 +311,8 @@ class ChooseGeneralExperiment(QWidget):
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
-    nextBtn.clicked.connect(lambda: controller.chooseGeneralExperimentFirstStep(controller, freeZebraRadioButton.isChecked(), headEmbZebraRadioButton.isChecked(), False, False, otherRadioButton.isChecked(), fastScreenRadioButton.isChecked()))
-    buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch()
-    layout.addLayout(buttonsLayout)
+    layout.addLayout(buttonsLayout, 7, 0, 1, 2)
 
     self.setLayout(layout)
 
@@ -306,22 +357,41 @@ class WellOrganisation(QWidget):
     self.controller = controller
     self.preferredSize = (1152, 768)
 
-    layout = QVBoxLayout()
-    layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(util.apply_style(QLabel("Choose only one of the options below:", self), font=QFont("Helvetica", 12)), alignment=Qt.AlignmentFlag.AlignCenter)
-    multipleROIsRadioButton = QRadioButton("Multiple rectangular regions of interest chosen at runtime", self)
-    multipleROIsRadioButton.setChecked(True)
-    layout.addWidget(multipleROIsRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    otherRadioButton = QRadioButton("Whole video", self)
-    layout.addWidget(otherRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    roiRadioButton = QRadioButton("One rectangular region of interest fixed in the configuration file", self)
-    layout.addWidget(roiRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    groupSameSizeAndShapeEquallySpacedWellsRadioButton = QRadioButton("Group of multiple same size and shape equally spaced wells", self)
-    layout.addWidget(groupSameSizeAndShapeEquallySpacedWellsRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    circularRadioButton = QRadioButton("Circular wells (beta version)", self)
-    layout.addWidget(circularRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    rectangularRadioButton = QRadioButton("Rectangular wells (beta version)", self)
-    layout.addWidget(rectangularRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout = QGridLayout()
+    layout.setSpacing(20)
+    curDirPath = os.path.dirname(os.path.realpath(__file__))
+
+    layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("General methods:", self), font=util.TITLE_FONT), 1, 0)
+    layout.addWidget(util.apply_style(QLabel("Manually defined regions of interest:", self), font=util.TITLE_FONT), 1, 1)
+
+    gridSystemBtn = QPushButton(self)
+    pixmap = QPixmap(os.path.join(curDirPath, 'gridSystem.png'))
+    gridSystemBtn.setIcon(QIcon(pixmap))
+    gridSystemBtn.setIconSize(pixmap.size())
+    gridSystemBtn.clicked.connect(lambda: controller.wellOrganisation(controller, False, False, False, False, False, True))
+    layout.addWidget(gridSystemBtn, 2, 0, Qt.AlignmentFlag.AlignCenter)
+
+    multipleROIBtn = QPushButton(self)
+    pixmap = QPixmap(os.path.join(curDirPath, 'runtimeROI.png'))
+    multipleROIBtn.setIcon(QIcon(pixmap))
+    multipleROIBtn.setIconSize(pixmap.size())
+    multipleROIBtn.clicked.connect(lambda: controller.wellOrganisation(controller, False, False, False, False, True, False))
+    layout.addWidget(multipleROIBtn, 2, 1, Qt.AlignmentFlag.AlignCenter)
+
+    wholeVideoBtn = QPushButton(self)
+    pixmap = QPixmap(os.path.join(curDirPath, 'wholeVideo.png'))
+    wholeVideoBtn.setIcon(QIcon(pixmap))
+    wholeVideoBtn.setIconSize(pixmap.size())
+    wholeVideoBtn.clicked.connect(lambda: controller.wellOrganisation(controller, False, False, False, True, False, False))
+    layout.addWidget(wholeVideoBtn, 3, 0, Qt.AlignmentFlag.AlignCenter)
+
+    singleROIBtn = QPushButton(self)
+    pixmap = QPixmap(os.path.join(curDirPath, 'configFileROI.png'))
+    singleROIBtn.setIcon(QIcon(pixmap))
+    singleROIBtn.setIconSize(pixmap.size())
+    singleROIBtn.clicked.connect(lambda: controller.wellOrganisation(controller, False, False, True, False, False, False))
+    layout.addWidget(singleROIBtn, 3, 1, Qt.AlignmentFlag.AlignCenter)
 
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch()
@@ -331,11 +401,8 @@ class WellOrganisation(QWidget):
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
-    nextBtn.clicked.connect(lambda: controller.wellOrganisation(controller, circularRadioButton.isChecked(), rectangularRadioButton.isChecked(), roiRadioButton.isChecked(), otherRadioButton.isChecked(), multipleROIsRadioButton.isChecked(), groupSameSizeAndShapeEquallySpacedWellsRadioButton.isChecked()))
-    buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch()
-    layout.addLayout(buttonsLayout)
+    layout.addLayout(buttonsLayout, 4, 0, 1, 2)
 
     self.setLayout(layout)
 

@@ -394,9 +394,11 @@ class ViewParameters(QWidget):
         layout = QGridLayout()
 
         optimizeLayout = QHBoxLayout()
-        message = QLabel("We ran the test tracking on your video, you can visualize the results on this page. If you think the tracking results are not good enough, click on the 'Optimize' button to improve the configuration file used for tracking.", self)
-        message.setStyleSheet('color: red')
-        optimizeLayout.addWidget(message, alignment=Qt.AlignmentFlag.AlignLeft)
+        message = util.apply_style(QLabel("We ran the test tracking on your video, you can visualize the results on this page. If you think the tracking results are not good enough, "
+                                          "click on the 'Optimize' button to improve the configuration file used for tracking.", self), color="red", font_size="14px")
+        message.setWordWrap(True)
+        optimizeLayout.addWidget(message)
+        optimizeLayout.setStretch(0, 1)
         optimizeBtn = util.apply_style(QPushButton("Optimize configuration file", self), background_color=util.LIGHT_YELLOW)
         optimizeBtn.clicked.connect(lambda: util.addToHistory(controller.optimizeConfigFile)())
         optimizeLayout.addWidget(optimizeBtn, alignment=Qt.AlignmentFlag.AlignLeft)
@@ -516,7 +518,7 @@ class ViewParameters(QWidget):
         sizeHint = layout.totalSizeHint().width() + canvasSize.width()
 
         centralWidget = QWidget()
-        centralWidget.sizeHint = lambda *args: QSize(sizeHint, 768)
+        centralWidget.sizeHint = lambda *args: QSize(sizeHint + 200, 768)
         centralWidget.setLayout(layout)
         wrapperLayout = QVBoxLayout()
         wrapperLayout.addWidget(centralWidget, alignment=Qt.AlignmentFlag.AlignCenter)

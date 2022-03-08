@@ -14,6 +14,11 @@ except ImportError:
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 
 
+PRETTY_PARAMETER_NAMES = {
+  'frameGapComparision': 'frameGapComparision pretty text',
+  'thresForDetectMovementWithRawVideo': 'thresForDetectMovementWithRawVideo pretty text',
+}
+
 TITLE_FONT = QFont('Helvetica', 18, QFont.Weight.Bold, True)
 LIGHT_YELLOW = '#FFFFE0'
 LIGHT_CYAN = '#E0FFFF'
@@ -204,8 +209,6 @@ class SliderWithSpinbox(QWidget):
 
     minLabel = QLabel(str(minimum))
     layout.addWidget(minLabel, 1, 1, Qt.AlignmentFlag.AlignLeft)
-    if name is not None:
-      layout.addWidget(QLabel(name), 1, 2, Qt.AlignmentFlag.AlignCenter)
     maxLabel = QLabel(str(maximum))
     layout.addWidget(maxLabel, 1, 3, Qt.AlignmentFlag.AlignRight)
     slider = QSlider(Qt.Orientation.Horizontal)
@@ -231,6 +234,14 @@ class SliderWithSpinbox(QWidget):
     layout.setContentsMargins(20, 5, 20, 5)
     self.setLayout(layout)
 
+    if name is not None:
+      self.setFixedWidth(layout.totalSizeHint().width())
+      titleLabel = QLabel(PRETTY_PARAMETER_NAMES.get(name, name))
+      titleLabel.setMinimumSize(1, 1)
+      titleLabel.resizeEvent = lambda evt: titleLabel.setMinimumWidth(evt.size().width()) or titleLabel.setWordWrap(evt.size().width() <= titleLabel.sizeHint().width())
+      slider.rangeChanged.connect(lambda: titleLabel.setMinimumWidth(1) or titleLabel.setWordWrap(False))
+      layout.addWidget(titleLabel, 1, 2, Qt.AlignmentFlag.AlignCenter)
+
     self.value = spinbox.value
     self.minimum = spinbox.minimum
     self.maximum = spinbox.maximum
@@ -243,9 +254,15 @@ class SliderWithSpinbox(QWidget):
     self.setPosition = slider.setSliderPosition
 
 
-def _chooseFrameLayout(cap, spinboxValues, title):
+def _chooseFrameLayout(cap, spinboxValues, title, titleStyle=None):
+  if titleStyle is None:
+    titleStyle = {'font': TITLE_FONT}
   layout = QVBoxLayout()
-  layout.addWidget(apply_style(QLabel(title), font=TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
+  window = QApplication.instance().window
+  titleLabel = apply_style(QLabel(title), **titleStyle)
+  titleLabel.setMinimumSize(1, 1)
+  titleLabel.resizeEvent = lambda evt: titleLabel.setMinimumWidth(evt.size().width()) or titleLabel.setWordWrap(evt.size().width() <= titleLabel.sizeHint().width())
+  layout.addWidget(titleLabel, alignment=Qt.AlignmentFlag.AlignCenter)
   video = QLabel()
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
   layout.setStretch(1, 1)
@@ -258,15 +275,15 @@ def _chooseFrameLayout(cap, spinboxValues, title):
     ret, frame = cap.read()
     setPixmapFromCv(frame, video)
   sliderWithSpinbox.valueChanged.connect(valueChanged)
-  layout.addWidget(sliderWithSpinbox)
+  layout.addWidget(sliderWithSpinbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
   return layout, video, sliderWithSpinbox
 
-def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb, extraButtonInfo=None):
+def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb, extraButtonInfo=None, titleStyle=None):
   cap = zzVideoReading.VideoCapture(videoPath)
   cap.set(1, 1)
   ret, frame = cap.read()
-  layout, label, valueWidget = _chooseFrameLayout(cap, (1, 0, cap.get(7) - 2), title)
+  layout, label, valueWidget = _chooseFrameLayout(cap, (1, 0, cap.get(7) - 2), title, titleStyle=titleStyle)
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
