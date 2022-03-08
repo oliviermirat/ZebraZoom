@@ -57,12 +57,6 @@ class OptimizeConfigFile(QWidget):
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Optimize previously created configuration file", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    sublayout = QVBoxLayout()
-    sublayout.addWidget(QLabel("In many cases, the configuration file previously generated will give good tracking results.", self), alignment=Qt.AlignmentFlag.AlignCenter)
-    sublayout.addWidget(QLabel("Always start by testing your newly created configuration file by using the 'Run ZebraZoom's Tracking on a video' option from the main menu of the GUI.", self), alignment=Qt.AlignmentFlag.AlignCenter)
-    sublayout.addWidget(QLabel("If after the test, you notice that the tracking has issues, you can use some of the options listed below to improve your configuration file.", self), alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addLayout(sublayout)
-
     self._optimizeFreelySwimmingBtn = util.apply_style(QPushButton("Optimize fish freely swimming tail tracking configuration file parameters", self), background_color=util.LIGHT_YELLOW)
     self._optimizeFreelySwimmingBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, automaticParameters=True, useNext=False))
     layout.addWidget(self._optimizeFreelySwimmingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -165,9 +159,6 @@ class OptimizeConfigFile(QWidget):
     self._speedUpTrackingBtn = util.apply_style(QPushButton("Speed up tracking for 'Track heads and tails of freely swimming fish'", self), background_color=util.LIGHT_YELLOW)
     self._speedUpTrackingBtn.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingSpeedOptimization.md"))
     layout.addWidget(self._speedUpTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    linkBtn4 = util.apply_style(QPushButton("View More Tracking Troubleshooting Tips", self), background_color=util.GOLD)
-    linkBtn4.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md"))
-    layout.addWidget(linkBtn4, alignment=Qt.AlignmentFlag.AlignCenter)
 
     frame = QFrame()
     frame.setFrameShadow(QFrame.Shadow.Raised)

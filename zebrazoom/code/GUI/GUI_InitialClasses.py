@@ -394,9 +394,10 @@ class ViewParameters(QWidget):
         layout = QGridLayout()
 
         optimizeLayout = QHBoxLayout()
-        message = QLabel("Tracking completed successfully. On this page you can check the results. If you don't like them, click on the button to try improving the config.", self)
+        message = QLabel("We ran the test tracking on your video, you can visualize the results on this page. If you think the tracking results are not good enough, click on the 'Optimize' button to improve the configuration file used for tracking.", self)
+        message.setStyleSheet('color: red')
         optimizeLayout.addWidget(message, alignment=Qt.AlignmentFlag.AlignLeft)
-        optimizeBtn = util.apply_style(QPushButton("Optimize config", self), background_color=util.LIGHT_YELLOW)
+        optimizeBtn = util.apply_style(QPushButton("Optimize configuration file", self), background_color=util.LIGHT_YELLOW)
         optimizeBtn.clicked.connect(lambda: util.addToHistory(controller.optimizeConfigFile)())
         optimizeLayout.addWidget(optimizeBtn, alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addLayout(optimizeLayout, 1, 1, 1, 7)

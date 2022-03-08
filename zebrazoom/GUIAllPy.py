@@ -374,5 +374,5 @@ class ZebraZoomApp(QApplication):
         layout.currentChanged.connect(cleanup)
       configFile = self.configFile.copy()
       cb = util.chooseBeginningPage if not addToHistory else util.addToHistory(util.chooseBeginningPage)
-      cb(self, videoPath, "Test tracking will be performed on up to 500 frames, starting with the selected frame",
+      cb(self, videoPath, "We will test the tracking on the video you provided, with the configuration file you just created. We will do this test only on 500 frames (maximum) and the tracking will start at the frame you select below (so please choose a section of the video where the animal is moving).",
          "Ok, I want the tracking to start at this frame!", callback)
