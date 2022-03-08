@@ -74,8 +74,8 @@ class StartPage(QWidget):
         toubleshoot_btn = util.apply_style(QPushButton("Troubleshoot", self), background_color=util.LIGHT_CYAN)
         toubleshoot_btn.clicked.connect(lambda: controller.show_frame("ChooseVideoToTroubleshootSplitVideo"))
         layout.addWidget(toubleshoot_btn, 13, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-        video_documentation_btn = util.apply_style(QPushButton("Video online documentation", self), background_color=util.LIGHT_CYAN)
-        video_documentation_btn.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom#tableofcontent"))
+        video_documentation_btn = util.apply_style(QPushButton("View online documentation", self), background_color=util.LIGHT_CYAN)
+        video_documentation_btn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/intro/"))
         layout.addWidget(video_documentation_btn, 14, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
         hbox = QHBoxLayout()

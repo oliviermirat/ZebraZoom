@@ -187,9 +187,9 @@ def adjustHeadEmbededTrackingParams(nbTailPoints, i, firstFrame, output, outputH
   [0, 80, "Increase this to avoid having the tracking points go on the head instead of the tail."],
   [1, 80, 'Increase this if the tail tracking is getting off track "mid-tail". Decrease if the tail tracking is going too far (further than the tip).'],
   # [1, 50, "This is set automatically when you change either overwriteFirstStepValue or overwriteLastStepValue. Decrease to make the tracking faster."],
-  [0, 255, "Decrease if the tail tracking is going too far (further than the tip of the tail). Increase if the tail if not going far enough (stops before the tip)."],
-  [0, 1, 'Relative length along the "normal lenght" of the tail where the tracking is "allowed" to stop. Decrease if the tail becomes invisible "mid-tail".'],
-  [0, 100, 'Try to find the right balance between too much and too little gaussian smoothing of the image.'],]
+  [0, 255, "ALMOST ALWAYS IGNORE THIS PARAMETER. Decrease if the tail tracking is going too far (further than the tip of the tail). Increase if the tail if not going far enough (stops before the tip)."],
+  [0, 1, 'ALMOST ALWAYS IGNORE THIS PARAMETER. Relative length along the "normal lenght" of the tail where the tracking is "allowed" to stop. Decrease if the tail becomes invisible "mid-tail".'],
+  [0, 100, 'THIS PARAMETER CAN USUALLY BE IGNORED. Try to find the right balance between too much and too little gaussian smoothing of the image.'],]
   title = "Tracking"
 
   # frame2 = np.concatenate((frame2, frame),axis=1)
