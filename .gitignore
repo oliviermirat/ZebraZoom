@@ -24,6 +24,12 @@ zebrazoom/trace.txt
 
 zebrazoom/ZZoutput/
 !zebrazoom/ZZoutput/standardValueFreelySwimZebrafishLarvae
+!zebrazoom/ZZoutput/example1/configUsed.json
+!zebrazoom/ZZoutput/example1/results_example1.txt
+!zebrazoom/ZZoutput/example2/configUsed.json
+!zebrazoom/ZZoutput/example2/results_example2.txt
+!zebrazoom/ZZoutput/example3/configUsed.json
+!zebrazoom/ZZoutput/example3/results_example3.txt
 
 MANIFEST
 dist/
