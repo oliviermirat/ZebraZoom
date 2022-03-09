@@ -228,7 +228,7 @@ class AnalysisOutputFolderPopulation(QWidget):
     layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     linkBtn = util.apply_style(QPushButton("Video data analysis online documentation", self), background_color=util.LIGHT_YELLOW)
-    linkBtn.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom#GUIanalysis"))
+    linkBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/behaviorAnalysis/behaviorAnalysisGUI"))
     layout.addWidget(linkBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(QLabel("(read the 'Further analyzing ZebraZoom's output through the Graphical User Interface' section)", self), alignment=Qt.AlignmentFlag.AlignCenter)
 

@@ -19,11 +19,6 @@ class ChooseVideoToTroubleshootSplitVideo(QWidget):
     self.preferredSize = (750, 500)
 
     layout = QVBoxLayout()
-    layout.addWidget(util.apply_style(QLabel("Troubleshooting.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-    linkBtn = util.apply_style(QPushButton("First View Tracking Troubleshooting Tips", self), background_color=util.GOLD)
-    linkBtn.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md"))
-    layout.addWidget(linkBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(QLabel("If the previous tracking troubleshooting tips where not enough to solve the issue, you can create a smaller sub-video to send to ZebraZoom's developers for troubleshooting.", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
     selectVideoBtn = QPushButton("Select the video to troubleshoot.", self)
     selectVideoBtn.clicked.connect(lambda: controller.chooseVideoToTroubleshootSplitVideo(controller))

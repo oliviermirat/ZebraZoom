@@ -478,7 +478,7 @@ class NumberOfAnimals2(QWidget):
     layout.addWidget(QLabel("Bends are used to calculate parameters such as tail beat frequency.", self), 6, 1, Qt.AlignmentFlag.AlignCenter)
 
     linkBtn1 = QPushButton("You may need to further adjust these parameters afterwards: see documentation.", self)
-    linkBtn1.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom#hyperparametersTailAngleSmoothBoutsAndBendsDetect"))
+    linkBtn1.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/configurationFile/advanced/angleSmoothBoutsAndBendsDetection"))
     layout.addWidget(linkBtn1, 7, 1, Qt.AlignmentFlag.AlignCenter)
     btnGroup3 = QButtonGroup(self)
     yesBendsRadioButton = QRadioButton("Yes", self)

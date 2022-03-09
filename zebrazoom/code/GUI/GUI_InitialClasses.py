@@ -75,7 +75,7 @@ class StartPage(QWidget):
         toubleshoot_btn.clicked.connect(lambda: controller.show_frame("ChooseVideoToTroubleshootSplitVideo"))
         layout.addWidget(toubleshoot_btn, 13, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
         video_documentation_btn = util.apply_style(QPushButton("Video online documentation", self), background_color=util.LIGHT_CYAN)
-        video_documentation_btn.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom#tableofcontent"))
+        video_documentation_btn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/intro"))
         layout.addWidget(video_documentation_btn, 14, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
         hbox = QHBoxLayout()
@@ -123,10 +123,10 @@ class SeveralVideos(QWidget):
         layout.addLayout(sublayout2)
 
         sublayout3 = QVBoxLayout()
-        button4 = util.apply_style(QPushButton("'Group of multiple same size and shape equally spaced wells' coordinates pre-selection", self), background_color=util.LIGHT_YELLOW)
+        button4 = util.apply_style(QPushButton("'Grid System' wells detection coordinates pre-selection", self), background_color=util.LIGHT_YELLOW)
         button4.clicked.connect(lambda: controller.show_frame("FolderMultipleROIInitialSelect"))
         sublayout3.addWidget(button4, alignment=Qt.AlignmentFlag.AlignCenter)
-        sublayout3.addWidget(QLabel("This button allows you to only select the coordinates,", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        sublayout3.addWidget(QLabel("This button allows you to only select the coordinates relative to the 'grid system',", self), alignment=Qt.AlignmentFlag.AlignCenter)
         sublayout3.addWidget(QLabel("you will be able to run the tracking on multiple videos without interruptions with the 'Run ZebraZoom on an entire folder' button above afterwards.", self), alignment=Qt.AlignmentFlag.AlignCenter)
         sublayout3.addWidget(util.apply_style(QLabel("", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addLayout(sublayout3)
@@ -172,7 +172,7 @@ class VideoToAnalyze(QWidget):
         layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
         button = util.apply_style(QPushButton("Click here if you prefer to run the tracking from the command line", self), background_color='green')
-        button.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom#commandlinezebrazoom"))
+        button.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/tracking/launchingTracking#launching-the-tracking-through-the-command-line"))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
 
         just_extract_checkbox = util.apply_style(QCheckBox("I ran the tracking already, I only want to redo the extraction of parameters.", self), color='purple')
@@ -369,9 +369,6 @@ class EnhanceZZOutput(QWidget):
 
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Tips on how to correct/enhance ZebraZoom's output when necessary", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-        linkBtn1 = util.apply_style(QPushButton("View Tracking Troubleshooting Tips", self), background_color=util.GOLD)
-        linkBtn1.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingTroubleshooting.md"))
-        layout.addWidget(linkBtn1, alignment=Qt.AlignmentFlag.AlignCenter)
 
         layout.addWidget(util.apply_style(QLabel("Movement Flagging System:", self), font_size='16px'), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("You can see the results obtained from ZebraZoom's tracking thanks to the button 'Visualize ZebraZoom's output' in the main menu.", self), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -392,7 +389,7 @@ class EnhanceZZOutput(QWidget):
         layout.addWidget(QLabel("You can check if the bends are being detected right with the 'Visualize ZebraZoom's output' in the main menu.", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
         linkBtn2 = QPushButton("View tips on bends detection", self)
-        linkBtn2.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom#hyperparametersTailAngleSmoothBoutsAndBendsDetect"))
+        linkBtn2.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/configurationFile/advanced/angleSmoothBoutsAndBendsDetection"))
         layout.addWidget(linkBtn2, alignment=Qt.AlignmentFlag.AlignCenter)
         self.setLayout(layout)
         startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
