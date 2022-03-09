@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import pickle
+import webbrowser
 
 try:
   from PyQt6.QtCore import Qt, QEventLoop, QPoint, QTimer
@@ -54,7 +55,7 @@ def _createWidget(layout, status, values, info, name, widgets):
     layout.addWidget(slider, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
 
-def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, title, organizationTab, widgets):
+def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, title, organizationTab, widgets, documentationLink=None):
   app = QApplication.instance()
   stackedLayout = app.window.centralWidget().layout()
   timers = []
@@ -90,6 +91,10 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
       button = QPushButton(text)
       button.clicked.connect(cb)
       buttonsLayout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
+    if documentationLink is not None:
+      documentationBtn = QPushButton("Help")
+      documentationBtn.clicked.connect(lambda: webbrowser.open_new(documentationLink))
+      buttonsLayout.addWidget(documentationBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch()
     mainLayout.addLayout(buttonsLayout)
     temporaryPage = QWidget()
@@ -155,6 +160,7 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
 
 
 def adjustDetectMouvRawVideosParams(img, res, l, totDiff, hyperparameters, widgets):
+  documentationLink = "https://zebrazoom.org/documentation/docs/configurationFile/throughGUI/boutsDetection"
   hyperparametersListNames = ["frameGapComparision", "thresForDetectMovementWithRawVideo", "halfDiameterRoiBoutDetect", "minNbPixelForDetectMovementWithRawVideo"]
   organizationTab = [
   [0, 15,  "Increase if small movements are not detected. An increase that's too big could lead to a detection of bout that's too early however."],
@@ -176,10 +182,11 @@ def adjustDetectMouvRawVideosParams(img, res, l, totDiff, hyperparameters, widge
 
   if totDiff > hyperparameters["minNbPixelForDetectMovementWithRawVideo"]:
     cv2.circle(frameToShow, (redDotDimension, redDotDimension), redDotDimension, (0,0,255), -1)
-  return adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, title, organizationTab, widgets)
+  return adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, title, organizationTab, widgets, documentationLink=documentationLink)
 
 
 def adjustHeadEmbededTrackingParams(nbTailPoints, i, firstFrame, output, outputHeading, frame, frame2, hyperparameters, widgets):
+  documentationLink = "https://zebrazoom.org/documentation/docs/configurationFile/throughGUI/headEmbeddedSwimming"
   # hyperparametersListNames = ["headEmbededAutoSet_BackgroundExtractionOption", "overwriteFirstStepValue", "overwriteLastStepValue", "overwriteNbOfStepValues", "headEmbededParamTailDescentPixThreshStopOverwrite", "authorizedRelativeLengthTailEnd"]
   hyperparametersListNames = ["headEmbededAutoSet_BackgroundExtractionOption", "overwriteFirstStepValue", "overwriteLastStepValue", "headEmbededParamTailDescentPixThreshStopOverwrite", "authorizedRelativeLengthTailEnd", "overwriteHeadEmbededParamGaussianBlur"]
   organizationTab = [
@@ -206,7 +213,7 @@ def adjustHeadEmbededTrackingParams(nbTailPoints, i, firstFrame, output, outputH
     x = output[k, i-firstFrame][0][0]
     y = output[k, i-firstFrame][0][1]
 
-  return adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frame2, title, organizationTab, widgets)
+  return adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frame2, title, organizationTab, widgets, documentationLink=documentationLink)
 
 
 def adjustFreelySwimTrackingParams(nbTailPoints, i, firstFrame, output, outputHeading, frame, frame2, hyperparameters, widgets):
@@ -242,6 +249,7 @@ def adjustFreelySwimTrackingParams(nbTailPoints, i, firstFrame, output, outputHe
 
 
 def adjustFreelySwimTrackingAutoParams(nbTailPoints, i, firstFrame, output, outputHeading, frame, frame2, hyperparameters, widgets):
+  documentationLink = "https://zebrazoom.org/documentation/docs/configurationFile/throughGUI/trackingFreelySwimming"
   hyperparametersListNames = ["recalculateForegroundImageBasedOnBodyArea", "adjustMinPixelDiffForBackExtract_nbBlackPixelsMax", "minPixelDiffForBackExtract"]
   organizationTab = [
   [0, 1, "Set to 1 for Method 3 and to 0 for Method 1 or 2"],
@@ -263,4 +271,4 @@ def adjustFreelySwimTrackingAutoParams(nbTailPoints, i, firstFrame, output, outp
     x = output[k, i-firstFrame][0][0]
     y = output[k, i-firstFrame][0][1]
 
-  return adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frame2, title, organizationTab, widgets)
+  return adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frame2, title, organizationTab, widgets, documentationLink=documentationLink)

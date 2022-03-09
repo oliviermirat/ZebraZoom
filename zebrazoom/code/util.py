@@ -1,22 +1,28 @@
 import cv2
 
 try:
-  from PyQt6.QtCore import pyqtSignal, Qt, QEventLoop, QPointF, QRectF, QSize, QSizeF, QTimer
+  from PyQt6.QtCore import pyqtSignal, Qt, QAbstractAnimation, QEventLoop, QParallelAnimationGroup, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, QTimer
   from PyQt6.QtGui import QColor, QFont, QImage, QPainter, QPixmap, QPolygonF, QTransform
-  from PyQt6.QtWidgets import QApplication, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QSlider, QSpinBox, QToolTip, QVBoxLayout, QWidget
+  from PyQt6.QtWidgets import QApplication, QFrame, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QToolButton, QToolTip, QVBoxLayout, QWidget
   PYQT6 = True
 except ImportError:
-  from PyQt5.QtCore import pyqtSignal, Qt, QEventLoop, QPointF, QRectF, QSize, QSizeF, QTimer
+  from PyQt5.QtCore import pyqtSignal, Qt, QAbstractAnimation, QEventLoop, QParallelAnimationGroup, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, QTimer
   from PyQt5.QtGui import QColor, QFont, QImage, QPainter, QPixmap, QPolygonF, QTransform
-  from PyQt5.QtWidgets import QApplication, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QSlider, QSpinBox, QToolTip, QVBoxLayout, QWidget
+  from PyQt5.QtWidgets import QApplication, QFrame, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QToolButton, QToolTip, QVBoxLayout, QWidget
   PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 
 
 PRETTY_PARAMETER_NAMES = {
-  'frameGapComparision': 'frameGapComparision pretty text',
-  'thresForDetectMovementWithRawVideo': 'thresForDetectMovementWithRawVideo pretty text',
+  'frameGapComparision': 'Compare frame n with frame n+?',
+  'thresForDetectMovementWithRawVideo': 'Threshold applied on frame n+? minus frame n',
+  'halfDiameterRoiBoutDetect': 'Size of sub-frame used for the comparison',
+  'minNbPixelForDetectMovementWithRawVideo': 'Minimum number of white pixels in frame n+? minus frame n for bout detection',
+  'headEmbededAutoSet_BackgroundExtractionOption': 'Background Extraction',
+  'overwriteFirstStepValue': 'Minimum number of pixels between subsequent points',
+  'overwriteLastStepValue': 'Maximum number of pixels between subsequent points',
+  'overwriteHeadEmbededParamGaussianBlur': 'Gaussian blur applied on the image',
 }
 
 TITLE_FONT = QFont('Helvetica', 18, QFont.Weight.Bold, True)
@@ -549,3 +555,54 @@ def addToHistory(fn):
     app.configFileHistory.append(restoreState)
     return fn(*args, **kwargs)
   return inner
+
+
+class Expander(QWidget):
+  def __init__(self, parent, title, layout, animationDuration=200):
+    super(Expander, self).__init__(parent)
+
+    toggleButton = QToolButton()
+    toggleButton.setStyleSheet("QToolButton { border: none; }")
+    toggleButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+    toggleButton.setArrowType(Qt.RightArrow)
+    toggleButton.setText(str(title))
+    toggleButton.setCheckable(True)
+    toggleButton.setChecked(False)
+
+    contentArea = QScrollArea()
+    contentArea.setFrameShape(QFrame.Shape.NoFrame)
+    contentArea.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+    contentArea.setMaximumHeight(0)
+    contentArea.setMinimumHeight(0)
+
+    mainLayout = QGridLayout()
+    mainLayout.setVerticalSpacing(0)
+    mainLayout.setContentsMargins(0, 0, 0, 0)
+    mainLayout.addWidget(toggleButton, 0, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
+    mainLayout.addWidget(contentArea, 1, 0, 1, 3)
+    self.setLayout(mainLayout)
+
+    contentArea.setLayout(layout)
+    collapsedHeight = self.sizeHint().height() - contentArea.maximumHeight()
+    contentHeight = layout.sizeHint().height()
+    toggleAnimation = QParallelAnimationGroup()
+    toggleAnimation.addAnimation(QPropertyAnimation(self, b"minimumHeight"))
+    toggleAnimation.addAnimation(QPropertyAnimation(self, b"maximumHeight"))
+    toggleAnimation.addAnimation(QPropertyAnimation(contentArea, b"maximumHeight"))
+    for i in range(toggleAnimation.animationCount() - 1):
+      spoilerAnimation = toggleAnimation.animationAt(i)
+      spoilerAnimation.setDuration(animationDuration)
+      spoilerAnimation.setStartValue(collapsedHeight)
+      spoilerAnimation.setEndValue(collapsedHeight + contentHeight)
+    contentAnimation = toggleAnimation.animationAt(toggleAnimation.animationCount() - 1)
+    contentAnimation.setDuration(animationDuration)
+    contentAnimation.setStartValue(0)
+    contentAnimation.setEndValue(contentHeight)
+
+    def start_animation(checked):
+      arrow_type = Qt.DownArrow if checked else Qt.RightArrow
+      direction = QAbstractAnimation.Forward if checked else QAbstractAnimation.Backward
+      toggleButton.setArrowType(arrow_type)
+      toggleAnimation.setDirection(direction)
+      toggleAnimation.start()
+    toggleButton.clicked.connect(start_animation)
