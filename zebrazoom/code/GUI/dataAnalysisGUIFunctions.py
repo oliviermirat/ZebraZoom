@@ -85,7 +85,7 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
     'resFolder'                         : os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'data')),
     'nameOfFile'                        : self.experimentOrganizationExcel.split(".")[0],
     'smoothingFactorDynaParam'          : 0,   # 0.001
-    'nbFramesTakenIntoAccount'          : 28,
+    'nbFramesTakenIntoAccount'          : 0,
     'numberOfBendsIncludedForMaxDetect' : -1,
     'minNbBendForBoutDetect'            : int(minNbBendForBoutDetect),
     'keepSpeedDistDurWhenLowNbBends'    : int(keep),
@@ -100,7 +100,7 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
   
   generatePklDataFileForVideo(os.path.join(self.experimentOrganizationExcelFileAndFolder, self.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation)
   
-  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", forcePandasRecreation, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", forcePandasRecreation, [])
   
   # Plotting for the different conditions
   nameOfFile = dataframeOptions['nameOfFile']
@@ -171,7 +171,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
     
   generatePklDataFileForVideo(os.path.join(self.experimentOrganizationExcelFileAndFolder, self.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation)
     
-  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", forcePandasRecreation, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral'])
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", forcePandasRecreation, [])
   # Applying the clustering on this dataframe
   clusteringOptions = {
     'analyzeAllWellsAtTheSameTime' : 0, # put this to 1 for head-embedded videos, and to 0 for multi-well videos

@@ -5,7 +5,7 @@ from zebrazoom.dataAnalysis.datasetcreation.generatePklDataFileForVideo import g
 import os
 from pathlib import Path
 
-def kinematicParametersAnalysis(sys, addMedianPerGenotype=0):
+def kinematicParametersAnalysis(sys, addMedianPerGenotype=0, checkConsistencyOfParameters=False):
   
   pathToExcelFile                 = sys.argv[3]
   
@@ -40,7 +40,7 @@ def kinematicParametersAnalysis(sys, addMedianPerGenotype=0):
     'resFolder'                         : os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'data')),
     'nameOfFile'                        : os.path.splitext(nameWithExt)[0],
     'smoothingFactorDynaParam'          : 0,
-    'nbFramesTakenIntoAccount'          : 28,
+    'nbFramesTakenIntoAccount'          : 0,
     'numberOfBendsIncludedForMaxDetect' : -1,
     'minNbBendForBoutDetect'            : minNbBendForBoutDetect,
     'keepSpeedDistDurWhenLowNbBends'    : keep,
@@ -55,23 +55,26 @@ def kinematicParametersAnalysis(sys, addMedianPerGenotype=0):
   
   generatePklDataFileForVideo(os.path.join(os.path.split(pathToExcelFile)[0], nameWithExt), os.path.join(cur_dir_path, 'ZZoutput'), frameStepForDistanceCalculation, forcePandasDfRecreation)
   
-  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, '', forcePandasDfRecreation, ['BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst'])
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, '', forcePandasDfRecreation, [])
   
   # Mixing up all the bouts
-  populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, True)
+  populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, True, 0, 0, int(checkConsistencyOfParameters))
   
-  populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, False)
+  if not(checkConsistencyOfParameters):
+    populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, False, 0, 0, int(checkConsistencyOfParameters))
   
   # Median per well for each kinematic parameter
-  populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 1, True)
+  populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 1, True, 0, 0, int(checkConsistencyOfParameters))
   
-  populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 1, False)
+  if not(checkConsistencyOfParameters):
+    populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 1, False, 0, 0, int(checkConsistencyOfParameters))
   
   # Median per genotype for each kinematic parameter
   if addMedianPerGenotype:
-    populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, True, 0, 1)
+    populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, True, 0, 1, int(checkConsistencyOfParameters))
     
-    populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, False, 0, 1)
+    if not(checkConsistencyOfParameters):
+      populationComparaison(dataframeOptions['nameOfFile'], dataframeOptions['resFolder'], globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, False, 0, 1, int(checkConsistencyOfParameters))
   
   if angleThreshSFSvsTurns != -1:
     calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold(cur_dir_path, dataframeOptions['nameOfFile'], angleThreshSFSvsTurns)

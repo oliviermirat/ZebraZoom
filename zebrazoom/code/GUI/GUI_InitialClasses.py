@@ -20,7 +20,7 @@ except ImportError:
 
 import zebrazoom.code.util as util
 from zebrazoom.code.readValidationVideo import readValidationVideo
-
+from zebrazoom.code.checkConsistencyOfParameters import checkConsistencyOfParameters
 
 LARGE_FONT= QFont("Verdana", 12)
 
@@ -470,6 +470,10 @@ class ViewParameters(QWidget):
         back_btn = QPushButton("Go to the previous page", self)
         back_btn.clicked.connect(lambda: controller.show_frame("ResultsVisualization"))
         layout.addWidget(back_btn, 8, 1, Qt.AlignmentFlag.AlignCenter)
+
+        kine_btn = QPushButton("Check kinematic parameters\n(beta version)", self)
+        kine_btn.clicked.connect(lambda: checkConsistencyOfParameters([self.currentResultFolder]))
+        layout.addWidget(kine_btn, 8, 2, Qt.AlignmentFlag.AlignCenter)
 
         self.zoom_btn = util.apply_style(QPushButton("", self), background_color=util.LIGHT_GREEN)
         self.zoom_btn.clicked.connect(lambda: setattr(self, "graphScaling", not self.graphScaling) or self._printSomeResults())

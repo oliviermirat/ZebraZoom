@@ -89,7 +89,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   basicInformation = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration']
   # Global parameters
   if tailAngleKinematicParameterCalculation:
-    globParam  = ['BoutDuration', 'TotalDistance', 'Speed', 'maxOfInstantaneousTBF', 'meanOfInstantaneousTBF', 'medianOfInstantaneousTBF', 'maxBendAmplitude', 'maxBendAmplitudeSigned', 'meanBendAmplitude', 'medianBendAmplitude', 'medianBendAmplitudeSigned', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude', 'deltaHead', 'firstBendTime', 'firstBendAmplitude', 'firstBendAmplitudeSigned', 'IBI', 'xmean', 'ymean', 'binaryClass25degMaxTailAngle', 'tailAngleIntegralSigned']
+    globParam  = ['BoutDuration', 'TotalDistance', 'Speed', 'maxOfInstantaneousTBF', 'meanOfInstantaneousTBF', 'medianOfInstantaneousTBF', 'maxBendAmplitude', 'maxBendAmplitudeSigned', 'meanBendAmplitude', 'medianBendAmplitude', 'medianBendAmplitudeSigned', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude', 'deltaHead', 'firstBendTime', 'firstBendAmplitude', 'firstBendAmplitudeSigned', 'IBI', 'xmean', 'ymean', 'binaryClass25degMaxTailAngle', 'tailAngleIntegralSigned', 'BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral']
   else:
     globParam  = ['BoutDuration', 'TotalDistance', 'Speed']
   
@@ -142,6 +142,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   removeColumnsWhenAppropriate = [col for col in dfCols if not(col in onlyKeepTheseColumns)]
   # Going through each video listed in the excel file
   for videoId in range(0, len(excelFile)):
+    
     if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder":
       path    = os.path.join(defaultZZoutputFolderPath, excelFile.loc[videoId, 'trial_id'])
     else:
@@ -158,11 +159,14 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     include   = excelFile.loc[videoId, 'include']
     include = eval('[' + include + ']')
     include = include[0]
+    
     if (not(os.path.exists(os.path.join(path, trial_id + '.pkl'))) or forcePandasDfRecreation):
       with open(os.path.join(path, 'results_' + trial_id + '.txt')) as f:
         supstruct = json.load(f)
         firstFrame = supstruct["firstFrame"]
         lastFrame  = supstruct["lastFrame"]
+      with open(os.path.join(path, 'parametersUsedForCalculation.json'), 'w') as outfile:
+        json.dump({'frameStepForDistanceCalculation': frameStepForDistanceCalculation, 'videoFPS': excelFile.loc[videoId, 'fq'], 'videoPixelSize': excelFile.loc[videoId, 'pixelsize']}, outfile)
     else:
       print("reloading previously calculated parameters")
       dfReloadedVid = pd.read_pickle(os.path.join(path, trial_id + '.pkl'))
@@ -310,10 +314,6 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   outfile = open(os.path.join(resFolder, nameOfFile + '.pkl'), 'wb')
   pickle.dump(dfParam,outfile)
   outfile.close()
-  
-  file1 = open(os.path.join(resFolder, 'frameStepForDistanceCalculationUsed.json'), "w")
-  file1.write(str(frameStepForDistanceCalculation))
-  file1.close()
   
   # Saving dataframe for the whole set of videos as a matlab file
   if saveAllBoutsSuperStructuresInMatlabFormat:
