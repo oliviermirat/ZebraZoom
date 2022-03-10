@@ -90,7 +90,7 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
     oldk = k
     if data[k//backCalculationStep] is None:
       headCoordinates = list(util.getPoint(frame, "Click on the center of the head of one animal" if zebrafishToTrack else "Click on the center of mass of an animal",
-                                           backBtnCb=callback))
+                                           backBtnCb=callback, zoomable=True))
     else:
       headCoordinates = data[k//backCalculationStep]["headCoordinates"]
     if oldk != k:
@@ -103,7 +103,7 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
         return None
     frame2 = cv2.circle(frame, tuple(headCoordinates), 2, (0, 0, 255), -1)
     tailTipCoordinates = list(util.getPoint(frame2, "Click on the tip of the tail of the same animal" if zebrafishToTrack else "Click on a point on the border of the same animal",
-                              backBtnCb=callback))
+                              backBtnCb=callback, zoomable=True))
     if oldk != k:
       k = oldk
       if data[k//backCalculationStep] is not None:

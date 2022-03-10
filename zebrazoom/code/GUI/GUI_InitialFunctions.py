@@ -24,7 +24,7 @@ except ImportError:
 
 LARGE_FONT= ("Verdana", 12)
 
-def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, debugMode=0):
+def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, testMode=False):
     self.videoName, _ = QFileDialog.getOpenFileName(self.window, 'Select file', os.path.expanduser("~"))
     self.folderName = ''
     self.headEmbedded = 0
@@ -32,7 +32,7 @@ def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, debugMode=0
 
     self.justExtractParams = int(justExtractParams)
     self.noValidationVideo = int(noValidationVideo)
-    self.debugMode         = int(debugMode)
+    self.testMode         = testMode
     self.findMultipleROIs = 0
 
     self.show_frame("ConfigFilePromp")
@@ -43,7 +43,7 @@ def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode
     self.justExtractParams = int(justExtractParams)
     self.noValidationVideo = int(noValidationVideo)
     self.sbatchMode        = int(sbatchMode)
-    self.debugMode = 0
+    self.testMode = False
     self.findMultipleROIs = 0
     self.show_frame("ConfigFilePromp")
 
@@ -53,7 +53,7 @@ def chooseFolderForTailExtremityHE(self):
     self.headEmbedded = 1
     self.justExtractParams = 0
     self.noValidationVideo = 0
-    self.debugMode = 0
+    self.testMode = False
     self.findMultipleROIs = 0
     self.show_frame("ConfigFilePromp")
 
@@ -63,7 +63,7 @@ def chooseFolderForMultipleROIs(self):
     self.headEmbedded = 0
     self.justExtractParams = 0
     self.noValidationVideo = 0
-    self.debugMode = 0
+    self.testMode = False
     self.findMultipleROIs = 1
     self.show_frame("ConfigFilePromp")
 
@@ -99,6 +99,19 @@ def findAllFilesRecursivelyInDirectories(folderName):
 
 
 def launchZebraZoom(self):
+  if self.testMode:
+    with open(self.configFileName) as f:
+      self.configFile = json.load(f)
+    self.videoToCreateConfigFileFor = self.videoName
+    self.testConfig(addToHistory=False)
+    self.headEmbedded      = 0
+    self.justExtractParams = 0
+    self.noValidationVideo = 0
+    self.testMode         = False
+    self.findMultipleROIs  = 0
+    self.configFileName = None
+    self.videoName = None
+    return
 
   last = 0
   allVideos = []
@@ -132,8 +145,6 @@ def launchZebraZoom(self):
         tabParams = tabParams + ["reloadWellPositions", 1, "reloadBackground", 1, "debugPauseBetweenTrackAndParamExtract", "justExtractParamFromPreviousTrackData"]
       if self.noValidationVideo == 1:
           tabParams = tabParams + ["createValidationVideo", 0]
-      if self.debugMode == 1:
-        tabParams = tabParams + ["debugTracking", 1, "debugExtractBack", 1, "onlyTrackThisOneWell", 0, "lastFrame", 5, "backgroundExtractionForceUseAllVideoFrames", 1, "noBoutsDetection", 1, "thresForDetectMovementWithRawVideo", 0, "noChecksForBoutSelectionInExtractParams", 1]
       if self.findMultipleROIs == 1:
         tabParams = tabParams + ["exitAfterWellsDetection", 1, "saveWellPositionsToBeReloadedNoMatterWhat", 1]
       try:
@@ -148,16 +159,13 @@ def launchZebraZoom(self):
         self.show_frame("Error")
         return
     else:
-      if self.debugMode == 1:
-        tabParams = ["mainZZ", path, name, videoExt, self.configFileName, "freqAlgoPosFollow", 100, "debugTracking", 1, "debugExtractBack", 1, "onlyDoTheTrackingForThisNumberOfFrames", 3, "onlyTrackThisOneWell", 0, "outputFolder", self.ZZoutputLocation]
-      else:
-        tabParams = ["outputFolder", self.ZZoutputLocation]
+      tabParams = ["outputFolder", self.ZZoutputLocation]
       getTailExtremityFirstFrame(path, name, videoExt, self.configFileName, tabParams)
 
   self.headEmbedded      = 0
   self.justExtractParams = 0
   self.noValidationVideo = 0
-  self.debugMode         = 0
+  self.testMode         = False
   self.findMultipleROIs  = 0
 
   if self.sbatchMode:
