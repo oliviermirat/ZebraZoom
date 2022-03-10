@@ -380,20 +380,65 @@ def _chooseFrameLayout(cap, spinboxValues, title, titleStyle=None):
   titleLabel.resizeEvent = lambda evt: titleLabel.setMinimumWidth(evt.size().width()) or titleLabel.setWordWrap(evt.size().width() <= titleLabel.sizeHint().width())
   layout.addWidget(titleLabel, alignment=Qt.AlignmentFlag.AlignCenter)
   video = QLabel()
-  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
-  layout.setStretch(1, 1)
+  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
 
-  sliderWithSpinbox = SliderWithSpinbox(*spinboxValues, name="Frame")
+  firstFrame, minFrame, maxFrame = spinboxValues
+  frameSlider = SliderWithSpinbox(firstFrame, minFrame, maxFrame, name="Frame")
 
-  def valueChanged():
-    value = sliderWithSpinbox.value()
-    cap.set(1, value)
-    ret, frame = cap.read()
-    setPixmapFromCv(frame, video)
-  sliderWithSpinbox.valueChanged.connect(valueChanged)
-  layout.addWidget(sliderWithSpinbox, alignment=Qt.AlignmentFlag.AlignCenter)
+  def getFrame():
+    cap.set(1, frameSlider.value())
+    ret, img = cap.read()
+    return img
+  frameSlider.valueChanged.connect(lambda: setPixmapFromCv(getFrame(), video))
 
-  return layout, video, sliderWithSpinbox
+  sublayout = QHBoxLayout()
+  sublayout.addStretch(1)
+  sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+  if maxFrame > 1000:
+    adjustLayout = QVBoxLayout()
+    adjustLayout.setSpacing(0)
+    adjustLayout.addStretch()
+    zoomInSliderBtn = QPushButton("Zoom in slider")
+
+    def updatePreciseFrameSlider(value):
+      if frameSlider.minimum() == value and frameSlider.minimum():
+        frameSlider.setMinimum(frameSlider.minimum() - 1)
+        frameSlider.setMaximum(frameSlider.maximum() - 1)
+      elif value == frameSlider.maximum() and frameSlider.maximum() != maxFrame:
+        frameSlider.setMinimum(frameSlider.minimum() + 1)
+        frameSlider.setMaximum(frameSlider.maximum() + 1)
+
+    def zoomInButtonClicked():
+      if "in" in zoomInSliderBtn.text():
+        zoomInSliderBtn.setText("Zoom out slider")
+        value = frameSlider.value()
+        minimum = value - 250
+        maximum = value + 250
+        if minimum < 0:
+          maximum = 500
+          minimum = 0
+        if maximum > frameSlider.maximum():
+          maximum = frameSlider.maximum()
+          minimum = maximum - 500
+        frameSlider.setMinimum(max(0, minimum))
+        frameSlider.setMaximum(min(frameSlider.maximum(), maximum))
+        frameSlider.setValue(value)
+        frameSlider.valueChanged.connect(updatePreciseFrameSlider)
+      else:
+        zoomInSliderBtn.setText("Zoom in slider")
+        frameSlider.setMinimum(0)
+        frameSlider.setMaximum(maxFrame)
+        frameSlider.valueChanged.disconnect(updatePreciseFrameSlider)
+    zoomInSliderBtn.clicked.connect(zoomInButtonClicked)
+    adjustLayout.addWidget(QLabel())
+    adjustLayout.addWidget(zoomInSliderBtn, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
+    adjustLayout.addStretch()
+    sublayout.addLayout(adjustLayout, stretch=1)
+  else:
+    sublayout.addStretch(1)
+  layout.addLayout(sublayout)
+
+  return layout, video, frameSlider
 
 def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb, extraButtonInfo=None, titleStyle=None):
   cap = zzVideoReading.VideoCapture(videoPath)

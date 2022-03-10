@@ -264,6 +264,35 @@ class OptimizeConfigFile(QWidget):
     else:
       self._recalculateForegroundImageBasedOnBodyArea.setChecked(False)
 
+
+class _ClickableImageLabel(QLabel):
+  def __init__(self, parent, pixmap, clickedCallback):
+    super().__init__(parent)
+    self._originalPixmap = pixmap
+    self._clickedCallback = clickedCallback
+    self.setMinimumSize(1, 1)
+
+  def resizeEvent(self, evt):
+    scaling = self.devicePixelRatio() if PYQT6 else self.devicePixelRatioF()
+    size = self._originalPixmap.size().scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatio)
+    img = self._originalPixmap.scaled(int(size.width() * scaling), int(size.height() * scaling))
+    img.setDevicePixelRatio(scaling)
+    self.setPixmap(img)
+    blocked = self.blockSignals(True)
+    self.resize(size)
+    self.blockSignals(blocked)
+
+  def mousePressEvent(self, evt):
+    QApplication.restoreOverrideCursor()
+    self._clickedCallback()
+
+  def enterEvent(self, evt):
+    QApplication.setOverrideCursor(Qt.CursorShape.PointingHandCursor)
+
+  def leaveEvent(self, evt):
+    QApplication.restoreOverrideCursor()
+
+
 class ChooseGeneralExperiment(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
@@ -278,61 +307,38 @@ class ChooseGeneralExperiment(QWidget):
     layout.addItem(QSpacerItem(16, 16), 4, 1, 1, 1)
     curDirPath = os.path.dirname(os.path.realpath(__file__))
 
-    def labelResized(label, evt):
-      scaling = label.devicePixelRatio() if PYQT6 else label.devicePixelRatioF()
-      size = label.originalPixmap.size().scaled(label.size(), Qt.AspectRatioMode.KeepAspectRatio)
-      img = label.originalPixmap.scaled(int(size.width() * scaling), int(size.height() * scaling))
-      img.setDevicePixelRatio(scaling)
-      label.setPixmap(img)
-
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), 0, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
-    freelySwimmingTitleLabel = util.apply_style(QLabel("Head and tail tracking of freely swimming fish", self), font=util.TITLE_FONT)
+    freelySwimmingTitleLabel = util.apply_style(QLabel("Head and tail tracking of freely swimming fish", self), font=QFont('Helvetica', 14, QFont.Weight.Bold))
     freelySwimmingTitleLabel.setWordWrap(True)
     layout.addWidget(freelySwimmingTitleLabel, 1, 0)
     freelySwimmingLabel = QLabel("Multiple fish can be tracked in the same well but the tail tracking can be mediocre when fish collide. Each well should contain the same number of fish.", self)
     freelySwimmingLabel.setWordWrap(True)
     layout.addWidget(freelySwimmingLabel, 2, 0)
-    freelySwimmingImage = QLabel(self)
-    freelySwimmingImage.originalPixmap = QPixmap(os.path.join(curDirPath, 'freelySwimming.png'))
-    freelySwimmingImage.setMinimumSize(1, 1)
-    freelySwimmingImage.resizeEvent = lambda evt: labelResized(freelySwimmingImage, evt)
-    freelySwimmingImage.mousePressEvent = lambda evt: controller.chooseGeneralExperimentFirstStep(controller, True, False, False, False, False, False)
+    freelySwimmingImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'freelySwimming.png')), lambda: controller.chooseGeneralExperimentFirstStep(controller, True, False, False, False, False, False))
     layout.addWidget(freelySwimmingImage, 3, 0)
 
-    headEmbeddedTitleLabel = util.apply_style(QLabel("Tail tracking of head-embedded fish", self), font=util.TITLE_FONT)
+    headEmbeddedTitleLabel = util.apply_style(QLabel("Tail tracking of head-embedded fish", self), font=QFont('Helvetica', 14, QFont.Weight.Bold))
     headEmbeddedTitleLabel.setWordWrap(True)
     layout.addWidget(headEmbeddedTitleLabel, 1, 2)
-    headEmbeddedImage = QLabel(self)
-    headEmbeddedImage.originalPixmap = QPixmap(os.path.join(curDirPath, 'headEmbedded.png'))
-    headEmbeddedImage.setMinimumSize(1, 1)
-    headEmbeddedImage.resizeEvent = lambda evt: labelResized(headEmbeddedImage, evt)
-    headEmbeddedImage.mousePressEvent = lambda evt: controller.chooseGeneralExperimentFirstStep(controller, False, True, False, False, False, False)
+    headEmbeddedImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'headEmbedded.png')), lambda: controller.chooseGeneralExperimentFirstStep(controller, False, True, False, False, False, False))
     layout.addWidget(headEmbeddedImage, 3, 2)
 
-    fastCenterOfMassTitleLabel = util.apply_style(QLabel("Fast center of mass tracking for any kind of animal", self), font=util.TITLE_FONT)
+    fastCenterOfMassTitleLabel = util.apply_style(QLabel("Fast center of mass tracking for any kind of animal", self), font=QFont('Helvetica', 14, QFont.Weight.Bold))
     fastCenterOfMassTitleLabel.setWordWrap(True)
     layout.addWidget(fastCenterOfMassTitleLabel, 5, 0)
     fastCenterOfMassLabel = QLabel("Only one animal per well, very useful for videos acquired at low frequency", self)
     fastCenterOfMassLabel.setWordWrap(True)
     layout.addWidget(fastCenterOfMassLabel, 6, 0)
-    fastCenterOfMassImage = QLabel(self)
-    fastCenterOfMassImage.originalPixmap = QPixmap(os.path.join(curDirPath, 'screen.png'))
-    fastCenterOfMassImage.setMinimumSize(1, 1)
-    fastCenterOfMassImage.resizeEvent = lambda evt: labelResized(fastCenterOfMassImage, evt)
-    fastCenterOfMassImage.mousePressEvent = lambda evt: controller.chooseGeneralExperimentFirstStep(controller, False, False, False, False, False, True)
+    fastCenterOfMassImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'screen.png')), lambda: controller.chooseGeneralExperimentFirstStep(controller, False, False, False, False, False, True))
     layout.addWidget(fastCenterOfMassImage, 7, 0)
 
-    centerOfMassTitleLabel = util.apply_style(QLabel("Center of mass tracking for any kind of animal", self), font=util.TITLE_FONT)
+    centerOfMassTitleLabel = util.apply_style(QLabel("Center of mass tracking for any kind of animal", self), font=QFont('Helvetica', 14, QFont.Weight.Bold))
     centerOfMassTitleLabel.setWordWrap(True)
     layout.addWidget(centerOfMassTitleLabel, 5, 2)
     centerOfMassLabel = QLabel("Several animals can be tracked in the same well/tank/arena. Each well should contain the same number of animals.", self)
     centerOfMassLabel.setWordWrap(True)
     layout.addWidget(centerOfMassLabel, 6, 2)
-    centerOfMassImage = QLabel(self)
-    centerOfMassImage.originalPixmap = QPixmap(os.path.join(curDirPath, 'centerOfMassAnyAnimal.png'))
-    centerOfMassImage.setMinimumSize(1, 1)
-    centerOfMassImage.resizeEvent = lambda evt: labelResized(centerOfMassImage, evt)
-    centerOfMassImage.mousePressEvent = lambda evt: controller.chooseGeneralExperimentFirstStep(controller, False, False, False, False, True, False)
+    centerOfMassImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'centerOfMassAnyAnimal.png')), lambda: controller.chooseGeneralExperimentFirstStep(controller, False, False, False, False, True, False))
     layout.addWidget(centerOfMassImage, 7, 2)
 
     buttonsLayout = QHBoxLayout()
@@ -410,44 +416,28 @@ class WellOrganisation(QWidget):
       img.setDevicePixelRatio(scaling)
       label.setPixmap(img)
 
-    gridSystemTitleLabel = util.apply_style(QLabel("Grid system (recommended in many cases)", self), font=util.TITLE_FONT)
+    gridSystemTitleLabel = util.apply_style(QLabel("Grid system (recommended in many cases)", self), font=QFont('Helvetica', 14, QFont.Weight.Bold))
     gridSystemTitleLabel.setWordWrap(True)
     layout.addWidget(gridSystemTitleLabel, 2, 0)
-    gridSystemImage = QLabel(self)
-    gridSystemImage.originalPixmap = QPixmap(os.path.join(curDirPath, 'gridSystem.png'))
-    gridSystemImage.setMinimumSize(1, 1)
-    gridSystemImage.resizeEvent = lambda evt: labelResized(gridSystemImage, evt)
-    gridSystemImage.mousePressEvent = lambda evt: controller.wellOrganisation(controller, False, False, False, False, False, True)
+    gridSystemImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'gridSystem.png')), lambda: controller.wellOrganisation(controller, False, False, False, False, False, True))
     layout.addWidget(gridSystemImage, 3, 0)
 
-    multipleROITitleLabel = util.apply_style(QLabel("Grid system (recommended in many cases)", self), font=util.TITLE_FONT)
+    multipleROITitleLabel = util.apply_style(QLabel("Chosen at runtime, right before tracking starts (multiple regions possible)", self), font=QFont('Helvetica', 14, QFont.Weight.Bold))
     multipleROITitleLabel.setWordWrap(True)
     layout.addWidget(multipleROITitleLabel, 2, 2)
-    multipleROIImage = QLabel(self)
-    multipleROIImage.originalPixmap = QPixmap(os.path.join(curDirPath, 'runtimeROI.png'))
-    multipleROIImage.setMinimumSize(1, 1)
-    multipleROIImage.resizeEvent = lambda evt: labelResized(multipleROIImage, evt)
-    multipleROIImage.mousePressEvent = lambda evt: controller.wellOrganisation(controller, False, False, False, False, True, False)
+    multipleROIImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'runtimeROI.png')), lambda: controller.wellOrganisation(controller, False, False, False, False, True, False))
     layout.addWidget(multipleROIImage, 3, 2)
 
-    wholeVideoTitleLabel = util.apply_style(QLabel("Grid system (recommended in many cases)", self), font=util.TITLE_FONT)
+    wholeVideoTitleLabel = util.apply_style(QLabel("Whole video", self), font=QFont('Helvetica', 14, QFont.Weight.Bold))
     wholeVideoTitleLabel.setWordWrap(True)
     layout.addWidget(wholeVideoTitleLabel, 5, 0)
-    wholeVideoImage = QLabel(self)
-    wholeVideoImage.originalPixmap = QPixmap(os.path.join(curDirPath, 'wholeVideo.png'))
-    wholeVideoImage.setMinimumSize(1, 1)
-    wholeVideoImage.resizeEvent = lambda evt: labelResized(wholeVideoImage, evt)
-    wholeVideoImage.mousePressEvent = lambda evt: controller.wellOrganisation(controller, False, False, False, True, False, False)
+    wholeVideoImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'wholeVideo.png')), lambda: controller.wellOrganisation(controller, False, False, False, True, False, False))
     layout.addWidget(wholeVideoImage, 6, 0)
 
-    singleROITitleLabel = util.apply_style(QLabel("Grid system (recommended in many cases)", self), font=util.TITLE_FONT)
+    singleROITitleLabel = util.apply_style(QLabel("Fixed in the configuration file (only one region)", self), font=QFont('Helvetica', 14, QFont.Weight.Bold))
     singleROITitleLabel.setWordWrap(True)
     layout.addWidget(singleROITitleLabel, 5, 2)
-    singleROIImage = QLabel(self)
-    singleROIImage.originalPixmap = QPixmap(os.path.join(curDirPath, 'configFileROI.png'))
-    singleROIImage.setMinimumSize(1, 1)
-    singleROIImage.resizeEvent = lambda evt: labelResized(singleROIImage, evt)
-    singleROIImage.mousePressEvent = lambda evt: controller.wellOrganisation(controller, False, False, True, False, False, False)
+    singleROIImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'configFileROI.png')), lambda: controller.wellOrganisation(controller, False, False, True, False, False, False))
     layout.addWidget(singleROIImage, 6, 2)
 
     advancedOptionsLayout = QHBoxLayout()
