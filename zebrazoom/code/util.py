@@ -1,18 +1,29 @@
 import cv2
 
 try:
-  from PyQt6.QtCore import pyqtSignal, Qt, QEventLoop, QPointF, QRectF, QSize, QSizeF, QTimer
-  from PyQt6.QtGui import QColor, QFont, QImage, QPainter, QPixmap, QPolygonF, QTransform
-  from PyQt6.QtWidgets import QApplication, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QSlider, QSpinBox, QToolTip, QVBoxLayout, QWidget
+  from PyQt6.QtCore import pyqtSignal, Qt, QAbstractAnimation, QEventLoop, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, QTimer
+  from PyQt6.QtGui import QBrush, QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygonF, QTransform
+  from PyQt6.QtWidgets import QApplication, QFrame, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QToolButton, QToolTip, QVBoxLayout, QWidget
   PYQT6 = True
 except ImportError:
-  from PyQt5.QtCore import pyqtSignal, Qt, QEventLoop, QPointF, QRectF, QSize, QSizeF, QTimer
-  from PyQt5.QtGui import QColor, QFont, QImage, QPainter, QPixmap, QPolygonF, QTransform
-  from PyQt5.QtWidgets import QApplication, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QSlider, QSpinBox, QToolTip, QVBoxLayout, QWidget
+  from PyQt5.QtCore import pyqtSignal, Qt, QAbstractAnimation, QEventLoop, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, QTimer
+  from PyQt5.QtGui import QBrush, QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygonF, QTransform
+  from PyQt5.QtWidgets import QApplication, QFrame, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QToolButton, QToolTip, QVBoxLayout, QWidget
   PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 
+
+PRETTY_PARAMETER_NAMES = {
+  'frameGapComparision': 'Compare frame n with frame n+?',
+  'thresForDetectMovementWithRawVideo': 'Threshold applied on frame n+? minus frame n',
+  'halfDiameterRoiBoutDetect': 'Size of sub-frame used for the comparison',
+  'minNbPixelForDetectMovementWithRawVideo': 'Minimum number of white pixels in frame n+? minus frame n for bout detection',
+  'headEmbededAutoSet_BackgroundExtractionOption': 'Background Extraction',
+  'overwriteFirstStepValue': 'Minimum number of pixels between subsequent points',
+  'overwriteLastStepValue': 'Maximum number of pixels between subsequent points',
+  'overwriteHeadEmbededParamGaussianBlur': 'Gaussian blur applied on the image',
+}
 
 TITLE_FONT = QFont('Helvetica', 18, QFont.Weight.Bold, True)
 LIGHT_YELLOW = '#FFFFE0'
@@ -83,7 +94,7 @@ def _getButtonsLayout(buttons, loop, dialog=None):
     button = QPushButton(text)
     if enabledSignal is not None:
       button.setEnabled(False)
-      enabledSignal.connect(lambda enabled, btn=button: btn.setEnabled(enabled))
+      enabledSignal.connect(lambda enabled, btn=button: btn.setEnabled(bool(enabled)))
     if exitLoop:
       button.clicked.connect(lambda *args, cb=cb: callback(cb))
     else:
@@ -112,10 +123,15 @@ def showBlockingPage(layout, title=None, buttons=(), dialog=False, labelInfo=Non
   with app.suppressBusyCursor():
     stackedLayout.setCurrentWidget(temporaryPage)
     if labelInfo is not None:
-      img, label = labelInfo
+      if len(labelInfo) == 2:
+        img, label = labelInfo
+        zoomable = False
+      else:
+        assert len(labelInfo) == 3
+        img, label, zoomable = labelInfo
       label.setMinimumSize(1, 1)
       label.show()
-      setPixmapFromCv(img, label)
+      setPixmapFromCv(img, label, zoomable=zoomable)
     loop.exec()
     stackedLayout.setCurrentWidget(oldWidget)
   stackedLayout.removeWidget(temporaryPage)
@@ -154,7 +170,7 @@ def showDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, tim
   dialog.closeEvent = _dialogClosed(loop, dialog.closeEvent)
   if timeout is not None:
     QTimer.singleShot(timeout, lambda: dialog.close())
-    loop.exec()
+  loop.exec()
 
 def _cvToPixmap(img):
   if len(img.shape) == 2:
@@ -169,22 +185,127 @@ def _cvToPixmap(img):
   return QPixmap.fromImage(QImage(img.data.tobytes(), width, height, bytesPerLine, fmt))
 
 
-def setPixmapFromCv(img, label, preferredSize=None):
+class ZoomableImage(QGraphicsView):
+  pointSelected = pyqtSignal(QPoint)
+
+  def __init__(self, parent=None):
+    super(ZoomableImage, self).__init__(parent)
+    self._zoom = 0
+    self._scene = QGraphicsScene(self)
+    self._pixmap = QGraphicsPixmapItem() # TODO: rename
+    self._scene.addItem(self._pixmap)
+    self.setScene(self._scene)
+    self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
+    self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
+    self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+    self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
+    self.setFrameShape(QFrame.NoFrame)
+    self._point = None
+    self._dragging = False
+    self._tooltipShown = False
+
+  def fitInView(self):
+    rect = QRectF(self._pixmap.pixmap().rect())
+    self.setSceneRect(rect)
+    unity = self.transform().mapRect(QRectF(0, 0, 1, 1))
+    self.scale(1 / unity.width(), 1 / unity.height())
+    viewrect = self.viewport().rect()
+    scenerect = self.transform().mapRect(rect)
+    factor = min(viewrect.width() / scenerect.width(),
+                 viewrect.height() / scenerect.height())
+    self.scale(factor, factor)
+    self._zoom = 0
+
+  def setPhoto(self, pixmap):
+    self._zoom = 0
+    self.setDragMode(QGraphicsView.ScrollHandDrag)
+    self._pixmap.setPixmap(pixmap)
+    self.fitInView()
+
+  def wheelEvent(self, evt):
+    if evt.angleDelta().y() > 0:
+      factor = 1.25
+      self._zoom += 1
+    else:
+      factor = 0.8
+      self._zoom -= 1
+    if self._zoom > 0:
+      self.scale(factor, factor)
+    elif self._zoom == 0:
+      self.fitInView()
+    else:
+      self._zoom = 0
+
+  def mouseMoveEvent(self, evt):
+    if evt.buttons() == Qt.LeftButton and not self._dragging:
+      self._dragging = True
+      QApplication.setOverrideCursor(Qt.CursorShape.ClosedHandCursor)
+    super().mouseMoveEvent(evt)
+
+  def mouseReleaseEvent(self, evt):
+    if not self._dragging:
+      if self._pixmap.isUnderMouse():
+        self._point = self.mapToScene(evt.pos()).toPoint()
+        self.viewport().update()
+        self.pointSelected.emit(self._point)
+        if not self._tooltipShown:
+          QToolTip.showText(self.mapToGlobal(self._point), "If you aren't satisfied with the selection, click again.", self, self.rect(), 5000)
+          self._tooltipShown = True
+    else:
+      self._dragging = False
+      QApplication.restoreOverrideCursor()
+    super(ZoomableImage, self).mouseReleaseEvent(evt)
+
+  def paintEvent(self, evt):
+    super().paintEvent(evt)
+    if self._point is None:
+      return
+    qp = QPainter(self.viewport())
+    if self._point is not None:
+      qp.setBrush(QColor(255, 0, 0))
+      qp.setPen(Qt.PenStyle.NoPen)
+      qp.drawEllipse(self.mapFromScene(self._point), 2, 2)
+    qp.end()
+
+  def enterEvent(self, evt):
+    QApplication.setOverrideCursor(Qt.CursorShape.CrossCursor)
+    super().enterEvent(evt)
+
+  def leaveEvent(self, evt):
+    QApplication.restoreOverrideCursor()
+    super().leaveEvent(evt)
+
+
+def setPixmapFromCv(img, label, preferredSize=None, zoomable=False):
+  originalPixmap = _cvToPixmap(img)
   if not label.isVisible():
-    label.setPixmap(_cvToPixmap(img))
+    label.setPixmap(originalPixmap)
     return
   scaling = label.devicePixelRatio() if PYQT6 else label.devicePixelRatioF()
   if label.pixmap() is None or label.pixmap().isNull():
     label.hide()
-    label.setPixmap(_cvToPixmap(img))
+    label.setPixmap(originalPixmap)
     label.show()
   if preferredSize is None:
     preferredSize = label.pixmap().size()
   size = preferredSize.scaled(label.size(), Qt.AspectRatioMode.KeepAspectRatio)
-  img = cv2.resize(img, (int(size.width() * scaling), int(size.height() * scaling)))
-  pixmap = _cvToPixmap(img)
-  pixmap.setDevicePixelRatio(scaling)
-  label.setPixmap(pixmap)
+  if not zoomable:
+    img = cv2.resize(img, (int(size.width() * scaling), int(size.height() * scaling)))
+    pixmap = _cvToPixmap(img)
+    pixmap.setDevicePixelRatio(scaling)
+    label.setPixmap(pixmap)
+  else:
+    label.hide()
+    image = ZoomableImage()
+    image.sizeHint = lambda: size
+    image.viewport().setMinimumSize(size)
+    image.setPhoto(originalPixmap)
+    label.parentWidget().layout().replaceWidget(label, image)
+    if hasattr(image, "pointSelected"):
+      def pointSelected(point):
+        label.pointSelected.emit(point)
+        label.getCoordinates = lambda: (point.x(), point.y())
+      image.pointSelected.connect(pointSelected)
 
 
 class SliderWithSpinbox(QWidget):
@@ -204,8 +325,6 @@ class SliderWithSpinbox(QWidget):
 
     minLabel = QLabel(str(minimum))
     layout.addWidget(minLabel, 1, 1, Qt.AlignmentFlag.AlignLeft)
-    if name is not None:
-      layout.addWidget(QLabel(name), 1, 2, Qt.AlignmentFlag.AlignCenter)
     maxLabel = QLabel(str(maximum))
     layout.addWidget(maxLabel, 1, 3, Qt.AlignmentFlag.AlignRight)
     slider = QSlider(Qt.Orientation.Horizontal)
@@ -231,6 +350,14 @@ class SliderWithSpinbox(QWidget):
     layout.setContentsMargins(20, 5, 20, 5)
     self.setLayout(layout)
 
+    if name is not None:
+      self.setFixedWidth(layout.totalSizeHint().width())
+      titleLabel = QLabel(PRETTY_PARAMETER_NAMES.get(name, name))
+      titleLabel.setMinimumSize(1, 1)
+      titleLabel.resizeEvent = lambda evt: titleLabel.setMinimumWidth(evt.size().width()) or titleLabel.setWordWrap(evt.size().width() <= titleLabel.sizeHint().width())
+      slider.rangeChanged.connect(lambda: titleLabel.setMinimumWidth(1) or titleLabel.setWordWrap(False))
+      layout.addWidget(titleLabel, 1, 2, Qt.AlignmentFlag.AlignCenter)
+
     self.value = spinbox.value
     self.minimum = spinbox.minimum
     self.maximum = spinbox.maximum
@@ -243,43 +370,88 @@ class SliderWithSpinbox(QWidget):
     self.setPosition = slider.setSliderPosition
 
 
-def _chooseFrameLayout(cap, spinboxValues):
+def _chooseFrameLayout(cap, spinboxValues, title, titleStyle=None):
+  if titleStyle is None:
+    titleStyle = {'font': TITLE_FONT}
   layout = QVBoxLayout()
-
+  window = QApplication.instance().window
+  titleLabel = apply_style(QLabel(title), **titleStyle)
+  titleLabel.setMinimumSize(1, 1)
+  titleLabel.resizeEvent = lambda evt: titleLabel.setMinimumWidth(evt.size().width()) or titleLabel.setWordWrap(evt.size().width() <= titleLabel.sizeHint().width())
+  layout.addWidget(titleLabel, alignment=Qt.AlignmentFlag.AlignCenter)
   video = QLabel()
-  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
-  layout.setStretch(0, 1)
+  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
 
-  sliderWithSpinbox = SliderWithSpinbox(*spinboxValues, name="Frame")
+  firstFrame, minFrame, maxFrame = spinboxValues
+  frameSlider = SliderWithSpinbox(firstFrame, minFrame, maxFrame, name="Frame")
 
-  def valueChanged():
-    value = sliderWithSpinbox.value()
-    cap.set(1, value)
-    ret, frame = cap.read()
-    setPixmapFromCv(frame, video)
-  sliderWithSpinbox.valueChanged.connect(valueChanged)
-  layout.addWidget(sliderWithSpinbox)
+  def getFrame():
+    cap.set(1, frameSlider.value())
+    ret, img = cap.read()
+    return img
+  frameSlider.valueChanged.connect(lambda: setPixmapFromCv(getFrame(), video))
 
-  return layout, video, sliderWithSpinbox
+  sublayout = QHBoxLayout()
+  sublayout.addStretch(1)
+  sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+  if maxFrame > 1000:
+    adjustLayout = QVBoxLayout()
+    adjustLayout.setSpacing(0)
+    adjustLayout.addStretch()
+    zoomInSliderBtn = QPushButton("Zoom in slider")
 
-def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb, extraButtonInfo=None):
+    def updatePreciseFrameSlider(value):
+      if frameSlider.minimum() == value and frameSlider.minimum():
+        frameSlider.setMinimum(frameSlider.minimum() - 1)
+        frameSlider.setMaximum(frameSlider.maximum() - 1)
+      elif value == frameSlider.maximum() and frameSlider.maximum() != maxFrame:
+        frameSlider.setMinimum(frameSlider.minimum() + 1)
+        frameSlider.setMaximum(frameSlider.maximum() + 1)
+
+    def zoomInButtonClicked():
+      if "in" in zoomInSliderBtn.text():
+        zoomInSliderBtn.setText("Zoom out slider")
+        value = frameSlider.value()
+        minimum = value - 250
+        maximum = value + 250
+        if minimum < 0:
+          maximum = 500
+          minimum = 0
+        if maximum > frameSlider.maximum():
+          maximum = frameSlider.maximum()
+          minimum = maximum - 500
+        frameSlider.setMinimum(max(0, minimum))
+        frameSlider.setMaximum(min(frameSlider.maximum(), maximum))
+        frameSlider.setValue(value)
+        frameSlider.valueChanged.connect(updatePreciseFrameSlider)
+      else:
+        zoomInSliderBtn.setText("Zoom in slider")
+        frameSlider.setMinimum(0)
+        frameSlider.setMaximum(maxFrame)
+        frameSlider.valueChanged.disconnect(updatePreciseFrameSlider)
+    zoomInSliderBtn.clicked.connect(zoomInButtonClicked)
+    adjustLayout.addWidget(QLabel())
+    adjustLayout.addWidget(zoomInSliderBtn, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
+    adjustLayout.addStretch()
+    sublayout.addLayout(adjustLayout, stretch=1)
+  else:
+    sublayout.addStretch(1)
+  layout.addLayout(sublayout)
+
+  return layout, video, frameSlider
+
+def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb, extraButtonInfo=None, titleStyle=None):
   cap = zzVideoReading.VideoCapture(videoPath)
   cap.set(1, 1)
   ret, frame = cap.read()
-  layout, label, valueWidget = _chooseFrameLayout(cap, (1, 0, cap.get(7) - 2))
+  layout, label, valueWidget = _chooseFrameLayout(cap, (1, 0, cap.get(7) - 2), title, titleStyle=titleStyle)
 
-  chooseEnd = True
-  def back():
-    nonlocal chooseEnd
-    chooseEnd = None
-  def trackWholeVideo():
-    nonlocal chooseEnd
-    chooseEnd = False
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
-  backBtn = QPushButton("Back")
-  backBtn.setObjectName("back")
-  buttonsLayout.addWidget(backBtn)
+  if app.configFileHistory:
+    backBtn = QPushButton("Back")
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn)
   chooseFrameBtn = QPushButton(chooseFrameBtnText)
   def chooseFrameBtnClicked():
     app.configFile["firstFrame"] = valueWidget.value()
@@ -304,7 +476,13 @@ def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBt
     label.setMinimumSize(1, 1)
     label.show()
     setPixmapFromCv(frame, label)
-  for btn in (backBtn, chooseFrameBtn) + () if extraBtn is None else (extraBtn,):
+  buttons = []
+  if app.configFileHistory:
+    buttons.append(backBtn)
+  buttons.append(chooseFrameBtn)
+  if extraBtn is not None:
+    buttons.append(extraBtn)
+  for btn in buttons:
     btn.clicked.connect(lambda: stackedLayout.removeWidget(page))
 
 
@@ -313,11 +491,8 @@ def chooseEndPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb):
   maximum = cap.get(7) - 2
   cap.set(1, maximum)
   ret, frame = cap.read()
-  layout, label, valueWidget = _chooseFrameLayout(cap, (maximum, app.configFile["firstFrame"] + 1, maximum))
-  proceed = True
-  def back():
-    nonlocal proceed
-    proceed = False
+  layout, label, valueWidget = _chooseFrameLayout(cap, (maximum, app.configFile["firstFrame"] + 1, maximum), title)
+
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
   backBtn = QPushButton("Back")
@@ -346,7 +521,7 @@ def chooseEndPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb):
 
 
 class _InteractiveLabelPoint(QLabel):
-  pointSelected = pyqtSignal(bool)
+  pointSelected = pyqtSignal(QPoint)
 
   def __init__(self, width, height, selectingRegion):
     super().__init__()
@@ -367,7 +542,7 @@ class _InteractiveLabelPoint(QLabel):
   def mousePressEvent(self, evt):
     self._point = evt.pos()
     self.update()
-    self.pointSelected.emit(True)
+    self.pointSelected.emit(self._point)
 
   def mouseReleaseEvent(self, evt):
     if self._point is not None and not self._tooltipShown:
@@ -411,19 +586,21 @@ class _InteractiveLabelPoint(QLabel):
     return point.x(), point.y()
 
 
-def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=None, useNext=True):
+def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=None, zoomable=False, useNext=True):
   height, width = frame.shape[:2]
 
   layout = QVBoxLayout()
+  if zoomable:
+    layout.addWidget(QLabel("You can zoom in/out using the mouse wheel and drag the image."), alignment=Qt.AlignmentFlag.AlignCenter)
 
   video = _InteractiveLabelPoint(width, height, selectingRegion)
   extraButtons = tuple((text, lambda: cb(video), exitLoop) for text, cb, exitLoop in extraButtons)
   buttons = (("Back", backBtnCb, True),) if backBtnCb is not None else ()
   buttons += (("Next", None, True, video.pointSelected),) if useNext else ()
-  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
+  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
   if not useNext:
     video.pointSelected.connect(lambda: QApplication.restoreOverrideCursor())
-  showBlockingPage(layout, title=title, buttons=buttons + extraButtons, labelInfo=(frame, video), exitSignals=() if useNext else (video.pointSelected,))
+  showBlockingPage(layout, title=title, buttons=buttons + extraButtons, labelInfo=(frame, video, zoomable), exitSignals=() if useNext else (video.pointSelected,))
   return video.getCoordinates()
 
 
@@ -526,11 +703,63 @@ def addToHistory(fn):
   def inner(*args, **kwargs):
     app = QApplication.instance()
     configFileState = app.configFile.copy()
-    def restoreState():
-      app.configFile.clear()
-      app.configFile.update(configFileState)
+    def restoreState(restoreConfig=True):
+      if restoreConfig:
+        app.configFile.clear()
+        app.configFile.update(configFileState)
       del app.configFileHistory[-1:]
       fn(*args, **kwargs)
     app.configFileHistory.append(restoreState)
     return fn(*args, **kwargs)
   return inner
+
+
+class Expander(QWidget):
+  def __init__(self, parent, title, layout, animationDuration=200):
+    super(Expander, self).__init__(parent)
+
+    toggleButton = QToolButton()
+    toggleButton.setStyleSheet("QToolButton { border: none; }")
+    toggleButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
+    toggleButton.setArrowType(Qt.RightArrow)
+    toggleButton.setText(str(title))
+    toggleButton.setCheckable(True)
+    toggleButton.setChecked(False)
+
+    contentArea = QScrollArea()
+    contentArea.setFrameShape(QFrame.Shape.NoFrame)
+    contentArea.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
+    contentArea.setMaximumHeight(0)
+    contentArea.setMinimumHeight(0)
+
+    mainLayout = QGridLayout()
+    mainLayout.setVerticalSpacing(0)
+    mainLayout.setContentsMargins(0, 0, 0, 0)
+    mainLayout.addWidget(toggleButton, 0, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
+    mainLayout.addWidget(contentArea, 1, 0, 1, 3)
+    self.setLayout(mainLayout)
+
+    contentArea.setLayout(layout)
+    collapsedHeight = self.sizeHint().height() - contentArea.maximumHeight()
+    contentHeight = layout.sizeHint().height()
+    toggleAnimation = QParallelAnimationGroup()
+    toggleAnimation.addAnimation(QPropertyAnimation(self, b"minimumHeight"))
+    toggleAnimation.addAnimation(QPropertyAnimation(self, b"maximumHeight"))
+    toggleAnimation.addAnimation(QPropertyAnimation(contentArea, b"maximumHeight"))
+    for i in range(toggleAnimation.animationCount() - 1):
+      spoilerAnimation = toggleAnimation.animationAt(i)
+      spoilerAnimation.setDuration(animationDuration)
+      spoilerAnimation.setStartValue(collapsedHeight)
+      spoilerAnimation.setEndValue(collapsedHeight + contentHeight)
+    contentAnimation = toggleAnimation.animationAt(toggleAnimation.animationCount() - 1)
+    contentAnimation.setDuration(animationDuration)
+    contentAnimation.setStartValue(0)
+    contentAnimation.setEndValue(contentHeight)
+
+    def start_animation(checked):
+      arrow_type = Qt.DownArrow if checked else Qt.RightArrow
+      direction = QAbstractAnimation.Forward if checked else QAbstractAnimation.Backward
+      toggleButton.setArrowType(arrow_type)
+      toggleAnimation.setDirection(direction)
+      toggleAnimation.start()
+    toggleButton.clicked.connect(start_animation)

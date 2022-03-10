@@ -285,7 +285,7 @@ def adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, fi
   self.configFile = configFile
 
 
-def calculateBackground(self, controller, nbImagesForBackgroundCalculation):
+def calculateBackground(self, controller, nbImagesForBackgroundCalculation, useNext=True):
 
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
 
@@ -310,10 +310,10 @@ def calculateBackground(self, controller, nbImagesForBackgroundCalculation):
   configFile["headEmbededRemoveBack"]           = 0
   configFile["debugExtractBack"]                = 0
 
-  adjustParamInsideAlgoPage()
+  adjustParamInsideAlgoPage(useNext=useNext)
 
 
-def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False):
+def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False, useNext=True):
 
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
 
@@ -352,12 +352,12 @@ def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalcula
 
 
   if boutDetectionsOnly:
-    adjustBoutDetectionOnlyPage()
+    adjustBoutDetectionOnlyPage(useNext=useNext)
   else:
     if automaticParameters:
-      adjustParamInsideAlgoFreelySwimAutomaticParametersPage()
+      adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=useNext)
     else:
       if morePreciseFastScreen:
         adjustFastFreelySwimTracking(self, controller)
       else:
-        adjustParamInsideAlgoFreelySwimPage()
+        adjustParamInsideAlgoFreelySwimPage(useNext=useNext)

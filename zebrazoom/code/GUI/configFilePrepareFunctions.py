@@ -1,6 +1,5 @@
 from pathlib import Path
 import numpy as np
-import json
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.GUI.getCoordinates import findWellLeft, findWellRight, findHeadCenter, findBodyExtremity
@@ -39,7 +38,7 @@ def getMainArguments(self):
   return [pathToVideo, videoName, videoExt, configFile, argv]
 
 
-def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile, freelySwimAutomaticParameters=False, boutDetectionsOnly=False):
+def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
 
   if int(reloadConfigFile):
 
@@ -51,16 +50,9 @@ def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile, freelyS
     configFileName, _ =  QFileDialog.getOpenFileName(self.window, "Select configuration file", pathconf, "All files(*)")
     with open(configFileName) as f:
       self.configFile = json.load(f)
+    self.savedConfigFile = self.configFile.copy()
 
   self.videoToCreateConfigFileFor, _ = QFileDialog.getOpenFileName(self.window, "Select video to create config file for", os.path.expanduser("~"), "All files(*)")
-
-  if boutDetectionsOnly:
-    util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, False, False, True)
-  else:
-    if freelySwimAutomaticParameters:
-      util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, False, True)
-    else:
-      util.addToHistory(controller.show_frame)("ChooseGeneralExperiment")
 
 
 @util.addToHistory
@@ -553,24 +545,3 @@ def goToAdvanceSettings(self, controller, yes, no):
   else:
     self.configFile["noBoutsDetection"] = 0
     self.calculateBackgroundFreelySwim(controller, 0)
-
-
-def finishConfig(self, controller, reference):
-
-  # Ideally would like to remove these four lines below, once the problem with wrong 'firstFrame' and 'lastFrame' being saved in the configuration file is solved
-  if "lastFrame" in self.configFile:
-    del self.configFile["lastFrame"]
-  if "firstFrame" in self.configFile:
-    del self.configFile["firstFrame"]
-
-  with open(reference, 'w') as outfile:
-    json.dump(self.configFile, outfile)
-  self.configFile = {}
-  self.videoToCreateConfigFileFor = ''
-  self.wellLeftBorderX = 0
-  self.wellLeftBorderY = 0
-  self.headCenterX = 0
-  self.headCenterY = 0
-  self.organism = ''
-
-  controller.show_frame("StartPage")
