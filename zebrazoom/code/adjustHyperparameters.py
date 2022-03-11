@@ -92,7 +92,7 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
       button.clicked.connect(cb)
       buttonsLayout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
     if documentationLink is not None:
-      documentationBtn = QPushButton("Help")
+      documentationBtn = util.apply_style(QPushButton("Help"), background_color="red")
       documentationBtn.clicked.connect(lambda: webbrowser.open_new(documentationLink))
       buttonsLayout.addWidget(documentationBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch()
