@@ -737,7 +737,7 @@ class Expander(QWidget):
     mainLayout = QGridLayout()
     mainLayout.setVerticalSpacing(0)
     mainLayout.setContentsMargins(0, 0, 0, 0)
-    mainLayout.addWidget(toggleButton, 0, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
+    mainLayout.addWidget(toggleButton, 0, 0, 1, 3, Qt.AlignmentFlag.AlignHCenter)
     mainLayout.addWidget(contentArea, 1, 0, 1, 3)
     self.setLayout(mainLayout)
 

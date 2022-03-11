@@ -10,12 +10,12 @@ import json
 try:
   from PyQt6.QtCore import Qt, QSize
   from PyQt6.QtGui import QFont
-  from PyQt6.QtWidgets import QWidget, QDialog, QFileDialog, QApplication, QLabel, QMainWindow, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem, QPushButton
+  from PyQt6.QtWidgets import QWidget, QButtonGroup, QCheckBox, QDialog, QFileDialog, QHBoxLayout, QApplication, QLabel, QMainWindow, QRadioButton, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem, QPushButton
   PYQT6 = True
 except ImportError:
   from PyQt5.QtCore import Qt, QSize
   from PyQt5.QtGui import QFont
-  from PyQt5.QtWidgets import QWidget, QDialog, QFileDialog, QApplication, QLabel, QMainWindow, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem, QPushButton
+  from PyQt5.QtWidgets import QWidget, QButtonGroup, QCheckBox, QDialog, QFileDialog, QHBoxLayout, QApplication, QLabel, QMainWindow, QRadioButton, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem, QPushButton
   QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
   QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
   QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
@@ -346,7 +346,7 @@ class ZebraZoomApp(QApplication):
         firstFrame = self.configFile["firstFrame"]
         self.configFile.clear()
         self.configFile.update(configFile)
-        lastFrame = min(firstFrame + 500, int(zzVideoReading.VideoCapture(videoPath).get(7)) - 1)
+        lastFrame = min(firstFrame + maximumFramesButtonGroup.checkedId(), int(zzVideoReading.VideoCapture(videoPath).get(7)) - 1)
         tempDir = tempfile.TemporaryDirectory()
         outputLocation = self.ZZoutputLocation
         self.ZZoutputLocation = tempDir.name
@@ -373,6 +373,23 @@ class ZebraZoomApp(QApplication):
           layout.currentChanged.disconnect(cleanup)
         layout.currentChanged.connect(cleanup)
       configFile = self.configFile.copy()
+
+      layout = QVBoxLayout()
+      backgroundExtractionForceUseAllVideoFramesCheckbox = QCheckBox("Use all frames to calculate background")
+      backgroundExtractionForceUseAllVideoFramesCheckbox.toggled.connect(lambda checked: self.configFile.update({"backgroundExtractionForceUseAllVideoFrames": int(checked)}))
+      backgroundExtractionForceUseAllVideoFramesCheckbox.setChecked(True)
+      layout.addWidget(backgroundExtractionForceUseAllVideoFramesCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+      maximumFramesLayout = QHBoxLayout()
+      maximumFramesLayout.addStretch()
+      maximumFramesLayout.addWidget(QLabel("Maximum number of frames used for tracking:"))
+      maximumFramesButtonGroup = QButtonGroup()
+      for value in (50, 100, 200, 300, 500):
+        btn = QRadioButton(str(value))
+        maximumFramesLayout.addWidget(btn)
+        maximumFramesButtonGroup.addButton(btn, id=value)
+      maximumFramesButtonGroup.button(500).setChecked(True)
+      maximumFramesLayout.addStretch()
+      layout.addLayout(maximumFramesLayout)
       cb = util.chooseBeginningPage if not addToHistory else util.addToHistory(util.chooseBeginningPage)
-      cb(self, videoPath, "We will test the tracking on the video you provided, with the configuration file you just created. We will do this test only on 500 frames (maximum) and the tracking will start at the frame you select below (so please choose a section of the video where the animal is moving).",
-         "Ok, I want the tracking to start at this frame!", callback, titleStyle={'color': 'red', 'font': QFont('Helvetica', 14, QFont.Weight.Bold, True)})
+      cb(self, videoPath, "We will test the tracking on the video you provided, with the configuration file you just created. We will do this test only on the selected number of frames (maximum) and the tracking will start at the frame you select below (so please choose a section of the video where the animal is moving).",
+         "Ok, I want the tracking to start at this frame!", callback, additionalLayout=layout, titleStyle={'color': 'red', 'font': QFont('Helvetica', 14, QFont.Weight.Bold, True)})
