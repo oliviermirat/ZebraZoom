@@ -195,11 +195,11 @@ class ZoomableImage(QGraphicsView):
     self._pixmap = QGraphicsPixmapItem() # TODO: rename
     self._scene.addItem(self._pixmap)
     self.setScene(self._scene)
-    self.setTransformationAnchor(QGraphicsView.AnchorUnderMouse)
-    self.setResizeAnchor(QGraphicsView.AnchorUnderMouse)
-    self.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-    self.setHorizontalScrollBarPolicy(Qt.ScrollBarAlwaysOff)
-    self.setFrameShape(QFrame.NoFrame)
+    self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+    self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+    self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+    self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+    self.setFrameShape(QFrame.Shape.NoFrame)
     self._point = None
     self._dragging = False
     self._tooltipShown = False
@@ -216,9 +216,9 @@ class ZoomableImage(QGraphicsView):
     self.scale(factor, factor)
     self._zoom = 0
 
-  def setPhoto(self, pixmap):
+  def setPixmap(self, pixmap):
     self._zoom = 0
-    self.setDragMode(QGraphicsView.ScrollHandDrag)
+    self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
     self._pixmap.setPixmap(pixmap)
     self.fitInView()
 
@@ -237,7 +237,7 @@ class ZoomableImage(QGraphicsView):
       self._zoom = 0
 
   def mouseMoveEvent(self, evt):
-    if evt.buttons() == Qt.LeftButton and not self._dragging:
+    if evt.buttons() == Qt.MouseButton.LeftButton and not self._dragging:
       self._dragging = True
       QApplication.setOverrideCursor(Qt.CursorShape.ClosedHandCursor)
     super().mouseMoveEvent(evt)
@@ -264,7 +264,7 @@ class ZoomableImage(QGraphicsView):
     if self._point is not None:
       qp.setBrush(QColor(255, 0, 0))
       qp.setPen(Qt.PenStyle.NoPen)
-      qp.drawEllipse(self.mapFromScene(self._point), 2, 2)
+      qp.drawEllipse(self.mapFromScene(QPointF(self._point)), 2, 2)
     qp.end()
 
   def enterEvent(self, evt):
@@ -299,7 +299,7 @@ def setPixmapFromCv(img, label, preferredSize=None, zoomable=False):
     image = ZoomableImage()
     image.sizeHint = lambda: size
     image.viewport().setMinimumSize(size)
-    image.setPhoto(originalPixmap)
+    image.setPixmap(originalPixmap)
     label.parentWidget().layout().replaceWidget(label, image)
     if hasattr(image, "pointSelected"):
       def pointSelected(point):
@@ -440,11 +440,13 @@ def _chooseFrameLayout(cap, spinboxValues, title, titleStyle=None):
 
   return layout, video, frameSlider
 
-def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb, extraButtonInfo=None, titleStyle=None):
+def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb, extraButtonInfo=None, titleStyle=None, additionalLayout=None):
   cap = zzVideoReading.VideoCapture(videoPath)
   cap.set(1, 1)
   ret, frame = cap.read()
   layout, label, valueWidget = _chooseFrameLayout(cap, (1, 0, cap.get(7) - 2), title, titleStyle=titleStyle)
+  if additionalLayout is not None:
+    layout.addLayout(additionalLayout)
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
@@ -720,8 +722,8 @@ class Expander(QWidget):
 
     toggleButton = QToolButton()
     toggleButton.setStyleSheet("QToolButton { border: none; }")
-    toggleButton.setToolButtonStyle(Qt.ToolButtonTextBesideIcon)
-    toggleButton.setArrowType(Qt.RightArrow)
+    toggleButton.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+    toggleButton.setArrowType(Qt.ArrowType.RightArrow)
     toggleButton.setText(str(title))
     toggleButton.setCheckable(True)
     toggleButton.setChecked(False)
@@ -735,7 +737,7 @@ class Expander(QWidget):
     mainLayout = QGridLayout()
     mainLayout.setVerticalSpacing(0)
     mainLayout.setContentsMargins(0, 0, 0, 0)
-    mainLayout.addWidget(toggleButton, 0, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
+    mainLayout.addWidget(toggleButton, 0, 0, 1, 3, Qt.AlignmentFlag.AlignHCenter)
     mainLayout.addWidget(contentArea, 1, 0, 1, 3)
     self.setLayout(mainLayout)
 
@@ -756,10 +758,10 @@ class Expander(QWidget):
     contentAnimation.setStartValue(0)
     contentAnimation.setEndValue(contentHeight)
 
-    def start_animation(checked):
-      arrow_type = Qt.DownArrow if checked else Qt.RightArrow
-      direction = QAbstractAnimation.Forward if checked else QAbstractAnimation.Backward
-      toggleButton.setArrowType(arrow_type)
+    def startAnimation(checked):
+      arrowType = Qt.ArrowType.DownArrow if checked else Qt.ArrowType.RightArrow
+      direction = QAbstractAnimation.Direction.Forward if checked else QAbstractAnimation.Direction.Backward
+      toggleButton.setArrowType(arrowType)
       toggleAnimation.setDirection(direction)
       toggleAnimation.start()
-    toggleButton.clicked.connect(start_animation)
+    toggleButton.clicked.connect(startAnimation)

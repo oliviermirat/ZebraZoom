@@ -120,20 +120,6 @@ class OptimizeConfigFile(QWidget):
     gridLayout.addWidget(QLabel("backgroundPreProcessParameters:"), 1, 1, Qt.AlignmentFlag.AlignCenter)
     gridLayout.addWidget(backgroundPreProcessParameters, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
-    self._recalculateForegroundImageBasedOnBodyArea = QCheckBox("recalculateForegroundImageBasedOnBodyArea")
-
-    def updateRecalculateForegroundImageBasedOnBodyArea(checked):
-      if checked:
-        controller.configFile["recalculateForegroundImageBasedOnBodyArea"] = 1
-      elif self._originalRecalculateForegroundImageBasedOnBodyArea is None:
-        if recalculateForegroundImageBasedOnBodyArea in controller.configFile:
-          del controll.configFile["recalculateForegroundImageBasedOnBodyArea"]
-      else:
-        controller.configFile["recalculateForegroundImageBasedOnBodyArea"] = 0
-    self._recalculateForegroundImageBasedOnBodyArea.toggled.connect(updateRecalculateForegroundImageBasedOnBodyArea)
-    self._recalculateForegroundImageBasedOnBodyArea.setLayoutDirection(Qt.RightToLeft)
-    gridLayout.addWidget(self._recalculateForegroundImageBasedOnBodyArea, 2, 1, 1, 2, Qt.AlignmentFlag.AlignCenter)
-
     postProcessTrajectoriesLabel = util.apply_style(QLabel("Post-process animal center trajectories"), font_size='16px')
     postProcessTrajectoriesLabel.setToolTip("Trajectories post-processing can help solve problems with animal 'disapearing' and/or temporarily 'jumping' to a distant (and incorrect) location.")
     gridLayout.addWidget(postProcessTrajectoriesLabel, 0, 4, 1, 2, Qt.AlignmentFlag.AlignLeft)
@@ -180,6 +166,21 @@ class OptimizeConfigFile(QWidget):
     postProcessMaxDisapearanceFrames.textChanged.connect(updatePostProcessMaxDisapearanceFrames)
     gridLayout.addWidget(QLabel("postProcessMaxDisapearanceFrames:"), 2, 4, Qt.AlignmentFlag.AlignCenter)
     gridLayout.addWidget(postProcessMaxDisapearanceFrames, 2, 5, Qt.AlignmentFlag.AlignCenter)
+
+    gridLayout.addWidget(util.apply_style(QLabel("Tail tracking quality"), font_size='16px'), 3, 1, 1, 5, Qt.AlignmentFlag.AlignCenter)
+    gridLayout.addWidget(QLabel("Checking this increases quality, but makes tracking slower."), 4, 1, 1, 5, Qt.AlignmentFlag.AlignCenter)
+    self._recalculateForegroundImageBasedOnBodyArea = QCheckBox("recalculateForegroundImageBasedOnBodyArea")
+
+    def updateRecalculateForegroundImageBasedOnBodyArea(checked):
+      if checked:
+        controller.configFile["recalculateForegroundImageBasedOnBodyArea"] = 1
+      elif self._originalRecalculateForegroundImageBasedOnBodyArea is None:
+        if "recalculateForegroundImageBasedOnBodyArea" in controller.configFile:
+          del controller.configFile["recalculateForegroundImageBasedOnBodyArea"]
+      else:
+        controller.configFile["recalculateForegroundImageBasedOnBodyArea"] = 0
+    self._recalculateForegroundImageBasedOnBodyArea.toggled.connect(updateRecalculateForegroundImageBasedOnBodyArea)
+    gridLayout.addWidget(self._recalculateForegroundImageBasedOnBodyArea, 5, 1, 1, 5, Qt.AlignmentFlag.AlignCenter)
     advancedOptionsLayout.addLayout(gridLayout)
 
     advancedButtonsLayout = QHBoxLayout()
