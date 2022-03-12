@@ -355,7 +355,8 @@ class ZebraZoomApp(QApplication):
           try:
             tabParams = ["mainZZ", pathToVideo, videoName, videoExt, self.configFile,
                          "firstFrame", firstFrame, "lastFrame", lastFrame, "freqAlgoPosFollow", 100,
-                         "popUpAlgoFollow", 1, "outputFolder", self.ZZoutputLocation]
+                         "popUpAlgoFollow", 1, "outputFolder", self.ZZoutputLocation,
+                         "backgroundExtractionForceUseAllVideoFrames", int(backgroundExtractionForceUseAllVideoFramesCheckbox.isChecked())]
             mainZZ(pathToVideo, videoName, videoExt, self.configFile, tabParams)
           except NameError:
             self.show_frame("Error")
@@ -376,7 +377,6 @@ class ZebraZoomApp(QApplication):
 
       layout = QVBoxLayout()
       backgroundExtractionForceUseAllVideoFramesCheckbox = QCheckBox("Use all frames to calculate background")
-      backgroundExtractionForceUseAllVideoFramesCheckbox.toggled.connect(lambda checked: self.configFile.update({"backgroundExtractionForceUseAllVideoFrames": int(checked)}))
       backgroundExtractionForceUseAllVideoFramesCheckbox.setChecked(True)
       layout.addWidget(backgroundExtractionForceUseAllVideoFramesCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
       maximumFramesLayout = QHBoxLayout()
