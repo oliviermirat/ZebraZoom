@@ -10,13 +10,13 @@ from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 
 try:
-  from PyQt6.QtCore import Qt, QSize
+  from PyQt6.QtCore import Qt, QDir, QSize, QSortFilterProxyModel
   from PyQt6.QtGui import QCursor, QFont
-  from PyQt6.QtWidgets import QLabel, QWidget, QFrame, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QComboBox
+  from PyQt6.QtWidgets import QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QComboBox, QTreeView
 except ImportError:
-  from PyQt5.QtCore import Qt, QSize
+  from PyQt5.QtCore import Qt, QDir, QSize, QSortFilterProxyModel
   from PyQt5.QtGui import QCursor, QFont
-  from PyQt5.QtWidgets import QLabel, QWidget, QFrame, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QComboBox
+  from PyQt5.QtWidgets import QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QComboBox, QTreeView
 
 import zebrazoom.code.util as util
 from zebrazoom.code.readValidationVideo import readValidationVideo
@@ -60,7 +60,7 @@ class StartPage(QWidget):
         run_tracking_on_videos_btn.clicked.connect(lambda: controller.show_frame("SeveralVideos"))
         layout.addWidget(run_tracking_on_videos_btn, 4, 1, Qt.AlignmentFlag.AlignCenter)
         visualize_output_btn = util.apply_style(QPushButton("Visualize ZebraZoom's output", self), background_color=util.LIGHT_YELLOW)
-        visualize_output_btn.clicked.connect(lambda: controller.showResultsVisualization())
+        visualize_output_btn.clicked.connect(lambda: controller.showViewParameters())
         layout.addWidget(visualize_output_btn, 8, 0, Qt.AlignmentFlag.AlignCenter)
         enhance_output_btn = util.apply_style(QPushButton("Enhance ZebraZoom's output", self), background_color=util.LIGHT_YELLOW)
         enhance_output_btn.clicked.connect(lambda: controller.show_frame("EnhanceZZOutput"))
@@ -314,46 +314,6 @@ class ZZoutroSbatch(QWidget):
         self.setLayout(layout)
 
 
-class ResultsVisualization(QWidget):
-    def __init__(self, controller):
-        super().__init__(controller.window)
-        self.controller = controller
-        self.setLayout(QGridLayout())
-
-    def refresh(self):
-        nbLines = 15
-        curLine = 1
-        curCol  = 0
-
-        layout = self.layout()
-        for idx in reversed(range(layout.count())):
-            layout.itemAt(idx).widget().setParent(None)
-
-        layout.addWidget(util.apply_style(QLabel("Choose the results you'd like to visualize", self), font=self.controller.title_font), 0, 0, Qt.AlignmentFlag.AlignCenter)
-
-        reference = self.controller.ZZoutputLocation
-
-        if not(os.path.exists(reference)):
-          os.mkdir(reference)
-
-        os.walk(reference)
-        for x in sorted(next(os.walk(reference))[1]):
-          button = QPushButton(x, self)
-          button.clicked.connect(lambda _, currentResultFolder=x: self.controller.showViewParameters(currentResultFolder))
-          layout.addWidget(button, curLine, curCol, Qt.AlignmentFlag.AlignCenter)
-          if (curLine > nbLines):
-            curLine = 1
-            curCol = curCol + 1
-          else:
-            curLine = curLine + 1
-
-        button = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_YELLOW)
-        button.clicked.connect(lambda: self.controller.show_frame("StartPage"))
-        layout.addWidget(button, curLine, curCol, Qt.AlignmentFlag.AlignCenter)
-
-        self.setLayout(layout)
-
-
 class EnhanceZZOutput(QWidget):
     def __init__(self, controller):
         super().__init__(controller.window)
@@ -395,6 +355,30 @@ class ViewParameters(QWidget):
         super().__init__(controller.window)
         self.controller = controller
 
+        model = QFileSystemModel()
+        model.setFilter(QDir.Filter.NoDotAndDotDot | QDir.Filter.Dirs)
+        model.setRootPath(self.controller.ZZoutputLocation)
+        model.setReadOnly(True)
+        proxyModel = QSortFilterProxyModel()
+
+        def filterModel(row, parent):
+          index = model.index(row, 0, parent)
+          if os.path.normpath(model.filePath(index)) == os.path.normpath(self.controller.ZZoutputLocation):
+            return True
+          return bool(self._findResultsFile(model.fileName(index)))
+        proxyModel.filterAcceptsRow = filterModel
+        proxyModel.setSourceModel(model)
+        self._tree = tree = QTreeView()
+        tree.setMaximumWidth(150)
+        tree.setModel(proxyModel)
+        tree.setRootIsDecorated(False)
+        tree.header().setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
+        for idx in range(1, model.columnCount()):
+          tree.hideColumn(idx)
+        tree.setRootIndex(proxyModel.mapFromSource(model.index(model.rootPath())))
+        selectionModel = tree.selectionModel()
+        selectionModel.currentRowChanged.connect(lambda current, previous: current.row() == -1 or self.setFolder(model.fileName(current)))
+
         layout = QGridLayout()
 
         optimizeLayout = QHBoxLayout()
@@ -410,6 +394,7 @@ class ViewParameters(QWidget):
         line = QFrame()
         line.setFrameShape(QFrame.Shape.HLine)
         layout.addWidget(line, 2, 1, 1, 7)
+
         button = QPushButton("View video for all wells together", self)
         button.clicked.connect(lambda: self.showValidationVideo(-1, self.numPoiss(), 0, -1))
         layout.addWidget(button, 3, 1, Qt.AlignmentFlag.AlignCenter)
@@ -476,31 +461,21 @@ class ViewParameters(QWidget):
         kine_btn.clicked.connect(lambda: checkConsistencyOfParameters([self.currentResultFolder]))
         layout.addWidget(kine_btn, 10, 2, Qt.AlignmentFlag.AlignCenter)
 
-        # self.zoom_btn = util.apply_style(QPushButton("", self), background_color=util.LIGHT_GREEN)
-        # self.zoom_btn.clicked.connect(lambda: setattr(self, "graphScaling", not self.graphScaling) or self._printSomeResults())
-        # layout.addWidget(self.zoom_btn, 8, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
-
         startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_YELLOW)
         startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
         layout.addWidget(startPageBtn, 10, 1, Qt.AlignmentFlag.AlignCenter)
-        backBtn = util.apply_style(QPushButton("Go to the previous page", self), background_color=util.LIGHT_YELLOW)
-        backBtn.clicked.connect(lambda: controller.showResultsVisualization())
-        layout.addWidget(backBtn, 10, 1, Qt.AlignmentFlag.AlignCenter)
 
         def _updateConfigWidgets():
-          otherButtons = (startPageBtn, optimizeBtn)
           if controller.configFile:  # page shown while testing config
             message.show()
             line.show()
-            backBtn.hide()
-            for btn in otherButtons:
-              btn.show()
+            optimizeBtn.show()
+            tree.hide()
           else:
             message.hide()
             line.hide()
-            backBtn.show()
-            for btn in otherButtons:
-              btn.hide()
+            optimizeBtn.hide()
+            tree.show()
         self._updateConfigWidgets = _updateConfigWidgets
 
         self.well_video_btn = QPushButton("", self)
@@ -522,33 +497,45 @@ class ViewParameters(QWidget):
         canvasWrapper = QWidget()
         canvasWrapperLayout = QVBoxLayout()
         canvasWrapperLayout.addWidget(self.canvas, alignment=Qt.AlignmentFlag.AlignCenter)
+        canvasWrapper.resizeEvent = lambda evt: self.canvas.resize(min(evt.size().width(), evt.size().height()), min(evt.size().width(), evt.size().height()))
         canvasWrapper.setLayout(canvasWrapperLayout)
         canvasSize = self.canvas.size()
         canvasWrapper.sizeHint = lambda *args: canvasSize
         layout.addWidget(canvasWrapper, 4, 7, 7, 1, Qt.AlignmentFlag.AlignCenter)
         sizeHint = layout.totalSizeHint().width() + canvasSize.width()
 
-        centralWidget = QWidget()
-        centralWidget.sizeHint = lambda *args: QSize(sizeHint + 200, 768)
-        centralWidget.setLayout(layout)
-        wrapperLayout = QVBoxLayout()
-        wrapperLayout.addWidget(centralWidget, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._centralWidget = QWidget()
+        self._centralWidget.sizeHint = lambda *args: QSize(sizeHint + 200, 768)
+        self._centralWidget.setLayout(layout)
+        wrapperLayout = QHBoxLayout()
+        wrapperLayout.addWidget(tree, alignment=Qt.AlignmentFlag.AlignLeft)
+        wrapperLayout.addWidget(self._centralWidget, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
         self.setLayout(wrapperLayout)
+
+    def _findResultsFile(self, folder):
+        reference = os.path.join(self.controller.ZZoutputLocation, os.path.join(folder, 'results_' + folder + '.txt'))
+        if os.path.exists(reference):
+          return reference
+        mypath = os.path.join(self.controller.ZZoutputLocation, folder)
+        if not os.path.exists(mypath):
+          return None
+        resultsFile = next((f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f)) if f.startswith('results_')), None)
+        if resultsFile is None:
+          return None
+        return os.path.join(self.controller.ZZoutputLocation, os.path.join(folder, resultsFile))
 
     def setFolder(self, name):
         self.title_label.setText(name)
+        if name is None:
+          self._centralWidget.hide()
+          self._tree.selectionModel().clearSelection()
+          self._tree.selectionModel().clearCurrentIndex()
+          return
+        else:
+          self._centralWidget.show()
         self.currentResultFolder = name
-        reference = os.path.join(self.controller.ZZoutputLocation, os.path.join(name, 'results_' + name + '.txt'))
-        if not(os.path.exists(reference)):
-          mypath = os.path.join(self.controller.ZZoutputLocation, name)
-          onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
-          resultFile = ''
-          for fileName in onlyfiles:
-            if 'results_' in fileName:
-              resultFile = fileName
-          reference = os.path.join(self.controller.ZZoutputLocation, os.path.join(name, resultFile))
 
-        with open(reference) as ff:
+        with open(self._findResultsFile(name)) as ff:
             self.dataRef = json.load(ff)
 
         self.spinbox1.setValue(0)
