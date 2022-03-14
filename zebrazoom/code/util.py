@@ -192,7 +192,7 @@ class ZoomableImage(QGraphicsView):
     super(ZoomableImage, self).__init__(parent)
     self._zoom = 0
     self._scene = QGraphicsScene(self)
-    self._pixmap = QGraphicsPixmapItem() # TODO: rename
+    self._pixmap = QGraphicsPixmapItem()
     self._scene.addItem(self._pixmap)
     self.setScene(self._scene)
     self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
@@ -298,7 +298,7 @@ def setPixmapFromCv(img, label, preferredSize=None, zoomable=False):
     label.hide()
     image = ZoomableImage()
     image.sizeHint = lambda: size
-    image.viewport().setMinimumSize(size)
+    image.viewport().setFixedSize(size)
     image.setPixmap(originalPixmap)
     label.parentWidget().layout().replaceWidget(label, image)
     if hasattr(image, "pointSelected"):
