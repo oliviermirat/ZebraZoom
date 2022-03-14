@@ -173,7 +173,7 @@ def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
 @util.addToHistory
 def homegeneousWellsLayout(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
 
-  self.configFile = {"nbAnimalsPerWell": 1, "nbWells": 8, "nbRowsOfWells": 2, "nbWellsPerRows": 4, "groupOfMultipleSameSizeAndShapeEquallySpacedWells": 1, "postProcessMultipleTrajectories": 1,   "postProcessRemoveLowProbabilityDetection" : 1, "postProcessLowProbabilityDetectionPercentOfMaximum" : 0.2, "trackingPointSizeDisplay": 4, "extractAdvanceZebraParameters": 0,  "validationVideoPlotHeading": 0, "trackTail": 0, "freqAlgoPosFollow": 100, "fasterMultiprocessing": 1, "copyOriginalVideoToOutputFolderForValidation": 0, "backgroundSubtractorKNN": 1}
+  self.configFile = {"trackingMethod": "fastCenterOfMassTracking_KNNbackgroundSubtraction", "nbAnimalsPerWell": 1, "nbWells": 8, "nbRowsOfWells": 2, "nbWellsPerRows": 4, "groupOfMultipleSameSizeAndShapeEquallySpacedWells": 1, "postProcessMultipleTrajectories": 1,   "postProcessRemoveLowProbabilityDetection" : 1, "postProcessLowProbabilityDetectionPercentOfMaximum" : 0.2, "trackingPointSizeDisplay": 4, "extractAdvanceZebraParameters": 0,  "validationVideoPlotHeading": 0, "trackTail": 0, "freqAlgoPosFollow": 100, "fasterMultiprocessing": 1, "copyOriginalVideoToOutputFolderForValidation": 0, "backgroundSubtractorKNN": 1}
 
   self.configFile["nbWells"]          = int(nbwells)
 
@@ -194,7 +194,7 @@ def homegeneousWellsLayout(self, controller, nbwells, nbRowsOfWells, nbWellsPerR
 def morePreciseFastScreen(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
 
   # The gaussian image filtering should be added here in the future
-  self.configFile = {"minPixelDiffForBackExtract": 20, "backgroundPreProcessParameters": [[3]], "backgroundPreProcessMethod": ["erodeThenMin"], "trackingPointSizeDisplay": 1, "nbAnimalsPerWell": 1, "extractAdvanceZebraParameters": 0, "trackTail": 0, "nbWells": 1, "noWellDetection": 1, "backgroundExtractionForceUseAllVideoFrames": 1, "headSize": 2, "createValidationVideo": 0, "lastFrame": 1000}
+  self.configFile = {"trackingMethod": "fastCenterOfMassTracking_ClassicalBackgroundSubtraction", "minPixelDiffForBackExtract": 20, "backgroundPreProcessParameters": [[3]], "backgroundPreProcessMethod": ["erodeThenMin"], "trackingPointSizeDisplay": 1, "nbAnimalsPerWell": 1, "extractAdvanceZebraParameters": 0, "trackTail": 0, "nbWells": 1, "noWellDetection": 1, "backgroundExtractionForceUseAllVideoFrames": 1, "headSize": 2, "createValidationVideo": 0, "lastFrame": 1000}
 
   self.configFile["nbAnimalsPerWell"] = int(nbwells)
 
@@ -267,7 +267,7 @@ def chooseCircularWellsRight(self, controller):
 
 
 @util.addToHistory
-def _beginningAndEndChosen(controller):
+def _beginningAndEndChosen(self, controller):
   controller.window.centralWidget().layout().setCurrentIndex(0)
   if int(controller.configFile["headEmbeded"]) == 1:
     controller.show_frame("HeadEmbeded")
@@ -277,17 +277,18 @@ def _beginningAndEndChosen(controller):
     elif controller.organism == 'zebrafish':
       controller.show_frame("NumberOfAnimals")
     else:
+      self.configFile["trackingMethod"] = "classicCenterOfMassTracking"
       controller.show_frame("NumberOfAnimalsCenterOfMass")
 
 
 @util.addToHistory
-def _chooseEnd(controller):
-  util.chooseEndPage(controller, controller.videoToCreateConfigFileFor, "Choose where the analysis of your video should end.", "Ok, I want the tracking to end at this frame!", lambda: _beginningAndEndChosen(controller))
+def _chooseEnd(self, controller):
+  util.chooseEndPage(controller, controller.videoToCreateConfigFileFor, "Choose where the analysis of your video should end.", "Ok, I want the tracking to end at this frame!", lambda: _beginningAndEndChosen(self, controller))
 
 
 def chooseBeginningAndEndOfVideo(self, controller):
-  util.chooseBeginningPage(controller, controller.videoToCreateConfigFileFor, "Choose where the analysis of your video should start.", "Ok, I want the tracking to start at this frame!", lambda: _chooseEnd(controller),
-                           extraButtonInfo=("I want the tracking to run on the entire video!", lambda: _beginningAndEndChosen(controller)))
+  util.chooseBeginningPage(controller, controller.videoToCreateConfigFileFor, "Choose where the analysis of your video should start.", "Ok, I want the tracking to start at this frame!", lambda: _chooseEnd(self, controller),
+                           extraButtonInfo=("I want the tracking to run on the entire video!", lambda: _beginningAndEndChosen(self, controller)))
 
 
 def getImageForMultipleAnimalGUI(l, nx, ny, max_l, videoToCreateConfigFileFor, background, wellPositions, hyperparameters):

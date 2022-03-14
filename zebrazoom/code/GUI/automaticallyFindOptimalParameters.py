@@ -50,6 +50,9 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, det
   else:
     configFile = {"nbWells": 1, "noBoutsDetection": 1, "trackingPointSizeDisplay": 4, "validationVideoPlotHeading": 0, "nbAnimalsPerWell": 1, "forceBlobMethodForHeadTracking": 1, "multipleHeadTrackingIterativelyRelaxAreaCriteria": 1, "erodeIter":0, "minArea": 0, "maxArea": 100000000000000, "minAreaBody": 0, "maxAreaBody": 100000000000000, "headSize": 20, "minTailSize": 0, "maxTailSize": 100000000000000, "paramGaussianBlur": 25, "extractBackWhiteBackground": 1, "dilateIter": 0, "thresholdForBlobImg": 254, "findContourPrecision": "CHAIN_APPROX_NONE", "recalculateForegroundImageBasedOnBodyArea": 0, "headingCalculationMethod": "simplyFromPreviousCalculations", "trackTail": 0}
   
+  if "trackingMethod" in initialConfigFile:
+    configFile["trackingMethod"] = initialConfigFile["trackingMethod"]
+  
   originalConfigFile = self.configFile
   paramsToOverwriteFromOriginalConfigFile = ["setBackgroundToImageMedian"]
   for param in paramsToOverwriteFromOriginalConfigFile:

@@ -226,11 +226,16 @@ def _adjustFastFreelySwimTracking(self, controller, oldFirstFrame):
   del configFile["adjustFreelySwimTracking"]
 
   self.configFile = configFile
+  
+  trackingMethodOldValue = configFile["trackingMethod"]
 
   if configFile["trackTail"] == 0: # FasterMultiprocessing screen option here
 
     # The image filtering option should be added here in the future
     self.configFile = {"nbWells": 25, "nbRowsOfWells": 5, "nbWellsPerRows": 5, "minPixelDiffForBackExtract": 20, "backgroundPreProcessParameters": [[3]], "backgroundPreProcessMethod": ["erodeThenMin"], "postProcessMultipleTrajectories": 1, "postProcessRemoveLowProbabilityDetection" : 0,"postProcessLowProbabilityDetectionThreshold" : 1, "postProcessRemovePointsOnBordersMargin" : 1, "trackingPointSizeDisplay": 1, "extractAdvanceZebraParameters": 0, "groupOfMultipleSameSizeAndShapeEquallySpacedWells": 1, "nbAnimalsPerWell": 1, "trackTail": 0, "validationVideoPlotHeading": 0, "freqAlgoPosFollow": 100, "fasterMultiprocessing": 1, "copyOriginalVideoToOutputFolderForValidation": 0, "backgroundExtractionForceUseAllVideoFrames": 1}
+    
+    if len(trackingMethodOldValue):
+      self.configFile["trackingMethod"] = trackingMethodOldValue
 
     self.configFile["nbWells"]          = configFile["nbAnimalsPerWell"]
     self.configFile["nbRowsOfWells"]    = configFile["nbRowsOfWells"]
