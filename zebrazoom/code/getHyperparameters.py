@@ -427,6 +427,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["reduceImageResolutionPercentage"] = getConfig(config, "reduceImageResolutionPercentage", videoPath)
   
+  hyperparameters["smoothTailHeadEmbededNbOfIterations"] = getConfig(config, "smoothTailHeadEmbededNbOfIterations", videoPath)
+  
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1
   

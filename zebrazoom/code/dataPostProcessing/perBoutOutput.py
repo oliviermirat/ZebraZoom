@@ -8,7 +8,7 @@ import numpy as np
 import time
 import pandas as pd
 import pickle
-import scipy as sp
+from scipy import ndimage
 
 def perBoutOutput(superStruct, hyperparameters, videoName):
   
@@ -100,9 +100,48 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         
           rolling_window = hyperparameters["curvatureMedianFilterSmoothingWindow"]
           if rolling_window:
-            curvature = sp.signal.medfilt2d(curvature, rolling_window)
+            curvature = ndimage.median_filter(curvature, size=rolling_window)
           else:
             curvature = np.array(curvature)
+        
+        if False:
+          from scipy.interpolate import UnivariateSpline
+          print("mmm:", len(curvature[0]))
+          for curvatureColInd in range(0, len(curvature[0])):
+            curvatureCol = curvature[:, curvatureColInd]
+            x = np.arange(len(curvatureCol))
+            print("x:", x)
+            # cs = CubicSpline(x, curvatureCol)
+            spl = UnivariateSpline(x, curvatureCol, s=len(x)/100000)
+            curvatureColInterpt = spl(x)
+            print("curvatureColInterpt:", curvatureColInterpt)
+            curvature[:, curvatureColInd] = curvatureColInterpt
+        
+        if False:
+          from scipy.interpolate import CubicSpline
+          print("lll:", len(curvature[0]))
+          for curvatureColInd in range(0, len(curvature[0])):
+            curvatureCol = curvature[:, curvatureColInd]
+            x = np.arange(len(curvatureCol))
+            cs = CubicSpline(x, curvatureCol)
+            curvatureColInterpt = cs(x)
+            curvature[:, curvatureColInd] = curvatureColInterpt
+            
+        if False:
+          from scipy.interpolate import splprep, splev
+          for curvatureColInd in range(0, len(curvature[0])):
+            curvatureCol = curvature[:, curvatureColInd]
+            x = np.arange(len(curvatureCol))
+            print("x:", x)
+            points3 = [x, curvatureCol]
+            tck, u = splprep(points3)
+            # u2 = [i/(len(curvatureCol)-1) for i in range(0, len(curvatureCol))]
+            interpolated_points = splev(x, tck)
+            curvature[:, curvatureColInd] = interpolated_points[1]
+            # u2 = [i/(nbTailPoints-1) for i in range(0, nbTailPoints)]
+            # interpolated_points = splev(u2, tck)
+            # newX = interpolated_points[0]
+            # newY = interpolated_points[1]
         
         fig = plt.figure(1)
         plt.pcolor(curvature)
