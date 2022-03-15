@@ -187,6 +187,7 @@ def _cvToPixmap(img):
 
 class ZoomableImage(QGraphicsView):
   pointSelected = pyqtSignal(QPoint)
+  proceed = pyqtSignal()
 
   def __init__(self, parent=None):
     super(ZoomableImage, self).__init__(parent)
@@ -235,6 +236,12 @@ class ZoomableImage(QGraphicsView):
       self.fitInView()
     else:
       self._zoom = 0
+
+  def keyPressEvent(self, evt):
+    if self._point is not None and (evt.key() == Qt.Key.Key_Enter or evt.key() == Qt.Key.Key_Return):
+      self.proceed.emit()
+      return
+    super().keyPressEvent(evt)
 
   def mouseMoveEvent(self, evt):
     if evt.buttons() == Qt.MouseButton.LeftButton and not self._dragging:
@@ -306,6 +313,7 @@ def setPixmapFromCv(img, label, preferredSize=None, zoomable=False):
         label.pointSelected.emit(point)
         label.getCoordinates = lambda: (point.x(), point.y())
       image.pointSelected.connect(pointSelected)
+      image.proceed.connect(label.proceed.emit)
 
 
 class SliderWithSpinbox(QWidget):
@@ -524,6 +532,7 @@ def chooseEndPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb):
 
 class _InteractiveLabelPoint(QLabel):
   pointSelected = pyqtSignal(QPoint)
+  proceed = pyqtSignal()
 
   def __init__(self, width, height, selectingRegion):
     super().__init__()
@@ -533,8 +542,15 @@ class _InteractiveLabelPoint(QLabel):
     self._selectingRegion = selectingRegion
     self._currentPosition = None
     self._tooltipShown = False
+    self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
     if self._selectingRegion:
       self.setMouseTracking(True)
+
+  def keyPressEvent(self, evt):
+    if self._point is not None and (evt.key() == Qt.Key.Key_Enter or evt.key() == Qt.Key.Key_Return):
+      self.proceed.emit()
+      return
+    super().keyPressEvent(evt)
 
   def mouseMoveEvent(self, evt):
     if self._selectingRegion:
@@ -592,8 +608,10 @@ def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=Non
   height, width = frame.shape[:2]
 
   layout = QVBoxLayout()
+  additionalText = "Enter/Return keys can be used instead of clicking Next."
   if zoomable:
-    layout.addWidget(QLabel("You can zoom in/out using the mouse wheel and drag the image."), alignment=Qt.AlignmentFlag.AlignCenter)
+    additionalText += "\nYou can zoom in/out using the mouse wheel and drag the image."
+  layout.addWidget(QLabel(additionalText), alignment=Qt.AlignmentFlag.AlignCenter)
 
   video = _InteractiveLabelPoint(width, height, selectingRegion)
   extraButtons = tuple((text, lambda: cb(video), exitLoop) for text, cb, exitLoop in extraButtons)
@@ -602,7 +620,7 @@ def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=Non
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
   if not useNext:
     video.pointSelected.connect(lambda: QApplication.restoreOverrideCursor())
-  showBlockingPage(layout, title=title, buttons=buttons + extraButtons, labelInfo=(frame, video, zoomable), exitSignals=() if useNext else (video.pointSelected,))
+  showBlockingPage(layout, title=title, buttons=buttons + extraButtons, labelInfo=(frame, video, zoomable), exitSignals=(video.proceed,) if useNext else (video.pointSelected,))
   return video.getCoordinates()
 
 
