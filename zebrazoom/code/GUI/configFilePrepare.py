@@ -56,6 +56,7 @@ class OptimizeConfigFile(QWidget):
     self._originalPostProcessMaxDisapearanceFrames = None
     self._originalOutputValidationVideoContrastImprovement = None
     self._originalRecalculateForegroundImageBasedOnBodyArea = None
+    self._originalPlotOnlyOneTailPointForVisu = None
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Optimize previously created configuration file", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -68,21 +69,32 @@ class OptimizeConfigFile(QWidget):
     self._optimizeHeadEmbeddedBtn = util.apply_style(QPushButton("Optimize head embedded tracking configuration file parameters", self), background_color=util.LIGHT_YELLOW)
     self._optimizeHeadEmbeddedBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackground)(controller, 0, useNext=False))
     optimizeButtonsLayout.addWidget(self._optimizeHeadEmbeddedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    optimizeBoutBtn = util.apply_style(QPushButton("Optimize/Add bouts detection (only for one animal per well)", self), background_color=util.LIGHT_YELLOW)
+    self._optimizeBoutBtn = optimizeBoutBtn = util.apply_style(QPushButton("Optimize/Add bouts detection (only for one animal per well)", self), background_color=util.LIGHT_YELLOW)
     optimizeBoutBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, boutDetectionsOnly=True, useNext=False))
     optimizeButtonsLayout.addWidget(optimizeBoutBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     optimizeButtonsLayout.addStretch()
     layout.addLayout(optimizeButtonsLayout)
 
+    def updatePlotOnlyOneTailPointForVisu(checked):
+      if checked:
+        controller.configFile["plotOnlyOneTailPointForVisu"] = 1
+      elif self._originalPlotOnlyOneTailPointForVisu is None:
+        if "plotOnlyOneTailPointForVisu" in controller.configFile:
+          del controller.configFile["plotOnlyOneTailPointForVisu"]
+      else:
+        controller.configFile["plotOnlyOneTailPointForVisu"] = 0
+    self._plotOnlyOneTailPointForVisu = QCheckBox("plotOnlyOneTailPointForVisu", self)
+    self._plotOnlyOneTailPointForVisu.toggled.connect(updatePlotOnlyOneTailPointForVisu)
+    layout.addWidget(self._plotOnlyOneTailPointForVisu, alignment=Qt.AlignmentFlag.AlignCenter)
+
     def updateOutputValidationVideoContrastImprovement(checked):
       if checked:
         controller.configFile["outputValidationVideoContrastImprovement"] = 1
       elif self._originalOutputValidationVideoContrastImprovement is None:
-        if outputValidationVideoContrastImprovement in controller.configFile:
+        if "outputValidationVideoContrastImprovement" in controller.configFile:
           del controller.configFile["outputValidationVideoContrastImprovement"]
       else:
         controller.configFile["outputValidationVideoContrastImprovement"] = 0
-
     self._improveContrastCheckbox = QCheckBox("Improve contrast on validation video", self)
     self._improveContrastCheckbox.toggled.connect(updateOutputValidationVideoContrastImprovement)
     layout.addWidget(self._improveContrastCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -167,8 +179,10 @@ class OptimizeConfigFile(QWidget):
     gridLayout.addWidget(QLabel("postProcessMaxDisapearanceFrames:"), 2, 4, Qt.AlignmentFlag.AlignCenter)
     gridLayout.addWidget(postProcessMaxDisapearanceFrames, 2, 5, Qt.AlignmentFlag.AlignCenter)
 
-    gridLayout.addWidget(util.apply_style(QLabel("Tail tracking quality"), font_size='16px'), 3, 1, 1, 5, Qt.AlignmentFlag.AlignCenter)
-    gridLayout.addWidget(QLabel("Checking this increases quality, but makes tracking slower."), 4, 1, 1, 5, Qt.AlignmentFlag.AlignCenter)
+    self._tailTrackingLabel = util.apply_style(QLabel("Tail tracking quality"), font_size='16px')
+    gridLayout.addWidget(self._tailTrackingLabel, 3, 1, 1, 5, Qt.AlignmentFlag.AlignCenter)
+    self._trailTrackingInfoLabel = QLabel("Checking this increases quality, but makes tracking slower.")
+    gridLayout.addWidget(self._trailTrackingInfoLabel, 4, 1, 1, 5, Qt.AlignmentFlag.AlignCenter)
     self._recalculateForegroundImageBasedOnBodyArea = QCheckBox("recalculateForegroundImageBasedOnBodyArea")
 
     def updateRecalculateForegroundImageBasedOnBodyArea(checked):
@@ -185,7 +199,7 @@ class OptimizeConfigFile(QWidget):
 
     advancedButtonsLayout = QHBoxLayout()
     advancedButtonsLayout.addStretch()
-    speedUpTrackingBtn = util.apply_style(QPushButton("Speed up tracking for 'Track heads and tails of freely swimming fish'", self), background_color=util.LIGHT_YELLOW)
+    self._speedUpTrackingBtn = speedUpTrackingBtn = util.apply_style(QPushButton("Speed up tracking for 'Track heads and tails of freely swimming fish'", self), background_color=util.LIGHT_YELLOW)
     speedUpTrackingBtn.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingSpeedOptimization.md"))
     advancedButtonsLayout.addWidget(speedUpTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     documentationBtn = util.apply_style(QPushButton("Help", self), background_color=util.LIGHT_YELLOW)
@@ -224,18 +238,52 @@ class OptimizeConfigFile(QWidget):
 
   def refresh(self):
     app = QApplication.instance()
-    if app.configFile.get("headEmbeded", False):
-      self._improveContrastCheckbox.show()
-      self._optimizeFreelySwimmingBtn.hide()
-      self._optimizeHeadEmbeddedBtn.show()
-      self._problemSolvingExpander.hide()
-      self._headEmbeddedDocumentationBtn.show()
-    else:
+    trackingMethod = app.configFile.get("trackingMethod", None)
+    if not trackingMethod:
+      if app.configFile.get("headEmbeded", False):
+        self._improveContrastCheckbox.show()
+        self._optimizeFreelySwimmingBtn.hide()
+        self._optimizeHeadEmbeddedBtn.show()
+        self._problemSolvingExpander.hide()
+        self._headEmbeddedDocumentationBtn.show()
+      else:
+        self._improveContrastCheckbox.hide()
+        self._optimizeFreelySwimmingBtn.show()
+        self._optimizeHeadEmbeddedBtn.hide()
+        self._problemSolvingExpander.show()
+        self._headEmbeddedDocumentationBtn.hide()
+        self._tailTrackingLabel.show()
+        self._trailTrackingInfoLabel.show()
+        self._recalculateForegroundImageBasedOnBodyArea.show()
+        self._speedUpTrackingBtn.show()
+      self._optimizeBoutBtn.show()
+      self._plotOnlyOneTailPointForVisu.show()
+    elif trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction" or \
+        trackingMethod == "fastCenterOfMassTracking_ClassicalBackgroundSubtraction":
       self._improveContrastCheckbox.hide()
-      self._optimizeFreelySwimmingBtn.show()
+      self._optimizeFreelySwimmingBtn.hide()
       self._optimizeHeadEmbeddedBtn.hide()
       self._problemSolvingExpander.show()
       self._headEmbeddedDocumentationBtn.hide()
+      self._tailTrackingLabel.hide()
+      self._trailTrackingInfoLabel.hide()
+      self._recalculateForegroundImageBasedOnBodyArea.hide()
+      self._optimizeBoutBtn.show()
+      self._plotOnlyOneTailPointForVisu.hide()
+      self._speedUpTrackingBtn.hide()
+    else:
+      assert trackingMethod == "classicCenterOfMassTracking"
+      self._improveContrastCheckbox.hide()
+      self._optimizeFreelySwimmingBtn.hide()
+      self._optimizeHeadEmbeddedBtn.hide()
+      self._problemSolvingExpander.show()
+      self._headEmbeddedDocumentationBtn.hide()
+      self._tailTrackingLabel.hide()
+      self._trailTrackingInfoLabel.hide()
+      self._recalculateForegroundImageBasedOnBodyArea.hide()
+      self._optimizeBoutBtn.hide()
+      self._plotOnlyOneTailPointForVisu.hide()
+      self._speedUpTrackingBtn.hide()
 
     self._originalBackgroundPreProcessMethod = app.configFile.get("backgroundPreProcessMethod")
     self._originalBackgroundPreProcessParameters = app.configFile.get("backgroundPreProcessParameters")
@@ -264,6 +312,11 @@ class OptimizeConfigFile(QWidget):
       self._recalculateForegroundImageBasedOnBodyArea.setChecked(bool(self._originalRecalculateForegroundImageBasedOnBodyArea))
     else:
       self._recalculateForegroundImageBasedOnBodyArea.setChecked(False)
+    self._originalPlotOnlyOneTailPointForVisu = app.configFile.get("plotOnlyOneTailPointForVisu")
+    if self._originalPlotOnlyOneTailPointForVisu is not None:
+      self._plotOnlyOneTailPointForVisu.setChecked(bool(self._originalPlotOnlyOneTailPointForVisu))
+    else:
+      self._plotOnlyOneTailPointForVisu.setChecked(False)
 
 
 class _ClickableImageLabel(QLabel):
