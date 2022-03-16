@@ -44,7 +44,7 @@ def _findTailTipByUserInputQt(frame, frameNumber, videoPath, hyperparameters):
     nonlocal plus
     plus += 1
     util.setPixmapFromCv(headEmbededFrame(videoPath, frameNumber + plus, hyperparameters)[0], frameWidget)
-  return list(util.getPoint(np.uint8(frame * 255), "Click on tail tip", extraButtons=(("Tail is not straight", tailNotStraight, False),)))
+  return list(util.getPoint(np.uint8(frame * 255), "Click on tail tip", zoomable=True, extraButtons=(("Tail is not straight", tailNotStraight, False),)))
 
 
 def findTailTipByUserInput(frame, frameNumber, videoPath, hyperparameters):
@@ -83,7 +83,7 @@ def _findHeadPositionByUserInputQt(frame, frameNumber, videoPath, hyperparameter
     nonlocal plus
     plus += 1
     util.setPixmapFromCv(headEmbededFrame(videoPath, frameNumber + plus, hyperparameters)[0], frameWidget)
-  return list(util.getPoint(np.uint8(frame * 255), "Click on the base of the tail", extraButtons=(("Tail is not straight", tailNotStraight, False),)))
+  return list(util.getPoint(np.uint8(frame * 255), "Click on the base of the tail", zoomable=True, extraButtons=(("Tail is not straight", tailNotStraight, False),)))
 
 
 def findHeadPositionByUserInput(frame, frameNumber, videoPath, hyperparameters={}):
