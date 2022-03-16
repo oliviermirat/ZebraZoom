@@ -173,7 +173,7 @@ def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
 @util.addToHistory
 def homegeneousWellsLayout(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
 
-  self.configFile = {"trackingMethod": "fastCenterOfMassTracking_KNNbackgroundSubtraction", "nbAnimalsPerWell": 1, "nbWells": 8, "nbRowsOfWells": 2, "nbWellsPerRows": 4, "groupOfMultipleSameSizeAndShapeEquallySpacedWells": 1, "postProcessMultipleTrajectories": 1,   "postProcessRemoveLowProbabilityDetection" : 1, "postProcessLowProbabilityDetectionPercentOfMaximum" : 0.2, "trackingPointSizeDisplay": 4, "extractAdvanceZebraParameters": 0,  "validationVideoPlotHeading": 0, "trackTail": 0, "freqAlgoPosFollow": 100, "fasterMultiprocessing": 1, "copyOriginalVideoToOutputFolderForValidation": 0, "backgroundSubtractorKNN": 1}
+  self.configFile = {"trackingMethod": "fastCenterOfMassTracking_KNNbackgroundSubtraction", "nbAnimalsPerWell": 1, "nbWells": 8, "nbRowsOfWells": 2, "nbWellsPerRows": 4, "groupOfMultipleSameSizeAndShapeEquallySpacedWells": 1, "postProcessMultipleTrajectories": 0, "trackingPointSizeDisplay": 3, "extractAdvanceZebraParameters": 0,  "validationVideoPlotHeading": 0, "trackTail": 0, "freqAlgoPosFollow": 100, "fasterMultiprocessing": 1, "copyOriginalVideoToOutputFolderForValidation": 0, "backgroundSubtractorKNN": 1, "boutsMinNbFrames": 0, "addOneFrameAtTheEndForBoutDetection": 1, "fillGapFrameNb": 0} # "postProcessMultipleTrajectories": 1, "postProcessRemoveLowProbabilityDetection" : 1, "postProcessLowProbabilityDetectionPercentOfMaximum" : 0.2
 
   self.configFile["nbWells"]          = int(nbwells)
 
