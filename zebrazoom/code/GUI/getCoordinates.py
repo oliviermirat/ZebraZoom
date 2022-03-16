@@ -11,7 +11,7 @@ def _getXYCoordinates(frame, text):
   def backClicked():
     nonlocal back
     back = True
-  coords = util.getPoint(frame, text, backBtnCb=backClicked)
+  coords = util.getPoint(frame, text, backBtnCb=backClicked, zoomable=True)
   if coords is not None and not back:
     return list(coords)
   app = QApplication.instance()

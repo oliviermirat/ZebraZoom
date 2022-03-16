@@ -219,6 +219,8 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
 
   frameSlider = QSlider(Qt.Orientation.Horizontal)
+  frameSlider.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+  frameSlider.setPageStep(50)
   frameSlider.setRange(0, max_l - 1)
   frameSlider.setValue(l)
   frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video))
