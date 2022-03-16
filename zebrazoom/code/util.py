@@ -223,24 +223,35 @@ class ZoomableImage(QGraphicsView):
     self._pixmap.setPixmap(pixmap)
     self.fitInView()
 
-  def wheelEvent(self, evt):
-    if evt.angleDelta().y() > 0:
-      factor = 1.25
-      self._zoom += 1
-    else:
-      factor = 0.8
-      self._zoom -= 1
+  def _update(self, scaleFactor):
     if self._zoom > 0:
-      self.scale(factor, factor)
+      self.scale(scaleFactor, scaleFactor)
     elif self._zoom == 0:
       self.fitInView()
     else:
       self._zoom = 0
 
+  def wheelEvent(self, evt):
+    if evt.angleDelta().y() > 0:
+      self._zoom += 1
+      self._update(1.25)
+    else:
+      self._zoom -= 1
+      self._update(0.8)
+
   def keyPressEvent(self, evt):
     if self._point is not None and (evt.key() == Qt.Key.Key_Enter or evt.key() == Qt.Key.Key_Return):
       self.proceed.emit()
       return
+    elif evt.modifiers() & Qt.KeyboardModifier.ControlModifier:
+      if evt.key() == Qt.Key.Key_Plus:
+        self._zoom += 1
+        self._update(1.25)
+        return
+      if evt.key() == Qt.Key.Key_Minus:
+        self._zoom -= 1
+        self._update(0.8)
+        return
     super().keyPressEvent(evt)
 
   def mouseMoveEvent(self, evt):
@@ -308,6 +319,7 @@ def setPixmapFromCv(img, label, preferredSize=None, zoomable=False):
     image.viewport().setFixedSize(size)
     image.setPixmap(originalPixmap)
     label.parentWidget().layout().replaceWidget(label, image)
+    image.setFocus()
     if hasattr(image, "pointSelected"):
       def pointSelected(point):
         label.pointSelected.emit(point)
@@ -610,7 +622,7 @@ def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=Non
   layout = QVBoxLayout()
   additionalText = "Enter/Return keys can be used instead of clicking Next."
   if zoomable:
-    additionalText += "\nYou can zoom in/out using the mouse wheel and drag the image."
+    additionalText += "\nYou can zoom in/out using the mouse wheel or Ctrl and +/- and drag the image."
   layout.addWidget(QLabel(additionalText), alignment=Qt.AlignmentFlag.AlignCenter)
 
   video = _InteractiveLabelPoint(width, height, selectingRegion)
