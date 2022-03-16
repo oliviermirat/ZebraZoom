@@ -746,7 +746,7 @@ class Expander(QWidget):
     toggleButton.setCheckable(True)
     toggleButton.setChecked(False)
 
-    contentArea = QScrollArea()
+    self._contentArea = contentArea = QScrollArea()
     contentArea.setFrameShape(QFrame.Shape.NoFrame)
     contentArea.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
     contentArea.setMaximumHeight(0)
@@ -760,17 +760,17 @@ class Expander(QWidget):
     self.setLayout(mainLayout)
 
     contentArea.setLayout(layout)
-    collapsedHeight = self.sizeHint().height() - contentArea.maximumHeight()
+    self._collapseHeight = self.sizeHint().height() - contentArea.maximumHeight()
     contentHeight = layout.sizeHint().height()
-    toggleAnimation = QParallelAnimationGroup()
+    self._toggleAnimation = toggleAnimation = QParallelAnimationGroup()
     toggleAnimation.addAnimation(QPropertyAnimation(self, b"minimumHeight"))
     toggleAnimation.addAnimation(QPropertyAnimation(self, b"maximumHeight"))
     toggleAnimation.addAnimation(QPropertyAnimation(contentArea, b"maximumHeight"))
     for i in range(toggleAnimation.animationCount() - 1):
       spoilerAnimation = toggleAnimation.animationAt(i)
       spoilerAnimation.setDuration(animationDuration)
-      spoilerAnimation.setStartValue(collapsedHeight)
-      spoilerAnimation.setEndValue(collapsedHeight + contentHeight)
+      spoilerAnimation.setStartValue(self._collapseHeight)
+      spoilerAnimation.setEndValue(self._collapseHeight + contentHeight)
     contentAnimation = toggleAnimation.animationAt(toggleAnimation.animationCount() - 1)
     contentAnimation.setDuration(animationDuration)
     contentAnimation.setStartValue(0)
@@ -782,4 +782,14 @@ class Expander(QWidget):
       toggleButton.setArrowType(arrowType)
       toggleAnimation.setDirection(direction)
       toggleAnimation.start()
-    toggleButton.clicked.connect(startAnimation)
+    toggleButton.clicked.connect(startAnimation or setattr(self, "toggled", not self.toggled))
+
+  def refresh(self):
+    contentHeight = self._contentArea.layout().sizeHint().height()
+    if self._contentArea.maximumHeight():
+      self._contentArea.setMaximumHeight(contentHeight)
+      self.setMinimumHeight(self._collapseHeight + contentHeight)
+      self.setMaximumHeight(self._collapseHeight + contentHeight)
+    for i in range(self._toggleAnimation.animationCount() - 1):
+      self._toggleAnimation.animationAt(i).setEndValue(self._collapseHeight + contentHeight)
+    self._toggleAnimation.animationAt(self._toggleAnimation.animationCount() - 1).setEndValue(contentHeight)

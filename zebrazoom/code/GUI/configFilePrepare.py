@@ -56,21 +56,32 @@ class OptimizeConfigFile(QWidget):
     self._originalPostProcessMaxDisapearanceFrames = None
     self._originalOutputValidationVideoContrastImprovement = None
     self._originalRecalculateForegroundImageBasedOnBodyArea = None
+    self._originalPlotOnlyOneTailPointForVisu = None
+
+    self._headEmbeddedWidgets = set()
+    self._freelySwimmingWidgets = set()
+    self._fastCenterOfMassWidgets = set()
+    self._centerOfMassWidgets = set()
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Optimize previously created configuration file", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
     optimizeButtonsLayout = QHBoxLayout()
     optimizeButtonsLayout.addStretch()
-    self._optimizeFreelySwimmingBtn = util.apply_style(QPushButton("Optimize fish freely swimming tail tracking configuration file parameters", self), background_color=util.LIGHT_YELLOW)
-    self._optimizeFreelySwimmingBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, automaticParameters=True, useNext=False))
-    optimizeButtonsLayout.addWidget(self._optimizeFreelySwimmingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    self._optimizeHeadEmbeddedBtn = util.apply_style(QPushButton("Optimize head embedded tracking configuration file parameters", self), background_color=util.LIGHT_YELLOW)
-    self._optimizeHeadEmbeddedBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackground)(controller, 0, useNext=False))
-    optimizeButtonsLayout.addWidget(self._optimizeHeadEmbeddedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    optimizeFreelySwimmingBtn = util.apply_style(QPushButton("Optimize fish freely swimming tail tracking configuration file parameters", self), background_color=util.LIGHT_YELLOW)
+    optimizeFreelySwimmingBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, automaticParameters=True, useNext=False))
+    optimizeButtonsLayout.addWidget(optimizeFreelySwimmingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(optimizeFreelySwimmingBtn)
+    optimizeHeadEmbeddedBtn = util.apply_style(QPushButton("Optimize head embedded tracking configuration file parameters", self), background_color=util.LIGHT_YELLOW)
+    optimizeHeadEmbeddedBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackground)(controller, 0, useNext=False))
+    optimizeButtonsLayout.addWidget(optimizeHeadEmbeddedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._headEmbeddedWidgets.add(optimizeHeadEmbeddedBtn)
     optimizeBoutBtn = util.apply_style(QPushButton("Optimize/Add bouts detection (only for one animal per well)", self), background_color=util.LIGHT_YELLOW)
     optimizeBoutBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, boutDetectionsOnly=True, useNext=False))
     optimizeButtonsLayout.addWidget(optimizeBoutBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(optimizeBoutBtn)
+    self._headEmbeddedWidgets.add(optimizeBoutBtn)
+    self._fastCenterOfMassWidgets.add(optimizeBoutBtn)
     optimizeButtonsLayout.addStretch()
     layout.addLayout(optimizeButtonsLayout)
 
@@ -78,27 +89,48 @@ class OptimizeConfigFile(QWidget):
       if checked:
         controller.configFile["outputValidationVideoContrastImprovement"] = 1
       elif self._originalOutputValidationVideoContrastImprovement is None:
-        if outputValidationVideoContrastImprovement in controller.configFile:
+        if "outputValidationVideoContrastImprovement" in controller.configFile:
           del controller.configFile["outputValidationVideoContrastImprovement"]
       else:
         controller.configFile["outputValidationVideoContrastImprovement"] = 0
-
     self._improveContrastCheckbox = QCheckBox("Improve contrast on validation video", self)
     self._improveContrastCheckbox.toggled.connect(updateOutputValidationVideoContrastImprovement)
     layout.addWidget(self._improveContrastCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
-    self._headEmbeddedDocumentationBtn = util.apply_style(QPushButton("Help", self), background_color=util.LIGHT_YELLOW)
-    self._headEmbeddedDocumentationBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/configurationFile/throughGUI/trackingheadEmbeddedConfigOptimization"))
-    layout.addWidget(self._headEmbeddedDocumentationBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._headEmbeddedWidgets.add(self._improveContrastCheckbox)
+    headEmbeddedDocumentationBtn = util.apply_style(QPushButton("Help", self), background_color=util.LIGHT_YELLOW)
+    headEmbeddedDocumentationBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/configurationFile/throughGUI/trackingheadEmbeddedConfigOptimization"))
+    layout.addWidget(headEmbeddedDocumentationBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._headEmbeddedWidgets.add(headEmbeddedDocumentationBtn)
 
     advancedOptionsLayout = QVBoxLayout()
+    def updatePlotOnlyOneTailPointForVisu(checked):
+      if checked:
+        controller.configFile["plotOnlyOneTailPointForVisu"] = 1
+      elif self._originalPlotOnlyOneTailPointForVisu is None:
+        if "plotOnlyOneTailPointForVisu" in controller.configFile:
+          del controller.configFile["plotOnlyOneTailPointForVisu"]
+      else:
+        controller.configFile["plotOnlyOneTailPointForVisu"] = 0
+    self._plotOnlyOneTailPointForVisu = QCheckBox("Display tracking point only on the tail tip in validation videos", self)
+    self._plotOnlyOneTailPointForVisu.toggled.connect(updatePlotOnlyOneTailPointForVisu)
+    advancedOptionsLayout.addWidget(self._plotOnlyOneTailPointForVisu, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(self._plotOnlyOneTailPointForVisu)
+    self._headEmbeddedWidgets.add(self._plotOnlyOneTailPointForVisu)
     gridLayout = QGridLayout()
     gridLayout.setColumnStretch(0, 1)
     gridLayout.setColumnStretch(6, 1)
     frame = QFrame(self)
     frame.setFrameShape(QFrame.Shape.VLine)
     gridLayout.addWidget(frame, 0, 3, 3, 1)
+    self._freelySwimmingWidgets.add(frame)
+    self._fastCenterOfMassWidgets.add(frame)
+    self._centerOfMassWidgets.add(frame)
 
-    gridLayout.addWidget(util.apply_style(QLabel("Solve issues near the borders of the wells/tanks/arenas"), font_size='16px'), 0, 1, 1, 2, Qt.AlignmentFlag.AlignLeft)
+    solveIssuesLabel = util.apply_style(QLabel("Solve issues near the borders of the wells/tanks/arenas"), font_size='16px')
+    gridLayout.addWidget(solveIssuesLabel, 0, 1, 1, 2, Qt.AlignmentFlag.AlignLeft)
+    self._freelySwimmingWidgets.add(solveIssuesLabel)
+    self._fastCenterOfMassWidgets.add(solveIssuesLabel)
+    self._centerOfMassWidgets.add(solveIssuesLabel)
     self._backgroundPreProcessParameters = backgroundPreProcessParameters = QLineEdit(controller.window)
     backgroundPreProcessParameters.setValidator(QIntValidator(backgroundPreProcessParameters))
     backgroundPreProcessParameters.validator().setBottom(0)
@@ -117,12 +149,22 @@ class OptimizeConfigFile(QWidget):
         elif "backgroundPreProcessParameters" in controller.configFile:
           del controller.configFile["backgroundPreProcessParameters"]
     backgroundPreProcessParameters.textChanged.connect(updateBackgroundPreProcessParameters)
-    gridLayout.addWidget(QLabel("backgroundPreProcessParameters:"), 1, 1, Qt.AlignmentFlag.AlignCenter)
+    backgroundPreProcessParametersLabel = QLabel("backgroundPreProcessParameters:")
+    gridLayout.addWidget(backgroundPreProcessParametersLabel, 1, 1, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(backgroundPreProcessParametersLabel)
+    self._fastCenterOfMassWidgets.add(backgroundPreProcessParametersLabel)
+    self._centerOfMassWidgets.add(backgroundPreProcessParametersLabel)
     gridLayout.addWidget(backgroundPreProcessParameters, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(backgroundPreProcessParameters)
+    self._fastCenterOfMassWidgets.add(backgroundPreProcessParameters)
+    self._centerOfMassWidgets.add(backgroundPreProcessParameters)
 
     postProcessTrajectoriesLabel = util.apply_style(QLabel("Post-process animal center trajectories"), font_size='16px')
     postProcessTrajectoriesLabel.setToolTip("Trajectories post-processing can help solve problems with animal 'disapearing' and/or temporarily 'jumping' to a distant (and incorrect) location.")
     gridLayout.addWidget(postProcessTrajectoriesLabel, 0, 4, 1, 2, Qt.AlignmentFlag.AlignLeft)
+    self._freelySwimmingWidgets.add(postProcessTrajectoriesLabel)
+    self._fastCenterOfMassWidgets.add(postProcessTrajectoriesLabel)
+    self._centerOfMassWidgets.add(postProcessTrajectoriesLabel)
     self._postProcessMaxDistanceAuthorized = postProcessMaxDistanceAuthorized = QLineEdit(controller.window)
     postProcessMaxDistanceAuthorized.setValidator(QIntValidator(postProcessMaxDistanceAuthorized))
     postProcessMaxDistanceAuthorized.validator().setBottom(0)
@@ -142,8 +184,15 @@ class OptimizeConfigFile(QWidget):
         elif "postProcessMaxDistanceAuthorized" in controller.configFile:
           del controller.configFile["postProcessMaxDistanceAuthorized"]
     postProcessMaxDistanceAuthorized.textChanged.connect(updatePostProcessMaxDistanceAuthorized)
-    gridLayout.addWidget(QLabel("postProcessMaxDistanceAuthorized:"), 1, 4, Qt.AlignmentFlag.AlignCenter)
+    postProcessMaxDistanceAuthorizedLabel = QLabel("postProcessMaxDistanceAuthorized:")
+    gridLayout.addWidget(postProcessMaxDistanceAuthorizedLabel, 1, 4, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(postProcessMaxDistanceAuthorizedLabel)
+    self._fastCenterOfMassWidgets.add(postProcessMaxDistanceAuthorizedLabel)
+    self._centerOfMassWidgets.add(postProcessMaxDistanceAuthorizedLabel)
     gridLayout.addWidget(postProcessMaxDistanceAuthorized, 1, 5, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(postProcessMaxDistanceAuthorized)
+    self._fastCenterOfMassWidgets.add(postProcessMaxDistanceAuthorized)
+    self._centerOfMassWidgets.add(postProcessMaxDistanceAuthorized)
 
     self._postProcessMaxDisapearanceFrames = postProcessMaxDisapearanceFrames = QLineEdit(controller.window)
     postProcessMaxDisapearanceFrames.setValidator(QIntValidator(postProcessMaxDisapearanceFrames))
@@ -164,11 +213,22 @@ class OptimizeConfigFile(QWidget):
         elif "postProcessMaxDisapearanceFrames" in controller.configFile:
           del controller.configFile["postProcessMaxDisapearanceFrames"]
     postProcessMaxDisapearanceFrames.textChanged.connect(updatePostProcessMaxDisapearanceFrames)
-    gridLayout.addWidget(QLabel("postProcessMaxDisapearanceFrames:"), 2, 4, Qt.AlignmentFlag.AlignCenter)
+    postProcessMaxDisapearanceFramesLabel = QLabel("postProcessMaxDisapearanceFrames:")
+    gridLayout.addWidget(postProcessMaxDisapearanceFramesLabel, 2, 4, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(postProcessMaxDisapearanceFramesLabel)
+    self._fastCenterOfMassWidgets.add(postProcessMaxDisapearanceFramesLabel)
+    self._centerOfMassWidgets.add(postProcessMaxDisapearanceFramesLabel)
     gridLayout.addWidget(postProcessMaxDisapearanceFrames, 2, 5, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(postProcessMaxDisapearanceFrames)
+    self._fastCenterOfMassWidgets.add(postProcessMaxDisapearanceFrames)
+    self._centerOfMassWidgets.add(postProcessMaxDisapearanceFrames)
 
-    gridLayout.addWidget(util.apply_style(QLabel("Tail tracking quality"), font_size='16px'), 3, 1, 1, 5, Qt.AlignmentFlag.AlignCenter)
-    gridLayout.addWidget(QLabel("Checking this increases quality, but makes tracking slower."), 4, 1, 1, 5, Qt.AlignmentFlag.AlignCenter)
+    tailTrackingLabel = util.apply_style(QLabel("Tail tracking quality"), font_size='16px')
+    gridLayout.addWidget(tailTrackingLabel, 3, 1, 1, 5, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(tailTrackingLabel)
+    tailTrackingInfoLabel = QLabel("Checking this increases quality, but makes tracking slower.")
+    gridLayout.addWidget(tailTrackingInfoLabel, 4, 1, 1, 5, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(tailTrackingInfoLabel)
     self._recalculateForegroundImageBasedOnBodyArea = QCheckBox("recalculateForegroundImageBasedOnBodyArea")
 
     def updateRecalculateForegroundImageBasedOnBodyArea(checked):
@@ -181,6 +241,7 @@ class OptimizeConfigFile(QWidget):
         controller.configFile["recalculateForegroundImageBasedOnBodyArea"] = 0
     self._recalculateForegroundImageBasedOnBodyArea.toggled.connect(updateRecalculateForegroundImageBasedOnBodyArea)
     gridLayout.addWidget(self._recalculateForegroundImageBasedOnBodyArea, 5, 1, 1, 5, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(self._recalculateForegroundImageBasedOnBodyArea)
     advancedOptionsLayout.addLayout(gridLayout)
 
     advancedButtonsLayout = QHBoxLayout()
@@ -188,13 +249,15 @@ class OptimizeConfigFile(QWidget):
     speedUpTrackingBtn = util.apply_style(QPushButton("Speed up tracking for 'Track heads and tails of freely swimming fish'", self), background_color=util.LIGHT_YELLOW)
     speedUpTrackingBtn.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingSpeedOptimization.md"))
     advancedButtonsLayout.addWidget(speedUpTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(speedUpTrackingBtn)
     documentationBtn = util.apply_style(QPushButton("Help", self), background_color=util.LIGHT_YELLOW)
     documentationBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/configurationFile/throughGUI/trackingFreelySwimmingConfigOptimization"))
     advancedButtonsLayout.addWidget(documentationBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(documentationBtn)
     advancedButtonsLayout.addStretch()
     advancedOptionsLayout.addLayout(advancedButtonsLayout)
-    self._problemSolvingExpander = util.Expander(self, 'Show advanced options', advancedOptionsLayout)
-    layout.addWidget(self._problemSolvingExpander)
+    self._expander = util.Expander(self, 'Show advanced options', advancedOptionsLayout)
+    layout.addWidget(self._expander)
 
     frame = QFrame()
     frame.setFrameShadow(QFrame.Shadow.Raised)
@@ -224,18 +287,26 @@ class OptimizeConfigFile(QWidget):
 
   def refresh(self):
     app = QApplication.instance()
-    if app.configFile.get("headEmbeded", False):
-      self._improveContrastCheckbox.show()
-      self._optimizeFreelySwimmingBtn.hide()
-      self._optimizeHeadEmbeddedBtn.show()
-      self._problemSolvingExpander.hide()
-      self._headEmbeddedDocumentationBtn.show()
+    trackingMethod = app.configFile.get("trackingMethod", None)
+    if not trackingMethod:
+      if app.configFile.get("headEmbeded", False):
+        visibleWidgets = self._headEmbeddedWidgets
+      else:
+        visibleWidgets = self._freelySwimmingWidgets
+    elif trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction" or \
+        trackingMethod == "fastCenterOfMassTracking_ClassicalBackgroundSubtraction":
+      visibleWidgets = self._fastCenterOfMassWidgets
     else:
-      self._improveContrastCheckbox.hide()
-      self._optimizeFreelySwimmingBtn.show()
-      self._optimizeHeadEmbeddedBtn.hide()
-      self._problemSolvingExpander.show()
-      self._headEmbeddedDocumentationBtn.hide()
+      assert trackingMethod == "classicCenterOfMassTracking"
+      visibleWidgets = self._centerOfMassWidgets
+    for widget in self._freelySwimmingWidgets | self._headEmbeddedWidgets | self._fastCenterOfMassWidgets | self._centerOfMassWidgets:
+      if widget in visibleWidgets:
+        widget.show()
+      else:
+        widget.hide()
+    self._expander.hide()
+    self._expander.show()
+    self._expander.refresh()
 
     self._originalBackgroundPreProcessMethod = app.configFile.get("backgroundPreProcessMethod")
     self._originalBackgroundPreProcessParameters = app.configFile.get("backgroundPreProcessParameters")
@@ -264,6 +335,11 @@ class OptimizeConfigFile(QWidget):
       self._recalculateForegroundImageBasedOnBodyArea.setChecked(bool(self._originalRecalculateForegroundImageBasedOnBodyArea))
     else:
       self._recalculateForegroundImageBasedOnBodyArea.setChecked(False)
+    self._originalPlotOnlyOneTailPointForVisu = app.configFile.get("plotOnlyOneTailPointForVisu")
+    if self._originalPlotOnlyOneTailPointForVisu is not None:
+      self._plotOnlyOneTailPointForVisu.setChecked(bool(self._originalPlotOnlyOneTailPointForVisu))
+    else:
+      self._plotOnlyOneTailPointForVisu.setChecked(False)
 
 
 class _ClickableImageLabel(QLabel):

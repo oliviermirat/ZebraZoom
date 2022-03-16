@@ -42,6 +42,7 @@
   "tryCreatingFolderUntilSuccess" : 1,
   "searchPreviousFramesIfCurrentFrameIsCorrupted" : 1,
   "reduceImageResolutionPercentage" : 1,
+  "trackingMethod" : "",
   
   "setPixDiffBoutDetectParameters" : 0,
   
