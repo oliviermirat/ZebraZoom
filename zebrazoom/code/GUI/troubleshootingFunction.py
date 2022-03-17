@@ -17,6 +17,8 @@ def chooseVideoToTroubleshootSplitVideo(self, controller):
 
   # Choosing video to split
   self.videoToTroubleshootSplitVideo, _ =  QFileDialog.getOpenFileName(self.window, "Select video", os.path.expanduser("~"), "All files(*)")
+  if not self.videoToTroubleshootSplitVideo:
+    return
 
   # User input of beginning and end of subvideo
 
@@ -133,6 +135,8 @@ def chooseVideoToTroubleshootSplitVideo(self, controller):
 
   # Choosing directory to save sub-video
   directoryChosen = QFileDialog.getExistingDirectory(self.window, 'Choose in which folder you want to save the sub-video.')
+  if not directoryChosen:
+    return
 
   # Extracting sub-video
 

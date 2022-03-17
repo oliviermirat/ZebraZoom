@@ -47,12 +47,22 @@ def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
     pathconf = pathconf.parent.parent
     pathconf = os.path.join(pathconf, 'configuration/')
 
-    configFileName, _ =  QFileDialog.getOpenFileName(self.window, "Select configuration file", pathconf, "All files(*)")
-    with open(configFileName) as f:
-      self.configFile = json.load(f)
+    configFileName, _ =  QFileDialog.getOpenFileName(self.window, "Select configuration file", pathconf, "JSON (*.json)")
+    if not configFileName:
+      return False
+    try:
+      with open(configFileName) as f:
+        self.configFile = json.load(f)
+    except (EnvironmentError, json.JSONDecodeError) as e:
+      QMessageBox.critical(self.window, "Could not read config file", "Config file couldn't be read: %s\n" % str(e))
+      return False
     self.savedConfigFile = self.configFile.copy()
 
   self.videoToCreateConfigFileFor, _ = QFileDialog.getOpenFileName(self.window, "Select video to create config file for", os.path.expanduser("~"), "All files(*)")
+  if not self.videoToCreateConfigFileFor:
+    self.configFile.clear()
+    return False
+  return True
 
 
 @util.addToHistory

@@ -85,7 +85,7 @@ class StartPage(QWidget):
         prepare_initial_config_btn.clicked.connect(lambda: util.addToHistory(controller.show_frame)("ChooseVideoToCreateConfigFileFor"))
         hbox.addWidget(prepare_initial_config_btn, alignment=Qt.AlignmentFlag.AlignCenter)
         optimize_config_file_btn = util.apply_style(QPushButton("Optimize a previously created configuration file", self), background_color=util.LIGHT_YELLOW)
-        optimize_config_file_btn.clicked.connect(lambda: controller.chooseVideoToCreateConfigFileFor(controller, True) or util.addToHistory(controller.optimizeConfigFile)())
+        optimize_config_file_btn.clicked.connect(lambda: controller.chooseVideoToCreateConfigFileFor(controller, True) and util.addToHistory(controller.optimizeConfigFile)())
         hbox.addWidget(optimize_config_file_btn, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addLayout(hbox, 2, 0, Qt.AlignmentFlag.AlignCenter)
         # Set the layout on the application's window
