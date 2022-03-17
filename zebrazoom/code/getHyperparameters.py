@@ -431,6 +431,10 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["smoothTailHeadEmbededNbOfIterations"] = getConfig(config, "smoothTailHeadEmbededNbOfIterations", videoPath)
   
+  hyperparameters["saveCurvaturePlots"] = getConfig(config, "saveCurvaturePlots", videoPath)
+  hyperparameters["saveTailAngleGraph"] = getConfig(config, "saveTailAngleGraph", videoPath)
+  hyperparameters["saveSubVideo"]       = getConfig(config, "saveSubVideo", videoPath)
+  hyperparameters["saveCurvatureData"]  = getConfig(config, "saveCurvatureData", videoPath)
   
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1

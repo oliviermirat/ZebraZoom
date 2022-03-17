@@ -228,6 +228,10 @@
   "curvatureMedianFilterSmoothingWindow" : 3,
   "nbPointsToIgnoreAtCurvatureBeginning" : 0,
   "nbPointsToIgnoreAtCurvatureEnd" : 0,
+  "saveCurvaturePlots" : 0,
+  "saveTailAngleGraph" : 0,
+  "saveSubVideo"       : 0,
+  "saveCurvatureData"  : 0,
   
   "tailAnglesHeatMap" : 0,
   "tailAnglesHeatMapNbPointsToTakeIntoAccount" : 8,

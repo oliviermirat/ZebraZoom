@@ -47,8 +47,6 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   
   getTailAngleSignMultNormalized = int(dataframeOptions['getTailAngleSignMultNormalized']) if 'getTailAngleSignMultNormalized' in dataframeOptions else 0
   
-  curvatureCalculated = int(dataframeOptions['curvatureCalculated']) if 'curvatureCalculated' in dataframeOptions else 0
-  
   # If nbFramesTakenIntoAccount was not specified, finds an appropriate value for it
   nbFramesTakenIntoAccount          = dataframeOptions['nbFramesTakenIntoAccount']
   if len(pathToExcelFile):
@@ -108,9 +106,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   # Initial raw data
   if saveRawDataInAllBoutsSuperStructure:
     if tailAngleKinematicParameterCalculation:
-      rawData = ['HeadX', 'HeadY', 'Heading', 'TailAngle_Raw', 'TailAngle_smoothed', 'Bend_Timing', 'Bend_TimingAbsolute', 'Bend_Amplitude', 'TailBeatFrequency']
-      if curvatureCalculated:
-        rawData += ['curvature']
+      rawData = ['HeadX', 'HeadY', 'Heading', 'TailAngle_Raw', 'TailAngle_smoothed', 'Bend_Timing', 'Bend_TimingAbsolute', 'Bend_Amplitude', 'TailBeatFrequency', 'curvature']
     else:
       rawData = ['HeadX', 'HeadY', 'Heading']
   # Tail angle related parameters for clustering
