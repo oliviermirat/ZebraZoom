@@ -152,10 +152,15 @@ class VideoToAnalyze(QWidget):
         testCheckbox = QCheckBox("Test on only 500 frames", self)
         layout.addWidget(testCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
         button = util.apply_style(QPushButton("Choose file", self), background_color=util.LIGHT_YELLOW)
-        button.clicked.connect(lambda: controller.chooseVideoToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), testCheckbox.isChecked()))
+        button.clicked.connect(lambda: controller.chooseVideoToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), plotOnlyOneTailPointForVisu.isChecked(), chooseFramesCheckbox.isChecked(), testCheckbox.isChecked()))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
 
         layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+        chooseFramesCheckbox = QCheckBox("Choose the first and the last frames on which the tracking should run", self)
+        layout.addWidget(chooseFramesCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+        plotOnlyOneTailPointForVisu = QCheckBox("Display tracking point only on the tail tip in validation videos", self)
+        layout.addWidget(plotOnlyOneTailPointForVisu, alignment=Qt.AlignmentFlag.AlignCenter)
 
         button = util.apply_style(QPushButton("Click here if you prefer to run the tracking from the command line", self), background_color='green')
         button.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/tracking/launchingTracking#launching-the-tracking-through-the-command-line"))
