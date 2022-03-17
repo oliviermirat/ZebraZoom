@@ -28,7 +28,7 @@ class ChooseVideoToCreateConfigFileFor(QWidget):
 
     sublayout1 = QVBoxLayout()
     selectVideoBtn = util.apply_style(QPushButton("Select the video you want to create a configuration file for.", self), background_color=util.LIGHT_YELLOW)
-    selectVideoBtn.clicked.connect(lambda: controller.chooseVideoToCreateConfigFileFor(controller, reloadCheckbox.isChecked()) or util.addToHistory(controller.show_frame)("ChooseGeneralExperiment"))
+    selectVideoBtn.clicked.connect(lambda: controller.chooseVideoToCreateConfigFileFor(controller, reloadCheckbox.isChecked()) and util.addToHistory(controller.show_frame)("ChooseGeneralExperiment"))
     sublayout1.addWidget(selectVideoBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     sublayout1.addWidget(QLabel("(you will be able to use the configuration file you create for all videos that are similar to that video)", self), alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addLayout(sublayout1)

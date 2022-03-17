@@ -220,7 +220,7 @@ def adjustFreelySwimTrackingParams(nbTailPoints, i, firstFrame, output, outputHe
   if hyperparameters["trackTail"] == 1:
     hyperparametersListNames = ["minPixelDiffForBackExtract", "maxAreaBody", "minTailSize", "maxTailSize"]
     organizationTab = [
-    [0, 20, "Increase this if some of the background is not completely white. Decrease if you can't see all of the fish. "],
+    [0, 20, "Increase this if some of the background is not completely white. Decrease if you can't see all of the animals. "],
     [0, 20, "Try increasing this if no tracking is showing."],
     [0, 20, "Try increasing this if no tracking is showing."],
     [0, 20, "Try decreasing this if no tracking is showing."],]
@@ -228,7 +228,7 @@ def adjustFreelySwimTrackingParams(nbTailPoints, i, firstFrame, output, outputHe
     hyperparametersListNames = ["minPixelDiffForBackExtract"]
     # The gaussian image filter should be added below, and maybe also the trajectories post-processing option
     organizationTab = [
-    [0, 20, "Increase this if some of the background is not completely white. Decrease if you can't see all of the fish. "],]
+    [0, 20, "Increase this if some of the background is not completely white. Decrease if you can't see all of the animals. "],]
 
   title = "Tracking"
 

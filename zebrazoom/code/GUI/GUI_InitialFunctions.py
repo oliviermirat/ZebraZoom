@@ -15,6 +15,7 @@ globalVariables = getGlobalVariables()
 from zebrazoom.mainZZ import mainZZ
 from zebrazoom.getTailExtremityFirstFrame import getTailExtremityFirstFrame
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
+import zebrazoom.code.util as util
 
 try:
   from PyQt6.QtWidgets import QFileDialog
@@ -24,8 +25,10 @@ except ImportError:
 
 LARGE_FONT= ("Verdana", 12)
 
-def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, testMode=False):
+def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, plotOnlyOneTailPointForVisu, chooseFrames, testMode):
     self.videoName, _ = QFileDialog.getOpenFileName(self.window, 'Select file', os.path.expanduser("~"))
+    if not self.videoName:
+      return
     self.folderName = ''
     self.headEmbedded = 0
     self.sbatchMode = 0
@@ -34,11 +37,26 @@ def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, testMode=Fa
     self.noValidationVideo = int(noValidationVideo)
     self.testMode         = testMode
     self.findMultipleROIs = 0
+    self.plotOnlyOneTailPointForVisu = int(plotOnlyOneTailPointForVisu)
 
-    self.show_frame("ConfigFilePromp")
+    if chooseFrames:
+      def beginningAndEndChosen():
+        if "firstFrame" in self.configFile:
+          self.firstFrame = self.configFile["firstFrame"]
+        if "lastFrame" in self.configFile:
+          self.lastFrame = self.configFile["lastFrame"]
+        self.configFile.clear()
+        self.show_frame("ConfigFilePromp")
+      util.chooseBeginningPage(self, self.videoName, "Choose where the analysis of your video should start.", "Ok, I want the tracking to start at this frame!",
+                               lambda: util.chooseEndPage(self, self.videoName, "Choose where the analysis of your video should end.", "Ok, I want the tracking to end at this frame!", beginningAndEndChosen),
+                               extraButtonInfo=("I want the tracking to run on the entire video!", beginningAndEndChosen))
+    else:
+      self.show_frame("ConfigFilePromp")
 
 def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode):
     self.folderName =  QFileDialog.getExistingDirectory(self.window, 'Select folder', os.path.expanduser("~"))
+    if not self.folderName:
+      return
     self.headEmbedded = 0
     self.justExtractParams = int(justExtractParams)
     self.noValidationVideo = int(noValidationVideo)
@@ -49,6 +67,8 @@ def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode
 
 def chooseFolderForTailExtremityHE(self):
     self.folderName =  QFileDialog.getExistingDirectory(self.window, 'Select folder', os.path.expanduser("~"))
+    if not self.folderName:
+      return
     self.sbatchMode = 0
     self.headEmbedded = 1
     self.justExtractParams = 0
@@ -59,6 +79,8 @@ def chooseFolderForTailExtremityHE(self):
 
 def chooseFolderForMultipleROIs(self):
     self.folderName =  QFileDialog.getExistingDirectory(self.window, 'Select folder', os.path.expanduser("~"))
+    if not self.folderName:
+      return
     self.sbatchMode = 0
     self.headEmbedded = 0
     self.justExtractParams = 0
@@ -74,7 +96,9 @@ def chooseConfigFile(self):
   path = path.parent.parent
   path = os.path.join(path, 'configuration')
 
-  self.configFileName, _ = QFileDialog.getOpenFileName(self.window, 'Select file', path, "json files (*.json);;All files(*)")
+  self.configFileName, _ = QFileDialog.getOpenFileName(self.window, 'Select file', path, "JSON (*.json)")
+  if not self.configFileName:
+    return
   if len(self.folderName) or globalVariables["mac"] or globalVariables["lin"]:
     self.show_frame("Patience")
   else:
@@ -141,6 +165,12 @@ def launchZebraZoom(self):
         tabParams = ["mainZZ", path, name, videoExt, self.configFileName, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1, "outputFolder", self.ZZoutputLocation]
       else:
         tabParams = ["mainZZ", path, name, videoExt, self.configFileName, "freqAlgoPosFollow", 100, "outputFolder", self.ZZoutputLocation]
+      if hasattr(self, "plotOnlyOneTailPointForVisu"):
+        tabParams.extend(["plotOnlyOneTailPointForVisu", self.plotOnlyOneTailPointForVisu])
+      if hasattr(self, "firstFrame"):
+        tabParams.extend(["firstFrame", self.firstFrame])
+      if hasattr(self, "lastFrame"):
+        tabParams.extend(["lastFrame", self.lastFrame])
       if self.justExtractParams == 1:
         tabParams = tabParams + ["reloadWellPositions", 1, "reloadBackground", 1, "debugPauseBetweenTrackAndParamExtract", "justExtractParamFromPreviousTrackData"]
       if self.noValidationVideo == 1:
@@ -160,6 +190,12 @@ def launchZebraZoom(self):
         return
     else:
       tabParams = ["outputFolder", self.ZZoutputLocation]
+      if hasattr(self, "plotOnlyOneTailPointForVisu"):
+        tabParams.extend(["plotOnlyOneTailPointForVisu", self.plotOnlyOneTailPointForVisu])
+      if hasattr(self, "firstFrame"):
+        tabParams.extend(["firstFrame", self.firstFrame])
+      if hasattr(self, "lastFrame"):
+        tabParams.extend(["lastFrame", self.lastFrame])
       getTailExtremityFirstFrame(path, name, videoExt, self.configFileName, tabParams)
 
   self.headEmbedded      = 0
@@ -167,6 +203,12 @@ def launchZebraZoom(self):
   self.noValidationVideo = 0
   self.testMode         = False
   self.findMultipleROIs  = 0
+  if hasattr(self, "plotOnlyOneTailPointForVisu"):
+    del self.plotOnlyOneTailPointForVisu
+  if hasattr(self, "firstFrame"):
+    del self.firstFrame
+  if hasattr(self, "lastFrame"):
+    del self.lastFrame
 
   if self.sbatchMode:
 

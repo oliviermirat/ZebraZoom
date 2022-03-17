@@ -48,6 +48,8 @@ def chooseExperimentOrganizationExcel(self, controller):
   cur_dir_path = cur_dir_path.parent.parent
 
   experimentOrganizationExcel, _ =  QFileDialog.getOpenFileName(self.window, "Select the excel file describing your experiments", os.path.join(cur_dir_path, 'dataAnalysis/experimentOrganizationExcel/'), "All files(*)")
+  if not experimentOrganizationExcel:
+    return
 
   array = os.path.split(experimentOrganizationExcel)
 

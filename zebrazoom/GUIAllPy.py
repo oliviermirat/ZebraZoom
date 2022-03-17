@@ -132,7 +132,9 @@ class ZebraZoomApp(QApplication):
         self.window.showMaximized()
 
     def askForZZoutputLocation(self):
-        self.ZZoutputLocation = QFileDialog.getExistingDirectory(self.window, "Select ZZoutput folder", os.path.expanduser("~"))
+        selectedFolder = QFileDialog.getExistingDirectory(self.window, "Select ZZoutput folder", os.path.expanduser("~"))
+        if selectedFolder:
+          self.ZZoutputLocation = selectedFolder
 
     def _currentPageChanged(self):
         backBtn = self.window.centralWidget().layout().currentWidget().findChild(QPushButton, "back")
@@ -195,8 +197,8 @@ class ZebraZoomApp(QApplication):
         if self._busyCursor:
             self.setOverrideCursor(Qt.CursorShape.BusyCursor)
 
-    def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, testMode):
-        GUI_InitialFunctions.chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, testMode)
+    def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, plotOnlyOneTailPointForVisu, chooseFrames, testMode):
+        GUI_InitialFunctions.chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, plotOnlyOneTailPointForVisu, chooseFrames, testMode)
 
     def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode):
         GUI_InitialFunctions.chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode)
@@ -234,7 +236,7 @@ class ZebraZoomApp(QApplication):
     # Config File preparation functions
 
     def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
-        configFilePrepareFunctions.chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile)
+        return configFilePrepareFunctions.chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile)
 
     def chooseGeneralExperimentFirstStep(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, fastScreen):
         configFilePrepareFunctions.chooseGeneralExperimentFirstStep(self, controller, freeZebra, headEmbZebra, drosophilia, rodent, other, fastScreen)
