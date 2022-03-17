@@ -17,10 +17,10 @@ import os
 
 try:
   from PyQt6.QtCore import Qt, QTimer
-  from PyQt6.QtWidgets import QApplication, QFileDialog, QGridLayout, QLabel, QVBoxLayout
+  from PyQt6.QtWidgets import QApplication, QFileDialog, QGridLayout, QLabel, QMessageBox, QVBoxLayout
 except ImportError:
   from PyQt5.QtCore import Qt, QTimer
-  from PyQt5.QtWidgets import QApplication, QFileDialog, QGridLayout, QLabel, QVBoxLayout
+  from PyQt5.QtWidgets import QApplication, QFileDialog, QGridLayout, QLabel, QMessageBox, QVBoxLayout
 
 import zebrazoom.code.util as util
 
