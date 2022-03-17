@@ -10,13 +10,13 @@ from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 
 try:
-  from PyQt6.QtCore import Qt, QDir, QSize, QSortFilterProxyModel
+  from PyQt6.QtCore import Qt, QDir, QEvent, QObject, QSize, QSortFilterProxyModel
   from PyQt6.QtGui import QCursor, QFont
-  from PyQt6.QtWidgets import QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QComboBox, QTreeView
+  from PyQt6.QtWidgets import QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QComboBox, QTreeView, QToolTip
 except ImportError:
-  from PyQt5.QtCore import Qt, QDir, QSize, QSortFilterProxyModel
+  from PyQt5.QtCore import Qt, QDir, QEvent, QObject, QSize, QSortFilterProxyModel
   from PyQt5.QtGui import QCursor, QFont
-  from PyQt5.QtWidgets import QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QComboBox, QTreeView
+  from PyQt5.QtWidgets import QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QComboBox, QTreeView, QToolTip
 
 import zebrazoom.code.util as util
 from zebrazoom.code.readValidationVideo import readValidationVideo
@@ -350,7 +350,28 @@ class EnhanceZZOutput(QWidget):
         self.setLayout(layout)
 
 
-class ViewParameters(QWidget):
+class _TooltipHelper(QObject):
+  def eventFilter(self, obj, evt):
+    if evt.type() != QEvent.Type.ToolTip:
+      return False
+    view = obj.parent()
+    if view is None:
+      return False
+
+    index = view.indexAt(evt.pos())
+    if not index.isValid():
+      return False
+    rect = view.visualRect(index)
+    if view.sizeHintForColumn(index.column()) > rect.width():
+      QToolTip.showText(evt.globalPos(), view.model().data(index), view, rect)
+      return True
+    else:
+      QToolTip.hideText()
+      return True
+    return False
+
+
+class ViewParameters(QSplitter):
     def __init__(self, controller):
         super().__init__(controller.window)
         self.controller = controller
@@ -369,13 +390,15 @@ class ViewParameters(QWidget):
         proxyModel.filterAcceptsRow = filterModel
         proxyModel.setSourceModel(model)
         self._tree = tree = QTreeView()
-        tree.setMaximumWidth(150)
+        tree.viewport().installEventFilter(_TooltipHelper(tree))
+        tree.sizeHint = lambda: QSize(150, 1)
         tree.setModel(proxyModel)
         tree.setRootIsDecorated(False)
         tree.header().setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
         for idx in range(1, model.columnCount()):
           tree.hideColumn(idx)
         tree.setRootIndex(proxyModel.mapFromSource(model.index(model.rootPath())))
+        tree.resizeEvent = lambda evt: tree.setColumnWidth(0, evt.size().width())
         selectionModel = tree.selectionModel()
         selectionModel.currentRowChanged.connect(lambda current, previous: current.row() == -1 or self.setFolder(model.fileName(current)))
 
@@ -504,13 +527,19 @@ class ViewParameters(QWidget):
         layout.addWidget(canvasWrapper, 4, 7, 7, 1, Qt.AlignmentFlag.AlignCenter)
         sizeHint = layout.totalSizeHint().width() + canvasSize.width()
 
-        self._centralWidget = QWidget()
-        self._centralWidget.sizeHint = lambda *args: QSize(sizeHint + 200, 768)
-        self._centralWidget.setLayout(layout)
+        centralWidget = QWidget()
+        centralWidget.sizeHint = lambda *args: QSize(sizeHint + 200, 768)
+        centralWidget.setLayout(layout)
+        self.addWidget(tree)
+        self._centralWidget = wrapperWidget = QWidget()
+        wrapperWidget.showChild = centralWidget.show
+        wrapperWidget.hideChild = centralWidget.hide
         wrapperLayout = QHBoxLayout()
-        wrapperLayout.addWidget(tree, alignment=Qt.AlignmentFlag.AlignLeft)
-        wrapperLayout.addWidget(self._centralWidget, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
-        self.setLayout(wrapperLayout)
+        wrapperLayout.addWidget(centralWidget, alignment=Qt.AlignmentFlag.AlignCenter)
+        wrapperWidget.setLayout(wrapperLayout)
+        self.addWidget(wrapperWidget)
+        self.setStretchFactor(1, 1)
+        self.setChildrenCollapsible(False)
 
     def _findResultsFile(self, folder):
         reference = os.path.join(self.controller.ZZoutputLocation, os.path.join(folder, 'results_' + folder + '.txt'))
@@ -527,12 +556,12 @@ class ViewParameters(QWidget):
     def setFolder(self, name):
         self.title_label.setText(name)
         if name is None:
-          self._centralWidget.hide()
+          self._centralWidget.hideChild()
           self._tree.selectionModel().clearSelection()
           self._tree.selectionModel().clearCurrentIndex()
           return
         else:
-          self._centralWidget.show()
+          self._centralWidget.showChild()
         self.currentResultFolder = name
 
         with open(self._findResultsFile(name)) as ff:
