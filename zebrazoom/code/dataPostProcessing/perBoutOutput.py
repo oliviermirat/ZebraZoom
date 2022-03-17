@@ -77,39 +77,21 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
           curv = curv[hyperparameters["nbPointsToIgnoreAtCurvatureBeginning"]: l-1-hyperparameters["nbPointsToIgnoreAtCurvatureEnd"]]
           curvature.append(curv)
           
-        if False: # Old version: 1d median filter: TO REMOVE MOST LIKELY
+        # 2d median filter
+        rolling_window = hyperparameters["curvatureMedianFilterSmoothingWindow"]
+        if rolling_window:
+          curvature = sp.signal.medfilt2d(curvature, rolling_window)
+        else:
+          curvature = np.array(curvature)
         
-          rolling_window = hyperparameters["curvatureMedianFilterSmoothingWindow"]
-          if rolling_window:
-            curvature2 = []
-            curvatureTransposed = np.transpose(curvature)
-            for transposedCurv in curvatureTransposed:
-              shift = int(-rolling_window / 2)
-              smoothedTransposedCurv = np.array(pd.Series(transposedCurv).rolling(rolling_window).median())
-              smoothedTransposedCurv = np.roll(smoothedTransposedCurv, shift)
-              for ii in range(0, rolling_window):
-                smoothedTransposedCurv[ii] = transposedCurv[ii]
-              for ii in range(len(smoothedTransposedCurv)-rolling_window,len(smoothedTransposedCurv)):
-                smoothedTransposedCurv[ii] = transposedCurv[ii] 
-              curvature2.append(smoothedTransposedCurv)  
-            curvature = np.transpose(curvature2)
-          else:
-            curvature = np.array(curvature)
-            
-        else: # New version: 2d median filter
-        
-          rolling_window = hyperparameters["curvatureMedianFilterSmoothingWindow"]
-          if rolling_window:
-            curvature = sp.signal.medfilt2d(curvature, rolling_window)
-          else:
-            curvature = np.array(curvature)
+        curvature = np.flip(np.transpose(curvature), 0)
         
         fig = plt.figure(1)
         plt.pcolor(curvature)
         
         ax = fig.axes
-        ax[0].set_xlabel('Rostral to Caudal')
-        ax[0].set_ylabel('Frame number')
+        ax[0].set_xlabel('Frame number')
+        ax[0].set_ylabel('Rostral to Caudal')
         plt.colorbar()
         plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_curvature_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.png'))
         plt.close(1)
@@ -117,6 +99,8 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         curvatureMatrixFile = open(os.path.join(outputPath, hyperparameters["videoName"] + "_curvatureData" + str(i) + '_' + str(j) + '_' + str(k) + '.txt'), 'wb')
         pickle.dump(curvature, curvatureMatrixFile)
         curvatureMatrixFile.close()
+        
+        superStruct["wellPoissMouv"][i][j][k]["curvature"] = curvature
         
         # Creation of tail angle graph for bout k
         bStart = superStruct["wellPoissMouv"][i][j][k]["BoutStart"]
@@ -197,3 +181,5 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
           out.write(frame)
           
         out.release()
+  
+  return superStruct

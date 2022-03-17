@@ -10,7 +10,7 @@ def dataPostProcessing(outputFolderVideo, superStruct, hyperparameters, videoNam
     generateAllTimeTailAngleGraph(outputFolderVideo, superStruct, hyperparameters["generateAllTimeTailAngleGraphLineWidth"])  
   
   if hyperparameters["perBoutOutput"]:
-    perBoutOutput(superStruct, hyperparameters, videoName)
+    superStruct = perBoutOutput(superStruct, hyperparameters, videoName)
   
   if hyperparameters["computeEyesHeadingPlot"]:
     computeEyesHeadingPlot(superStruct, hyperparameters, videoName)
@@ -19,4 +19,4 @@ def dataPostProcessing(outputFolderVideo, superStruct, hyperparameters, videoNam
     tailAnglesHeatMap(superStruct, hyperparameters, videoName)
   
   if hyperparameters["createPandasDataFrameOfParameters"] and hyperparameters["videoFPS"] and hyperparameters["videoPixelSize"]:
-    createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension)
+    createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension, '', superStruct)

@@ -3,7 +3,7 @@ from pathlib import Path
 import pandas as pd
 import os
 
-def createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension, ZZoutputLocation=''):
+def createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension, ZZoutputLocation='', supstructOverwrite={}):
   
   print("Creating pandas dataframe of parameters")
   
@@ -44,6 +44,9 @@ def createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension
     'saveAllBoutsSuperStructuresInMatlabFormat' : 0
   }
   
+  if hyperparameters["perBoutOutput"]:
+    dataframeOptions['curvatureCalculated'] = 1
+  
   # forcePandasDfRecreation (third parameter) is set to True here
-  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, excelFileDataFrame, 1, [])
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, excelFileDataFrame, 1, [], 0, supstructOverwrite)
   

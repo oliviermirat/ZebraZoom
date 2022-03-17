@@ -17,7 +17,7 @@ from zebrazoom.dataAnalysis.datasetcreation.getTailAngleRecalculated2 import get
 from zebrazoom.dataAnalysis.datasetcreation.gatherInitialRawData import gatherInitialRawData
 import pickle
 
-def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecreation=0, addToGlobalParameters=0, minimumFrameToFrameDistanceToBeConsideredAsMoving=0):
+def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecreation=0, addToGlobalParameters=0, minimumFrameToFrameDistanceToBeConsideredAsMoving=0, supstructOverwrite={}):
 
   # Gathering user-inputed information about how to create the dataframe of parameters for the whole set of videos
   
@@ -47,6 +47,8 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   
   getTailAngleSignMultNormalized = int(dataframeOptions['getTailAngleSignMultNormalized']) if 'getTailAngleSignMultNormalized' in dataframeOptions else 0
   
+  curvatureCalculated = int(dataframeOptions['curvatureCalculated']) if 'curvatureCalculated' in dataframeOptions else 0
+  
   # If nbFramesTakenIntoAccount was not specified, finds an appropriate value for it
   nbFramesTakenIntoAccount          = dataframeOptions['nbFramesTakenIntoAccount']
   if len(pathToExcelFile):
@@ -68,8 +70,11 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     include   = excelFile.loc[videoId, 'include']
     include = eval('[' + include + ']')
     include = include[0]
-    with open(os.path.join(path, 'results_' + trial_id + '.txt')) as f:
-      supstruct = json.load(f)
+    if len(supstructOverwrite):
+      supstruct = supstructOverwrite
+    else:
+      with open(os.path.join(path, 'results_' + trial_id + '.txt')) as f:
+        supstruct = json.load(f)
     for Well_ID, Cond in enumerate(include):
       if include[Well_ID]:
         for NumBout, dataForBout in enumerate(supstruct["wellPoissMouv"][Well_ID][0]):
@@ -79,10 +84,14 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
             break;
       if boutTakenIntoAcccount > 100:
         break;
-    if nbFramesTakenIntoAccount == -1:
-      nbFramesTakenIntoAccount = int(np.median(boutNbFrames))
+    if len(boutNbFrames):
+      if nbFramesTakenIntoAccount == -1:
+        nbFramesTakenIntoAccount = int(np.median(boutNbFrames))
+      else:
+        nbFramesTakenIntoAccount = 3 * int(np.median(boutNbFrames)) if 3 * int(np.median(boutNbFrames)) >= 100 else 100
     else:
-      nbFramesTakenIntoAccount = 3 * int(np.median(boutNbFrames)) if 3 * int(np.median(boutNbFrames)) >= 100 else 100
+      # There are not bouts in the dataset...
+      return [[], [], 0, []]
   
   # Creating labels of columns of dataframe
   # General basic information
@@ -100,6 +109,8 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   if saveRawDataInAllBoutsSuperStructure:
     if tailAngleKinematicParameterCalculation:
       rawData = ['HeadX', 'HeadY', 'Heading', 'TailAngle_Raw', 'TailAngle_smoothed', 'Bend_Timing', 'Bend_TimingAbsolute', 'Bend_Amplitude', 'TailBeatFrequency']
+      if curvatureCalculated:
+        rawData += ['curvature']
     else:
       rawData = ['HeadX', 'HeadY', 'Heading']
   # Tail angle related parameters for clustering
@@ -161,12 +172,18 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     include = include[0]
     
     if (not(os.path.exists(os.path.join(path, trial_id + '.pkl'))) or forcePandasDfRecreation):
-      with open(os.path.join(path, 'results_' + trial_id + '.txt')) as f:
-        supstruct = json.load(f)
-        firstFrame = supstruct["firstFrame"]
-        lastFrame  = supstruct["lastFrame"]
+      if len(supstructOverwrite):
+        supstruct = supstructOverwrite
+      else:
+        with open(os.path.join(path, 'results_' + trial_id + '.txt')) as f:
+          supstruct = json.load(f)
+      firstFrame = supstruct["firstFrame"]
+      lastFrame  = supstruct["lastFrame"]
       with open(os.path.join(path, 'parametersUsedForCalculation.json'), 'w') as outfile:
-        json.dump({'frameStepForDistanceCalculation': frameStepForDistanceCalculation, 'videoFPS': excelFile.loc[videoId, 'fq'], 'videoPixelSize': excelFile.loc[videoId, 'pixelsize']}, outfile)
+        print('frameStepForDistanceCalculation', frameStepForDistanceCalculation)
+        print('videoFPS', excelFile.loc[videoId, 'fq'])
+        print('videoPixelSize', excelFile.loc[videoId, 'pixelsize'])
+        json.dump({'frameStepForDistanceCalculation': int(frameStepForDistanceCalculation), 'videoFPS': float(excelFile.loc[videoId, 'fq']), 'videoPixelSize': float(excelFile.loc[videoId, 'pixelsize'])}, outfile)
     else:
       print("reloading previously calculated parameters")
       dfReloadedVid = pd.read_pickle(os.path.join(path, trial_id + '.pkl'))
