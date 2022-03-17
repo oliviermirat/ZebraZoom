@@ -303,7 +303,8 @@ def headEmbededTailTracking(headPosition,nbTailPoints,i,thresh1,frame,hyperparam
   
   if len(points[0]) > 3:
     if hyperparameters["smoothTailHeadEmbeded"]:
-      points = smoothTail(points, nbTailPoints, hyperparameters["smoothTailHeadEmbeded"])
+      for smoothTailIteration in range(0, hyperparameters["smoothTailHeadEmbededNbOfIterations"]):
+        points = smoothTail(points, nbTailPoints, hyperparameters["smoothTailHeadEmbeded"])
     else:
       if not(hyperparameters["adjustHeadEmbededTracking"]):
         points   = interpolateTail(points, nbTailPoints)

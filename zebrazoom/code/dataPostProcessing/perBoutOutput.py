@@ -8,7 +8,7 @@ import numpy as np
 import time
 import pandas as pd
 import pickle
-import scipy as sp
+from scipy import ndimage
 
 def perBoutOutput(superStruct, hyperparameters, videoName):
   
@@ -80,7 +80,7 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         # 2d median filter
         rolling_window = hyperparameters["curvatureMedianFilterSmoothingWindow"]
         if rolling_window:
-          curvature = sp.signal.medfilt2d(curvature, rolling_window)
+          curvature = ndimage.median_filter(curvature, size=rolling_window)
         else:
           curvature = np.array(curvature)
         
