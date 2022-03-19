@@ -375,6 +375,7 @@ class ViewParameters(QSplitter):
     def __init__(self, controller):
         super().__init__(controller.window)
         self.controller = controller
+        self._headEmbedded = False
 
         model = QFileSystemModel()
         model.setFilter(QDir.Filter.NoDotAndDotDot | QDir.Filter.Dirs)
@@ -418,9 +419,9 @@ class ViewParameters(QSplitter):
         line.setFrameShape(QFrame.Shape.HLine)
         layout.addWidget(line, 2, 1, 1, 7)
 
-        button = QPushButton("View video for all wells together", self)
-        button.clicked.connect(lambda: self.showValidationVideo(-1, self.numPoiss(), 0, -1))
-        layout.addWidget(button, 3, 1, Qt.AlignmentFlag.AlignCenter)
+        self._wholeVideoBtn = QPushButton("View video for all wells together", self)
+        self._wholeVideoBtn.clicked.connect(lambda: self.showValidationVideo(-1, self.numPoiss(), 0, -1))
+        layout.addWidget(self._wholeVideoBtn, 3, 1, Qt.AlignmentFlag.AlignCenter)
 
         self._viewBtn = QPushButton("", self)
         self._viewBtn.clicked.connect(lambda: self.showGraphForAllBoutsCombined(self.numWell(), self.numPoiss(), self.dataRef, self.visualization, self.graphScaling))
@@ -428,7 +429,8 @@ class ViewParameters(QSplitter):
 
         self.title_label = util.apply_style(QLabel('', self), font_size='16px')
         layout.addWidget(self.title_label, 0, 0, 1, 8, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QLabel("Well number:", self), 4, 1, Qt.AlignmentFlag.AlignCenter)
+        self._wellNumberLabel = QLabel("Well number:", self)
+        layout.addWidget(self._wellNumberLabel, 4, 1, Qt.AlignmentFlag.AlignCenter)
         self.spinbox1 = QSpinBox(self)
         self.spinbox1.setStyleSheet(util.SPINBOX_STYLESHEET)
         self.spinbox1.setMinimumWidth(70)
@@ -445,7 +447,8 @@ class ViewParameters(QSplitter):
         self._plotComboBox.currentIndexChanged.connect(lambda idx: setattr(self, "visualization", idx) or self._printSomeResults())
         layout.addWidget(self._plotComboBox, 5, 4, Qt.AlignmentFlag.AlignCenter)
 
-        layout.addWidget(QLabel("Fish number:", self), 6, 1, Qt.AlignmentFlag.AlignCenter)
+        self._fishNumberLabel = QLabel("Fish number:", self)
+        layout.addWidget(self._fishNumberLabel, 6, 1, Qt.AlignmentFlag.AlignCenter)
         self.spinbox2 = QSpinBox(self)
         self.spinbox2.setStyleSheet(util.SPINBOX_STYLESHEET)
         self.spinbox2.setMinimumWidth(70)
@@ -505,7 +508,7 @@ class ViewParameters(QSplitter):
         self.well_video_btn.clicked.connect(lambda: self.showValidationVideo(self.numWell(), self.numPoiss(), 0, self.begMove))
         layout.addWidget(self.well_video_btn, 5, 1, Qt.AlignmentFlag.AlignCenter)
         self.bout_video_btn = QPushButton("View bout's video" , self)
-        self.bout_video_btn.clicked.connect(lambda: self.showValidationVideo(self.numWell(), self.numPoiss(), 1, self.begMove))
+        self.bout_video_btn.clicked.connect(lambda: self.showValidationVideo(self.numWell(), self.numPoiss(), not self._headEmbedded, self.begMove))
         layout.addWidget(self.bout_video_btn, 8, 1, Qt.AlignmentFlag.AlignCenter)
         self.graph_title_label = util.apply_style(QLabel('', font=LARGE_FONT))
         layout.addWidget(self.graph_title_label, 3, 7, Qt.AlignmentFlag.AlignCenter)
@@ -559,6 +562,7 @@ class ViewParameters(QSplitter):
 
     def setFolder(self, name):
         self.title_label.setText(name)
+        self._updateConfigWidgets()
         if name is None:
           self._centralWidget.hideChild()
           self._tree.selectionModel().clearSelection()
@@ -568,8 +572,13 @@ class ViewParameters(QSplitter):
           self._centralWidget.showChild()
         self.currentResultFolder = name
 
+        try:
+          with open(os.path.join(self.controller.ZZoutputLocation, name, 'configUsed.json')) as config:
+            self._headEmbedded = bool(json.load(config).get("headEmbeded", False))
+        except (EnvironmentError, json.JSONDecodeError) as e:
+          self._headEmbedded = False
         with open(self._findResultsFile(name)) as ff:
-            self.dataRef = json.load(ff)
+          self.dataRef = json.load(ff)
 
         self.spinbox1.setValue(0)
         self.spinbox2.setValue(0)
@@ -582,10 +591,26 @@ class ViewParameters(QSplitter):
         self.spinbox2.setRange(0, self.nbPoiss - 1)
         self.spinbox3.setRange(0, self.nbMouv - 1)
         self.superstruct_btn.hide()
-        if self._plotComboBox.currentIndex() == 2:
+        defaultGraphIndex = 0 if self._headEmbedded else 2
+        if self._plotComboBox.currentIndex() == defaultGraphIndex:
             self._printSomeResults()
         else:
-            self._plotComboBox.setCurrentIndex(2)
+            self._plotComboBox.setCurrentIndex(defaultGraphIndex)
+
+        if self._headEmbedded:
+          self.spinbox1.hide()
+          self.spinbox2.hide()
+          self.zoomed_video_btn.hide()
+          self._wholeVideoBtn.setText("View the whole video")
+          self._wellNumberLabel.hide()
+          self._fishNumberLabel.hide()
+        else:
+          self.spinbox1.show()
+          self.spinbox2.show()
+          self.zoomed_video_btn.show()
+          self._wholeVideoBtn.setText("View video for all wells together")
+          self._wellNumberLabel.show()
+          self._fishNumberLabel.show()
 
     def _updateGraph(self):
         self.a.clear()
@@ -694,16 +719,23 @@ class ViewParameters(QSplitter):
           else:
             util.apply_style(self.flag_movement_btn).setText("Flag Movement")
           self.flag_movement_btn.show()
-          self.well_video_btn.setText("View video for well %d" % self.numWell())
-          self.well_video_btn.show()
+          if not self._headEmbedded:
+            self.well_video_btn.setText("View video for well %d" % self.numWell())
+            self.well_video_btn.show()
+          else:
+            self.well_video_btn.hide()
           self.bout_video_btn.show()
           if self.visualization == 0:
-            text = "Tail Angle Smoothed and amplitudes for well %d, fish %d, bout %d"
+            text = "Tail Angle Smoothed and amplitudes for "
           elif self.visualization == 1:
-            text = "Tail Angle Raw for well %d, fish %d, bout %d"
+            text = "Tail Angle Raw for well "
           else:
-            text = "Body Coordinates for well %d, fish %d, bout %d"
-          self.graph_title_label.setText(text % (self.numWell() , self.numPoiss(), self.numMouv()))
+            text = "Body Coordinates for "
+          if self._headEmbedded:
+            text += "bout %d" % self.numMouv()
+          else:
+            text += "well %d, fish %d, bout %d" % (self.numWell() , self.numPoiss(), self.numMouv())
+          self.graph_title_label.setText(text)
           self.graph_title_label.show()
         else:
           self.flag_movement_btn.hide()
