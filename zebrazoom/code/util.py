@@ -161,6 +161,8 @@ def showDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, tim
   else:
     layoutSize = mainLayout.totalSizeHint()
   screenSize = QApplication.primaryScreen().availableSize()
+  if app is not None:
+    screenSize -= app.window.frameSize() - app.window.size()
   if layoutSize.width() > screenSize.width() or layoutSize.height() > screenSize.height():
     layoutSize.scale(screenSize, Qt.AspectRatioMode.KeepAspectRatio)
   dialog.setFixedSize(layoutSize)
@@ -517,9 +519,10 @@ def chooseEndPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb):
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
-  backBtn = QPushButton("Back")
-  backBtn.setObjectName("back")
-  buttonsLayout.addWidget(backBtn)
+  if app.configFileHistory:
+    backBtn = QPushButton("Back")
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn)
   chooseFrameBtn = QPushButton(chooseFrameBtnText)
   def chooseFrameBtnClicked():
     app.configFile["lastFrame"] = valueWidget.value()
@@ -538,7 +541,7 @@ def chooseEndPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb):
     label.setMinimumSize(1, 1)
     label.show()
     setPixmapFromCv(frame, label)
-  for btn in (backBtn, chooseFrameBtn):
+  for btn in (backBtn, chooseFrameBtn) if app.configFileHistory else (chooseFrameBtn,):
     btn.clicked.connect(lambda: stackedLayout.removeWidget(page))
 
 

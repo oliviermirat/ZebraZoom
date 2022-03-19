@@ -31,15 +31,6 @@ def getTailExtremityFirstFrame(pathToVideo, videoName, videoExt, configFile, arg
   [hyperparameters, config] = getHyperparameters(configFile, videoName, videoPath, argv)
   
   frameNumber = hyperparameters["firstFrame"]
-  videoNames = [videoName]
-  
-  if len(argv) > 5:
-    for i in range(5, len(argv)):
-      if argv[i] == "frameNumber":
-        frameNumber = int(argv[i+1])
-        break
-      else:
-        videoNames.append(argv[i])
   
   [frame, thresh1] = headEmbededFrame(videoPath, frameNumber, hyperparameters)
   
@@ -54,17 +45,12 @@ def getTailExtremityFirstFrame(pathToVideo, videoName, videoExt, configFile, arg
     frame = frame * (255/mult)
     frame = frame.astype(int)
     frame = (frame / np.linalg.norm(frame))*255
-  
-  tailTip  = findTailTipByUserInput(frame, frameNumber, videoPath, hyperparameters)
 
-  for videoN in videoNames:
-  
-    with open(pathToVideo+'/'+videoN+'.csv', mode='w') as employee_file:
-      employee_writer = csv.writer(employee_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-      employee_writer.writerow(tailTip)
-      
-    if hyperparameters["findHeadPositionByUserInput"]:
-      headPosition = findHeadPositionByUserInput(frame, frameNumber, videoPath)
-      with open(pathToVideo+'/'+videoN+'HP.csv', mode='w') as employee_file:
-        employee_writer = csv.writer(employee_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-        employee_writer.writerow(headPosition)
+  if hyperparameters["findHeadPositionByUserInput"]:
+    with open(os.path.join(pathToVideo, videoName + 'HP.csv'), mode='w') as f:
+      writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+      writer.writerow(findHeadPositionByUserInput(frame, frameNumber, videoPath))
+
+  with open(os.path.join(pathToVideo, videoName + '.csv'), mode='w') as f:
+      writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
+      writer.writerow(findTailTipByUserInput(frame, frameNumber, videoPath, hyperparameters))
