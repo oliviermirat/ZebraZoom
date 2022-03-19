@@ -3,15 +3,10 @@ try:
   from PyQt6.QtCore import Qt, QEventLoop
   from PyQt6.QtGui import QFont
   from PyQt6.QtWidgets import QWidget, QApplication, QLabel, QPushButton, QLineEdit, QGridLayout, QRadioButton
-  PYQT6 = True
 except ImportError:
   from PyQt5.QtCore import Qt, QEventLoop
   from PyQt5.QtGui import QFont
   from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QPushButton, QLineEdit, QGridLayout, QRadioButton
-  QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-  QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
-  QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
-  PYQT6 = False
 
 from pathlib import Path
 import pandas as pd
@@ -57,6 +52,8 @@ def checkConsistencyOfParameters(listOfVideosToCheckConsistencyOn):
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
   cur_dir_path = Path(cur_dir_path)
   zebrazoom_path = cur_dir_path.parent
+  app = QApplication.instance()
+  ZZoutputFolder = os.path.join(zebrazoom_path, 'ZZoutput') if app is None else app.ZZoutputLocation
   
   data = []
   
@@ -64,7 +61,7 @@ def checkConsistencyOfParameters(listOfVideosToCheckConsistencyOn):
   videoPixelSize_forAllVideos = -1
   setSameForAll = False
   for videoName in listOfVideosToCheckConsistencyOn:
-    with open(os.path.join(os.path.join(os.path.join(zebrazoom_path, 'ZZoutput'), videoName), 'configUsed.json')) as f:
+    with open(os.path.join(ZZoutputFolder, videoName, 'configUsed.json')) as f:
       configFile = json.load(f)
     nbWells        = configFile["nbWells"]
     # Checking / getting information about videoFPS and videoPixelSize
@@ -79,7 +76,7 @@ def checkConsistencyOfParameters(listOfVideosToCheckConsistencyOn):
       videoFPS       = videoFPS_forAllVideos
       videoPixelSize = videoPixelSize_forAllVideos
     # Setting the videoFPS and videoPixelSize values inside the excel file
-    vidTab  = ["defaultZZoutputFolder", videoName, videoFPS, videoPixelSize, str([1 for i in range(nbWells)]), str(['Your data' for i in range(nbWells)]), str([1 for i in range(nbWells)])]
+    vidTab  = ["defaultZZoutputFolder" if app is None else ZZoutputFolder, videoName, videoFPS, videoPixelSize, str([1 for i in range(nbWells)]), str(['Your data' for i in range(nbWells)]), str([1 for i in range(nbWells)])]
     data.append(vidTab)
   
   nbWellsStandardValues = 100
