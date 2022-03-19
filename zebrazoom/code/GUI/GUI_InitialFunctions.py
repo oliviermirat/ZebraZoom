@@ -18,14 +18,16 @@ import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 import zebrazoom.code.util as util
 
 try:
-  from PyQt6.QtWidgets import QFileDialog
+  from PyQt6.QtCore import Qt
+  from PyQt6.QtWidgets import QCheckBox, QFileDialog, QVBoxLayout
 except ImportError:
-  from PyQt5.QtWidgets import QFileDialog
+  from PyQt5.QtCore import Qt
+  from PyQt5.QtWidgets import QCheckBox, QFileDialog, QVBoxLayout
 
 
 LARGE_FONT= ("Verdana", 12)
 
-def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, plotOnlyOneTailPointForVisu, chooseFrames, testMode):
+def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, chooseFrames, testMode):
     self.videoName, _ = QFileDialog.getOpenFileName(self.window, 'Select file', os.path.expanduser("~"))
     if not self.videoName:
       return
@@ -37,7 +39,6 @@ def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, plotOnlyOne
     self.noValidationVideo = int(noValidationVideo)
     self.testMode         = testMode
     self.findMultipleROIs = 0
-    self.plotOnlyOneTailPointForVisu = int(plotOnlyOneTailPointForVisu)
 
     if chooseFrames:
       def beginningAndEndChosen():
@@ -46,10 +47,15 @@ def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, plotOnlyOne
         if "lastFrame" in self.configFile:
           self.lastFrame = self.configFile["lastFrame"]
         self.configFile.clear()
+        self.backgroundExtractionForceUseAllVideoFrames = int(backgroundExtractionForceUseAllVideoFramesCheckbox.isChecked())
         self.show_frame("ConfigFilePromp")
+      layout = QVBoxLayout()
+      backgroundExtractionForceUseAllVideoFramesCheckbox = QCheckBox("Use all frames to calculate background")
+      backgroundExtractionForceUseAllVideoFramesCheckbox.setChecked(True)
+      layout.addWidget(backgroundExtractionForceUseAllVideoFramesCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
       util.chooseBeginningPage(self, self.videoName, "Choose where the analysis of your video should start.", "Ok, I want the tracking to start at this frame!",
                                lambda: util.chooseEndPage(self, self.videoName, "Choose where the analysis of your video should end.", "Ok, I want the tracking to end at this frame!", beginningAndEndChosen),
-                               extraButtonInfo=("I want the tracking to run on the entire video!", beginningAndEndChosen))
+                               additionalLayout=layout)
     else:
       self.show_frame("ConfigFilePromp")
 
@@ -165,8 +171,8 @@ def launchZebraZoom(self):
         tabParams = ["mainZZ", path, name, videoExt, self.configFileName, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1, "outputFolder", self.ZZoutputLocation]
       else:
         tabParams = ["mainZZ", path, name, videoExt, self.configFileName, "freqAlgoPosFollow", 100, "outputFolder", self.ZZoutputLocation]
-      if hasattr(self, "plotOnlyOneTailPointForVisu"):
-        tabParams.extend(["plotOnlyOneTailPointForVisu", self.plotOnlyOneTailPointForVisu])
+      if hasattr(self, "backgroundExtractionForceUseAllVideoFrames"):
+        tabParams.extend(["backgroundExtractionForceUseAllVideoFrames", self.backgroundExtractionForceUseAllVideoFrames])
       if hasattr(self, "firstFrame"):
         tabParams.extend(["firstFrame", self.firstFrame])
       if hasattr(self, "lastFrame"):
@@ -190,8 +196,8 @@ def launchZebraZoom(self):
         return
     else:
       tabParams = ["outputFolder", self.ZZoutputLocation]
-      if hasattr(self, "plotOnlyOneTailPointForVisu"):
-        tabParams.extend(["plotOnlyOneTailPointForVisu", self.plotOnlyOneTailPointForVisu])
+      if hasattr(self, "backgroundExtractionForceUseAllVideoFrames"):
+        tabParams.extend(["backgroundExtractionForceUseAllVideoFrames", self.backgroundExtractionForceUseAllVideoFrames])
       if hasattr(self, "firstFrame"):
         tabParams.extend(["firstFrame", self.firstFrame])
       if hasattr(self, "lastFrame"):
@@ -203,8 +209,8 @@ def launchZebraZoom(self):
   self.noValidationVideo = 0
   self.testMode         = False
   self.findMultipleROIs  = 0
-  if hasattr(self, "plotOnlyOneTailPointForVisu"):
-    del self.plotOnlyOneTailPointForVisu
+  if hasattr(self, "backgroundExtractionForceUseAllVideoFrames"):
+    del self.backgroundExtractionForceUseAllVideoFrames
   if hasattr(self, "firstFrame"):
     del self.firstFrame
   if hasattr(self, "lastFrame"):

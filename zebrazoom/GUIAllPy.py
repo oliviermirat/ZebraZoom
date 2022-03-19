@@ -197,8 +197,8 @@ class ZebraZoomApp(QApplication):
         if self._busyCursor:
             self.setOverrideCursor(Qt.CursorShape.BusyCursor)
 
-    def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, plotOnlyOneTailPointForVisu, chooseFrames, testMode):
-        GUI_InitialFunctions.chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, plotOnlyOneTailPointForVisu, chooseFrames, testMode)
+    def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, chooseFrames, testMode):
+        GUI_InitialFunctions.chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, chooseFrames, testMode)
 
     def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode):
         GUI_InitialFunctions.chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode)
