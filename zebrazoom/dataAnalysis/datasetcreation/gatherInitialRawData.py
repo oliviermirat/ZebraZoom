@@ -17,5 +17,7 @@ def gatherInitialRawData(dataForBout, rawData, fps):
         rawInitialData.append(TailBeatFrequency.tolist())
       else:
         rawInitialData.append(dataForBout[param])
+    else:
+      rawInitialData.append(float('nan'))
   
   return rawInitialData

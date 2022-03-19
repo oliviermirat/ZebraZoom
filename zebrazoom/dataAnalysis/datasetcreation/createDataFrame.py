@@ -284,7 +284,6 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
                   toPutInDataFrame       = toPutInDataFrame       + [tailLength, tailLengthFromRecalculatedAngles] + tailAnglesRecalculatedData + tailAnglesRecalculatedData2.tolist()
                 
                 # Adding bout parameters to the dataframe created for the current well
-                
                 dfParamForWell.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
                 curBoutId = curBoutId + 1
               
