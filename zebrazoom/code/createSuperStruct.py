@@ -243,19 +243,6 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters):
     videoDataResults['videoFPS']    = hyperparameters["videoFPS"]
   if hyperparameters["videoPixelSize"]:
     videoDataResults['videoPixelSize']    = hyperparameters["videoPixelSize"]
-  
-  path = os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'results_' + hyperparameters["videoName"] + '.txt')
-  
-  print("createSuperStruct:", path)
-  
-  with open(path, 'w') as outfile:
-    json.dump(videoDataResults, outfile)
-    
-  if hyperparameters["saveSuperStructToMatlab"]:
-    matlabPath = os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'results_' + hyperparameters["videoName"] + '.mat')
-    videoDataResults2 = {}
-    videoDataResults2['videoDataResults'] = videoDataResults
-    savemat(matlabPath, videoDataResults2)
     
   if (hyperparameters["freqAlgoPosFollow"] != 0):
     print("Super Structure created")

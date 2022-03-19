@@ -95,8 +95,8 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
     'computeTailAngleParamForCluster'   : False,
     'computeMassCenterParamForCluster'  : False,
     'tailAngleKinematicParameterCalculation'    : TailTrackingParameters,
-    'saveRawDataInAllBoutsSuperStructure'       : saveInMatlabFormat,
-    'saveAllBoutsSuperStructuresInMatlabFormat' : saveRawData,
+    'saveRawDataInAllBoutsSuperStructure'       : saveRawData,
+    'saveAllBoutsSuperStructuresInMatlabFormat' : saveInMatlabFormat,
     'frameStepForDistanceCalculation'           : frameStepForDistanceCalculation
   }
   

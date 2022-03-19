@@ -20,3 +20,5 @@ def dataPostProcessing(outputFolderVideo, superStruct, hyperparameters, videoNam
   
   if hyperparameters["createPandasDataFrameOfParameters"] and hyperparameters["videoFPS"] and hyperparameters["videoPixelSize"]:
     createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension, '', superStruct)
+  
+  return superStruct

@@ -86,7 +86,7 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         
         curvature = np.flip(np.transpose(curvature), 0)
         
-        superStruct["wellPoissMouv"][i][j][k]["curvature"] = curvature
+        superStruct["wellPoissMouv"][i][j][k]["curvature"] = curvature.tolist()
         
         if hyperparameters["saveCurvaturePlots"]:
           fig = plt.figure(1)

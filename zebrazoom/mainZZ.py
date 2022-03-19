@@ -289,8 +289,19 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
         infoFrame = createValidationVideo(os.path.join(pathToVideo, videoNameWithExt), superStruct, hyperparameters)
     
     # Various post-processing options depending on configuration file choices
-    dataPostProcessing(outputFolderVideo, superStruct, hyperparameters, videoName, videoExt)
+    superStruct = dataPostProcessing(outputFolderVideo, superStruct, hyperparameters, videoName, videoExt)
+    
+    path = os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'results_' + hyperparameters["videoName"] + '.txt')
+    print("createSuperStruct:", path)
+    with open(path, 'w') as outfile:
+      json.dump(superStruct, outfile)
+    if hyperparameters["saveSuperStructToMatlab"]:
+      matlabPath = os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'results_' + hyperparameters["videoName"] + '.mat')
+      videoDataResults2 = {}
+      videoDataResults2['videoDataResults'] = superStruct
+      savemat(matlabPath, videoDataResults2)
   
+    
   try:
     with open(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'ZebraZoomVersionUsed.txt'), 'w') as fp:
       subprocess.run(["pip", "show",  "zebrazoom"], stdout=fp)

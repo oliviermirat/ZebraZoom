@@ -14,7 +14,7 @@ def createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension
   if hyperparameters["frameStepForDistanceCalculation"] and hyperparameters["frameStepForDistanceCalculation"] != -1:
     frameStepForDistanceCalculation = int(hyperparameters["frameStepForDistanceCalculation"])
   else:
-    frameStepForDistanceCalculation = int(hyperparameters["videoFPS"] / 100) * 4 if int(hyperparameters["videoFPS"]) >= 100 else 2
+    frameStepForDistanceCalculation = 4 #int(hyperparameters["videoFPS"] / 100) * 4 if int(hyperparameters["videoFPS"]) >= 100 else 2
   
   print("Parameter: frameStepForDistanceCalculation:", frameStepForDistanceCalculation)
   
