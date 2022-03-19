@@ -12,11 +12,11 @@ from matplotlib.figure import Figure
 try:
   from PyQt6.QtCore import Qt, QDir, QEvent, QObject, QSize, QSortFilterProxyModel
   from PyQt6.QtGui import QCursor, QFont
-  from PyQt6.QtWidgets import QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QComboBox, QTreeView, QToolTip
+  from PyQt6.QtWidgets import QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
 except ImportError:
   from PyQt5.QtCore import Qt, QDir, QEvent, QObject, QSize, QSortFilterProxyModel
   from PyQt5.QtGui import QCursor, QFont
-  from PyQt5.QtWidgets import QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QSpinBox, QComboBox, QTreeView, QToolTip
+  from PyQt5.QtWidgets import QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
 
 import zebrazoom.code.util as util
 from zebrazoom.code.readValidationVideo import readValidationVideo
@@ -537,7 +537,11 @@ class ViewParameters(QSplitter):
         wrapperLayout = QHBoxLayout()
         wrapperLayout.addWidget(centralWidget, alignment=Qt.AlignmentFlag.AlignCenter)
         wrapperWidget.setLayout(wrapperLayout)
-        self.addWidget(wrapperWidget)
+        scrollArea = QScrollArea()
+        scrollArea.setFrameShape(QFrame.Shape.NoFrame)
+        scrollArea.setWidgetResizable(True)
+        scrollArea.setWidget(wrapperWidget)
+        self.addWidget(scrollArea)
         self.setStretchFactor(1, 1)
         self.setChildrenCollapsible(False)
 
