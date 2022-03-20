@@ -562,6 +562,9 @@ class ViewParameters(QSplitter):
         self.title_label.setText(name)
         self._updateConfigWidgets()
         if name is None:
+          filesystemModel = self._tree.model().sourceModel()
+          filesystemModel.setRootPath(None)
+          filesystemModel.setRootPath(self.controller.ZZoutputLocation)  # force refresh of the model
           self._centralWidget.hideChild()
           self._tree.selectionModel().clearSelection()
           self._tree.selectionModel().clearCurrentIndex()
