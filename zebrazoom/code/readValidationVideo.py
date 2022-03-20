@@ -216,7 +216,7 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   layout = QVBoxLayout()
 
   video = QLabel()
-  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
+  layout.addWidget(video, stretch=1)
 
   frameSlider = QSlider(Qt.Orientation.Horizontal)
   frameSlider.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -225,6 +225,9 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   frameSlider.setValue(l)
   frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video))
   layout.addWidget(frameSlider)
+  shortcutsLabel = QLabel("Left Arrow, Right Arrow, Page Up, Page Down, Home and End keys can be used to navigate through the video.")
+  shortcutsLabel.setWordWrap(True)
+  layout.addWidget(shortcutsLabel)
 
   stopTimer = True
   timer = QTimer()

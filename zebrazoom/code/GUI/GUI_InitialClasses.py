@@ -1,3 +1,4 @@
+import contextlib
 import json
 import math
 import os
@@ -533,8 +534,8 @@ class ViewParameters(QSplitter):
         centralWidget.setLayout(layout)
         self.addWidget(tree)
         self._centralWidget = wrapperWidget = QWidget()
-        wrapperWidget.showChild = centralWidget.show
-        wrapperWidget.hideChild = centralWidget.hide
+        wrapperWidget.showChildren = lambda: [child.show() for child in centralWidget.findChildren(QWidget) if child is not startPageBtn]
+        wrapperWidget.hideChildren = lambda: [child.hide() for child in centralWidget.findChildren(QWidget) if child is not startPageBtn]
         wrapperLayout = QHBoxLayout()
         wrapperLayout.addWidget(centralWidget, alignment=Qt.AlignmentFlag.AlignCenter)
         wrapperWidget.setLayout(wrapperLayout)
@@ -545,6 +546,7 @@ class ViewParameters(QSplitter):
         self.addWidget(scrollArea)
         self.setStretchFactor(1, 1)
         self.setChildrenCollapsible(False)
+        tree.hide()
 
     def _findResultsFile(self, folder):
         reference = os.path.join(self.controller.ZZoutputLocation, os.path.join(folder, 'results_' + folder + '.txt'))
@@ -560,14 +562,18 @@ class ViewParameters(QSplitter):
 
     def setFolder(self, name):
         self.title_label.setText(name)
-        self._updateConfigWidgets()
         if name is None:
-          self._centralWidget.hideChild()
-          self._tree.selectionModel().clearSelection()
-          self._tree.selectionModel().clearCurrentIndex()
+          self._tree.hide()
+          filesystemModel = self._tree.model().sourceModel()
+          filesystemModel.setRootPath(None)
+          filesystemModel.setRootPath(self.controller.ZZoutputLocation)  # force refresh of the model
+          self._centralWidget.hideChildren()
+          self._tree.selectionModel().reset()
+          self._tree.show()
+          self._updateConfigWidgets()
           return
         else:
-          self._centralWidget.showChild()
+          self._centralWidget.showChildren()
         self.currentResultFolder = name
 
         try:
