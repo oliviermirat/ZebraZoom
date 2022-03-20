@@ -436,6 +436,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["saveSubVideo"]       = getConfig(config, "saveSubVideo", videoPath)
   hyperparameters["saveCurvatureData"]  = getConfig(config, "saveCurvatureData", videoPath)
   
+  hyperparameters["colorMapCurvature"]  = getConfig(config, "colorMapCurvature", videoPath)
+  
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1
   

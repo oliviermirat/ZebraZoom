@@ -90,7 +90,8 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         
         if hyperparameters["saveCurvaturePlots"]:
           fig = plt.figure(1)
-          plt.pcolor(curvature)
+          maxx = max([max(abs(np.array(t))) for t in curvature])
+          plt.pcolor(curvature, vmin=-maxx, vmax=maxx, cmap=hyperparameters["colorMapCurvature"])
           ax = fig.axes
           ax[0].set_xlabel('Frame number')
           ax[0].set_ylabel('Rostral to Caudal')

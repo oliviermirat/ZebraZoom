@@ -228,6 +228,7 @@
   "curvatureMedianFilterSmoothingWindow" : 3,
   "nbPointsToIgnoreAtCurvatureBeginning" : 0,
   "nbPointsToIgnoreAtCurvatureEnd" : 0,
+  "colorMapCurvature"  : "BrBG",
   "saveCurvaturePlots" : 0,
   "saveTailAngleGraph" : 0,
   "saveSubVideo"       : 0,
