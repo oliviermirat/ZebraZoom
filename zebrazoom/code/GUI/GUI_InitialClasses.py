@@ -375,6 +375,7 @@ class ViewParameters(QSplitter):
         super().__init__(controller.window)
         self.controller = controller
         self._headEmbedded = False
+        self.visualization = 0
 
         model = QFileSystemModel()
         model.setFilter(QDir.Filter.NoDotAndDotDot | QDir.Filter.Dirs)
