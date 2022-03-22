@@ -72,6 +72,8 @@ if False:
 
 # Regrouping per "time bins"
 
+distanceOperation = 'mean' # can be set to 'sum', 'mean', 'median'
+
 finalDataArray = 0
 for wellId in range(0, 6):
   fig = plt.subplots(1, 1)
@@ -82,7 +84,12 @@ for wellId in range(0, 6):
 
   wellData['minuteGroup'] = (wellData['minute'] / 0.05).astype('int')
 
-  minuteGroupSum   = wellData[['minuteGroup', 'instantaneousDistance']].groupby(['minuteGroup']).sum()['instantaneousDistance'].tolist()
+  if distanceOperation == 'sum':
+    minuteGroupSum = wellData[['minuteGroup', 'instantaneousDistance']].groupby(['minuteGroup']).sum()['instantaneousDistance'].tolist()
+  elif distanceOperation == 'mean':
+    minuteGroupSum = wellData[['minuteGroup', 'instantaneousDistance']].groupby(['minuteGroup']).mean()['instantaneousDistance'].tolist()
+  elif distanceOperation == 'median':
+    minuteGroupSum = wellData[['minuteGroup', 'instantaneousDistance']].groupby(['minuteGroup']).median()['instantaneousDistance'].tolist()
 
   minuteGroupFirst = wellData[['minuteGroup', 'minute']].groupby(['minuteGroup']).first()['minute'].tolist()
 
