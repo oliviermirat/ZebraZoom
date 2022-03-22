@@ -103,31 +103,24 @@ class OptimizeConfigFile(QWidget):
     self._headEmbeddedWidgets.add(headEmbeddedDocumentationBtn)
 
     advancedOptionsLayout = QVBoxLayout()
-    def updatePlotOnlyOneTailPointForVisu(checked):
-      if checked:
-        controller.configFile["plotOnlyOneTailPointForVisu"] = 1
-      elif self._originalPlotOnlyOneTailPointForVisu is None:
-        if "plotOnlyOneTailPointForVisu" in controller.configFile:
-          del controller.configFile["plotOnlyOneTailPointForVisu"]
-      else:
-        controller.configFile["plotOnlyOneTailPointForVisu"] = 0
-    self._plotOnlyOneTailPointForVisu = QCheckBox("Display tracking point only on the tail tip in validation videos", self)
-    self._plotOnlyOneTailPointForVisu.toggled.connect(updatePlotOnlyOneTailPointForVisu)
-    advancedOptionsLayout.addWidget(self._plotOnlyOneTailPointForVisu, alignment=Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(self._plotOnlyOneTailPointForVisu)
-    self._headEmbeddedWidgets.add(self._plotOnlyOneTailPointForVisu)
     gridLayout = QGridLayout()
     gridLayout.setColumnStretch(0, 1)
     gridLayout.setColumnStretch(6, 1)
-    frame = QFrame(self)
-    frame.setFrameShape(QFrame.Shape.VLine)
-    gridLayout.addWidget(frame, 0, 3, 3, 1)
-    self._freelySwimmingWidgets.add(frame)
-    self._fastCenterOfMassWidgets.add(frame)
-    self._centerOfMassWidgets.add(frame)
+    vframe = QFrame(self)
+    vframe.setFrameShape(QFrame.Shape.VLine)
+    gridLayout.addWidget(vframe, 0, 3, 7, 1)
+    self._freelySwimmingWidgets.add(vframe)
+    self._fastCenterOfMassWidgets.add(vframe)
+    self._centerOfMassWidgets.add(vframe)
+    hframe = QFrame(self)
+    hframe.setFrameShape(QFrame.Shape.HLine)
+    gridLayout.addWidget(hframe, 3, 1, 1, 5)
+    self._freelySwimmingWidgets.add(hframe)
+    self._fastCenterOfMassWidgets.add(hframe)
+    self._centerOfMassWidgets.add(hframe)
 
     solveIssuesLabel = util.apply_style(QLabel("Solve issues near the borders of the wells/tanks/arenas"), font_size='16px')
-    gridLayout.addWidget(solveIssuesLabel, 0, 1, 1, 2, Qt.AlignmentFlag.AlignLeft)
+    gridLayout.addWidget(solveIssuesLabel, 0, 1, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(solveIssuesLabel)
     self._fastCenterOfMassWidgets.add(solveIssuesLabel)
     self._centerOfMassWidgets.add(solveIssuesLabel)
@@ -161,7 +154,7 @@ class OptimizeConfigFile(QWidget):
 
     postProcessTrajectoriesLabel = util.apply_style(QLabel("Post-process animal center trajectories"), font_size='16px')
     postProcessTrajectoriesLabel.setToolTip("Trajectories post-processing can help solve problems with animal 'disapearing' and/or temporarily 'jumping' to a distant (and incorrect) location.")
-    gridLayout.addWidget(postProcessTrajectoriesLabel, 0, 4, 1, 2, Qt.AlignmentFlag.AlignLeft)
+    gridLayout.addWidget(postProcessTrajectoriesLabel, 0, 4, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(postProcessTrajectoriesLabel)
     self._fastCenterOfMassWidgets.add(postProcessTrajectoriesLabel)
     self._centerOfMassWidgets.add(postProcessTrajectoriesLabel)
@@ -184,7 +177,20 @@ class OptimizeConfigFile(QWidget):
         elif "postProcessMaxDistanceAuthorized" in controller.configFile:
           del controller.configFile["postProcessMaxDistanceAuthorized"]
     postProcessMaxDistanceAuthorized.textChanged.connect(updatePostProcessMaxDistanceAuthorized)
-    postProcessMaxDistanceAuthorizedLabel = QLabel("postProcessMaxDistanceAuthorized:")
+    postProcessMaxDistanceAuthorizedLabel = QPushButton("postProcessMaxDistanceAuthorized:")
+
+    def modifyPostProcessMaxDistanceAuthorized():
+      import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+      cap = zzVideoReading.VideoCapture(controller.videoToCreateConfigFileFor)
+      ret, frame = cap.read()
+      cancelled = False
+      def cancel():
+        nonlocal cancelled
+        cancelled = True
+      center, radius = util.getCircle(frame, 'Click on the center of an animal and select the distance which it can realistically travel', cancel)
+      if not cancelled:
+        postProcessMaxDistanceAuthorized.setText(str(radius))
+    postProcessMaxDistanceAuthorizedLabel.clicked.connect(modifyPostProcessMaxDistanceAuthorized)
     gridLayout.addWidget(postProcessMaxDistanceAuthorizedLabel, 1, 4, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(postProcessMaxDistanceAuthorizedLabel)
     self._fastCenterOfMassWidgets.add(postProcessMaxDistanceAuthorizedLabel)
@@ -224,10 +230,10 @@ class OptimizeConfigFile(QWidget):
     self._centerOfMassWidgets.add(postProcessMaxDisapearanceFrames)
 
     tailTrackingLabel = util.apply_style(QLabel("Tail tracking quality"), font_size='16px')
-    gridLayout.addWidget(tailTrackingLabel, 3, 1, 1, 5, Qt.AlignmentFlag.AlignCenter)
+    gridLayout.addWidget(tailTrackingLabel, 4, 1, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(tailTrackingLabel)
     tailTrackingInfoLabel = QLabel("Checking this increases quality, but makes tracking slower.")
-    gridLayout.addWidget(tailTrackingInfoLabel, 4, 1, 1, 5, Qt.AlignmentFlag.AlignCenter)
+    gridLayout.addWidget(tailTrackingInfoLabel, 5, 1, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(tailTrackingInfoLabel)
     self._recalculateForegroundImageBasedOnBodyArea = QCheckBox("recalculateForegroundImageBasedOnBodyArea")
 
@@ -240,8 +246,26 @@ class OptimizeConfigFile(QWidget):
       else:
         controller.configFile["recalculateForegroundImageBasedOnBodyArea"] = 0
     self._recalculateForegroundImageBasedOnBodyArea.toggled.connect(updateRecalculateForegroundImageBasedOnBodyArea)
-    gridLayout.addWidget(self._recalculateForegroundImageBasedOnBodyArea, 5, 1, 1, 5, Qt.AlignmentFlag.AlignCenter)
+    gridLayout.addWidget(self._recalculateForegroundImageBasedOnBodyArea, 6, 1, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(self._recalculateForegroundImageBasedOnBodyArea)
+
+    plotOnlyOneTailPointForVisuLabel = util.apply_style(QLabel("Validaton video options"), font_size='16px')
+    gridLayout.addWidget(plotOnlyOneTailPointForVisuLabel, 4, 4, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(plotOnlyOneTailPointForVisuLabel)
+    self._headEmbeddedWidgets.add(plotOnlyOneTailPointForVisuLabel)
+    def updatePlotOnlyOneTailPointForVisu(checked):
+      if checked:
+        controller.configFile["plotOnlyOneTailPointForVisu"] = 1
+      elif self._originalPlotOnlyOneTailPointForVisu is None:
+        if "plotOnlyOneTailPointForVisu" in controller.configFile:
+          del controller.configFile["plotOnlyOneTailPointForVisu"]
+      else:
+        controller.configFile["plotOnlyOneTailPointForVisu"] = 0
+    self._plotOnlyOneTailPointForVisu = QCheckBox("Display tracking point only on the tail tip in validation videos", self)
+    self._plotOnlyOneTailPointForVisu.toggled.connect(updatePlotOnlyOneTailPointForVisu)
+    gridLayout.addWidget(self._plotOnlyOneTailPointForVisu, 5, 4, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(self._plotOnlyOneTailPointForVisu)
+    self._headEmbeddedWidgets.add(self._plotOnlyOneTailPointForVisu)
     advancedOptionsLayout.addLayout(gridLayout)
 
     advancedButtonsLayout = QHBoxLayout()
