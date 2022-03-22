@@ -1,12 +1,14 @@
+import math
+
 import cv2
 
 try:
-  from PyQt6.QtCore import pyqtSignal, Qt, QAbstractAnimation, QEventLoop, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, QTimer
+  from PyQt6.QtCore import pyqtSignal, Qt, QAbstractAnimation, QEventLoop, QLine, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, QTimer
   from PyQt6.QtGui import QBrush, QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygonF, QTransform
   from PyQt6.QtWidgets import QApplication, QFrame, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QToolButton, QToolTip, QVBoxLayout, QWidget
   PYQT6 = True
 except ImportError:
-  from PyQt5.QtCore import pyqtSignal, Qt, QAbstractAnimation, QEventLoop, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, QTimer
+  from PyQt5.QtCore import pyqtSignal, Qt, QAbstractAnimation, QEventLoop, QLine, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, QTimer
   from PyQt5.QtGui import QBrush, QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygonF, QTransform
   from PyQt5.QtWidgets import QApplication, QFrame, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QToolButton, QToolTip, QVBoxLayout, QWidget
   PYQT6 = False
@@ -808,3 +810,94 @@ class Expander(QWidget):
     for i in range(self._toggleAnimation.animationCount() - 1):
       self._toggleAnimation.animationAt(i).setEndValue(self._collapseHeight + contentHeight)
     self._toggleAnimation.animationAt(self._toggleAnimation.animationCount() - 1).setEndValue(contentHeight)
+
+
+class _InteractiveLabelCircle(QLabel):
+  circleSelected = pyqtSignal(bool)
+
+  def __init__(self, width, height):
+    super().__init__()
+    self._width = width
+    self._height = height
+    self._center = None
+    self._currentPosition = None
+    self._radius = None
+    self._size = None
+    self._tooltipShown = False
+    self.setMouseTracking(True)
+
+  def mousePressEvent(self, evt):
+    if self._center is None or self._radius is not None:
+      self._center = evt.pos()
+      self._radius = None
+      self._currentPosition = None
+      self.circleSelected.emit(False)
+    else:
+      self._radius = QLine(self._center, evt.pos())
+      self.circleSelected.emit(True)
+    self.update()
+
+  def mouseReleaseEvent(self, evt):
+    if self._radius is not None and not self._tooltipShown:
+      QToolTip.showText(evt.globalPos(), "If you aren't satisfied with the selection, click again.", self, self.rect(), 5000)
+      self._tooltipShown = True
+
+  def mouseMoveEvent(self, evt):
+    self._currentPosition = evt.pos()
+    self.update()
+
+  def enterEvent(self, evt):
+    QApplication.setOverrideCursor(Qt.CursorShape.CrossCursor)
+
+  def leaveEvent(self, evt):
+    QApplication.restoreOverrideCursor()
+    self._currentPosition = None
+    self.update()
+
+  def paintEvent(self, evt):
+    super().paintEvent(evt)
+    if self._currentPosition is None and self._center is None:
+      return
+    qp = QPainter()
+    qp.begin(self)
+    if self._center is not None:
+      qp.setBrush(QColor(255, 0, 0))
+      qp.setPen(Qt.PenStyle.NoPen)
+      radius = self._radius if self._radius is not None else QLine(self._center, self._currentPosition) if self._currentPosition is not None else None
+      qp.drawEllipse(self._center, 2, 2)
+      if radius is not None:
+        radius = math.sqrt(radius.dx() * radius.dx() + radius.dy() * radius.dy())
+        qp.setBrush(Qt.BrushStyle.NoBrush)
+        qp.setPen(QColor(0, 0, 255))
+        qp.drawEllipse(self._center, radius, radius)
+    qp.end()
+
+  def resizeEvent(self, evt):
+    super().resizeEvent(evt)
+    self._size = self.size()
+
+  def getInfo(self):
+    if self._center is None or self._radius is None:
+      return None, None
+    if self._size.height() != self._height or self._size.width() != self._width:
+      center = transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(self._width, self._height)), self._center)
+      radius = transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(self._width, self._height)), self._radius)
+    else:
+      center = self._center
+      radius = self._radius
+    return center, int(math.sqrt(radius.dx() * radius.dx() + radius.dy() * radius.dy()))
+
+
+def getCircle(frame, title, backBtnCb=None):
+  height, width, _ = frame.shape
+
+  layout = QVBoxLayout()
+
+  video = _InteractiveLabelCircle(width, height)
+  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
+  if backBtnCb is not None:
+    buttons = (("Cancel", backBtnCb, True), ("Ok", None, True, video.circleSelected))
+  else:
+    buttons = (("Ok", None, True, video.circleSelected),)
+  showBlockingPage(layout, title=title, buttons=buttons, labelInfo=(frame, video))
+  return video.getInfo()
