@@ -752,7 +752,7 @@ def addToHistory(fn):
 
 
 class Expander(QWidget):
-  def __init__(self, parent, title, layout, animationDuration=200):
+  def __init__(self, parent, title, layout, animationDuration=200, showFrame=False):
     super(Expander, self).__init__(parent)
 
     toggleButton = QToolButton()
@@ -764,7 +764,8 @@ class Expander(QWidget):
     toggleButton.setChecked(False)
 
     self._contentArea = contentArea = QScrollArea()
-    contentArea.setFrameShape(QFrame.Shape.NoFrame)
+    if not showFrame:
+      contentArea.setFrameShape(QFrame.Shape.NoFrame)
     contentArea.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred)
     contentArea.setMaximumHeight(0)
     contentArea.setMinimumHeight(0)
