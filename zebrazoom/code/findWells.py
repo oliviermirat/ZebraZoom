@@ -24,7 +24,7 @@ import zebrazoom.code.util as util
 
 
 def _findRectangularWellsAreaQt(frame, videoPath, hyperparameters):
-  topLeft, bottomRight = util.getRectangle(frame, "Select one of the wells")
+  topLeft, bottomRight = util.getRectangle(frame, "Click on the top left and bottom right of one of the wells")
   return abs(topLeft[0] - bottomRight[0]) * abs(topLeft[1] - bottomRight[1])
 
 
@@ -72,7 +72,7 @@ def findRectangularWellsArea(frame, videoPath, hyperparameters):
   return rectangularWellsArea
 
 
-def findRectangularWells(frame, videoPath, hyperparameters, rectangularWellsArea):
+def findRectangularWells(frame, videoPath, hyperparameters, rectangularWellsArea, widgets=None):
   
   findRectangleWellArea                    = rectangularWellsArea
   hyperparameters["findRectangleWellArea"] = rectangularWellsArea
@@ -169,14 +169,14 @@ def findRectangularWells(frame, videoPath, hyperparameters, rectangularWellsArea
     
     cv2.putText(frameToShow, "Wells detected:" + str(len(wellPositions)), (int(len(frameToShow[0])/2), 80), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 255), 8)
   
-    l, widgets = adjustHyperparameters(0, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab, None)
+    l, widgets = adjustHyperparameters(0, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab, widgets)
     
     for param in hyperparametersListNames:
       hyperparameters[param] = int(hyperparameters[param])
     if hyperparameters["rectangularWellsInvertBlackWhite"] > 1:
       hyperparameters["rectangularWellsInvertBlackWhite"] = 1
     
-    findRectangularWells(frame, videoPath, hyperparameters, hyperparameters["findRectangleWellArea"])
+    findRectangularWells(frame, videoPath, hyperparameters, hyperparameters["findRectangleWellArea"], widgets=widgets)
   
   return wellPositions
 
