@@ -24,7 +24,7 @@ import zebrazoom.code.util as util
 
 
 def _findRectangularWellsAreaQt(frame, videoPath, hyperparameters):
-  topLeft, bottomRight = util.getRectangle(frame, "Select one of the wells")
+  topLeft, bottomRight = util.getRectangle(frame, "Click on the top left and bottom right of one of the wells")
   return abs(topLeft[0] - bottomRight[0]) * abs(topLeft[1] - bottomRight[1])
 
 
