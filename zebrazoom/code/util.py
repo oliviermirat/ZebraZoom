@@ -752,7 +752,7 @@ def addToHistory(fn):
 
 
 class Expander(QWidget):
-  def __init__(self, parent, title, layout, animationDuration=200, showFrame=False):
+  def __init__(self, parent, title, layout, animationDuration=200, showFrame=False, addScrollbars=False):
     super(Expander, self).__init__(parent)
 
     toggleButton = QToolButton()
@@ -777,7 +777,13 @@ class Expander(QWidget):
     mainLayout.addWidget(contentArea, 1, 0, 1, 3)
     self.setLayout(mainLayout)
 
-    contentArea.setLayout(layout)
+    if not addScrollbars:
+      contentArea.setLayout(layout)
+    else:
+      widget = QWidget(self)
+      widget.setLayout(layout)
+      contentArea.setWidgetResizable(True)
+      contentArea.setWidget(widget)
     self._collapseHeight = self.sizeHint().height() - contentArea.maximumHeight()
     contentHeight = layout.sizeHint().height()
     self._toggleAnimation = toggleAnimation = QParallelAnimationGroup()
@@ -800,10 +806,12 @@ class Expander(QWidget):
       toggleButton.setArrowType(arrowType)
       toggleAnimation.setDirection(direction)
       toggleAnimation.start()
-    toggleButton.clicked.connect(startAnimation or setattr(self, "toggled", not self.toggled))
+    toggleButton.clicked.connect(startAnimation)
 
-  def refresh(self):
-    contentHeight = self._contentArea.layout().sizeHint().height()
+  def refresh(self, availableHeight):
+    layout = self._contentArea.layout()
+    height = layout.sizeHint().height() if layout is not None else self._contentArea.widget().sizeHint().height() + 5
+    contentHeight = min(height, availableHeight - self._collapseHeight - 10)
     if self._contentArea.maximumHeight():
       self._contentArea.setMaximumHeight(contentHeight)
       self.setMinimumHeight(self._collapseHeight + contentHeight)

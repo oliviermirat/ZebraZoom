@@ -4,12 +4,12 @@ import webbrowser
 try:
   from PyQt6.QtCore import Qt, QSize
   from PyQt6.QtGui import QCursor, QFont, QIcon, QIntValidator, QPixmap
-  from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup, QScrollArea, QSpacerItem
+  from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup, QSpacerItem
   PYQT6 = True
 except ImportError:
   from PyQt5.QtCore import Qt, QSize
   from PyQt5.QtGui import QCursor, QFont, QIcon, QIntValidator, QPixmap
-  from PyQt5.QtWidgets import QApplication, QFrame, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup, QScrollArea, QSpacerItem
+  from PyQt5.QtWidgets import QApplication, QFrame, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup, QSpacerItem
   PYQT6 = False
 
 import zebrazoom.code.util as util
@@ -102,30 +102,27 @@ class OptimizeConfigFile(QWidget):
     layout.addWidget(headEmbeddedDocumentationBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     self._headEmbeddedWidgets.add(headEmbeddedDocumentationBtn)
 
-    advancedOptionsLayout = QVBoxLayout()
-    gridLayout = QGridLayout()
+    advancedOptionsLayout = QGridLayout()
     vframe = QFrame(self)
     vframe.setFrameShape(QFrame.Shape.VLine)
-    gridLayout.addWidget(vframe, 0, 3, 8, 1)
+    advancedOptionsLayout.addWidget(vframe, 0, 2, 15, 1)
     self._freelySwimmingWidgets.add(vframe)
     self._fastCenterOfMassWidgets.add(vframe)
     self._centerOfMassWidgets.add(vframe)
     hframe = QFrame(self)
     hframe.setFrameShape(QFrame.Shape.HLine)
-    gridLayout.addWidget(hframe, 4, 1, 1, 5)
+    advancedOptionsLayout.addWidget(hframe, 4, 0, 1, 5)
     self._freelySwimmingWidgets.add(hframe)
-    self._fastCenterOfMassWidgets.add(hframe)
-    self._centerOfMassWidgets.add(hframe)
 
     solveIssuesLabel = util.apply_style(QLabel("Solve issues near the borders of the wells/tanks/arenas"), font_size='16px')
-    gridLayout.addWidget(solveIssuesLabel, 0, 1, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(solveIssuesLabel, 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(solveIssuesLabel)
     self._fastCenterOfMassWidgets.add(solveIssuesLabel)
     self._centerOfMassWidgets.add(solveIssuesLabel)
     solveIssuesInfoLabel = QLabel("backgroundPreProcessParameters should be an odd positive integer. Higher value filters more pixels on the borders of the wells/tanks/arenas.")
     solveIssuesInfoLabel.setMinimumSize(1, 1)
     solveIssuesInfoLabel.resizeEvent = lambda evt: solveIssuesInfoLabel.setMinimumWidth(evt.size().width()) or solveIssuesInfoLabel.setWordWrap(evt.size().width() <= solveIssuesInfoLabel.sizeHint().width())
-    gridLayout.addWidget(solveIssuesInfoLabel, 1, 1, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(solveIssuesInfoLabel, 1, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(solveIssuesInfoLabel)
     self._fastCenterOfMassWidgets.add(solveIssuesInfoLabel)
     self._centerOfMassWidgets.add(solveIssuesInfoLabel)
@@ -148,24 +145,24 @@ class OptimizeConfigFile(QWidget):
           del controller.configFile["backgroundPreProcessParameters"]
     backgroundPreProcessParameters.textChanged.connect(updateBackgroundPreProcessParameters)
     backgroundPreProcessParametersLabel = QLabel("backgroundPreProcessParameters:")
-    gridLayout.addWidget(backgroundPreProcessParametersLabel, 2, 1, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(backgroundPreProcessParametersLabel, 2, 0, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(backgroundPreProcessParametersLabel)
     self._fastCenterOfMassWidgets.add(backgroundPreProcessParametersLabel)
     self._centerOfMassWidgets.add(backgroundPreProcessParametersLabel)
-    gridLayout.addWidget(backgroundPreProcessParameters, 2, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(backgroundPreProcessParameters, 2, 1, Qt.AlignmentFlag.AlignLeft)
     self._freelySwimmingWidgets.add(backgroundPreProcessParameters)
     self._fastCenterOfMassWidgets.add(backgroundPreProcessParameters)
     self._centerOfMassWidgets.add(backgroundPreProcessParameters)
 
     postProcessTrajectoriesLabel = util.apply_style(QLabel("Post-process animal center trajectories"), font_size='16px')
-    gridLayout.addWidget(postProcessTrajectoriesLabel, 0, 4, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(postProcessTrajectoriesLabel, 0, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(postProcessTrajectoriesLabel)
     self._fastCenterOfMassWidgets.add(postProcessTrajectoriesLabel)
     self._centerOfMassWidgets.add(postProcessTrajectoriesLabel)
     postProcessTrajectoriesInfoLabel = QLabel("postProcessMaxDistanceAuthorized is the maximum distance in pixels above which it is considered that an animal was detected incorrectly (click on the button to adjust it visually). postProcessMaxDisapearanceFrames is the maximum number of frames for which the post-processing will consider that an animal can be incorrectly detected.")
     postProcessTrajectoriesInfoLabel.setMinimumSize(1, 1)
     postProcessTrajectoriesInfoLabel.resizeEvent = lambda evt: postProcessTrajectoriesInfoLabel.setMinimumWidth(evt.size().width()) or postProcessTrajectoriesInfoLabel.setWordWrap(evt.size().width() <= postProcessTrajectoriesInfoLabel.sizeHint().width())
-    gridLayout.addWidget(postProcessTrajectoriesInfoLabel, 1, 4, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(postProcessTrajectoriesInfoLabel, 1, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(postProcessTrajectoriesInfoLabel)
     self._fastCenterOfMassWidgets.add(postProcessTrajectoriesInfoLabel)
     self._centerOfMassWidgets.add(postProcessTrajectoriesInfoLabel)
@@ -203,11 +200,11 @@ class OptimizeConfigFile(QWidget):
       if not cancelled:
         postProcessMaxDistanceAuthorized.setText(str(radius))
     postProcessMaxDistanceAuthorizedLabel.clicked.connect(modifyPostProcessMaxDistanceAuthorized)
-    gridLayout.addWidget(postProcessMaxDistanceAuthorizedLabel, 2, 4, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(postProcessMaxDistanceAuthorizedLabel, 2, 3, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(postProcessMaxDistanceAuthorizedLabel)
     self._fastCenterOfMassWidgets.add(postProcessMaxDistanceAuthorizedLabel)
     self._centerOfMassWidgets.add(postProcessMaxDistanceAuthorizedLabel)
-    gridLayout.addWidget(postProcessMaxDistanceAuthorized, 2, 5, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(postProcessMaxDistanceAuthorized, 2, 4, Qt.AlignmentFlag.AlignLeft)
     self._freelySwimmingWidgets.add(postProcessMaxDistanceAuthorized)
     self._fastCenterOfMassWidgets.add(postProcessMaxDistanceAuthorized)
     self._centerOfMassWidgets.add(postProcessMaxDistanceAuthorized)
@@ -232,20 +229,20 @@ class OptimizeConfigFile(QWidget):
           del controller.configFile["postProcessMaxDisapearanceFrames"]
     postProcessMaxDisapearanceFrames.textChanged.connect(updatePostProcessMaxDisapearanceFrames)
     postProcessMaxDisapearanceFramesLabel = QLabel("postProcessMaxDisapearanceFrames:")
-    gridLayout.addWidget(postProcessMaxDisapearanceFramesLabel, 3, 4, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(postProcessMaxDisapearanceFramesLabel, 3, 3, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(postProcessMaxDisapearanceFramesLabel)
     self._fastCenterOfMassWidgets.add(postProcessMaxDisapearanceFramesLabel)
     self._centerOfMassWidgets.add(postProcessMaxDisapearanceFramesLabel)
-    gridLayout.addWidget(postProcessMaxDisapearanceFrames, 3, 5, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(postProcessMaxDisapearanceFrames, 3, 4, Qt.AlignmentFlag.AlignLeft)
     self._freelySwimmingWidgets.add(postProcessMaxDisapearanceFrames)
     self._fastCenterOfMassWidgets.add(postProcessMaxDisapearanceFrames)
     self._centerOfMassWidgets.add(postProcessMaxDisapearanceFrames)
 
     tailTrackingLabel = util.apply_style(QLabel("Tail tracking quality"), font_size='16px')
-    gridLayout.addWidget(tailTrackingLabel, 5, 1, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(tailTrackingLabel, 5, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(tailTrackingLabel)
     tailTrackingInfoLabel = QLabel("Checking this increases quality, but makes tracking slower.")
-    gridLayout.addWidget(tailTrackingInfoLabel, 6, 1, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(tailTrackingInfoLabel, 6, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(tailTrackingInfoLabel)
     self._recalculateForegroundImageBasedOnBodyArea = QCheckBox("recalculateForegroundImageBasedOnBodyArea")
 
@@ -258,11 +255,11 @@ class OptimizeConfigFile(QWidget):
       else:
         controller.configFile["recalculateForegroundImageBasedOnBodyArea"] = 0
     self._recalculateForegroundImageBasedOnBodyArea.toggled.connect(updateRecalculateForegroundImageBasedOnBodyArea)
-    gridLayout.addWidget(self._recalculateForegroundImageBasedOnBodyArea, 7, 1, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(self._recalculateForegroundImageBasedOnBodyArea, 7, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(self._recalculateForegroundImageBasedOnBodyArea)
 
     plotOnlyOneTailPointForVisuLabel = util.apply_style(QLabel("Validaton video options"), font_size='16px')
-    gridLayout.addWidget(plotOnlyOneTailPointForVisuLabel, 5, 4, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(plotOnlyOneTailPointForVisuLabel, 5, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(plotOnlyOneTailPointForVisuLabel)
     self._headEmbeddedWidgets.add(plotOnlyOneTailPointForVisuLabel)
     def updatePlotOnlyOneTailPointForVisu(checked):
@@ -275,33 +272,36 @@ class OptimizeConfigFile(QWidget):
         controller.configFile["plotOnlyOneTailPointForVisu"] = 0
     self._plotOnlyOneTailPointForVisu = QCheckBox("Display tracking point only on the tail tip in validation videos", self)
     self._plotOnlyOneTailPointForVisu.toggled.connect(updatePlotOnlyOneTailPointForVisu)
-    gridLayout.addWidget(self._plotOnlyOneTailPointForVisu, 6, 4, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(self._plotOnlyOneTailPointForVisu, 6, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(self._plotOnlyOneTailPointForVisu)
     self._headEmbeddedWidgets.add(self._plotOnlyOneTailPointForVisu)
-    for idx in range(gridLayout.columnCount()):
-      gridLayout.setColumnStretch(idx, 100 if not idx else 1)
-    gridLayout.setColumnStretch(gridLayout.columnCount(), 100)
-    scrollArea = QScrollArea(self)
-    scrollArea.setFrameShape(QFrame.Shape.NoFrame)
-    scrollArea.setWidgetResizable(True)
-    widget = QWidget(self)
-    widget.setLayout(gridLayout)
-    scrollArea.setWidget(widget)
-    advancedOptionsLayout.addWidget(scrollArea, alignment=Qt.AlignmentFlag.AlignVCenter)
 
-    advancedButtonsLayout = QHBoxLayout()
-    advancedButtonsLayout.addStretch()
+    hframe = QFrame(self)
+    hframe.setFrameShape(QFrame.Shape.HLine)
+    advancedOptionsLayout.addWidget(hframe, 8, 0, 1, 5)
+    self._freelySwimmingWidgets.add(hframe)
+    advancedOptionsLabel = util.apply_style(QLabel("Documentation links"), font_size='16px')
+    advancedOptionsLayout.addWidget(advancedOptionsLabel, 9, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(advancedOptionsLabel)
     speedUpTrackingBtn = util.apply_style(QPushButton("Speed up tracking for 'Track heads and tails of freely swimming fish'", self), background_color=util.LIGHT_YELLOW)
     speedUpTrackingBtn.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingSpeedOptimization.md"))
-    advancedButtonsLayout.addWidget(speedUpTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(speedUpTrackingBtn, 10, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(speedUpTrackingBtn)
     documentationBtn = util.apply_style(QPushButton("Help", self), background_color=util.LIGHT_YELLOW)
     documentationBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/configurationFile/throughGUI/trackingFreelySwimmingConfigOptimization"))
-    advancedButtonsLayout.addWidget(documentationBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(documentationBtn, 11, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(documentationBtn)
-    advancedButtonsLayout.addStretch()
-    advancedOptionsLayout.addLayout(advancedButtonsLayout)
-    self._expander = util.Expander(self, 'Show advanced options', advancedOptionsLayout, showFrame=True)
+
+    def updateColumnWidths(setUniform):
+      if setUniform:
+        for idx in range(advancedOptionsLayout.columnCount()):
+          advancedOptionsLayout.setColumnStretch(idx, 1)
+      else:
+        for idx in range(3):
+          advancedOptionsLayout.setColumnStretch(idx, 0)
+    self._updateColumnWidths = updateColumnWidths
+    self._updateColumnWidths(True)
+    self._expander = util.Expander(self, 'Show advanced options', advancedOptionsLayout, showFrame=True, addScrollbars=True)
     layout.addWidget(self._expander)
 
     frame = QFrame()
@@ -349,9 +349,17 @@ class OptimizeConfigFile(QWidget):
         widget.show()
       else:
         widget.hide()
+    self._updateColumnWidths(visibleWidgets is not self._headEmbeddedWidgets)
     self._expander.hide()
+    maximumHeight = self._expander.maximumHeight()
+    self._expander.setMaximumHeight(self.height())
+    layout = self.layout().itemAt(0).widget().layout()
+    layout.setStretchFactor(self._expander, 1)
     self._expander.show()
-    self._expander.refresh()
+    availableHeight = self._expander.size().height()
+    layout.setStretchFactor(self._expander, 0)
+    self._expander.setMaximumHeight(maximumHeight)
+    self._expander.refresh(availableHeight=availableHeight)
 
     self._originalBackgroundPreProcessMethod = app.configFile.get("backgroundPreProcessMethod")
     self._originalBackgroundPreProcessParameters = app.configFile.get("backgroundPreProcessParameters")
