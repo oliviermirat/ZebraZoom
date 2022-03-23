@@ -258,7 +258,7 @@ class OptimizeConfigFile(QWidget):
     advancedOptionsLayout.addWidget(self._recalculateForegroundImageBasedOnBodyArea, 7, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(self._recalculateForegroundImageBasedOnBodyArea)
 
-    plotOnlyOneTailPointForVisuLabel = util.apply_style(QLabel("Validaton video options"), font_size='16px')
+    plotOnlyOneTailPointForVisuLabel = util.apply_style(QLabel("Validation video options"), font_size='16px')
     advancedOptionsLayout.addWidget(plotOnlyOneTailPointForVisuLabel, 5, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(plotOnlyOneTailPointForVisuLabel)
     self._headEmbeddedWidgets.add(plotOnlyOneTailPointForVisuLabel)
