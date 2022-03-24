@@ -71,7 +71,10 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
     status = QLabel()
     layout.addWidget(status, 1, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
-    _createWidget(layout, status, widgets, (hyperparameters["firstFrame"], hyperparameters["lastFrame"] - 1, "You can also go through the video with the keys left arrow (backward); right arrow (forward); page down (fast backward); page up (fast forward)"), "Frame number", widgets)
+    if l is not None:
+      _createWidget(layout, status, widgets, (hyperparameters["firstFrame"], hyperparameters["lastFrame"] - 1, "You can also go through the video with the keys left arrow (backward); right arrow (forward); page down (fast backward); page up (fast forward)"), "Frame number", widgets)
+    else:
+      layout.addWidget(QWidget())
     for info, name in zip(organizationTab, hyperparametersListNames):
       _createWidget(layout, status, hyperparameters, info, name, widgets)
 
@@ -134,7 +137,8 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
         newPosition = min(localCursorX / slider.sliderWidth(), 1) * maxx
         timer.timeout.connect(lambda slider=slider: (slider.setPosition(newPosition) if newPosition > 0 else widgets['loop'].exit()) or timers.remove(timer))
         timer.start(30)
-    widgets['frameSlider'].setValue(l)
+    if 'frameSlider' in widgets:
+      widgets['frameSlider'].setValue(l)
     widgets['frame'].clear()
     widgets['Frame number'] = l
     util.setPixmapFromCv(frameToShow, widgets['frame'])
