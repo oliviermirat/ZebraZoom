@@ -169,7 +169,7 @@ def findRectangularWells(frame, videoPath, hyperparameters, rectangularWellsArea
     
     cv2.putText(frameToShow, "Wells detected:" + str(len(wellPositions)), (int(len(frameToShow[0])/2), 80), cv2.FONT_HERSHEY_SIMPLEX, 3, (255, 0, 255), 8)
   
-    l, widgets = adjustHyperparameters(0, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab, widgets)
+    l, widgets = adjustHyperparameters(None, hyperparameters, hyperparametersListNames, frameToShow, WINDOW_NAME, organizationTab, widgets)
     
     for param in hyperparametersListNames:
       hyperparameters[param] = int(hyperparameters[param])
