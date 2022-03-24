@@ -93,8 +93,12 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
           maxx = max([max(abs(np.array(t))) for t in curvature])
           plt.pcolor(curvature, vmin=-maxx, vmax=maxx, cmap=hyperparameters["colorMapCurvature"])
           ax = fig.axes
-          ax[0].set_xlabel('Frame number')
           ax[0].set_ylabel('Rostral to Caudal')
+          if hyperparameters["videoFPS"]:
+            ax[0].set_xlabel('Second')
+            plt.xticks([i for i in range(0, len(curvature[0]), int(len(curvature[0])/10))], [int(100*(i/hyperparameters["videoFPS"]))/100 for i in range(0, len(curvature[0]), int(len(curvature[0])/10))])
+          else:
+            ax[0].set_xlabel('Frame number')
           plt.colorbar()
           plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_curvature_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.png'))
           plt.close(1)

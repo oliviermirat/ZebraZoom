@@ -5,6 +5,7 @@ import numpy as np
 data = pd.read_pickle('nameOfVideo.pkl')
 
 numBout = 0
+fps     = 300
 
 curvature = data.loc[numBout]['curvature']
 
@@ -15,7 +16,10 @@ fig = plt.figure(1)
 plt.pcolor(curvature, vmin=-maxx, vmax=maxx, cmap='BrBG')
 
 ax = fig.axes
-ax[0].set_xlabel('Frame number')
+ax[0].set_xlabel('Second')
 ax[0].set_ylabel('Rostral to Caudal')
+
+plt.xticks([i for i in range(0, len(curvature[0]), 10)], [int(100*(i/fps))/100 for i in range(0, len(curvature[0]), 10)])
+
 plt.colorbar()
 plt.show()
