@@ -147,7 +147,7 @@ def launchZebraZoom(self):
   allVideos = []
 
   if self.sbatchMode:
-    commandsFile = open("commands.txt", "w")
+    commandsFile = open("commands.txt", "w", newline='\n')
     nbVideosToLaunch = 0
 
   if len(self.folderName):
@@ -185,7 +185,7 @@ def launchZebraZoom(self):
         tabParams = tabParams + ["exitAfterWellsDetection", 1, "saveWellPositionsToBeReloadedNoMatterWhat", 1]
       try:
         if self.sbatchMode:
-          commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]).replace('\\', '/').replace('//lexport/iss01.', '/network/lustre/iss01') + ' configFile.json\n')
+          commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]).replace('\\', '/').replace('//lexport/iss01.', '/network/lustre/iss01/') + ' configFile.json\n')
           nbVideosToLaunch = nbVideosToLaunch + 1
         else:
           mainZZ(path, name, videoExt, self.configFileName, tabParams)
@@ -223,8 +223,10 @@ def launchZebraZoom(self):
     with open(self.configFileName) as f:
       jsonFile = json.load(f)
     nbWells = jsonFile["nbWells"]
+    if nbWells > 24:
+      nbWells = 24
 
-    launchFile = open("launchZZ.sh", "w")
+    launchFile = open("launchZZ.sh", "w", newline='\n')
     linesToWrite = ['#!/bin/sh',
                     '#SBATCH --ntasks=1',
                     '#SBATCH --cpus-per-task='+str(nbWells),
