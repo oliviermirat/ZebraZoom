@@ -568,6 +568,7 @@ class ViewParameters(QSplitter):
           filesystemModel = self._tree.model().sourceModel()
           filesystemModel.setRootPath(None)
           filesystemModel.setRootPath(self.controller.ZZoutputLocation)  # force refresh of the model
+          self._tree.setRootIndex(self._tree.model().mapFromSource(filesystemModel.index(filesystemModel.rootPath())))
           self._centralWidget.hideChildren()
           self._tree.selectionModel().reset()
           self._tree.show()
