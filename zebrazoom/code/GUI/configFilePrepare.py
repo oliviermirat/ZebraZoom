@@ -109,10 +109,13 @@ class OptimizeConfigFile(QWidget):
     self._freelySwimmingWidgets.add(vframe)
     self._fastCenterOfMassWidgets.add(vframe)
     self._centerOfMassWidgets.add(vframe)
+    self._headEmbeddedWidgets.add(vframe)
     hframe = QFrame(self)
     hframe.setFrameShape(QFrame.Shape.HLine)
     advancedOptionsLayout.addWidget(hframe, 4, 0, 1, 5)
     self._freelySwimmingWidgets.add(hframe)
+    self._fastCenterOfMassWidgets.add(hframe)
+    self._centerOfMassWidgets.add(hframe)
 
     solveIssuesLabel = util.apply_style(QLabel("Solve issues near the borders of the wells/tanks/arenas"), font_size='16px')
     advancedOptionsLayout.addWidget(solveIssuesLabel, 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
@@ -238,11 +241,74 @@ class OptimizeConfigFile(QWidget):
     self._fastCenterOfMassWidgets.add(postProcessMaxDisapearanceFrames)
     self._centerOfMassWidgets.add(postProcessMaxDisapearanceFrames)
 
+    optimizeDataAnalysisLabel = util.apply_style(QLabel("Optimize data analysis"), font_size='16px')
+    advancedOptionsLayout.addWidget(optimizeDataAnalysisLabel, 5, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._headEmbeddedWidgets.add(optimizeDataAnalysisLabel)
+    self._freelySwimmingWidgets.add(optimizeDataAnalysisLabel)
+    self._fastCenterOfMassWidgets.add(optimizeDataAnalysisLabel)
+    self._centerOfMassWidgets.add(optimizeDataAnalysisLabel)
+
+    def speedUpAnalysisToggled(checked):
+      analysisInfoWidget.setVisible(checked)
+      if not checked:
+        if "createPandasDataFrameOfParameters" in controller.configFile:
+          del controller.configFile["createPandasDataFrameOfParameters"]
+        if "videoFPS" in controller.configFile:
+          del controller.configFile["videoFPS"]
+        if "videoPixelSize" in controller.configFile:
+          del controller.configFile["videoPixelSize"]
+      else:
+        controller.configFile["createPandasDataFrameOfParameters"] = 1
+        if videoFPS.text():
+          controller.configFile["videoFPS"] = float(videoFPS.text())
+        if videoPixelSize.text():
+          controller.configFile["videoPixelSize"] = float(videoPixelSize.text())
+    self._speedUpAnalysisCheckbox = speedUpAnalysisCheckbox = QCheckBox("Speed up final ZebraZoom behavior analysis", self)
+    speedUpAnalysisCheckbox.toggled.connect(speedUpAnalysisToggled)
+    advancedOptionsLayout.addWidget(speedUpAnalysisCheckbox, 6, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._headEmbeddedWidgets.add(speedUpAnalysisCheckbox)
+    self._freelySwimmingWidgets.add(speedUpAnalysisCheckbox)
+    self._fastCenterOfMassWidgets.add(speedUpAnalysisCheckbox)
+    self._centerOfMassWidgets.add(speedUpAnalysisCheckbox)
+
+    analysisInfoLayout = QGridLayout()
+    analysisInfoLayout.addWidget(QLabel("videoFPS:"), 0, 0, Qt.AlignmentFlag.AlignLeft)
+    self._videoFPS = videoFPS = QLineEdit(self)
+    videoFPS.setValidator(QDoubleValidator(videoFPS))
+    videoFPS.validator().setBottom(0)
+
+    def videoFPSChanged(text):
+      if text:
+        controller.configFile["videoFPS"] = float(text)
+      elif "videoFPS" in controller.configFile:
+          del controller.configFile["videoFPS"]
+    videoFPS.textChanged.connect(videoFPSChanged)
+    analysisInfoLayout.addWidget(videoFPS, 0, 1, Qt.AlignmentFlag.AlignLeft)
+    analysisInfoLayout.addWidget(QLabel("videoPixelSize:"), 1, 0, Qt.AlignmentFlag.AlignLeft)
+    self._videoPixelSize = videoPixelSize = QLineEdit(self)
+    videoPixelSize.setValidator(QDoubleValidator(videoPixelSize))
+    videoPixelSize.validator().setBottom(0)
+
+    def videoPixelSizeChanged(text):
+      if text:
+        controller.configFile["videoPixelSize"] = float(text)
+      elif "videoPixelSize" in controller.configFile:
+          del controller.configFile["videoPixelSize"]
+    videoPixelSize.textChanged.connect(videoPixelSizeChanged)
+    analysisInfoLayout.addWidget(videoPixelSize, 1, 1, Qt.AlignmentFlag.AlignLeft)
+    self._analysisInfoWidget = analysisInfoWidget = QWidget(self)
+    analysisInfoWidget.setLayout(analysisInfoLayout)
+    advancedOptionsLayout.addWidget(analysisInfoWidget, 7, 0, 2, 2, Qt.AlignmentFlag.AlignCenter)
+    self._headEmbeddedWidgets.add(analysisInfoWidget)
+    self._freelySwimmingWidgets.add(analysisInfoWidget)
+    self._fastCenterOfMassWidgets.add(analysisInfoWidget)
+    self._centerOfMassWidgets.add(analysisInfoWidget)
+
     tailTrackingLabel = util.apply_style(QLabel("Tail tracking quality"), font_size='16px')
-    advancedOptionsLayout.addWidget(tailTrackingLabel, 5, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(tailTrackingLabel, 10, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(tailTrackingLabel)
     tailTrackingInfoLabel = QLabel("Checking this increases quality, but makes tracking slower.")
-    advancedOptionsLayout.addWidget(tailTrackingInfoLabel, 6, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(tailTrackingInfoLabel, 11, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(tailTrackingInfoLabel)
     self._recalculateForegroundImageBasedOnBodyArea = QCheckBox("recalculateForegroundImageBasedOnBodyArea")
 
@@ -255,7 +321,7 @@ class OptimizeConfigFile(QWidget):
       else:
         controller.configFile["recalculateForegroundImageBasedOnBodyArea"] = 0
     self._recalculateForegroundImageBasedOnBodyArea.toggled.connect(updateRecalculateForegroundImageBasedOnBodyArea)
-    advancedOptionsLayout.addWidget(self._recalculateForegroundImageBasedOnBodyArea, 7, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(self._recalculateForegroundImageBasedOnBodyArea, 12, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(self._recalculateForegroundImageBasedOnBodyArea)
 
     plotOnlyOneTailPointForVisuLabel = util.apply_style(QLabel("Validation video options"), font_size='16px')
@@ -278,29 +344,22 @@ class OptimizeConfigFile(QWidget):
 
     hframe = QFrame(self)
     hframe.setFrameShape(QFrame.Shape.HLine)
-    advancedOptionsLayout.addWidget(hframe, 8, 0, 1, 5)
+    advancedOptionsLayout.addWidget(hframe, 9, 0, 1, 5)
     self._freelySwimmingWidgets.add(hframe)
     advancedOptionsLabel = util.apply_style(QLabel("Documentation links"), font_size='16px')
-    advancedOptionsLayout.addWidget(advancedOptionsLabel, 9, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(advancedOptionsLabel, 10, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(advancedOptionsLabel)
     speedUpTrackingBtn = util.apply_style(QPushButton("Speed up tracking for 'Track heads and tails of freely swimming fish'", self), background_color=util.LIGHT_YELLOW)
     speedUpTrackingBtn.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingSpeedOptimization.md"))
-    advancedOptionsLayout.addWidget(speedUpTrackingBtn, 10, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(speedUpTrackingBtn, 11, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(speedUpTrackingBtn)
     documentationBtn = util.apply_style(QPushButton("Help", self), background_color=util.LIGHT_YELLOW)
     documentationBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/configurationFile/throughGUI/trackingFreelySwimmingConfigOptimization"))
-    advancedOptionsLayout.addWidget(documentationBtn, 11, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(documentationBtn, 12, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(documentationBtn)
 
-    def updateColumnWidths(setUniform):
-      if setUniform:
-        for idx in range(advancedOptionsLayout.columnCount()):
-          advancedOptionsLayout.setColumnStretch(idx, 1)
-      else:
-        for idx in range(3):
-          advancedOptionsLayout.setColumnStretch(idx, 0)
-    self._updateColumnWidths = updateColumnWidths
-    self._updateColumnWidths(True)
+    for idx in range(advancedOptionsLayout.columnCount()):
+      advancedOptionsLayout.setColumnStretch(idx, 1)
     self._expander = util.Expander(self, 'Show advanced options', advancedOptionsLayout, showFrame=True, addScrollbars=True)
     layout.addWidget(self._expander)
 
@@ -349,7 +408,6 @@ class OptimizeConfigFile(QWidget):
         widget.show()
       else:
         widget.hide()
-    self._updateColumnWidths(visibleWidgets is not self._headEmbeddedWidgets)
     self._expander.hide()
     maximumHeight = self._expander.maximumHeight()
     self._expander.setMaximumHeight(self.height())
@@ -393,6 +451,15 @@ class OptimizeConfigFile(QWidget):
       self._plotOnlyOneTailPointForVisu.setChecked(bool(self._originalPlotOnlyOneTailPointForVisu))
     else:
       self._plotOnlyOneTailPointForVisu.setChecked(False)
+    if "createPandasDataFrameOfParameters" in app.configFile:
+      self._speedUpAnalysisCheckbox.setChecked(app.configFile["createPandasDataFrameOfParameters"])
+    else:
+      self._speedUpAnalysisCheckbox.setChecked(False)
+    self._analysisInfoWidget.setVisible(self._speedUpAnalysisCheckbox.isChecked())
+    if "videoFPS" in app.configFile:
+      self._videoFPS.setText(str(app.configFile["videoFPS"]))
+    if "videoPixelSize" in app.configFile:
+      self._videoPixelSize.setText(str(app.configFile["videoPixelSize"]))
 
 
 class _ClickableImageLabel(QLabel):
