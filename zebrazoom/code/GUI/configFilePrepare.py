@@ -3,12 +3,12 @@ import webbrowser
 
 try:
   from PyQt6.QtCore import Qt, QSize
-  from PyQt6.QtGui import QCursor, QFont, QIcon, QIntValidator, QPixmap
+  from PyQt6.QtGui import QCursor, QFont, QIcon, QDoubleValidator, QIntValidator, QPixmap
   from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup, QSpacerItem
   PYQT6 = True
 except ImportError:
   from PyQt5.QtCore import Qt, QSize
-  from PyQt5.QtGui import QCursor, QFont, QIcon, QIntValidator, QPixmap
+  from PyQt5.QtGui import QCursor, QFont, QIcon, QDoubleValidator, QIntValidator, QPixmap
   from PyQt5.QtWidgets import QApplication, QFrame, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup, QSpacerItem
   PYQT6 = False
 
@@ -1091,9 +1091,60 @@ class FinishConfig(QWidget):
 
     layout = QVBoxLayout()
     layout.addStretch()
+
+    def updateSaveBtn():
+      enabled = not speedUpAnalysisCheckbox.isChecked() or bool(videoFPS.text() and videoPixelSize.text())
+      saveBtn.setEnabled(enabled)
+      if not enabled:
+        saveBtn.setToolTip("Video FPS and pixel size have to be filled in if speed up analysis option is checked.")
+      else:
+        saveBtn.setToolTip(None)
+
+    def speedUpAnalysisToggled(checked):
+      analysisInfoWidget.setVisible(checked)
+      if not checked:
+        if "createPandasDataFrameOfParameters" in controller.configFile:
+          del controller.configFile["createPandasDataFrameOfParameters"]
+        if "videoFPS" in controller.configFile:
+          del controller.configFile["videoFPS"]
+        if "videoPixelSize" in controller.configFile:
+          del controller.configFile["videoPixelSize"]
+      else:
+        controller.configFile["createPandasDataFrameOfParameters"] = 1
+        if videoFPS.text():
+          controller.configFile["videoFPS"] = float(videoFPS.text())
+        if videoPixelSize.text():
+          controller.configFile["videoPixelSize"] = float(videoPixelSize.text())
+    speedUpAnalysisCheckbox = QCheckBox("Speed up final ZebraZoom behavior analysis", self)
+    speedUpAnalysisCheckbox.toggled.connect(speedUpAnalysisToggled)
+    speedUpAnalysisCheckbox.toggled.connect(updateSaveBtn)
+    layout.addWidget(speedUpAnalysisCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    analysisInfoLayout = QGridLayout()
+    analysisInfoLayout.addWidget(QLabel("videoFPS:"), 0, 0, Qt.AlignmentFlag.AlignLeft)
+    videoFPS = QLineEdit(self)
+    videoFPS.setValidator(QDoubleValidator(videoFPS))
+    videoFPS.validator().setBottom(0)
+    videoFPS.textChanged.connect(lambda text: text and controller.configFile.update({"videoFPS": float(text)}))
+    videoFPS.textChanged.connect(updateSaveBtn)
+    self.setFPS = lambda fps: videoFPS.setText(str(fps))
+    analysisInfoLayout.addWidget(videoFPS, 0, 1, Qt.AlignmentFlag.AlignLeft)
+    analysisInfoLayout.addWidget(QLabel("videoPixelSize:"), 1, 0, Qt.AlignmentFlag.AlignLeft)
+    videoPixelSize = QLineEdit(self)
+    videoPixelSize.setValidator(QDoubleValidator(videoPixelSize))
+    videoPixelSize.validator().setBottom(0)
+    videoPixelSize.textChanged.connect(lambda text: text and controller.configFile.update({"videoPixelSize": float(text)}))
+    videoPixelSize.textChanged.connect(updateSaveBtn)
+    analysisInfoLayout.addWidget(videoPixelSize, 1, 1, Qt.AlignmentFlag.AlignLeft)
+    analysisInfoWidget = QWidget(self)
+    analysisInfoWidget.setLayout(analysisInfoLayout)
+    analysisInfoWidget.setVisible(False)
+    layout.addWidget(analysisInfoWidget, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    layout.addStretch()
+
     testCheckbox = QCheckBox("Test tracking after saving config", self)
     testCheckbox.setChecked(True)
-    testCheckbox.clearFocus()
     layout.addWidget(testCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
     saveBtn = util.apply_style(QPushButton("Save Config File", self), background_color=util.LIGHT_YELLOW)
     saveBtn.clicked.connect(lambda: controller.finishConfig(testCheckbox.isChecked()))

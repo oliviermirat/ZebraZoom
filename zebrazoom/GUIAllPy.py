@@ -164,6 +164,9 @@ class ZebraZoomApp(QApplication):
             self.organism = ''
             del self.configFileHistory[:]
         self.window.centralWidget().layout().setCurrentIndex(self.frames[page_name])
+        if page_name == "FinishConfig":
+          fps = zzVideoReading.VideoCapture(self.videoToCreateConfigFileFor).get(5)
+          self.window.centralWidget().layout().currentWidget().setFPS(fps)
 
     def _windowClosed(self, window, fn):
         def inner(*args, **kwargs):
