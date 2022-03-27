@@ -398,7 +398,6 @@ class ViewParameters(QSplitter):
         tree.header().setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
         for idx in range(1, model.columnCount()):
           tree.hideColumn(idx)
-        tree.setRootIndex(proxyModel.mapFromSource(model.index(model.rootPath())))
         tree.resizeEvent = lambda evt: tree.setColumnWidth(0, evt.size().width())
         selectionModel = tree.selectionModel()
         selectionModel.currentRowChanged.connect(lambda current, previous: current.row() == -1 or self.setFolder(model.fileName(current)))
