@@ -296,19 +296,22 @@ class OptimizeConfigFile(QWidget):
           del controller.configFile["videoPixelSize"]
     videoPixelSize.textChanged.connect(videoPixelSizeChanged)
     analysisInfoLayout.addWidget(videoPixelSize, 1, 1, Qt.AlignmentFlag.AlignLeft)
+    helpBtn = QPushButton("Help", self)
+    helpBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/behaviorAnalysis/optimizingSpeedOfFinalAnalysis"))
+    analysisInfoLayout.addWidget(helpBtn, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._analysisInfoWidget = analysisInfoWidget = QWidget(self)
     analysisInfoWidget.setLayout(analysisInfoLayout)
-    advancedOptionsLayout.addWidget(analysisInfoWidget, 7, 0, 2, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(analysisInfoWidget, 7, 0, 3, 2, Qt.AlignmentFlag.AlignCenter)
     self._headEmbeddedWidgets.add(analysisInfoWidget)
     self._freelySwimmingWidgets.add(analysisInfoWidget)
     self._fastCenterOfMassWidgets.add(analysisInfoWidget)
     self._centerOfMassWidgets.add(analysisInfoWidget)
 
     tailTrackingLabel = util.apply_style(QLabel("Tail tracking quality"), font_size='16px')
-    advancedOptionsLayout.addWidget(tailTrackingLabel, 10, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(tailTrackingLabel, 11, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(tailTrackingLabel)
     tailTrackingInfoLabel = QLabel("Checking this increases quality, but makes tracking slower.")
-    advancedOptionsLayout.addWidget(tailTrackingInfoLabel, 11, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(tailTrackingInfoLabel, 12, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(tailTrackingInfoLabel)
     self._recalculateForegroundImageBasedOnBodyArea = QCheckBox("recalculateForegroundImageBasedOnBodyArea")
 
@@ -321,7 +324,7 @@ class OptimizeConfigFile(QWidget):
       else:
         controller.configFile["recalculateForegroundImageBasedOnBodyArea"] = 0
     self._recalculateForegroundImageBasedOnBodyArea.toggled.connect(updateRecalculateForegroundImageBasedOnBodyArea)
-    advancedOptionsLayout.addWidget(self._recalculateForegroundImageBasedOnBodyArea, 12, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(self._recalculateForegroundImageBasedOnBodyArea, 13, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(self._recalculateForegroundImageBasedOnBodyArea)
 
     plotOnlyOneTailPointForVisuLabel = util.apply_style(QLabel("Validation video options"), font_size='16px')
@@ -344,18 +347,18 @@ class OptimizeConfigFile(QWidget):
 
     hframe = QFrame(self)
     hframe.setFrameShape(QFrame.Shape.HLine)
-    advancedOptionsLayout.addWidget(hframe, 9, 0, 1, 5)
+    advancedOptionsLayout.addWidget(hframe, 10, 0, 1, 5)
     self._freelySwimmingWidgets.add(hframe)
     advancedOptionsLabel = util.apply_style(QLabel("Documentation links"), font_size='16px')
-    advancedOptionsLayout.addWidget(advancedOptionsLabel, 10, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(advancedOptionsLabel, 11, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(advancedOptionsLabel)
     speedUpTrackingBtn = util.apply_style(QPushButton("Speed up tracking for 'Track heads and tails of freely swimming fish'", self), background_color=util.LIGHT_YELLOW)
     speedUpTrackingBtn.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingSpeedOptimization.md"))
-    advancedOptionsLayout.addWidget(speedUpTrackingBtn, 11, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(speedUpTrackingBtn, 12, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(speedUpTrackingBtn)
     documentationBtn = util.apply_style(QPushButton("Help", self), background_color=util.LIGHT_YELLOW)
     documentationBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/configurationFile/throughGUI/trackingFreelySwimmingConfigOptimization"))
-    advancedOptionsLayout.addWidget(documentationBtn, 12, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(documentationBtn, 13, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(documentationBtn)
 
     for idx in range(advancedOptionsLayout.columnCount()):
@@ -1203,6 +1206,9 @@ class FinishConfig(QWidget):
     videoPixelSize.textChanged.connect(lambda text: text and controller.configFile.update({"videoPixelSize": float(text)}))
     videoPixelSize.textChanged.connect(updateSaveBtn)
     analysisInfoLayout.addWidget(videoPixelSize, 1, 1, Qt.AlignmentFlag.AlignLeft)
+    helpBtn = QPushButton("Help", self)
+    helpBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/behaviorAnalysis/optimizingSpeedOfFinalAnalysis"))
+    analysisInfoLayout.addWidget(helpBtn, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     analysisInfoWidget = QWidget(self)
     analysisInfoWidget.setLayout(analysisInfoLayout)
     analysisInfoWidget.setVisible(False)
