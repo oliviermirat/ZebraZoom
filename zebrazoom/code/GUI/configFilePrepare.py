@@ -12,6 +12,7 @@ except ImportError:
   from PyQt5.QtWidgets import QApplication, QFrame, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup, QSpacerItem
   PYQT6 = False
 
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.util as util
 
 
@@ -191,7 +192,6 @@ class OptimizeConfigFile(QWidget):
     postProcessMaxDistanceAuthorizedLabel = QPushButton("postProcessMaxDistanceAuthorized:")
 
     def modifyPostProcessMaxDistanceAuthorized():
-      import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
       cap = zzVideoReading.VideoCapture(controller.videoToCreateConfigFileFor)
       cap.set(1, controller.configFile.get("firstFrame", 1))
       ret, frame = cap.read()
@@ -501,13 +501,14 @@ class ChooseGeneralExperiment(QWidget):
     layout = QGridLayout()
     layout.setSpacing(2)
     layout.setRowStretch(3, 1)
-    layout.setRowStretch(7, 1)
     layout.setColumnStretch(0, 1)
     layout.setColumnStretch(2, 1)
-    layout.addItem(QSpacerItem(16, 16), 4, 1, 1, 1)
+    layout.setColumnStretch(4, 1)
+    layout.addItem(QSpacerItem(16, 16), 4, 1)
+    layout.addItem(QSpacerItem(16, 16), 4, 3)
     curDirPath = os.path.dirname(os.path.realpath(__file__))
 
-    layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), 0, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), 0, 0, 1, 5, Qt.AlignmentFlag.AlignCenter)
     freelySwimmingTitleLabel = util.apply_style(QLabel("Head and tail tracking of freely swimming fish", self), font=QFont('Helvetica', 14, QFont.Weight.Bold))
     freelySwimmingTitleLabel.setWordWrap(True)
     layout.addWidget(freelySwimmingTitleLabel, 1, 0)
@@ -523,23 +524,11 @@ class ChooseGeneralExperiment(QWidget):
     headEmbeddedImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'headEmbedded.png')), lambda: controller.chooseGeneralExperimentFirstStep(controller, False, True, False, False, False, False))
     layout.addWidget(headEmbeddedImage, 3, 2)
 
-    fastCenterOfMassTitleLabel = util.apply_style(QLabel("Fast center of mass tracking for any kind of animal", self), font=QFont('Helvetica', 14, QFont.Weight.Bold))
-    fastCenterOfMassTitleLabel.setWordWrap(True)
-    layout.addWidget(fastCenterOfMassTitleLabel, 5, 0)
-    fastCenterOfMassLabel = QLabel("Only one animal per well, very useful for videos acquired at low frequency", self)
-    fastCenterOfMassLabel.setWordWrap(True)
-    layout.addWidget(fastCenterOfMassLabel, 6, 0)
-    fastCenterOfMassImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'screen.png')), lambda: controller.chooseGeneralExperimentFirstStep(controller, False, False, False, False, False, True))
-    layout.addWidget(fastCenterOfMassImage, 7, 0)
-
     centerOfMassTitleLabel = util.apply_style(QLabel("Center of mass tracking for any kind of animal", self), font=QFont('Helvetica', 14, QFont.Weight.Bold))
     centerOfMassTitleLabel.setWordWrap(True)
-    layout.addWidget(centerOfMassTitleLabel, 5, 2)
-    centerOfMassLabel = QLabel("Several animals can be tracked in the same well/tank/arena. Each well should contain the same number of animals.", self)
-    centerOfMassLabel.setWordWrap(True)
-    layout.addWidget(centerOfMassLabel, 6, 2)
-    centerOfMassImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'centerOfMassAnyAnimal.png')), lambda: controller.chooseGeneralExperimentFirstStep(controller, False, False, False, False, True, False))
-    layout.addWidget(centerOfMassImage, 7, 2)
+    layout.addWidget(centerOfMassTitleLabel, 1, 4)
+    centerOfMassImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'centerOfMassAnyAnimal.png')), lambda: util.addToHistory(controller.show_frame)("ChooseCenterOfMassTracking"))
+    layout.addWidget(centerOfMassImage, 3, 4)
 
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch()
@@ -550,7 +539,48 @@ class ChooseGeneralExperiment(QWidget):
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch()
-    layout.addLayout(buttonsLayout, 8, 0, 1, 3)
+    layout.addLayout(buttonsLayout, 5, 0, 1, 5)
+
+    self.setLayout(layout)
+
+
+class ChooseCenterOfMassTracking(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
+    self.controller = controller
+
+    layout = QGridLayout()
+    layout.setSpacing(2)
+    layout.setRowStretch(2, 1)
+    layout.setColumnStretch(0, 1)
+    layout.setColumnStretch(2, 1)
+    layout.addItem(QSpacerItem(16, 16), 4, 1)
+    curDirPath = os.path.dirname(os.path.realpath(__file__))
+
+    layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), 0, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
+
+    fastCenterOfMassTitleLabel = util.apply_style(QLabel("Center of mass tracking for only one animal per well", self), font=QFont('Helvetica', 14, QFont.Weight.Bold))
+    fastCenterOfMassTitleLabel.setWordWrap(True)
+    layout.addWidget(fastCenterOfMassTitleLabel, 1, 0)
+    fastCenterOfMassImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'screen.png')), lambda: controller.chooseGeneralExperimentFirstStep(controller, False, False, False, False, False, True))
+    layout.addWidget(fastCenterOfMassImage, 2, 0)
+
+    centerOfMassTitleLabel = util.apply_style(QLabel("Center of mass tracking for more than one animal per well", self), font=QFont('Helvetica', 14, QFont.Weight.Bold))
+    centerOfMassTitleLabel.setWordWrap(True)
+    layout.addWidget(centerOfMassTitleLabel, 1, 2)
+    centerOfMassImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'centerOfMassAnyAnimal.png')), lambda: controller.chooseGeneralExperimentFirstStep(controller, False, False, False, False, True, False))
+    layout.addWidget(centerOfMassImage, 2, 2)
+
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = util.apply_style(QPushButton("Back", self), background_color=util.LIGHT_YELLOW)
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout, 4, 0, 1, 3)
 
     self.setLayout(layout)
 
@@ -564,10 +594,9 @@ class FreelySwimmingExperiment(QWidget):
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File for Freely Swimming Fish:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(util.apply_style(QLabel("Choose only one of the options below:", self), font=QFont("Helvetica", 12)), alignment=Qt.AlignmentFlag.AlignCenter)
-    freeZebra2RadioButton = QRadioButton("Recommended method: Automatic Parameters Setting", self)
+    freeZebra2RadioButton = QRadioButton("Recommended method: Automatic Setting", self)
     freeZebra2RadioButton.setChecked(True)
     layout.addWidget(freeZebra2RadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(QLabel("This method will work well on most videos. One exception can be for fish of very different sizes.", self), alignment=Qt.AlignmentFlag.AlignCenter)
     advancedOptionsLayout = QVBoxLayout()
     freeZebraRadioButton = QRadioButton("Alternative method: Manual Parameters Setting", self)
     advancedOptionsLayout.addWidget(freeZebraRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -605,7 +634,10 @@ class WellOrganisation(QWidget):
     layout.addItem(QSpacerItem(16, 16), 4, 1, 1, 1)
     curDirPath = os.path.dirname(os.path.realpath(__file__))
 
-    layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), 0, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
+    titleLabel = util.apply_style(QLabel("ZebraZoom will run the tracking in parallel on different areas/wells of the video. How do you want these areas/wells to be detected?", self), font=controller.title_font)
+    titleLabel.setMinimumSize(1, 1)
+    titleLabel.resizeEvent = lambda evt: titleLabel.setMinimumWidth(evt.size().width()) or titleLabel.setWordWrap(evt.size().width() <= titleLabel.sizeHint().width())
+    layout.addWidget(titleLabel, 0, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(util.apply_style(QLabel("General methods:", self), font=util.TITLE_FONT), 1, 0)
     layout.addWidget(util.apply_style(QLabel("Manually defined regions of interest:", self), font=util.TITLE_FONT), 1, 2)
 
@@ -711,13 +743,13 @@ class HomegeneousWellsLayout(QWidget):
     nbwells.validator().setBottom(0)
     layout.addWidget(nbwells, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(util.apply_style(QLabel("How many rows of wells are there in your video? (leave blank for default of 1)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("How many rows of wells are there in your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     nbRowsOfWells = QLineEdit(controller.window)
     nbRowsOfWells.setValidator(QIntValidator(nbRowsOfWells))
     nbRowsOfWells.validator().setBottom(0)
     layout.addWidget(nbRowsOfWells, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(util.apply_style(QLabel("How many wells are there per row on your video? (leave blank for default of 4)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("How many wells are there per row on your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     nbWellsPerRows = QLineEdit(controller.window)
     nbWellsPerRows.setValidator(QIntValidator(nbWellsPerRows))
     nbWellsPerRows.validator().setBottom(0)
@@ -755,28 +787,63 @@ class CircularOrRectangularWells(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
-    self.preferredSize = (750, 500)
+    self._cap = None
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(util.apply_style(QLabel("How many wells are there in your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    nbwells = QLineEdit(controller.window)
-    nbwells.setValidator(QIntValidator(nbwells))
-    nbwells.validator().setBottom(0)
-    layout.addWidget(nbwells, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._video = video = QLabel()
+    video.setMinimumSize(1, 1)
+    layout.addWidget(video, stretch=1)
 
-    layout.addWidget(util.apply_style(QLabel("How many rows of wells are there in your video? (leave blank for default of 1)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    def updateNextBtn():
+      enabled = bool(nbRowsOfWells.text() and nbWellsPerRows.text() and nbanimals.text())
+      nextBtn.setEnabled(enabled)
+      nextBtn.setToolTip("Values must be entered in all fields." if not enabled else None)
+    self._updateNextBtn = updateNextBtn
+
+    self._frameSlider = frameSlider = util.SliderWithSpinbox(1, 0, 1, name="Frame")
+
+    def frameChanged(frame):
+      if self._cap is None:
+        video.clear()
+      else:
+        self._cap.set(1, frame)
+        ret, img = self._cap.read()
+        util.setPixmapFromCv(img, video)
+    frameSlider.valueChanged.connect(frameChanged)
+    layout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    wellsSublayout = QHBoxLayout()
+    wellsSublayout.addStretch(1)
+
+    wellsSublayout.addWidget(util.apply_style(QLabel("How many rows of wells are there in your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     nbRowsOfWells = QLineEdit(controller.window)
     nbRowsOfWells.setValidator(QIntValidator(nbRowsOfWells))
-    nbRowsOfWells.validator().setBottom(0)
-    layout.addWidget(nbRowsOfWells, alignment=Qt.AlignmentFlag.AlignCenter)
+    nbRowsOfWells.validator().setBottom(1)
+    nbRowsOfWells.textChanged.connect(updateNextBtn)
+    wellsSublayout.addWidget(nbRowsOfWells, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(util.apply_style(QLabel("How many wells are there per row on your video? (leave blank for default of 4)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    wellsSublayout.addWidget(util.apply_style(QLabel("How many wells are there per row on your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     nbWellsPerRows = QLineEdit(controller.window)
     nbWellsPerRows.setValidator(QIntValidator(nbWellsPerRows))
-    nbWellsPerRows.validator().setBottom(0)
-    layout.addWidget(nbWellsPerRows, alignment=Qt.AlignmentFlag.AlignCenter)
+    nbWellsPerRows.validator().setBottom(1)
+    nbWellsPerRows.textChanged.connect(updateNextBtn)
+    wellsSublayout.addWidget(nbWellsPerRows, alignment=Qt.AlignmentFlag.AlignCenter)
+    wellsSublayout.addStretch(1)
+    layout.addLayout(wellsSublayout)
+
+    animalsSublayout = QHBoxLayout()
+    animalsSublayout.addStretch(1)
+    animalsSublayout.addWidget(util.apply_style(QLabel("What's the number of animals per well in your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    nbanimals = QLineEdit(controller.window)
+    nbanimals.setValidator(QIntValidator(nbanimals))
+    nbanimals.validator().setBottom(1)
+    nbanimals.textChanged.connect(updateNextBtn)
+    animalsSublayout.addWidget(nbanimals, alignment=Qt.AlignmentFlag.AlignCenter)
+    animalsSublayout.addWidget(util.apply_style(QLabel("ZebraZoom only supports videos which have the same number of animals in each well.", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    animalsSublayout.addStretch(1)
+    layout.addLayout(animalsSublayout)
 
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch()
@@ -787,12 +854,28 @@ class CircularOrRectangularWells(QWidget):
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
-    nextBtn.clicked.connect(lambda: controller.circularOrRectangularWells(controller, nbwells.text(), nbRowsOfWells.text(), nbWellsPerRows.text()))
+    nextBtn.clicked.connect(lambda: controller.circularOrRectangularWells(controller, nbRowsOfWells.text(), nbWellsPerRows.text(), nbanimals.text()))
     buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch()
     layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
+
+  def showEvent(self, evt):
+    if not evt.spontaneous():
+      self._cap = zzVideoReading.VideoCapture(self.controller.videoToCreateConfigFileFor)
+      self._frameSlider.setMaximum(self._cap.get(7) - 1)
+      self._frameSlider.valueChanged.emit(self._frameSlider.value())
+      self.layout().setAlignment(self._video, Qt.AlignmentFlag.AlignCenter)
+      self._updateNextBtn()
+    super().showEvent(evt)
+
+  def hideEvent(self, evt):
+    super().hideEvent(evt)
+    if not evt.spontaneous():
+      self._cap = None
+      self._frameSlider.valueChanged.emit(self._frameSlider.value())
+      self.layout().setAlignment(self._video, Qt.Alignment())
 
 
 class ChooseCircularWellsLeft(QWidget):
@@ -909,13 +992,14 @@ class NumberOfAnimals2(QWidget):
     layout = QGridLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(util.apply_style(QLabel("What's the total number of animals in your video?", self), font_size='16px'), 1, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    nbanimals = QLineEdit(controller.window)
+    self._nbanimalsLabel = util.apply_style(QLabel("What's the total number of animals in your video?", self), font_size='16px')
+    layout.addWidget(self._nbanimalsLabel, 1, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._nbanimals = nbanimals = QLineEdit(controller.window)
     nbanimals.setValidator(QIntValidator(nbanimals))
     nbanimals.validator().setBottom(0)
     layout.addWidget(nbanimals, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(util.apply_style(QLabel("Are all of those animals ALWAYS visible throughout the video?", self), font_size='16px'), 3, 1, Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Are all animals ALWAYS visible throughout the video?", self), font_size='16px'), 3, 1, Qt.AlignmentFlag.AlignCenter)
     yesNoLayout1 = QHBoxLayout()
     yesNoLayout1.addStretch()
     btnGroup1 = QButtonGroup(self)
@@ -1003,12 +1087,17 @@ class NumberOfAnimals2(QWidget):
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     nextBtn = util.apply_style(QPushButton("Ok, next step", self), background_color=util.LIGHT_YELLOW)
-    nextBtn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text(), yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, yesBoutsRadioButton.isChecked(), noBoutsRadioButton.isChecked(), recommendedMethodRadioButton.isChecked(), alternativeMethodRadioButton.isChecked(), yesBendsRadioButton.isChecked(), noBendsRadioButton.isChecked(), recommendedTrackingMethodRadioButton.isChecked()))
+    nextBtn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text() if nbanimals.isVisible() else None, yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, yesBoutsRadioButton.isChecked(), noBoutsRadioButton.isChecked(), recommendedMethodRadioButton.isChecked(), alternativeMethodRadioButton.isChecked(), yesBendsRadioButton.isChecked(), noBendsRadioButton.isChecked(), recommendedTrackingMethodRadioButton.isChecked()))
     buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch()
     layout.addLayout(buttonsLayout, 7, 0, 1, 2)
 
     self.setLayout(layout)
+
+  def showEvent(self, evt):
+    self._nbanimals.setVisible(self.controller.shape not in ('groupSameSizeAndShapeEquallySpacedWells', 'circular', 'rectangular'))
+    self._nbanimalsLabel.setVisible(self.controller.shape not in ('groupSameSizeAndShapeEquallySpacedWells', 'circular', 'rectangular'))
+    super().showEvent(evt)
 
 
 class NumberOfAnimalsCenterOfMass(QWidget):
@@ -1020,8 +1109,9 @@ class NumberOfAnimalsCenterOfMass(QWidget):
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(util.apply_style(QLabel("What's the total number of animals in your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    nbanimals = QLineEdit(controller.window)
+    self._nbanimalsLabel = util.apply_style(QLabel("What's the total number of animals in your video?", self), font=QFont("Helvetica", 10))
+    layout.addWidget(self._nbanimalsLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._nbanimals = nbanimals = QLineEdit(controller.window)
     nbanimals.setValidator(QIntValidator(nbanimals))
     nbanimals.validator().setBottom(0)
     layout.addWidget(nbanimals, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -1034,13 +1124,13 @@ class NumberOfAnimalsCenterOfMass(QWidget):
     layout.addWidget(noRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
     method1Btn = QPushButton("Automatic Parameters Setting, Method 1: Slower tracking but often more accurate", self)
-    method1Btn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text(), yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, 0, 0, 1, 0, 0, 0, 1))
+    method1Btn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text() if nbanimals.isVisible() else None, yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, 0, 0, 1, 0, 0, 0, 1))
     layout.addWidget(method1Btn, alignment=Qt.AlignmentFlag.AlignCenter)
     method2Btn = QPushButton("Automatic Parameters Setting, Method 2: Faster tracking but often less accurate", self)
-    method2Btn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text(), yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, 0, 0, 1, 0, 0, 0, 0))
+    method2Btn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text() if nbanimals.isVisible() else None, yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, 0, 0, 1, 0, 0, 0, 0))
     layout.addWidget(method2Btn, alignment=Qt.AlignmentFlag.AlignCenter)
     manualBtn = QPushButton("Manual Parameters Setting: More control over the choice of parameters", self)
-    manualBtn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text(), yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, 0, 0, 0, 1, 0, 0, 0))
+    manualBtn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text() if nbanimals.isVisible() else None, yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, 0, 0, 0, 1, 0, 0, 0))
     layout.addWidget(manualBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(util.apply_style(QLabel("Try the 'Automatic Parameters Setting, Method 1' first. If it doesn't work, try the other methods.", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(util.apply_style(QLabel("The 'Manual Parameter Settings' makes setting parameter slightly more challenging but offers more control over the choice of parameters.", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -1057,6 +1147,11 @@ class NumberOfAnimalsCenterOfMass(QWidget):
     layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
+
+  def showEvent(self, evt):
+    self._nbanimals.setVisible(self.controller.shape not in ('groupSameSizeAndShapeEquallySpacedWells', 'circular', 'rectangular'))
+    self._nbanimalsLabel.setVisible(self.controller.shape not in ('groupSameSizeAndShapeEquallySpacedWells', 'circular', 'rectangular'))
+    super().showEvent(evt)
 
 
 class IdentifyHeadCenter(QWidget):

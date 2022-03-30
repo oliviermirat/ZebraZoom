@@ -398,7 +398,6 @@ def _chooseFrameLayout(cap, spinboxValues, title, titleStyle=None):
   if titleStyle is None:
     titleStyle = {'font': TITLE_FONT}
   layout = QVBoxLayout()
-  window = QApplication.instance().window
   titleLabel = apply_style(QLabel(title), **titleStyle)
   titleLabel.setMinimumSize(1, 1)
   titleLabel.resizeEvent = lambda evt: titleLabel.setMinimumWidth(evt.size().width()) or titleLabel.setWordWrap(evt.size().width() <= titleLabel.sizeHint().width())
@@ -486,8 +485,13 @@ def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBt
   buttonsLayout.addWidget(chooseFrameBtn)
   extraBtn = None
   if extraButtonInfo is not None:
-    text, cb = extraButtonInfo
-    extraBtn = QPushButton(text)
+    if len(extraButtonInfo) == 2:
+      text, cb = extraButtonInfo
+      styleKwargs = {}
+    else:
+      assert len(extraButtonInfo) == 3
+      text, cb, styleKwargs = extraButtonInfo
+    extraBtn = apply_style(QPushButton(text), **styleKwargs)
     extraBtn.clicked.connect(cb)
     buttonsLayout.addWidget(extraBtn)
   buttonsLayout.addStretch()
