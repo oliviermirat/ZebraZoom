@@ -226,18 +226,11 @@ def morePreciseFastScreen(self, controller, nbwells, nbRowsOfWells, nbWellsPerRo
 
 
 @util.addToHistory
-def circularOrRectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
-  self.configFile["nbWells"]        = int(nbwells)
-
-  if len(nbRowsOfWells):
-    self.configFile["nbRowsOfWells"]  = int(nbRowsOfWells)
-  else:
-    self.configFile["nbRowsOfWells"]  = 1
-
-  if len(nbWellsPerRows):
-    self.configFile["nbWellsPerRows"]  = int(nbWellsPerRows)
-  else:
-    self.configFile["nbWellsPerRows"]  = 4
+def circularOrRectangularWells(self, controller, nbRowsOfWells, nbWellsPerRows, nbanimals):
+  self.configFile["nbWells"]        = int(nbRowsOfWells) * int(nbWellsPerRows)
+  self.configFile["nbAnimalsPerWell"] = int(nbanimals)
+  self.configFile["nbRowsOfWells"]  = int(nbRowsOfWells)
+  self.configFile["nbWellsPerRows"]  = int(nbWellsPerRows)
 
   if self.shape == 'circular':
     controller.show_frame("ChooseCircularWellsLeft")
@@ -298,7 +291,7 @@ def _chooseEnd(self, controller):
 
 def chooseBeginningAndEndOfVideo(self, controller):
   util.chooseBeginningPage(controller, controller.videoToCreateConfigFileFor, "Choose where the analysis of your video should start.", "Ok, I want the tracking to start at this frame!", lambda: _chooseEnd(self, controller),
-                           extraButtonInfo=("I want the tracking to run on the entire video!", lambda: _beginningAndEndChosen(self, controller)))
+                           extraButtonInfo=("I want the tracking to run on the entire video!", lambda: _beginningAndEndChosen(self, controller), {"background_color": "red"}))
 
 
 def getImageForMultipleAnimalGUI(l, nx, ny, max_l, videoToCreateConfigFileFor, background, wellPositions, hyperparameters):
@@ -462,7 +455,7 @@ def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHea
   if int(yesBends):
     self.configFile["extractAdvanceZebraParameters"] = 1
 
-  nbanimals = int(nbanimals)
+  nbanimals = int(nbanimals) if nbanimals is not None else self.configFile["nbWells"] * self.configFile["nbAnimalsPerWell"]
   if nbanimals == self.configFile["nbWells"]:
     self.configFile["nbAnimalsPerWell"] = 1
   else:
