@@ -442,7 +442,7 @@ class ViewParameters(QSplitter):
         layout.addWidget(self.zoomed_video_btn, 5, 2, Qt.AlignmentFlag.AlignCenter)
 
         self._plotComboBox = QComboBox(self)
-        self._plotComboBox.addItems(("Tail angle smoothed", "Tail angle raw", "Body coordinates"))
+        self._plotComboBox.addItems(("Tail angle smoothed", "Tail angle raw", "All tail angles smoothed", "All tail angles raw", "Body coordinates"))
         self._plotComboBox.currentIndexChanged.connect(lambda idx: setattr(self, "visualization", idx) or self._printSomeResults())
         layout.addWidget(self._plotComboBox, 5, 4, Qt.AlignmentFlag.AlignCenter)
 
@@ -695,6 +695,44 @@ class ViewParameters(QSplitter):
 
               self.a.plot([i for i in range(self.begMove,endMove+1)],tailAngleSmoothed)
               self.a.plot([i for i in range(self.begMove,endMove+1)],[0 for i in range(0,len(tailAngleSmoothed))])
+
+            elif self.visualization == 2:
+              
+              if not(self.graphScaling):
+                self.a.set_ylim(-140, 140)
+              pointsToTakeIntoAccountStart = 9 - 8
+              bStart = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["BoutStart"]
+              bEnd   = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["BoutEnd"]
+              if "allTailAnglesSmoothed" in self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]:
+                tailAngles = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["allTailAnglesSmoothed"][pointsToTakeIntoAccountStart:]
+                if len(tailAngles) <= 10:
+                  for tailAngle in tailAngles:
+                    if bEnd - bStart + 1 == len(tailAngle):
+                      self.a.plot([i for i in range(bStart, bEnd + 1)], [t*(180/math.pi) for t in tailAngle])
+                else:
+                  for angleNum in range(0, len(tailAngles), int(len(tailAngles) / 10) + 1):
+                    tailAngle = tailAngles[angleNum]
+                    if bEnd - bStart + 1 == len(tailAngle):
+                      self.a.plot([i for i in range(bStart, bEnd + 1)], [t*(180/math.pi) for t in tailAngle])
+
+            elif self.visualization == 3:
+              
+              if not(self.graphScaling):
+                self.a.set_ylim(-140, 140)
+              pointsToTakeIntoAccountStart = 9 - 8
+              bStart = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["BoutStart"]
+              bEnd   = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["BoutEnd"]
+              if "allTailAngles" in self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]:
+                tailAngles = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["allTailAngles"][pointsToTakeIntoAccountStart:]
+                if len(tailAngles) <= 10:
+                  for tailAngle in tailAngles:
+                    if bEnd - bStart + 1 == len(tailAngle):
+                      self.a.plot([i for i in range(bStart, bEnd + 1)], [t*(180/math.pi) for t in tailAngle])
+                else:
+                  for angleNum in range(0, len(tailAngles), int(len(tailAngles) / 10) + 1):
+                    tailAngle = tailAngles[angleNum]
+                    if bEnd - bStart + 1 == len(tailAngle):
+                      self.a.plot([i for i in range(bStart, bEnd + 1)], [t*(180/math.pi) for t in tailAngle])       
 
             else:
               headX = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["HeadX"].copy()
