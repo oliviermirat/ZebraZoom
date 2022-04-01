@@ -596,7 +596,7 @@ class ViewParameters(QSplitter):
         self.spinbox2.setRange(0, self.nbPoiss - 1)
         self.spinbox3.setRange(0, self.nbMouv - 1)
         self.superstruct_btn.hide()
-        defaultGraphIndex = 0 if self._headEmbedded else 2
+        defaultGraphIndex = 0 if self._headEmbedded else 4
         if self._plotComboBox.currentIndex() == defaultGraphIndex:
             self._printSomeResults()
         else:
@@ -625,6 +625,8 @@ class ViewParameters(QSplitter):
 
             self._plotComboBox.model().item(0).setEnabled("TailAngle_smoothed" in self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()])
             self._plotComboBox.model().item(1).setEnabled("TailAngle_Raw" in self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()])
+            self._plotComboBox.model().item(2).setEnabled("allTailAnglesSmoothed" in self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()])
+            self._plotComboBox.model().item(3).setEnabled("allTailAngles" in self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()])
 
             newIndex = self.visualization
             while not self._plotComboBox.model().item(newIndex).isEnabled():
@@ -703,17 +705,16 @@ class ViewParameters(QSplitter):
               pointsToTakeIntoAccountStart = 9 - 8
               bStart = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["BoutStart"]
               bEnd   = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["BoutEnd"]
-              if "allTailAnglesSmoothed" in self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]:
-                tailAngles = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["allTailAnglesSmoothed"][pointsToTakeIntoAccountStart:]
-                if len(tailAngles) <= 10:
-                  for tailAngle in tailAngles:
-                    if bEnd - bStart + 1 == len(tailAngle):
-                      self.a.plot([i for i in range(bStart, bEnd + 1)], [t*(180/math.pi) for t in tailAngle])
-                else:
-                  for angleNum in range(0, len(tailAngles), int(len(tailAngles) / 10) + 1):
-                    tailAngle = tailAngles[angleNum]
-                    if bEnd - bStart + 1 == len(tailAngle):
-                      self.a.plot([i for i in range(bStart, bEnd + 1)], [t*(180/math.pi) for t in tailAngle])
+              tailAngles = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["allTailAnglesSmoothed"][pointsToTakeIntoAccountStart:]
+              if len(tailAngles) <= 10:
+                for tailAngle in tailAngles:
+                  if bEnd - bStart + 1 == len(tailAngle):
+                    self.a.plot([i for i in range(bStart, bEnd + 1)], [t*(180/math.pi) for t in tailAngle])
+              else:
+                for angleNum in range(0, len(tailAngles), int(len(tailAngles) / 10) + 1):
+                  tailAngle = tailAngles[angleNum]
+                  if bEnd - bStart + 1 == len(tailAngle):
+                    self.a.plot([i for i in range(bStart, bEnd + 1)], [t*(180/math.pi) for t in tailAngle])
 
             elif self.visualization == 3:
               
@@ -722,17 +723,16 @@ class ViewParameters(QSplitter):
               pointsToTakeIntoAccountStart = 9 - 8
               bStart = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["BoutStart"]
               bEnd   = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["BoutEnd"]
-              if "allTailAngles" in self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]:
-                tailAngles = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["allTailAngles"][pointsToTakeIntoAccountStart:]
-                if len(tailAngles) <= 10:
-                  for tailAngle in tailAngles:
-                    if bEnd - bStart + 1 == len(tailAngle):
-                      self.a.plot([i for i in range(bStart, bEnd + 1)], [t*(180/math.pi) for t in tailAngle])
-                else:
-                  for angleNum in range(0, len(tailAngles), int(len(tailAngles) / 10) + 1):
-                    tailAngle = tailAngles[angleNum]
-                    if bEnd - bStart + 1 == len(tailAngle):
-                      self.a.plot([i for i in range(bStart, bEnd + 1)], [t*(180/math.pi) for t in tailAngle])       
+              tailAngles = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["allTailAngles"][pointsToTakeIntoAccountStart:]
+              if len(tailAngles) <= 10:
+                for tailAngle in tailAngles:
+                  if bEnd - bStart + 1 == len(tailAngle):
+                    self.a.plot([i for i in range(bStart, bEnd + 1)], [t*(180/math.pi) for t in tailAngle])
+              else:
+                for angleNum in range(0, len(tailAngles), int(len(tailAngles) / 10) + 1):
+                  tailAngle = tailAngles[angleNum]
+                  if bEnd - bStart + 1 == len(tailAngle):
+                    self.a.plot([i for i in range(bStart, bEnd + 1)], [t*(180/math.pi) for t in tailAngle])
 
             else:
               headX = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["HeadX"].copy()
@@ -771,7 +771,11 @@ class ViewParameters(QSplitter):
           if self.visualization == 0:
             text = "Tail Angle Smoothed and amplitudes for "
           elif self.visualization == 1:
-            text = "Tail Angle Raw for well "
+            text = "Tail Angle Raw for "
+          elif self.visualization == 2:
+            text = "All Tail Angles Smoothed for "
+          elif self.visualization == 3:
+            text = "All Tail Angles Raw for "
           else:
             text = "Body Coordinates for "
           if self._headEmbedded:
@@ -804,6 +808,10 @@ class ViewParameters(QSplitter):
           buttonLabel = buttonLabel + "tail angle smoothed"
         elif self.visualization == 1:
           buttonLabel = buttonLabel + "tail angle raw"
+        elif self.visualization == 2:
+          buttonLabel = buttonLabel + "all tail angles smoothed"
+        elif self.visualization == 3:
+          buttonLabel = buttonLabel + "all tail angles raw"
         else:
           buttonLabel = buttonLabel + "body coordinates"
         self._viewBtn.setText(buttonLabel + " for all bouts combined")
