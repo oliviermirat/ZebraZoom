@@ -8,13 +8,13 @@ import pandas as pd
 
 try:
   from PyQt6.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QItemSelectionModel, QModelIndex, QPoint, QPointF, QRect, QRectF, QSize, QSizeF, QStringListModel
-  from PyQt6.QtGui import QColor, QFont, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
-  from PyQt6.QtWidgets import QApplication, QCompleter, QFileDialog, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QMessageBox, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QSplitter, QTableView, QTreeView
+  from PyQt6.QtGui import QColor, QFont, QFontMetrics, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
+  from PyQt6.QtWidgets import QAbstractItemView, QApplication, QCompleter, QFileDialog, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QHBoxLayout, QListView, QLabel, QMessageBox, QSpacerItem, QTextEdit, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QSplitter, QTableView, QTreeView
   PYQT6 = True
 except ImportError:
   from PyQt5.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QItemSelectionModel, QModelIndex, QPoint, QPointF, QRect, QRectF, QSize, QSizeF, QStringListModel
-  from PyQt5.QtGui import QColor, QFont, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
-  from PyQt5.QtWidgets import QApplication, QCompleter, QFileDialog, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QMessageBox, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QSplitter, QTableView, QTreeView
+  from PyQt5.QtGui import QColor, QFont, QFontMetrics, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
+  from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCompleter, QFileDialog, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QListView, QMessageBox, QSpacerItem, QTextEdit, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QSplitter, QTableView, QTreeView
   PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
@@ -62,6 +62,7 @@ class _WellsSelectionLabel(QLabel):
     self._wells = set()
     self._hoveredWells = set()
     self._wellPositions = None
+    self._wellInfos = None
     self._size = None
     self._originalPixmap = None
     self._clickedPosition = None
@@ -72,6 +73,11 @@ class _WellsSelectionLabel(QLabel):
   def setWellPositions(self, wellPositions):
     self.setMouseTracking(wellPositions is not None)
     self._wellPositions = wellPositions
+    self._wellInfos = None
+
+  def setWellInfos(self, wellInfos):
+    self._wellInfos = wellInfos
+    self.update()
 
   def setOriginalPixmap(self, pixmap):
     self._originalPixmap = pixmap
@@ -173,10 +179,6 @@ class _WellsSelectionLabel(QLabel):
     qp = QPainter()
     qp.begin(self)
     factory = qp.drawRect if self.wellShape == 'rectangle' else qp.drawEllipse
-    font = QFont()
-    font.setPointSize(16)
-    font.setWeight(QFont.Weight.Bold)
-    qp.setFont(font)
     for idx, positions in enumerate(self._wellPositions):
       if idx in self._wells:
         if idx in self._hoveredWells and self._expandExisting:
@@ -188,8 +190,20 @@ class _WellsSelectionLabel(QLabel):
       else:
         qp.setPen(QColor(0, 0, 255))
       rect = self._transformFromOriginal.map(QPolygon(QRect(*positions))).boundingRect()
+      font = QFont()
+      font.setPointSize(16)
+      font.setWeight(QFont.Weight.Bold)
+      qp.setFont(font)
       qp.drawText(rect, Qt.AlignmentFlag.AlignCenter, str(idx))
       factory(rect)
+      if self._wellInfos is not None:
+        rect.adjust(10, rect.height() // 2, -10, -10)
+        qp.setFont(QFont())
+        qp.setClipping(True)
+        qp.setClipRect(rect)
+        fm = QFontMetrics(QFont())
+        qp.drawText(rect, Qt.AlignmentFlag.AlignCenter, "\n".join(map(lambda text: fm.elidedText(text, Qt.TextElideMode.ElideRight, rect.width()), self._wellInfos[idx])))
+        qp.setClipping(False)
     if self._hoveredPosition is not None and self._clickedPosition is not None:
       qp.setPen(QColor(70, 70, 140))
       qp.setBrush(QColor(127, 127, 255, 70))
@@ -228,6 +242,9 @@ class _WellsSelectionLabel(QLabel):
   def getWells(self):
     return self._wells if self._wellPositions is not None else {0}
 
+  def totalWells(self):
+    return len(self._wellPositions) if self._wellPositions is not None else 1
+
 
 class _DummyFullSet(object):
   def __contains__(self, item):
@@ -241,8 +258,8 @@ class _ExperimentOrganizationModel(QAbstractTableModel):
 
   def __init__(self, filename):
     super().__init__()
-    self._filename = filename
     self._data = pd.read_excel(filename)
+    self._data = self._data.loc[:, ~self._data.columns.str.contains('^Unnamed')]
 
   def rowCount(self, parent=None):
     return self._data.shape[0]
@@ -278,8 +295,8 @@ class _ExperimentOrganizationModel(QAbstractTableModel):
   def flags(self, index):
     return super().flags(index) if index.column() == 1 else super().flags(index) | Qt.ItemFlag.ItemIsEditable
 
-  def saveFile(self):
-    self._data.to_excel(self._filename)
+  def saveFile(self, filename):
+    self._data.to_excel(filename, index=False)
 
   def videoPath(self, row):
     path, folderName = self._data.iloc[row, list(map(self._data.columns.get_loc, self._COLUMN_NAMES[:2]))]
@@ -299,22 +316,90 @@ class _ExperimentOrganizationModel(QAbstractTableModel):
     self._data = self._data.drop(idxs).reset_index(drop=True,)
     self.endResetModel()
 
-  def getExistingConditions(self, rows=None, wells=None):
+  def getExistingConditions(self, rows=None, wells=None, includeEmpty=False):
     if rows is None:
       rows = range(self.rowCount())
     if wells is None:
       wells = _DummyFullSet()
-    return sorted({val.strip() for row in rows for idx, val in enumerate(self._data.iloc[row, self._data.columns.get_loc("condition")][1:-1].split(",")) if idx in wells and val.strip()})
+    return sorted({val.strip() for row in rows for idx, val in enumerate(self._data.iloc[row, self._data.columns.get_loc("condition")][1:-1].split(",")) if idx in wells and (includeEmpty or val.strip())})
 
-  def getExistingGenotypes(self, rows=None, wells=None):
+  def getExistingGenotypes(self, rows=None, wells=None, includeEmpty=False):
     if rows is None:
       rows = range(self.rowCount())
     if wells is None:
       wells = _DummyFullSet()
-    return sorted({val.strip() for row in rows for idx, val in enumerate(self._data.iloc[row, self._data.columns.get_loc("genotype")][1:-1].split(",")) if idx in wells and val.strip()})
+    return sorted({val.strip() for row in rows for idx, val in enumerate(self._data.iloc[row, self._data.columns.get_loc("genotype")][1:-1].split(",")) if idx in wells and (includeEmpty or val.strip())})
 
   def getInclude(self, rows, wells):
     return {val.strip() for row in rows for idx, val in enumerate(self._data.iloc[row, self._data.columns.get_loc("include")][1:-1].split(",")) if idx in wells}
+
+  def hasUnsavedChanges(self, filename):
+    if not os.path.exists(filename):  # file was deleted
+      return False
+    fileData = pd.read_excel(filename)
+    fileData = fileData.loc[:, ~fileData.columns.str.contains('^Unnamed')]
+    return not self._data.equals(fileData)
+
+  def getErrors(self, getWellPositionsCb, resultsFileCb):
+    fileData = self._data
+    errors = []
+    fpsCol = fileData.columns.get_loc("fq")
+    pixelSizeCol = fileData.columns.get_loc("pixelsize")
+    conditionCol = fileData.columns.get_loc("condition")
+    genotypeCol = fileData.columns.get_loc("genotype")
+    includeCol = fileData.columns.get_loc("include")
+    rowCount = self.rowCount()
+    if not rowCount:
+      return ["File is empty."]
+    for row in range(rowCount):
+      path = self.videoPath(row)
+      if resultsFileCb(path) is None:
+        errors.append("Row %d: '%s' is not a valid results folder." % (row, path))
+        continue
+      errorParts = ["Row %d: " % row]
+      if not fileData.iloc[row, fpsCol]:
+        errorParts.append("fps is empty")
+      wellPositions = getWellPositionsCb(path)
+      if wellPositions is None:
+        errorParts.append("wells file is corrupt")
+        errors.append("%s%s." % (errorParts[0], ', '.join(errorParts[1:])))
+        continue
+      numWells = 1 if not wellPositions else len(wellPositions)
+      for arr, col in (("condition", conditionCol), ("genotype", genotypeCol), ("include", includeCol)):
+        value = fileData.iloc[row, col]
+        if value[0] != '[' or value[-1] != ']':
+          errorParts.append("%s array is missing square brackets" % arr)
+          continue
+        values = value[1:-1].split(",")
+        if len(values) != numWells:
+          errorParts.append("the number of elements in %s array does not match the number of wells in the video" % arr)
+        if not all(val.strip() for val in values):
+          errorParts.append("some elements in the array %s are empty" % arr)
+      if len(errorParts) > 1:
+        errors.append("%s%s." % (errorParts[0], ', '.join(errorParts[1:])))
+    return errors
+
+
+class _ExperimentOrganizationSelectionModel(QItemSelectionModel):
+  def __init__(self, window, table, *args):
+    super().__init__(*args)
+    self._window = window
+    self._table = table
+    self._blockSelection = False
+
+  def setCurrentIndex(self, index, command):
+    if index != self.currentIndex() and self._table.model() is not None and self._table.model().hasUnsavedChanges(self.model().filePath(self.currentIndex())) and \
+        QMessageBox.question(self._window, "Unsaved changes", "Are you sure you want to proceed? Unsaved changes will be lost.",
+                             defaultButton=QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+      self._blockSelection = True
+      return None
+    return super().setCurrentIndex(index, command)
+
+  def select(self, index, command):
+    if self._blockSelection:
+      self._blockSelection = False
+      return None
+    return super().select(index, command)
 
 
 class CreateExperimentOrganizationExcel(QWidget):
@@ -338,7 +423,9 @@ class CreateExperimentOrganizationExcel(QWidget):
     for idx in range(1, model.columnCount()):
       tree.hideColumn(idx)
     tree.setRootIndex(model.index(model.rootPath()))
-    selectionModel = tree.selectionModel()
+    self._table = QTableView()
+    selectionModel = _ExperimentOrganizationSelectionModel(controller.window, self._table, model)
+    tree.setSelectionModel(selectionModel)
     selectionModel.currentRowChanged.connect(lambda current, previous: current.row() == -1 or self._fileSelected(model.filePath(current)))
 
     treeLayout = QVBoxLayout()
@@ -363,17 +450,16 @@ class CreateExperimentOrganizationExcel(QWidget):
     removeVideosBtn.clicked.connect(self._removeVideos)
     tableButtonsLayout.addWidget(removeVideosBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     saveChangesBtn = QPushButton("Save changes")
-    saveChangesBtn.clicked.connect(lambda: self._table.model().saveFile() or QMessageBox.information(self.controller.window, "Experiment saved", "Changes made to the experiment were saved."))
+    saveChangesBtn.clicked.connect(lambda: self._table.model().saveFile(self._tree.model().filePath(selectionModel.currentIndex())) or QMessageBox.information(self.controller.window, "Experiment saved", "Changes made to the experiment were saved."))
     tableButtonsLayout.addWidget(saveChangesBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     deleteExperimentBtn = QPushButton("Delete experiment")
     deleteExperimentBtn.clicked.connect(self._removeExperiment)
     tableButtonsLayout.addWidget(deleteExperimentBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     runExperimentBtn = util.apply_style(QPushButton("Run analysis"), background_color=util.LIGHT_YELLOW)
-    runExperimentBtn.clicked.connect(self._runExperiment)
+    runExperimentBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: self._runExperiment(), forceSave=True))
     tableButtonsLayout.addWidget(runExperimentBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     tableButtonsLayout.addStretch()
     tableLayout.addLayout(tableButtonsLayout)
-    self._table = QTableView()
     tableLayout.addWidget(self._table, stretch=1)
     self._mainWidget = QWidget()
     self._mainWidget.setVisible(False)
@@ -436,7 +522,7 @@ class CreateExperimentOrganizationExcel(QWidget):
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch()
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
-    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    startPageBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: controller.show_frame("StartPage")))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     previousParameterResultsBtn = util.apply_style(QPushButton("View previous kinematic parameter analysis results", self), background_color=util.LIGHT_YELLOW)
     previousParameterResultsBtn.clicked.connect(lambda: controller.show_frame("AnalysisOutputFolderPopulation"))
@@ -449,26 +535,51 @@ class CreateExperimentOrganizationExcel(QWidget):
 
     self.setLayout(layout)
 
+  def _unsavedChangesWarning(self, fn, forceSave=False):
+    def inner(*args, **kwargs):
+      if forceSave:
+        text = "Do you want to save the changes and proceed?"
+      else:
+        text = "Are you sure you want to proceed? Unsaved changes will be lost."
+      filename = self._tree.model().filePath(self._tree.selectionModel().currentIndex())
+      if self._table.model() is not None and self._table.model().hasUnsavedChanges(filename):
+        if QMessageBox.question(self.controller.window, "Unsaved changes", text, defaultButton=QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+          return
+        elif forceSave:
+          self._table.model().saveFile(filename)
+      return fn(*args, **kwargs)
+    return inner
+
   def _updateConditionCompletion(self):
     self._conditionLineEdit.completer().model().setStringList(self._table.model().getExistingConditions())
 
   def _updateGenotypeCompletion(self):
     self._genotypeLineEdit.completer().model().setStringList(self._table.model().getExistingGenotypes())
 
+  def _updateWellInfos(self):
+    rows = set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))
+    formatList = lambda s: '[%s]' % ', '.join(s) if len(s) != 1 else s.pop()
+    self._frame.setWellInfos([(formatList(self._table.model().getExistingConditions(rows=rows, wells=[well], includeEmpty=True)),
+                               formatList(self._table.model().getExistingGenotypes(rows=rows, wells=[well], includeEmpty=True)),
+                               formatList(self._table.model().getInclude(rows, [well]))) for well in range(self._frame.totalWells())])
+
   def _conditionChanged(self):
     condition = self._conditionLineEdit.text()
     self._table.model().updateValues(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))), 4, self._frame.getWells(), condition)
     self._updateConditionCompletion()
+    self._updateWellInfos()
 
   def _genotypeChanged(self):
     genotype = self._genotypeLineEdit.text()
     self._table.model().updateValues(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))), 5, self._frame.getWells(), genotype)
     self._updateGenotypeCompletion()
+    self._updateWellInfos()
 
   def _includeChanged(self, state):
     checked = int(state == Qt.CheckState.Checked)
     self._table.model().updateValues(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))), 6, self._frame.getWells(), checked)
     self._includeCheckbox.setTristate(False)
+    self._updateWellInfos()
 
   def _fileSelected(self, filename):
     self._mainWidget.show()
@@ -517,6 +628,7 @@ class CreateExperimentOrganizationExcel(QWidget):
     self._previousSelection = newSelection
     videoToShow = self._table.model().videoPath(rows[0])
     validationVideo = self._findValidationVideo(videoToShow)
+    self._wellsSelected()
     if len(rows) > 1:
       if (newWellLengths == oldWellLengths and self._shownVideo is not None and validationVideo is None == self._findValidationVideo(self._shownVideo) is None) or \
           (len(newWellLengths) > 1 and len(oldWellLengths) > 1):
@@ -544,6 +656,7 @@ class CreateExperimentOrganizationExcel(QWidget):
     else:
       self._frame.setWellPositions([(position['topLeftX'], position['topLeftY'], position['lengthX'], position['lengthY'])
                                     for idx, position in enumerate(wellPositions)])
+      self._updateWellInfos()
       with open(os.path.join(videoToShow, 'configUsed.json')) as f:
         config = json.load(f)
       self._frame.wellShape = 'rectangle' if config.get("wellsAreRectangles", False) or len(config.get("oneWellManuallyChosenTopLeft", '')) or int(config.get("multipleROIsDefinedDuringExecution", 0)) or config.get("noWellDetection", False) or config.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
@@ -559,20 +672,57 @@ class CreateExperimentOrganizationExcel(QWidget):
       self._frame.setOriginalPixmap(QPixmap(util._cvToPixmap(zzVideoReading.VideoCapture(validationVideo).read()[1])))
       self._wellsSelected()
 
+  def _findResultsFile(self, path):
+    if not os.path.exists(path):
+      return None
+    folder = os.path.basename(path)
+    reference = os.path.join(path, 'results_' + folder + '.txt')
+    if os.path.exists(reference):
+      return reference
+    resultsFile = next((f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) if f.startswith('results_')), None)
+    if resultsFile is None:
+      return None
+    return os.path.join(path, resultsFile)
+
   def _addVideos(self):
-    selectedFolder = QFileDialog.getExistingDirectory(self.controller.window, "Select a results folder", self.controller.ZZoutputLocation)
-    if not selectedFolder:
+    dialog = QFileDialog()
+    dialog.setWindowTitle('Select one or more results folders')
+    dialog.setDirectory(self.controller.ZZoutputLocation)
+    dialog.setFileMode(QFileDialog.FileMode.DirectoryOnly)
+    dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
+    listView = dialog.findChild(QListView, 'listView')
+    if listView:
+      listView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+    treeView = dialog.findChild(QTreeView)
+    if treeView:
+      treeView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+
+    if not dialog.exec():
       return
-    wellPositions = self._getWellPositions(selectedFolder)
-    if wellPositions is None:
-      return
-    numWells = 1 if not wellPositions else len(wellPositions)
-    emptyArray = ["[%s]" % ','.join(" " for _ in range(numWells))]
-    includeArray = ["[%s]" % ', '.join("1" for _ in range(numWells))]
-    model = self._table.model()
-    model.addVideo({"path": [os.path.dirname(selectedFolder)], "trial_id": [os.path.basename(selectedFolder)], "fq": [" "], "pixelsize": [" "], "condition": emptyArray, "genotype": emptyArray, "include": includeArray})
-    model.insertRow(model.rowCount())
-    self._table.selectionModel().setCurrentIndex(model.index(model.rowCount() - 1, 1), QItemSelectionModel.SelectionFlag.ClearAndSelect)
+    selectedFolders = dialog.selectedFiles()
+    invalidFolders = []
+    for selectedFolder in selectedFolders:
+      if self._findResultsFile(selectedFolder) is None:
+        invalidFolders.append(selectedFolder)
+        continue
+      wellPositions = self._getWellPositions(selectedFolder)
+      if wellPositions is None:
+        invalidFolders.append(selectedFolder)
+        continue
+      numWells = 1 if not wellPositions else len(wellPositions)
+      emptyArray = ["[%s]" % ','.join(" " for _ in range(numWells))]
+      includeArray = ["[%s]" % ', '.join("1" for _ in range(numWells))]
+      model = self._table.model()
+      model.addVideo({"path": [os.path.dirname(selectedFolder)], "trial_id": [os.path.basename(selectedFolder)], "fq": [" "], "pixelsize": [" "], "condition": emptyArray, "genotype": emptyArray, "include": includeArray})
+      model.insertRow(model.rowCount())
+      self._table.selectionModel().setCurrentIndex(model.index(model.rowCount() - 1, 1), QItemSelectionModel.SelectionFlag.ClearAndSelect)
+    if invalidFolders:
+      warning = QMessageBox(self.controller.window)
+      warning.setIcon(QMessageBox.Icon.Warning)
+      warning.setWindowTitle("Invalid folders selected")
+      warning.setText("Some of the selected folders were ignored because they are not valid results folders.")
+      warning.setDetailedText("\n".join(invalidFolders))
+      warning.exec()
 
   def _removeVideos(self):
     selectedIdxs = sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes())))
@@ -581,15 +731,18 @@ class CreateExperimentOrganizationExcel(QWidget):
 
   def _newExperiment(self):
     number = 1
-    while os.path.exists(os.path.join(self._tree.model().rootPath(), 'Experiment %d.xls' % number)):
+    while os.path.exists(os.path.join(self._tree.model().rootPath(), 'Experiment %d.xlsx' % number)):
       number += 1
-    path = os.path.join(self._tree.model().rootPath(), 'Experiment %d.xls' % number)
-    pd.DataFrame(columns=_ExperimentOrganizationModel._COLUMN_NAMES).to_excel(path)
+    path = os.path.join(self._tree.model().rootPath(), 'Experiment %d.xlsx' % number)
+    pd.DataFrame(columns=_ExperimentOrganizationModel._COLUMN_NAMES).to_excel(path, index=False)
     index = self._tree.model().index(path)
     self._tree.selectionModel().setCurrentIndex(index, QItemSelectionModel.SelectionFlag.ClearAndSelect)
     self._tree.edit(index)
 
   def _removeExperiment(self):
+    if QMessageBox.question(self.controller.window, "Delete experiment", "Are you sure you want to delete the experiment? This action removes the file from disk and cannot be undone.",
+                            defaultButton=QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+      return
     pathToRemove = self._tree.model().filePath(self._tree.selectionModel().currentIndex())
     self._tree.model().remove(self._tree.selectionModel().currentIndex())
     if pathToRemove == self._tree.model().filePath(self._tree.selectionModel().currentIndex()):  # last valid file removed
@@ -603,7 +756,7 @@ class CreateExperimentOrganizationExcel(QWidget):
     if not wellsSelected:
       return
     rows = set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))
-    conditions = self._table.model().getExistingConditions(rows, wells) or ['']
+    conditions = self._table.model().getExistingConditions(rows=rows, wells=wells, includeEmpty=True)
     if len(conditions) == 1:
       self._conditionLineEdit.setText(conditions[0])
       self._conditionLineEdit.setPlaceholderText('')
@@ -613,7 +766,7 @@ class CreateExperimentOrganizationExcel(QWidget):
       text = '[%s]' % ', '.join(conditions)
       self._conditionLineEdit.setPlaceholderText(text)
       self._conditionLineEdit.setToolTip(text)
-    genotypes = self._table.model().getExistingGenotypes(rows, wells) or ['']
+    genotypes = self._table.model().getExistingGenotypes(rows=rows, wells=wells, includeEmpty=True)
     if len(genotypes) == 1:
       self._genotypeLineEdit.setText(genotypes[0])
       self._genotypeLineEdit.setPlaceholderText('')
@@ -627,8 +780,22 @@ class CreateExperimentOrganizationExcel(QWidget):
     blocked = self._includeCheckbox.blockSignals(True)
     self._includeCheckbox.setCheckState(Qt.CheckState.PartiallyChecked if len(include) > 1 else Qt.CheckState.Checked if include.pop() == "1" else Qt.CheckState.Unchecked)
     self._includeCheckbox.blockSignals(blocked)
+    self._updateWellInfos()
 
   def _runExperiment(self):
+    errors = self._table.model().getErrors(self._getWellPositions, self._findResultsFile)
+    if errors:
+      error = QMessageBox(self.controller.window)
+      error.setIcon(QMessageBox.Icon.Critical)
+      error.setWindowTitle("Excel file contains errors")
+      error.setText("Experiment organization file contains some errors. Please fix them before running analysis.")
+      error.setDetailedText("\n".join(errors))
+      textEdit = error.findChild(QTextEdit)
+      textEdit.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
+      layout = error.layout()
+      layout.addItem(QSpacerItem(600, 0), layout.rowCount(), 0, 1, layout.columnCount())
+      error.exec()
+      return
     path = self._tree.model().filePath(self._tree.selectionModel().currentIndex())
     self.controller.experimentOrganizationExcel = os.path.basename(path)
     self.controller.experimentOrganizationExcelFileAndFolder = os.path.dirname(path)
