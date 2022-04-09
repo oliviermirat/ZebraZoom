@@ -267,7 +267,14 @@ class _ExperimentOrganizationModel(QAbstractTableModel):
   def columnCount(self, parent=None):
     return len(self._COLUMN_NAMES)
 
-  def updateValues(self, rows, column, indices, newValue):
+  def updateNumericValue(self, rows, column, newValue):
+    dataColIdx = self._data.columns.get_loc(self._COLUMN_NAMES[column])
+    for row in rows:
+      self._data.iloc[row, dataColIdx] = float(newValue)
+      index = self.index(row, column)
+      self.dataChanged.emit(index, index)
+
+  def updateArrayValues(self, rows, column, indices, newValue):
     dataColIdx = self._data.columns.get_loc(self._COLUMN_NAMES[column])
     for row in rows:
       self._data.iloc[row, dataColIdx] = "[%s]" % ", ".join(val.strip() if idx not in indices else str(newValue)
@@ -305,8 +312,8 @@ class _ExperimentOrganizationModel(QAbstractTableModel):
     return os.path.join(path, folderName)
 
   def addVideo(self, videoData):
-    if videoData["path"] == self._DEFAULT_ZZOUTPUT:
-      videoData["path"] = "defaultZZoutputFolder"
+    if os.path.normpath(videoData["path"][0]) == os.path.normpath(self._DEFAULT_ZZOUTPUT):
+      videoData["path"][0] = "defaultZZoutputFolder"
     self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
     self._data = pd.concat([self._data, pd.DataFrame.from_dict(videoData)], ignore_index=True)
     self.endInsertRows()
@@ -316,19 +323,29 @@ class _ExperimentOrganizationModel(QAbstractTableModel):
     self._data = self._data.drop(idxs).reset_index(drop=True,)
     self.endResetModel()
 
+  def getFPS(self, rows):
+    colIdx = self._data.columns.get_loc("fq")
+    return sorted({str(self._data.iloc[row, colIdx]) for row in rows})
+
+  def getPixelSizes(self, rows):
+    colIdx = self._data.columns.get_loc("pixelsize")
+    return sorted({str(self._data.iloc[row, colIdx]) for row in rows})
+
   def getExistingConditions(self, rows=None, wells=None, includeEmpty=False):
     if rows is None:
       rows = range(self.rowCount())
     if wells is None:
       wells = _DummyFullSet()
-    return sorted({val.strip() for row in rows for idx, val in enumerate(self._data.iloc[row, self._data.columns.get_loc("condition")][1:-1].split(",")) if idx in wells and (includeEmpty or val.strip())})
+    colIdx = self._data.columns.get_loc("condition")
+    return sorted({val.strip() for row in rows for idx, val in enumerate(self._data.iloc[row, colIdx][1:-1].split(",")) if idx in wells and (includeEmpty or val.strip())})
 
   def getExistingGenotypes(self, rows=None, wells=None, includeEmpty=False):
     if rows is None:
       rows = range(self.rowCount())
     if wells is None:
       wells = _DummyFullSet()
-    return sorted({val.strip() for row in rows for idx, val in enumerate(self._data.iloc[row, self._data.columns.get_loc("genotype")][1:-1].split(",")) if idx in wells and (includeEmpty or val.strip())})
+    colIdx = self._data.columns.get_loc("genotype")
+    return sorted({val.strip() for row in rows for idx, val in enumerate(self._data.iloc[row, colIdx][1:-1].split(",")) if idx in wells and (includeEmpty or val.strip())})
 
   def getInclude(self, rows, wells):
     return {val.strip() for row in rows for idx, val in enumerate(self._data.iloc[row, self._data.columns.get_loc("include")][1:-1].split(",")) if idx in wells}
@@ -472,26 +489,34 @@ class CreateExperimentOrganizationExcel(QWidget):
     detailsLayout = QVBoxLayout()
     detailsLayout.addWidget(self._frame, stretch=1)
     videoDetailsLayout = QGridLayout()
-    videoDetailsLayout.addWidget(QLabel("Condition:"), 0, 0, alignment=Qt.AlignmentFlag.AlignLeft)
+    videoDetailsLayout.addWidget(QLabel("FPS:"), 0, 0, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._FPSLineEdit = QLineEdit()
+    self._FPSLineEdit.editingFinished.connect(self._FPSChanged)
+    videoDetailsLayout.addWidget(self._FPSLineEdit, 0, 1, alignment=Qt.AlignmentFlag.AlignLeft)
+    videoDetailsLayout.addWidget(QLabel("Pixel size:"), 1, 0, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._pixelSizeLineEdit = QLineEdit()
+    self._pixelSizeLineEdit.editingFinished.connect(self._pixelSizeChanged)
+    videoDetailsLayout.addWidget(self._pixelSizeLineEdit, 1, 1, alignment=Qt.AlignmentFlag.AlignLeft)
+    videoDetailsLayout.addWidget(QLabel("Condition:"), 2, 0, alignment=Qt.AlignmentFlag.AlignLeft)
     self._conditionLineEdit = QLineEdit()
     conditionCompleter = QCompleter()
     conditionCompleter.setModel(QStringListModel())
     conditionCompleter.setCompletionMode(QCompleter.CompletionMode.UnfilteredPopupCompletion)
     self._conditionLineEdit.setCompleter(conditionCompleter)
     self._conditionLineEdit.editingFinished.connect(self._conditionChanged)
-    videoDetailsLayout.addWidget(self._conditionLineEdit, 0, 1, alignment=Qt.AlignmentFlag.AlignLeft)
-    videoDetailsLayout.addWidget(QLabel("Genotype:"), 1, 0, alignment=Qt.AlignmentFlag.AlignLeft)
+    videoDetailsLayout.addWidget(self._conditionLineEdit, 2, 1, alignment=Qt.AlignmentFlag.AlignLeft)
+    videoDetailsLayout.addWidget(QLabel("Genotype:"), 3, 0, alignment=Qt.AlignmentFlag.AlignLeft)
     self._genotypeLineEdit = QLineEdit()
     genotypeCompleter = QCompleter()
     genotypeCompleter.setModel(QStringListModel())
     genotypeCompleter.setCompletionMode(QCompleter.CompletionMode.UnfilteredPopupCompletion)
     self._genotypeLineEdit.setCompleter(genotypeCompleter)
     self._genotypeLineEdit.editingFinished.connect(self._genotypeChanged)
-    videoDetailsLayout.addWidget(self._genotypeLineEdit, 1, 1, alignment=Qt.AlignmentFlag.AlignLeft)
+    videoDetailsLayout.addWidget(self._genotypeLineEdit, 3, 1, alignment=Qt.AlignmentFlag.AlignLeft)
     self._includeCheckbox = QCheckBox("Include in analysis")
     self._includeCheckbox.stateChanged.connect(self._includeChanged)
-    videoDetailsLayout.addWidget(self._includeCheckbox, 3, 0, 1, 2, alignment=Qt.AlignmentFlag.AlignLeft)
-    videoDetailsLayout.setRowStretch(4, 1)
+    videoDetailsLayout.addWidget(self._includeCheckbox, 4, 0, 1, 2, alignment=Qt.AlignmentFlag.AlignLeft)
+    videoDetailsLayout.setRowStretch(5, 1)
     self._detailsWidget = QWidget()
     self._detailsWidget.setLayout(videoDetailsLayout)
     self._detailsWidget.setVisible(False)
@@ -563,21 +588,27 @@ class CreateExperimentOrganizationExcel(QWidget):
                                formatList(self._table.model().getExistingGenotypes(rows=rows, wells=[well], includeEmpty=True)),
                                formatList(self._table.model().getInclude(rows, [well]))) for well in range(self._frame.totalWells())])
 
+  def _FPSChanged(self):
+    self._table.model().updateNumericValue(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))), 2, self._FPSLineEdit.text())
+
+  def _pixelSizeChanged(self):
+    self._table.model().updateNumericValue(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))), 3, self._pixelSizeLineEdit.text())
+
   def _conditionChanged(self):
     condition = self._conditionLineEdit.text()
-    self._table.model().updateValues(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))), 4, self._frame.getWells(), condition)
+    self._table.model().updateArrayValues(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))), 4, self._frame.getWells(), condition)
     self._updateConditionCompletion()
     self._updateWellInfos()
 
   def _genotypeChanged(self):
     genotype = self._genotypeLineEdit.text()
-    self._table.model().updateValues(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))), 5, self._frame.getWells(), genotype)
+    self._table.model().updateArrayValues(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))), 5, self._frame.getWells(), genotype)
     self._updateGenotypeCompletion()
     self._updateWellInfos()
 
   def _includeChanged(self, state):
     checked = int(state == Qt.CheckState.Checked)
-    self._table.model().updateValues(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))), 6, self._frame.getWells(), checked)
+    self._table.model().updateArrayValues(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))), 6, self._frame.getWells(), checked)
     self._includeCheckbox.setTristate(False)
     self._updateWellInfos()
 
@@ -686,7 +717,7 @@ class CreateExperimentOrganizationExcel(QWidget):
 
   def _addVideos(self):
     dialog = QFileDialog()
-    dialog.setWindowTitle('Select one or more results folders')
+    dialog.setWindowTitle('Select one or more results folders (use Ctrl or Shift key to select multiple folders)')
     dialog.setDirectory(self.controller.ZZoutputLocation)
     dialog.setFileMode(QFileDialog.FileMode.DirectoryOnly)
     dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
@@ -756,6 +787,26 @@ class CreateExperimentOrganizationExcel(QWidget):
     if not wellsSelected:
       return
     rows = set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))
+    FPS = self._table.model().getFPS(rows)
+    if len(FPS) == 1:
+      self._FPSLineEdit.setText(FPS[0])
+      self._FPSLineEdit.setPlaceholderText('')
+      self._FPSLineEdit.setToolTip(None)
+    else:
+      self._FPSLineEdit.setText('')
+      text = '[%s]' % ', '.join(FPS)
+      self._FPSLineEdit.setPlaceholderText(text)
+      self._FPSLineEdit.setToolTip(text)
+    pixelSizes = self._table.model().getPixelSizes(rows)
+    if len(pixelSizes) == 1:
+      self._pixelSizeLineEdit.setText(pixelSizes[0])
+      self._pixelSizeLineEdit.setPlaceholderText('')
+      self._pixelSizeLineEdit.setToolTip(None)
+    else:
+      self._pixelSizeLineEdit.setText('')
+      text = '[%s]' % ', '.join(pixelSizes)
+      self._pixelSizeLineEdit.setPlaceholderText(text)
+      self._pixelSizeLineEdit.setToolTip(text)
     conditions = self._table.model().getExistingConditions(rows=rows, wells=wells, includeEmpty=True)
     if len(conditions) == 1:
       self._conditionLineEdit.setText(conditions[0])

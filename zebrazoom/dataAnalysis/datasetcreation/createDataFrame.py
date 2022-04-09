@@ -65,9 +65,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     else:
       path    = os.path.join(excelFile.loc[videoId, 'path'], excelFile.loc[videoId, 'trial_id'])
     trial_id  = excelFile.loc[videoId, 'trial_id']
-    include   = excelFile.loc[videoId, 'include']
-    include = eval('[' + include + ']')
-    include = include[0]
+    include   = [bool(int(val.strip())) for val in excelFile.loc[videoId, 'include'][1:-1].split(',')]
     if len(supstructOverwrite):
       supstruct = supstructOverwrite
     else:
@@ -157,15 +155,9 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     trial_id  = excelFile.loc[videoId, 'trial_id']
     fq        = excelFile.loc[videoId, 'fq']
     pixelsize = excelFile.loc[videoId, 'pixelsize']
-    condition = excelFile.loc[videoId, 'condition']
-    condition = eval('[' + condition + ']')
-    condition = condition[0]
-    genotype  = excelFile.loc[videoId, 'genotype']
-    genotype = eval('[' + genotype + ']')
-    genotype = genotype[0]
-    include   = excelFile.loc[videoId, 'include']
-    include = eval('[' + include + ']')
-    include = include[0]
+    condition = [val.strip('\'" ') for val in excelFile.loc[videoId, 'condition'][1:-1].split(',')]
+    genotype  = [val.strip('\'" ') for val in excelFile.loc[videoId, 'genotype'][1:-1].split(',')]
+    include   = [bool(int(val.strip())) for val in excelFile.loc[videoId, 'include'][1:-1].split(',')]
     
     if (not(os.path.exists(os.path.join(path, trial_id + '.pkl'))) or forcePandasDfRecreation):
       if len(supstructOverwrite):

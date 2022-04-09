@@ -238,7 +238,7 @@ def circularOrRectangularWells(self, controller, nbRowsOfWells, nbWellsPerRows, 
     if self.shape == 'groupSameSizeAndShapeEquallySpacedWells':
       chooseBeginningAndEndOfVideo(self, controller)
     else:
-      rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows)
+      rectangularWells(self, controller, self.configFile["nbWells"], nbRowsOfWells, nbWellsPerRows)
 
 
 @util.addToHistory
