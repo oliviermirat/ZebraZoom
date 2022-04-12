@@ -171,6 +171,15 @@ class _WellsSelectionLabel(QLabel):
     self._hoveredWells.clear()
     self.update()
 
+  def _elideText(self, text, rect):
+    if not text:
+      return text
+    fm = QFontMetrics(QFont())
+    elidedText = fm.elidedText(text, Qt.TextElideMode.ElideRight, rect.width())
+    if elidedText:
+      return elidedText
+    return text[0]
+
   def paintEvent(self, evt):
     super().paintEvent(evt)
     app = QApplication.instance()
@@ -201,8 +210,7 @@ class _WellsSelectionLabel(QLabel):
         qp.setFont(QFont())
         qp.setClipping(True)
         qp.setClipRect(rect)
-        fm = QFontMetrics(QFont())
-        qp.drawText(rect, Qt.AlignmentFlag.AlignCenter, "\n".join(map(lambda text: fm.elidedText(text, Qt.TextElideMode.ElideRight, rect.width()), self._wellInfos[idx])))
+        qp.drawText(rect, Qt.AlignmentFlag.AlignCenter, "\n".join(map(lambda text: self._elideText(text, rect), self._wellInfos[idx])))
         qp.setClipping(False)
     if self._hoveredPosition is not None and self._clickedPosition is not None:
       qp.setPen(QColor(70, 70, 140))
