@@ -23,14 +23,6 @@ from zebrazoom.dataAnalysis.dataanalysis.applyClustering import applyClustering
 
 from zebrazoom.dataAnalysis.datasetcreation.generatePklDataFileForVideo import generatePklDataFileForVideo
 
-def openExperimentOrganizationExcelFolder(self, homeDirectory):
-  dir_path = os.path.join(homeDirectory,'dataAnalysis/experimentOrganizationExcel/')
-  if sys.platform == "win32":
-    os.startfile(dir_path)
-  else:
-    opener ="open" if sys.platform == "darwin" else "xdg-open"
-    subprocess.call([opener, dir_path])
-
 
 def openAnalysisFolder(self, homeDirectory, specificDirectory):
   dir_path = os.path.join(os.path.join(homeDirectory,'dataAnalysis'), specificDirectory)
@@ -39,24 +31,6 @@ def openAnalysisFolder(self, homeDirectory, specificDirectory):
   else:
     opener ="open" if sys.platform == "darwin" else "xdg-open"
     subprocess.call([opener, dir_path])
-
-
-def chooseExperimentOrganizationExcel(self, controller):
-
-  cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-  cur_dir_path = Path(cur_dir_path)
-  cur_dir_path = cur_dir_path.parent.parent
-
-  experimentOrganizationExcel, _ =  QFileDialog.getOpenFileName(self.window, "Select the excel file describing your experiments", os.path.join(cur_dir_path, 'dataAnalysis/experimentOrganizationExcel/'), "All files(*)")
-  if not experimentOrganizationExcel:
-    return
-
-  array = os.path.split(experimentOrganizationExcel)
-
-  self.experimentOrganizationExcel = array[len(array)-1]
-  self.experimentOrganizationExcelFileAndFolder = ''.join(array[0:len(array)-1])
-
-  controller.show_frame("ChooseDataAnalysisMethod")
 
 
 def populationComparison(self, controller, TailTrackingParameters=0, saveInMatlabFormat=0, saveRawData=0, forcePandasRecreation=0, minNbBendForBoutDetect=3, discard=0, keep=1, frameStepForDistanceCalculation='4'):

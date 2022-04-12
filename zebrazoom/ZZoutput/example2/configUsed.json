@@ -1,1 +1,1 @@
-{"nbWells" : 12, "videoFPS": 100, "videoPixelSize": 0.1}
+{"nbWells" : 12, "wellsAreRectangles": 1, "videoFPS": 100, "videoPixelSize": 0.1}
