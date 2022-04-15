@@ -158,8 +158,6 @@ def showDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, tim
     label.setMinimumSize(width, height)
     layoutSize = mainLayout.totalSizeHint()
     label.setMinimumSize(1, 1)
-    extraWidth = layoutSize.width() - width
-    extraHeight = layoutSize.height() - height
   else:
     layoutSize = mainLayout.totalSizeHint()
   screenSize = QApplication.primaryScreen().availableSize()
@@ -170,7 +168,7 @@ def showDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, tim
   dialog.setFixedSize(layoutSize)
   dialog.show()
   if labelInfo is not None:
-    setPixmapFromCv(*labelInfo, QSize(layoutSize.width() - extraWidth, layoutSize.height() - extraHeight))
+    setPixmapFromCv(*labelInfo, preferredSize=QSize(width, height).scaled(label.size(), Qt.AspectRatioMode.KeepAspectRatio))
   dialog.closeEvent = _dialogClosed(loop, dialog.closeEvent)
   if timeout is not None:
     QTimer.singleShot(timeout, lambda: dialog.close())
