@@ -12,8 +12,8 @@ from matplotlib.figure import Figure
 
 try:
   from PyQt6.QtCore import Qt, QDir, QEvent, QObject, QSize, QSortFilterProxyModel
-  from PyQt6.QtGui import QCursor, QFont
-  from PyQt6.QtWidgets import QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
+  from PyQt6.QtGui import QCursor, QFileSystemModel, QFont
+  from PyQt6.QtWidgets import QLabel, QWidget, QFrame, QGridLayout, QHeaderView, QPushButton, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
 except ImportError:
   from PyQt5.QtCore import Qt, QDir, QEvent, QObject, QSize, QSortFilterProxyModel
   from PyQt5.QtGui import QCursor, QFont
