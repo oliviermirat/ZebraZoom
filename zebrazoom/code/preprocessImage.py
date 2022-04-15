@@ -94,6 +94,15 @@ def setImageLineToBlack(img, hyperparameters, imagePreProcessParameters):
   
   return img
 
+def rotateImage(img, hyperparameters, imagePreProcessParameters):
+  
+  image_center = tuple(np.array(img.shape[1::-1]) / 2)
+  rot_mat = cv2.getRotationMatrix2D(image_center, imagePreProcessParameters[0], 1.0)
+  img = cv2.warpAffine(img, rot_mat, img.shape[1::-1], flags=cv2.INTER_LINEAR)
+  
+  return img
+
+
 def preprocessImage(img, hyperparameters):
   
   if type(hyperparameters["imagePreProcessMethod"]) == list:
@@ -118,7 +127,9 @@ def preprocessImage(img, hyperparameters):
       img = erodeThenMin(img, hyperparameters, imagePreProcessParameters)
     elif imagePreProcessMethod == "setImageLineToBlack":
       img = setImageLineToBlack(img, hyperparameters, imagePreProcessParameters)
-  
+    elif imagePreProcessMethod == "rotate":
+      img = rotateImage(img, hyperparameters, imagePreProcessParameters)
+    
   return img
 
 
@@ -146,5 +157,7 @@ def preprocessBackgroundImage(img, hyperparameters):
       img = erodeThenMin(img, hyperparameters, imagePreProcessParameters)
     elif imagePreProcessMethod == "setImageLineToBlack":
       img = setImageLineToBlack(img, hyperparameters, imagePreProcessParameters)
+    elif imagePreProcessMethod == "rotate":
+      img = rotateImage(img, hyperparameters, imagePreProcessParameters)
   
   return img

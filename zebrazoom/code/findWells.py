@@ -2,6 +2,7 @@ import h5py
 import numpy as np
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+from zebrazoom.code.preprocessImage import preprocessImage
 import cvui
 import math
 import json
@@ -241,6 +242,8 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
   if (cap.isOpened()== False):
     print("Error opening video stream or file")
   ret, frame = cap.read()
+  if hyperparameters["imagePreProcessMethod"]:
+    frame = preprocessImage(frame, hyperparameters)
   frameForRepartitionJPG = frame.copy()
 
   accepted = False
@@ -314,6 +317,8 @@ def _multipleROIsDefinedDuringExecutionQt(videoPath, hyperparameters):
     if (cap.isOpened()== False):
       print("Error opening video stream or file")
     ret, frame = cap.read()
+    if hyperparameters["imagePreProcessMethod"]:
+      frame = preprocessImage(frame, hyperparameters)
     frameForRepartitionJPG = frame.copy()
     i = 0
     app = QApplication.instance()
@@ -355,6 +360,8 @@ def findWells(videoPath, hyperparameters):
     if (cap.isOpened()== False): 
       print("Error opening video stream or file")
     ret, frame = cap.read()
+    if hyperparameters["imagePreProcessMethod"]:
+      frame = preprocessImage(frame, hyperparameters)
     frame_width  = int(cap.get(3))
     frame_height = int(cap.get(4))
     l = []
@@ -374,6 +381,8 @@ def findWells(videoPath, hyperparameters):
     if (cap.isOpened()== False): 
       print("Error opening video stream or file")
     ret, frame = cap.read()
+    if hyperparameters["imagePreProcessMethod"]:
+      frame = preprocessImage(frame, hyperparameters)
     frameForRepartitionJPG = frame.copy()
     [frame, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame, True, 0.85)
     cv2.waitKey(500)
@@ -449,6 +458,8 @@ def findWells(videoPath, hyperparameters):
     if (cap.isOpened()== False): 
       print("Error opening video stream or file")
     ret, frame = cap.read()
+    if hyperparameters["imagePreProcessMethod"]:
+      frame = preprocessImage(frame, hyperparameters)
     frameForRepartitionJPG = frame.copy()
     [frame, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame, True, 0.85)
     cv2.waitKey(500)
@@ -506,6 +517,8 @@ def findWells(videoPath, hyperparameters):
     if (cap.isOpened()== False): 
       print("Error opening video stream or file")
     ret, frame = cap.read()
+    if hyperparameters["imagePreProcessMethod"]:
+      frame = preprocessImage(frame, hyperparameters)
     saveWellsRepartitionImage(l, frame, hyperparameters)
     cap.release()
     return l
@@ -516,6 +529,8 @@ def findWells(videoPath, hyperparameters):
   if (cap.isOpened()== False): 
     print("Error opening video stream or file")
   ret, frame = cap.read()
+  if hyperparameters["imagePreProcessMethod"]:
+    frame = preprocessImage(frame, hyperparameters)
   if hyperparameters["invertBlackWhiteOnImages"]:
     frame = 255 - frame
   
