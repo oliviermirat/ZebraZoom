@@ -8,8 +8,8 @@ import pandas as pd
 
 try:
   from PyQt6.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QItemSelectionModel, QModelIndex, QPoint, QPointF, QRect, QRectF, QSize, QSizeF, QStringListModel
-  from PyQt6.QtGui import QColor, QFont, QFontMetrics, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
-  from PyQt6.QtWidgets import QAbstractItemView, QApplication, QCompleter, QFileDialog, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QHBoxLayout, QListView, QLabel, QMessageBox, QSpacerItem, QTextEdit, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QSplitter, QTableView, QTreeView
+  from PyQt6.QtGui import QColor, QFileSystemModel, QFont, QFontMetrics, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
+  from PyQt6.QtWidgets import QAbstractItemView, QApplication, QCompleter, QFileDialog, QFrame, QGridLayout, QHeaderView, QHBoxLayout, QListView, QLabel, QMessageBox, QSpacerItem, QTextEdit, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QSplitter, QTableView, QTreeView
   PYQT6 = True
 except ImportError:
   from PyQt5.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QItemSelectionModel, QModelIndex, QPoint, QPointF, QRect, QRectF, QSize, QSizeF, QStringListModel
@@ -727,8 +727,9 @@ class CreateExperimentOrganizationExcel(QWidget):
     dialog = QFileDialog()
     dialog.setWindowTitle('Select one or more results folders (use Ctrl or Shift key to select multiple folders)')
     dialog.setDirectory(self.controller.ZZoutputLocation)
-    dialog.setFileMode(QFileDialog.FileMode.DirectoryOnly)
+    dialog.setFileMode(QFileDialog.FileMode.Directory)
     dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
+    dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
     listView = dialog.findChild(QListView, 'listView')
     if listView:
       listView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
