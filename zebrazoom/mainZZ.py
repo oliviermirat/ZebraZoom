@@ -296,6 +296,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     with open(path, 'w') as outfile:
       json.dump(superStruct, outfile)
     if hyperparameters["saveSuperStructToMatlab"]:
+      from scipy.io import savemat
       matlabPath = os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'results_' + hyperparameters["videoName"] + '.mat')
       videoDataResults2 = {}
       videoDataResults2['videoDataResults'] = superStruct

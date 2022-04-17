@@ -4,7 +4,6 @@ import json
 import scipy.io as io
 from scipy.interpolate import UnivariateSpline
 import scipy.interpolate as interp
-from scipy.io import savemat
 import numpy as np
 from scipy.signal import find_peaks
 import pandas as pd
