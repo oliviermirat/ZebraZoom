@@ -203,13 +203,13 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
 
     if lengthX > 100 and lengthY > 100:
       font = cv2.FONT_HERSHEY_SIMPLEX
-      cv2.putText(img,str(l + supstruct["firstFrame"] - 1),(int(lengthX-110), int(lengthY-30)),font,1,(0,255,0))
+      cv2.putText(img,str(l + supstruct["firstFrame"]),(int(lengthX-110), int(lengthY-30)),font,1,(0,255,0))
     else:
       blank_image = np.zeros((len(img)+30, len(img[0]), 3), np.uint8)
       blank_image[0:len(img), 0:len(img[0])] = img
       img = blank_image
       font = cv2.FONT_HERSHEY_SIMPLEX
-      cv2.putText(img, str(l + supstruct["firstFrame"] - 1), (int(0), int(lengthY+25)), font, 1, (0,255,0))
+      cv2.putText(img, str(l + supstruct["firstFrame"]), (int(0), int(lengthY+25)), font, 1, (0,255,0))
 
     return img
 

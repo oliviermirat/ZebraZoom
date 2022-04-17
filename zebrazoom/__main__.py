@@ -187,6 +187,11 @@ if __name__ == '__main__':
         framesToShow = df[["sleep_" + str(i) for i in range(0, nbWells)]].to_numpy()
         readValidationVideo("", sys.argv[3], "", -1, -1, 0, 1, framesToShow)
 
+    elif sys.argv[1] == "createDistanceBetweenFramesExcelFile":
+
+      from zebrazoom.dataAnalysis.createCustomDataStructure.createDistanceBetweenFramesExcelFile import createDistanceBetweenFramesExcelFile
+      createDistanceBetweenFramesExcelFile(os.path.join(dir_path,'ZZoutput'), sys.argv) # fps, pixelSize
+      
 
     elif sys.argv[1] == "otherScripts":
 
