@@ -11,13 +11,13 @@ from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 
 try:
-  from PyQt6.QtCore import Qt, QDir, QEvent, QObject, QSize, QSortFilterProxyModel
-  from PyQt6.QtGui import QCursor, QFileSystemModel, QFont
-  from PyQt6.QtWidgets import QLabel, QWidget, QFrame, QGridLayout, QHeaderView, QPushButton, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
+  from PyQt6.QtCore import pyqtSignal, Qt, QDir, QEvent, QLine, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel
+  from PyQt6.QtGui import QColor, QCursor, QFileSystemModel, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
+  from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QFrame, QGridLayout, QHeaderView, QPushButton, QSizePolicy, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
 except ImportError:
-  from PyQt5.QtCore import Qt, QDir, QEvent, QObject, QSize, QSortFilterProxyModel
-  from PyQt5.QtGui import QCursor, QFont
-  from PyQt5.QtWidgets import QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
+  from PyQt5.QtCore import pyqtSignal, Qt, QDir, QEvent, QLine, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel
+  from PyQt5.QtGui import QColor, QCursor, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
+  from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSizePolicy, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
 
 import zebrazoom.code.util as util
 from zebrazoom.code.readValidationVideo import readValidationVideo
@@ -26,71 +26,231 @@ from zebrazoom.code.checkConsistencyOfParameters import checkConsistencyOfParame
 LARGE_FONT= QFont("Verdana", 12)
 
 
+class _FlowchartWidget(QWidget):
+  circleHovered = pyqtSignal(int, int)
+
+  _ARROW_SIZE = 10
+  _TEXTS = ('Create Configuration File', 'Run Tracking', 'View Tracking Results', 'Analyze Behavior')
+
+  def __init__(self):
+    super().__init__()
+    self._circleRects = []
+    self._lines = []
+    font = QFont()
+    font.setPixelSize(16)
+    fm = QFontMetrics(font)
+    stepMinimumWidth = fm.boundingRect('Good Results').width() + self._ARROW_SIZE * 2 + 4  # add 4 pixels to ensure some spacing
+    self.setFixedHeight(200)
+    self.setContentsMargins(0, 4, 0, 4)
+    self.setMouseTracking(True)
+
+  def resizeEvent(self, evt):
+    super().resizeEvent(evt)
+    del self._circleRects[:]
+    del self._lines[:]
+    size = self.contentsRect()
+    yOffset = 100
+    midHeight = (size.height() - yOffset) // 2 + size.y() + yOffset
+    stepSize = size.width() // 8
+    for step, startPos in enumerate(range(size.x() + stepSize // 2, size.width() - stepSize, stepSize)):
+      if step % 2:
+        self._lines.append(QLine(startPos + stepSize, midHeight, startPos, midHeight))
+      else:
+        self._circleRects.append(QRect(startPos, size.y() + yOffset, stepSize, size.height() - yOffset))
+
+  def iterCircleRects(self):
+    yield from self._circleRects
+
+  def _getArrow(self, p1, p2, angle):
+    p1 = QPointF(p1)
+    p2 = QPointF(p2)
+    arrowP1 = p1 + QPointF(math.sin(angle + math.pi / 3) * self._ARROW_SIZE, math.cos(angle + math.pi / 3) * self._ARROW_SIZE)
+    arrowP2 = p1 + QPointF(math.sin(angle + math.pi - math.pi / 3) * self._ARROW_SIZE, math.cos(angle + math.pi - math.pi / 3) * self._ARROW_SIZE)
+
+    arrowHead = QPolygonF()
+    arrowHead.clear()
+    arrowHead.append(p1)
+    arrowHead.append(arrowP1)
+    arrowHead.append(arrowP2)
+    return arrowHead
+
+  def paintEvent(self, evt):
+    super().paintEvent(evt)
+    qp = QPainter()
+    qp.begin(self)
+    qp.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+    font = QFont()
+    font.setPixelSize(16)
+    qp.setFont(font)
+
+    qp.setBrush(QColor(util.LIGHT_YELLOW))
+    for rect, text in zip(self._circleRects, self._TEXTS):
+      qp.drawEllipse(rect)
+      qp.drawText(rect, Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap, text)
+
+    qp.setBrush(QColor('black'))
+    for line in self._lines:
+      qp.drawLine(line)
+      qp.drawPolygon(self._getArrow(line.p1(), line.p2(), math.atan2(-line.dy(), line.dx())))
+
+    fontHeight = qp.fontMetrics().height() + 4  # add 4 pixels to ensure some spacing
+    qp.setPen(QColor('green'))
+    qp.drawText(QRect(QPoint(line.p1().x(), line.p1().y() - fontHeight), QPoint(line.p2().x() - self._ARROW_SIZE, line.p2().y())), Qt.AlignmentFlag.AlignCenter, 'Good Results')
+    qp.setPen(QColor('red'))
+    qp.drawText(QRect(QPoint(self._circleRects[1].x(), self.contentsRect().y()), QPoint(self._circleRects[1].x() + self._circleRects[1].width(), fontHeight)), Qt.AlignmentFlag.AlignCenter, 'Bad Results')
+
+    qp.setPen(QColor('black'))
+    p1 = QPointF(self._circleRects[0].x() + self._circleRects[0].width() // 2, self._circleRects[0].y())
+    p2 = QPointF(self._circleRects[2].x() + self._circleRects[2].width() // 2, self._circleRects[2].y())
+    c1 = QPointF(self._circleRects[0].width() // 2 + self._circleRects[0].x(), self.contentsRect().y())
+    c2 = QPointF(self._circleRects[2].width() // 2 + self._circleRects[2].x(), self.contentsRect().y())
+    path = QPainterPath(p1)
+    path.cubicTo(c1, c2, p2)
+    qp.drawPolygon(self._getArrow(p1, p2, math.radians(path.angleAtPercent(self._ARROW_SIZE / path.length()))))
+    qp.setBrush(Qt.BrushStyle.NoBrush)
+    qp.drawPath(path)
+    qp.end()
+
+
+class _ConfigurationDetails(QFrame):
+  def __init__(self):
+    super().__init__()
+    self.setFrameShape(QFrame.Shape.WinPanel)
+    self.setVisible(False)
+
+    app = QApplication.instance()
+    layout = QVBoxLayout()
+    prepareConfigBtn = util.apply_style(QPushButton("Prepare initial configuration\nfile for tracking", self), background_color=util.LIGHT_YELLOW)
+    prepareConfigBtn.clicked.connect(lambda: util.addToHistory(app.show_frame)("ChooseVideoToCreateConfigFileFor"))
+    layout.addWidget(prepareConfigBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    optimizeConfigBtn = util.apply_style(QPushButton("Optimize a previously\ncreated configuration file", self), background_color=util.LIGHT_YELLOW)
+    optimizeConfigBtn.clicked.connect(lambda: app.chooseVideoToCreateConfigFileFor(app, True) and util.addToHistory(app.optimizeConfigFile)())
+    layout.addWidget(optimizeConfigBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    openConfigFolderBtn = util.apply_style(QPushButton("Open configuration file\nfolder", self), background_color=util.LIGHT_YELLOW)
+    openConfigFolderBtn.clicked.connect(lambda: app.openConfigurationFileFolder(app.homeDirectory))
+    layout.addWidget(openConfigFolderBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    label = QLabel('A configuration file can be used to track not only the video that was used to create it, but also all videos similar enough to it.')
+    label.setWordWrap(True)
+    layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+    self.setLayout(layout)
+
+
+class _TrackingDetails(QFrame):
+  def __init__(self):
+    super().__init__()
+    self.setFrameShape(QFrame.Shape.WinPanel)
+    self.setVisible(False)
+
+    app = QApplication.instance()
+    layout = QVBoxLayout()
+    runTrackingOneVideoBtn = util.apply_style(QPushButton("Run ZebraZoom's Tracking\non a video", self), background_color=util.LIGHT_YELLOW)
+    runTrackingOneVideoBtn.clicked.connect(lambda: app.show_frame("VideoToAnalyze"))
+    layout.addWidget(runTrackingOneVideoBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    oneVideoLabel = QLabel('Once your configuration file is ready, use it to run the tracking on one video.')
+    oneVideoLabel.setWordWrap(True)
+    layout.addWidget(oneVideoLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+    runTrackingMultipleVideosBtn = util.apply_style(QPushButton("Run ZebraZoom's Tracking\non several videos", self), background_color=util.LIGHT_YELLOW)
+    runTrackingMultipleVideosBtn.clicked.connect(lambda: app.show_frame("SeveralVideos"))
+    layout.addWidget(runTrackingMultipleVideosBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    multipleVideosLabel = QLabel('If you got good tracking results for one video, you can then run the tracking on multiple videos as a batch.')
+    multipleVideosLabel.setWordWrap(True)
+    layout.addWidget(multipleVideosLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+    self.setLayout(layout)
+
+
+class _VisualizationDetails(QFrame):
+  def __init__(self):
+    super().__init__()
+    self.setFrameShape(QFrame.Shape.WinPanel)
+    self.setVisible(False)
+
+    app = QApplication.instance()
+    layout = QVBoxLayout()
+    visualizeOutputBtn = util.apply_style(QPushButton("Visualize tracking results", self), background_color=util.LIGHT_YELLOW)
+    visualizeOutputBtn.clicked.connect(lambda: app.showViewParameters())
+    layout.addWidget(visualizeOutputBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    label = QLabel('Make sure that the tracking results are good enough. If they are not, adjust/optimize the configuration file you used.')
+    label.setWordWrap(True)
+    layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+    enhanceOutputBtn = util.apply_style(QPushButton("Enhance ZebraZoom's output", self), background_color=util.LIGHT_YELLOW)
+    enhanceOutputBtn.clicked.connect(lambda: app.show_frame("EnhanceZZOutput"))
+    layout.addWidget(enhanceOutputBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self.setLayout(layout)
+
+
+class _AnalysisDetails(QFrame):
+  def __init__(self):
+    super().__init__()
+    self.setFrameShape(QFrame.Shape.WinPanel)
+    self.setVisible(False)
+
+    app = QApplication.instance()
+    layout = QVBoxLayout()
+    analyzeOutputBtn = util.apply_style(QPushButton("Analyze ZebraZoom's output", self), background_color=util.LIGHT_YELLOW)
+    analyzeOutputBtn.clicked.connect(lambda: app.show_frame("CreateExperimentOrganizationExcel"))
+    layout.addWidget(analyzeOutputBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    analyzeOutputLabel = QLabel('Kinematic parameters analysis and unsupervised clustering are available right from the GUI!')
+    analyzeOutputLabel.setWordWrap(True)
+    layout.addWidget(analyzeOutputLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+    outputFolderBtn = util.apply_style(QPushButton("Open ZebraZoom's\noutput folder", self), background_color=util.LIGHT_YELLOW)
+    outputFolderBtn.clicked.connect(lambda: app.openZZOutputFolder(app.homeDirectory))
+    layout.addWidget(outputFolderBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    outputFolderLabel = QLabel('Go one step further: access the raw data and do your own analysis!')
+    outputFolderLabel.setWordWrap(True)
+    layout.addWidget(outputFolderLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+    self.setLayout(layout)
+
+
 class StartPage(QWidget):
     def __init__(self, controller):
         super().__init__(controller.window)
         self.controller = controller
-        self.preferredSize = (1152, 768)
+        self.setMouseTracking(True)
+        self._detailsWidgets = (_ConfigurationDetails(), _TrackingDetails(), _VisualizationDetails(), _AnalysisDetails())
+        self._shownDetail = None
 
         layout = QGridLayout()
-        # Add widgets to the layout
-        layout.addWidget(util.apply_style(QLabel("Welcome to ZebraZoom!", self), font=controller.title_font, color='purple'), 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(util.apply_style(QLabel("1 - Create a Configuration File:", self), color='blue', font_size='16px'), 1, 0, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(util.apply_style(QLabel("You first need to create a configuration file for each 'type' of video you want to track.", self), color='green'), 3, 0, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(util.apply_style(QLabel("Access the folder where configuration files are saved with the button above.", self), color='green'), 5, 0, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QLabel("", self), 6, 0, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(util.apply_style(QLabel("2 - Run the Tracking:", self), color='blue', font_size='16px'), 1, 1, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(util.apply_style(QLabel("Once you have a configuration file, use it to track a video.", self), color='green'), 3, 1, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(util.apply_style(QLabel("Or run the tracking on all videos inside a folder.", self), color='green'), 5, 1, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(util.apply_style(QLabel("3 - Verify tracking results:", self), color='blue', font_size='16px'), 7, 0, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(util.apply_style(QLabel("Visualize/Verify/Explore the tracking results with the button above.", self), color='green'), 9, 0, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(util.apply_style(QLabel("Tips on how to correct/enhance ZebraZoom's output when necessary.", self), color='green'), 11, 0, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(util.apply_style(QLabel("4 - Analyze behavior:", self), color='blue', font_size='16px'), 7, 1, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(util.apply_style(QLabel("Compare populations based on either kinematic parameters or clustering of bouts.", self), color='green'), 9, 1, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(util.apply_style(QLabel("Access the folder where the tracking results are saved with the button above.", self), color='green'), 11, 1, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QLabel("", self), 12, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(util.apply_style(QLabel("Regularly update your version of ZebraZoom with: 'pip install zebrazoom --upgrade'!", self), background_color=util.GOLD), 15, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+        layout.setVerticalSpacing(20)
+        titleLabel = util.apply_style(QLabel("Welcome to ZebraZoom!", self), font=controller.title_font, color='purple')
+        titleLabel.setSizePolicy(QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed))
+        layout.addWidget(titleLabel, 0, 0, 1, 4, Qt.AlignmentFlag.AlignHCenter)
+        self._flowchart = _FlowchartWidget()
+        layout.addWidget(self._flowchart, 1, 0, 1, 4)
+        for idx, widget in enumerate(self._detailsWidgets):
+          layout.addWidget(widget, 2, idx, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+        for idx in range(layout.columnCount()):
+          layout.setColumnStretch(idx, 1)
 
-        open_config_folder_btn = util.apply_style(QPushButton("Open configuration file folder", self), background_color=util.LIGHT_YELLOW)
-        open_config_folder_btn.clicked.connect(lambda: controller.openConfigurationFileFolder(controller.homeDirectory))
-        layout.addWidget(open_config_folder_btn, 4, 0, Qt.AlignmentFlag.AlignCenter)
-        run_tracking_on_video_btn = util.apply_style(QPushButton("Run ZebraZoom's Tracking on a video", self), background_color=util.LIGHT_YELLOW)
-        run_tracking_on_video_btn.clicked.connect(lambda: controller.show_frame("VideoToAnalyze"))
-        layout.addWidget(run_tracking_on_video_btn, 2, 1, Qt.AlignmentFlag.AlignCenter)
-        run_tracking_on_videos_btn = util.apply_style(QPushButton("Run ZebraZoom's Tracking on several videos", self), background_color=util.LIGHT_YELLOW)
-        run_tracking_on_videos_btn.clicked.connect(lambda: controller.show_frame("SeveralVideos"))
-        layout.addWidget(run_tracking_on_videos_btn, 4, 1, Qt.AlignmentFlag.AlignCenter)
-        visualize_output_btn = util.apply_style(QPushButton("Visualize ZebraZoom's output", self), background_color=util.LIGHT_YELLOW)
-        visualize_output_btn.clicked.connect(lambda: controller.showViewParameters())
-        layout.addWidget(visualize_output_btn, 8, 0, Qt.AlignmentFlag.AlignCenter)
-        enhance_output_btn = util.apply_style(QPushButton("Enhance ZebraZoom's output", self), background_color=util.LIGHT_YELLOW)
-        enhance_output_btn.clicked.connect(lambda: controller.show_frame("EnhanceZZOutput"))
-        layout.addWidget(enhance_output_btn, 10, 0, Qt.AlignmentFlag.AlignCenter)
-        analyze_output_btn = util.apply_style(QPushButton("Analyze ZebraZoom's outputs", self), background_color=util.LIGHT_YELLOW)
-        analyze_output_btn.clicked.connect(lambda: controller.show_frame("CreateExperimentOrganizationExcel"))
-        layout.addWidget(analyze_output_btn, 8, 1, Qt.AlignmentFlag.AlignCenter)
-        open_output_folder_btn = util.apply_style(QPushButton("Open ZebraZoom's output folder: Access raw data", self), background_color=util.LIGHT_YELLOW)
-        open_output_folder_btn.clicked.connect(lambda: controller.openZZOutputFolder(controller.homeDirectory))
-        layout.addWidget(open_output_folder_btn, 10, 1, Qt.AlignmentFlag.AlignCenter)
-        toubleshoot_btn = util.apply_style(QPushButton("Troubleshoot", self), background_color=util.LIGHT_CYAN)
-        toubleshoot_btn.clicked.connect(lambda: controller.show_frame("ChooseVideoToTroubleshootSplitVideo"))
-        layout.addWidget(toubleshoot_btn, 13, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+        bottomLayout = QHBoxLayout()
+        toubleshootBtn = QPushButton("Troubleshoot", self)
+        toubleshootBtn.clicked.connect(lambda: controller.show_frame("ChooseVideoToTroubleshootSplitVideo"))
+        bottomLayout.addWidget(toubleshootBtn)
+        documentationBtn = QPushButton("Documentation", self)
+        documentationBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/intro/"))
+        bottomLayout.addWidget(documentationBtn)
+        bottomLayout.addWidget(QLabel("Regularly update your version of ZebraZoom with: 'pip install zebrazoom --upgrade'!", self))
+        layout.addLayout(bottomLayout, 2, 0, 1, 4, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
 
-        video_documentation_btn = util.apply_style(QPushButton("View online documentation", self), background_color=util.LIGHT_CYAN)
-        video_documentation_btn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/intro/"))
-
-        layout.addWidget(video_documentation_btn, 14, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-
-        hbox = QHBoxLayout()
-        prepare_initial_config_btn = util.apply_style(QPushButton("Prepare initial configuration file for tracking", self), background_color=util.LIGHT_YELLOW)
-        prepare_initial_config_btn.clicked.connect(lambda: util.addToHistory(controller.show_frame)("ChooseVideoToCreateConfigFileFor"))
-        hbox.addWidget(prepare_initial_config_btn, alignment=Qt.AlignmentFlag.AlignCenter)
-        optimize_config_file_btn = util.apply_style(QPushButton("Optimize a previously created configuration file", self), background_color=util.LIGHT_YELLOW)
-        optimize_config_file_btn.clicked.connect(lambda: controller.chooseVideoToCreateConfigFileFor(controller, True) and util.addToHistory(controller.optimizeConfigFile)())
-        hbox.addWidget(optimize_config_file_btn, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addLayout(hbox, 2, 0, Qt.AlignmentFlag.AlignCenter)
-        # Set the layout on the application's window
         self.setLayout(layout)
+
+    def mouseMoveEvent(self, evt):
+        super().mouseMoveEvent(evt)
+        flowchartPos = self._flowchart.mapFromGlobal(evt.globalPos())
+        maxDetailY = max(map(lambda widget: widget.sizeHint().height(), self._detailsWidgets))
+
+        for idx, circle in enumerate(self._flowchart.iterCircleRects()):
+            if circle.y() <= flowchartPos.y() <= circle.y() + circle.height() + maxDetailY and \
+                    circle.x() <= flowchartPos.x() <= circle.x() + circle.width():
+                if self._shownDetail is not self._detailsWidgets[idx]:
+                    if self._shownDetail is not None:
+                        self._shownDetail.hide()
+                    self._shownDetail = self._detailsWidgets[idx]
+                    self._shownDetail.show()
+                break
+        else:
+            if self._shownDetail is not None:
+                self._shownDetail.hide()
+                self._shownDetail = None
 
 
 class SeveralVideos(QWidget):
