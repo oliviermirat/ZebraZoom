@@ -13,11 +13,11 @@ from matplotlib.figure import Figure
 try:
   from PyQt6.QtCore import pyqtSignal, Qt, QDir, QEvent, QLine, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel
   from PyQt6.QtGui import QColor, QCursor, QFileSystemModel, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
-  from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QFrame, QGridLayout, QHeaderView, QPushButton, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
+  from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QFrame, QGridLayout, QHeaderView, QPushButton, QSizePolicy, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
 except ImportError:
   from PyQt5.QtCore import pyqtSignal, Qt, QDir, QEvent, QLine, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel
   from PyQt5.QtGui import QColor, QCursor, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
-  from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
+  from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSizePolicy, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
 
 import zebrazoom.code.util as util
 from zebrazoom.code.readValidationVideo import readValidationVideo
@@ -36,19 +36,13 @@ class _FlowchartWidget(QWidget):
     super().__init__()
     self._circleRects = []
     self._lines = []
-    self._lastHovered = None
     font = QFont()
     font.setPixelSize(16)
     fm = QFontMetrics(font)
     stepMinimumWidth = fm.boundingRect('Good Results').width() + self._ARROW_SIZE * 2 + 4  # add 4 pixels to ensure some spacing
-    self.setFixedHeight(300)
-    self.setContentsMargins(0, 5, 0, 5)
+    self.setFixedHeight(200)
+    self.setContentsMargins(0, 4, 0, 4)
     self.setMouseTracking(True)
-
-  def enterEvent(self, evt):
-    super().enterEvent(evt)
-    self.circleHovered.emit(self._lastHovered if self._lastHovered is not None else -1, -1)
-    self._lastHovered = None
 
   def resizeEvent(self, evt):
     super().resizeEvent(evt)
@@ -56,22 +50,16 @@ class _FlowchartWidget(QWidget):
     del self._lines[:]
     size = self.contentsRect()
     yOffset = 100
-    midHeight = size.height() // 2 + size.y()
+    midHeight = (size.height() - yOffset) // 2 + size.y() + yOffset
     stepSize = size.width() // 8
     for step, startPos in enumerate(range(size.x() + stepSize // 2, size.width() - stepSize, stepSize)):
       if step % 2:
         self._lines.append(QLine(startPos + stepSize, midHeight, startPos, midHeight))
       else:
-        self._circleRects.append(QRect(startPos, size.y() + yOffset, stepSize, size.height() - yOffset * 2))
+        self._circleRects.append(QRect(startPos, size.y() + yOffset, stepSize, size.height() - yOffset))
 
-  def mouseMoveEvent(self, evt):
-    super().mouseMoveEvent(evt)
-    for idx, circle in enumerate(self._circleRects):
-      if circle.contains(evt.pos()):
-        if idx != self._lastHovered:
-          self.circleHovered.emit(self._lastHovered if self._lastHovered is not None else -1, idx)
-          self._lastHovered = idx
-        break
+  def iterCircleRects(self):
+    yield from self._circleRects
 
   def _getArrow(self, p1, p2, angle):
     p1 = QPointF(p1)
@@ -124,16 +112,10 @@ class _FlowchartWidget(QWidget):
     qp.end()
 
 
-class _DetailsFrame(QFrame):
-  def leaveEvent(self, evt):
-    super().leaveEvent(evt)
-    self.hide()
-
-
-class _ConfigurationDetails(_DetailsFrame):
+class _ConfigurationDetails(QFrame):
   def __init__(self):
     super().__init__()
-    self.setFrameShape(QFrame.Shape.Box)
+    self.setFrameShape(QFrame.Shape.WinPanel)
     self.setVisible(False)
 
     app = QApplication.instance()
@@ -153,10 +135,10 @@ class _ConfigurationDetails(_DetailsFrame):
     self.setLayout(layout)
 
 
-class _TrackingDetails(_DetailsFrame):
+class _TrackingDetails(QFrame):
   def __init__(self):
     super().__init__()
-    self.setFrameShape(QFrame.Shape.Box)
+    self.setFrameShape(QFrame.Shape.WinPanel)
     self.setVisible(False)
 
     app = QApplication.instance()
@@ -176,10 +158,10 @@ class _TrackingDetails(_DetailsFrame):
     self.setLayout(layout)
 
 
-class _VisualizationDetails(_DetailsFrame):
+class _VisualizationDetails(QFrame):
   def __init__(self):
     super().__init__()
-    self.setFrameShape(QFrame.Shape.Box)
+    self.setFrameShape(QFrame.Shape.WinPanel)
     self.setVisible(False)
 
     app = QApplication.instance()
@@ -196,10 +178,10 @@ class _VisualizationDetails(_DetailsFrame):
     self.setLayout(layout)
 
 
-class _AnalysisDetails(_DetailsFrame):
+class _AnalysisDetails(QFrame):
   def __init__(self):
     super().__init__()
-    self.setFrameShape(QFrame.Shape.Box)
+    self.setFrameShape(QFrame.Shape.WinPanel)
     self.setVisible(False)
 
     app = QApplication.instance()
@@ -223,14 +205,19 @@ class StartPage(QWidget):
     def __init__(self, controller):
         super().__init__(controller.window)
         self.controller = controller
+        self.setMouseTracking(True)
         self._detailsWidgets = (_ConfigurationDetails(), _TrackingDetails(), _VisualizationDetails(), _AnalysisDetails())
+        self._shownDetail = None
 
         layout = QGridLayout()
-        flowchart = _FlowchartWidget()
-        flowchart.circleHovered.connect(lambda oldIdx, newIdx: (oldIdx != -1 and self._detailsWidgets[oldIdx].hide()) or (newIdx != -1 and self._detailsWidgets[newIdx].show()))
-        layout.addWidget(flowchart, 0, 0, 1, 4)
+        layout.setVerticalSpacing(20)
+        titleLabel = util.apply_style(QLabel("Welcome to ZebraZoom!", self), font=controller.title_font, color='purple')
+        titleLabel.setSizePolicy(QSizePolicy(QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Fixed))
+        layout.addWidget(titleLabel, 0, 0, 1, 4, Qt.AlignmentFlag.AlignHCenter)
+        self._flowchart = _FlowchartWidget()
+        layout.addWidget(self._flowchart, 1, 0, 1, 4)
         for idx, widget in enumerate(self._detailsWidgets):
-          layout.addWidget(widget, 1, idx, alignment=Qt.AlignmentFlag.AlignCenter)
+          layout.addWidget(widget, 2, idx, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
         for idx in range(layout.columnCount()):
           layout.setColumnStretch(idx, 1)
 
@@ -245,6 +232,25 @@ class StartPage(QWidget):
         layout.addLayout(bottomLayout, 2, 0, 1, 4, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
 
         self.setLayout(layout)
+
+    def mouseMoveEvent(self, evt):
+        super().mouseMoveEvent(evt)
+        flowchartPos = self._flowchart.mapFromGlobal(evt.globalPos())
+        maxDetailY = max(map(lambda widget: widget.sizeHint().height(), self._detailsWidgets))
+
+        for idx, circle in enumerate(self._flowchart.iterCircleRects()):
+            if circle.y() <= flowchartPos.y() <= circle.y() + circle.height() + maxDetailY and \
+                    circle.x() <= flowchartPos.x() <= circle.x() + circle.width():
+                if self._shownDetail is not self._detailsWidgets[idx]:
+                    if self._shownDetail is not None:
+                        self._shownDetail.hide()
+                    self._shownDetail = self._detailsWidgets[idx]
+                    self._shownDetail.show()
+                break
+        else:
+            if self._shownDetail is not None:
+                self._shownDetail.hide()
+                self._shownDetail = None
 
 
 class SeveralVideos(QWidget):
