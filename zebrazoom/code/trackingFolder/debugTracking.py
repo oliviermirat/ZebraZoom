@@ -3,6 +3,9 @@ import math
 from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 import numpy as np
 
+import zebrazoom.code.util as util
+
+
 def debugTracking(nbTailPoints, i, firstFrame, output, outputHeading, frame2, hyperparameters):
   if hyperparameters["debugTracking"]:
     if type(frame2[0][0]) == int or type(frame2[0][0]) == np.uint8:
@@ -26,5 +29,4 @@ def debugTracking(nbTailPoints, i, firstFrame, output, outputHeading, frame2, hy
     if hyperparameters["debugTrackingPtExtremeLargeVerticals"]: # Put this to True for large resolution videos (to be able to see on your screen what's happening)
       frame2 = frame2[int(y-200):len(frame2), :]
     
-    cv2.imshow('Tracked frame: Click on any key to proceed!', frame2)
-    cv2.waitKey(0)
+    util.showFrame(frame2, title='Tracked frame')

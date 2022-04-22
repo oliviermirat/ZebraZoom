@@ -1,11 +1,11 @@
 import cv2
-import cvui
 import numpy as np
 import math
 import pickle
 import os
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+import zebrazoom.code.util as util
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.headTrackingHeadingCalculation import headTrackingHeadingCalculation
 from zebrazoom.code.trackingFolder.tailTracking import tailTracking
 from zebrazoom.code.trackingFolder.debugTracking import debugTracking
@@ -200,29 +200,8 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
       
       if i == firstFrame:
         
-        WINDOW_NAME = "Click on the center of the head of the animal"
-        cvui.init(WINDOW_NAME)
-        cv2.moveWindow(WINDOW_NAME, 0,0)
-        cvui.imshow(WINDOW_NAME, frame)
-        while not(cvui.mouse(cvui.CLICK)):
-          cursor = cvui.mouse()
-          if cv2.waitKey(20) == 27:
-            break
-        cv2.destroyAllWindows()
-        previousCenterDetectedX = cursor.x
-        previousCenterDetectedY = cursor.y
-        
-        WINDOW_NAME = "Click on the tip of the tail of the same animal"
-        cvui.init(WINDOW_NAME)
-        cv2.moveWindow(WINDOW_NAME, 0,0)
-        cvui.imshow(WINDOW_NAME, frame)
-        while not(cvui.mouse(cvui.CLICK)):
-          cursor = cvui.mouse()
-          if cv2.waitKey(20) == 27:
-            break
-        cv2.destroyAllWindows()
-        tailTipX = cursor.x
-        tailTipY = cursor.y
+        previousCenterDetectedX, previousCenterDetectedY = util.getPoint(frame, "Click on the center of the head of the animal", zoomable=True, dialog=True)
+        tailTipX, tailTipY = util.getPoint(frame, "Click on the tip of the tail of the same animal", zoomable=True, dialog=True)
         
         frame2 = frame.copy()
         frame2 = fgbg.apply(frame2)
@@ -241,8 +220,7 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
         print("animalBodyArea:", animalBodyArea)
         print("ROIHalfDiam:", ROIHalfDiam)
         if showFramesForDebugging:
-          cv2.imshow("frame0", frame2)
-          cv2.waitKey(0)        
+          util.showFrame(frame2, title='frame0')
       
       if chooseValueForAnimalBodyArea > 0:
         animalBodyArea = chooseValueForAnimalBodyArea
@@ -293,8 +271,7 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
         else:
           frame = addWhiteBorders(frame)
         if showFramesForDebugging:
-          cv2.imshow("frame1", frame)
-          cv2.waitKey(0)
+          util.showFrame(frame, title='frame1')
         
         nbOfIterations = 1
         while cv2.countNonZero(255 - frame) < animalBodyArea and nbOfIterations < 10:
@@ -302,8 +279,7 @@ def fishTailTrackingDifficultBackground(videoPath, wellNumber, wellPositions, hy
           frame = erodeThenDilateThenAddWhiteBorders(frame, kernel, nbOfIterations)
           nbOfIterations += 1
           if showFramesForDebugging:
-            cv2.imshow("frame" + str(nbOfIterations), frame)
-            cv2.waitKey(0)
+            util.showDialog(frame, title='frame%d' % str(nbOfIterations))
         
         if nbOfIterations > 1:
           dist2t = fgbg.getDist2Threshold()

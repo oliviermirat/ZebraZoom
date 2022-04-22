@@ -10,6 +10,7 @@ from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from scipy.interpolate import UnivariateSpline
 from numpy import linspace
 
+import zebrazoom.code.util as util
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.getMidline import getMidline
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.findTailExtremete import findTailExtremete
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTheTwoSides import findTheTwoSides
@@ -36,10 +37,9 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
   
   if hyperparameters["debugTrackingThreshImg"]:
     if hyperparameters["debugTrackingPtExtremeLargeVerticals"]:
-      cv2.imshow('debugTrackingThreshImg', thresh1[int(headPosition[1])-200:len(thresh1), :] )
+      util.showFrame(thresh1[int(headPosition[1])-200:len(thresh1), :], title='debugTrackingThreshImg')
     else:
-      cv2.imshow('debugTrackingThreshImg', thresh1)
-    cv2.waitKey(0)
+      util.showFrame(thresh1, title='debugTrackingThreshImg')
   
   # Finding blob corresponding to the body of the fish
   bodyContour = findBodyContour(headPosition, hyperparameters, thresh1, initialCurFrame, back, wellNumber, i)
@@ -76,8 +76,7 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
       else:
         [dst, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(dst)
       # Plotting points
-      cv2.imshow('Frame', dst)
-      cv2.waitKey(0)
+      util.showFrame(dst, title='Frame')
     
     # Getting Midline
     if hyperparameters["detectMouthInsteadOfHeadTwoSides"] == 0:
@@ -105,8 +104,7 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
     if False:
       for pt in bodyContour:
         cv2.circle(dst, (pt[0][0], pt[0][1]), 3, (0, 0, 255), -1)
-      cv2.imshow('Frame', dst)
-      cv2.waitKey(0)
+      util.showFrame(dst, title='Frame')
     
     # Optimizing midline if necessary
     midlineIsInBlobTrackingOptimization = hyperparameters["midlineIsInBlobTrackingOptimization"]

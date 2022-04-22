@@ -1,4 +1,5 @@
 import math
+import sys
 
 import cv2
 
@@ -139,21 +140,28 @@ def showBlockingPage(layout, title=None, buttons=(), dialog=False, labelInfo=Non
   stackedLayout.removeWidget(temporaryPage)
 
 
-def showDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, timeout=None):
+def showDialog(layout, title=None, buttons=(), labelInfo=None, timeout=None, exitSignals=()):
   dialog = QWidget()
+  for signal in exitSignals:
+    signal.connect(lambda *args: dialog.close())
   loop = QEventLoop()
   mainLayout = QVBoxLayout()
   mainLayout.addLayout(layout)
   mainLayout.addLayout(_getButtonsLayout(buttons, loop, dialog=dialog))
   app = QApplication.instance()
-  if app is not None:
+  if hasattr(app, 'registerWindow'):
     app.registerWindow(dialog)
   dialog.setWindowTitle(title)
   dialog.move(0, 0)
   dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
   dialog.setLayout(mainLayout)
   if labelInfo is not None:
-    img, label = labelInfo
+    if len(labelInfo) == 2:
+      img, label = labelInfo
+      zoomable = False
+    else:
+      assert len(labelInfo) == 3
+      img, label, zoomable = labelInfo
     height, width = img.shape[:2]
     label.setMinimumSize(width, height)
     layoutSize = mainLayout.totalSizeHint()
@@ -161,14 +169,20 @@ def showDialog(layout, title=None, buttons=(), dialog=False, labelInfo=None, tim
   else:
     layoutSize = mainLayout.totalSizeHint()
   screenSize = QApplication.primaryScreen().availableSize()
-  if app is not None:
+  if hasattr(app, 'window'):
     screenSize -= app.window.frameSize() - app.window.size()
   if layoutSize.width() > screenSize.width() or layoutSize.height() > screenSize.height():
     layoutSize.scale(screenSize, Qt.AspectRatioMode.KeepAspectRatio)
   dialog.setFixedSize(layoutSize)
   dialog.show()
   if labelInfo is not None:
-    setPixmapFromCv(*labelInfo, preferredSize=QSize(width, height).scaled(label.size(), Qt.AspectRatioMode.KeepAspectRatio))
+    if len(labelInfo) == 2:
+      img, label = labelInfo
+      zoomable = False
+    else:
+      assert len(labelInfo) == 3
+      img, label, zoomable = labelInfo
+    setPixmapFromCv(img, label, preferredSize=QSize(width, height).scaled(label.size(), Qt.AspectRatioMode.KeepAspectRatio), zoomable=zoomable)
   dialog.closeEvent = _dialogClosed(loop, dialog.closeEvent)
   if timeout is not None:
     QTimer.singleShot(timeout, lambda: dialog.close())
@@ -623,7 +637,7 @@ class _InteractiveLabelPoint(QLabel):
     return point.x(), point.y()
 
 
-def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=None, zoomable=False, useNext=True):
+def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=None, zoomable=False, useNext=True, dialog=False):
   height, width = frame.shape[:2]
 
   layout = QVBoxLayout()
@@ -639,7 +653,10 @@ def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=Non
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
   if not useNext:
     video.pointSelected.connect(lambda: QApplication.restoreOverrideCursor())
-  showBlockingPage(layout, title=title, buttons=buttons + extraButtons, labelInfo=(frame, video, zoomable), exitSignals=(video.proceed,) if useNext else (video.pointSelected,))
+  if not dialog:
+    showBlockingPage(layout, title=title, buttons=buttons + extraButtons, labelInfo=(frame, video, zoomable), exitSignals=(video.proceed,) if useNext else (video.pointSelected,))
+  else:
+    showDialog(layout, title=title, buttons=buttons + extraButtons, labelInfo=(frame, video, zoomable), exitSignals=(video.proceed,) if useNext else (video.pointSelected,))
   return video.getCoordinates()
 
 
@@ -722,7 +739,7 @@ class _InteractiveLabelRect(QLabel):
     return ([point.x(), point.y()] for point in points)
 
 
-def getRectangle(frame, title, backBtnCb=None):
+def getRectangle(frame, title, backBtnCb=None, dialog=False):
   height, width, _ = frame.shape
 
   layout = QVBoxLayout()
@@ -733,9 +750,142 @@ def getRectangle(frame, title, backBtnCb=None):
     buttons = (("Back", backBtnCb, True), ("Next", None, True, video.regionSelected))
   else:
     buttons = (("Next", None, True, video.regionSelected),)
-  showBlockingPage(layout, title=title, buttons=buttons, labelInfo=(frame, video))
+  if not dialog:
+    showBlockingPage(layout, title=title, buttons=buttons, labelInfo=(frame, video))
+  else:
+    showDialog(layout, title=title, buttons=buttons, labelInfo=(frame, video))
 
   return video.getCoordinates()
+
+
+class _CVLabelLine(QLabel):
+  pointSelected = pyqtSignal(QPoint)
+  proceed = pyqtSignal()
+
+  def __init__(self, width, height, frame, thickness, startPoint):
+    super().__init__()
+    self._width = width
+    self._height = height
+    self._point = None
+    self._currentPosition = None
+    self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+    self.setMouseTracking(True)
+    self._thickness = thickness
+    self._startPoint = startPoint
+    self._frame = frame
+
+  def keyPressEvent(self, evt):
+    if self._point is not None and (evt.key() == Qt.Key.Key_Enter or evt.key() == Qt.Key.Key_Return):
+      self.proceed.emit()
+      return
+    super().keyPressEvent(evt)
+
+  def mouseMoveEvent(self, evt):
+    self._currentPosition = evt.pos()
+    point = self._currentPosition
+    if self._size.height() != self._height or self._size.width() != self._width:
+      point = transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(self._width, self._height)), point)
+    setPixmapFromCv(cv2.line(self._frame.copy(), (self._startPoint), (point.x(), point.y()), (255, 255, 255), self._thickness), self)
+
+  def mousePressEvent(self, evt):
+    self._point = evt.pos()
+    self.pointSelected.emit(self._point)
+
+  def enterEvent(self, evt):
+    QApplication.setOverrideCursor(Qt.CursorShape.CrossCursor)
+
+  def leaveEvent(self, evt):
+    QApplication.restoreOverrideCursor()
+    self._currentPosition = None
+
+  def resizeEvent(self, evt):
+    super().resizeEvent(evt)
+    self._size = self.size()
+
+  def getCoordinates(self):
+    if self._point is None:
+      return 0, 0
+    point = self._point
+    if self._size.height() != self._height or self._size.width() != self._width:
+      point = transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(self._width, self._height)), self._point)
+    return point.x(), point.y()
+
+
+def getLine(frame, title, thickness, startPoint):
+  height, width = frame.shape[:2]
+
+  layout = QVBoxLayout()
+
+  video = _CVLabelLine(width, height, frame, thickness, startPoint)
+  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
+  buttons = (("Next", None, True),)
+  showDialog(layout, title=title, buttons=buttons, labelInfo=(frame, video), exitSignals=(video.pointSelected,))
+
+  return video.getCoordinates()
+
+
+class _CVDrawLabel(QLabel):
+  proceed = pyqtSignal()
+
+  def __init__(self, width, height, frame):
+    super().__init__()
+    self._width = width
+    self._height = height
+    self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+    self._frame = frame
+
+  def keyPressEvent(self, evt):
+    if self._point is not None and (evt.key() == Qt.Key.Key_Enter or evt.key() == Qt.Key.Key_Return):
+      self.proceed.emit()
+      return
+    super().keyPressEvent(evt)
+
+  def mouseMoveEvent(self, evt):
+    point = evt.pos()
+    if self._size.height() != self._height or self._size.width() != self._width:
+      point = transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(self._width, self._height)), point)
+    self._frame = cv2.circle(self._frame, (point.x(), point.y()), 3, (255, 255, 255), -1)
+    setPixmapFromCv(self._frame, self)
+
+  def mousePressEvent(self, evt):
+    point = evt.pos()
+    if self._size.height() != self._height or self._size.width() != self._width:
+      point = transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(self._width, self._height)), point)
+    self._frame = cv2.circle(self._frame, (point.x(), point.y()), 3, (255, 255, 255), -1)
+    setPixmapFromCv(self._frame, self)
+
+  def enterEvent(self, evt):
+    QApplication.setOverrideCursor(Qt.CursorShape.CrossCursor)
+
+  def leaveEvent(self, evt):
+    QApplication.restoreOverrideCursor()
+
+  def resizeEvent(self, evt):
+    super().resizeEvent(evt)
+    self._size = self.size()
+
+  def getFrame(self):
+    return self._frame
+
+
+def drawPoints(frame, title):
+  height, width = frame.shape[:2]
+
+  layout = QVBoxLayout()
+
+  video = _CVDrawLabel(width, height, frame)
+  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
+  buttons = (("Done", None, True),)
+  showDialog(layout, title=title, buttons=buttons, labelInfo=(frame, video))
+  return video.getFrame()
+
+
+def showFrame(frame, title='', buttons=(), timeout=None):
+  label = QLabel()
+  label.setMinimumSize(1, 1)
+  layout = QVBoxLayout()
+  layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+  showDialog(layout, title=title, buttons=buttons, labelInfo=(frame, label), timeout=timeout)
 
 
 def addToHistory(fn):

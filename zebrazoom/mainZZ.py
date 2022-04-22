@@ -33,6 +33,9 @@ output = 0
 
 # Does the tracking and then the extraction of parameters
 def getParametersForWell(videoPath,background,wellNumber,wellPositions,output,previouslyAcquiredTrackingDataForDebug,hyperparameters, videoName, dlModel):
+  if QApplication.instance() is None:
+    from zebrazoom.GUIAllPy import PlainApplication
+    app = PlainApplication(sys.argv)
   if hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "noDebug":
     # Normal execution process
     trackingData = tracking(videoPath,background,wellNumber,wellPositions,hyperparameters, videoName, dlModel)
@@ -114,8 +117,8 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
   
   # Launching GUI algoFollower if necessary
   if hyperparameters["popUpAlgoFollow"]:
-    popUpAlgoFollow.initialise()
-    popUpAlgoFollow.prepend("starting ZebraZoom analysis on " + videoName)
+    p = Process(target=popUpAlgoFollow.initialise, args=("starting ZebraZoom analysis on " + videoName,))
+    p.start()
 
   if hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justExtractParamFromPreviousTrackData":
     # Reloading previously extracted tracking data if debugging option selected

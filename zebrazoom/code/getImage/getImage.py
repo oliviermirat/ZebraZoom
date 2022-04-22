@@ -2,6 +2,7 @@ from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+import zebrazoom.code.util as util
 
 def getImage(videoPath, frameNumber, wellNumber, wellPositions, hyperparameters):
   
@@ -31,7 +32,6 @@ def getImage(videoPath, frameNumber, wellNumber, wellPositions, hyperparameters)
   curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
   
   if (debug):
-    cv2.imshow('Frame', curFrame)
-    cv2.waitKey(0)
+    util.showFrame(curFrame, title='Frame')
     
   return curFrame

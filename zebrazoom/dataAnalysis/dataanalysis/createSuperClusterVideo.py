@@ -1,6 +1,9 @@
 import cv2
 import numpy as np
 
+import zebrazoom.code.util as util
+
+
 folderName = 'allCatamaran'
 
 cap1 = zzVideoReading.VideoCapture(folderName + '/cluster1.avi')
@@ -20,9 +23,6 @@ out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (
 # out = cv2.VideoWriter('outpy.avi',cv2.VideoWriter_fourcc('M','J','P','G'), 10, (frame_width, frame_height))
 
 affiche = False
-if affiche:
-  cv2.namedWindow("Frame")
-  cv2.moveWindow("Frame", 0, 0)
 
 i = 0
 # Read until video is completed
@@ -68,10 +68,7 @@ while(cap1.isOpened() and (i < minOfMaxs - 1)):
     
     if (affiche):
       # Display the resulting frame
-      cv2.imshow('Frame',frameF)
-      # Press Q on keyboard to  exit
-      if cv2.waitKey(1) & 0xFF == ord('q'):
-        break
+      util.showFrame(frameF, title='Frame')
     else:
        out.write(frameF)
  

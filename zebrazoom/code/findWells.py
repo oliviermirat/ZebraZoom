@@ -3,7 +3,6 @@ import numpy as np
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.preprocessImage import preprocessImage
-import cvui
 import math
 import json
 import sys
@@ -11,7 +10,6 @@ import os
 from scipy import interpolate
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 from zebrazoom.code.adjustHyperparameters import adjustHyperparameters
-import tkinter as tk
 from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 
 try:
@@ -30,47 +28,7 @@ def _findRectangularWellsAreaQt(frame, videoPath, hyperparameters):
 
 
 def findRectangularWellsArea(frame, videoPath, hyperparameters):
-  if QApplication.instance() is not None:
-    return _findRectangularWellsAreaQt(frame, videoPath, hyperparameters)
-  
-  frame2 = frame.copy()
-  
-  root = tk.Tk()
-  horizontal = root.winfo_screenwidth()
-  vertical   = root.winfo_screenheight()
-  getRealValueCoefX = 1
-  getRealValueCoefY = 1
-  if len(frame2[0]) > horizontal or len(frame2) > vertical:
-    getRealValueCoefX = len(frame2[0]) / int(horizontal*0.8)
-    getRealValueCoefY = len(frame2) / int(vertical*0.8)
-    frame2 = cv2.resize(frame2, (int(horizontal*0.8), int(vertical*0.8)))
-  root.destroy()
-  
-  WINDOW_NAME = "Click on the top left of one of the wells"
-  cvui.init(WINDOW_NAME)
-  cv2.moveWindow(WINDOW_NAME, 0,0)
-  cvui.imshow(WINDOW_NAME, frame2)
-  while not(cvui.mouse(cvui.CLICK)):
-    cursor = cvui.mouse()
-    if cv2.waitKey(20) == 27:
-      break
-  topLeft = [cursor.x, cursor.y]
-  cv2.destroyAllWindows()
-  
-  WINDOW_NAME = "Click on the bottom right of the same well"
-  cvui.init(WINDOW_NAME)
-  cv2.moveWindow(WINDOW_NAME, 0,0)
-  cvui.imshow(WINDOW_NAME, frame2)
-  while not(cvui.mouse(cvui.CLICK)):
-    cursor = cvui.mouse()
-    if cv2.waitKey(20) == 27:
-      break
-  bottomRight = [cursor.x, cursor.y]
-  cv2.destroyAllWindows()  
-  
-  rectangularWellsArea = int(abs((topLeft[0] - bottomRight[0]) * getRealValueCoefX) * abs((topLeft[1] - bottomRight[1]) * getRealValueCoefY))
-  
-  return rectangularWellsArea
+  return _findRectangularWellsAreaQt(frame, videoPath, hyperparameters, dialog=not hasattr(QApplication.instance(), 'window'))
 
 
 def findRectangularWells(frame, videoPath, hyperparameters, rectangularWellsArea, widgets=None):
@@ -191,10 +149,11 @@ def findCircularWells(frame, videoPath, hyperparameters):
 
   circles2 = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, minWellDistanceForWellDetection)
   if hyperparameters["debugFindWells"] and (hyperparameters["exitAfterBackgroundExtraction"] == 0):
-    print(circles2)
-    cv2.imshow('Frame', gray)
-    cv2.waitKey(0)
-    cv2.destroyWindow('Frame')
+    label = QLabel()
+    label.setMinimumSize(1, 1)
+    layout = QVBoxLayout()
+    layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+    util.showDialog(layout, title='Frame', labelInfo=(gray, label))
   
   circles = np.uint16(np.around(circles2))
 
@@ -252,7 +211,7 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
     idx = 0
     posCoord = {}
     app = QApplication.instance()
-    if app.configFileHistory:
+    if getattr(app, 'configFileHistory', None):
       def back():
         nonlocal idx
         idx -= 1
@@ -261,7 +220,7 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
     while idx < len(positions):
       oldidx = idx
       posCoord[positions[idx]] = np.array(list(util.getPoint(frame, "Click on the " + positions[idx] + " of the group of wells",
-                                                             selectingRegion=True, backBtnCb=back, useNext=False)))
+                                                             selectingRegion=True, backBtnCb=back, useNext=False, dialog=not hasattr(app, 'window'))))
       if idx != oldidx:
         if idx >= 0:
           continue
@@ -304,7 +263,10 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
       nonlocal accepted
       accepted = True
     buttons = (("Yes, this is a good repartition.", accept), ("No, I want to try again.", None))
-    util.showBlockingPage(layout, title="Is this a good repartition of wells?", buttons=buttons, labelInfo=(possibleRepartition, label))
+    if hasattr(app, 'window'):
+      util.showBlockingPage(layout, title="Is this a good repartition of wells?", buttons=buttons, labelInfo=(possibleRepartition, label))
+    else:
+      util.showDialog(layout, title="Is this a good repartition of wells?", buttons=buttons, labelInfo=(possibleRepartition, label))
 
   cap.release()
   return l
@@ -322,7 +284,7 @@ def _multipleROIsDefinedDuringExecutionQt(videoPath, hyperparameters):
     frameForRepartitionJPG = frame.copy()
     i = 0
     app = QApplication.instance()
-    if app.configFileHistory:
+    if getattr(app, 'configFileHistory', None):
       def back():
         nonlocal i
         i -= 1
@@ -334,7 +296,7 @@ def _multipleROIsDefinedDuringExecutionQt(videoPath, hyperparameters):
         frame = frames[i].copy()
       else:
         frames[i] = frame.copy()
-      topLeft, bottomRight = util.getRectangle(frame, "Select one of the regions of interest", backBtnCb=back)
+      topLeft, bottomRight = util.getRectangle(frame, "Select one of the regions of interest", backBtnCb=back, dialog=not hasattr(app, 'window'))
       if oldi != i:
         if i >= 0:
           frames[oldi] = None
@@ -374,132 +336,12 @@ def findWells(videoPath, hyperparameters):
   # Group of multiple same size and shape equally spaced wells
   
   if int(hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"]):
-    if QApplication.instance() is not None:
-      return _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparameters)
-    
-    cap = zzVideoReading.VideoCapture(videoPath)
-    if (cap.isOpened()== False): 
-      print("Error opening video stream or file")
-    ret, frame = cap.read()
-    if hyperparameters["imagePreProcessMethod"]:
-      frame = preprocessImage(frame, hyperparameters)
-    frameForRepartitionJPG = frame.copy()
-    [frame, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame, True, 0.85)
-    cv2.waitKey(500)
-    answerYes = False
-    
-    while not(answerYes):
-      position = ["top left", "top right", "bottom left"]
-      posCoord = {}
-      for pos in position:
-        WINDOW_NAME = "Click on the " + pos + " of the group of wells"
-        cvui.init(WINDOW_NAME)
-        cv2.moveWindow(WINDOW_NAME, 0,0)
-        cvui.imshow(WINDOW_NAME, frame)
-        while not(cvui.mouse(cvui.CLICK)):
-          cursor = cvui.mouse()
-          frame2 = frame.copy()
-          frame2 = cv2.line(frame2, (cursor.x - 2000, cursor.y), (cursor.x + 2000, cursor.y), (0, 0, 255), 2)
-          frame2 = cv2.line(frame2, (cursor.x, cursor.y - 2000), (cursor.x, cursor.y + 2000), (0, 0, 255), 2)
-          cvui.imshow(WINDOW_NAME, frame2)
-          cv2.waitKey(20)
-        posCoord[pos] = np.array([cursor.x, cursor.y])
-        cv2.destroyWindow(WINDOW_NAME)
-
-      nbWellsPerRows = hyperparameters["nbWellsPerRows"]
-      nbRowsOfWells  = hyperparameters["nbRowsOfWells"]
-      
-      l = []
-      
-      vectorX = (posCoord["top right"] - posCoord["top left"]) / nbWellsPerRows
-      vectorY = (posCoord["bottom left"] - posCoord["top left"]) / nbRowsOfWells
-      
-      for row in range(0, nbRowsOfWells):
-        for col in range(0, nbWellsPerRows):
-        
-          wellTopLeft     = posCoord["top left"] + col * vectorX + row * vectorY
-          wellTopRight    = wellTopLeft + vectorX
-          wellBottomLeft  = wellTopLeft + vectorY
-          wellBottomRight = wellTopLeft + vectorX + vectorY
-          
-          minX = getRealValueCoefX * min([wellTopLeft[0], wellTopRight[0], wellBottomLeft[0], wellBottomRight[0]])
-          minY = getRealValueCoefY * min([wellTopLeft[1], wellTopRight[1], wellBottomLeft[1], wellBottomRight[1]])
-          maxX = getRealValueCoefX * max([wellTopLeft[0], wellTopRight[0], wellBottomLeft[0], wellBottomRight[0]])
-          maxY = getRealValueCoefY * max([wellTopLeft[1], wellTopRight[1], wellBottomLeft[1], wellBottomRight[1]])
-          
-          well = {'topLeftX' : int(minX), 'topLeftY' : int(minY), 'lengthX' : int(maxX - minX), 'lengthY': int(maxY - minY)}
-          l.append(well)
-      
-      possibleRepartition = saveWellsRepartitionImage(l, frameForRepartitionJPG.copy(), hyperparameters)
-      
-      WINDOW_NAME = "Is this a good repartition of wells?"
-      cvui.init(WINDOW_NAME)
-      cv2.moveWindow(WINDOW_NAME, 0,0)
-      
-      answerNo  = False
-      while not(answerYes) and not(answerNo):
-        answerYes = cvui.button(possibleRepartition, 10, 10, "Yes, this is a good repartition.")
-        answerNo  = cvui.button(possibleRepartition, 10, 40, "No, I want to try again.")
-        cvui.imshow(WINDOW_NAME, possibleRepartition)
-        cv2.waitKey(20)
-      cv2.destroyAllWindows()
-    
-    cap.release()
-    return l
+    return _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparameters)
   
   # Multiple ROIs defined by user during the execution
   
   if int(hyperparameters["multipleROIsDefinedDuringExecution"]):
-    if QApplication.instance() is not None:
-      return _multipleROIsDefinedDuringExecutionQt(videoPath, hyperparameters)
-    
-    l = []
-    cap = zzVideoReading.VideoCapture(videoPath)
-    if (cap.isOpened()== False): 
-      print("Error opening video stream or file")
-    ret, frame = cap.read()
-    if hyperparameters["imagePreProcessMethod"]:
-      frame = preprocessImage(frame, hyperparameters)
-    frameForRepartitionJPG = frame.copy()
-    [frame, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame, True, 0.85)
-    cv2.waitKey(500)
-    for i in range(0, int(hyperparameters["nbWells"])):
-      WINDOW_NAME = "Click on the top left of one of the regions of interest"
-      cvui.init(WINDOW_NAME)
-      cv2.moveWindow(WINDOW_NAME, 0,0)
-      cvui.imshow(WINDOW_NAME, frame)
-      while not(cvui.mouse(cvui.CLICK)):
-        cursor = cvui.mouse()
-        frame2 = frame.copy()
-        frame2 = cv2.line(frame2, (cursor.x - 2000, cursor.y), (cursor.x + 2000, cursor.y), (0, 0, 255), 2)
-        frame2 = cv2.line(frame2, (cursor.x, cursor.y - 2000), (cursor.x, cursor.y + 2000), (0, 0, 255), 2)
-        cvui.imshow(WINDOW_NAME, frame2)
-        del frame2
-        cv2.waitKey(20)
-      topLeft = [cursor.x, cursor.y]
-      cv2.destroyWindow(WINDOW_NAME)
-      WINDOW_NAME = "Click on the bottom right of the same region of interest"
-      cvui.init(WINDOW_NAME)
-      cv2.moveWindow(WINDOW_NAME, 0,0)
-      cvui.imshow(WINDOW_NAME, frame)
-      while not(cvui.mouse(cvui.CLICK)):
-        cursor = cvui.mouse()
-        frame2 = frame.copy()
-        frame2 = cv2.line(frame2, (cursor.x - 2000, cursor.y), (cursor.x + 2000, cursor.y), (0, 0, 255), 2)
-        frame2 = cv2.line(frame2, (cursor.x, cursor.y - 2000), (cursor.x, cursor.y + 2000), (0, 0, 255), 2)
-        cvui.imshow(WINDOW_NAME, frame2)
-        del frame2
-        cv2.waitKey(20)
-      bottomRight = [cursor.x, cursor.y]
-      frame = cv2.rectangle(frame, (topLeft[0], topLeft[1]), (bottomRight[0], bottomRight[1]), (255, 0, 0), 1)
-      cv2.destroyWindow(WINDOW_NAME)
-      frame_width  = int(getRealValueCoefX * (bottomRight[0] - topLeft[0]))
-      frame_height = int(getRealValueCoefY * (bottomRight[1] - topLeft[1]))
-      well = {'topLeftX' : int(getRealValueCoefX * topLeft[0]), 'topLeftY' : int(getRealValueCoefY * topLeft[1]), 'lengthX' : frame_width, 'lengthY': frame_height}
-      l.append(well)
-    saveWellsRepartitionImage(l, frameForRepartitionJPG, hyperparameters)
-    cap.release()
-    return l
+    return _multipleROIsDefinedDuringExecutionQt(videoPath, hyperparameters)
   
   # One ROI definied in the configuration file
   
@@ -601,24 +443,12 @@ def findWells(videoPath, hyperparameters):
   saveWellsRepartitionImage(wellPositions, frame, hyperparameters)
   
   if hyperparameters["debugFindWells"]:
-
-    if QApplication.instance() is None:
-      frame2 = frame.copy()
-      [frame2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame2)
-    
-      cv2.imshow('Wells Detection', frame2)
-      if hyperparameters["exitAfterBackgroundExtraction"]:
-        cv2.waitKey(3000)
-      else:
-        cv2.waitKey(0)
-      cv2.destroyWindow('Wells Detection')
-    else:
-      label = QLabel()
-      label.setMinimumSize(1, 1)
-      layout = QVBoxLayout()
-      layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
-      timeout = 3000 if hyperparameters["exitAfterBackgroundExtraction"] else None
-      util.showDialog(layout, title='Wells Detection', labelInfo=(frame, label), timeout=timeout)
+    label = QLabel()
+    label.setMinimumSize(1, 1)
+    layout = QVBoxLayout()
+    layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+    timeout = 3000 if hyperparameters["exitAfterBackgroundExtraction"] else None
+    util.showDialog(layout, title='Wells Detection', labelInfo=(frame, label), timeout=timeout)
   
   print("Wells found")
   

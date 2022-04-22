@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import math
+import zebrazoom.code.util as util
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.calculateHeading import computeHeading
 from zebrazoom.code.trackingFolder.trackingFunctions import distBetweenThetas
 
@@ -56,8 +57,7 @@ def eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, tracki
           maxArea2    = area
           maxContour2 = contour
   if debugEyeTrackingAdvanced:
-    cv2.imshow('Frame', threshEye)
-    cv2.waitKey(0)
+    util.showFrame(threshEye, title='Frame')
   # Finding, in the image without the white circle, the contours corresponding to the contours previously found in the image with the white circle
   # This to make sure that we get the blobs that "really" correspond to the eyes in the unlikely event where the white circle would have overlapped with the eyes
   M = cv2.moments(maxContour1)
@@ -136,8 +136,7 @@ def eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, tracki
         threshEye1[:, :] = 0
         cv2.fillPoly(threshEye1, pts =[contour], color=(255))
         if debugEyeTrackingAdvanced:
-          cv2.imshow('Frame', threshEye1)
-          cv2.waitKey(0)
+          util.showFrame(threshEye1, title='Frame')
         if False:
           angle1 = computeHeading(threshEye1, eyeX[idx], eyeY[idx], eyeHeadingSearchAreaHalfDiameter, hyperparameters)
         else:
@@ -188,8 +187,7 @@ def eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, tracki
     cv2.line(colorFrame, (eyeX[0], eyeY[0]), (int(eyeX[0]+headingLineValidationPlotLength*math.cos(eyeAngle[0])), int(eyeY[0]+headingLineValidationPlotLength*math.sin(eyeAngle[0]))), (255,0,255), 1)
     cv2.line(colorFrame, (eyeX[1], eyeY[1]), (int(eyeX[1]+headingLineValidationPlotLength*math.cos(eyeAngle[1])), int(eyeY[1]+headingLineValidationPlotLength*math.sin(eyeAngle[1]))), (255,0,255), 1)
     cv2.circle(colorFrame, (eyeX[1], eyeY[1]), 2, (0,255,255), 1)
-    cv2.imshow('Eye Tracking debugging', colorFrame)
-    cv2.waitKey(0)
+    util.showFrame(colorFrame, title='Eye Tracking debugging')
   
   # Storing the (X, Y) coordinates and angles
   trackingEyesAllAnimals[animalId, i-firstFrame, 0] = eyeX[0]

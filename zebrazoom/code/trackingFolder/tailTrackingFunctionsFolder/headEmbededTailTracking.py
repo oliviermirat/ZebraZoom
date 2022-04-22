@@ -11,6 +11,8 @@ import csv
 from scipy.interpolate import interp1d
 from scipy.interpolate import splprep, splev
 
+import zebrazoom.code.util as util
+
 
 def smoothTail(points, nbTailPoints, smoothingFactor):
   
@@ -195,8 +197,7 @@ def findNextPoints(depth,x,y,frame,points,angle,maxDepth,steps,nbList,initialIma
     points = appendPoint(xTot, yTot, points)
   if debug:
     cv2.circle(frame, (xTot, yTot), 3, (255,0,0),   -1)
-    cv2.imshow('HeadEmbeddedTailTracking', frame)
-    cv2.waitKey(0)
+    util.showFrame(frame, title='HeadEmbeddedTailTracking')
     
   newTheta = calculateAngle(x,y,xTot,yTot)
   if distSubsquentPoints > 0 and depth + distSubsquentPoints < maxDepth and ((pixSur < pixSurMax) or (depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth)):

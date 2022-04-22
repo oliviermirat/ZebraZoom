@@ -1,6 +1,3 @@
-import tkinter.filedialog as filedialog
-import tkinter
-
 import json
 import matplotlib.pyplot as plt
 import cv2
@@ -9,15 +6,21 @@ import math
 import pandas as pd
 import os
 
+try:
+  from PyQt6.QtWidgets import QFileDialog
+except ImportError:
+  from PyQt5.QtWidgets import QFileDialog
+
+
 def createDistanceBetweenFramesExcelFile(ZZoutputFolder, paramList):
   
   fps       = float(paramList[2]) if len(paramList) > 2 else 1
   pixelSize = float(paramList[3]) if len(paramList) > 3 else 1
   
-  directory_root = tkinter.Tk()
-  directory_root.withdraw()
-  pathToResultFolder = filedialog.askdirectory(title = 'Choose the result folder for which an excel file should be generated', initialdir = ZZoutputFolder)
-  
+  pathToResultFolder =  QFileDialog.getExistingDirectory(caption='Choose the result folder for which an excel file should be generated', directory=ZZoutputFolder)
+  if not pathToResultFolder:
+    return
+
   videoName = os.path.basename(os.path.normpath(pathToResultFolder))
   
   numberOfWells       = 0
