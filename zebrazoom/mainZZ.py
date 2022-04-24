@@ -57,17 +57,6 @@ def getParametersForWell(videoPath,background,wellNumber,wellPositions,output,pr
     output.put([wellNumber,parameters,[]])
 
 
-# Getting parameters
-if len(sys.argv) > 2:
-  pathToVideo = sys.argv[1]
-  videoName   = sys.argv[2]
-  videoExt    = sys.argv[3] # Ext means extension (avi, mp4, etc...)
-  configFile  = sys.argv[4]
-  argv        = sys.argv
-else:
-  configFile  = ""
-
-
 def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
   
   videoNameWithExt = videoName + '.' + videoExt
