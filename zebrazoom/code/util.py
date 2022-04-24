@@ -880,12 +880,21 @@ def drawPoints(frame, title):
   return video.getFrame()
 
 
+class _FrameLabel(QLabel):
+  proceed = pyqtSignal()
+
+  def keyPressEvent(self, evt):
+    super().keyPressEvent(evt)
+    self.proceed.emit()
+
+
 def showFrame(frame, title='', buttons=(), timeout=None):
-  label = QLabel()
+  label = _FrameLabel()
   label.setMinimumSize(1, 1)
+  label.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
   layout = QVBoxLayout()
   layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
-  showDialog(layout, title=title, buttons=buttons, labelInfo=(frame, label), timeout=timeout)
+  showDialog(layout, title=title, buttons=buttons, labelInfo=(frame, label), timeout=timeout, exitSignals=(label.proceed,))
 
 
 def addToHistory(fn):
