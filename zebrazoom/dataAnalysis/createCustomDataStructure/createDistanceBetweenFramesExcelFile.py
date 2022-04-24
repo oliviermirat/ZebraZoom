@@ -77,11 +77,11 @@ def createDistanceBetweenFramesExcelFile(ZZoutputFolder, paramList):
   for wellId in range(0, numberOfWells):
     wellData = data.loc[data['wellId'] == wellId]
     if type(finalDataArray) == int:
-      finalDataArray = np.concatenate((np.transpose(np.array([[i for i in range(firstFrame, lastFrame)]])), np.transpose(np.array([[i/fps for i in range(firstFrame, lastFrame)]])), np.transpose(np.array([wellData['instantaneousDistance']]))), axis=1)
+      finalDataArray = np.concatenate((np.transpose(np.array([[i for i in range(firstFrame, lastFrame)]])), np.transpose(np.array([[i/fps for i in range(firstFrame, lastFrame)]])), np.transpose(np.array([wellData['instantaneousDistance']])), np.transpose(np.array([wellData['xPosition']])), np.transpose(np.array([wellData['yPosition']]))), axis=1)
     else:
-      finalDataArray = np.concatenate((finalDataArray, np.transpose(np.array([wellData['instantaneousDistance']]))), axis=1)
+      finalDataArray = np.concatenate((finalDataArray, np.transpose(np.array([wellData['instantaneousDistance']])), np.transpose(np.array([wellData['xPosition']])), np.transpose(np.array([wellData['yPosition']]))), axis=1)
   
   # Converting to excel
-  finalData = pd.DataFrame(data=finalDataArray, columns=['frame', 'second'] + ['distanceWell' + str(i) for i in range(0, numberOfWells)])
+  finalData = pd.DataFrame(data=finalDataArray, columns=['frame', 'second'] + [item for i in range(0, numberOfWells) for item in ['distanceWell' + str(i), 'xPosition' + str(i), 'yPosition' + str(i)]])
   finalData.to_excel(os.path.join(pathToResultFolder, videoName + '_Distances.xls'))
 
