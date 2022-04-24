@@ -10,6 +10,7 @@ from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from scipy.interpolate import UnivariateSpline
 from numpy import linspace
 
+import zebrazoom.code.util as util
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.resampleSeqConstPtsPerArcLength import resampleSeqConstPtsPerArcLength
 
 def fillTailRanges(tailRange1,tailRange2,fillSecond,i,MostCurvyIndex):
@@ -64,8 +65,7 @@ def getMidline(bord1, bord2, MostCurvyIndex, boundary, dst, taille, distance2, d
         cv2.circle(dst, (pt[0][0], pt[0][1]), 1, (0, 255, 0), -1)
       for pt in OrigBoundB:
         cv2.circle(dst, (pt[0][0], pt[0][1]), 1, (255, 0, 0), -1)
-      cv2.imshow('dst', dst)
-      cv2.waitKey(0)
+      util.showFrame(dst, title='dst')
     
     NBoundA = resampleSeqConstPtsPerArcLength(OrigBoundA, numTailPoints)
     NBoundB = resampleSeqConstPtsPerArcLength(OrigBoundB, numTailPoints)

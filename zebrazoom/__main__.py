@@ -5,21 +5,21 @@ if __name__ == '__main__':
   dir_path = os.path.dirname(os.path.realpath(__file__))
 
   from zebrazoom.code.vars import getGlobalVariables
+  from zebrazoom.GUIAllPy import PlainApplication, ZebraZoomApp
   globalVariables = getGlobalVariables()
 
   if len(sys.argv) == 1:
 
     print("The data produced by ZebraZoom can be found in the folder: " + os.path.join(dir_path,'ZZoutput'))
-    from zebrazoom.GUIAllPy import ZebraZoomApp
     app = ZebraZoomApp(sys.argv)
     sys.exit(app.exec())
 
   else:
 
+    app = PlainApplication(sys.argv)
     if sys.argv[1] == "selectZZoutput":
 
       print("The data produced by ZebraZoom can be found in the folder: " + os.path.join(dir_path,'ZZoutput'))
-      from zebrazoom.GUIAllPy import ZebraZoomApp
       app = ZebraZoomApp(sys.argv)
       app.askForZZoutputLocation()
       sys.exit(app.exec())

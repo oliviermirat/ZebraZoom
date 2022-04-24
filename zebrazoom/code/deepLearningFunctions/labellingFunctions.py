@@ -3,22 +3,14 @@ import os
 import json
 import numpy as np
 import math
-import cvui
 import cv2
+
+import zebrazoom.code.util as util
+
 
 def drawWhitePointsOnInitialImages(initialCurFrame, back, hyperparameters):
 
-  img = initialCurFrame.copy()
-  WINDOW_NAME = "Draw white points and click on any key when you're done"
-  cvui.init(WINDOW_NAME)
-  cv2.moveWindow(WINDOW_NAME, 0, 0)
-  cvui.imshow(WINDOW_NAME, img)
-  while cv2.waitKey(1) == -1:
-    if cvui.mouse(WINDOW_NAME, cvui.IS_DOWN):
-      cursor = cvui.mouse(WINDOW_NAME)
-      img = cv2.circle(img, (cursor.x, cursor.y), 3, (255, 255, 255), -1)
-    cvui.imshow(WINDOW_NAME, img)
-  cv2.destroyWindow(WINDOW_NAME)
+  img = util.drawPoints(initialCurFrame.copy(), "Draw white points and click on any key when you're done")
   putToWhite = ( img.astype('int32') >= (back.astype('int32') - hyperparameters["minPixelDiffForBackExtract"]) )
   img[putToWhite] = 255      
   ret, thresh1 = cv2.threshold(img, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
@@ -66,19 +58,15 @@ def saveImagesAndData(hyperparameters, bodyContour, initialCurFrame, wellNumber,
       initialCurFrame2 = cv2.circle(initialCurFrame2, (pt1[0], pt1[1]), 1, (255, 0, 0), -1)
     
     if hyperparameters["bodyMask_saveDataForAllFrames"]:
-      answerNo  = False
       answerYes = True        
     else:
-      WINDOW_NAME = "Is this a good delimitation of the body of the animal?"
-      cvui.init(WINDOW_NAME)
-      cv2.moveWindow(WINDOW_NAME, 0,0)
-      answerNo  = False
       answerYes = False
-      while not(answerYes) and not(answerNo) and cv2.waitKey(20) == -1:
-        answerYes = cvui.button(initialCurFrame2, 10, 10, "Save")
-        answerNo  = cvui.button(initialCurFrame2, 10, 40, "Discard")
-        cvui.imshow(WINDOW_NAME, initialCurFrame2)
-      cv2.destroyAllWindows()
+
+      def saveClicked():
+        nonlocal answerYes
+        answerYes = True
+      buttons = (("Save", saveClicked), ("Discard", None))
+      util.showFrame(initialCurFrame2, title="Is this a good delimitation of the body of the animal?", buttons=buttons)
     
     if answerYes:
       

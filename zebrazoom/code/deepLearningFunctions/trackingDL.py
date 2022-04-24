@@ -4,6 +4,7 @@ import numpy as np
 import torch
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+import zebrazoom.code.util as util
 
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.headTrackingHeadingCalculation import headTrackingHeadingCalculation
 from zebrazoom.code.trackingFolder.tailTracking import tailTracking
@@ -71,7 +72,7 @@ def trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName,
     if len(prediction) and len(prediction[0]['masks']):
       thresh = prediction[0]['masks'][0, 0].mul(255).byte().cpu().numpy()
       if debugPlus:
-        cv2.imshow("thresh", 255 - thresh)
+        util.showFrame(255 - thresh, title="thresh")
       
       if hyperparameters["applySimpleThresholdOnPredictedMask"]:
         ret, thresh2 = cv2.threshold(thresh, hyperparameters["applySimpleThresholdOnPredictedMask"], 255, cv2.THRESH_BINARY)
@@ -116,7 +117,7 @@ def trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName,
       thresh3 = thresh2.copy()
     
       if debugPlus:
-        cv2.imshow("thresh2", 255 - thresh2)
+        util.showFrame(255 - thresh2, title="thresh2")
       
       [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, i, thresh2, thresh2, thresh2, thresh2, hyperparameters["erodeSize"], frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, 0, wellPositions[wellNumber]["lengthX"])
       

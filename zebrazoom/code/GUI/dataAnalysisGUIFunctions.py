@@ -3,7 +3,6 @@ import numpy as np
 import json
 import cv2
 import math
-import cvui
 from zebrazoom.code.vars import getGlobalVariables
 import json
 import os

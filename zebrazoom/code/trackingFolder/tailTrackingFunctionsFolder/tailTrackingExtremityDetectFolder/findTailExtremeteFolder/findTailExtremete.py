@@ -10,6 +10,7 @@ from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from scipy.interpolate import UnivariateSpline
 from numpy import linspace
 
+import zebrazoom.code.util as util
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.functions import initialiseDistance2
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.functions import PointDot
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.functions import calculateJuge
@@ -167,8 +168,7 @@ def findTailExtremete(rotatedContour, bodyContour, aaa, bord1b, bord2b, debug, d
     if hyperparameters["debugTrackingPtExtremeLargeVerticals"]:
       dst = dst[pt1[1]-200:len(dst), :]
     # Plotting points
-    cv2.imshow('Frame', dst)
-    cv2.waitKey(0)
+    util.showFrame(dst, title='Frame')
     
   # allPossibilities = [[ind_droite,DotProds[ind_droite],jugeDroite], [ind_gauche,DotProds[ind_gauche],jugeGauche], [ind_haut,DotProds[ind_haut],jugeHaut], [ind_bas,DotProds[ind_bas],jugeBas]]
   

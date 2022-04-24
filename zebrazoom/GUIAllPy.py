@@ -80,11 +80,16 @@ def excepthook(excType, excValue, traceback_):
 sys.excepthook = excepthook
 
 
-class ZebraZoomApp(QApplication):
+class PlainApplication(QApplication):
     def __init__(self, args):
         super().__init__(args)
         if not PYQT6 and sys.platform.startswith('win'):  # qt5 uses deprecated windows API to determine the system font, this works around that issuue
             self.setFont(QApplication.font("QMessageBox"))
+
+
+class ZebraZoomApp(PlainApplication):
+    def __init__(self, args):
+        super().__init__(args)
 
         self.homeDirectory = os.path.dirname(os.path.realpath(__file__))
 

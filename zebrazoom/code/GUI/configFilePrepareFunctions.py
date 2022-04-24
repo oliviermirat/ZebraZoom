@@ -9,7 +9,6 @@ from zebrazoom.code.findWells import findWells
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.getBackground import getBackground
 from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
-import cvui
 import pickle
 from zebrazoom.mainZZ import mainZZ
 import json

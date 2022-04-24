@@ -2,6 +2,9 @@ from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
 
+import zebrazoom.code.util as util
+
+
 def getImageSequential(cap, videoPath, frameNumber, wellNumber, wellPositions, hyperparameters):
   
   minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtract"]
@@ -30,7 +33,6 @@ def getImageSequential(cap, videoPath, frameNumber, wellNumber, wellPositions, h
   curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
   
   if (debug):
-    cv2.imshow('Frame', curFrame)
-    cv2.waitKey(0)
+    util.showFrame(curFrame, title='Frame')
     
   return curFrame

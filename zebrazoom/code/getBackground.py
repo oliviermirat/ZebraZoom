@@ -131,23 +131,13 @@ def getBackground(videoPath, hyperparameters):
   if hyperparameters["setBackgroundToImageMedian"]:
     back[:, :] = np.median(back)
   
-  if (debugExtractBack):
-    if QApplication.instance() is None:
-      back2 = back.copy()
-      [back2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(back2)
-      cv2.imshow('Background extracted: Click on any key to proceed!', back2)
-      if hyperparameters["exitAfterBackgroundExtraction"]:
-        cv2.waitKey(3000)
-      else:
-        cv2.waitKey(0)
-      cv2.destroyAllWindows()
-    else:
-      label = QLabel()
-      label.setMinimumSize(1, 1)
-      layout = QVBoxLayout()
-      layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
-      timeout = 3000 if hyperparameters["exitAfterBackgroundExtraction"] else None
-      util.showDialog(layout, title="Background Extracted", labelInfo=(back, label), timeout=timeout)
+  if debugExtractBack:
+    label = QLabel()
+    label.setMinimumSize(1, 1)
+    layout = QVBoxLayout()
+    layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+    timeout = 3000 if hyperparameters["exitAfterBackgroundExtraction"] else None
+    util.showDialog(layout, title="Background Extracted", labelInfo=(back, label), timeout=timeout)
   cap.release()
   
   print("Background Extracted")

@@ -4,6 +4,9 @@ import cv2
 import numpy as np
 import math
 
+import zebrazoom.code.util as util
+
+
 readingSpeed = 70
 zoom = 4
 
@@ -45,11 +48,8 @@ for videoName in listOfVideosTracked:
               blank_image = np.zeros((height, width, 3), np.uint8)
               for point in range(0, len(TailX_HeadingReferentialNumFrame)):
                 cv2.circle(blank_image, (int(TailX_HeadingReferentialNumFrame[point]) + int(width/2), int(TailY_HeadingReferentialNumFrame[point])), 1, (255,255,255), -1)
-              cv2.namedWindow("bout")
-              cv2.moveWindow("bout", 0, 0)
               blank_image = cv2.resize(blank_image, (int(width * zoom), int(height * zoom)))
-              cv2.imshow('bout', blank_image)
-              cv2.waitKey(readingSpeed)
+              util.showFrame(blank_image, title='bout', timeout=readingSpeed)
               
             # Plotting fish head and tail position over time
             height = 500
@@ -72,10 +72,7 @@ for videoName in listOfVideosTracked:
               heading = bout["Heading"][numFrame]
               cv2.line(blank_image, (int(HeadX - minX), int(HeadY - minY)), (int(HeadX - 20 * math.cos(heading) - minX), int(HeadY - 20 * math.sin(heading) - minY)), (0, 0, 255), 3) # Plotting heading
               cv2.circle(blank_image, (int(HeadX - minX), int(HeadY - minY)), 4, (0,255,0), -1)
-              cv2.namedWindow("bout")
-              cv2.moveWindow("bout", 0, 0)
-              cv2.imshow('bout', blank_image)
-              cv2.waitKey(readingSpeed)
+              util.showFrame(blank_image, title='bout', timeout=readingSpeed)
 
             # Printing all available information for this bout
             print(bout.keys())

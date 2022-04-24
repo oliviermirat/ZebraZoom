@@ -2,6 +2,9 @@ from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
 
+import zebrazoom.code.util as util
+
+
 def headEmbededFrameSequential(cap, videoPath, frameNumber, hyperparameters):
   
   debug = 0
@@ -28,10 +31,8 @@ def headEmbededFrameSequential(cap, videoPath, frameNumber, hyperparameters):
   frame = 255 - frame
   
   if (debug):
-    cv2.imshow('thres1', frame)
-    cv2.waitKey(0)
-    cv2.imshow('thres1', thres1)
-    cv2.waitKey(0)
+    util.showFrame(frame, title='thres1')
+    util.showFrame(thres1, title='thres1')
     
   frame  = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
   thres1 = cv2.cvtColor(thres1, cv2.COLOR_BGR2GRAY)

@@ -2,6 +2,9 @@ from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
 
+import zebrazoom.code.util as util
+
+
 def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNumber, wellPositions, hyperparameters, alreadyExtractedImage=0, trackingHeadTailAllAnimals=0):
   
   minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtract"]
@@ -139,8 +142,7 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
   
   if (debug):
     # cv2.imshow('Frame', curFrame)
-    cv2.imshow('Frame', frame)
-    cv2.waitKey(0)
+    util.showFrame(frame, title='Frame')
   
   if hyperparameters["trackOnlyOnROI_halfDiameter"] != 0:
     ret, res = cv2.threshold(curFrame, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
