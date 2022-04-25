@@ -1009,7 +1009,7 @@ class _InteractiveLabelCircle(QLabel):
 
   def mouseReleaseEvent(self, evt):
     if self._radius is not None and not self._tooltipShown:
-      QToolTip.showText(evt.globalPos(), "If you aren't satisfied with the selection, click again.", self, self.rect(), 5000)
+      QToolTip.showText(evt.globalPosition() if PYQT6 else evt.globalPos(), "If you aren't satisfied with the selection, click again.", self, self.rect(), 5000)
       self._tooltipShown = True
 
   def mouseMoveEvent(self, evt):

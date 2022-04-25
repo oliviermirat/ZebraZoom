@@ -14,10 +14,12 @@ try:
   from PyQt6.QtCore import pyqtSignal, Qt, QDir, QEvent, QLine, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel
   from PyQt6.QtGui import QColor, QCursor, QFileSystemModel, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
   from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QFrame, QGridLayout, QHeaderView, QPushButton, QSizePolicy, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
+  PYQT6 = True
 except ImportError:
   from PyQt5.QtCore import pyqtSignal, Qt, QDir, QEvent, QLine, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel
   from PyQt5.QtGui import QColor, QCursor, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
   from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSizePolicy, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
+  PYQT6 = False
 
 import zebrazoom.code.util as util
 from zebrazoom.code.readValidationVideo import readValidationVideo
@@ -235,7 +237,7 @@ class StartPage(QWidget):
 
     def mouseMoveEvent(self, evt):
         super().mouseMoveEvent(evt)
-        flowchartPos = self._flowchart.mapFromGlobal(evt.globalPos())
+        flowchartPos = self._flowchart.mapFromGlobal(evt.globalPosition() if PYQT6 else evt.globalPos())
         maxDetailY = max(map(lambda widget: widget.sizeHint().height(), self._detailsWidgets))
 
         for idx, circle in enumerate(self._flowchart.iterCircleRects()):
