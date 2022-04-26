@@ -10,16 +10,10 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 
-try:
-  from PyQt6.QtCore import pyqtSignal, Qt, QDir, QEvent, QLine, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel
-  from PyQt6.QtGui import QColor, QCursor, QFileSystemModel, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
-  from PyQt6.QtWidgets import QApplication, QLabel, QWidget, QFrame, QGridLayout, QHeaderView, QPushButton, QSizePolicy, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
-  PYQT6 = True
-except ImportError:
-  from PyQt5.QtCore import pyqtSignal, Qt, QDir, QEvent, QLine, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel
-  from PyQt5.QtGui import QColor, QCursor, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
-  from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSizePolicy, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
-  PYQT6 = False
+from PyQt5.QtCore import pyqtSignal, Qt, QDir, QEvent, QLine, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel
+from PyQt5.QtGui import QColor, QCursor, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
+from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSizePolicy, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
+PYQT6 = False
 
 import zebrazoom.code.util as util
 from zebrazoom.code.readValidationVideo import readValidationVideo

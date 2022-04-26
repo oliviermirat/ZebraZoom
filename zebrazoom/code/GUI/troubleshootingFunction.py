@@ -6,10 +6,7 @@ import math
 import json
 import os
 
-try:
-  from PyQt6.QtWidgets import QFileDialog
-except ImportError:
-  from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog
 
 import zebrazoom.code.util as util
 

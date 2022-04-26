@@ -1,12 +1,8 @@
 import sys
-try:
-  from PyQt6.QtCore import Qt, QEventLoop
-  from PyQt6.QtGui import QFont
-  from PyQt6.QtWidgets import QWidget, QApplication, QLabel, QPushButton, QLineEdit, QGridLayout, QRadioButton
-except ImportError:
-  from PyQt5.QtCore import Qt, QEventLoop
-  from PyQt5.QtGui import QFont
-  from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QPushButton, QLineEdit, QGridLayout, QRadioButton
+
+from PyQt5.QtCore import Qt, QEventLoop
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QPushButton, QLineEdit, QGridLayout, QRadioButton
 
 from pathlib import Path
 import pandas as pd

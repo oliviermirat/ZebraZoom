@@ -1,12 +1,8 @@
 import sys
 import numpy as np
 
-try:
-  from PyQt6.QtCore import pyqtSignal, QTimer
-  from PyQt6.QtWidgets import QPlainTextEdit, QVBoxLayout
-except ImportError:
-  from PyQt5.QtCore import pyqtSignal, QTimer
-  from PyQt5.QtWidgets import QPlainTextEdit, QVBoxLayout
+from PyQt5.QtCore import pyqtSignal, QTimer
+from PyQt5.QtWidgets import QPlainTextEdit, QVBoxLayout
 
 import zebrazoom.code.util as util
 from zebrazoom.code.vars import getGlobalVariables

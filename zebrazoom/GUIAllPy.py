@@ -7,19 +7,13 @@ from datetime import datetime
 
 import json
 
-try:
-  from PyQt6.QtCore import Qt, QSize
-  from PyQt6.QtGui import QFont
-  from PyQt6.QtWidgets import QWidget, QButtonGroup, QCheckBox, QDialog, QFileDialog, QHBoxLayout, QApplication, QLabel, QMainWindow, QRadioButton, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem, QPushButton
-  PYQT6 = True
-except ImportError:
-  from PyQt5.QtCore import Qt, QSize
-  from PyQt5.QtGui import QFont
-  from PyQt5.QtWidgets import QWidget, QButtonGroup, QCheckBox, QDialog, QFileDialog, QHBoxLayout, QApplication, QLabel, QMainWindow, QRadioButton, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem, QPushButton
-  QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-  QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
-  QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
-  PYQT6 = False
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QFont
+from PyQt5.QtWidgets import QWidget, QButtonGroup, QCheckBox, QDialog, QFileDialog, QHBoxLayout, QApplication, QLabel, QMainWindow, QRadioButton, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem, QPushButton
+QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
+QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
+QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPolicy.PassThrough)
+PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.util as util

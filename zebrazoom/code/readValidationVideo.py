@@ -7,12 +7,8 @@ import os
 import cv2
 from pathlib import Path
 
-try:
-  from PyQt6.QtCore import Qt, QSize, QTimer
-  from PyQt6.QtWidgets import QLabel, QSlider, QVBoxLayout
-except ImportError:
-  from PyQt5.QtCore import Qt, QSize, QTimer
-  from PyQt5.QtWidgets import QLabel, QSlider, QVBoxLayout
+from PyQt5.QtCore import Qt, QSize, QTimer
+from PyQt5.QtWidgets import QLabel, QSlider, QVBoxLayout
 
 import zebrazoom.code.util as util
 

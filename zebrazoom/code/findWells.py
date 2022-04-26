@@ -12,12 +12,8 @@ import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 from zebrazoom.code.adjustHyperparameters import adjustHyperparameters
 from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 
-try:
-  from PyQt6.QtCore import Qt, QTimer
-  from PyQt6.QtWidgets import QApplication, QLabel, QVBoxLayout
-except ImportError:
-  from PyQt5.QtCore import Qt, QTimer
-  from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout
+from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout
 
 import zebrazoom.code.util as util
 

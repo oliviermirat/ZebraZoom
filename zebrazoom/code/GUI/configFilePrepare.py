@@ -1,16 +1,10 @@
 import os
 import webbrowser
 
-try:
-  from PyQt6.QtCore import Qt, QSize
-  from PyQt6.QtGui import QCursor, QFont, QIcon, QDoubleValidator, QIntValidator, QPixmap
-  from PyQt6.QtWidgets import QApplication, QFrame, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup, QSpacerItem
-  PYQT6 = True
-except ImportError:
-  from PyQt5.QtCore import Qt, QSize
-  from PyQt5.QtGui import QCursor, QFont, QIcon, QDoubleValidator, QIntValidator, QPixmap
-  from PyQt5.QtWidgets import QApplication, QFrame, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup, QSpacerItem
-  PYQT6 = False
+from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtGui import QCursor, QFont, QIcon, QDoubleValidator, QIntValidator, QPixmap
+from PyQt5.QtWidgets import QApplication, QFrame, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup, QSpacerItem
+PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.util as util

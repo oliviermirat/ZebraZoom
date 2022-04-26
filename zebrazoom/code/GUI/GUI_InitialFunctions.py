@@ -17,12 +17,8 @@ from zebrazoom.getTailExtremityFirstFrame import getTailExtremityFirstFrame
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 import zebrazoom.code.util as util
 
-try:
-  from PyQt6.QtCore import Qt
-  from PyQt6.QtWidgets import QCheckBox, QFileDialog, QVBoxLayout
-except ImportError:
-  from PyQt5.QtCore import Qt
-  from PyQt5.QtWidgets import QCheckBox, QFileDialog, QVBoxLayout
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QCheckBox, QFileDialog, QVBoxLayout
 
 
 LARGE_FONT= ("Verdana", 12)

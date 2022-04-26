@@ -3,14 +3,9 @@ import numpy as np
 import pickle
 import webbrowser
 
-try:
-  from PyQt6.QtCore import Qt, QEventLoop, QPoint, QTimer
-  from PyQt6.QtGui import QCursor
-  from PyQt6.QtWidgets import QApplication, QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
-except ImportError:
-  from PyQt5.QtCore import Qt, QEventLoop, QPoint, QTimer
-  from PyQt5.QtGui import QCursor
-  from PyQt5.QtWidgets import QApplication, QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtCore import Qt, QEventLoop, QPoint, QTimer
+from PyQt5.QtGui import QCursor
+from PyQt5.QtWidgets import QApplication, QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 import zebrazoom.code.util as util
 

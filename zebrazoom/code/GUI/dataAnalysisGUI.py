@@ -6,16 +6,10 @@ from pathlib import Path
 import json
 import pandas as pd
 
-try:
-  from PyQt6.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QItemSelectionModel, QModelIndex, QPoint, QPointF, QRect, QRectF, QSize, QSizeF, QStringListModel
-  from PyQt6.QtGui import QColor, QFileSystemModel, QFont, QFontMetrics, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
-  from PyQt6.QtWidgets import QAbstractItemView, QApplication, QCompleter, QFileDialog, QFrame, QGridLayout, QHeaderView, QHBoxLayout, QListView, QLabel, QMessageBox, QSpacerItem, QTextEdit, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QSplitter, QTableView, QTreeView
-  PYQT6 = True
-except ImportError:
-  from PyQt5.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QItemSelectionModel, QModelIndex, QPoint, QPointF, QRect, QRectF, QSize, QSizeF, QStringListModel
-  from PyQt5.QtGui import QColor, QFont, QFontMetrics, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
-  from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCompleter, QFileDialog, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QListView, QMessageBox, QSpacerItem, QTextEdit, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QSplitter, QTableView, QTreeView
-  PYQT6 = False
+from PyQt5.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QItemSelectionModel, QModelIndex, QPoint, QPointF, QRect, QRectF, QSize, QSizeF, QStringListModel
+from PyQt5.QtGui import QColor, QFont, QFontMetrics, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCompleter, QFileDialog, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QListView, QMessageBox, QSpacerItem, QTextEdit, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QSplitter, QTableView, QTreeView
+PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.util as util

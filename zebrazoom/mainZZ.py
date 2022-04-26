@@ -21,10 +21,7 @@ import json
 import subprocess
 import glob
 
-try:
-  from PyQt6.QtWidgets import QApplication
-except ImportError:
-  from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication
 
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()

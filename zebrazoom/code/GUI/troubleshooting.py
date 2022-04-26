@@ -1,13 +1,8 @@
 import webbrowser
 
-try:
-  from PyQt6.QtCore import Qt
-  from PyQt6.QtGui import QFont, QIntValidator
-  from PyQt6.QtWidgets import QLabel, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup
-except ImportError:
-  from PyQt5.QtCore import Qt
-  from PyQt5.QtGui import QFont, QIntValidator
-  from PyQt5.QtWidgets import QLabel, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup
+from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QFont, QIntValidator
+from PyQt5.QtWidgets import QLabel, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup
 
 import zebrazoom.code.util as util
 

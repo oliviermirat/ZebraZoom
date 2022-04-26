@@ -10,10 +10,7 @@ import os.path
 import csv
 from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 
-try:
-  from PyQt6.QtWidgets import QApplication
-except ImportError:
-  from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication
 
 import zebrazoom.code.util as util
 

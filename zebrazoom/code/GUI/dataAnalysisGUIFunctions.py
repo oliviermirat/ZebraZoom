@@ -11,10 +11,7 @@ import sys
 import pandas as pd
 globalVariables = getGlobalVariables()
 
-try:
-  from PyQt6.QtWidgets import QFileDialog
-except ImportError:
-  from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog
 
 from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
 from zebrazoom.dataAnalysis.dataanalysis.populationComparaison import populationComparaison
