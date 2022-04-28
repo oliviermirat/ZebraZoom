@@ -521,7 +521,7 @@ class ChooseGeneralExperiment(QWidget):
     centerOfMassTitleLabel = util.apply_style(QLabel("Center of mass tracking for any kind of animal", self), font=QFont('Helvetica', 14, QFont.Weight.Bold))
     centerOfMassTitleLabel.setWordWrap(True)
     layout.addWidget(centerOfMassTitleLabel, 1, 4)
-    centerOfMassImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'centerOfMassAnyAnimal.png')), lambda: util.addToHistory(controller.show_frame)("ChooseCenterOfMassTracking"))
+    centerOfMassImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'centerOfMassAnyAnimal2.png')), lambda: util.addToHistory(controller.show_frame)("ChooseCenterOfMassTracking"))
     layout.addWidget(centerOfMassImage, 3, 4)
 
     buttonsLayout = QHBoxLayout()
@@ -749,19 +749,21 @@ class HomegeneousWellsLayout(QWidget):
     nbWellsPerRows.validator().setBottom(0)
     layout.addWidget(nbWellsPerRows, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    finishBtn = util.apply_style(QPushButton("Finish now", self), background_color=util.LIGHT_YELLOW)
+    finishBtn = util.apply_style(QPushButton("Use Method 1", self), background_color=util.LIGHT_YELLOW)
     finishBtn.clicked.connect(lambda: controller.homegeneousWellsLayout(controller, nbwells.text(), nbRowsOfWells.text(), nbWellsPerRows.text()))
     layout.addWidget(finishBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(QLabel('The tracking will work nicely in many cases when choosing this option.', self), alignment=Qt.AlignmentFlag.AlignCenter)
-
-    adjustBtn = util.apply_style(QPushButton("Adjust Parameters futher", self), background_color=util.LIGHT_YELLOW)
+    layout.addWidget(QLabel('Method 1 is usually best for "poor quality" video (poor contrast, changing background, etc...)', self), alignment=Qt.AlignmentFlag.AlignCenter)
+    
+    adjustBtn = util.apply_style(QPushButton("Use Method 2", self), background_color=util.LIGHT_YELLOW)
     adjustBtn.clicked.connect(lambda: controller.morePreciseFastScreen(controller, nbwells.text(), nbRowsOfWells.text(), nbWellsPerRows.text()))
     layout.addWidget(adjustBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(QLabel('Choosing this option will lead to a higher probability that the tracking will work well.', self), alignment=Qt.AlignmentFlag.AlignCenter)
-
-    linkBtn1 = util.apply_style(QPushButton("Alternative", self), background_color=util.GOLD)
-    linkBtn1.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/FastScreenTrackingGuidlines.md"))
-    layout.addWidget(linkBtn1, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel('Method 2 will usually lead to more accurate results for "high quality" video (high contrast, strictly fixed background, no issues on borders, etc..).', self), alignment=Qt.AlignmentFlag.AlignCenter)
+    
+    layout.addWidget(QLabel('If you are unusure which method to use, it is highly recommended to simply try both.', self), alignment=Qt.AlignmentFlag.AlignCenter)
+    
+    # linkBtn1 = util.apply_style(QPushButton("Alternative", self), background_color=util.GOLD)
+    # linkBtn1.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/FastScreenTrackingGuidlines.md"))
+    # layout.addWidget(linkBtn1, alignment=Qt.AlignmentFlag.AlignCenter)
 
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch()

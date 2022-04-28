@@ -286,7 +286,7 @@ def _chooseEnd(self, controller):
 
 def chooseBeginningAndEndOfVideo(self, controller):
   util.chooseBeginningPage(controller, controller.videoToCreateConfigFileFor, "Choose where the analysis of your video should start.", "Ok, I want the tracking to start at this frame!", lambda: _chooseEnd(self, controller),
-                           extraButtonInfo=("I want the tracking to run on the entire video!", lambda: _beginningAndEndChosen(self, controller), {"background_color": "red"}))
+                           extraButtonInfo=("I want the tracking to run on the entire video!", lambda: _beginningAndEndChosen(self, controller), {"background_color": "greenyellow"}))
 
 
 def getImageForMultipleAnimalGUI(l, nx, ny, max_l, videoToCreateConfigFileFor, background, wellPositions, hyperparameters):

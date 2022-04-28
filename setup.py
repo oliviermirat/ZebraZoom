@@ -2,7 +2,7 @@ import setuptools
 from distutils.core import setup
 setup(
   name = 'zebrazoom',
-  version = '1.32.45',
+  version = '1.32.46',
   license='AGPL-3.0',
   description = 'Track and analyze zebrafish and animal behavior',
   author = 'Olivier Mirat',
@@ -60,6 +60,7 @@ setup(
         "zebrazoom/code/GUI/savedjustincase.png",
         
         "zebrazoom/code/GUI/centerOfMassAnyAnimal.png",
+        "zebrazoom/code/GUI/centerOfMassAnyAnimal2.png",
         "zebrazoom/code/GUI/configFileROI.png",
         "zebrazoom/code/GUI/freelySwimming.png",
         "zebrazoom/code/GUI/gridSystem.png",
