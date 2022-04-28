@@ -176,44 +176,29 @@ def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
 
 
 @util.addToHistory
-def homegeneousWellsLayout(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
+def homegeneousWellsLayout(self, controller, nbRowsOfWells, nbWellsPerRows):
 
   self.configFile = {"trackingMethod": "fastCenterOfMassTracking_KNNbackgroundSubtraction", "nbAnimalsPerWell": 1, "nbWells": 8, "nbRowsOfWells": 2, "nbWellsPerRows": 4, "groupOfMultipleSameSizeAndShapeEquallySpacedWells": 1, "postProcessMultipleTrajectories": 0, "trackingPointSizeDisplay": 3, "extractAdvanceZebraParameters": 0,  "validationVideoPlotHeading": 0, "trackTail": 0, "freqAlgoPosFollow": 100, "fasterMultiprocessing": 1, "copyOriginalVideoToOutputFolderForValidation": 0, "backgroundSubtractorKNN": 1, "boutsMinNbFrames": 0, "addOneFrameAtTheEndForBoutDetection": 1, "fillGapFrameNb": 0} # "postProcessMultipleTrajectories": 1, "postProcessRemoveLowProbabilityDetection" : 1, "postProcessLowProbabilityDetectionPercentOfMaximum" : 0.2
 
-  self.configFile["nbWells"]          = int(nbwells)
-
-  if len(nbRowsOfWells):
-    self.configFile["nbRowsOfWells"]  = int(nbRowsOfWells)
-  else:
-    self.configFile["nbRowsOfWells"]  = 1
-
-  if len(nbWellsPerRows):
-    self.configFile["nbWellsPerRows"]  = int(nbWellsPerRows)
-  else:
-    self.configFile["nbWellsPerRows"]  = 4
+  self.configFile["nbWells"] = int(nbRowsOfWells) * int(nbWellsPerRows)
+  self.configFile["nbRowsOfWells"] = int(nbRowsOfWells)
+  self.configFile["nbWellsPerRows"] = int(nbWellsPerRows)
 
   controller.show_frame("FinishConfig")
 
 
 @util.addToHistory
-def morePreciseFastScreen(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
+def morePreciseFastScreen(self, controller, nbRowsOfWells, nbWellsPerRows):
 
   # The gaussian image filtering should be added here in the future
   self.configFile = {"trackingMethod": "fastCenterOfMassTracking_ClassicalBackgroundSubtraction", "minPixelDiffForBackExtract": 20, "backgroundPreProcessParameters": [[3]], "backgroundPreProcessMethod": ["erodeThenMin"], "trackingPointSizeDisplay": 1, "nbAnimalsPerWell": 1, "extractAdvanceZebraParameters": 0, "trackTail": 0, "nbWells": 1, "noWellDetection": 1, "backgroundExtractionForceUseAllVideoFrames": 1, "headSize": 2, "createValidationVideo": 0, "lastFrame": 1000}
 
-  self.configFile["nbAnimalsPerWell"] = int(nbwells)
+  self.configFile["nbAnimalsPerWell"] = int(nbRowsOfWells) * int(nbWellsPerRows)
 
   # self.configFile["nbWells"]          = int(nbwells)
 
-  if len(nbRowsOfWells):
-    self.configFile["nbRowsOfWells"]  = int(nbRowsOfWells)
-  else:
-    self.configFile["nbRowsOfWells"]  = 1
-
-  if len(nbWellsPerRows):
-    self.configFile["nbWellsPerRows"]  = int(nbWellsPerRows)
-  else:
-    self.configFile["nbWellsPerRows"]  = 4
+  self.configFile["nbRowsOfWells"] = int(nbRowsOfWells)
+  self.configFile["nbWellsPerRows"] = int(nbWellsPerRows)
 
   self.calculateBackgroundFreelySwim(controller, 0, True)
 

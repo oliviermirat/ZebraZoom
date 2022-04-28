@@ -726,36 +726,59 @@ class HomegeneousWellsLayout(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
-    self.preferredSize = (1152, 768)
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(util.apply_style(QLabel("How many wells are there in your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    nbwells = QLineEdit(controller.window)
-    nbwells.setValidator(QIntValidator(nbwells))
-    nbwells.validator().setBottom(0)
-    layout.addWidget(nbwells, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._video = video = QLabel()
+    video.setMinimumSize(1, 1)
+    layout.addWidget(video, stretch=1)
 
-    layout.addWidget(util.apply_style(QLabel("How many rows of wells are there in your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    def updateButtons():
+      enabled = bool(nbRowsOfWells.text() and nbWellsPerRows.text())
+      for btn in (finishBtn, adjustBtn):
+        btn.setEnabled(enabled)
+        btn.setToolTip("Values must be entered in all fields." if not enabled else None)
+    self._updateButtons = updateButtons
+
+    self._frameSlider = frameSlider = util.SliderWithSpinbox(1, 0, 1, name="Frame")
+
+    def frameChanged(frame):
+      if self._cap is None:
+        video.clear()
+      else:
+        self._cap.set(1, frame)
+        ret, img = self._cap.read()
+        util.setPixmapFromCv(img, video)
+    frameSlider.valueChanged.connect(frameChanged)
+    layout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    wellsSublayout = QHBoxLayout()
+    wellsSublayout.addStretch(1)
+
+    wellsSublayout.addWidget(util.apply_style(QLabel("How many rows of wells are there in your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     nbRowsOfWells = QLineEdit(controller.window)
     nbRowsOfWells.setValidator(QIntValidator(nbRowsOfWells))
-    nbRowsOfWells.validator().setBottom(0)
-    layout.addWidget(nbRowsOfWells, alignment=Qt.AlignmentFlag.AlignCenter)
+    nbRowsOfWells.validator().setBottom(1)
+    nbRowsOfWells.textChanged.connect(updateButtons)
+    wellsSublayout.addWidget(nbRowsOfWells, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(util.apply_style(QLabel("How many wells are there per row on your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    wellsSublayout.addWidget(util.apply_style(QLabel("How many wells are there per row on your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     nbWellsPerRows = QLineEdit(controller.window)
     nbWellsPerRows.setValidator(QIntValidator(nbWellsPerRows))
-    nbWellsPerRows.validator().setBottom(0)
-    layout.addWidget(nbWellsPerRows, alignment=Qt.AlignmentFlag.AlignCenter)
+    nbWellsPerRows.validator().setBottom(1)
+    nbWellsPerRows.textChanged.connect(updateButtons)
+    wellsSublayout.addWidget(nbWellsPerRows, alignment=Qt.AlignmentFlag.AlignCenter)
+    wellsSublayout.addStretch(1)
+    layout.addLayout(wellsSublayout)
 
     finishBtn = util.apply_style(QPushButton("Use Method 1", self), background_color=util.LIGHT_YELLOW)
-    finishBtn.clicked.connect(lambda: controller.homegeneousWellsLayout(controller, nbwells.text(), nbRowsOfWells.text(), nbWellsPerRows.text()))
+    finishBtn.clicked.connect(lambda: controller.homegeneousWellsLayout(controller, nbRowsOfWells.text(), nbWellsPerRows.text()))
     layout.addWidget(finishBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(QLabel('Method 1 is usually best for "poor quality" video (poor contrast, changing background, etc...)', self), alignment=Qt.AlignmentFlag.AlignCenter)
     
     adjustBtn = util.apply_style(QPushButton("Use Method 2", self), background_color=util.LIGHT_YELLOW)
-    adjustBtn.clicked.connect(lambda: controller.morePreciseFastScreen(controller, nbwells.text(), nbRowsOfWells.text(), nbWellsPerRows.text()))
+    adjustBtn.clicked.connect(lambda: controller.morePreciseFastScreen(controller, nbRowsOfWells.text(), nbWellsPerRows.text()))
     layout.addWidget(adjustBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(QLabel('Method 2 will usually lead to more accurate results for "high quality" video (high contrast, strictly fixed background, no issues on borders, etc..).', self), alignment=Qt.AlignmentFlag.AlignCenter)
     
@@ -777,6 +800,22 @@ class HomegeneousWellsLayout(QWidget):
     layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
+
+  def showEvent(self, evt):
+    if not evt.spontaneous():
+      self._cap = zzVideoReading.VideoCapture(self.controller.videoToCreateConfigFileFor)
+      self._frameSlider.setMaximum(self._cap.get(7) - 1)
+      self._frameSlider.valueChanged.emit(self._frameSlider.value())
+      self.layout().setAlignment(self._video, Qt.AlignmentFlag.AlignCenter)
+      self._updateButtons()
+    super().showEvent(evt)
+
+  def hideEvent(self, evt):
+    super().hideEvent(evt)
+    if not evt.spontaneous():
+      self._cap = None
+      self._frameSlider.valueChanged.emit(self._frameSlider.value())
+      self.layout().setAlignment(self._video, Qt.Alignment())
 
 
 class CircularOrRectangularWells(QWidget):
