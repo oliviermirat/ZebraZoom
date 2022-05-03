@@ -1,6 +1,10 @@
 if __name__ == '__main__':
 
   import sys
+  if sys.platform.startswith('win'):
+    import multiprocessing
+    multiprocessing.freeze_support()  # required to support freezing on windows
+
   import os
   dir_path = os.path.dirname(os.path.realpath(__file__))
 
@@ -10,8 +14,10 @@ if __name__ == '__main__':
 
   if len(sys.argv) == 1:
 
+    from PyQt5.QtCore import QTimer
     print("The data produced by ZebraZoom can be found in the folder: " + os.path.join(dir_path,'ZZoutput'))
     app = ZebraZoomApp(sys.argv)
+    QTimer.singleShot(0, app.checkForUpdates)
     sys.exit(app.exec())
 
   else:
