@@ -8,6 +8,7 @@ from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 from zebrazoom.dataAnalysis.dataanalysis.visualizeClusters import visualizeClusters
+from zebrazoom.dataAnalysis.dataanalysis.readValidationVideoDataAnalysis import readValidationVideoDataAnalysis
 from zebrazoom.dataAnalysis.dataanalysis.outputValidationVideo import outputValidationVideo
 from zebrazoom.dataAnalysis.dataanalysis.activeLearning import prepareForActiveLearning
 from scipy.stats import chi2

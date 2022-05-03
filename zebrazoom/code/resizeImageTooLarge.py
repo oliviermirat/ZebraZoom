@@ -1,11 +1,12 @@
+import tkinter as tk
 import cv2
 import numpy as np
 
-from PyQt5.QtWidgets import QApplication
-
-
 def resizeImageTooLarge(frame, fillScreen=True, horizontalReduction=0.98, verticalReduction=0.95):
-  screenSize = QApplication.primaryScreen().availableSize()
+  root = tk.Tk()
+  horizontal = root.winfo_screenwidth()
+  vertical   = root.winfo_screenheight()
+  root.destroy()
   getRealValueCoefX = 1
   getRealValueCoefY = 1
   if len(frame[0]) > horizontal or len(frame) > vertical:
