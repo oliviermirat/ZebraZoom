@@ -326,6 +326,7 @@ def setPixmapFromCv(img, label, preferredSize=None, zoomable=False):
     label.hide()
     image = ZoomableImage()
     image.sizeHint = lambda: size
+    image.setMaximumSize(size)
     image.viewport().setFixedSize(size)
     image.setPixmap(originalPixmap)
     label.parentWidget().layout().replaceWidget(label, image)
