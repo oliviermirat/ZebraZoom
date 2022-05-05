@@ -638,7 +638,8 @@ def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=Non
   layout = QVBoxLayout()
   additionalText = "Enter/Return keys can be used instead of clicking Next."
   if zoomable:
-    additionalText += "\nYou can zoom in/out using the mouse wheel or Ctrl and +/- and drag the image."
+    controlModifier = 'Ctrl' if sys.platform != 'darwin' else 'Cmd'  # Qt documentation explicilty states this
+    additionalText += "\nYou can zoom in/out using the mouse wheel or %s and +/- and drag the image." % controlModifier
   layout.addWidget(QLabel(additionalText), alignment=Qt.AlignmentFlag.AlignCenter)
 
   video = _InteractiveLabelPoint(width, height, selectingRegion)
