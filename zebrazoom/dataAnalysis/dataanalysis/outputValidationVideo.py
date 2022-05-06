@@ -4,7 +4,6 @@ import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import json
 import numpy as np
 import sys
-import tkinter as tk
 import os
 from pathlib import Path
 

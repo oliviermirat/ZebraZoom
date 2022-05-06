@@ -5,13 +5,15 @@ from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
 from zebrazoom.dataAnalysis.dataanalysis.visualizeClusters import visualizeClusters
 import matplotlib.pyplot as plt
-from tkinter import simpledialog
-import tkinter as tk
 import numpy as np
 import pickle
 import shutil
 import json
 import os
+import sys
+
+from PyQt5.QtWidgets import QInputDialog
+
 
 def prepareForActiveLearning(proportions, sortedRepresentativeBouts, outputFolderResult, nbCluster, pca_result, dfParam, sortedRepresentativeBoutsIndex, tailAngles):
   
@@ -140,13 +142,6 @@ def activeLearning(modelUsed, nbConditions, nbCluster, outputFolderResult, N_QUE
   
   # Actual active learning start
   
-  def winput(title, sentence):
-    root = tk.Tk()
-    root.withdraw()
-    y = simpledialog.askinteger(title, sentence)
-    root.destroy()
-    return y
-  
   for index in range(N_QUERIES):
     
     query_index, query_instance = learner.query(X_pool)
@@ -154,7 +149,7 @@ def activeLearning(modelUsed, nbConditions, nbCluster, outputFolderResult, N_QUE
     plt.plot(tailAngles_pool[query_index][0])
     plt.show()
     
-    userInput = winput("Cluster Number", "Enter the cluster number of this bout:")
+    userInput, _ok = QInputDialog.getInt(None, "Cluster Number", "Enter the cluster number of this bout:")
     
     X, y = X_pool[query_index].reshape(1, -1), np.array([userInput])
     
