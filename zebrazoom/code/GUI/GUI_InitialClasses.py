@@ -1,17 +1,21 @@
+import atexit
 import contextlib
 import json
 import math
 import os
+import sys
 import webbrowser
 from pathlib import Path
+from packaging import version
 
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 
-from PyQt5.QtCore import pyqtSignal, Qt, QDir, QEvent, QLine, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel
+from PyQt5.QtCore import pyqtSignal, Qt, QDir, QEvent, QLine, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel, QTimer, QUrl
 from PyQt5.QtGui import QColor, QCursor, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
+from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSizePolicy, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
 PYQT6 = False
 
@@ -224,7 +228,13 @@ class StartPage(QWidget):
         documentationBtn = QPushButton("Documentation", self)
         documentationBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/intro/"))
         bottomLayout.addWidget(documentationBtn)
-        bottomLayout.addWidget(QLabel("Regularly update your version of ZebraZoom with: 'pip install zebrazoom --upgrade'!", self))
+        self._updateStatusLabel = QLabel("Regularly update your version of ZebraZoom with: 'pip install zebrazoom --upgrade'!", self)
+        bottomLayout.addWidget(self._updateStatusLabel)
+        if getattr(sys, 'frozen', False):  # running an installed executable
+            self._networkManager = QNetworkAccessManager()
+            self._updateBtn = QPushButton('', self)
+            bottomLayout.addWidget(self._updateBtn)
+            QTimer.singleShot(0, self._checkForUpdates)
         layout.addLayout(bottomLayout, 2, 0, 1, 4, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom)
 
         self.setLayout(layout)
@@ -247,6 +257,48 @@ class StartPage(QWidget):
             if self._shownDetail is not None:
                 self._shownDetail.hide()
                 self._shownDetail = None
+
+    def _launchUpdate(self):
+        updaterExecutable = 'updater/updater.exe' if sys.platform.startswith('win') else 'updater/updater'
+        atexit.register(os.execl, updaterExecutable, updaterExecutable)
+        installationFolder = os.path.dirname(sys.executable)
+        atexit.register(os.chdir, installationFolder)
+        sys.exit(0)
+
+    def _refreshUpdateStatus(self, reply):
+        if reply.error() != QNetworkReply.NetworkError.NoError:
+            self._updateStatusLabel.setText("Could not check for updates.")
+            util.apply_style(self._updateStatusLabel, color='red')
+            self._updateBtn.setText("Retry")
+            self._updateBtn.show()
+            self._updateBtn.disconnect()
+            self._updateBtn.clicked.connect(self._checkForUpdates)
+            return
+        latestVersion = reply.url().toString().split('/')[-1]
+        if version.parse(latestVersion) <= version.parse(self.controller.version):
+            self._updateStatusLabel.setText("Using ZebraZoom version %s, no updates available." % self.controller.version)
+            util.apply_style(self._updateStatusLabel, color='green')
+            self._updateBtn.hide()
+            return
+        self._updateStatusLabel.setText("Using ZebraZoom version %s, updates are available (%s)." % (self.controller.version, latestVersion))
+        util.apply_style(self._updateStatusLabel, color='red')
+        self._updateBtn.setText("Update")
+        self._updateBtn.show()
+        self._updateBtn.disconnect()
+        self._updateBtn.clicked.connect(self._launchUpdate)
+
+    def _checkForUpdates(self):
+        self._updateBtn.hide()
+        self._updateStatusLabel.setText("Checking for updates...")
+        util.apply_style(self._updateStatusLabel, color='orange')
+        updaterExecutable = 'updater/updater.exe' if sys.platform.startswith('win') else 'updater/updater'
+        updatedUpdater = updaterExecutable + '.new'
+        if os.path.exists(updatedUpdater):
+            os.replace(updatedUpdater, updaterExecutable)
+        request = QNetworkRequest(QUrl('https://github.com/anthepro/asd/releases/latest'))
+        request.setAttribute(QNetworkRequest.Attribute.RedirectPolicyAttribute, QNetworkRequest.RedirectPolicy.NoLessSafeRedirectPolicy)
+        reply = self._networkManager.get(request)
+        reply.finished.connect(lambda: self._refreshUpdateStatus(reply))
 
 
 class SeveralVideos(QWidget):
