@@ -7,7 +7,6 @@ import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE
 from sklearn.cluster import KMeans
 from sklearn.mixture import GaussianMixture
-from zebrazoom.dataAnalysis.dataanalysis.readValidationVideoDataAnalysis import readValidationVideoDataAnalysis
 from zebrazoom.dataAnalysis.dataanalysis.outputValidationVideo import outputValidationVideo
 import cv2
 import os

@@ -1,0 +1,233 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - release/*
+
+jobs:
+  create_release:
+    name: Create Github release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      release_id: ${{ steps.create_release.outputs.id }}
+    steps:
+      - name: Create a new release draft
+        id: create_release
+        uses: actions/create-release@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: ${{ github.ref }}
+          draft: true
+          prerelease: false
+
+  deploy_windows:
+    name: Deploy on Windows
+    needs: create_release
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install pyinstaller
+          pip install -e .
+      - name: Freeze the code
+        run: |
+          mkdir build
+          cd build
+          pyinstaller --console --icon=../icon.ico --onedir --collect-data zebrazoom --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoom ../zebrazoom/__main__.py
+          pyinstaller --onefile --icon=../icon.ico --windowed -n updater ../updater.py
+          mkdir dist/ZebraZoom/updater
+          mv dist/updater.exe dist/ZebraZoom/updater
+      - name: Generate the list of installed files
+        run: |
+          cd build/dist/ZebraZoom
+          python3 -c "exec('''\nimport os\n\ndef walk(path):\n    files = []\n    for entry in os.scandir(path):\n        if entry.is_dir(follow_symlinks=False):\n            yield from walk(entry.path)\n            yield entry.path\n        else:\n            files.append(entry.path)\n    yield from files\n\nwith open('installedFiles.txt', 'w') as f:\n    f.write('\\n'.join(map(os.path.relpath, walk('.'))))\n''')"
+      - name: Create installer
+        uses: joncloud/makensis-action@v3.3
+      - name: Upload installer
+        uses: actions/upload-release-asset@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_name: ZebraZoom-${{ runner.os }}.exe
+          asset_path: ZebraZoom.exe
+          asset_content_type: application/octet-stream
+      - name: Create archive
+        uses: thedoctor0/zip-release@master
+        with:
+          type: zip
+          filename: ZebraZoom.zip
+          directory: build/dist/ZebraZoom
+      - name: Upload archive
+        uses: actions/upload-release-asset@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_name: ZebraZoom-${{ runner.os }}.zip
+          asset_path: build/dist/ZebraZoom/ZebraZoom.zip
+          asset_content_type: application/zip
+
+  deploy_linux:
+    name: Deploy on Linux
+    needs: create_release
+    runs-on: ubuntu-latest
+    container: centos/python-38-centos7
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install pyinstaller
+          python3 -m pip install -e .
+      - name: Freeze the code
+        run: |
+          mkdir build
+          cd build
+          pyinstaller --console --icon=../icon.ico --onedir --collect-data zebrazoom --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoom ../zebrazoom/__main__.py
+          pyinstaller --onefile --icon=../icon.ico --windowed -n updater ../updater.py
+          mkdir dist/ZebraZoom/updater
+          mv dist/updater dist/ZebraZoom/updater
+      - name: Generate the list of installed files
+        run: |
+          cd build/dist/ZebraZoom
+          python3 - <<-EOF
+          import os
+
+          def walk(path):
+              files = []
+              for entry in os.scandir(path):
+                  if entry.is_dir(follow_symlinks=False):
+                      yield from walk(entry.path)
+                      yield entry.path
+                  else:
+                      files.append(entry.path)
+              yield from files
+
+          with open('installedFiles.txt', 'w') as f:
+              f.write('\n'.join(map(os.path.relpath, walk('.'))))
+          EOF
+      - name: Create archive
+        uses: thedoctor0/zip-release@master
+        with:
+          type: zip
+          filename: ZebraZoom.zip
+          directory: build/dist/ZebraZoom
+      - name: Upload archive
+        uses: actions/upload-release-asset@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_name: ZebraZoom-${{ runner.os }}.zip
+          asset_path: build/dist/ZebraZoom/ZebraZoom.zip
+          asset_content_type: application/zip
+
+  deploy_mac:
+    name: Deploy on macOS
+    needs: create_release
+    runs-on: macOS-latest
+    env:
+      PYTHON_VERSION: 3.9.12
+      MACOSX_DEPLOYMENT_TARGET: 10.9
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install Python
+        run: |
+          curl https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-macosx10.9.pkg -o "python.pkg" && sudo installer -pkg python.pkg -target /
+      - name: Install dependencies
+        run: |
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install pyinstaller
+          python3 -m pip install -e .
+      - name: Freeze the code
+        run: |
+          mkdir build
+          cd build
+          python3 -m PyInstaller --console --icon=../icon.ico --onedir --osx-bundle-identifier ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoomApp ../zebrazoom/__main__.py
+          python3 -m PyInstaller --onefile --icon=../icon.ico --windowed --osx-bundle-identifier ZebraZoom.updater -n updater ../updater.py
+          mkdir dist/ZebraZoomApp/updater
+          mv dist/updater dist/ZebraZoomApp/updater
+      - name: Generate the list of installed files
+        run: |
+          cd build/dist/ZebraZoomApp
+          python3 - <<-EOF
+          import os
+
+          def walk(path):
+              files = []
+              for entry in os.scandir(path):
+                  if entry.is_dir(follow_symlinks=False):
+                      yield from walk(entry.path)
+                      yield entry.path
+                  else:
+                      files.append(entry.path)
+              yield from files
+
+          with open('installedFiles.txt', 'w') as f:
+              f.write('\n'.join(map(os.path.relpath, walk('.'))))
+          EOF
+      #- name: Create Disk image  # XXX: to enable creating app, use pyinstaller with --windowed and bundle the updater app within the zebrazoom app
+      #  run: |
+      #    brew install create-dmg
+      #    cd build
+      #    mkdir -p dist/dmg
+      #    cp -r "dist/ZebraZoomApp.app" dist/dmg
+      #    create-dmg \
+      #      --volname "ZebraZoom" \
+      #      --volicon "dist/ZebraZoomApp.app/Contents/Resources/icon-windowed.icns" \
+      #      --window-pos 200 120 \
+      #      --window-size 600 300 \
+      #      --hide-extension "ZebraZoomApp.app" \
+      #      --app-drop-link 425 120 \
+      #      "dist/ZebraZoom.dmg" \
+      #      "dist/dmg/"
+      #- name: Upload Disk image
+      #  uses: actions/upload-release-asset@latest
+      #  env:
+      #    GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      #  with:
+      #    upload_url: ${{ needs.create_release.outputs.upload_url }}
+      #    asset_name: ZebraZoom-${{ runner.os }}.dmg
+      #    asset_path: build/dist/ZebraZoom.dmg
+      #    asset_content_type: application/octet-stream
+      - name: Create archive
+        uses: thedoctor0/zip-release@master
+        with:
+          type: zip
+          filename: ZebraZoom.zip
+          directory: build/dist/ZebraZoomApp
+      - name: Upload archive
+        uses: actions/upload-release-asset@latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_name: ZebraZoom-${{ runner.os }}.zip
+          asset_path: build/dist/ZebraZoomApp/ZebraZoom.zip
+          asset_content_type: application/zip
+
+  publish_release:
+    name: Publish release
+    needs: [create_release, deploy_windows, deploy_linux, deploy_mac]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish the release draft
+        uses: eregon/publish-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          release_id: ${{ needs.create_release.outputs.release_id }}

@@ -1,6 +1,10 @@
 if __name__ == '__main__':
 
   import sys
+  if sys.platform.startswith('win'):
+    import multiprocessing
+    multiprocessing.freeze_support()  # required to support freezing on windows
+
   import os
   dir_path = os.path.dirname(os.path.realpath(__file__))
 

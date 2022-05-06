@@ -8,7 +8,7 @@ from datetime import datetime
 import json
 
 from PyQt5.QtCore import Qt, QSize
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import QWidget, QButtonGroup, QCheckBox, QDialog, QFileDialog, QHBoxLayout, QApplication, QLabel, QMainWindow, QRadioButton, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem, QPushButton
 QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
 QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
@@ -84,6 +84,7 @@ class PlainApplication(QApplication):
 class ZebraZoomApp(PlainApplication):
     def __init__(self, args):
         super().__init__(args)
+        self.version = '1.32.48'
 
         self.homeDirectory = os.path.dirname(os.path.realpath(__file__))
 
@@ -108,6 +109,7 @@ class ZebraZoomApp(PlainApplication):
 
         self._windows = set()
         self.window = QMainWindow()
+        self.window.setWindowIcon(QIcon('icon.ico'))
         self.window.closeEvent = self._windowClosed(self.window, self.window.closeEvent)
         layout = QStackedLayout()
         self.frames = {}
