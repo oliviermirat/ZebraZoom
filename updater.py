@@ -50,7 +50,7 @@ class _ZipFile(zipfile.ZipFile):  # this is required to work around a bug in Zip
         return path
 
 
-if __name__ == '__main__':
+if __name__ == '__main__' and getattr(sys, 'frozen', False):  # running an installed executable
     zebrazoomExecutable = 'ZebraZoom.exe' if sys.platform.startswith('win') else 'ZebraZoomApp' if sys.platform == 'darwin' else "ZebraZoom"
     atexit.register(os.execl, zebrazoomExecutable, zebrazoomExecutable)
     installationFolder = os.path.dirname(os.path.dirname(sys.executable))
@@ -62,7 +62,10 @@ if __name__ == '__main__':
     assetName = 'ZebraZoom-%s.zip' % ('Windows' if sys.platform.startswith('win') else 'macOS' if sys.platform == 'darwin' else 'Linux',)
     window = _UpdaterWindow()
     window.show()
-    downloadRequest = QNetworkRequest(QUrl('https://github.com/anthepro/asd/releases/latest/download/%s' % assetName))
+    rect = window.geometry()
+    rect.moveCenter(window.screen().availableGeometry().center())
+    window.setGeometry(rect)
+    downloadRequest = QNetworkRequest(QUrl('https://github.com/oliviermirat/ZebraZoom/releases/latest/download/%s' % assetName))
     downloadRequest.setAttribute(QNetworkRequest.Attribute.RedirectPolicyAttribute, QNetworkRequest.RedirectPolicy.NoLessSafeRedirectPolicy)
     download = networkManager.get(downloadRequest)
 

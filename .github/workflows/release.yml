@@ -45,7 +45,7 @@ jobs:
           mkdir build
           cd build
           pyinstaller --console --icon=../icon.ico --onedir --collect-data zebrazoom --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoom ../zebrazoom/__main__.py
-          pyinstaller --onefile --icon=../icon.ico --windowed -n updater ../updater.py
+          pyinstaller --onefile --uac-admin --icon=../icon.ico --windowed -n updater ../updater.py
           mkdir dist/ZebraZoom/updater
           mv dist/updater.exe dist/ZebraZoom/updater
       - name: Generate the list of installed files

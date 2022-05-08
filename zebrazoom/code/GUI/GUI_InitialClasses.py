@@ -3,6 +3,7 @@ import contextlib
 import json
 import math
 import os
+import subprocess
 import sys
 import webbrowser
 from pathlib import Path
@@ -259,22 +260,27 @@ class StartPage(QWidget):
                 self._shownDetail = None
 
     def _launchUpdate(self):
-        updaterExecutable = 'updater/updater.exe' if sys.platform.startswith('win') else 'updater/updater'
-        atexit.register(os.execl, updaterExecutable, updaterExecutable)
         installationFolder = os.path.dirname(sys.executable)
-        atexit.register(os.chdir, installationFolder)
+        if sys.platform.startswith('win'):
+          atexit.register(subprocess.Popen, os.path.join(installationFolder, 'updater', 'updater.exe'), shell=True)
+        else:
+          updaterExecutable = 'updater/updater'
+          atexit.register(os.execl, updaterExecutable, updaterExecutable)
+          atexit.register(os.chdir, installationFolder)
         sys.exit(0)
 
-    def _refreshUpdateStatus(self, reply):
-        if reply.error() != QNetworkReply.NetworkError.NoError:
+    def _refreshUpdateStatus(self):
+        if self._reply.error() != QNetworkReply.NetworkError.NoError:
             self._updateStatusLabel.setText("Could not check for updates.")
             util.apply_style(self._updateStatusLabel, color='red')
             self._updateBtn.setText("Retry")
             self._updateBtn.show()
             self._updateBtn.disconnect()
             self._updateBtn.clicked.connect(self._checkForUpdates)
+            self._reply = None
             return
-        latestVersion = reply.url().toString().split('/')[-1]
+        latestVersion = self._reply.url().toString().split('/')[-1]
+        self._reply = None
         if version.parse(latestVersion) <= version.parse(self.controller.version):
             self._updateStatusLabel.setText("Using ZebraZoom version %s, no updates available." % self.controller.version)
             util.apply_style(self._updateStatusLabel, color='green')
@@ -295,10 +301,10 @@ class StartPage(QWidget):
         updatedUpdater = updaterExecutable + '.new'
         if os.path.exists(updatedUpdater):
             os.replace(updatedUpdater, updaterExecutable)
-        request = QNetworkRequest(QUrl('https://github.com/anthepro/asd/releases/latest'))
+        request = QNetworkRequest(QUrl('https://github.com/oliviermirat/ZebraZoom/releases/latest'))
         request.setAttribute(QNetworkRequest.Attribute.RedirectPolicyAttribute, QNetworkRequest.RedirectPolicy.NoLessSafeRedirectPolicy)
-        reply = self._networkManager.get(request)
-        reply.finished.connect(lambda: self._refreshUpdateStatus(reply))
+        self._reply = self._networkManager.get(request)
+        self._reply.finished.connect(self._refreshUpdateStatus)
 
 
 class SeveralVideos(QWidget):

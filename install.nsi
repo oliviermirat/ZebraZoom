@@ -20,7 +20,7 @@
   InstallDirRegKey HKCU "Software\ZebraZoom" ""
 
   ;Request application privileges
-  RequestExecutionLevel user
+  RequestExecutionLevel admin
 
 ;--------------------------------
 ;Variables
