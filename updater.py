@@ -4,7 +4,7 @@ import sys
 import zipfile
 from io import BytesIO
 
-from PyQt5.QtCore import Qt, QEventLoop, QUrl
+from PyQt5.QtCore import Qt, QEventLoop, QStandardPaths, QUrl
 from PyQt5.QtGui import QFont
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
 from PyQt5.QtWidgets import QApplication, QLabel, QMessageBox, QProgressBar, QPushButton, QVBoxLayout, QWidget
@@ -87,13 +87,18 @@ if __name__ == '__main__' and getattr(sys, 'frozen', False):  # running an insta
         QMessageBox.critical(window, "Error deleting old files", "Could not delete some of the old files. Installation might have been damaged, please reinstall ZebraZoom manually.")
         sys.exit(0)
 
+    dataInDocuments = os.path.exists(os.path.join(installationFolder, 'Uninstall.exe'))
+    documentsFolder = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DocumentsLocation)
     processedSize = 0
     totalSize = len(installedFiles)
     try:
         for fname in installedFiles:
             if fname.startswith('updater'):
                 continue
-            path = os.path.join(installationFolder, fname)
+            if dataInDocuments and any(fname.startswith(folder) for folder in ('zebrazoom\configuration', 'zebrazoom\dataAnalysis', 'zebrazoom\ZZoutput')):
+              path = os.path.join(documentsFolder, 'ZebraZoom', fname.lstrip('zebrazoom\\'))
+            else:
+              path = os.path.join(installationFolder, fname)
             window.updateState(processedSize, totalSize, 'Removing old files...')
             processedSize += 1
             if os.path.isdir(path):
@@ -113,9 +118,13 @@ if __name__ == '__main__' and getattr(sys, 'frozen', False):  # running an insta
           processedSize = 0
           window.updateState(processedSize, totalSize, 'Extracting new files...')
           for info in archive.infolist():
+              extractToFolder = installationFolder
               if info.filename.startswith('updater/updater'):
                   info.filename += '.new'
-              archive.extract(info, installationFolder)
+              elif dataInDocuments and any(info.filename.startswith(folder) for folder in ('zebrazoom/configuration', 'zebrazoom/dataAnalysis', 'zebrazoom/ZZoutput')):
+                  info.filename = info.filename.lstrip('zebrazoom/')
+                  extractToFolder = os.path.join(documentsFolder, 'ZebraZoom')
+              archive.extract(info, extractToFolder)
               processedSize += info.file_size
               window.updateState(processedSize, totalSize, 'Extracting new files...')
     except:  # we really don't care what goes wrong here

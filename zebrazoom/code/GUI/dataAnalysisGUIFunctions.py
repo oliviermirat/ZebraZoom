@@ -1,4 +1,3 @@
-from pathlib import Path
 import numpy as np
 import json
 import cv2
@@ -13,6 +12,7 @@ globalVariables = getGlobalVariables()
 
 from PyQt5.QtWidgets import QFileDialog
 
+import zebrazoom.code.paths as paths
 from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
 from zebrazoom.dataAnalysis.dataanalysis.populationComparaison import populationComparaison
 from zebrazoom.dataAnalysis.dataanalysis.applyClustering import applyClustering
@@ -40,12 +40,8 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
   if len(minNbBendForBoutDetect) == 0:
     minNbBendForBoutDetect = 3
 
-  cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-  cur_dir_path = Path(cur_dir_path)
-  cur_dir_path = cur_dir_path.parent.parent
-
   if len(controller.ZZoutputLocation) == 0:
-    ZZoutputLocation = os.path.join(cur_dir_path, 'ZZoutput')
+    ZZoutputLocation = paths.getDefaultZZoutputFolder()
   else:
     ZZoutputLocation = controller.ZZoutputLocation
 
@@ -54,7 +50,7 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
   dataframeOptions = {
     'pathToExcelFile'                   : self.experimentOrganizationExcelFileAndFolder, #os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'experimentOrganizationExcel/')),
     'fileExtension'                     : '.' + self.experimentOrganizationExcel.split(".")[1],
-    'resFolder'                         : os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'data')),
+    'resFolder'                         : os.path.join(paths.getDataAnalysisFolder(), 'data'),
     'nameOfFile'                        : self.experimentOrganizationExcel.split(".")[0],
     'smoothingFactorDynaParam'          : 0,   # 0.001
     'nbFramesTakenIntoAccount'          : 0,
@@ -79,14 +75,14 @@ def populationComparison(self, controller, TailTrackingParameters=0, saveInMatla
   resFolder  = dataframeOptions['resFolder']
 
   # Mixing up all the bouts
-  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, True)
+  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 0, True)
 
-  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 0, False)
+  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 0, False)
 
   # First median per well for each kinematic parameter
-  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 1, True)
+  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 1, True)
 
-  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsKinematic')), 1, False)
+  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 1, False)
 
   controller.show_frame("AnalysisOutputFolderPopulation")
 
@@ -113,12 +109,9 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
 
   videoSaveFirstTenBouts = True if nbVideosToSave else False
 
-  cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-  cur_dir_path = Path(cur_dir_path)
-  cur_dir_path = cur_dir_path.parent.parent
 
   if len(controller.ZZoutputLocation) == 0:
-    ZZoutputLocation = os.path.join(cur_dir_path, 'ZZoutput')
+    ZZoutputLocation = paths.getDefaultZZoutputFolder()
   else:
     ZZoutputLocation = controller.ZZoutputLocation
 
@@ -126,7 +119,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
   dataframeOptions = {
     'pathToExcelFile'                   : self.experimentOrganizationExcelFileAndFolder, # os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'experimentOrganizationExcel')),
     'fileExtension'                     : '.' + self.experimentOrganizationExcel.split(".")[1],
-    'resFolder'                         : os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'data')),
+    'resFolder'                         : os.path.join(paths.getDataAnalysisFolder(), 'data'),
     'nameOfFile'                        : self.experimentOrganizationExcel.split(".")[0],
     'smoothingFactorDynaParam'          : 0,   # 0.001
     'nbFramesTakenIntoAccount'          : -1, #28,
@@ -164,7 +157,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
     'videoSaveFirstTenBouts' : videoSaveFirstTenBouts,
     'globalParametersCalculations' : True,
     'nbVideosToSave' : nbVideosToSave,
-    'resFolder' : os.path.join(os.path.join(cur_dir_path, 'dataAnalysis'),'data/'),
+    'resFolder' : os.path.join(paths.getDataAnalysisFolder(), 'data/'),
     'nameOfFile' : self.experimentOrganizationExcel.split(".")[0],
     'modelUsedForClustering' : modelUsedForClustering,
     'removeOutliers'         : removeOutliers,
@@ -177,7 +170,7 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
   if int(HeadEmbeded):
     clusteringOptions['useAngles'] = True
   # Applies the clustering
-  [allBouts, classifier] = applyClustering(clusteringOptions, 0, os.path.join(os.path.join(cur_dir_path, 'dataAnalysis'),'resultsClustering/'), self.ZZoutputLocation)
+  [allBouts, classifier] = applyClustering(clusteringOptions, 0, os.path.join(paths.getDataAnalysisFolder(), 'resultsClustering/'), self.ZZoutputLocation)
   # Saves the classifier
   controller.show_frame("AnalysisOutputFolderClustering")
 

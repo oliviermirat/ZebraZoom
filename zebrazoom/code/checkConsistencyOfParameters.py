@@ -4,13 +4,13 @@ from PyQt5.QtCore import Qt, QEventLoop
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QWidget, QApplication, QLabel, QPushButton, QLineEdit, QGridLayout, QRadioButton
 
-from pathlib import Path
 import pandas as pd
 import subprocess
 import json
 import sys
 import os
 
+import zebrazoom.code.paths as paths
 from zebrazoom.kinematicParametersAnalysis import kinematicParametersAnalysis
 
 def getVideoFPSandPixelSizeThroughGUI(initialFPS, initialPixelSize, videoName):
@@ -45,11 +45,8 @@ def getVideoFPSandPixelSizeThroughGUI(initialFPS, initialPixelSize, videoName):
 
 def checkConsistencyOfParameters(listOfVideosToCheckConsistencyOn):
   
-  cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-  cur_dir_path = Path(cur_dir_path)
-  zebrazoom_path = cur_dir_path.parent
   app = QApplication.instance()
-  ZZoutputFolder = os.path.join(zebrazoom_path, 'ZZoutput') if app is None else app.ZZoutputLocation
+  ZZoutputFolder = paths.getDefaultZZoutputFolder() if not hasattr(app, 'ZZoutputLocation') else app.ZZoutputLocation
   
   data = []
   
@@ -78,13 +75,13 @@ def checkConsistencyOfParameters(listOfVideosToCheckConsistencyOn):
   nbWellsStandardValues = 100
   data.append(["defaultZZoutputFolder", 'standardValueFreelySwimZebrafishLarvae', 1, 1, str([1 for i in range(nbWellsStandardValues)]), str(['StandardValues' for i in range(nbWellsStandardValues)]), str([1 for i in range(nbWellsStandardValues)])])
   excelFileDataFrame = pd.DataFrame(data=data, columns=['path', 'trial_id', 'fq', 'pixelsize', 'condition', 'genotype', 'include'])
-  excelFileDataFrame.to_excel(os.path.join(os.path.join(os.path.join(zebrazoom_path, 'dataAnalysis'), 'experimentOrganizationExcel'), 'tempExcelFileForParametersConsistencyCheck.xls'))
+  excelFileDataFrame.to_excel(os.path.join(paths.getDataAnalysisFolder(), 'experimentOrganizationExcel', 'tempExcelFileForParametersConsistencyCheck.xls'))
   class sysSimulation:
     argv = []
   sysSimul = sysSimulation()
-  sysSimul.argv = ['', '', '', os.path.join(os.path.join(os.path.join(zebrazoom_path, 'dataAnalysis'), 'experimentOrganizationExcel'), 'tempExcelFileForParametersConsistencyCheck.xls'), 4, -1, 1, -1, 0]
+  sysSimul.argv = ['', '', '', os.path.join(paths.getDataAnalysisFolder(), 'experimentOrganizationExcel', 'tempExcelFileForParametersConsistencyCheck.xls'), 4, -1, 1, -1, 0]
   kinematicParametersAnalysis(sysSimul, 0, True)
-  dir_path = os.path.join(os.path.join(os.path.join(zebrazoom_path, 'dataAnalysis'), 'resultsKinematic'), 'tempExcelFileForParametersConsistencyCheck')
+  dir_path = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'tempExcelFileForParametersConsistencyCheck')
   if sys.platform == "win32":
     os.startfile(dir_path)
   else:

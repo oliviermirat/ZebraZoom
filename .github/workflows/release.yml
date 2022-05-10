@@ -46,6 +46,9 @@ jobs:
           cd build
           pyinstaller --console --icon=../icon.ico --onedir --collect-data zebrazoom --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoom ../zebrazoom/__main__.py
           pyinstaller --onefile --uac-admin --icon=../icon.ico --windowed -n updater ../updater.py
+          mkdir dist/ZebraZoom/zebrazoom/dataAnalysis/data
+          mkdir dist/ZebraZoom/zebrazoom/dataAnalysis/resultsClustering
+          mkdir dist/ZebraZoom/zebrazoom/dataAnalysis/resultsKinematic
           mkdir dist/ZebraZoom/updater
           mv dist/updater.exe dist/ZebraZoom/updater
       - name: Generate the list of installed files
@@ -83,12 +86,15 @@ jobs:
     name: Deploy on Linux
     needs: create_release
     runs-on: ubuntu-latest
-    container: centos/python-38-centos7
+    container:
+      image: centos/python-38-centos7
+      options: --user root
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Install dependencies
         run: |
+          yum install -y mesa-libGL
           python3 -m pip install --upgrade pip setuptools wheel
           python3 -m pip install pyinstaller
           python3 -m pip install -e .
@@ -98,6 +104,9 @@ jobs:
           cd build
           pyinstaller --console --icon=../icon.ico --onedir --collect-data zebrazoom --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoom ../zebrazoom/__main__.py
           pyinstaller --onefile --icon=../icon.ico --windowed -n updater ../updater.py
+          mkdir dist/ZebraZoom/zebrazoom/dataAnalysis/data
+          mkdir dist/ZebraZoom/zebrazoom/dataAnalysis/resultsClustering
+          mkdir dist/ZebraZoom/zebrazoom/dataAnalysis/resultsKinematic
           mkdir dist/ZebraZoom/updater
           mv dist/updater dist/ZebraZoom/updater
       - name: Generate the list of installed files
@@ -159,6 +168,9 @@ jobs:
           cd build
           python3 -m PyInstaller --console --icon=../icon.ico --onedir --osx-bundle-identifier ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoomApp ../zebrazoom/__main__.py
           python3 -m PyInstaller --onefile --icon=../icon.ico --windowed --osx-bundle-identifier ZebraZoom.updater -n updater ../updater.py
+          mkdir dist/ZebraZoomApp/zebrazoom/dataAnalysis/data
+          mkdir dist/ZebraZoomApp/zebrazoom/dataAnalysis/resultsClustering
+          mkdir dist/ZebraZoomApp/zebrazoom/dataAnalysis/resultsKinematic
           mkdir dist/ZebraZoomApp/updater
           mv dist/updater dist/ZebraZoomApp/updater
       - name: Generate the list of installed files

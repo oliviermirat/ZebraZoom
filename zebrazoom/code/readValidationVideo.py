@@ -5,11 +5,11 @@ import numpy as np
 import sys
 import os
 import cv2
-from pathlib import Path
 
 from PyQt5.QtCore import Qt, QSize, QTimer
 from PyQt5.QtWidgets import QLabel, QSlider, QVBoxLayout
 
+import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 
 
@@ -21,12 +21,10 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   s5  = ".avi"
   s5b = ".txt"
 
-  cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-  initialPath  = Path(cur_dir_path)
-  initialPath  = initialPath.parent
-  initialPath  = os.path.join(initialPath, s1)
   if len(ZZoutputLocation):
     initialPath = ZZoutputLocation
+  else:
+    initialPath = paths.getDefaultZZoutputFolder()
 
   with open(os.path.join(initialPath, os.path.join(s2, 'configUsed.json'))) as f:
     configTemp = json.load(f)

@@ -3,6 +3,7 @@ import json
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import os
+import zebrazoom.code.paths as paths
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
@@ -26,7 +27,7 @@ def getConfig(config, variableName, videoPath):
     if variableName in configDefault:
       
       if variableName == "outputFolder":
-        return os.path.join(cur_dir_path2, "ZZoutput")
+        return paths.getDefaultZZoutputFolder()
       else:
         return configDefault[variableName]
         

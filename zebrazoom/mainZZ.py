@@ -103,7 +103,8 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
   
   # Launching GUI algoFollower if necessary
   if hyperparameters["popUpAlgoFollow"]:
-    p = Process(target=popUpAlgoFollow.initialise, args=("starting ZebraZoom analysis on " + videoName,))
+    popUpAlgoFollow.createTraceFile("starting ZebraZoom analysis on " + videoName)
+    p = Process(target=popUpAlgoFollow.initialise)
     p.start()
 
   if hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justExtractParamFromPreviousTrackData":

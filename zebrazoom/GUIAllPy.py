@@ -16,6 +16,7 @@ QApplication.setHighDpiScaleFactorRoundingPolicy(Qt.HighDpiScaleFactorRoundingPo
 PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 import zebrazoom.code.GUI.configFilePrepareFunctions as configFilePrepareFunctions
 import zebrazoom.code.GUI.GUI_InitialFunctions as GUI_InitialFunctions
@@ -47,7 +48,7 @@ def excepthook(excType, excValue, traceback_):
   errorMessage.setText("An error has ocurred: %s" % formattedTraceback[-1])
   informativeText = 'Please report the issue on <a href="https://github.com/oliviermirat/ZebraZoom/issues">Github</a>.'
   if app.configFile and app.savedConfigFile != {k: v for k, v in app.configFile.items() if k != "firstFrame" and k != "lastFrame"}:
-    configDir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'configuration')
+    configDir = paths.getConfigurationFolder()
     videoName = os.path.splitext(os.path.basename(app.videoToCreateConfigFileFor))[0]
     configFilename = os.path.join(configDir, '%s_%s_unfinished.json' % (videoName, datetime.now().strftime("%Y_%m_%d-%H_%M_%S")))
     with open(configFilename, 'w') as f:
@@ -84,9 +85,9 @@ class PlainApplication(QApplication):
 class ZebraZoomApp(PlainApplication):
     def __init__(self, args):
         super().__init__(args)
-        self.version = '1.32.48'
+        self.version = '1.32.47'
 
-        self.homeDirectory = os.path.dirname(os.path.realpath(__file__))
+        self.homeDirectory = paths.getRootDataFolder()
 
         self.savedConfigFile = None
         self.configFile = {}
@@ -99,9 +100,7 @@ class ZebraZoomApp(PlainApplication):
 
         self.configFileHistory = []
 
-        curZZoutputPath = os.path.dirname(os.path.realpath(__file__))
-        curZZoutputPath = os.path.join(curZZoutputPath, 'ZZoutput')
-        self.ZZoutputLocation = curZZoutputPath
+        self.ZZoutputLocation = paths.getDefaultZZoutputFolder()
 
         self.title_font = QFont('Helvetica', 18, QFont.Weight.Bold, True)
 
@@ -271,7 +270,7 @@ class ZebraZoomApp(PlainApplication):
 
     def finishConfig(self, testConfig=False):
         suggestedName = '%s_%s' % (os.path.splitext(os.path.basename(self.videoToCreateConfigFileFor))[0], datetime.now().strftime("%Y_%m_%d-%H_%M_%S"))
-        configDir = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'configuration')
+        configDir = paths.getConfigurationFolder()
         reference, _ = QFileDialog.getSaveFileName(self.window, "Save config", os.path.join(configDir, suggestedName), "JSON (*.json)")
         if not reference:
           return

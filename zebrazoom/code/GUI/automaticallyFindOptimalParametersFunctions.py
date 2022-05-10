@@ -15,6 +15,7 @@ from zebrazoom.code.findWells import findWells
 from zebrazoom.code.trackingFolder.tracking import tracking
 from zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions import prepareConfigFileForParamsAdjustements
 from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
+import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 
 from PyQt5.QtWidgets import QApplication
@@ -367,7 +368,7 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
     try:
       mainZZ(pathToVideo, videoName, videoExt, configFile, [])
     except ValueError:
-      newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
+      newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
       for index in newhyperparameters:
         configFile[index] = newhyperparameters[index]
     except NameError:

@@ -1,5 +1,6 @@
 import numpy as np
 from zebrazoom.mainZZ import mainZZ
+import os
 import pickle
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
@@ -8,6 +9,7 @@ from zebrazoom.code.GUI.adjustParameterInsideAlgo import adjustParamInsideAlgoPa
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QDialog, QLabel, QPushButton, QVBoxLayout
 
+import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 
 
@@ -87,7 +89,7 @@ def detectBouts(self, controller, wellNumber, firstFrame, adjustOnWholeVideo):
         del configFile["lastFrame"]
       mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
     except ValueError:
-      newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
+      newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
       for index in newhyperparameters:
         configFile[index] = newhyperparameters[index]
     except NameError:
@@ -130,7 +132,7 @@ def adjustHeadEmbededTracking(self, controller, wellNumber, firstFrame, adjustOn
       del configFile["lastFrame"]
     mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
   except ValueError:
-    newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
+    newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
     for index in newhyperparameters:
       configFile[index] = newhyperparameters[index]
   except NameError:
@@ -166,7 +168,7 @@ def adjustFreelySwimTracking(self, controller, wellNumber, firstFrame, adjustOnW
       del configFile["lastFrame"]
     mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
   except ValueError:
-    newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
+    newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
     for index in newhyperparameters:
       configFile[index] = newhyperparameters[index]
   except NameError:
@@ -211,7 +213,7 @@ def _adjustFastFreelySwimTracking(self, controller, oldFirstFrame):
       del configFile["lastFrame"]
     mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
   except ValueError:
-    newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
+    newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
     for index in newhyperparameters:
       configFile[index] = newhyperparameters[index]
   except NameError:
@@ -262,7 +264,7 @@ def adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, fi
       del configFile["lastFrame"]
     mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
   except ValueError:
-    newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
+    newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
     for index in newhyperparameters:
       configFile[index] = newhyperparameters[index]
   except NameError:

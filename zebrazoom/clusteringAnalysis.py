@@ -1,9 +1,9 @@
+import zebrazoom.code.paths as paths
 from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
 from zebrazoom.dataAnalysis.dataanalysis.applyClustering import applyClustering
 from zebrazoom.dataAnalysis.datasetcreation.generatePklDataFileForVideo import generatePklDataFileForVideo
 
 import os
-from pathlib import Path
 
 def clusteringAnalysis(sys):
 
@@ -17,10 +17,6 @@ def clusteringAnalysis(sys):
   frameStepForDistanceCalculation = int(sys.argv[9]) if len(sys.argv) > 9 else 4
   removeBoutsContainingNanValuesInParametersUsedForClustering = int(sys.argv[10]) if len(sys.argv) > 10 else 1
   forcePandasRecreation = int(sys.argv[11]) if len(sys.argv) > 11 else 0
-  
-  cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-  cur_dir_path = Path(cur_dir_path)
-  cur_dir_path = cur_dir_path
 
   nameWithExt = os.path.split(pathToExcelFile)[1]
   
@@ -28,13 +24,13 @@ def clusteringAnalysis(sys):
   dataframeOptions = {
     'pathToExcelFile'                   : os.path.split(pathToExcelFile)[0],
     'fileExtension'                     : os.path.splitext(nameWithExt)[1],
-    'resFolder'                         : os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'data')),
+    'resFolder'                         : os.path.join(paths.getDataAnalysisFolder(), 'data'),
     'nameOfFile'                        : os.path.splitext(nameWithExt)[0],
     'smoothingFactorDynaParam'          : 0,   # 0.001
     'nbFramesTakenIntoAccount'          : -1, #28,
     'numberOfBendsIncludedForMaxDetect' : -1,
     'minNbBendForBoutDetect'            : minNbBendForBoutDetect, # THIS NEEDS TO BE CHANGED IF FPS IS LOW (default: 3)
-    'defaultZZoutputFolderPath'         : os.path.join(cur_dir_path, 'ZZoutput'),
+    'defaultZZoutputFolderPath'         : paths.getDefaultZZoutputFolder(),
     'tailAngleKinematicParameterCalculation' : 1,
     'getTailAngleSignMultNormalized'    : 1,
     'computeTailAngleParamForCluster'   : True,
@@ -44,14 +40,14 @@ def clusteringAnalysis(sys):
   if int(freelySwimming):
     dataframeOptions['computeMassCenterParamForCluster'] = True
   
-  generatePklDataFileForVideo(os.path.join(os.path.split(pathToExcelFile)[0], nameWithExt), os.path.join(cur_dir_path, 'ZZoutput'), frameStepForDistanceCalculation, forcePandasRecreation)
+  generatePklDataFileForVideo(os.path.join(os.path.split(pathToExcelFile)[0], nameWithExt), paths.getDefaultZZoutputFolder(), frameStepForDistanceCalculation, forcePandasRecreation)
   
   [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", forcePandasRecreation, [])
   
   # Applying the clustering on this dataframe
   clusteringOptions = {
     'analyzeAllWellsAtTheSameTime' : 0, # put this to 1 for head-embedded videos, and to 0 for multi-well videos
-    'pathToVideos' : os.path.join(cur_dir_path, 'ZZoutput'),
+    'pathToVideos' : paths.getDefaultZZoutputFolder(),
     'nbCluster' : int(nbClustersToFind),
     #'nbPcaComponents' : 30,
     'nbFramesTakenIntoAccount' : nbFramesTakenIntoAccount,
@@ -68,7 +64,7 @@ def clusteringAnalysis(sys):
     'videoSaveFirstTenBouts' : False,
     'globalParametersCalculations' : True,
     'nbVideosToSave' : 10,
-    'resFolder'  : os.path.join(os.path.join(cur_dir_path, 'dataAnalysis'),'data/'),
+    'resFolder'  : os.path.join(paths.getDataAnalysisFolder(), 'data/'),
     'nameOfFile' : os.path.splitext(nameWithExt)[0],
     'modelUsedForClustering' : modelUsedForClustering,
     'removeOutliers'  : removeOutliers,
@@ -82,7 +78,7 @@ def clusteringAnalysis(sys):
     clusteringOptions['useAngles'] = True
   
   # Applies the clustering
-  [allBouts, classifier] = applyClustering(clusteringOptions, 0, os.path.join(os.path.join(cur_dir_path, 'dataAnalysis'),'resultsClustering/'))
+  [allBouts, classifier] = applyClustering(clusteringOptions, 0, os.path.join(paths.getDataAnalysisFolder(), 'resultsClustering/'))
   
-  print("The data has been saved in the folder:", os.path.join(os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'resultsClustering')), dataframeOptions['nameOfFile']))
+  print("The data has been saved in the folder:", os.path.join(paths.getDataAnalysisFolder(), 'resultsClustering', dataframeOptions['nameOfFile']))
   print("The raw data has also been saved in:", dataframeOptions['resFolder'])

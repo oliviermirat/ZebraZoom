@@ -1,7 +1,6 @@
 import os
 import pickle
 import webbrowser
-from pathlib import Path
 
 import json
 import pandas as pd
@@ -12,6 +11,7 @@ from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCompleter, QFileDi
 PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 
 
@@ -256,7 +256,7 @@ class _DummyFullSet(object):
 class _ExperimentOrganizationModel(QAbstractTableModel):
   _COLUMN_NAMES = ["path", "trial_id", "fq", "pixelsize", "condition", "genotype", "include"]
   _COLUMN_TITLES = [None, "Video", "FPS", "Pixel Size", "Condition", "Genotype", "Include"]
-  _DEFAULT_ZZOUTPUT = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.parent, 'ZZoutput')
+  _DEFAULT_ZZOUTPUT = paths.getDefaultZZoutputFolder()
 
   def __init__(self, filename):
     super().__init__()
@@ -433,7 +433,7 @@ class CreateExperimentOrganizationExcel(QWidget):
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare experiment organization excel file", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    folderPath = os.path.join(Path(os.path.dirname(os.path.realpath(__file__))).parent.parent, 'dataAnalysis' ,'experimentOrganizationExcel')
+    folderPath = os.path.join(paths.getDataAnalysisFolder(), 'experimentOrganizationExcel')
     model = _ExperimentFilesModel()
     model.setRootPath(folderPath)
 

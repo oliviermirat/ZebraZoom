@@ -8,13 +8,12 @@ import subprocess
 from matplotlib.figure import Figure
 import math
 import scipy.io as sio
-from pathlib import Path
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
 from zebrazoom.mainZZ import mainZZ
 from zebrazoom.getTailExtremityFirstFrame import getTailExtremityFirstFrame
-import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
+import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 
 from PyQt5.QtCore import Qt
@@ -93,12 +92,7 @@ def chooseFolderForMultipleROIs(self):
 
 def chooseConfigFile(self):
 
-  cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-  path = Path(cur_dir_path)
-  path = path.parent.parent
-  path = os.path.join(path, 'configuration')
-
-  self.configFileName, _ = QFileDialog.getOpenFileName(self.window, 'Select file', path, "JSON (*.json)")
+  self.configFileName, _ = QFileDialog.getOpenFileName(self.window, 'Select file', paths.getConfigurationFolder(), "JSON (*.json)")
   if not self.configFileName:
     return
   if len(self.folderName) or globalVariables["mac"] or globalVariables["lin"]:
@@ -143,7 +137,7 @@ def launchZebraZoom(self):
   allVideos = []
 
   if self.sbatchMode:
-    commandsFile = open("commands.txt", "w", newline='\n')
+    commandsFile = open(os.path.join(paths.getRootDataFolder(), "commands.txt"), "w", newline='\n')
     nbVideosToLaunch = 0
 
   if len(self.folderName):
@@ -222,7 +216,7 @@ def launchZebraZoom(self):
     if nbWells > 24:
       nbWells = 24
 
-    launchFile = open("launchZZ.sh", "w", newline='\n')
+    launchFile = open(os.path.join(paths.getRootDataFolder(), "launchZZ.sh"), "w", newline='\n')
     linesToWrite = ['#!/bin/sh',
                     '#SBATCH --ntasks=1',
                     '#SBATCH --cpus-per-task='+str(nbWells),
@@ -249,7 +243,7 @@ def launchZebraZoom(self):
     launchFile.writelines(linesToWrite)
     launchFile.close()
 
-    shutil.copy(self.configFileName, 'configFile.json')
+    shutil.copy(self.configFileName, os.path.join(paths.getRootDataFolder(), 'configFile.json'))
 
     self.show_frame("ZZoutroSbatch")
 

@@ -1,4 +1,3 @@
-from pathlib import Path
 import numpy as np
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
@@ -17,6 +16,7 @@ import os
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication, QFileDialog, QGridLayout, QLabel, QMessageBox, QVBoxLayout
 
+import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 
 
@@ -37,12 +37,7 @@ def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
 
   if int(reloadConfigFile):
 
-    cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-    pathconf = Path(cur_dir_path)
-    pathconf = pathconf.parent.parent
-    pathconf = os.path.join(pathconf, 'configuration/')
-
-    configFileName, _ =  QFileDialog.getOpenFileName(self.window, "Select configuration file", pathconf, "JSON (*.json)")
+    configFileName, _ =  QFileDialog.getOpenFileName(self.window, "Select configuration file", paths.getConfigurationFolder(), "JSON (*.json)")
     if not configFileName:
       return False
     try:
@@ -162,7 +157,7 @@ def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
     try:
       mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
     except ValueError:
-      newhyperparameters = pickle.load(open('newhyperparameters', 'rb'))
+      newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
       for index in newhyperparameters:
         configFile[index] = newhyperparameters[index]
     except NameError:
@@ -353,7 +348,6 @@ def identifyMultipleHead(self, controller, nbanimals):
     background    = getBackground(self.videoToCreateConfigFileFor, hyperparameters)
 
   cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-  cur_dir_path = Path(cur_dir_path)
 
   def imagesGenerator():
     images = (cv2.imread(os.path.join(cur_dir_path, 'no1.png')),

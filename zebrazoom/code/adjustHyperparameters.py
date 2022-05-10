@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import os
 import pickle
 import webbrowser
 
@@ -7,6 +8,7 @@ from PyQt5.QtCore import Qt, QEventLoop, QPoint, QTimer
 from PyQt5.QtGui import QCursor
 from PyQt5.QtWidgets import QApplication, QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
+import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 
 
@@ -144,7 +146,7 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
     timer.stop()
 
   if widgets['saved']:
-    pickle.dump({name: hyperparameters[name] for name in hyperparametersListNames}, open('newhyperparameters', 'wb'))
+    pickle.dump({name: hyperparameters[name] for name in hyperparametersListNames}, open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'wb'))
     temporaryPage = stackedLayout.currentWidget()
     stackedLayout.setCurrentWidget(widgets['oldWidget'])
     stackedLayout.removeWidget(temporaryPage)

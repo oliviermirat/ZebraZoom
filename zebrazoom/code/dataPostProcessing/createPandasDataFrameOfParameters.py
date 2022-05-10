@@ -1,5 +1,5 @@
+import zebrazoom.code.paths as paths
 from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
-from pathlib import Path
 import pandas as pd
 import os
 
@@ -19,8 +19,7 @@ def createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension
   print("Parameter: frameStepForDistanceCalculation:", frameStepForDistanceCalculation)
   
   if len(ZZoutputLocation) == 0:
-    cur_dir_path = Path(os.path.dirname(os.path.realpath(__file__))).parent.parent
-    cur_dir_path = os.path.join(cur_dir_path, 'ZZoutput')
+    cur_dir_path = paths.getDefaultZZoutputFolder()
   else:
     cur_dir_path = ZZoutputLocation
 

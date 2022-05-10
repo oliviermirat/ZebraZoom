@@ -69,13 +69,19 @@ Section "Install" "Install ZebraZoom."
 
   SetOutPath "$INSTDIR"
 
-  File /r "build\dist\ZebraZoom\*"
+  File /r /x "configuration" /x "ZZoutput" /x "dataAnalysis" "build\dist\ZebraZoom\*"
 
   ;Store installation folder
   WriteRegStr HKCU "Software\ZebraZoom" "" $INSTDIR
 
   ;Create uninstaller
   WriteUninstaller "$INSTDIR\Uninstall.exe"
+
+  ;Extract things to Documents
+  SetOutPath "$DOCUMENTS\ZebraZoom"
+  File /r "build\dist\ZebraZoom\zebrazoom\configuration"
+  File /r "build\dist\ZebraZoom\zebrazoom\dataAnalysis"
+  File /r "build\dist\ZebraZoom\zebrazoom\ZZoutput"
 
   !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
 

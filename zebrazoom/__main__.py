@@ -6,7 +6,7 @@ if __name__ == '__main__':
     multiprocessing.freeze_support()  # required to support freezing on windows
 
   import os
-  dir_path = os.path.dirname(os.path.realpath(__file__))
+  import zebrazoom.code.paths as paths
 
   from zebrazoom.code.vars import getGlobalVariables
   from zebrazoom.GUIAllPy import PlainApplication, ZebraZoomApp
@@ -14,7 +14,7 @@ if __name__ == '__main__':
 
   if len(sys.argv) == 1:
 
-    print("The data produced by ZebraZoom can be found in the folder: " + os.path.join(dir_path,'ZZoutput'))
+    print("The data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
     app = ZebraZoomApp(sys.argv)
     sys.exit(app.exec())
 
@@ -23,7 +23,7 @@ if __name__ == '__main__':
     app = PlainApplication(sys.argv)
     if sys.argv[1] == "selectZZoutput":
 
-      print("The data produced by ZebraZoom can be found in the folder: " + os.path.join(dir_path,'ZZoutput'))
+      print("The data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
       app = ZebraZoomApp(sys.argv)
       app.askForZZoutputLocation()
       sys.exit(app.exec())
@@ -84,7 +84,7 @@ if __name__ == '__main__':
       sqb_convert_to_avi(path, videoName, codec, lastFrame)
       print("small break start")
       time.sleep(2)
-      print("Launching the tracking, the data produced by ZebraZoom can be found in the folder: " + os.path.join(dir_path,'ZZoutput'))
+      print("Launching the tracking, the data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
       __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
       mainZZ(path2, videoName, 'avi', configFile, argv2)
 
@@ -94,7 +94,7 @@ if __name__ == '__main__':
       from zebrazoom.code.deepLearningFunctions.labellingFunctions import createMask
       pathToImgFolder = sys.argv[2]
       if not(os.path.exists(pathToImgFolder)):
-        pathToImgFolder = os.path.join(os.path.join(os.path.join(dir_path,'ZZoutput'), sys.argv[2]), 'PNGImages')
+        pathToImgFolder = os.path.join(paths.getDefaultZZoutputFolder(), sys.argv[2], 'PNGImages')
       createMask(pathToImgFolder)
 
 
@@ -102,7 +102,7 @@ if __name__ == '__main__':
 
       if sys.argv[2] == "sleepVsMoving":
         from zebrazoom.code.dataPostProcessing.findSleepVsMoving import calculateSleepVsMovingPeriods
-        pathToZZoutput = os.path.join(dir_path,'ZZoutput')
+        pathToZZoutput = paths.getDefaultZZoutputFolder()
         videoName      = sys.argv[3]
         speedThresholdForMoving = float(sys.argv[4])
         notMovingNumberOfFramesThresholdForSleep = int(sys.argv[5])
@@ -125,7 +125,7 @@ if __name__ == '__main__':
 
       if sys.argv[2] == "firstSleepingTimeAfterSpecifiedTime":
         from zebrazoom.code.dataPostProcessing.findSleepVsMoving import firstSleepingTimeAfterSpecifiedTime
-        pathToZZoutput = os.path.join(dir_path,'ZZoutput')
+        pathToZZoutput = paths.getDefaultZZoutputFolder()
         videoName      = sys.argv[3]
         specifiedTime  = sys.argv[4]
         wellNumber     = sys.argv[5]
@@ -133,7 +133,7 @@ if __name__ == '__main__':
 
       if sys.argv[2] == "numberOfSleepingAndMovingTimesInTimeRange":
         from zebrazoom.code.dataPostProcessing.findSleepVsMoving import numberOfSleepingAndMovingTimesInTimeRange
-        pathToZZoutput     = os.path.join(dir_path,'ZZoutput')
+        pathToZZoutput     = paths.getDefaultZZoutputFolder()
         videoName          = sys.argv[3]
         specifiedStartTime = sys.argv[4]
         specifiedEndTime   = sys.argv[5]
@@ -142,7 +142,7 @@ if __name__ == '__main__':
 
       if sys.argv[2] == "numberOfSleepBoutsInTimeRange":
         from zebrazoom.code.dataPostProcessing.findSleepVsMoving import numberOfSleepBoutsInTimeRange
-        pathToZZoutput                  = os.path.join(dir_path,'ZZoutput')
+        pathToZZoutput                  = paths.getDefaultZZoutputFolder()
         videoName                       = sys.argv[3]
         minSleepLenghtDurationThreshold = int(sys.argv[4])
         wellNumber                      = sys.argv[5] if len(sys.argv) >= 6 else '-1'
@@ -152,7 +152,7 @@ if __name__ == '__main__':
 
       if sys.argv[2] == "calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshod":
         from zebrazoom.dataAnalysis.postProcessingFromCommandLine.postProcessingFromCommandLine import calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold
-        calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold(dir_path, sys.argv[3], int(sys.argv[4]))
+        calculateNumberOfSfsVsTurnsBasedOnMaxAmplitudeThreshold(paths.getRootDataFolder(), sys.argv[3], int(sys.argv[4]))
 
       if sys.argv[2] == "kinematicParametersAnalysis":
         from zebrazoom.kinematicParametersAnalysis import kinematicParametersAnalysis
@@ -178,7 +178,7 @@ if __name__ == '__main__':
 
       from zebrazoom.code.readValidationVideo import readValidationVideo
       import pandas as pd
-      df = pd.read_excel(os.path.join(os.path.join(os.path.join(dir_path, 'ZZoutput'), sys.argv[3]), "sleepVsMoving_" + sys.argv[3] + ".xlsx"))
+      df = pd.read_excel(os.path.join(paths.getDefaultZZoutputFolder(), sys.argv[3], "sleepVsMoving_" + sys.argv[3] + ".xlsx"))
       nbWells = int(len(df.columns)/3)
 
       if sys.argv[2] == "movingTime":
@@ -194,7 +194,7 @@ if __name__ == '__main__':
     elif sys.argv[1] == "createDistanceBetweenFramesExcelFile":
 
       from zebrazoom.dataAnalysis.createCustomDataStructure.createDistanceBetweenFramesExcelFile import createDistanceBetweenFramesExcelFile
-      createDistanceBetweenFramesExcelFile(os.path.join(dir_path,'ZZoutput'), sys.argv) # fps, pixelSize
+      createDistanceBetweenFramesExcelFile(paths.getDefaultZZoutputFolder(), sys.argv) # fps, pixelSize
       
 
     elif sys.argv[1] == "otherScripts":
@@ -216,7 +216,7 @@ if __name__ == '__main__':
 
     else:
 
-      print("The data produced by ZebraZoom can be found in the folder: " + os.path.join(dir_path,'ZZoutput'))
+      print("The data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
       pathToVideo = sys.argv[1]
       videoName   = sys.argv[2]
       videoExt    = sys.argv[3]

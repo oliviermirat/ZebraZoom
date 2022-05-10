@@ -6,7 +6,6 @@ import os
 import subprocess
 import sys
 import webbrowser
-from pathlib import Path
 from packaging import version
 
 import matplotlib
@@ -20,6 +19,7 @@ from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkReques
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSizePolicy, QSplitter, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
 PYQT6 = False
 
+import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 from zebrazoom.code.readValidationVideo import readValidationVideo
 from zebrazoom.code.checkConsistencyOfParameters import checkConsistencyOfParameters
@@ -515,7 +515,7 @@ class ZZoutroSbatch(QWidget):
         self.controller = controller
 
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Three files have been generated in the current folder:", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("Three files have been generated in the folder %s:" % paths.getRootDataFolder(), self), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("launchZZ.sh, commands.txt, configFile.json", self), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("Place these three files on your server and type: 'sbatch launchZZ.sh' to launch the analysis on all videos in parallel", self), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("Before launching the parrallel tracking with sbatch, you may need to type: 'chmod +x launchZZ.sh'", self), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -1035,10 +1035,7 @@ class ViewParameters(QSplitter):
         self._updateConfigWidgets()
 
     def showValidationVideo(self, numWell, numAnimal, zoom, deb):
-        cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-        path = Path(cur_dir_path)
-        path = path.parent.parent
-        filepath = os.path.join(path, os.path.join('ZZoutput', os.path.join(self.currentResultFolder, 'pathToVideo.txt')))
+        filepath = os.path.join(self.controller.ZZoutputLocation, self.currentResultFolder, 'pathToVideo.txt')
 
         if os.path.exists(filepath):
             with open(filepath) as fp:
@@ -1135,8 +1132,6 @@ class ViewParameters(QSplitter):
     def saveSuperStruct(self):
         name = self.currentResultFolder
 
-        cur_dir_path = os.path.dirname(os.path.realpath(__file__))
-        path = Path(cur_dir_path).parent.parent
         reference = os.path.join(self.controller.ZZoutputLocation, os.path.join(name, 'results_' + name + '.txt'))
         print("reference:", reference)
 
