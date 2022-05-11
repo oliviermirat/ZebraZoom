@@ -237,9 +237,21 @@ jobs:
     needs: [create_release, deploy_windows, deploy_linux, deploy_mac]
     runs-on: ubuntu-latest
     steps:
-      - name: Publish the release draft
+      - name: Publish the release draft on Github
         uses: eregon/publish-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           release_id: ${{ needs.create_release.outputs.release_id }}
+      - name: Install Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+      - name: Prepare package for PyPI release
+        run: |
+          pip install --upgrade pip setuptools wheel
+          python setup.py sdist bdist_wheel
+      - name: Publish the release on PyPI
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
