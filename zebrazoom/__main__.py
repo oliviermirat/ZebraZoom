@@ -1,9 +1,8 @@
 if __name__ == '__main__':
 
   import sys
-  if sys.platform.startswith('win'):
-    import multiprocessing
-    multiprocessing.freeze_support()  # required to support freezing on windows
+  import multiprocessing
+  multiprocessing.freeze_support()  # documentation mistakenly states this is required only on Windows; it's also required on Mac and does nothing on Linux
 
   import os
   import zebrazoom.code.paths as paths
