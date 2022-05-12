@@ -17,7 +17,7 @@ import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QCheckBox, QFileDialog, QVBoxLayout
+from PyQt5.QtWidgets import QCheckBox, QFileDialog, QMessageBox, QVBoxLayout
 
 
 LARGE_FONT= ("Verdana", 12)
@@ -145,6 +145,13 @@ def launchZebraZoom(self):
     allVideos = findAllFilesRecursivelyInDirectories(self.folderName)
 
   else:
+    if (os.path.exists(self.videoName + 'HP.csv') or os.path.exists(self.videoName + '.csv')) and \
+        QMessageBox.question(self.window, "Previously stored coordinates found", "Do you want to use the previously stored coordinates?",
+                             defaultButton=QMessageBox.StandardButton.Yes) != QMessageBox.StandardButton.Yes:
+      if os.path.exists(self.videoName + 'HP.csv'):
+        os.remove(self.videoName + 'HP.csv')
+      if os.path.exists(self.videoName + '.csv'):
+        os.remove(self.videoName + '.csv')
     allVideos = [self.videoName]
 
   print("allVideos:", allVideos)
