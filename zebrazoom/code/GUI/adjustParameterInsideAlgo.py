@@ -141,6 +141,7 @@ def _showPage(layout, labelInfo):
 
 class _InteractiveCVLabelLine(QLabel):
   lineSelected = pyqtSignal(bool)
+  proceed = pyqtSignal()
 
   def __init__(self, width, height, frame, thickness):
     super().__init__()
@@ -152,6 +153,12 @@ class _InteractiveCVLabelLine(QLabel):
     self.setMouseTracking(True)
     self._thickness = thickness
     self._frame = frame
+
+  def keyPressEvent(self, evt):
+    if self._endPoint is not None and (evt.key() == Qt.Key.Key_Enter or evt.key() == Qt.Key.Key_Return):
+      self.proceed.emit()
+      return
+    super().keyPressEvent(evt)
 
   def updateFrame(self, frame=None):
     if frame is not None:
@@ -178,10 +185,12 @@ class _InteractiveCVLabelLine(QLabel):
   def mouseMoveEvent(self, evt):
     if self._endPoint is not None or self._startPoint is None:
       return
-    point = evt.pos()
+    startPoint = self._startPoint
+    endPoint = evt.pos()
     if self._size.height() != self._height or self._size.width() != self._width:
-      point = util.transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(self._width, self._height)), point)
-    util.setPixmapFromCv(cv2.line(self._frame.copy(), (self._startPoint.x(), self._startPoint.y()), (point.x(), point.y()), (255, 255, 255), self._thickness), self)
+      startPoint = util.transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(self._width, self._height)), startPoint)
+      endPoint = util.transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(self._width, self._height)), endPoint)
+    util.setPixmapFromCv(cv2.line(self._frame.copy(), (startPoint.x(), startPoint.y()), (endPoint.x(), endPoint.y()), (255, 255, 255), self._thickness), self)
 
   def mousePressEvent(self, evt):
     if self._endPoint is None and self._startPoint is not None:
@@ -276,6 +285,7 @@ def addBlackSegments(config, videoPath, frameNumber):
     imagePreProcessParameters.append([startPointX, startPointY, endPointX, endPointY, blackSegmentsLineWidth.value()])
     label.updateFrame()
   addSegmentBtn.clicked.connect(storeSegment)
+  label.proceed.connect(storeSegment)
   label.lineSelected.connect(lambda selected: addSegmentBtn.setEnabled(selected))
   buttonsLayout.addWidget(addSegmentBtn)
   removeAllSegmentsBtn = QPushButton("Remove all segments")
@@ -407,7 +417,7 @@ def adjustParamInsideAlgoPage(useNext=True):
   adjustTrackingBtn.setToolTip('WARNING: only click this button if you\'ve tried to track without adjusting these parameters first. Trying to adjust these could make the tracking worse.\n'
                                'Warning: for some of the "overwrite" parameters, you will need to change the initial value for the "overwrite" to take effect.')
   adjustButtonsLayout.addWidget(adjustTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-  addBlackSegmentsBtn = QPushButton("Add Black Segments")
+  addBlackSegmentsBtn = QPushButton("Add Black Segments on Artefacts")
   addBlackSegmentsBtn.clicked.connect(lambda: addBlackSegments(app.configFile, app.videoToCreateConfigFileFor, frameSlider.value()))
   adjustButtonsLayout.addWidget(addBlackSegmentsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   adjustButtonsLayout.addStretch()
