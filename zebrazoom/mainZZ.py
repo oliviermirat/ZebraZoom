@@ -206,6 +206,9 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
       pickle.dump(background, outfile)
       cv2.imwrite(os.path.join(outputFolderVideo, 'background.png'), background)
     outfile.close()
+    app = QApplication.instance()
+    if hasattr(app, "background"):
+      app.background = background
   if hyperparameters["exitAfterBackgroundExtraction"]:
     print("exitAfterBackgroundExtraction")
     raise ValueError

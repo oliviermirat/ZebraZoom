@@ -301,6 +301,7 @@ def calculateBackground(self, controller, nbImagesForBackgroundCalculation, useN
 
   app = QApplication.instance()
   app.wellPositions = []
+  app.background = []
   with app.busyCursor():
     try:
       if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:

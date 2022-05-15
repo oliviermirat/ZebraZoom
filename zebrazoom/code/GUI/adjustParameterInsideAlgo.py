@@ -1,9 +1,16 @@
+import cv2
+
+import numpy as np
+
 from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QRect, QRectF, QSizeF
 from PyQt5.QtGui import QColor, QFont, QIntValidator, QPainter, QPolygon, QPolygonF, QTransform
-from PyQt5.QtWidgets import QApplication, QLabel, QLineEdit, QCheckBox, QPushButton, QHBoxLayout, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QLineEdit, QCheckBox, QPushButton, QHBoxLayout, QSpinBox, QVBoxLayout, QWidget
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.util as util
+from zebrazoom.code.getHyperparameters import getHyperparametersSimple
+from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
+from zebrazoom.code.getImage.headEmbededFrameBackExtract import headEmbededFrameBackExtract
 
 
 class _WellSelectionLabel(QLabel):
@@ -111,6 +118,8 @@ def _cleanup(app, page):
     del app.wellPositions
   if hasattr(app, "wellShape"):
     del app.wellShape
+  if hasattr(app, "background"):
+    del app.background
 
 
 def _showPage(layout, labelInfo):
@@ -128,6 +137,176 @@ def _showPage(layout, labelInfo):
       label.show()
       util.setPixmapFromCv(img, label)
   return page
+
+
+class _InteractiveCVLabelLine(QLabel):
+  lineSelected = pyqtSignal(bool)
+
+  def __init__(self, width, height, frame, thickness):
+    super().__init__()
+    self._width = width
+    self._height = height
+    self._startPoint = None
+    self._endPoint = None
+    self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+    self.setMouseTracking(True)
+    self._thickness = thickness
+    self._frame = frame
+
+  def updateFrame(self, frame=None):
+    if frame is not None:
+      self._frame = frame
+    else:
+      (startPointX, startPointY), (endPointX, endPointY) = self.getPoints()
+      cv2.line(self._frame, (startPointX, startPointY), (endPointX, endPointY), (255, 255, 255), self._thickness)
+    util.setPixmapFromCv(self._frame, self)
+    self._startPoint = None
+    self._endPoint = None
+    self.lineSelected.emit(False)
+
+  def setThickness(self, thickness):
+    self._thickness = thickness
+    if self._endPoint is None:
+      return
+    startPoint = self._startPoint
+    endPoint = self._endPoint
+    if self._size.height() != self._height or self._size.width() != self._width:
+      startPoint = util.transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(self._width, self._height)), startPoint)
+      endPoint = util.transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(self._width, self._height)), endPoint)
+    util.setPixmapFromCv(cv2.line(self._frame.copy(), (startPoint.x(), startPoint.y()), (endPoint.x(), endPoint.y()), (255, 255, 255), self._thickness), self)
+
+  def mouseMoveEvent(self, evt):
+    if self._endPoint is not None or self._startPoint is None:
+      return
+    point = evt.pos()
+    if self._size.height() != self._height or self._size.width() != self._width:
+      point = util.transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(self._width, self._height)), point)
+    util.setPixmapFromCv(cv2.line(self._frame.copy(), (self._startPoint.x(), self._startPoint.y()), (point.x(), point.y()), (255, 255, 255), self._thickness), self)
+
+  def mousePressEvent(self, evt):
+    if self._endPoint is None and self._startPoint is not None:
+      self._endPoint = evt.pos()
+      self.lineSelected.emit(True)
+    else:
+      self._startPoint = evt.pos()
+      self._endPoint = None
+      self.lineSelected.emit(False)
+      util.setPixmapFromCv(self._frame, self)
+
+  def enterEvent(self, evt):
+    QApplication.setOverrideCursor(Qt.CursorShape.CrossCursor)
+
+  def leaveEvent(self, evt):
+    QApplication.restoreOverrideCursor()
+    if self._endPoint is None:
+      util.setPixmapFromCv(self._frame, self)
+
+  def resizeEvent(self, evt):
+    super().resizeEvent(evt)
+    self._size = self.size()
+
+  def getPoints(self):
+    if self._endPoint is None:
+      return None
+    startPoint = self._startPoint
+    endPoint = self._endPoint
+    if self._size.height() != self._height or self._size.width() != self._width:
+      startPoint = util.transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(self._width, self._height)), self._startPoint)
+      endPoint = util.transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(self._width, self._height)), self._endPoint)
+    return (startPoint.x(), startPoint.y()), (endPoint.x(), endPoint.y())
+
+
+def addBlackSegments(config, videoPath, frameNumber):
+  tmpConfig = config.copy()
+
+  def getFrame():
+    hyperparameters = getHyperparametersSimple(tmpConfig)
+    if hyperparameters["headEmbededRemoveBack"] == 0 and hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0:
+      frame, thresh1 = headEmbededFrame(videoPath, frameNumber, hyperparameters)
+    else:
+      hyperparameters["headEmbededRemoveBack"] = 1
+      hyperparameters["minPixelDiffForBackExtract"] = hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"]
+      frame, thresh1 = headEmbededFrameBackExtract(videoPath, QApplication.instance().background, hyperparameters, frameNumber)
+
+    quartileChose = hyperparameters["outputValidationVideoContrastImprovementQuartile"]
+    lowVal  = int(np.quantile(frame, quartileChose))
+    highVal = int(np.quantile(frame, 1 - quartileChose))
+    frame[frame < lowVal]  = lowVal
+    frame[frame > highVal] = highVal
+    frame -= lowVal
+    return (frame * (255 / np.max(frame))).astype('uint8')
+
+  frame = getFrame()
+
+  imagePreProcessMethod = config.get("imagePreProcessMethod", None)
+  imagePreProcessParameters = config.get("imagePreProcessParameters", None)
+  if isinstance(imagePreProcessMethod, list) and isinstance(imagePreProcessParameters, list) and \
+      len(imagePreProcessMethod) == len(imagePreProcessParameters):
+    imagePreProcessMethod = imagePreProcessMethod[:]
+    imagePreProcessParameters = imagePreProcessParameters[:]
+  else:
+    imagePreProcessMethod = []
+    imagePreProcessParameters = []
+  tmpConfig["imagePreProcessMethod"] = imagePreProcessMethod
+  tmpConfig["imagePreProcessParameters"] = imagePreProcessParameters
+
+  layout = QVBoxLayout()
+  height, width = frame.shape[:2]
+  blackSegmentsLineWidth = QSpinBox()
+  blackSegmentsLineWidth.setMinimum(1)
+  blackSegmentsLineWidth.valueChanged.connect(lambda value: label.setThickness(value))
+  blackSegmentsLineWidth.setValue(config.get("addBlackLineToImg_Width", 1))
+  label = _InteractiveCVLabelLine(width, height, frame, blackSegmentsLineWidth.value())
+  layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
+  blackSegmentWidthLayout = QHBoxLayout()
+  blackSegmentWidthLayout.addStretch(1)
+  blackSegmentWidthLayout.addWidget(QLabel("Black segment line width:"))
+  blackSegmentWidthLayout.addWidget(blackSegmentsLineWidth)
+  blackSegmentWidthLayout.addStretch(1)
+  layout.addLayout(blackSegmentWidthLayout)
+
+  buttonsLayout = QHBoxLayout()
+  buttonsLayout.addStretch(1)
+  addSegmentBtn = QPushButton("Add another segment")
+  addSegmentBtn.setEnabled(False)
+
+  def storeSegment():
+    (startPointX, startPointY), (endPointX, endPointY) = label.getPoints()
+    imagePreProcessMethod.append("setImageLineToBlack")
+    imagePreProcessParameters.append([startPointX, startPointY, endPointX, endPointY, blackSegmentsLineWidth.value()])
+    label.updateFrame()
+  addSegmentBtn.clicked.connect(storeSegment)
+  label.lineSelected.connect(lambda selected: addSegmentBtn.setEnabled(selected))
+  buttonsLayout.addWidget(addSegmentBtn)
+  removeAllSegmentsBtn = QPushButton("Remove all segments")
+
+  def removeSegments():
+    for idx in reversed(range(len(imagePreProcessMethod))):
+      if imagePreProcessMethod[idx] != "setImageLineToBlack":
+        continue
+      del imagePreProcessMethod[idx]
+      del imagePreProcessParameters[idx]
+    label.updateFrame(getFrame())
+  removeAllSegmentsBtn.clicked.connect(removeSegments)
+  buttonsLayout.addWidget(removeAllSegmentsBtn)
+  buttonsLayout.addStretch(1)
+  layout.addLayout(buttonsLayout)
+
+  def saveClicked():
+    if label.getPoints() is not None:
+      storeSegment()
+    if not imagePreProcessMethod:
+      if "imagePreProcessMethod" in config:
+        del config["imagePreProcessMethod"]
+    else:
+      config["imagePreProcessMethod"] = imagePreProcessMethod
+    if not imagePreProcessParameters:
+      if "imagePreProcessParameters" in config:
+        del config["imagePreProcessMethod"]
+    else:
+      config["imagePreProcessParameters"] = imagePreProcessParameters
+  buttons = (("Done! Save changes!", saveClicked), ("Discard changes.", None))
+  util.showBlockingPage(layout, labelInfo=(frame, label), title="Click in the beginning and end of segment to set to black pixels", buttons=buttons)
 
 
 def adjustParamInsideAlgoPage(useNext=True):
@@ -228,6 +407,9 @@ def adjustParamInsideAlgoPage(useNext=True):
   adjustTrackingBtn.setToolTip('WARNING: only click this button if you\'ve tried to track without adjusting these parameters first. Trying to adjust these could make the tracking worse.\n'
                                'Warning: for some of the "overwrite" parameters, you will need to change the initial value for the "overwrite" to take effect.')
   adjustButtonsLayout.addWidget(adjustTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  addBlackSegmentsBtn = QPushButton("Add Black Segments")
+  addBlackSegmentsBtn.clicked.connect(lambda: addBlackSegments(app.configFile, app.videoToCreateConfigFileFor, frameSlider.value()))
+  adjustButtonsLayout.addWidget(addBlackSegmentsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   adjustButtonsLayout.addStretch()
   layout.addLayout(adjustButtonsLayout)
 
