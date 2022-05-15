@@ -260,6 +260,7 @@ def addBlackSegments(config, videoPath, frameNumber):
   tmpConfig["imagePreProcessParameters"] = imagePreProcessParameters
 
   layout = QVBoxLayout()
+  layout.addWidget(QLabel("Enter/Return keys can be used instead of clicking Add another segment."), alignment=Qt.AlignmentFlag.AlignCenter)
   height, width = frame.shape[:2]
   blackSegmentsLineWidth = QSpinBox()
   blackSegmentsLineWidth.setMinimum(1)
