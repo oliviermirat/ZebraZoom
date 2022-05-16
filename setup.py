@@ -10,7 +10,7 @@ def read_file(file):
 
 setup(
   name = 'zebrazoom',
-  version = '1.32.51',
+  version = '1.32.52',
   license='AGPL-3.0',
   description = 'Track and analyze zebrafish and animal behavior',
   long_description=read_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), "README.md")),
