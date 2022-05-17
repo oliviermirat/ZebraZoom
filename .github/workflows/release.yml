@@ -51,6 +51,9 @@ jobs:
           rm dist/ZebraZoom/zebrazoom/dataAnalysis/resultsKinematic/.gitignore
           mkdir dist/ZebraZoom/updater
           mv dist/updater.exe dist/ZebraZoom/updater
+      - name: Run the created executable
+        run: |
+          build/dist/ZebraZoom/ZebraZoom --exit
       - name: Generate the list of installed files
         run: |
           cd build/dist/ZebraZoom
@@ -173,6 +176,9 @@ jobs:
           rm dist/ZebraZoomApp/zebrazoom/dataAnalysis/resultsKinematic/.gitignore
           mkdir dist/ZebraZoomApp/updater
           mv dist/updater dist/ZebraZoomApp/updater
+      - name: Run the created executable
+        run: |
+          build/dist/ZebraZoomApp/ZebraZoomApp --exit
       - name: Generate the list of installed files
         run: |
           cd build/dist/ZebraZoomApp

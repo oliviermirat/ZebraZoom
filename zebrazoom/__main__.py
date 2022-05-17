@@ -19,11 +19,13 @@ if __name__ == '__main__':
 
   else:
 
-    app = PlainApplication(sys.argv)
+    if sys.argv[1] == "selectZZoutput" or sys.argv[1] == "--exit":
+      app = ZebraZoomApp(sys.argv)
+    else:
+      app = PlainApplication(sys.argv)
     if sys.argv[1] == "selectZZoutput":
 
       print("The data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
-      app = ZebraZoomApp(sys.argv)
       app.askForZZoutputLocation()
       sys.exit(app.exec())
 
@@ -213,6 +215,10 @@ if __name__ == '__main__':
         from zebrazoom.otherScripts.launchReapplyClustering import launchReapplyClustering
         launchReapplyClustering()
 
+    elif sys.argv[1] == "--exit":
+      from PyQt5.QtCore import QTimer
+      QTimer.singleShot(0, app.window.close)
+      sys.exit(app.exec())
     else:
 
       print("The data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
