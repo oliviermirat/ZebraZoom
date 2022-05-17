@@ -32,7 +32,7 @@ setup(
     "opencv-python-headless<=4.5.1.48",
     "xlrd>=2.0.1",
     "seaborn",
-    "PyQt5",
+    "PyQt5>=5.15.0",
   ],
   packages=setuptools.find_packages(),
   data_files=[
