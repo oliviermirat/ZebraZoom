@@ -85,7 +85,7 @@ class PlainApplication(QApplication):
 class ZebraZoomApp(PlainApplication):
     def __init__(self, args):
         super().__init__(args)
-        self.version = '1.32.54'
+        self.version = '1.32.55'
 
         self.homeDirectory = paths.getRootDataFolder()
 

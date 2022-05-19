@@ -182,7 +182,7 @@ def launchZebraZoom(self):
         tabParams = tabParams + ["exitAfterWellsDetection", 1, "saveWellPositionsToBeReloadedNoMatterWhat", 1]
       try:
         if self.sbatchMode:
-          commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]).replace('\\', '/').replace('//lexport/iss01.', '/network/lustre/iss01/') + ' configFile.json\n')
+          commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]).replace('\\', '/').replace('//lexport/iss02.', '/network/lustre/iss02/') + ' configFile.json\n')
           nbVideosToLaunch = nbVideosToLaunch + 1
         else:
           mainZZ(path, name, videoExt, self.configFileName, tabParams)
