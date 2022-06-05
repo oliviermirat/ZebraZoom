@@ -57,7 +57,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     elif parameterToCalculate == 'Speed':
       
-      Speed = TotalDistance / BoutDuration # This is a bit of a "hack" (not very "clean"), it only works because the listOfParametersToCalculate provided contains BoutDuration and TotalDistance before Speed
+      Speed = TotalDistance * fps / (curbout["BoutEnd"] - curbout["BoutStart"]) # This is a bit of a "hack" (not very "clean"), it only works because the listOfParametersToCalculate provided contains TotalDistance before Speed
       listOfParametersCalculated.append(Speed)
     
     
