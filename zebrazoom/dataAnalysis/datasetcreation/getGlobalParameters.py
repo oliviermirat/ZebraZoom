@@ -57,7 +57,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     elif parameterToCalculate == 'Speed':
       
-      Speed = TotalDistance / BoutDuration # This is a bit of a "hack" (not very "clean"), it only works because the listOfParametersToCalculate provided contains BoutDuration and TotalDistance before Speed
+      Speed = TotalDistance * fps / (curbout["BoutEnd"] - curbout["BoutStart"]) # This is a bit of a "hack" (not very "clean"), it only works because the listOfParametersToCalculate provided contains TotalDistance before Speed
       listOfParametersCalculated.append(Speed)
     
     
@@ -122,7 +122,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     elif parameterToCalculate == 'maxBendAmplitudeSigned':
       
       if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
-        maxBendAmplitudeSigned = curbout["Bend_Amplitude"][np.argmax(abs(np.array(curbout["Bend_Amplitude"])))]
+        maxBendAmplitudeSigned = curbout["Bend_Amplitude"][np.argmax(abs(np.array(curbout["Bend_Amplitude"])))] * (180 / math.pi)
       else:
         maxBendAmplitudeSigned = float('NaN')
       listOfParametersCalculated.append(maxBendAmplitudeSigned)

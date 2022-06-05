@@ -35,7 +35,7 @@ def generatePklDataFileForVideo(excelFileName, ZZoutputLocation, frameStepForDis
       videoName      = excelFile.loc[videoId, 'trial_id']
       videoExtension = os.path.splitext(os.path.split(excelFileName)[1])[1]
       hyperparameters = {}
-      hyperparameters["nbWells"] = len(excelFile.loc[0, 'condition'][1:-1].split(','))
+      hyperparameters["nbWells"] = len(excelFile.loc[videoId, 'condition'][1:-1].split(','))
       hyperparameters["frameStepForDistanceCalculation"] = frameStepForDistanceCalculation
       hyperparameters["videoFPS"]       = float(excelFile.loc[videoId, 'fq'])
       hyperparameters["videoPixelSize"] = float(excelFile.loc[videoId, 'pixelsize'])
