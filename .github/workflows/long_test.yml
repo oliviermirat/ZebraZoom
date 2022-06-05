@@ -1,0 +1,39 @@
+name: Long running automated tests
+
+on: workflow_dispatch
+
+jobs:
+  run_tests:
+    name: Run automated tests
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Install Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 xvfb herbstluftwm
+          export DISPLAY=:99.0
+          /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1920x1200x24 -ac +extension GLX
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install pytest pytest-qt
+          pip install -e .
+      - name: Run Linux tests
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          export DISPLAY=:99.0
+          herbstluftwm &
+          python -m pytest --long -s test/
+      - name: Run tests
+        if: matrix.os != 'ubuntu-latest'
+        run: |
+          python -m pytest --long -s test/
