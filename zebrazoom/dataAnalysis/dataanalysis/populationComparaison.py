@@ -177,6 +177,7 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
           # tabAx[int(idx/nbColumns), idx%nbColumns].set_xticklabels(labels)
     
     plt.savefig(os.path.join(outputFolderResult, 'globalParametersInsideCategories_' + str(i+1) + '.png'))
+    plt.close(fig)
   
   if saveDataPlottedInJson:
     outputFile = open(os.path.join(outputFolderResult, 'dataPlotted.txt'), 'w')
