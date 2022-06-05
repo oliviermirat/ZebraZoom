@@ -910,9 +910,9 @@ def addToHistory(fn):
 
 class Expander(QWidget):
   def __init__(self, parent, title, layout, animationDuration=200, showFrame=False, addScrollbars=False):
-    super(Expander, self).__init__(parent)
+    super(Expander, self).__init__()
 
-    toggleButton = QToolButton()
+    self._toggleButton = toggleButton = QToolButton()
     toggleButton.setStyleSheet("QToolButton { border: none; }")
     toggleButton.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
     toggleButton.setArrowType(Qt.ArrowType.RightArrow)

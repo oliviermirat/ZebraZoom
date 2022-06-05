@@ -431,7 +431,7 @@ class CreateExperimentOrganizationExcel(QWidget):
     self._previousSelection = {}
 
     layout = QVBoxLayout()
-    layout.addWidget(util.apply_style(QLabel("Prepare experiment organization excel file", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Prepare experiment organization excel file"), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
     folderPath = os.path.join(paths.getDataAnalysisFolder(), 'experimentOrganizationExcel')
     model = _ExperimentFilesModel()
@@ -448,9 +448,9 @@ class CreateExperimentOrganizationExcel(QWidget):
     selectionModel.currentRowChanged.connect(lambda current, previous: current.row() == -1 or self._fileSelected(model.filePath(current)))
 
     treeLayout = QVBoxLayout()
-    newExperimentBtn = QPushButton("New experiment")
-    newExperimentBtn.clicked.connect(self._newExperiment)
-    treeLayout.addWidget(newExperimentBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._newExperimentBtn = QPushButton("New experiment")
+    self._newExperimentBtn.clicked.connect(self._newExperiment)
+    treeLayout.addWidget(self._newExperimentBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     treeLayout.addWidget(tree, stretch=1)
     treeWidget = QWidget()
     treeLayout.setContentsMargins(0, 0, 0, 0)
@@ -462,9 +462,9 @@ class CreateExperimentOrganizationExcel(QWidget):
     verticalSplitter.setChildrenCollapsible(False)
     tableLayout = QVBoxLayout()
     tableButtonsLayout = QHBoxLayout()
-    addVideosBtn = QPushButton("Add video(s)")
-    addVideosBtn.clicked.connect(self._addVideos)
-    tableButtonsLayout.addWidget(addVideosBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._addVideosBtn = QPushButton("Add video(s)")
+    self._addVideosBtn.clicked.connect(self._addVideos)
+    tableButtonsLayout.addWidget(self._addVideosBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     removeVideosBtn = QPushButton("Remove selected videos")
     removeVideosBtn.clicked.connect(self._removeVideos)
     tableButtonsLayout.addWidget(removeVideosBtn, alignment=Qt.AlignmentFlag.AlignLeft)
@@ -474,9 +474,9 @@ class CreateExperimentOrganizationExcel(QWidget):
     deleteExperimentBtn = QPushButton("Delete experiment")
     deleteExperimentBtn.clicked.connect(self._removeExperiment)
     tableButtonsLayout.addWidget(deleteExperimentBtn, alignment=Qt.AlignmentFlag.AlignLeft)
-    runExperimentBtn = util.apply_style(QPushButton("Run analysis"), background_color=util.LIGHT_YELLOW)
-    runExperimentBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: self._runExperiment(), forceSave=True))
-    tableButtonsLayout.addWidget(runExperimentBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._runExperimentBtn = util.apply_style(QPushButton("Run analysis"), background_color=util.LIGHT_YELLOW)
+    self._runExperimentBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: self._runExperiment(), forceSave=True))
+    tableButtonsLayout.addWidget(self._runExperimentBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     tableButtonsLayout.addStretch()
     tableLayout.addLayout(tableButtonsLayout)
     tableLayout.addWidget(self._table, stretch=1)
@@ -548,13 +548,13 @@ class CreateExperimentOrganizationExcel(QWidget):
 
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch()
-    startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
+    startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: controller.show_frame("StartPage")))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    previousParameterResultsBtn = util.apply_style(QPushButton("View previous kinematic parameter analysis results", self), background_color=util.LIGHT_YELLOW)
+    previousParameterResultsBtn = util.apply_style(QPushButton("View previous kinematic parameter analysis results"), background_color=util.LIGHT_YELLOW)
     previousParameterResultsBtn.clicked.connect(lambda: controller.show_frame("AnalysisOutputFolderPopulation"))
     buttonsLayout.addWidget(previousParameterResultsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    previousClusteringResultsBtn = util.apply_style(QPushButton("View previous clustering analysis results", self), background_color=util.LIGHT_YELLOW)
+    previousClusteringResultsBtn = util.apply_style(QPushButton("View previous clustering analysis results"), background_color=util.LIGHT_YELLOW)
     previousClusteringResultsBtn.clicked.connect(lambda: controller.show_frame("AnalysisOutputFolderClustering"))
     buttonsLayout.addWidget(previousClusteringResultsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch()
@@ -717,7 +717,7 @@ class CreateExperimentOrganizationExcel(QWidget):
       return None
     return os.path.join(path, resultsFile)
 
-  def _addVideos(self):
+  def _getMultipleFolders(self):
     dialog = QFileDialog()
     dialog.setWindowTitle('Select one or more results folders (use Ctrl or Shift key to select multiple folders)')
     dialog.setDirectory(self.controller.ZZoutputLocation)
@@ -732,8 +732,13 @@ class CreateExperimentOrganizationExcel(QWidget):
       treeView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
 
     if not dialog.exec():
+      return None
+    return dialog.selectedFiles()
+
+  def _addVideos(self):
+    selectedFolders = self._getMultipleFolders()
+    if selectedFolders is None:
       return
-    selectedFolders = dialog.selectedFiles()
     invalidFolders = []
     for selectedFolder in selectedFolders:
       if self._findResultsFile(selectedFolder) is None:
@@ -862,18 +867,18 @@ class ChooseDataAnalysisMethod(QWidget):
     self.controller = controller
 
     layout = QVBoxLayout()
-    layout.addWidget(util.apply_style(QLabel("Choose the analysis you want to perform:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Choose the analysis you want to perform:"), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    compareBtn = util.apply_style(QPushButton("Compare populations with kinematic parameters", self), background_color=util.LIGHT_YELLOW)
-    compareBtn.clicked.connect(lambda: controller.show_frame("PopulationComparison"))
-    layout.addWidget(compareBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    clusterBtn = util.apply_style(QPushButton("Cluster bouts of movements  (for zebrafish only)", self), background_color=util.LIGHT_YELLOW)
-    clusterBtn.clicked.connect(lambda: controller.show_frame("BoutClustering"))
-    layout.addWidget(clusterBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._compareBtn = util.apply_style(QPushButton("Compare populations with kinematic parameters"), background_color=util.LIGHT_YELLOW)
+    self._compareBtn.clicked.connect(lambda: controller.show_frame("PopulationComparison"))
+    layout.addWidget(self._compareBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._clusterBtn = util.apply_style(QPushButton("Cluster bouts of movements  (for zebrafish only)"), background_color=util.LIGHT_YELLOW)
+    self._clusterBtn.clicked.connect(lambda: controller.show_frame("BoutClustering"))
+    layout.addWidget(self._clusterBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
-    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
+    self._startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     self.setLayout(layout)
 
@@ -885,50 +890,51 @@ class PopulationComparison(QWidget):
     self.preferredSize = (1152, 768)
 
     layout = QVBoxLayout()
-    layout.addWidget(util.apply_style(QLabel("Population Comparison:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Population Comparison:"), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    tailTrackingParametersCheckbox = QCheckBox("I want fish tail tracking related kinematic parameters (number of oscillation, tail beat frequency, etc..) to be calculated.", self)
-    layout.addWidget(tailTrackingParametersCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._tailTrackingParametersCheckbox = QCheckBox("I want fish tail tracking related kinematic parameters (number of oscillation, tail beat frequency, etc..) to be calculated.")
+    layout.addWidget(self._tailTrackingParametersCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
     advancedOptionsLayout = QVBoxLayout()
-    saveInMatlabFormatCheckbox = QCheckBox("The result structure is always saved in the pickle format. Also save it in the matlab format.", self)
-    advancedOptionsLayout.addWidget(saveInMatlabFormatCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
-    saveRawDataCheckbox = QCheckBox("Save original raw data in result structure.", self)
-    advancedOptionsLayout.addWidget(saveRawDataCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
-    forcePandasRecreation = QCheckBox("Force recalculation of all parameters even if they have already been calculated and saved.", self)
-    advancedOptionsLayout.addWidget(forcePandasRecreation, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._saveInMatlabFormatCheckbox = QCheckBox("The result structure is always saved in the pickle format. Also save it in the matlab format.")
+    advancedOptionsLayout.addWidget(self._saveInMatlabFormatCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._saveRawDataCheckbox = QCheckBox("Save original raw data in result structure.")
+    advancedOptionsLayout.addWidget(self._saveRawDataCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._forcePandasRecreation = QCheckBox("Force recalculation of all parameters even if they have already been calculated and saved.")
+    advancedOptionsLayout.addWidget(self._forcePandasRecreation, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    advancedOptionsLayout.addWidget(util.apply_style(QLabel("Number of frames between each frame used for distance calculation (to avoid noise due to close-by subsequent points) (default value is 4):", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    frameStepForDistanceCalculation = QLineEdit(controller.window)
-    frameStepForDistanceCalculation.setValidator(QIntValidator(frameStepForDistanceCalculation))
-    frameStepForDistanceCalculation.validator().setBottom(0)
-    advancedOptionsLayout.addWidget(frameStepForDistanceCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(util.apply_style(QLabel("Number of frames between each frame used for distance calculation (to avoid noise due to close-by subsequent points) (default value is 4):"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    self._frameStepForDistanceCalculation = QLineEdit()
+    self._frameStepForDistanceCalculation.setValidator(QIntValidator())
+    self._frameStepForDistanceCalculation.validator().setBottom(0)
+    advancedOptionsLayout.addWidget(self._frameStepForDistanceCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    advancedOptionsLayout.addWidget(util.apply_style(QLabel("If you are calculating fish tail tracking related kinematic parameters:", self), font_size="16px"), alignment=Qt.AlignmentFlag.AlignCenter)
-    advancedOptionsLayout.addWidget(util.apply_style(QLabel("What's the minimum number of bends a bout should have to be taken into account for the analysis?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    advancedOptionsLayout.addWidget(util.apply_style(QLabel("(the default value is 3) (put 0 if you want all bends to be taken into account)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    minNbBendForBoutDetect = QLineEdit(controller.window)
-    minNbBendForBoutDetect.setValidator(QIntValidator(minNbBendForBoutDetect))
-    minNbBendForBoutDetect.validator().setBottom(0)
-    advancedOptionsLayout.addWidget(minNbBendForBoutDetect, alignment=Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(util.apply_style(QLabel("If you are calculating fish tail tracking related kinematic parameters:"), font_size="16px"), alignment=Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(util.apply_style(QLabel("What's the minimum number of bends a bout should have to be taken into account for the analysis?"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(util.apply_style(QLabel("(the default value is 3) (put 0 if you want all bends to be taken into account)"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    self._minNbBendForBoutDetect = QLineEdit()
+    self._minNbBendForBoutDetect.setValidator(QIntValidator())
+    self._minNbBendForBoutDetect.validator().setBottom(0)
+    advancedOptionsLayout.addWidget(self._minNbBendForBoutDetect, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    advancedOptionsLayout.addWidget(util.apply_style(QLabel("If, for a bout, the tail tracking related kinematic parameters are being discarded because of a low amount of bends,", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    advancedOptionsLayout.addWidget(util.apply_style(QLabel("should the BoutDuration, TotalDistance, Speed and IBI also be discarded for that bout?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    discardRadioButton = QRadioButton("Yes, discard BoutDuration, TotalDistance, Speed and IBI in that situation", self)
-    discardRadioButton.setChecked(True)
-    advancedOptionsLayout.addWidget(discardRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    keepRadioButton = QRadioButton("No, keep BoutDuration, TotalDistance, Speed and IBI in that situation", self)
-    advancedOptionsLayout.addWidget(keepRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    advancedOptionsLayout.addWidget(util.apply_style(QLabel("Please ignore the two questions above if you're only looking at BoutDuration, TotalDistance, Speed and IBI.", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(util.apply_style(QLabel("If, for a bout, the tail tracking related kinematic parameters are being discarded because of a low amount of bends,"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(util.apply_style(QLabel("should the BoutDuration, TotalDistance, Speed and IBI also be discarded for that bout?"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    self._discardRadioButton = QRadioButton("Yes, discard BoutDuration, TotalDistance, Speed and IBI in that situation")
+    self._discardRadioButton.setChecked(True)
+    advancedOptionsLayout.addWidget(self._discardRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._keepRadioButton = QRadioButton("No, keep BoutDuration, TotalDistance, Speed and IBI in that situation")
+    advancedOptionsLayout.addWidget(self._keepRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(util.apply_style(QLabel("Please ignore the two questions above if you're only looking at BoutDuration, TotalDistance, Speed and IBI."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(util.Expander(self, "Show advanced options", advancedOptionsLayout))
+    self._advancedOptionsExpander = util.Expander(self, "Show advanced options", advancedOptionsLayout)
+    layout.addWidget(self._advancedOptionsExpander)
 
-    launchBtn = util.apply_style(QPushButton("Launch Analysis", self), background_color=util.LIGHT_YELLOW)
-    launchBtn.clicked.connect(lambda: controller.populationComparison(controller, tailTrackingParametersCheckbox.isChecked(), saveInMatlabFormatCheckbox.isChecked(), saveRawDataCheckbox.isChecked(), forcePandasRecreation.isChecked(), minNbBendForBoutDetect.text(), discardRadioButton.isChecked(), keepRadioButton.isChecked(), frameStepForDistanceCalculation.text()))
-    layout.addWidget(launchBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
-    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._launchBtn = util.apply_style(QPushButton("Launch Analysis"), background_color=util.LIGHT_YELLOW)
+    self._launchBtn.clicked.connect(lambda: controller.populationComparison(controller, self._tailTrackingParametersCheckbox.isChecked(), self._saveInMatlabFormatCheckbox.isChecked(), self._saveRawDataCheckbox.isChecked(), self._forcePandasRecreation.isChecked(), self._minNbBendForBoutDetect.text(), self._discardRadioButton.isChecked(), self._keepRadioButton.isChecked(), self._frameStepForDistanceCalculation.text()))
+    layout.addWidget(self._launchBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
+    self._startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     self.setLayout(layout)
 
@@ -986,13 +992,13 @@ class BoutClustering(QWidget):
     advancedOptionsLayout.addWidget(removeBoutsContainingNanValuesInParametersUsedForClustering, alignment=Qt.AlignmentFlag.AlignCenter)
     advancedOptionsLayout.addWidget(util.apply_style(QLabel("If the box above is un-checked, the nan values will be replaced by zeros and no bouts will be removed.", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     
-    forcePandasRecreation = QCheckBox("Force recalculation of all parameters even if they have already been calculated and saved.", self)
-    advancedOptionsLayout.addWidget(forcePandasRecreation, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._forcePandasRecreation = QCheckBox("Force recalculation of all parameters even if they have already been calculated and saved.", self)
+    advancedOptionsLayout.addWidget(self._forcePandasRecreation, alignment=Qt.AlignmentFlag.AlignCenter)
 
     layout.addWidget(util.Expander(self, "Show advanced options", advancedOptionsLayout))
 
     launchBtn = util.apply_style(QPushButton("Launch Analysis", self), background_color=util.LIGHT_YELLOW)
-    launchBtn.clicked.connect(lambda: controller.boutClustering(controller, nbClustersToFind.text(), freelySwimmingRadioButton.isChecked(), headEmbeddedRadioButton.isChecked(), minNbBendForBoutDetect.text(), nbVideosToSave.text(), modelUsedForClusteringCheckbox.isChecked(), removeOutliersCheckbox.isChecked(), frameStepForDistanceCalculation.text(), removeBoutsContainingNanValuesInParametersUsedForClustering.isChecked(), forcePandasRecreation.isChecked()))
+    launchBtn.clicked.connect(lambda: controller.boutClustering(controller, nbClustersToFind.text(), freelySwimmingRadioButton.isChecked(), headEmbeddedRadioButton.isChecked(), minNbBendForBoutDetect.text(), nbVideosToSave.text(), modelUsedForClusteringCheckbox.isChecked(), removeOutliersCheckbox.isChecked(), frameStepForDistanceCalculation.text(), removeBoutsContainingNanValuesInParametersUsedForClustering.isChecked(), self._forcePandasRecreation.isChecked()))
     layout.addWidget(launchBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
@@ -1007,23 +1013,23 @@ class AnalysisOutputFolderPopulation(QWidget):
     self.controller = controller
 
     layout = QVBoxLayout()
-    layout.addWidget(util.apply_style(QLabel("View Analysis Output:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(QLabel("Click the button below to open the folder that contains the results of the analysis.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("View Analysis Output:"), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel("Click the button below to open the folder that contains the results of the analysis."), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    viewProcessedBtn = util.apply_style(QPushButton("View 'plots and processed data' folders", self), background_color=util.LIGHT_YELLOW)
-    viewProcessedBtn.clicked.connect(lambda: controller.openAnalysisFolder(controller.homeDirectory, 'resultsKinematic'))
-    layout.addWidget(viewProcessedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    viewRawBtn = util.apply_style(QPushButton("View raw data", self), background_color=util.LIGHT_YELLOW)
-    viewRawBtn.clicked.connect(lambda: controller.openAnalysisFolder(controller.homeDirectory, 'data'))
-    layout.addWidget(viewRawBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
-    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._viewProcessedBtn = util.apply_style(QPushButton("View 'plots and processed data' folders"), background_color=util.LIGHT_YELLOW)
+    self._viewProcessedBtn.clicked.connect(lambda: controller.openAnalysisFolder(controller.homeDirectory, 'resultsKinematic'))
+    layout.addWidget(self._viewProcessedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._viewRawBtn = util.apply_style(QPushButton("View raw data"), background_color=util.LIGHT_YELLOW)
+    self._viewRawBtn.clicked.connect(lambda: controller.openAnalysisFolder(controller.homeDirectory, 'data'))
+    layout.addWidget(self._viewRawBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
+    self._startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    layout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    linkBtn = util.apply_style(QPushButton("Video data analysis online documentation", self), background_color=util.LIGHT_YELLOW)
-    linkBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/behaviorAnalysis/behaviorAnalysisGUI"))
-    layout.addWidget(linkBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(QLabel("(read the 'Further analyzing ZebraZoom's output through the Graphical User Interface' section)", self), alignment=Qt.AlignmentFlag.AlignCenter)
+    self._linkBtn = util.apply_style(QPushButton("Video data analysis online documentation"), background_color=util.LIGHT_YELLOW)
+    self._linkBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/behaviorAnalysis/behaviorAnalysisGUI"))
+    layout.addWidget(self._linkBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel("(read the 'Further analyzing ZebraZoom's output through the Graphical User Interface' section)"), alignment=Qt.AlignmentFlag.AlignCenter)
 
     self.setLayout(layout)
 

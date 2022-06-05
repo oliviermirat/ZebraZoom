@@ -116,12 +116,7 @@ class ZebraZoomApp(PlainApplication):
             self.frames[F.__name__] = idx
             page = F(self)
             if hasattr(page, 'preferredSize'):
-                page.sizeHint = lambda *args, page=page: QSize(*page.preferredSize)
-                wrapperWidget = QWidget(self.window)
-                wrapperLayout = QVBoxLayout()
-                wrapperLayout.addWidget(page, alignment=Qt.AlignmentFlag.AlignCenter)
-                wrapperWidget.setLayout(wrapperLayout)
-                layout.addWidget(wrapperWidget)
+                layout.addWidget(self._wrapWidget(page))
             else:
                 layout.addWidget(page)
         central_widget = QWidget(self.window)
@@ -135,6 +130,14 @@ class ZebraZoomApp(PlainApplication):
         selectedFolder = QFileDialog.getExistingDirectory(self.window, "Select ZZoutput folder", os.path.expanduser("~"))
         if selectedFolder:
           self.ZZoutputLocation = selectedFolder
+
+    def _wrapWidget(self, page):
+        page.sizeHint = lambda *args, page=page: QSize(*page.preferredSize)
+        wrapperWidget = QWidget()
+        wrapperLayout = QVBoxLayout()
+        wrapperLayout.addWidget(page, alignment=Qt.AlignmentFlag.AlignCenter)
+        wrapperWidget.setLayout(wrapperLayout)
+        return wrapperWidget
 
     def _currentPageChanged(self):
         backBtn = self.window.centralWidget().layout().currentWidget().findChild(QPushButton, "back")
