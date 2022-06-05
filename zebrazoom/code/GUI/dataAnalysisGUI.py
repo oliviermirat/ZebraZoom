@@ -899,6 +899,7 @@ class PopulationComparison(QWidget):
     self._saveInMatlabFormatCheckbox = QCheckBox("The result structure is always saved in the pickle format. Also save it in the matlab format.")
     advancedOptionsLayout.addWidget(self._saveInMatlabFormatCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
     self._saveRawDataCheckbox = QCheckBox("Save original raw data in result structure.")
+    self._saveRawDataCheckbox.setVisible(False)  # XXX: hidden from the moment because of a bug, unhide it once it's fixed
     advancedOptionsLayout.addWidget(self._saveRawDataCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
     self._forcePandasRecreation = QCheckBox("Force recalculation of all parameters even if they have already been calculated and saved.")
     advancedOptionsLayout.addWidget(self._forcePandasRecreation, alignment=Qt.AlignmentFlag.AlignCenter)
