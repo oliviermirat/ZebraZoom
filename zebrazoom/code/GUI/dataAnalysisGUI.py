@@ -1,9 +1,13 @@
+import math
 import os
 import pickle
 import webbrowser
 
 import json
 import pandas as pd
+import seaborn as sns
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qtagg import FigureCanvas
 
 from PyQt5.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QItemSelectionModel, QModelIndex, QPoint, QPointF, QRect, QRectF, QSize, QSizeF, QStringListModel
 from PyQt5.QtGui import QColor, QFont, QFontMetrics, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
@@ -13,6 +17,9 @@ PYQT6 = False
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
+from zebrazoom.dataAnalysis.dataanalysis.populationComparaison import populationComparaison
+from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
+from zebrazoom.dataAnalysis.datasetcreation.generatePklDataFileForVideo import generatePklDataFileForVideo
 
 
 class _ExperimentFilesModel(QFileSystemModel):
@@ -931,13 +938,82 @@ class PopulationComparison(QWidget):
     layout.addWidget(self._advancedOptionsExpander)
 
     self._launchBtn = util.apply_style(QPushButton("Launch Analysis"), background_color=util.LIGHT_YELLOW)
-    self._launchBtn.clicked.connect(lambda: controller.populationComparison(controller, self._tailTrackingParametersCheckbox.isChecked(), self._saveInMatlabFormatCheckbox.isChecked(), self._saveRawDataCheckbox.isChecked(), self._forcePandasRecreation.isChecked(), self._minNbBendForBoutDetect.text(), self._discardRadioButton.isChecked(), self._keepRadioButton.isChecked(), self._frameStepForDistanceCalculation.text()))
+    self._launchBtn.clicked.connect(lambda: self._populationComparison(self._tailTrackingParametersCheckbox.isChecked(), self._saveInMatlabFormatCheckbox.isChecked(), self._saveRawDataCheckbox.isChecked(), self._forcePandasRecreation.isChecked(), self._minNbBendForBoutDetect.text(), self._discardRadioButton.isChecked(), self._keepRadioButton.isChecked(), self._frameStepForDistanceCalculation.text()))
     layout.addWidget(self._launchBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     self._startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
     self._startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     layout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     self.setLayout(layout)
+
+  def _populationComparison(self, TailTrackingParameters=0, saveInMatlabFormat=0, saveRawData=0, forcePandasRecreation=0, minNbBendForBoutDetect=3, discard=0, keep=1, frameStepForDistanceCalculation='4'):
+    if len(frameStepForDistanceCalculation) == 0:
+      frameStepForDistanceCalculation = '4'
+
+    if discard == 0 and keep == 0:
+      keep = 1
+
+    if len(minNbBendForBoutDetect) == 0:
+      minNbBendForBoutDetect = 3
+
+    if len(self.controller.ZZoutputLocation) == 0:
+      ZZoutputLocation = paths.getDefaultZZoutputFolder()
+    else:
+      ZZoutputLocation = self.controller.ZZoutputLocation
+
+    # Creating the dataframe
+
+    dataframeOptions = {
+      'pathToExcelFile'                   : self.controller.experimentOrganizationExcelFileAndFolder, #os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'experimentOrganizationExcel/')),
+      'fileExtension'                     : '.' + self.controller.experimentOrganizationExcel.split(".")[1],
+      'resFolder'                         : os.path.join(paths.getDataAnalysisFolder(), 'data'),
+      'nameOfFile'                        : self.controller.experimentOrganizationExcel.split(".")[0],
+      'smoothingFactorDynaParam'          : 0,   # 0.001
+      'nbFramesTakenIntoAccount'          : 0,
+      'numberOfBendsIncludedForMaxDetect' : -1,
+      'minNbBendForBoutDetect'            : int(minNbBendForBoutDetect),
+      'keepSpeedDistDurWhenLowNbBends'    : int(keep),
+      'defaultZZoutputFolderPath'         : ZZoutputLocation,
+      'computeTailAngleParamForCluster'   : False,
+      'computeMassCenterParamForCluster'  : False,
+      'tailAngleKinematicParameterCalculation'    : TailTrackingParameters,
+      'saveRawDataInAllBoutsSuperStructure'       : saveRawData,
+      'saveAllBoutsSuperStructuresInMatlabFormat' : saveInMatlabFormat,
+      'frameStepForDistanceCalculation'           : frameStepForDistanceCalculation
+    }
+
+    generatePklDataFileForVideo(os.path.join(self.controller.experimentOrganizationExcelFileAndFolder, self.controller.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation)
+
+    [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", forcePandasRecreation, [])
+
+    # Plotting for the different conditions
+    nameOfFile = dataframeOptions['nameOfFile']
+    resFolder  = dataframeOptions['resFolder']
+
+    # Mixing up all the bouts
+    populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 0, True)
+
+    allParameters, allData = populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 0, False)
+
+    # First median per well for each kinematic parameter
+    populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 1, True)
+
+    medianParameters, medianData = populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 1, False)
+
+    self.controller.show_frame("AnalysisOutputFolderPopulation")
+    layout = self.controller.window.centralWidget().layout()
+    page = layout.currentWidget()
+    page.allParameters = allParameters
+    page.medianParameters = medianParameters
+    page.allData = allData
+    page.medianData = medianData
+    def cleanup():
+      page.allParameters = []
+      page.medianParameters = []
+      page.allData = None
+      page.medianData = None
+      layout.currentChanged.disconnect(cleanup)
+    layout.currentChanged.connect(cleanup)
 
 
 class BoutClustering(QWidget):
@@ -1012,11 +1088,23 @@ class AnalysisOutputFolderPopulation(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
+    self.allParameters = []
+    self.medianParameters = []
+    self.allData = None
+    self.medianData = None
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("View Analysis Output:"), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(QLabel("Click the button below to open the folder that contains the results of the analysis."), alignment=Qt.AlignmentFlag.AlignCenter)
 
+    def visualizeKinematicParameters():
+      stackedLayout = controller.window.centralWidget().layout()
+      page = KinematicParametersVisualization(controller, self.allParameters, self.medianParameters, self.allData, self.medianData)
+      stackedLayout.addWidget(page)
+      stackedLayout.setCurrentWidget(page)
+    self._visualizeBtn = util.apply_style(QPushButton("Visualize kinematic parameters"), background_color=util.LIGHT_YELLOW)
+    self._visualizeBtn.clicked.connect(visualizeKinematicParameters)
+    layout.addWidget(self._visualizeBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     self._viewProcessedBtn = util.apply_style(QPushButton("View 'plots and processed data' folders"), background_color=util.LIGHT_YELLOW)
     self._viewProcessedBtn.clicked.connect(lambda: controller.openAnalysisFolder(controller.homeDirectory, 'resultsKinematic'))
     layout.addWidget(self._viewProcessedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -1056,3 +1144,111 @@ class AnalysisOutputFolderClustering(QWidget):
     layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     self.setLayout(layout)
+
+
+class KinematicParametersVisualization(QWidget):
+  def __init__(self, controller, allParameters, medianParameters, allData, medianData):
+    super().__init__(controller.window)
+    self.controller = controller
+    self._paramCheckboxes = {}
+    self._allParameters = allParameters
+    self._medianParameters = medianParameters
+    self._allData = allData
+    self._medianData = medianData
+    self._figures = {'median': {True: {}, False: {}}, 'all': {True: {}, False: {}}}
+
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("Visualize Kinematic Parameters"), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    middleLayout = QHBoxLayout()
+    checkboxesLayout = QVBoxLayout()
+    checkboxesLayout.addWidget(util.apply_style(QLabel("Visualization options"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
+    self._medianPerWellCheckbox = QCheckBox("Median per well")
+    self._medianPerWellCheckbox.toggled.connect(lambda: self._update(visualizationOptionsChanged=True))
+    checkboxesLayout.addWidget(self._medianPerWellCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._plotOutliersAndMeanCheckbox = QCheckBox("Plot outliers and mean")
+    self._plotOutliersAndMeanCheckbox.toggled.connect(lambda: self._update(visualizationOptionsChanged=True))
+    checkboxesLayout.addWidget(self._plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
+    checkboxesLayout.addWidget(util.apply_style(QLabel("Parameters"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
+    for param in allParameters + medianParameters:
+      if param in self._paramCheckboxes:
+        continue
+      checkbox = QCheckBox(param)
+      checkbox.toggled.connect(lambda: self._update())
+      self._paramCheckboxes[param] = checkbox
+      checkboxesLayout.addWidget(checkbox, alignment=Qt.AlignmentFlag.AlignLeft)
+    checkboxesLayout.addStretch(1)
+    checkboxesWidget = QWidget()
+    checkboxesWidget.setLayout(checkboxesLayout)
+    checkboxesScrollArea = QScrollArea()
+    checkboxesScrollArea.setWidgetResizable(True)
+    checkboxesScrollArea.setWidget(checkboxesWidget)
+    middleLayout.addWidget(checkboxesScrollArea)
+
+    for params, typeDict in zip((medianParameters, allParameters), self._figures.values()):
+      for figuresDict in typeDict.values():
+        for param in params:
+          figuresDict[param] = FigureCanvas(Figure(figsize=(5.8, 4.35), tight_layout=True))
+
+    self._chartsScrollArea = QScrollArea()
+    middleLayout.addWidget(self._chartsScrollArea, stretch=1)
+    layout.addLayout(middleLayout)
+
+    self._startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
+    self._startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    self._startPageBtn.clicked.connect(lambda: controller.window.centralWidget().layout().removeWidget(self))
+    layout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self.setLayout(layout)
+    self._update(visualizationOptionsChanged=True)
+
+  def _createChartsWidget(self, figures):
+    if not figures:
+      self._chartsScrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
+      return QLabel("Select one or more parameters to visualize.")
+    chartsLayout = QGridLayout()
+    chartsWidget = QWidget()
+    chartsWidget.setLayout(chartsLayout)
+    cols = math.ceil(len(figures) / 2)
+    row = 0
+    col = 0
+    for param, figure in figures:
+      chartsLayout.addWidget(figure, row, col)
+      if col < cols - 1:
+        col += 1
+      else:
+        row += 1
+        col = 0
+      figure.setVisible(True)
+      if not figure.figure.get_axes():  # check whether we've already plotted it
+        self._plotFigure(param, figure.figure)
+    self._chartsScrollArea.setAlignment(Qt.AlignmentFlag.AlignLeft)
+    return chartsWidget
+
+  def _plotFigure(self, param, figure):
+    data = self._medianData if self._medianPerWellCheckbox.isChecked() else self._allData
+    plotOutliersAndMean = self._plotOutliersAndMeanCheckbox.isChecked()
+    ax = figure.add_subplot(111)
+    b = sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean)
+    b.set_ylabel('', fontsize=0)
+    b.set_xlabel('', fontsize=0)
+    b.axes.set_title(param, fontsize=20)
+
+  def _iterAllFigures(self):
+    for typeDict in self._figures.values():
+      for figuresDict in typeDict.values():
+        yield from figuresDict.values()
+
+  def _update(self, visualizationOptionsChanged=False):
+    params = set(self._medianParameters) if self._medianPerWellCheckbox.isChecked() else set(self._allParameters)
+    if visualizationOptionsChanged:
+      for param, checkbox in self._paramCheckboxes.items():
+        checkbox.setVisible(param in params)
+    for figure in self._iterAllFigures():
+      figure.hide()
+      figure.setParent(None)
+    selectedParameters = {param for param, checkbox in self._paramCheckboxes.items() if checkbox.isChecked()}
+    shownFigures = [(param, figure) for param, figure in
+                    self._figures['median' if self._medianPerWellCheckbox.isChecked() else 'all'][self._plotOutliersAndMeanCheckbox.isChecked()].items()
+                    if param in selectedParameters]
+    self._chartsScrollArea.setWidget(self._createChartsWidget(shownFigures))

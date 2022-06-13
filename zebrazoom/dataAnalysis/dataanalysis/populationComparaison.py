@@ -183,3 +183,4 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
     outputFile = open(os.path.join(outputFolderResult, 'dataPlotted.txt'), 'w')
     outputFile.write(json.dumps(dataPlotted))
     outputFile.close()
+  return globParam, dfParam

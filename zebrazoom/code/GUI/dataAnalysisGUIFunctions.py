@@ -14,7 +14,6 @@ from PyQt5.QtWidgets import QFileDialog
 
 import zebrazoom.code.paths as paths
 from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
-from zebrazoom.dataAnalysis.dataanalysis.populationComparaison import populationComparaison
 from zebrazoom.dataAnalysis.dataanalysis.applyClustering import applyClustering
 
 from zebrazoom.dataAnalysis.datasetcreation.generatePklDataFileForVideo import generatePklDataFileForVideo
@@ -27,64 +26,6 @@ def openAnalysisFolder(self, homeDirectory, specificDirectory):
   else:
     opener ="open" if sys.platform == "darwin" else "xdg-open"
     subprocess.call([opener, dir_path])
-
-
-def populationComparison(self, controller, TailTrackingParameters=0, saveInMatlabFormat=0, saveRawData=0, forcePandasRecreation=0, minNbBendForBoutDetect=3, discard=0, keep=1, frameStepForDistanceCalculation='4'):
-  
-  if len(frameStepForDistanceCalculation) == 0:
-    frameStepForDistanceCalculation = '4'
-  
-  if discard == 0 and keep == 0:
-    keep = 1
-
-  if len(minNbBendForBoutDetect) == 0:
-    minNbBendForBoutDetect = 3
-
-  if len(controller.ZZoutputLocation) == 0:
-    ZZoutputLocation = paths.getDefaultZZoutputFolder()
-  else:
-    ZZoutputLocation = controller.ZZoutputLocation
-
-  # Creating the dataframe
-
-  dataframeOptions = {
-    'pathToExcelFile'                   : self.experimentOrganizationExcelFileAndFolder, #os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'experimentOrganizationExcel/')),
-    'fileExtension'                     : '.' + self.experimentOrganizationExcel.split(".")[1],
-    'resFolder'                         : os.path.join(paths.getDataAnalysisFolder(), 'data'),
-    'nameOfFile'                        : self.experimentOrganizationExcel.split(".")[0],
-    'smoothingFactorDynaParam'          : 0,   # 0.001
-    'nbFramesTakenIntoAccount'          : 0,
-    'numberOfBendsIncludedForMaxDetect' : -1,
-    'minNbBendForBoutDetect'            : int(minNbBendForBoutDetect),
-    'keepSpeedDistDurWhenLowNbBends'    : int(keep),
-    'defaultZZoutputFolderPath'         : ZZoutputLocation,
-    'computeTailAngleParamForCluster'   : False,
-    'computeMassCenterParamForCluster'  : False,
-    'tailAngleKinematicParameterCalculation'    : TailTrackingParameters,
-    'saveRawDataInAllBoutsSuperStructure'       : saveRawData,
-    'saveAllBoutsSuperStructuresInMatlabFormat' : saveInMatlabFormat,
-    'frameStepForDistanceCalculation'           : frameStepForDistanceCalculation
-  }
-  
-  generatePklDataFileForVideo(os.path.join(self.experimentOrganizationExcelFileAndFolder, self.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation)
-  
-  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", forcePandasRecreation, [])
-  
-  # Plotting for the different conditions
-  nameOfFile = dataframeOptions['nameOfFile']
-  resFolder  = dataframeOptions['resFolder']
-
-  # Mixing up all the bouts
-  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 0, True)
-
-  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 0, False)
-
-  # First median per well for each kinematic parameter
-  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 1, True)
-
-  populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 1, False)
-
-  controller.show_frame("AnalysisOutputFolderPopulation")
 
 
 def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering=0, removeOutliers=False, frameStepForDistanceCalculation='4', removeBoutsContainingNanValuesInParametersUsedForClustering=True, forcePandasRecreation=0):
