@@ -1129,7 +1129,7 @@ class _TooltipHelper(QObject):
 
 class KinematicParametersVisualization(util.CollapsibleSplitter):
   _IGNORE_COLUMNS = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
-  _FILENAME = 'globalParametersInsideCategories.xlsx'
+  _FILENAME = 'globalParametersInsideCategories'
   _CHART_SIZE = QSize(580, 435)
 
   def __init__(self, data):
@@ -1299,18 +1299,22 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._update(visualizationOptionsChanged=True)
 
   def _findResultsFiles(self, folder):
-    allBoutsMixed = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'allBoutsMixed', self._FILENAME)
-    medianPerWell = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'medianPerWellFirst', self._FILENAME)
-    if not os.path.exists(allBoutsMixed) or not os.path.exists(medianPerWell):
+    allBoutsMixedXlsx = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'allBoutsMixed', self._FILENAME + '.xlsx')
+    allBoutsMixedCsv = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'allBoutsMixed', self._FILENAME + '.csv')
+    medianPerWellXlsx = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'medianPerWellFirst', self._FILENAME + '.xlsx')
+    medianPerWellCsv = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'medianPerWellFirst', self._FILENAME + '.csv')
+    allBouts = allBoutsMixedCsv if os.path.exists(allBoutsMixedCsv) else allBoutsMixedXlsx if os.path.exists(allBoutsMixedXlsx) else None
+    median = medianPerWellCsv if os.path.exists(medianPerWellCsv) else medianPerWellXlsx if os.path.exists(medianPerWellXlsx) else None
+    if allBouts is None or median is None:
       return None
-    return allBoutsMixed, medianPerWell
+    return allBouts, median
 
   def _readResults(self, folder):
     allBoutsMixed, medianPerWell = self._findResultsFiles(folder)
-    self._allData = pd.read_excel(allBoutsMixed)
+    self._allData = pd.read_csv(allBoutsMixed) if allBoutsMixed.endswith('.csv') else pd.read_excel(allBoutsMixed)
     self._allData = self._allData.loc[:, ~self._allData.columns.str.contains('^Unnamed')]
     self._allParameters = [param for param in self._allData.columns if param not in self._IGNORE_COLUMNS]
-    self._medianData = pd.read_excel(medianPerWell)
+    self._medianData = pd.read_csv(medianPerWell) if medianPerWell.endswith('.csv') else pd.read_excel(medianPerWell)
     self._medianData = self._medianData.loc[:, ~self._medianData.columns.str.contains('^Unnamed')]
     self._medianParameters = [param for param in self._medianData.columns if param not in self._IGNORE_COLUMNS]
     self._recreateMainWidget()

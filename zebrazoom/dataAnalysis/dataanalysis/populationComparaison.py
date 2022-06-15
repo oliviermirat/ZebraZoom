@@ -93,6 +93,7 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
   
   if plotOutliersAndMean:
     dfParam.to_excel(os.path.join(outputFolderResult, 'globalParametersInsideCategories.xlsx'))
+    dfParam.to_csv(os.path.join(outputFolderResult, 'globalParametersInsideCategories.csv'), index=False)
   
   nbGraphs = int(len(globParam)/6) if len(globParam) % 6 == 0 else int(len(globParam)/6) + 1
   color = ['b', 'r', 'c', 'm', 'y', 'k']
