@@ -298,7 +298,7 @@ def _test_kinematic_parameters_small_check_results():
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)} | {'globalParametersInsideCategories.xlsx', 'noMeanAndOutliersPlotted'}
+    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)}
 
 
@@ -357,7 +357,7 @@ def _test_basic_check_results():
   assert not os.path.exists(os.path.join(dataFolder, 'Experiment 2.mat'))
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_1.png', 'globalParametersInsideCategories.xlsx', 'noMeanAndOutliersPlotted'}
+    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_1.png', 'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_1.png'}
 
 
@@ -454,7 +454,7 @@ def _test_kinematic_parameters_large_check_results():
     assert_series_equal(expectedResultsAll[col], dataframe[col])
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)} | {'globalParametersInsideCategories.xlsx', 'noMeanAndOutliersPlotted'}
+    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)}
 
 
@@ -513,7 +513,7 @@ def _test_frames_for_distance_calculation_check_results():
     assert_series_equal(expectedResultsAll[col], dataframe[col])
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_1.png', 'globalParametersInsideCategories.xlsx', 'noMeanAndOutliersPlotted'}
+    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_1.png', 'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_1.png'}
 
 
@@ -565,7 +565,7 @@ def _test_minimum_number_of_bends_check_results():
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)} | {'globalParametersInsideCategories.xlsx', 'noMeanAndOutliersPlotted'}
+    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)}
 
 
@@ -618,7 +618,7 @@ def _test_keep_data_for_discarded_bouts_check_results():
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)} | {'globalParametersInsideCategories.xlsx', 'noMeanAndOutliersPlotted'}
+    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)}
 
 
