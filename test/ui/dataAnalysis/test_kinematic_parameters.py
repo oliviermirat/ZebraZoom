@@ -16,7 +16,7 @@ from PyQt5.QtWidgets import QMessageBox
 
 from zebrazoom.code import paths
 from zebrazoom.code.GUI.GUI_InitialClasses import StartPage
-from zebrazoom.code.GUI.dataAnalysisGUI import AnalysisOutputFolderPopulation, ChooseDataAnalysisMethod, CreateExperimentOrganizationExcel, PopulationComparison
+from zebrazoom.code.GUI.dataAnalysisGUI import KinematicParametersVisualization, ChooseDataAnalysisMethod, CreateExperimentOrganizationExcel, PopulationComparison
 
 
 _DEFAULT_KEYS = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition',
@@ -325,7 +325,7 @@ def test_kinematic_parameters_small(qapp, qtbot, monkeypatch):
   qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(populationComparisonPage._tailTrackingParametersCheckbox.isChecked)
   qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), AnalysisOutputFolderPopulation))
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
 
   _test_kinematic_parameters_small_check_results()
 
@@ -374,7 +374,7 @@ def test_basic(qapp, qtbot, monkeypatch):
   populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
   _resetPopulationComparisonPageState(populationComparisonPage, qapp)
   qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), AnalysisOutputFolderPopulation))
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
 
   _test_basic_check_results()
 
@@ -398,7 +398,7 @@ def test_force_recalculation(qapp, qtbot, monkeypatch):
   populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
   _resetPopulationComparisonPageState(populationComparisonPage, qapp)
   qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), AnalysisOutputFolderPopulation))
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
 
   # ensure parameters were not recalculated
   assert mtime == os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'parametersUsedForCalculation.json')).st_mtime
@@ -420,7 +420,7 @@ def test_force_recalculation(qapp, qtbot, monkeypatch):
   qtbot.waitUntil(populationComparisonPage._forcePandasRecreation.isChecked)
 
   qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), AnalysisOutputFolderPopulation))
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
 
   # ensure parameters were recalculated
   assert mtime != os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'parametersUsedForCalculation.json')).st_mtime
@@ -476,7 +476,7 @@ def test_kinematic_parameters_large(qapp, qtbot):
   qtbot.mouseClick(populationComparisonPage._saveInMatlabFormatCheckbox, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(populationComparisonPage._saveInMatlabFormatCheckbox.isChecked)
   qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), AnalysisOutputFolderPopulation))
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
 
   _test_kinematic_parameters_large_check_results()
 
@@ -535,7 +535,7 @@ def test_frames_for_distance_calculation(qapp, qtbot):
   qtbot.waitUntil(lambda: populationComparisonPage._frameStepForDistanceCalculation.text() == '1')
 
   qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), AnalysisOutputFolderPopulation))
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
 
   _test_frames_for_distance_calculation_check_results()
 
@@ -588,7 +588,7 @@ def test_minimum_number_of_bends(qapp, qtbot):
   qtbot.waitUntil(lambda: populationComparisonPage._minNbBendForBoutDetect.text() == '12')
 
   qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), AnalysisOutputFolderPopulation))
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
 
   _test_minimum_number_of_bends_check_results()
 
@@ -642,7 +642,7 @@ def test_keep_data_for_discarded_bouts(qapp, qtbot):
   qtbot.keyClicks(populationComparisonPage._minNbBendForBoutDetect, '12')
 
   qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), AnalysisOutputFolderPopulation))
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
 
   _test_keep_data_for_discarded_bouts_check_results()
 
