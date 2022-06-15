@@ -5,7 +5,7 @@ import cv2
 
 from PyQt5.QtCore import pyqtSignal, Qt, QAbstractAnimation, QEventLoop, QLine, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, QStandardPaths, QTimer
 from PyQt5.QtGui import QBrush, QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygonF, QTransform
-from PyQt5.QtWidgets import QApplication, QFrame, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QToolButton, QToolTip, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QFrame, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QSplitter, QSplitterHandle, QToolButton, QToolTip, QVBoxLayout, QWidget
 PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
@@ -1067,3 +1067,50 @@ def getCircle(frame, title, backBtnCb=None):
     buttons = (("Ok", None, True, video.circleSelected),)
   showBlockingPage(layout, title=title, buttons=buttons, labelInfo=(frame, video))
   return video.getInfo()
+
+
+class CollapsibleSplitter(QSplitter):
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self.setHandleWidth(10)
+    self._lastState = None
+
+  def _collapseButtonClicked(self):
+    self.setCollapsible(0, True)
+    leftWidget = self.widget(0)
+    orientation = self.orientation()
+    if all(self.sizes()):
+      self._lastState = self.saveState()
+      self._collapseButton.setArrowType(Qt.ArrowType.RightArrow if orientation == Qt.Orientation.Horizontal else Qt.ArrowType.DownArrow)
+      self.setSizes([0, 1])
+    else:
+      self._collapseButton.setArrowType(Qt.ArrowType.LeftArrow if orientation == Qt.Orientation.Horizontal else Qt.ArrowType.UpArrow)
+      self.setSizes([1, 1])
+      if self._lastState is not None:
+        self.restoreState(self._lastState)
+        self._lastState = None
+    self.setCollapsible(0, False)
+    self.splitterMoved.connect(self._splitterMoved)
+
+  def _splitterMoved(self, pos, idx):
+    assert idx == 1
+    orientation = self.orientation()
+    if pos and self._lastState is not None:
+      self._collapseButton.setArrowType(Qt.ArrowType.LeftArrow if orientation == Qt.Orientation.Horizontal else Qt.ArrowType.UpArrow)
+      self._lastState = None
+
+  def createHandle(self):
+    count = self.count()
+    orientation = self.orientation()
+    handle = QSplitterHandle(orientation, self)
+
+    layout = QVBoxLayout() if orientation == Qt.Orientation.Horizontal else QHBoxLayout()
+    layout.setContentsMargins(0, 0, 0, 0)
+
+    self._collapseButton = QToolButton()
+    self._collapseButton.setArrowType(Qt.ArrowType.LeftArrow if orientation == Qt.Orientation.Horizontal else Qt.ArrowType.UpArrow)
+    self._collapseButton.clicked.connect(self._collapseButtonClicked)
+    layout.addWidget(self._collapseButton)
+
+    handle.setLayout(layout)
+    return handle

@@ -11,7 +11,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvas
 
 from PyQt5.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QEvent, QItemSelectionModel, QModelIndex, QObject, QPoint, QPointF, QRect, QRectF, QSize, QSizeF, QSortFilterProxyModel, QStringListModel
 from PyQt5.QtGui import QColor, QFont, QFontMetrics, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
-from PyQt5.QtWidgets import QAction, QAbstractItemView, QApplication, QCompleter, QFileDialog, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QListView, QMessageBox, QSpacerItem, QTextEdit, QToolButton, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QSplitter, QTableView, QToolTip, QTreeView
+from PyQt5.QtWidgets import QAction, QAbstractItemView, QApplication, QCompleter, QFileDialog, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QListView, QMessageBox, QSpacerItem, QTextEdit, QToolButton, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QTableView, QToolTip, QTreeView
 PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
@@ -462,9 +462,9 @@ class CreateExperimentOrganizationExcel(QWidget):
     treeWidget = QWidget()
     treeLayout.setContentsMargins(0, 0, 0, 0)
     treeWidget.setLayout(treeLayout)
-    horizontalSplitter = QSplitter()
+    horizontalSplitter = util.CollapsibleSplitter()
     horizontalSplitter.addWidget(treeWidget)
-    verticalSplitter = QSplitter()
+    verticalSplitter = util.CollapsibleSplitter()
     verticalSplitter.setOrientation(Qt.Orientation.Vertical)
     verticalSplitter.setChildrenCollapsible(False)
     tableLayout = QVBoxLayout()
@@ -1127,7 +1127,7 @@ class _TooltipHelper(QObject):
     return False
 
 
-class KinematicParametersVisualization(QSplitter):
+class KinematicParametersVisualization(util.CollapsibleSplitter):
   _IGNORE_COLUMNS = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
   _FILENAME = 'globalParametersInsideCategories.xlsx'
   _CHART_SIZE = QSize(580, 435)
