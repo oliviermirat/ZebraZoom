@@ -1,18 +1,25 @@
+import math
 import os
 import pickle
 import webbrowser
 
 import json
 import pandas as pd
+import seaborn as sns
+from matplotlib.figure import Figure
+from matplotlib.backends.backend_qtagg import FigureCanvas
 
-from PyQt5.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QItemSelectionModel, QModelIndex, QPoint, QPointF, QRect, QRectF, QSize, QSizeF, QStringListModel
+from PyQt5.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QEvent, QItemSelectionModel, QModelIndex, QObject, QPoint, QPointF, QRect, QRectF, QSize, QSizeF, QSortFilterProxyModel, QStringListModel
 from PyQt5.QtGui import QColor, QFont, QFontMetrics, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
-from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCompleter, QFileDialog, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QListView, QMessageBox, QSpacerItem, QTextEdit, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QSplitter, QTableView, QTreeView
+from PyQt5.QtWidgets import QAction, QAbstractItemView, QApplication, QCompleter, QFileDialog, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QListView, QMessageBox, QSpacerItem, QTextEdit, QToolButton, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QTableView, QToolTip, QTreeView
 PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
+from zebrazoom.dataAnalysis.dataanalysis.populationComparaison import populationComparaison
+from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
+from zebrazoom.dataAnalysis.datasetcreation.generatePklDataFileForVideo import generatePklDataFileForVideo
 
 
 class _ExperimentFilesModel(QFileSystemModel):
@@ -455,9 +462,9 @@ class CreateExperimentOrganizationExcel(QWidget):
     treeWidget = QWidget()
     treeLayout.setContentsMargins(0, 0, 0, 0)
     treeWidget.setLayout(treeLayout)
-    horizontalSplitter = QSplitter()
+    horizontalSplitter = util.CollapsibleSplitter()
     horizontalSplitter.addWidget(treeWidget)
-    verticalSplitter = QSplitter()
+    verticalSplitter = util.CollapsibleSplitter()
     verticalSplitter.setOrientation(Qt.Orientation.Vertical)
     verticalSplitter.setChildrenCollapsible(False)
     tableLayout = QVBoxLayout()
@@ -552,7 +559,7 @@ class CreateExperimentOrganizationExcel(QWidget):
     startPageBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: controller.show_frame("StartPage")))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     previousParameterResultsBtn = util.apply_style(QPushButton("View previous kinematic parameter analysis results"), background_color=util.LIGHT_YELLOW)
-    previousParameterResultsBtn.clicked.connect(lambda: controller.show_frame("AnalysisOutputFolderPopulation"))
+    previousParameterResultsBtn.clicked.connect(lambda: _showKinematicParametersVisualization())
     buttonsLayout.addWidget(previousParameterResultsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     previousClusteringResultsBtn = util.apply_style(QPushButton("View previous clustering analysis results"), background_color=util.LIGHT_YELLOW)
     previousClusteringResultsBtn.clicked.connect(lambda: controller.show_frame("AnalysisOutputFolderClustering"))
@@ -931,13 +938,81 @@ class PopulationComparison(QWidget):
     layout.addWidget(self._advancedOptionsExpander)
 
     self._launchBtn = util.apply_style(QPushButton("Launch Analysis"), background_color=util.LIGHT_YELLOW)
-    self._launchBtn.clicked.connect(lambda: controller.populationComparison(controller, self._tailTrackingParametersCheckbox.isChecked(), self._saveInMatlabFormatCheckbox.isChecked(), self._saveRawDataCheckbox.isChecked(), self._forcePandasRecreation.isChecked(), self._minNbBendForBoutDetect.text(), self._discardRadioButton.isChecked(), self._keepRadioButton.isChecked(), self._frameStepForDistanceCalculation.text()))
+    self._launchBtn.clicked.connect(lambda: self._populationComparison(self._tailTrackingParametersCheckbox.isChecked(), self._saveInMatlabFormatCheckbox.isChecked(), self._saveRawDataCheckbox.isChecked(), self._forcePandasRecreation.isChecked(), self._minNbBendForBoutDetect.text(), self._discardRadioButton.isChecked(), self._keepRadioButton.isChecked(), self._frameStepForDistanceCalculation.text()))
     layout.addWidget(self._launchBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     self._startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
     self._startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     layout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     self.setLayout(layout)
+
+  def _populationComparison(self, TailTrackingParameters=0, saveInMatlabFormat=0, saveRawData=0, forcePandasRecreation=0, minNbBendForBoutDetect=3, discard=0, keep=1, frameStepForDistanceCalculation='4'):
+    if len(frameStepForDistanceCalculation) == 0:
+      frameStepForDistanceCalculation = '4'
+
+    if discard == 0 and keep == 0:
+      keep = 1
+
+    if len(minNbBendForBoutDetect) == 0:
+      minNbBendForBoutDetect = 3
+
+    if len(self.controller.ZZoutputLocation) == 0:
+      ZZoutputLocation = paths.getDefaultZZoutputFolder()
+    else:
+      ZZoutputLocation = self.controller.ZZoutputLocation
+
+    # Creating the dataframe
+
+    dataframeOptions = {
+      'pathToExcelFile'                   : self.controller.experimentOrganizationExcelFileAndFolder, #os.path.join(cur_dir_path, os.path.join('dataAnalysis', 'experimentOrganizationExcel/')),
+      'fileExtension'                     : '.' + self.controller.experimentOrganizationExcel.split(".")[1],
+      'resFolder'                         : os.path.join(paths.getDataAnalysisFolder(), 'data'),
+      'nameOfFile'                        : self.controller.experimentOrganizationExcel.split(".")[0],
+      'smoothingFactorDynaParam'          : 0,   # 0.001
+      'nbFramesTakenIntoAccount'          : 0,
+      'numberOfBendsIncludedForMaxDetect' : -1,
+      'minNbBendForBoutDetect'            : int(minNbBendForBoutDetect),
+      'keepSpeedDistDurWhenLowNbBends'    : int(keep),
+      'defaultZZoutputFolderPath'         : ZZoutputLocation,
+      'computeTailAngleParamForCluster'   : False,
+      'computeMassCenterParamForCluster'  : False,
+      'tailAngleKinematicParameterCalculation'    : TailTrackingParameters,
+      'saveRawDataInAllBoutsSuperStructure'       : saveRawData,
+      'saveAllBoutsSuperStructuresInMatlabFormat' : saveInMatlabFormat,
+      'frameStepForDistanceCalculation'           : frameStepForDistanceCalculation
+    }
+
+    generatePklDataFileForVideo(os.path.join(self.controller.experimentOrganizationExcelFileAndFolder, self.controller.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation)
+
+    [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", forcePandasRecreation, [])
+
+    # Plotting for the different conditions
+    nameOfFile = dataframeOptions['nameOfFile']
+    resFolder  = dataframeOptions['resFolder']
+
+    # Mixing up all the bouts
+    populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 0, True)
+
+    allParameters, allData = populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 0, False)
+
+    # First median per well for each kinematic parameter
+    populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 1, True)
+
+    medianParameters, medianData = populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 1, False)
+
+    _showKinematicParametersVisualization((nameOfFile, allParameters, medianParameters, allData, medianData))
+
+
+def _showKinematicParametersVisualization(data=None):
+  app = QApplication.instance()
+  layout = app.window.centralWidget().layout()
+  page = KinematicParametersVisualization(data)
+  layout.addWidget(page)
+  layout.setCurrentWidget(page)
+  def cleanup():
+    layout.removeWidget(page)
+    layout.currentChanged.disconnect(cleanup)
+  layout.currentChanged.connect(cleanup)
 
 
 class BoutClustering(QWidget):
@@ -1008,33 +1083,6 @@ class BoutClustering(QWidget):
     self.setLayout(layout)
 
 
-class AnalysisOutputFolderPopulation(QWidget):
-  def __init__(self, controller):
-    super().__init__(controller.window)
-    self.controller = controller
-
-    layout = QVBoxLayout()
-    layout.addWidget(util.apply_style(QLabel("View Analysis Output:"), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(QLabel("Click the button below to open the folder that contains the results of the analysis."), alignment=Qt.AlignmentFlag.AlignCenter)
-
-    self._viewProcessedBtn = util.apply_style(QPushButton("View 'plots and processed data' folders"), background_color=util.LIGHT_YELLOW)
-    self._viewProcessedBtn.clicked.connect(lambda: controller.openAnalysisFolder(controller.homeDirectory, 'resultsKinematic'))
-    layout.addWidget(self._viewProcessedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    self._viewRawBtn = util.apply_style(QPushButton("View raw data"), background_color=util.LIGHT_YELLOW)
-    self._viewRawBtn.clicked.connect(lambda: controller.openAnalysisFolder(controller.homeDirectory, 'data'))
-    layout.addWidget(self._viewRawBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    self._startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
-    self._startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-
-    self._linkBtn = util.apply_style(QPushButton("Video data analysis online documentation"), background_color=util.LIGHT_YELLOW)
-    self._linkBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/behaviorAnalysis/behaviorAnalysisGUI"))
-    layout.addWidget(self._linkBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(QLabel("(read the 'Further analyzing ZebraZoom's output through the Graphical User Interface' section)"), alignment=Qt.AlignmentFlag.AlignCenter)
-
-    self.setLayout(layout)
-
-
 class AnalysisOutputFolderClustering(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
@@ -1056,3 +1104,288 @@ class AnalysisOutputFolderClustering(QWidget):
     layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     self.setLayout(layout)
+
+
+class _TooltipHelper(QObject):
+  def eventFilter(self, obj, evt):
+    if evt.type() != QEvent.Type.ToolTip:
+      return False
+    view = obj.parent()
+    if view is None:
+      return False
+
+    index = view.indexAt(evt.pos())
+    if not index.isValid():
+      return False
+    rect = view.visualRect(index)
+    if view.sizeHintForColumn(index.column()) > rect.width():
+      QToolTip.showText(evt.globalPos(), view.model().data(index), view, rect)
+      return True
+    else:
+      QToolTip.hideText()
+      return True
+    return False
+
+
+class KinematicParametersVisualization(util.CollapsibleSplitter):
+  _IGNORE_COLUMNS = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
+  _FILENAME = 'globalParametersInsideCategories'
+  _CHART_SIZE = QSize(580, 435)
+
+  def __init__(self, data):
+    super().__init__()
+    if data is None:
+      data = (None, [], [], [], [])
+    experimentName, allParameters, medianParameters, allData, medianData = data
+    self._allParameters = allParameters
+    self._medianParameters = medianParameters
+    self._allData = allData
+    self._medianData = medianData
+    self._chartScaleFactor = 1
+
+    model = QFileSystemModel()
+    model.setFilter(QDir.Filter.NoDotAndDotDot | QDir.Filter.Dirs)
+    folderPath = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic')
+    model.setRootPath(folderPath)
+    model.setReadOnly(True)
+    proxyModel = QSortFilterProxyModel()
+
+    def filterModel(row, parent):
+      index = model.index(row, 0, parent)
+      if os.path.normpath(model.filePath(index)) == os.path.normpath(folderPath):
+        return True
+      return bool(self._findResultsFiles(model.fileName(index)))
+    proxyModel.filterAcceptsRow = filterModel
+    proxyModel.setSourceModel(model)
+    self._tree = tree = QTreeView()
+    tree.viewport().installEventFilter(_TooltipHelper(tree))
+    tree.sizeHint = lambda: QSize(150, 1)
+    tree.setModel(proxyModel)
+    tree.setRootIsDecorated(False)
+    tree.setRootIndex(proxyModel.mapFromSource(model.index(folderPath)))
+    tree.header().setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
+    for idx in range(1, model.columnCount()):
+      tree.hideColumn(idx)
+    tree.resizeEvent = lambda evt: tree.setColumnWidth(0, evt.size().width())
+    selectionModel = tree.selectionModel()
+    if experimentName is not None:
+      selectionModel.setCurrentIndex(proxyModel.mapFromSource(model.index(os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', experimentName))),
+                                     QItemSelectionModel.SelectionFlag.ClearAndSelect)
+    selectionModel.currentRowChanged.connect(lambda current, previous: current.row() == -1 or self._readResults(model.fileName(current)))
+
+    self.addWidget(tree)
+    self._recreateMainWidget()
+    self.setChildrenCollapsible(False)
+
+  def _recreateMainWidget(self):
+    app = QApplication.instance()
+    self._paramCheckboxes = {}
+    self._figures = {'median': {True: {}, False: {}}, 'all': {True: {}, False: {}}}
+
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("Visualize Kinematic Parameters"), font=app.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    if self._tree.selectionModel().currentIndex().row() == -1:
+      layout.addWidget(QLabel("Select an experiment to visualize kinematic parameters."), alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
+      buttonsLayout = QHBoxLayout()
+      buttonsLayout.addStretch(1)
+      self._viewProcessedBtn = util.apply_style(QPushButton("View 'plots and processed data' folders"), background_color=util.LIGHT_YELLOW)
+      self._viewProcessedBtn.clicked.connect(lambda: app.openAnalysisFolder(app.homeDirectory, 'resultsKinematic'))
+      buttonsLayout.addWidget(self._viewProcessedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+      self._viewRawBtn = util.apply_style(QPushButton("View raw data"), background_color=util.LIGHT_YELLOW)
+      self._viewRawBtn.clicked.connect(lambda: app.openAnalysisFolder(app.homeDirectory, 'data'))
+      buttonsLayout.addWidget(self._viewRawBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+      self._linkBtn = util.apply_style(QPushButton("Video data analysis online documentation"), background_color=util.LIGHT_YELLOW)
+      self._linkBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/behaviorAnalysis/behaviorAnalysisGUI"))
+      buttonsLayout.addWidget(self._linkBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+      self._startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
+      self._startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
+      buttonsLayout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+      buttonsLayout.addStretch(1)
+      layout.addLayout(buttonsLayout)
+
+      replace = hasattr(self, '_mainWidget')
+      self._mainWidget = QWidget()
+      self._mainWidget.setLayout(layout)
+      if replace:
+        self.replaceWidget(1, self._mainWidget)
+      else:
+        self.addWidget(self._mainWidget)
+      self.setStretchFactor(1, 1)
+      return
+
+    middleLayout = QHBoxLayout()
+    checkboxesLayout = QVBoxLayout()
+    checkboxesLayout.addWidget(util.apply_style(QLabel("Visualization options"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
+    chartScalingLayout = QHBoxLayout()
+    chartScalingLayout.addWidget(QLabel('Chart size'), alignment=Qt.AlignmentFlag.AlignLeft)
+    self._decreaseScalingBtn = QToolButton()
+    self._decreaseScalingBtn.setDefaultAction(QAction('-'))
+    self._decreaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 0.8) or self._update())
+    chartScalingLayout.addWidget(self._decreaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._increaseScalingBtn = QToolButton()
+    self._decreaseScalingBtn.sizeHint = self._increaseScalingBtn.sizeHint
+    self._increaseScalingBtn.setDefaultAction(QAction('+'))
+    self._increaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 1.25) or self._update())
+    chartScalingLayout.addWidget(self._increaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    chartScalingLayout.addStretch(1)
+    checkboxesLayout.addLayout(chartScalingLayout)
+    self._allBoutsRadioBtn = QRadioButton("All bouts")
+    self._allBoutsRadioBtn.toggled.connect(lambda: self._update(visualizationOptionsChanged=True))
+    checkboxesLayout.addWidget(self._allBoutsRadioBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._medianPerWellRadioBtn = QRadioButton("Median per well")
+    self._medianPerWellRadioBtn.setChecked(True)
+    self._medianPerWellRadioBtn.toggled.connect(lambda: self._update(visualizationOptionsChanged=True))
+    checkboxesLayout.addWidget(self._medianPerWellRadioBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._plotOutliersAndMeanCheckbox = QCheckBox("Plot outliers and mean")
+    self._plotOutliersAndMeanCheckbox.toggled.connect(lambda: self._update(visualizationOptionsChanged=True))
+    checkboxesLayout.addWidget(self._plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
+    checkboxesLayout.addWidget(util.apply_style(QLabel("Parameters"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
+    self._selectAllCheckbox = util.apply_style(QCheckBox('Select all'), font_weight='bold')
+    self._selectAllCheckbox.stateChanged.connect(self._checkOrUncheckAll)
+    checkboxesLayout.addWidget(self._selectAllCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
+    precheckedParams = {'BoutDuration', 'TotalDistance', 'Speed', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude'}
+    for param in self._allParameters + self._medianParameters:
+      if param in self._paramCheckboxes:
+        continue
+      checkbox = QCheckBox(param)
+      if param in precheckedParams:
+        checkbox.setChecked(True)
+      checkbox.toggled.connect(lambda: self._update())
+      self._paramCheckboxes[param] = checkbox
+      checkboxesLayout.addWidget(checkbox, alignment=Qt.AlignmentFlag.AlignLeft)
+    checkboxesLayout.addStretch(1)
+    checkboxesWidget = QWidget()
+    checkboxesWidget.setLayout(checkboxesLayout)
+    checkboxesScrollArea = QScrollArea()
+    checkboxesScrollArea.setWidgetResizable(True)
+    checkboxesScrollArea.setWidget(checkboxesWidget)
+    middleLayout.addWidget(checkboxesScrollArea)
+
+    for params, typeDict in zip((self._medianParameters, self._allParameters), self._figures.values()):
+      for figuresDict in typeDict.values():
+        for param in params:
+          figuresDict[param] = FigureCanvas(Figure(figsize=(5.8, 4.35), tight_layout=True))
+
+    self._chartsScrollArea = QScrollArea()
+    middleLayout.addWidget(self._chartsScrollArea, stretch=1)
+    layout.addLayout(middleLayout)
+
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch(1)
+    self._viewProcessedBtn = util.apply_style(QPushButton("View 'plots and processed data' folders"), background_color=util.LIGHT_YELLOW)
+    self._viewProcessedBtn.clicked.connect(lambda: app.openAnalysisFolder(app.homeDirectory, 'resultsKinematic'))
+    buttonsLayout.addWidget(self._viewProcessedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._viewRawBtn = util.apply_style(QPushButton("View raw data"), background_color=util.LIGHT_YELLOW)
+    self._viewRawBtn.clicked.connect(lambda: app.openAnalysisFolder(app.homeDirectory, 'data'))
+    buttonsLayout.addWidget(self._viewRawBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._linkBtn = util.apply_style(QPushButton("Video data analysis online documentation"), background_color=util.LIGHT_YELLOW)
+    self._linkBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/behaviorAnalysis/behaviorAnalysisGUI"))
+    buttonsLayout.addWidget(self._linkBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
+    self._startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
+    buttonsLayout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch(1)
+    layout.addLayout(buttonsLayout)
+
+    replace = hasattr(self, '_mainWidget')
+    self._mainWidget = QWidget()
+    self._mainWidget.setLayout(layout)
+    if replace:
+      self.replaceWidget(1, self._mainWidget)
+    else:
+      self.addWidget(self._mainWidget)
+    self.setStretchFactor(1, 1)
+    self._update(visualizationOptionsChanged=True)
+
+  def _findResultsFiles(self, folder):
+    allBoutsMixedXlsx = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'allBoutsMixed', self._FILENAME + '.xlsx')
+    allBoutsMixedCsv = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'allBoutsMixed', self._FILENAME + '.csv')
+    medianPerWellXlsx = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'medianPerWellFirst', self._FILENAME + '.xlsx')
+    medianPerWellCsv = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'medianPerWellFirst', self._FILENAME + '.csv')
+    allBouts = allBoutsMixedCsv if os.path.exists(allBoutsMixedCsv) else allBoutsMixedXlsx if os.path.exists(allBoutsMixedXlsx) else None
+    median = medianPerWellCsv if os.path.exists(medianPerWellCsv) else medianPerWellXlsx if os.path.exists(medianPerWellXlsx) else None
+    if allBouts is None or median is None:
+      return None
+    return allBouts, median
+
+  def _readResults(self, folder):
+    allBoutsMixed, medianPerWell = self._findResultsFiles(folder)
+    self._allData = pd.read_csv(allBoutsMixed) if allBoutsMixed.endswith('.csv') else pd.read_excel(allBoutsMixed)
+    self._allData = self._allData.loc[:, ~self._allData.columns.str.contains('^Unnamed')]
+    self._allParameters = [param for param in self._allData.columns if param not in self._IGNORE_COLUMNS]
+    self._medianData = pd.read_csv(medianPerWell) if medianPerWell.endswith('.csv') else pd.read_excel(medianPerWell)
+    self._medianData = self._medianData.loc[:, ~self._medianData.columns.str.contains('^Unnamed')]
+    self._medianParameters = [param for param in self._medianData.columns if param not in self._IGNORE_COLUMNS]
+    self._recreateMainWidget()
+
+  def _createChartsWidget(self, figures):
+    if not figures:
+      self._chartsScrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
+      return QLabel("Select one or more parameters to visualize.")
+    chartsLayout = QGridLayout()
+    chartsWidget = QWidget()
+    chartsWidget.setLayout(chartsLayout)
+    availableHeight = self._chartsScrollArea.size().height() - 10  # subtract 10 for padding
+    chartSize = self._CHART_SIZE * self._chartScaleFactor
+    chartHeight = chartSize.height()
+    rows = max(1, availableHeight // chartHeight)
+    cols = math.ceil(len(figures) / rows)
+    row = 0
+    col = 0
+    for param, figure in figures:
+      figure.setFixedSize(chartSize)
+      chartsLayout.addWidget(figure, row, col)
+      if col < cols - 1:
+        col += 1
+      else:
+        row += 1
+        col = 0
+      figure.setVisible(True)
+      if not figure.figure.get_axes():  # check whether we've already plotted it
+        self._plotFigure(param, figure.figure)
+    self._chartsScrollArea.setAlignment(Qt.AlignmentFlag.AlignLeft)
+    return chartsWidget
+
+  def _plotFigure(self, param, figure):
+    data = self._medianData if self._medianPerWellRadioBtn.isChecked() else self._allData
+    plotOutliersAndMean = self._plotOutliersAndMeanCheckbox.isChecked()
+    ax = figure.add_subplot(111)
+    b = sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean)
+    b.set_ylabel('', fontsize=0)
+    b.set_xlabel('', fontsize=0)
+    b.axes.set_title(param, fontsize=20)
+
+  def _iterAllFigures(self):
+    for typeDict in self._figures.values():
+      for figuresDict in typeDict.values():
+        yield from figuresDict.values()
+
+  def _checkOrUncheckAll(self, state):
+    self._selectAllCheckbox.setTristate(False)
+    checked = state == Qt.CheckState.Checked
+    params = self._medianParameters if self._medianPerWellRadioBtn.isChecked() else self._allParameters
+    for param in params:
+      blocked = self._paramCheckboxes[param].blockSignals(True)
+      self._paramCheckboxes[param].setChecked(checked)
+      self._paramCheckboxes[param].blockSignals(blocked)
+    self._update()
+
+  def _update(self, visualizationOptionsChanged=False):
+    params = set(self._medianParameters) if self._medianPerWellRadioBtn.isChecked() else set(self._allParameters)
+    if visualizationOptionsChanged:
+      for param, checkbox in self._paramCheckboxes.items():
+        checkbox.setVisible(param in params)
+    for figure in self._iterAllFigures():
+      figure.hide()
+      figure.setParent(None)
+    selectedParameters = {param for param, checkbox in self._paramCheckboxes.items() if checkbox.isChecked()}
+    allParams = self._medianParameters if self._medianPerWellRadioBtn.isChecked() else self._allParameters
+    state = Qt.CheckState.Unchecked if not selectedParameters else Qt.CheckState.Checked if len(selectedParameters) == len(allParams) else Qt.CheckState.PartiallyChecked
+    blocked = self._selectAllCheckbox.blockSignals(True)
+    self._selectAllCheckbox.setCheckState(state)
+    self._selectAllCheckbox.blockSignals(blocked)
+    shownFigures = [(param, figure) for param, figure in
+                    self._figures['median' if self._medianPerWellRadioBtn.isChecked() else 'all'][self._plotOutliersAndMeanCheckbox.isChecked()].items()
+                    if param in selectedParameters]
+    self._chartsScrollArea.setWidget(self._createChartsWidget(shownFigures))
