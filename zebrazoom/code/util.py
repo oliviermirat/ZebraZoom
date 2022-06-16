@@ -1069,10 +1069,20 @@ def getCircle(frame, title, backBtnCb=None):
   return video.getInfo()
 
 
+class _CollapseButton(QToolButton):
+  def enterEvent(self, evt):
+    QApplication.setOverrideCursor(Qt.CursorShape.ArrowCursor)
+    super().enterEvent(evt)
+
+  def leaveEvent(self, evt):
+    QApplication.restoreOverrideCursor()
+    super().leaveEvent(evt)
+
+
 class CollapsibleSplitter(QSplitter):
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
-    self.setHandleWidth(10)
+    self.setHandleWidth(12)
     self._lastState = None
 
   def _collapseButtonClicked(self):
@@ -1107,7 +1117,7 @@ class CollapsibleSplitter(QSplitter):
     layout = QVBoxLayout() if orientation == Qt.Orientation.Horizontal else QHBoxLayout()
     layout.setContentsMargins(0, 0, 0, 0)
 
-    self._collapseButton = QToolButton()
+    self._collapseButton = _CollapseButton()
     self._collapseButton.setArrowType(Qt.ArrowType.LeftArrow if orientation == Qt.Orientation.Horizontal else Qt.ArrowType.UpArrow)
     self._collapseButton.clicked.connect(self._collapseButtonClicked)
     layout.addWidget(self._collapseButton)
