@@ -32,7 +32,12 @@ def getTailExtremityFirstFrame(pathToVideo, videoName, videoExt, configFile, arg
   
   frameNumber = hyperparameters["firstFrame"]
   
-  [frame, thresh1] = headEmbededFrame(videoPath, frameNumber, hyperparameters)
+  wellNumber = 0
+  if hyperparameters["oneWellManuallyChosenTopLeft"]:
+    wellPositions = findWells(os.path.join(pathToVideo, videoName), hyperparameters)
+  else:
+    wellPositions = [{"topLeftX":0, "topLeftY":0, "lengthX": hyperparameters["videoWidth"], "lengthY": hyperparameters["videoHeight"]}]
+  [frame, thresh1] = headEmbededFrame(videoPath, frameNumber, wellNumber, wellPositions, hyperparameters)
   
   if hyperparameters["accentuateFrameForManualTailExtremityFind"]:
     quartileChose = 0.01
@@ -49,8 +54,8 @@ def getTailExtremityFirstFrame(pathToVideo, videoName, videoExt, configFile, arg
   if hyperparameters["findHeadPositionByUserInput"]:
     with open(os.path.join(pathToVideo, videoName + 'HP.csv'), mode='w') as f:
       writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-      writer.writerow(findHeadPositionByUserInput(frame, frameNumber, videoPath))
+      writer.writerow(findHeadPositionByUserInput(frame, frameNumber, videoPath, hyperparameters, wellNumber, wellPositions))
 
   with open(os.path.join(pathToVideo, videoName + '.csv'), mode='w') as f:
       writer = csv.writer(f, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-      writer.writerow(findTailTipByUserInput(frame, frameNumber, videoPath, hyperparameters))
+      writer.writerow(findTailTipByUserInput(frame, frameNumber, videoPath, hyperparameters, wellNumber, wellPositions))

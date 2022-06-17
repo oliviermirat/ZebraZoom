@@ -643,7 +643,15 @@ def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=Non
   layout.addWidget(QLabel(additionalText), alignment=Qt.AlignmentFlag.AlignCenter)
 
   video = _InteractiveLabelPoint(width, height, selectingRegion)
-  extraButtons = tuple((text, lambda: cb(video), exitLoop) for text, cb, exitLoop in extraButtons)
+
+  def callback(cb):
+    if zoomable:
+      zoomableImage = layout.itemAt(1).widget()
+      layout.replaceWidget(zoomableImage, video)
+      zoomableImage.hide()
+      video.show()
+    cb(video)
+  extraButtons = tuple((text, lambda: callback(cb), exitLoop) for text, cb, exitLoop in extraButtons)
   buttons = (("Back", backBtnCb, True),) if backBtnCb is not None else ()
   buttons += (("Next", None, True, video.pointSelected),) if useNext else ()
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
@@ -659,16 +667,24 @@ def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=Non
 class _InteractiveLabelRect(QLabel):
   regionSelected = pyqtSignal(bool)
 
-  def __init__(self, width, height):
+  def __init__(self, width, height, initialRect):
     super().__init__()
     self._width = width
     self._height = height
-    self._topLeft = None
     self._currentPosition = None
+    if initialRect is not None:
+      self._initialRect = initialRect
+    self._topLeft = None
     self._bottomRight = None
-    self._size = None
+    self._size = self.size()
     self._tooltipShown = False
     self.setMouseTracking(True)
+
+  def clearRectangle(self):
+    self._topLeft = None
+    self._bottomRight = None
+    self.update()
+    self.regionSelected.emit(False)
 
   def mousePressEvent(self, evt):
     if self._topLeft is None or self._bottomRight is not None:
@@ -700,6 +716,9 @@ class _InteractiveLabelRect(QLabel):
 
   def paintEvent(self, evt):
     super().paintEvent(evt)
+    if hasattr(self, '_initialRect'):
+      self._topLeft, self._bottomRight = (transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._width, self._height)), QRectF(QPointF(0, 0), QSizeF(self.size())), point) for point in self._initialRect)
+      del self._initialRect
     if self._currentPosition is None and self._topLeft is None:
       return
     qp = QPainter()
@@ -724,6 +743,12 @@ class _InteractiveLabelRect(QLabel):
 
   def resizeEvent(self, evt):
     super().resizeEvent(evt)
+    if self._topLeft is not None:
+      self._topLeft = transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(evt.size())), self._topLeft)
+    if self._bottomRight is not None:
+      self._bottomRight = transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(evt.size())), self._bottomRight)
+    if self._currentPosition:
+      self._currentPosition = transformCoordinates(QRectF(QPointF(0, 0), QSizeF(self._size)), QRectF(QPointF(0, 0), QSizeF(evt.size())), self._currentPosition)
     self._size = self.size()
 
   def getCoordinates(self):
@@ -735,17 +760,26 @@ class _InteractiveLabelRect(QLabel):
     return ([point.x(), point.y()] for point in points)
 
 
-def getRectangle(frame, title, backBtnCb=None, dialog=False):
+def getRectangle(frame, title, backBtnCb=None, dialog=False, buttons=None, initialRect=None, allowEmpty=False):
   height, width, _ = frame.shape
 
   layout = QVBoxLayout()
 
-  video = _InteractiveLabelRect(width, height)
-  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter)
-  if backBtnCb is not None:
-    buttons = (("Back", backBtnCb, True), ("Next", None, True, video.regionSelected))
+  video = _InteractiveLabelRect(width, height, initialRect)
+  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
+  if allowEmpty:
+    clearRectangleBtn = QPushButton('Clear rectangle')
+    clearRectangleBtn.clicked.connect(video.clearRectangle)
+    clearRectangleBtn.setEnabled(initialRect is not None)
+    layout.addWidget(clearRectangleBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    video.regionSelected.connect(clearRectangleBtn.setEnabled)
+  if buttons is None:
+    if backBtnCb is not None:
+      buttons = (("Back", backBtnCb, True), ("Next", None, True, video.regionSelected))
+    else:
+      buttons = (("Next", None, True, video.regionSelected),)
   else:
-    buttons = (("Next", None, True, video.regionSelected),)
+    assert backBtnCb is None
   if not dialog:
     showBlockingPage(layout, title=title, buttons=buttons, labelInfo=(frame, video))
   else:

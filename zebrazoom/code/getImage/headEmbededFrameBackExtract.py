@@ -4,7 +4,7 @@ import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.util as util
 
-def headEmbededFrameBackExtract(videoPath, background, hyperparameters, frameNumber):
+def headEmbededFrameBackExtract(videoPath, background, hyperparameters, frameNumber, wellNumber, wellPositions):
   
   minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtract"]
   debug = 0
@@ -19,7 +19,13 @@ def headEmbededFrameBackExtract(videoPath, background, hyperparameters, frameNum
     frameNumber = frameNumber - 1
     cap.set(1, frameNumber)
     ret, frame = cap.read()
-  
+
+  xtop = wellPositions[wellNumber]['topLeftX']
+  ytop = wellPositions[wellNumber]['topLeftY']
+  lenX = wellPositions[wellNumber]['lengthX']
+  lenY = wellPositions[wellNumber]['lengthY']
+  frame = frame[ytop:ytop+lenY, xtop:xtop+lenX]
+
   if ("invertBlackWhiteOnImages" in hyperparameters) and hyperparameters["invertBlackWhiteOnImages"]:
     frame = 255 - frame
     

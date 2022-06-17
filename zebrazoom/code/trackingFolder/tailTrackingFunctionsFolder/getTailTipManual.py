@@ -33,34 +33,25 @@ def getAccentuateFrameForManualPointSelect(image, hyperparameters):
     return image
 
 
-def _findTailTipByUserInputQt(frame, frameNumber, videoPath, hyperparameters):
+def findTailTipByUserInput(frame, frameNumber, videoPath, hyperparameters, wellNumber, wellPositions):
   plus = 0
 
   def tailNotStraight(frameWidget):
     nonlocal plus
     plus += 1
-    util.setPixmapFromCv(headEmbededFrame(videoPath, frameNumber + plus, hyperparameters)[0], frameWidget)
+    util.setPixmapFromCv(headEmbededFrame(videoPath, frameNumber + plus, wellNumber, wellPositions, hyperparameters)[0], frameWidget, zoomable=True)
   return list(util.getPoint(np.uint8(frame * 255), "Click on tail tip", zoomable=True, extraButtons=(("Tail is not straight", tailNotStraight, False),),
                             dialog=not hasattr(QApplication.instance(), 'window')))
 
-
-def findTailTipByUserInput(frame, frameNumber, videoPath, hyperparameters):
-  return _findTailTipByUserInputQt(frame, frameNumber, videoPath, hyperparameters)
-
-
-def _findHeadPositionByUserInputQt(frame, frameNumber, videoPath, hyperparameters):
+def findHeadPositionByUserInput(frame, frameNumber, videoPath, hyperparameters, wellNumber, wellPositions):
   plus = 0
 
   def tailNotStraight(frameWidget):
     nonlocal plus
     plus += 1
-    util.setPixmapFromCv(headEmbededFrame(videoPath, frameNumber + plus, hyperparameters)[0], frameWidget)
+    util.setPixmapFromCv(headEmbededFrame(videoPath, frameNumber + plus, wellNumber, wellPositions, hyperparameters)[0], frameWidget, zoomable=True)
   return list(util.getPoint(np.uint8(frame * 255), "Click on the base of the tail", zoomable=True, extraButtons=(("Tail is not straight", tailNotStraight, False),),
                             dialog=not hasattr(QApplication.instance(), 'window')))
-
-
-def findHeadPositionByUserInput(frame, frameNumber, videoPath, hyperparameters={}):
-  return _findHeadPositionByUserInputQt(frame, frameNumber, videoPath, hyperparameters)
 
 
 def getTailTipByFileSaved(hyperparameters,videoPath):

@@ -148,7 +148,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
   
 
   # Getting well positions
-  if hyperparameters["headEmbeded"]:
+  if hyperparameters["headEmbeded"] and not hyperparameters["oneWellManuallyChosenTopLeft"]:
     wellPositions = [{"topLeftX":0, "topLeftY":0, "lengthX": hyperparameters["videoWidth"], "lengthY": hyperparameters["videoHeight"]}]
   else:
     print("start find wells")

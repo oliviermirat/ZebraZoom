@@ -22,15 +22,15 @@ def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPo
   if hyperparameters["headEmbeded"]:
     if hyperparameters["headEmbededRemoveBack"] == 0:
       if hyperparameters["adjustHeadEmbededTracking"] == 0:
-        [frame, thresh1] = headEmbededFrameSequential(cap, videoPath, i, hyperparameters)
+        [frame, thresh1] = headEmbededFrameSequential(cap, videoPath, i, wellNumber, wellPositions, hyperparameters)
       else:
-        [frame, thresh1] = headEmbededFrame(videoPath, i, hyperparameters)
+        [frame, thresh1] = headEmbededFrame(videoPath, i, wellNumber, wellPositions, hyperparameters)
       gray = frame.copy()
     else:
       if hyperparameters["adjustHeadEmbededTracking"] == 0:
-        [frame, thresh1] = headEmbededFrameSequentialBackExtract(cap, videoPath, background, hyperparameters, i)
+        [frame, thresh1] = headEmbededFrameSequentialBackExtract(cap, videoPath, background, hyperparameters, i, wellNumber, wellPositions)
       else:
-        [frame, thresh1] = headEmbededFrameBackExtract(videoPath, background, hyperparameters, i)
+        [frame, thresh1] = headEmbededFrameBackExtract(videoPath, background, hyperparameters, i, wellNumber, wellPositions)
       gray = frame.copy()
   else:
     if hyperparameters["adjustFreelySwimTracking"] == 0 and hyperparameters["adjustFreelySwimTrackingAutomaticParameters"] == 0:

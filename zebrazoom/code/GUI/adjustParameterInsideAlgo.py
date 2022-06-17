@@ -2,7 +2,7 @@ import cv2
 
 import numpy as np
 
-from PyQt5.QtCore import Qt, pyqtSignal, QPointF, QRect, QRectF, QSizeF
+from PyQt5.QtCore import Qt, pyqtSignal, QPoint, QPointF, QRect, QRectF, QSizeF
 from PyQt5.QtGui import QColor, QFont, QIntValidator, QPainter, QPolygon, QPolygonF, QTransform
 from PyQt5.QtWidgets import QApplication, QLabel, QLineEdit, QCheckBox, QPushButton, QHBoxLayout, QSpinBox, QVBoxLayout, QWidget
 
@@ -225,17 +225,20 @@ class _InteractiveCVLabelLine(QLabel):
     return (startPoint.x(), startPoint.y()), (endPoint.x(), endPoint.y())
 
 
-def addBlackSegments(config, videoPath, frameNumber):
+def _addBlackSegments(config, videoPath, frameNumber, wellNumber, cap):
+  app = QApplication.instance()
+  wellPositions = [dict(zip(("topLeftX", "topLeftY", "lengthX", "lengthY"), app.wellPositions[wellNumber]))] if app.wellPositions else \
+    [{"topLeftX":0, "topLeftY":0, "lengthX": int(cap.get(3)), "lengthY": int(cap.get(4))}]
   tmpConfig = config.copy()
 
   def getFrame():
     hyperparameters = getHyperparametersSimple(tmpConfig)
     if hyperparameters["headEmbededRemoveBack"] == 0 and hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0:
-      frame, thresh1 = headEmbededFrame(videoPath, frameNumber, hyperparameters)
+      frame, thresh1 = headEmbededFrame(videoPath, frameNumber, wellNumber, wellPositions, hyperparameters)
     else:
       hyperparameters["headEmbededRemoveBack"] = 1
       hyperparameters["minPixelDiffForBackExtract"] = hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"]
-      frame, thresh1 = headEmbededFrameBackExtract(videoPath, QApplication.instance().background, hyperparameters, frameNumber)
+      frame, thresh1 = headEmbededFrameBackExtract(videoPath, QApplication.instance().background, hyperparameters, frameNumber, wellNumber, wellPositions)
 
     quartileChose = hyperparameters["outputValidationVideoContrastImprovementQuartile"]
     lowVal  = int(np.quantile(frame, quartileChose))
@@ -319,6 +322,34 @@ def addBlackSegments(config, videoPath, frameNumber):
   buttons = (("Done! Save changes!", saveClicked), ("Discard changes.", None))
   util.showBlockingPage(layout, labelInfo=(frame, label), title="Click in the beginning and end of segment to set to black pixels", buttons=buttons)
 
+
+def _selectROI(config, frame):
+  save = False
+  def saveClicked():
+    nonlocal save
+    save = True
+  buttons = (("Done! Save changes!", saveClicked, True), ("Discard changes.", None, True))
+  topLeft = config.get("oneWellManuallyChosenTopLeft")
+  bottomRight = config.get("oneWellManuallyChosenBottomRight")
+  initialRect = None if topLeft is None or bottomRight is None else (QPoint(*topLeft), QPoint(*bottomRight))
+  coords = util.getRectangle(frame, "Click on the top left and bottom right of the region of interest",
+                             buttons=buttons, initialRect=initialRect, allowEmpty=True)
+  if save:
+    app = QApplication.instance()
+    if coords is None:
+      if "oneWellManuallyChosenTopLeft" in config:
+        del config["oneWellManuallyChosenTopLeft"]
+      if "oneWellManuallyChosenBottomRight" in config:
+        del config["oneWellManuallyChosenBottomRight"]
+      del app.wellPositions
+      del app.wellShape
+    else:
+      config["oneWellManuallyChosenTopLeft"], config["oneWellManuallyChosenBottomRight"] = coords
+      topLeftX, topLeftY = config["oneWellManuallyChosenTopLeft"]
+      bottomRightX, bottomRightY = config["oneWellManuallyChosenBottomRight"]
+      app.wellPositions = [(topLeftX, topLeftY, bottomRightX - topLeftX, bottomRightY - topLeftY)]
+      app.wellShape = 'rectangle'
+    config["nbWells"] = 1
 
 def adjustParamInsideAlgoPage(useNext=True):
   app = QApplication.instance()
@@ -419,8 +450,11 @@ def adjustParamInsideAlgoPage(useNext=True):
                                'Warning: for some of the "overwrite" parameters, you will need to change the initial value for the "overwrite" to take effect.')
   adjustButtonsLayout.addWidget(adjustTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   addBlackSegmentsBtn = QPushButton("Add Black Segments on Artefacts")
-  addBlackSegmentsBtn.clicked.connect(lambda: addBlackSegments(app.configFile, app.videoToCreateConfigFileFor, frameSlider.value()))
+  addBlackSegmentsBtn.clicked.connect(lambda: _addBlackSegments(app.configFile, app.videoToCreateConfigFileFor, frameSlider.value(), video.getWell(), cap))
   adjustButtonsLayout.addWidget(addBlackSegmentsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  selectROIBtn = QPushButton("Select a Region of Interest")
+  selectROIBtn.clicked.connect(lambda: _selectROI(app.configFile, getFrame()))
+  adjustButtonsLayout.addWidget(selectROIBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   adjustButtonsLayout.addStretch()
   layout.addLayout(adjustButtonsLayout)
 
