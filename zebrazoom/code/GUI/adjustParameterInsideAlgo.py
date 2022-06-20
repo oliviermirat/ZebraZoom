@@ -335,14 +335,43 @@ def adjustParamInsideAlgoPage(useNext=True):
 
   def getFrame():
     cap.set(1, frameSlider.value())
-    ret, img = cap.read()
-    return img
+    ret, frame = cap.read()
+    hyperparameters = getHyperparametersSimple(app.configFile)
+    if hyperparameters["outputValidationVideoContrastImprovement"]:
+      frame = 255 - frame
+      frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+      quartileChose = hyperparameters["outputValidationVideoContrastImprovementQuartile"]
+      lowVal = int(np.quantile(frame, quartileChose))
+      highVal = int(np.quantile(frame, 1 - quartileChose))
+      frame[frame < lowVal] = lowVal
+      frame[frame > highVal] = highVal
+      frame = frame - lowVal
+      mult = np.max(frame)
+      frame = frame * (255 / mult)
+      frame = frame.astype('uint8')
+      frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+    return frame
   frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video))
 
   img = getFrame()
   height, width = img.shape[:2]
   video = _WellSelectionLabel(width, height)
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
+
+  if useNext:
+    originalOutputValidationVideoContrastImprovement = app.configFile.get('outputValidationVideoContrastImprovement')
+    def contrastCheckboxToggled(checked):
+      if checked:
+        app.configFile["outputValidationVideoContrastImprovement"] = 1
+      elif originalOutputValidationVideoContrastImprovement is None:
+        if "outputValidationVideoContrastImprovement" in app.configFile:
+          del app.configFile["outputValidationVideoContrastImprovement"]
+      else:
+        app.configFile["outputValidationVideoContrastImprovement"] = 0
+      util.setPixmapFromCv(getFrame(), video)
+    contrastCheckbox = QCheckBox("Improve contrast on validation video")
+    contrastCheckbox.toggled.connect(contrastCheckboxToggled)
+    layout.addWidget(contrastCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
   sublayout = QHBoxLayout()
   sublayout.addStretch(1)
@@ -401,7 +430,7 @@ def adjustParamInsideAlgoPage(useNext=True):
   nbImagesForBackgroundCalculation.setFixedWidth(50)
   recalculateLayout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
   recalculateBtn = QPushButton("Recalculate")
-  recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text()))
+  recalculateBtn.clicked.connect(lambda: app.calculateBackground(app, nbImagesForBackgroundCalculation.text(), useNext=useNext))
   recalculateLayout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   recalculateLayout.addStretch()
   layout.addLayout(recalculateLayout)
@@ -524,7 +553,7 @@ def adjustParamInsideAlgoFreelySwimPage(useNext=True):
   nbImagesForBackgroundCalculation.setFixedWidth(50)
   recalculateLayout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
   recalculateBtn = QPushButton("Recalculate")
-  recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text()))
+  recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text(), useNext=useNext))
   recalculateLayout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   recalculateLayout.addStretch()
   layout.addLayout(recalculateLayout)
@@ -643,7 +672,7 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
   nbImagesForBackgroundCalculation.setFixedWidth(50)
   recalculateLayout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
   recalculateBtn = QPushButton("Recalculate")
-  recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text(), False, True))
+  recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text(), False, True, useNext=useNext))
   recalculateLayout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   recalculateLayout.addStretch()
   layout.addLayout(recalculateLayout)
@@ -752,7 +781,7 @@ def adjustBoutDetectionOnlyPage(useNext=True):
   nbImagesForBackgroundCalculation.setFixedWidth(50)
   recalculateLayout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
   recalculateBtn = QPushButton("Recalculate")
-  recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text(), False, True))
+  recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text(), False, True, useNext=useNext))
   recalculateLayout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   recalculateLayout.addStretch()
   layout.addLayout(recalculateLayout)
