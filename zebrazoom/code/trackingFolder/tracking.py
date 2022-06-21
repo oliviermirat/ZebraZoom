@@ -91,11 +91,11 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     # Getting images
     
     if hyperparameters["headEmbededRemoveBack"] == 0 and hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0:
-      [frame, thresh1] = headEmbededFrame(videoPath, firstFrame, hyperparameters)
+      [frame, thresh1] = headEmbededFrame(videoPath, firstFrame, wellNumber, wellPositions, hyperparameters)
     else:
       hyperparameters["headEmbededRemoveBack"] = 1
       hyperparameters["minPixelDiffForBackExtract"] = hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"]
-      [frame, thresh1] = headEmbededFrameBackExtract(videoPath, background, hyperparameters, firstFrame)
+      [frame, thresh1] = headEmbededFrameBackExtract(videoPath, background, hyperparameters, firstFrame, wellNumber, wellPositions)
     
     # Setting hyperparameters in order to add line on image
     if hyperparameters["addBlackLineToImg_Width"]:
@@ -114,7 +114,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     else:
       if hyperparameters["findHeadPositionByUserInput"]:
         frameForManualPointSelection = getAccentuateFrameForManualPointSelect(frame, hyperparameters)
-        headPositionFirstFrame = findHeadPositionByUserInput(frameForManualPointSelection, firstFrame, videoPath)
+        headPositionFirstFrame = findHeadPositionByUserInput(frameForManualPointSelection, firstFrame, videoPath, hyperparameters, wellNumber, wellPositions)
       else:
         [frame, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back, xHead, yHead] = getImages(hyperparameters, cap, videoPath, firstFrame, background, wellNumber, wellPositions)
         cap.set(1, firstFrame)
@@ -123,7 +123,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
       tailTipFirstFrame  = getTailTipByFileSaved(hyperparameters,videoPath)
     else:
       frameForManualPointSelection = getAccentuateFrameForManualPointSelect(frame, hyperparameters)
-      tailTipFirstFrame  = findTailTipByUserInput(frameForManualPointSelection, firstFrame, videoPath, hyperparameters)
+      tailTipFirstFrame  = findTailTipByUserInput(frameForManualPointSelection, firstFrame, videoPath, hyperparameters, wellNumber, wellPositions)
     if hyperparameters["automaticallySetSomeOfTheHeadEmbededHyperparameters"] == 1:
       hyperparameters = adjustHeadEmbededHyperparameters(hyperparameters, frame, headPositionFirstFrame, tailTipFirstFrame)
     # Getting max depth

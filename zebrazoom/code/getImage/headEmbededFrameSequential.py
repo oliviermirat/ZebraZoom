@@ -5,7 +5,7 @@ import cv2
 import zebrazoom.code.util as util
 
 
-def headEmbededFrameSequential(cap, videoPath, frameNumber, hyperparameters):
+def headEmbededFrameSequential(cap, videoPath, frameNumber, wellNumber, wellPositions, hyperparameters):
   
   debug = 0
   
@@ -16,7 +16,13 @@ def headEmbededFrameSequential(cap, videoPath, frameNumber, hyperparameters):
     frameNumber = frameNumber - 1
     cap.set(1, frameNumber)
     ret, frame = cap.read()
-  
+
+  xtop = wellPositions[wellNumber]['topLeftX']
+  ytop = wellPositions[wellNumber]['topLeftY']
+  lenX = wellPositions[wellNumber]['lengthX']
+  lenY = wellPositions[wellNumber]['lengthY']
+  frame = frame[ytop:ytop+lenY, xtop:xtop+lenX]
+
   if ("invertBlackWhiteOnImages" in hyperparameters) and hyperparameters["invertBlackWhiteOnImages"]:
     frame = 255 - frame
   
