@@ -8,6 +8,7 @@ import sys
 import webbrowser
 from packaging import version
 
+import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvas
@@ -950,7 +951,8 @@ class ViewParameters(util.CollapsibleSplitter):
 
             else:
               headX = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["HeadX"].copy()
-              headY = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["HeadY"].copy()
+              lengthY  = self.dataRef["wellPositions"][self.numWell()]["lengthY"]
+              headY = lengthY - np.array(self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["HeadY"])
 
 
               if not(self.graphScaling):
@@ -1099,8 +1101,9 @@ class ViewParameters(util.CollapsibleSplitter):
         headXFinal = []
         headYFinal = []
         for numMouv in range(0, len(dataRef["wellPoissMouv"][numWell][numPoiss])):
-          headXFinal = headXFinal + dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["HeadX"].copy()
-          headYFinal = headYFinal + dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["HeadY"].copy()
+          headXFinal.extend(dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["HeadX"])
+          lengthY  = dataRef["wellPositions"][numWell]["lengthY"]
+          headYFinal.extend((lengthY - pos for pos in dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["HeadY"]))
         plt.plot(headXFinal, headYFinal)
         if not(graphScaling):
           plt.xlim(0, dataRef["wellPositions"][numWell]["lengthX"])
