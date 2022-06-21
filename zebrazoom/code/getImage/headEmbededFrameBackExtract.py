@@ -25,6 +25,7 @@ def headEmbededFrameBackExtract(videoPath, background, hyperparameters, frameNum
   lenX = wellPositions[wellNumber]['lengthX']
   lenY = wellPositions[wellNumber]['lengthY']
   frame = frame[ytop:ytop+lenY, xtop:xtop+lenX]
+  background = background[ytop:ytop+lenY, xtop:xtop+lenX]
 
   if ("invertBlackWhiteOnImages" in hyperparameters) and hyperparameters["invertBlackWhiteOnImages"]:
     frame = 255 - frame
