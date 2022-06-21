@@ -336,13 +336,12 @@ def _selectROI(config, frame):
                              buttons=buttons, initialRect=initialRect, allowEmpty=True)
   if save:
     app = QApplication.instance()
-    if coords is None:
+    if coords == ([0, 0], [0, 0]):
       if "oneWellManuallyChosenTopLeft" in config:
         del config["oneWellManuallyChosenTopLeft"]
       if "oneWellManuallyChosenBottomRight" in config:
         del config["oneWellManuallyChosenBottomRight"]
-      del app.wellPositions
-      del app.wellShape
+      del app.wellPositions[:]
     else:
       config["oneWellManuallyChosenTopLeft"], config["oneWellManuallyChosenBottomRight"] = coords
       topLeftX, topLeftY = config["oneWellManuallyChosenTopLeft"]
@@ -469,7 +468,7 @@ def adjustParamInsideAlgoPage(useNext=True):
   adjustButtonsLayout = QHBoxLayout()
   adjustButtonsLayout.addStretch()
   adjustBoutsBtn = QPushButton("Adjust Bouts Detection")
-  adjustBoutsBtn.clicked.connect(lambda: app.detectBouts(app, video.getWell(), frameSlider.value(), False))
+  adjustBoutsBtn.clicked.connect(lambda: app.detectBouts(app, video.getWell(), frameSlider.value(), False, reloadWellPositions=False))
   adjustBoutsBtn.setToolTip("The aim here is to adjust parameters in order for the red dot on the top left of the image to appear when and only when movement is occurring.\n"
                             "WARNING: if you don't want ZebraZoom to detect bouts, don't click on this button.")
   adjustButtonsLayout.addWidget(adjustBoutsBtn, alignment=Qt.AlignmentFlag.AlignCenter)

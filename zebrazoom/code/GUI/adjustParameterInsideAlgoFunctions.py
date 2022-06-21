@@ -57,7 +57,7 @@ def prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrame, v
   return initialFirstFrameValue, initialLastFrameValue
 
 
-def detectBouts(self, controller, wellNumber, firstFrame, adjustOnWholeVideo):
+def detectBouts(self, controller, wellNumber, firstFrame, adjustOnWholeVideo, reloadWellPositions=True):
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
 
   initialFirstFrameValue, initialLastFrameValue = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrame, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
@@ -69,7 +69,7 @@ def detectBouts(self, controller, wellNumber, firstFrame, adjustOnWholeVideo):
     trackTailOriginalValue = 1
   configFile["trackTail"]                   = 0
   configFile["adjustDetectMovWithRawVideo"] = 1
-  configFile["reloadWellPositions"]         = 1
+  configFile["reloadWellPositions"]         = int(reloadWellPositions)
   if "freqAlgoPosFollow" in configFile:
     freqAlgoPosFollowInitial = configFile["freqAlgoPosFollow"]
   else:

@@ -311,8 +311,8 @@ class ZebraZoomApp(PlainApplication):
     def headEmbededGUI(self, controller, blackBack, whiteBack, noBoutDetect, boutDetection, optionExtendedDescentSearchOption, optionBackgroundExtractionOption):
         configFileZebrafishFunctions.headEmbededGUI(self, controller, blackBack, whiteBack, noBoutDetect, boutDetection, optionExtendedDescentSearchOption, optionBackgroundExtractionOption)
 
-    def detectBouts(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo):
-      adjustParameterInsideAlgoFunctions.detectBouts(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo)
+    def detectBouts(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo, reloadWellPositions=True):
+      adjustParameterInsideAlgoFunctions.detectBouts(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo, reloadWellPositions=reloadWellPositions)
 
     def adjustHeadEmbededTracking(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo):
       adjustParameterInsideAlgoFunctions.adjustHeadEmbededTracking(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo)
