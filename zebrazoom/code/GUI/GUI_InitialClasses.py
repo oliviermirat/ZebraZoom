@@ -8,7 +8,6 @@ import sys
 import webbrowser
 from packaging import version
 
-import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvas
@@ -951,17 +950,18 @@ class ViewParameters(util.CollapsibleSplitter):
 
             else:
               headX = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["HeadX"].copy()
-              lengthY  = self.dataRef["wellPositions"][self.numWell()]["lengthY"]
-              headY = lengthY - np.array(self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["HeadY"])
+              headY = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["HeadY"].copy()
 
 
               if not(self.graphScaling):
                 lengthX  = self.dataRef["wellPositions"][self.numWell()]["lengthX"]
                 lengthY  = self.dataRef["wellPositions"][self.numWell()]["lengthY"]
                 self.a.set_xlim(0, lengthX)
-                self.a.set_ylim(0, lengthY)
+                self.a.set_ylim(lengthY, 0)
 
               self.a.plot(headX, headY)
+              if self.graphScaling:
+                self.a.set_ylim(self.a.get_ylim()[::-1])
         else:
             tailAngleSmoothed = [i for i in range(0,1)]
             self.a.plot([i for i in range(0,len(tailAngleSmoothed))],tailAngleSmoothed)
@@ -1102,12 +1102,13 @@ class ViewParameters(util.CollapsibleSplitter):
         headYFinal = []
         for numMouv in range(0, len(dataRef["wellPoissMouv"][numWell][numPoiss])):
           headXFinal.extend(dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["HeadX"])
-          lengthY  = dataRef["wellPositions"][numWell]["lengthY"]
-          headYFinal.extend((lengthY - pos for pos in dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["HeadY"]))
+          headYFinal.extend(dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["HeadY"])
         plt.plot(headXFinal, headYFinal)
         if not(graphScaling):
           plt.xlim(0, dataRef["wellPositions"][numWell]["lengthX"])
-          plt.ylim(0, dataRef["wellPositions"][numWell]["lengthY"])
+          plt.ylim(dataRef["wellPositions"][numWell]["lengthY"], 0)
+        else:
+          plt.ylim(plt.ylim()[::-1])
         plt.show()
 
     def printNextResults(self):
