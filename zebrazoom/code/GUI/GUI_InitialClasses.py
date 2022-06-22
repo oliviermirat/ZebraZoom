@@ -19,6 +19,7 @@ from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkReques
 from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSizePolicy, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
 PYQT6 = False
 
+import zebrazoom
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 from zebrazoom.code.readValidationVideo import readValidationVideo
@@ -281,12 +282,12 @@ class StartPage(QWidget):
             return
         latestVersion = self._reply.url().toString().split('/')[-1]
         self._reply = None
-        if version.parse(latestVersion) <= version.parse(self.controller.version):
-            self._updateStatusLabel.setText("Using ZebraZoom version %s, no updates available." % self.controller.version)
+        if version.parse(latestVersion) <= version.parse(zebrazoom.__version__):
+            self._updateStatusLabel.setText("Using ZebraZoom version %s, no updates available." % zebrazoom.__version__)
             util.apply_style(self._updateStatusLabel, color='green')
             self._updateBtn.hide()
             return
-        self._updateStatusLabel.setText("Using ZebraZoom version %s, updates are available (%s)." % (self.controller.version, latestVersion))
+        self._updateStatusLabel.setText("Using ZebraZoom version %s, updates are available (%s)." % (zebrazoom.__version__, latestVersion))
         util.apply_style(self._updateStatusLabel, color='red')
         self._updateBtn.setText("Update")
         self._updateBtn.show()

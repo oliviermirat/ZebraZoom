@@ -4,13 +4,13 @@ from setuptools import setup
 
 
 def read_file(file):
-   with open(file) as f:
-        return f.read()
+  with open(file) as f:
+    return f.read()
 
 
 setup(
   name = 'zebrazoom',
-  version = '1.32.56',
+  version = read_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'zebrazoom', 'version.txt')).strip(),
   license='AGPL-3.0',
   description = 'Track and analyze zebrafish and animal behavior',
   long_description=read_file(os.path.join(os.path.dirname(os.path.realpath(__file__)), "README.md")),

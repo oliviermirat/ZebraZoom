@@ -1,26 +1,39 @@
-name: Release
+name: Release a new version
 
 on:
-  push:
-    tags:
-      - release/*
+  workflow_dispatch:
+    inputs:
+      new_version:
+        description: Release version
+        required: true
+        type: string
 
 jobs:
   create_release:
-    name: Create Github release
+    name: Bump version and create Github release
     runs-on: ubuntu-latest
     outputs:
       upload_url: ${{ steps.create_release.outputs.upload_url }}
       release_id: ${{ steps.create_release.outputs.id }}
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Bump version
+        run: |
+          echo ${{ inputs.new_version }} > zebrazoom/version.txt
+      - name: Commit changes
+        uses: EndBug/add-and-commit@v9
+        with:
+          message: Bump version to ${{ inputs.new_version }}
+          tag: release/${{ inputs.new_version }}
       - name: Create a new release draft
         id: create_release
         uses: actions/create-release@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: ${{ github.ref }}
+          tag_name: release/${{ inputs.new_version }}
+          release_name: release/${{ inputs.new_version }}
           draft: true
           prerelease: false
 
