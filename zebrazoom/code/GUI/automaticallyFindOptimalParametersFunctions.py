@@ -14,7 +14,6 @@ from zebrazoom.code.getBackground import getBackground
 from zebrazoom.code.findWells import findWells
 from zebrazoom.code.trackingFolder.tracking import tracking
 from zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions import prepareConfigFileForParamsAdjustements
-from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 

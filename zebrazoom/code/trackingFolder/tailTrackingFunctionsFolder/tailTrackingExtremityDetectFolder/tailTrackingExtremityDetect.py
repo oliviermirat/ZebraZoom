@@ -17,7 +17,6 @@ from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtre
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findBodyContour import findBodyContour
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.Rotate import Rotate
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.checkIfMidlineIsInBlob import checkIfMidlineIsInBlob
-from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 
 # from kalmanFilter import kalman_xy
 # from trackingFunctions import calculateAngle
@@ -73,8 +72,6 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
       #
       if hyperparameters["debugTrackingPtExtremeLargeVerticals"]:
         dst = dst[int(headPosition[1])-200:len(dst), :]
-      else:
-        [dst, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(dst)
       # Plotting points
       util.showFrame(dst, title='Frame')
     

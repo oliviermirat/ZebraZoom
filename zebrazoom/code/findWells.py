@@ -10,7 +10,6 @@ import os
 from scipy import interpolate
 import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 from zebrazoom.code.adjustHyperparameters import adjustHyperparameters
-from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 
 from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout

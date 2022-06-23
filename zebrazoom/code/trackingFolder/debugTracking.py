@@ -1,6 +1,5 @@
 import cv2
 import math
-from zebrazoom.code.resizeImageTooLarge import resizeImageTooLarge
 import numpy as np
 
 import zebrazoom.code.util as util
@@ -11,16 +10,14 @@ def debugTracking(nbTailPoints, i, firstFrame, output, outputHeading, frame2, hy
     if type(frame2[0][0]) == int or type(frame2[0][0]) == np.uint8:
       frame2 = cv2.cvtColor(frame2,cv2.COLOR_GRAY2RGB)
     
-    [frame2, getRealValueCoefX, getRealValueCoefY, horizontal, vertical] = resizeImageTooLarge(frame2)
-    
     for k in range(0, hyperparameters["nbAnimalsPerWell"]):
       for j in range(0, nbTailPoints):
         x = int(output[k, i-firstFrame][j][0])
         y = int(output[k, i-firstFrame][j][1])
-        cv2.circle(frame2, (int(x / getRealValueCoefX), int(y / getRealValueCoefY)), 1, (0, 255, 0),   -1)
+        cv2.circle(frame2, (x, y), 1, (0, 255, 0),   -1)
       x = int(output[k, i-firstFrame][nbTailPoints-1][0]) # it used to be 10 instead of 9 here, not sure why
       y = int(output[k, i-firstFrame][nbTailPoints-1][1]) # it used to be 10 instead of 9 here, not sure why
-      cv2.circle(frame2, (int(x / getRealValueCoefX), int(y / getRealValueCoefY)), 2, (0, 0, 255),   -1)
+      cv2.circle(frame2, (x, y), 2, (0, 0, 255),   -1)
       
       x = output[k, i-firstFrame][0][0]
       y = output[k, i-firstFrame][0][1]
