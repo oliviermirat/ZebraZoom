@@ -1,3 +1,4 @@
+import zebrazoom
 from zebrazoom.code.findWells import findWells
 from zebrazoom.code.getBackground import getBackground
 from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
@@ -298,7 +299,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
     
   try:
     with open(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'ZebraZoomVersionUsed.txt'), 'w') as fp:
-      subprocess.run(["pip", "show",  "zebrazoom"], stdout=fp)
+      fp.write(zebrazoom.__version__)
   except:
     fileVersionUsed = open(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'ZebraZoomVersionUsed.txt'), 'w')
     fileVersionUsed.write("Was not able to retrive the version number used.")
