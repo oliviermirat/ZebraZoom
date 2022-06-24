@@ -17,7 +17,8 @@ MAX_INT32 = 2 ** 31 - 1
 
 def _createWidget(layout, status, values, info, name, widgets):
   minn, maxx, hint = info
-  slider = util.SliderWithSpinbox(values[name], minn, maxx, name=name)
+  double = name == "authorizedRelativeLengthTailEnd"
+  slider = util.SliderWithSpinbox(values[name], minn, maxx, name=name, double=double)
 
   def showHint(fn):
     def inner(evt):
@@ -108,7 +109,10 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
   else:
     for name in hyperparametersListNames:
       slider = widgets[name]
-      slider.setValue(hyperparameters[name])
+      if slider.value() != hyperparameters[name]:
+        slider.setValue(hyperparameters[name])
+      if name == "authorizedRelativeLengthTailEnd":
+        continue
       minn = slider.minimum()
       maxx = slider.maximum()
       if name == "frameGapComparision" and maxx == hyperparameters["lastFrame"] - hyperparameters["firstFrame"] - 1:

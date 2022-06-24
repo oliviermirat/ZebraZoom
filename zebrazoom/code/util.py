@@ -5,7 +5,7 @@ import cv2
 
 from PyQt5.QtCore import pyqtSignal, Qt, QAbstractAnimation, QEventLoop, QLine, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, QStandardPaths, QTimer
 from PyQt5.QtGui import QBrush, QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygonF, QTransform
-from PyQt5.QtWidgets import QApplication, QFrame, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QSplitter, QSplitterHandle, QToolButton, QToolTip, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QDoubleSpinBox, QFrame, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QSplitter, QSplitterHandle, QToolButton, QToolTip, QVBoxLayout, QWidget
 PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
@@ -28,14 +28,28 @@ LIGHT_CYAN = '#E0FFFF'
 LIGHT_GREEN = '#90ee90'
 GOLD = '#FFD700'
 SPINBOX_STYLESHEET = '''
-QSpinBox::down-button  {
+QSpinBox::down-button {
   subcontrol-origin: border;
   subcontrol-position: center left;
   height: 20;
   width: 20;
 }
 
-QSpinBox::up-button  {
+QSpinBox::up-button {
+  subcontrol-origin: border;
+  subcontrol-position: center right;
+  height: 20;
+  width: 20;
+}
+
+QDoubleSpinBox::down-button {
+  subcontrol-origin: border;
+  subcontrol-position: center left;
+  height: 20;
+  width: 20;
+}
+
+QDoubleSpinBox::up-button {
   subcontrol-origin: border;
   subcontrol-position: center right;
   height: 20;
@@ -339,10 +353,33 @@ def setPixmapFromCv(img, label, preferredSize=None, zoomable=False):
       image.proceed.connect(label.proceed.emit)
 
 
+class _DoubleSlider(QSlider):
+  _DECIMALS = 2
+
+  def __init__(self, *args, **kargs):
+    super().__init__( *args, **kargs)
+    self._factor = 10 ** self._DECIMALS
+
+  def value(self):
+    return super().value() / self._factor
+
+  def setMinimum(self, value):
+    return super().setMinimum(int(value * self._factor))
+
+  def setMaximum(self, value):
+    return super().setMaximum(int(value * self._factor))
+
+  def setRange(self, minimum, maximum):
+    return super().setRange(int(minimum * self._factor), int(maximum * self._factor))
+
+  def setValue(self, value):
+    super().setValue(int(value * self._factor))
+
+
 class SliderWithSpinbox(QWidget):
   valueChanged = pyqtSignal(int)
 
-  def __init__(self, value, minimum, maximum, name=None):
+  def __init__(self, value, minimum, maximum, name=None, double=False):
     super().__init__()
     minimum = int(minimum)
     maximum = int(maximum)
@@ -358,13 +395,13 @@ class SliderWithSpinbox(QWidget):
     layout.addWidget(minLabel, 1, 1, Qt.AlignmentFlag.AlignLeft)
     maxLabel = QLabel(str(maximum))
     layout.addWidget(maxLabel, 1, 3, Qt.AlignmentFlag.AlignRight)
-    slider = QSlider(Qt.Orientation.Horizontal)
+    slider = QSlider(Qt.Orientation.Horizontal) if not double else _DoubleSlider(Qt.Orientation.Horizontal)
     slider.setMinimumWidth(350)
     slider.setRange(minimum, maximum)
     slider.setValue(value)
     layout.addWidget(slider, 2, 1, 1, 3)
 
-    spinbox = QSpinBox()
+    spinbox = QSpinBox() if not double else QDoubleSpinBox()
     spinbox.setStyleSheet(SPINBOX_STYLESHEET)
     spinbox.setMinimumWidth(90)
     spinbox.setRange(minimum, maximum)
@@ -373,7 +410,9 @@ class SliderWithSpinbox(QWidget):
 
     def spinboxValueChanged():
       value = spinbox.value()
+      blocked = slider.blockSignals(True)
       slider.setValue(value)
+      slider.blockSignals(blocked)
       self.valueChanged.emit(value)
     spinbox.valueChanged.connect(spinboxValueChanged)
     slider.valueChanged.connect(lambda: spinbox.setValue(slider.value()))
