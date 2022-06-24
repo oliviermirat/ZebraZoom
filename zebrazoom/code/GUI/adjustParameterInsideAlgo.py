@@ -401,6 +401,7 @@ def adjustParamInsideAlgoPage(useNext=True):
       util.setPixmapFromCv(getFrame(), video)
     contrastCheckbox = QCheckBox("Improve contrast on validation video")
     contrastCheckbox.toggled.connect(contrastCheckboxToggled)
+    contrastCheckbox.setChecked(True)
     layout.addWidget(contrastCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
   sublayout = QHBoxLayout()
