@@ -2,7 +2,7 @@ import cv2
 
 import numpy as np
 
-from PyQt5.QtCore import Qt, pyqtSignal, QPoint, QPointF, QRect, QRectF, QSizeF
+from PyQt5.QtCore import Qt, pyqtSignal, QPoint, QPointF, QRect, QRectF, QSizeF, QTimer
 from PyQt5.QtGui import QColor, QFont, QIntValidator, QPainter, QPolygon, QPolygonF, QTransform
 from PyQt5.QtWidgets import QApplication, QLabel, QLineEdit, QCheckBox, QPushButton, QHBoxLayout, QSpinBox, QVBoxLayout, QWidget
 
@@ -395,7 +395,7 @@ def adjustParamInsideAlgoPage(useNext=True):
       util.setPixmapFromCv(getFrame(), video)
     contrastCheckbox = QCheckBox("Improve contrast on validation video")
     contrastCheckbox.toggled.connect(contrastCheckboxToggled)
-    contrastCheckbox.setChecked(True)
+    QTimer.singleShot(0, lambda: contrastCheckbox.setChecked(True))
     layout.addWidget(contrastCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
   sublayout = QHBoxLayout()
