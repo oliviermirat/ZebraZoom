@@ -2,7 +2,7 @@ import cv2
 
 import numpy as np
 
-from PyQt5.QtCore import Qt, pyqtSignal, QPoint, QPointF, QRect, QRectF, QSizeF
+from PyQt5.QtCore import Qt, pyqtSignal, QPoint, QPointF, QRect, QRectF, QSizeF, QTimer
 from PyQt5.QtGui import QColor, QFont, QIntValidator, QPainter, QPolygon, QPolygonF, QTransform
 from PyQt5.QtWidgets import QApplication, QLabel, QLineEdit, QCheckBox, QPushButton, QHBoxLayout, QSpinBox, QVBoxLayout, QWidget
 
@@ -323,7 +323,7 @@ def _addBlackSegments(config, videoPath, frameNumber, wellNumber, cap):
   util.showBlockingPage(layout, labelInfo=(frame, label), title="Click in the beginning and end of segment to set to black pixels", buttons=buttons)
 
 
-def _selectROI(config, frame):
+def _selectROI(config, getFrame):
   save = False
   def saveClicked():
     nonlocal save
@@ -332,8 +332,11 @@ def _selectROI(config, frame):
   topLeft = config.get("oneWellManuallyChosenTopLeft")
   bottomRight = config.get("oneWellManuallyChosenBottomRight")
   initialRect = None if topLeft is None or bottomRight is None else (QPoint(*topLeft), QPoint(*bottomRight))
-  coords = util.getRectangle(frame, "Click on the top left and bottom right of the region of interest",
-                             buttons=buttons, initialRect=initialRect, allowEmpty=True)
+  checkbox = QCheckBox('Improve contrast')
+  improveContrast = bool(config.get("outputValidationVideoContrastImprovement", False))
+  checkbox.setChecked(improveContrast)
+  coords = util.getRectangle(getFrame(), "Click on the top left and bottom right of the region of interest", buttons=buttons,
+                             initialRect=initialRect, allowEmpty=True, contrastCheckbox=checkbox, getFrame=getFrame)
   if save:
     app = QApplication.instance()
     if coords == ([0, 0], [0, 0]):
@@ -363,23 +366,14 @@ def adjustParamInsideAlgoPage(useNext=True):
   maxFrame = cap.get(7) - 1
   frameSlider = util.SliderWithSpinbox(firstFrame, 0, maxFrame, name="First frame")
 
-  def getFrame():
+  def getFrame(improveContrast=None):
     cap.set(1, frameSlider.value())
     ret, frame = cap.read()
     hyperparameters = getHyperparametersSimple(app.configFile)
-    if hyperparameters["outputValidationVideoContrastImprovement"]:
-      frame = 255 - frame
-      frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-      quartileChose = hyperparameters["outputValidationVideoContrastImprovementQuartile"]
-      lowVal = int(np.quantile(frame, quartileChose))
-      highVal = int(np.quantile(frame, 1 - quartileChose))
-      frame[frame < lowVal] = lowVal
-      frame[frame > highVal] = highVal
-      frame = frame - lowVal
-      mult = np.max(frame)
-      frame = frame * (255 / mult)
-      frame = frame.astype('uint8')
-      frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+    if improveContrast is None:
+      improveContrast = hyperparameters["outputValidationVideoContrastImprovement"]
+    if improveContrast:
+      frame = util.improveContrast(frame, hyperparameters["outputValidationVideoContrastImprovementQuartile"])
     return frame
   frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video))
 
@@ -401,6 +395,7 @@ def adjustParamInsideAlgoPage(useNext=True):
       util.setPixmapFromCv(getFrame(), video)
     contrastCheckbox = QCheckBox("Improve contrast on validation video")
     contrastCheckbox.toggled.connect(contrastCheckboxToggled)
+    QTimer.singleShot(0, lambda: contrastCheckbox.setChecked(True))
     layout.addWidget(contrastCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
   sublayout = QHBoxLayout()
@@ -481,7 +476,7 @@ def adjustParamInsideAlgoPage(useNext=True):
   addBlackSegmentsBtn.clicked.connect(lambda: _addBlackSegments(app.configFile, app.videoToCreateConfigFileFor, frameSlider.value(), video.getWell(), cap))
   adjustButtonsLayout.addWidget(addBlackSegmentsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   selectROIBtn = QPushButton("Select a Region of Interest")
-  selectROIBtn.clicked.connect(lambda: _selectROI(app.configFile, getFrame()))
+  selectROIBtn.clicked.connect(lambda: _selectROI(app.configFile, getFrame))
   adjustButtonsLayout.addWidget(selectROIBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   adjustButtonsLayout.addStretch()
   layout.addLayout(adjustButtonsLayout)

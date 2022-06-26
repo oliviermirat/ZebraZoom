@@ -1,6 +1,8 @@
 import math
 import sys
 
+import numpy as np
+
 import cv2
 
 from PyQt5.QtCore import pyqtSignal, Qt, QAbstractAnimation, QEventLoop, QLine, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, QStandardPaths, QTimer
@@ -799,13 +801,17 @@ class _InteractiveLabelRect(QLabel):
     return ([point.x(), point.y()] for point in points)
 
 
-def getRectangle(frame, title, backBtnCb=None, dialog=False, buttons=None, initialRect=None, allowEmpty=False):
+def getRectangle(frame, title, backBtnCb=None, dialog=False, buttons=None, initialRect=None, allowEmpty=False, contrastCheckbox=None, getFrame=None):
   height, width, _ = frame.shape
 
   layout = QVBoxLayout()
 
   video = _InteractiveLabelRect(width, height, initialRect)
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
+  if contrastCheckbox is not None:
+    assert getFrame is not None
+    contrastCheckbox.toggled.connect(lambda checked: setPixmapFromCv(getFrame(checked), video))
+    layout.addWidget(contrastCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
   if allowEmpty:
     clearRectangleBtn = QPushButton('Clear rectangle')
     clearRectangleBtn.clicked.connect(video.clearRectangle)
@@ -1197,3 +1203,21 @@ class CollapsibleSplitter(QSplitter):
 
     handle.setLayout(layout)
     return handle
+
+
+def improveContrast(frame, quartile):
+  frame = 255 - frame
+  frameIsBGR = len(frame.shape) == 3
+  if frameIsBGR:
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+  lowVal = int(np.quantile(frame, quartile))
+  highVal = int(np.quantile(frame, 1 - quartile))
+  frame[frame < lowVal] = lowVal
+  frame[frame > highVal] = highVal
+  frame = frame - lowVal
+  mult = np.max(frame)
+  frame = frame * (255 / mult)
+  frame = frame.astype('uint8')
+  if frameIsBGR:
+    frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+  return frame

@@ -7,6 +7,9 @@ import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 import random
 import os
 
+import zebrazoom.code.util as util
+
+
 def createValidationVideo(videoPath, superStruct, hyperparameters):
 
   if (hyperparameters["freqAlgoPosFollow"] != 0):
@@ -205,18 +208,7 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
         if hyperparameters["reduceImageResolutionPercentage"]:
           frame = cv2.resize(frame, (int(frame_width * hyperparameters["reduceImageResolutionPercentage"]), int(frame_height * hyperparameters["reduceImageResolutionPercentage"])), interpolation = cv2.INTER_AREA)
         if hyperparameters["outputValidationVideoContrastImprovement"]:
-          frame = 255 - frame
-          frame  = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-          quartileChose = hyperparameters["outputValidationVideoContrastImprovementQuartile"]
-          lowVal  = int(np.quantile(frame, quartileChose))
-          highVal = int(np.quantile(frame, 1 - quartileChose))
-          frame[frame < lowVal]  = lowVal
-          frame[frame > highVal] = highVal
-          frame = frame - lowVal
-          mult  = np.max(frame)
-          frame = frame * (255/mult)
-          frame = frame.astype('uint8')
-          frame  = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+          frame = util.improveContrast(frame, hyperparameters["outputValidationVideoContrastImprovementQuartile"])
         
         for i in range(0, len(infoFrame[l])):
           x = infoFrame[l][i]["x"]
