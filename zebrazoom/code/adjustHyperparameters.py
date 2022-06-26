@@ -6,7 +6,7 @@ import webbrowser
 
 from PyQt5.QtCore import Qt, QEventLoop, QPoint, QTimer
 from PyQt5.QtGui import QCursor
-from PyQt5.QtWidgets import QApplication, QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QCheckBox, QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
@@ -15,7 +15,7 @@ import zebrazoom.code.util as util
 MAX_INT32 = 2 ** 31 - 1
 
 
-def _createWidget(layout, status, values, info, name, widgets):
+def _createWidget(layout, status, values, info, name, widgets, hasCheckbox):
   minn, maxx, hint = info
   double = name == "authorizedRelativeLengthTailEnd"
   slider = util.SliderWithSpinbox(values[name], minn, maxx, name=name, double=double)
@@ -40,8 +40,8 @@ def _createWidget(layout, status, values, info, name, widgets):
   slider.valueChanged.connect(valueChanged)
 
   if name != "Frame number":
-    elements = layout.count() - 3  # frame, status, frameSlider
-    row = elements // 2 + 3
+    elements = layout.count() - (4 if hasCheckbox else 3)  # frame, status, checkbox, frameSlider
+    row = elements // 2 + (4 if hasCheckbox else 3)
     col = elements % 2
     if len(values) == 1:
       layout.addWidget(slider, row, col, 1, 2, Qt.AlignmentFlag.AlignCenter)
@@ -50,10 +50,10 @@ def _createWidget(layout, status, values, info, name, widgets):
     widgets[name] = slider
   else:
     widgets['frameSlider'] = slider
-    layout.addWidget(slider, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(slider, 3 if hasCheckbox else 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
 
-def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, title, organizationTab, widgets, documentationLink=None):
+def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, title, organizationTab, widgets, documentationLink=None, addContrastCheckbox=False):
   app = QApplication.instance()
   stackedLayout = app.window.centralWidget().layout()
   timers = []
@@ -69,12 +69,19 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
     status = QLabel()
     layout.addWidget(status, 1, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
+    if addContrastCheckbox:
+      checkbox = QCheckBox('Improve contrast')
+      widgets['contrastCheckbox'] = checkbox
+      checkbox.toggled.connect(lambda: widgets['loop'].exit())
+      QTimer.singleShot(0, lambda: checkbox.setChecked(hyperparameters["outputValidationVideoContrastImprovement"]))
+      layout.addWidget(checkbox, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+
     if l is not None:
-      _createWidget(layout, status, widgets, (hyperparameters["firstFrame"], hyperparameters["lastFrame"] - 1, "You can also go through the video with the keys left arrow (backward); right arrow (forward); page down (fast backward); page up (fast forward)"), "Frame number", widgets)
+      _createWidget(layout, status, widgets, (hyperparameters["firstFrame"], hyperparameters["lastFrame"] - 1, "You can also go through the video with the keys left arrow (backward); right arrow (forward); page down (fast backward); page up (fast forward)"), "Frame number", widgets, addContrastCheckbox)
     else:
       layout.addWidget(QWidget())
     for info, name in zip(organizationTab, hyperparametersListNames):
-      _createWidget(layout, status, hyperparameters, info, name, widgets)
+      _createWidget(layout, status, hyperparameters, info, name, widgets, addContrastCheckbox)
 
     mainLayout = QVBoxLayout()
     mainLayout.addWidget(util.apply_style(QLabel(title), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -173,6 +180,8 @@ def adjustDetectMouvRawVideosParams(img, res, l, totDiff, hyperparameters, widge
   [0, 500, "Controls the size of the images on which pixel change from image to the next are counted."],
   [0, 50,  "Increase if too much movement is being detected."],]
   title = "Red dot must appear only when movement is occuring"
+  if widgets is not None and widgets["contrastCheckbox"].isChecked():
+    img = util.improveContrast(img, hyperparameters["outputValidationVideoContrastImprovementQuartile"])
   frameToShow = np.concatenate((img, res),axis=1)
   frameToShow = cv2.cvtColor(frameToShow,cv2.COLOR_GRAY2RGB)
 
@@ -187,7 +196,7 @@ def adjustDetectMouvRawVideosParams(img, res, l, totDiff, hyperparameters, widge
 
   if totDiff > hyperparameters["minNbPixelForDetectMovementWithRawVideo"]:
     cv2.circle(frameToShow, (redDotDimension, redDotDimension), redDotDimension, (0,0,255), -1)
-  return adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, title, organizationTab, widgets, documentationLink=documentationLink)
+  return adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, title, organizationTab, widgets, documentationLink=documentationLink, addContrastCheckbox=hyperparameters['headEmbeded'])
 
 
 def adjustHeadEmbededTrackingParams(nbTailPoints, i, firstFrame, output, outputHeading, frame, frame2, hyperparameters, widgets):
@@ -206,6 +215,9 @@ def adjustHeadEmbededTrackingParams(nbTailPoints, i, firstFrame, output, outputH
 
   # frame2 = np.concatenate((frame2, frame),axis=1)
 
+  if widgets is not None and widgets["contrastCheckbox"].isChecked():
+    frame2 = util.improveContrast(frame2, hyperparameters["outputValidationVideoContrastImprovementQuartile"])
+
   frame2 = cv2.cvtColor(frame2,cv2.COLOR_GRAY2RGB)
   for k in range(0, hyperparameters["nbAnimalsPerWell"]):
     for j in range(0, nbTailPoints):
@@ -218,7 +230,7 @@ def adjustHeadEmbededTrackingParams(nbTailPoints, i, firstFrame, output, outputH
     x = output[k, i-firstFrame][0][0]
     y = output[k, i-firstFrame][0][1]
 
-  return adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frame2, title, organizationTab, widgets, documentationLink=documentationLink)
+  return adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frame2, title, organizationTab, widgets, documentationLink=documentationLink, addContrastCheckbox=True)
 
 
 def adjustFreelySwimTrackingParams(nbTailPoints, i, firstFrame, output, outputHeading, frame, frame2, hyperparameters, widgets):
