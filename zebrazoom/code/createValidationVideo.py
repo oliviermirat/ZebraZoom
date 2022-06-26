@@ -143,6 +143,9 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
               dataToPlot["y"]       = leftEyeY
               dataToPlot["size"]    = 1
               dataToPlot["Heading"] = leftEyeAngle
+              dataToPlot["headingColor"] = (0, 255, 0)
+              dataToPlot["headingWidth"]    = hyperparameters["eyeTrackingHeadEmbeddedWidth"]
+              dataToPlot["headingHalfDiam"] = hyperparameters["eyeTrackingHeadEmbeddedHalfDiameter"]
               dataToPlot["numMouv"] = k+1
               dataToPlot["numWell"] = i
               dataToPlot["red"]     = 255
@@ -163,6 +166,9 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
               dataToPlot["y"]       = rightEyeY
               dataToPlot["size"]    = 1
               dataToPlot["Heading"] = rightEyeAngle
+              dataToPlot["headingColor"] = (0, 255, 0)
+              dataToPlot["headingWidth"]    = hyperparameters["eyeTrackingHeadEmbeddedWidth"]
+              dataToPlot["headingHalfDiam"] = hyperparameters["eyeTrackingHeadEmbeddedHalfDiameter"]
               # dataToPlot["numMouv"] = k+1
               # dataToPlot["numWell"] = i
               dataToPlot["red"]     = 0
@@ -221,11 +227,14 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
           blue  = infoFrame[l][i]["blue"]
           if (infoFrame[l][i]["Heading"] != -10):
             heading = infoFrame[l][i]["Heading"]
+            headingColor = infoFrame[l][i]["headingColor"] if "headingColor" in infoFrame[l][i] else (255,0,0)
+            headingWidth = infoFrame[l][i]["headingWidth"] if "headingWidth" in infoFrame[l][i] else trackingPointSizeDisplay
+            headingHalfDiam = infoFrame[l][i]["headingHalfDiam"] if "headingHalfDiam" in infoFrame[l][i] else 20
             if hyperparameters["validationVideoPlotHeading"]:
               if hyperparameters["debugValidationVideoHeading"] == 0:
-                cv2.line(frame,(int(x),int(y)),(int(x+20*math.cos(heading)),int(y+20*math.sin(heading))), (255,0,0), trackingPointSizeDisplay)
+                cv2.line(frame,(int(x),int(y)),(int(x+headingHalfDiam*math.cos(heading)),int(y+headingHalfDiam*math.sin(heading))), headingColor, headingWidth)
               else:
-                cv2.line(frame,(int(x),int(y)),(int(x-250*math.cos(heading)),int(y-250*math.sin(heading))), (255,0,0), trackingPointSizeDisplay)
+                cv2.line(frame,(int(x),int(y)),(int(x-250*math.cos(heading)),int(y-250*math.sin(heading))), headingColor, headingWidth)
             
             # if ("numMouv" in infoFrame[l][i]) and ("numWell" in infoFrame[l][i]):
               # numMouv = infoFrame[l][i]["numMouv"]

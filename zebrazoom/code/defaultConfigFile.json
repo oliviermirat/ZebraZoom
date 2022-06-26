@@ -154,6 +154,8 @@
   "midEyesPointToEyeCenterMaxDistance" : 10,
   "eyeHeadingSearchAreaHalfDiameter" : 40,
   "headingLineValidationPlotLength" : 10,
+  "eyeTrackingHeadEmbeddedWidth" : 4,
+  "eyeTrackingHeadEmbeddedHalfDiameter" : 15,
   
   "backCalculationStep" : -1,
   "step" : -1,

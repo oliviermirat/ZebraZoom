@@ -13,7 +13,7 @@ from zebrazoom.code.trackingFolder.debugTracking import debugTracking
 from zebrazoom.code.trackingFolder.tailTracking import tailTracking
 from zebrazoom.code.trackingFolder.blackFramesDetection import getThresForBlackFrame, savingBlackFrames
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import getHeadPositionByFileSaved, findTailTipByUserInput, getTailTipByFileSaved, findHeadPositionByUserInput, getAccentuateFrameForManualPointSelect
-from zebrazoom.code.trackingFolder.eyeTracking.eyeTracking import eyeTracking
+from zebrazoom.code.trackingFolder.eyeTracking.eyeTracking import eyeTracking, eyeTrackingHeadEmbedded
 from zebrazoom.code.trackingFolder.postProcessMultipleTrajectories import postProcessMultipleTrajectories
 
 from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
@@ -101,6 +101,21 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     if hyperparameters["addBlackLineToImg_Width"]:
       hyperparameters = addBlackLineToImgSetParameters(hyperparameters, frame, videoName)
     
+    # (x, y) coordinates for both eyes for head embedded fish eye tracking
+    if hyperparameters["eyeTracking"] and hyperparameters["headEmbeded"] == 1:
+      from PyQt5.QtWidgets import QApplication
+      import zebrazoom.code.util as util
+      from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import getAccentuateFrameForManualPointSelect
+      forEye = getAccentuateFrameForManualPointSelect(frame.copy(), hyperparameters)
+      if True:
+        leftEyeCoordinate = list(util.getPoint(np.uint8(forEye * 255), "Click on the center of the left eye", zoomable=True, dialog=not hasattr(QApplication.instance(), 'window')))
+        rightEyeCoordinate = list(util.getPoint(np.uint8(forEye * 255), "Click on the center of the right eye", zoomable=True, dialog=not hasattr(QApplication.instance(), 'window')))
+      else:
+        leftEyeCoordinate  = [210, 105]
+        rightEyeCoordinate = [236, 72]
+      print("leftEyeCoordinate:", leftEyeCoordinate)
+      print("rightEyeCoordinate:", rightEyeCoordinate)
+    
     # if hyperparameters["invertBlackWhiteOnImages"]:
       # frame   = 255 - frame
     
@@ -162,7 +177,10 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
         [trackingHeadTailAllAnimals, trackingHeadingAllAnimals] = tailTracking(animalId, i, firstFrame, videoPath, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, lastFirstTheta, maxDepth, tailTipFirstFrame, initialCurFrame, back, wellNumber, xHead, yHead)
     # Eye tracking for frame i
     if hyperparameters["eyeTracking"]:
-      trackingEyesAllAnimals = eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals)
+      if hyperparameters["headEmbeded"] == 1:
+        trackingEyesAllAnimals = eyeTrackingHeadEmbedded(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate)
+      else:
+        trackingEyesAllAnimals = eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals)
     # Debug functions
     if hyperparameters["nbAnimalsPerWell"] > 1 or hyperparameters["forceBlobMethodForHeadTracking"] or hyperparameters["headEmbeded"] == 1 or hyperparameters["fixedHeadPositionX"] != -1:
       debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, hyperparameters)

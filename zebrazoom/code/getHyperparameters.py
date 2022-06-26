@@ -439,6 +439,10 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["colorMapCurvature"]  = getConfig(config, "colorMapCurvature", videoPath)
   
+  hyperparameters["eyeTrackingHeadEmbeddedWidth"]  = getConfig(config, "eyeTrackingHeadEmbeddedWidth", videoPath)
+  hyperparameters["eyeTrackingHeadEmbeddedHalfDiameter"]  = getConfig(config, "eyeTrackingHeadEmbeddedHalfDiameter", videoPath)
+  
+  
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1
   
