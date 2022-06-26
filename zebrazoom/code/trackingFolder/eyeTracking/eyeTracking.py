@@ -4,7 +4,6 @@ import math
 import zebrazoom.code.util as util
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.calculateHeading import computeHeading
 from zebrazoom.code.trackingFolder.trackingFunctions import distBetweenThetas
-from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import getAccentuateFrameForManualPointSelect
 
 from PyQt5.QtWidgets import QApplication
 import zebrazoom.code.util as util
