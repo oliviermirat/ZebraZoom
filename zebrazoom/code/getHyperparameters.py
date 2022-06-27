@@ -442,6 +442,9 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["eyeTrackingHeadEmbeddedWidth"]  = getConfig(config, "eyeTrackingHeadEmbeddedWidth", videoPath)
   hyperparameters["eyeTrackingHeadEmbeddedHalfDiameter"]  = getConfig(config, "eyeTrackingHeadEmbeddedHalfDiameter", videoPath)
   
+  hyperparameters["eyeTrackingHeadEmbeddedWithSegment"]  = getConfig(config, "eyeTrackingHeadEmbeddedWithSegment", videoPath)
+  hyperparameters["eyeTrackingHeadEmbeddedWithEllipse"]  = getConfig(config, "eyeTrackingHeadEmbeddedWithEllipse", videoPath)
+  hyperparameters["eyeFilterKernelSize"] = getConfig(config, "eyeFilterKernelSize", videoPath)
   
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1

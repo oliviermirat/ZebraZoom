@@ -149,6 +149,9 @@
   "readjustCenterOfMassIfNotInsideContour": 0,
   
   "eyeTracking" : 0,
+  "eyeTrackingHeadEmbeddedWithSegment" : 0,
+  "eyeTrackingHeadEmbeddedWithEllipse" : 0,
+  "eyeFilterKernelSize" : 7,
   "headCenterToMidEyesPointDistance" : 5,
   "eyeBinaryThreshold" : 50,
   "midEyesPointToEyeCenterMaxDistance" : 10,

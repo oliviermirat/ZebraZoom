@@ -28,6 +28,9 @@ from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.centerOfMassTailT
 
 from zebrazoom.code.trackingFolder.trackingFunctions import addBlackLineToImgSetParameters
 
+from PyQt5.QtWidgets import QApplication
+import zebrazoom.code.util as util
+
 def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, videoName, dlModel=0):
   
   if hyperparameters["trackingDL"]:
@@ -103,16 +106,13 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     
     # (x, y) coordinates for both eyes for head embedded fish eye tracking
     if hyperparameters["eyeTracking"] and hyperparameters["headEmbeded"] == 1:
-      from PyQt5.QtWidgets import QApplication
-      import zebrazoom.code.util as util
-      from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import getAccentuateFrameForManualPointSelect
-      forEye = getAccentuateFrameForManualPointSelect(frame.copy(), hyperparameters)
+      forEye = getAccentuateFrameForManualPointSelect(frame, hyperparameters)
       if True:
         leftEyeCoordinate = list(util.getPoint(np.uint8(forEye * 255), "Click on the center of the left eye", zoomable=True, dialog=not hasattr(QApplication.instance(), 'window')))
         rightEyeCoordinate = list(util.getPoint(np.uint8(forEye * 255), "Click on the center of the right eye", zoomable=True, dialog=not hasattr(QApplication.instance(), 'window')))
       else:
-        leftEyeCoordinate  = [210, 105]
-        rightEyeCoordinate = [236, 72]
+        leftEyeCoordinate  = [261, 201] # [267, 198] # [210, 105]
+        rightEyeCoordinate = [285, 157] # [290, 151] # [236, 72]
       print("leftEyeCoordinate:", leftEyeCoordinate)
       print("rightEyeCoordinate:", rightEyeCoordinate)
     
@@ -181,6 +181,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
         trackingEyesAllAnimals = eyeTrackingHeadEmbedded(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate)
       else:
         trackingEyesAllAnimals = eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals)
+    
     # Debug functions
     if hyperparameters["nbAnimalsPerWell"] > 1 or hyperparameters["forceBlobMethodForHeadTracking"] or hyperparameters["headEmbeded"] == 1 or hyperparameters["fixedHeadPositionX"] != -1:
       debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, hyperparameters)
