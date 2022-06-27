@@ -149,11 +149,16 @@
   "readjustCenterOfMassIfNotInsideContour": 0,
   
   "eyeTracking" : 0,
+  "eyeTrackingHeadEmbeddedWithSegment" : 0,
+  "eyeTrackingHeadEmbeddedWithEllipse" : 0,
+  "eyeFilterKernelSize" : 7,
   "headCenterToMidEyesPointDistance" : 5,
   "eyeBinaryThreshold" : 50,
   "midEyesPointToEyeCenterMaxDistance" : 10,
   "eyeHeadingSearchAreaHalfDiameter" : 40,
   "headingLineValidationPlotLength" : 10,
+  "eyeTrackingHeadEmbeddedWidth" : 4,
+  "eyeTrackingHeadEmbeddedHalfDiameter" : 15,
   
   "backCalculationStep" : -1,
   "step" : -1,

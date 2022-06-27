@@ -4,6 +4,205 @@ import math
 import zebrazoom.code.util as util
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.calculateHeading import computeHeading
 from zebrazoom.code.trackingFolder.trackingFunctions import distBetweenThetas
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import getAccentuateFrameForManualPointSelect
+
+def eyeTrackingHeadEmbedded(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate):
+  
+  if hyperparameters["eyeTrackingHeadEmbeddedWithSegment"]:
+    return eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate)
+  
+  if hyperparameters["eyeTrackingHeadEmbeddedWithEllipse"]:
+    return eyeTrackingHeadEmbeddedEllipse(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate)
+
+def eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate):
+  
+  headingLineHalfDiameter = hyperparameters["eyeTrackingHeadEmbeddedHalfDiameter"]
+  headingLineWidth        = hyperparameters["eyeTrackingHeadEmbeddedWidth"]
+  
+  forEye = getAccentuateFrameForManualPointSelect(frame, hyperparameters) * 255
+  forEye = forEye.astype(np.uint8)
+  
+  angle = []
+  for eyeCoordinate in [leftEyeCoordinate, rightEyeCoordinate]:
+    forSpecificEye = forEye[int(eyeCoordinate[1]-headingLineHalfDiameter):int(eyeCoordinate[1]+headingLineHalfDiameter), int(eyeCoordinate[0]-headingLineHalfDiameter):int(eyeCoordinate[0]+headingLineHalfDiameter)]
+    pixelSum  = 0
+    bestAngle = 0
+    nTries    = 12
+    for j in range(0, nTries):
+      angleOption = j * (math.pi / nTries)
+      startPoint = (int(headingLineHalfDiameter - headingLineHalfDiameter * math.cos(angleOption)), int(headingLineHalfDiameter - headingLineHalfDiameter * math.sin(angleOption)))
+      endPoint   = (int(headingLineHalfDiameter + headingLineHalfDiameter * math.cos(angleOption)), int(headingLineHalfDiameter + headingLineHalfDiameter * math.sin(angleOption)))
+      testImage  = forSpecificEye.copy()
+      testImage  = cv2.line(testImage, startPoint, endPoint, (0), 4)
+      nbWhitePixels = np.sum(testImage)
+      if nbWhitePixels > pixelSum:
+        pixelSum  = nbWhitePixels
+        bestAngle = angleOption
+    bestAngle1 = bestAngle
+    nTries2     = 20
+    for j2 in range(0, nTries2):
+      angleOption = bestAngle1 - ((math.pi / nTries) / 2) + ((j2 / nTries2) * (math.pi / nTries))
+      startPoint = (int(headingLineHalfDiameter - headingLineHalfDiameter * math.cos(angleOption)), int(headingLineHalfDiameter - headingLineHalfDiameter * math.sin(angleOption)))
+      endPoint   = (int(headingLineHalfDiameter + headingLineHalfDiameter * math.cos(angleOption)), int(headingLineHalfDiameter + headingLineHalfDiameter * math.sin(angleOption)))
+      testImage  = forSpecificEye.copy()
+      testImage  = cv2.line(testImage, startPoint, endPoint, (0), 4)
+      nbWhitePixels = np.sum(testImage)
+      if nbWhitePixels > pixelSum:
+        pixelSum  = nbWhitePixels
+        bestAngle = angleOption
+    angle.append(bestAngle)
+  
+  leftEyeAngle  = angle[0]
+  rightEyeAngle = angle[1]
+  
+  # Debugging Plot
+  if hyperparameters["debugEyeTracking"]:
+    forEye2 = getAccentuateFrameForManualPointSelect(frame, hyperparameters) * 255
+    forEye2 = forEye2.astype(np.uint8)
+    colorFrame = forEye2.copy()
+    # Left eye
+    cv2.circle(colorFrame, (leftEyeCoordinate[0], leftEyeCoordinate[1]), 2, (0,255,255), 1)
+    cv2.line(colorFrame, (leftEyeCoordinate[0], leftEyeCoordinate[1]), (int(leftEyeCoordinate[0]+headingLineHalfDiameter*math.cos(leftEyeAngle)), int(leftEyeCoordinate[1]+headingLineHalfDiameter*math.sin(leftEyeAngle))), (255,0,255), headingLineWidth)
+    # Right eye
+    cv2.circle(colorFrame, (rightEyeCoordinate[0], rightEyeCoordinate[1]), 2, (0,255,255), 1)
+    cv2.line(colorFrame, (rightEyeCoordinate[0], rightEyeCoordinate[1]), (int(rightEyeCoordinate[0]+headingLineHalfDiameter*math.cos(rightEyeAngle)), int(rightEyeCoordinate[1]+headingLineHalfDiameter*math.sin(rightEyeAngle))), (255,0,255), headingLineWidth)
+    util.showFrame(colorFrame, title='Eye Tracking debugging')
+  
+  trackingEyesAllAnimals[animalId, i-firstFrame, 0] = leftEyeCoordinate[0]
+  trackingEyesAllAnimals[animalId, i-firstFrame, 1] = leftEyeCoordinate[1]
+  trackingEyesAllAnimals[animalId, i-firstFrame, 2] = leftEyeAngle
+  trackingEyesAllAnimals[animalId, i-firstFrame, 3] = 0
+  trackingEyesAllAnimals[animalId, i-firstFrame, 4] = rightEyeCoordinate[0]
+  trackingEyesAllAnimals[animalId, i-firstFrame, 5] = rightEyeCoordinate[1]
+  trackingEyesAllAnimals[animalId, i-firstFrame, 6] = rightEyeAngle
+  trackingEyesAllAnimals[animalId, i-firstFrame, 7] = 0
+  
+  return trackingEyesAllAnimals
+
+
+def eyeTrackingHeadEmbeddedEllipse(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate):
+  
+  forEye = getAccentuateFrameForManualPointSelect(frame, hyperparameters) * 255
+
+  forEye = forEye.astype(np.uint8)
+  
+  eyeBinaryThreshold = hyperparameters["eyeBinaryThreshold"] # 15
+  
+  ret, threshEye = cv2.threshold(forEye, eyeBinaryThreshold, 255, cv2.THRESH_BINARY)
+  
+  kernel = np.ones((hyperparameters["eyeFilterKernelSize"], hyperparameters["eyeFilterKernelSize"]), np.uint8)
+  threshEye = cv2.erode(threshEye, kernel, iterations=1)
+  threshEye = cv2.dilate(threshEye, kernel, iterations=1)
+  
+  threshEye[0,:] = 255
+  threshEye[len(threshEye)-1,:] = 255
+  threshEye[:,0] = 255
+  threshEye[:,len(threshEye[0])-1] = 255
+  
+  contourLeft  = 0
+  contourRight = 0
+  
+  contours, hierarchy = cv2.findContours(threshEye, cv2.RETR_LIST, cv2.CHAIN_APPROX_SIMPLE)
+  maxLeft  = 1000000000000000000000000000
+  maxRight = 1000000000000000000000000000
+  maxArea  = len(threshEye) * len(threshEye[0]) * 0.9
+  for contour in contours:
+    area = cv2.contourArea(contour)
+    M = cv2.moments(contour)
+    if M['m00']:
+      cx = int(M['m10']/M['m00'])
+      cy = int(M['m01']/M['m00'])
+    if area < maxArea:
+      if (leftEyeCoordinate[0] - cx)**2 + (leftEyeCoordinate[1] - cy)**2 < maxLeft:
+        maxLeft  = (leftEyeCoordinate[0] - cx)**2 + (leftEyeCoordinate[1] - cy)**2
+        contourLeft  = contour
+      if (rightEyeCoordinate[0] - cx)**2 + (rightEyeCoordinate[1] - cy)**2 < maxRight:
+        maxRight = (rightEyeCoordinate[0] - cx)**2 + (rightEyeCoordinate[1] - cy)**2
+        contourRight = contour
+    
+  # Finding the (X, Y) coordinates and the angle of each of the two eyes
+  eyeAngle = [0, 0]
+  eyeX = [leftEyeCoordinate[0], rightEyeCoordinate[0]]
+  eyeY = [leftEyeCoordinate[1], rightEyeCoordinate[1]]
+  for idx, contour in enumerate([contourLeft, contourRight]):
+    if type(contour) != int and len(contour) >= 3:
+      if len(contour) >= 5:
+        ellipse = cv2.fitEllipse(contour)
+        angle1 = ellipse[2] * (math.pi / 180) + (math.pi / 2)
+        if hyperparameters["debugEyeTrackingAdvanced"]:
+          threshEye1 = np.zeros((len(threshEye), len(threshEye[0])))
+          threshEye1[:, :] = 0
+          threshEye1 = threshEye1.astype(np.uint8)
+          cv2.fillPoly(threshEye1, pts =[contour], color=(255))
+      else:
+        print("problem with eye angle here, not enough points in the contour to use fitEllipse")
+        threshEye1 = np.zeros((len(threshEye), len(threshEye[0])))
+        threshEye1[:, :] = 0
+        cv2.fillPoly(threshEye1, pts =[contour], color=(255))
+        if hyperparameters["debugEyeTrackingAdvanced"]:
+          util.showFrame(threshEye1, title='Frame')
+
+        minWhitePixel = 10000000000000000000000
+        bestAngle     = 0
+        nTries        = 200
+        for j in range(0, nTries):
+          angleOption = j * (math.pi / nTries)
+          startPoint = (int(eyeX[idx] - 100000 * math.cos(angleOption)), int(eyeY[idx] - 100000 * math.sin(angleOption)))
+          endPoint   = (int(eyeX[idx] + 100000 * math.cos(angleOption)), int(eyeY[idx] + 100000 * math.sin(angleOption)))
+          testImage  = threshEye1.copy()
+          testImage  = cv2.line(testImage, startPoint, endPoint, (0), 4)
+          nbWhitePixels = cv2.countNonZero(testImage)
+          if nbWhitePixels < minWhitePixel:
+            minWhitePixel = nbWhitePixels
+            bestAngle     = angleOption
+          if False:
+            firstBestAngle = bestAngle
+            for j in range(0, nTries):
+              angleOption = firstBestAngle - (math.pi / 5) + j * ((2 * (math.pi / 5)) / nTries)
+              startPoint = (int(eyeX[idx] - 100000 * math.cos(angleOption)), int(eyeY[idx] - 100000 * math.sin(angleOption)))
+              endPoint   = (int(eyeX[idx] + 100000 * math.cos(angleOption)), int(eyeY[idx] + 100000 * math.sin(angleOption)))
+              testImage  = threshEye1.copy()
+              testImage  = cv2.line(testImage, startPoint, endPoint, (0), 4)
+              nbWhitePixels = cv2.countNonZero(testImage)
+              if nbWhitePixels < minWhitePixel:
+                minWhitePixel = nbWhitePixels
+                bestAngle     = angleOption
+        angle1 = bestAngle
+      
+      headingApproximate = trackingHeadingAllAnimals[animalId, i-firstFrame] % (2*math.pi)
+      headingPreciseOpt1 = angle1
+      headingPreciseOpt2 = (angle1 + math.pi) % (2*math.pi)
+      diffAngle1 = distBetweenThetas(headingApproximate, headingPreciseOpt1)
+      diffAngle2 = distBetweenThetas(headingApproximate, headingPreciseOpt2)
+      if (diffAngle1 < diffAngle2):
+        eyeAngle[idx] = headingPreciseOpt1
+      else:
+        eyeAngle[idx] = headingPreciseOpt2
+    else:
+      eyeAngle[idx] = 0
+  # Debugging Plot
+  headingLineValidationPlotLength = hyperparameters["eyeTrackingHeadEmbeddedHalfDiameter"]
+  if hyperparameters["debugEyeTracking"]:
+    colorFrame = cv2.cvtColor(threshEye, cv2.COLOR_GRAY2RGB)
+    cv2.circle(colorFrame, (eyeX[0], eyeY[0]), 2, (0,255,255), 1)
+    cv2.line(colorFrame, (eyeX[0], eyeY[0]), (int(eyeX[0]+headingLineValidationPlotLength*math.cos(eyeAngle[0])), int(eyeY[0]+headingLineValidationPlotLength*math.sin(eyeAngle[0]))), (255,0,255), 1)
+    cv2.line(colorFrame, (eyeX[1], eyeY[1]), (int(eyeX[1]+headingLineValidationPlotLength*math.cos(eyeAngle[1])), int(eyeY[1]+headingLineValidationPlotLength*math.sin(eyeAngle[1]))), (255,0,255), 1)
+    cv2.circle(colorFrame, (eyeX[1], eyeY[1]), 2, (0,255,255), 1)
+    util.showFrame(colorFrame, title='Eye Tracking debugging')
+  
+  # Storing the (X, Y) coordinates and angles
+  trackingEyesAllAnimals[animalId, i-firstFrame, 0] = leftEyeCoordinate[0]
+  trackingEyesAllAnimals[animalId, i-firstFrame, 1] = leftEyeCoordinate[1]
+  trackingEyesAllAnimals[animalId, i-firstFrame, 2] = eyeAngle[0]
+  trackingEyesAllAnimals[animalId, i-firstFrame, 3] = 0
+  trackingEyesAllAnimals[animalId, i-firstFrame, 4] = rightEyeCoordinate[0]
+  trackingEyesAllAnimals[animalId, i-firstFrame, 5] = rightEyeCoordinate[1]
+  trackingEyesAllAnimals[animalId, i-firstFrame, 6] = eyeAngle[1]
+  trackingEyesAllAnimals[animalId, i-firstFrame, 7] = 0
+  
+  return trackingEyesAllAnimals
+
+
 
 def eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals):
   
