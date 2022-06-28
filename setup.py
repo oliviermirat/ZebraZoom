@@ -39,6 +39,7 @@ setup(
     (
       "zebrazoom",
       [
+        "zebrazoom/version.txt",
         "zebrazoom/configuration/4wellsZebrafishLarvaeEscapeResponses.json",
         "zebrazoom/configuration/fliesInTube.json",
         "zebrazoom/configuration/headEmbeddedZebrafishLarva.json",
