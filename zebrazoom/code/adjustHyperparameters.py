@@ -180,7 +180,7 @@ def adjustDetectMouvRawVideosParams(img, res, l, totDiff, hyperparameters, widge
   [0, 500, "Controls the size of the images on which pixel change from image to the next are counted."],
   [0, 50,  "Increase if too much movement is being detected."],]
   title = "Red dot must appear only when movement is occuring"
-  if widgets is not None and widgets["contrastCheckbox"].isChecked():
+  if widgets is not None and "contrastCheckbox" in widgets and widgets["contrastCheckbox"].isChecked():
     img = util.improveContrast(img, hyperparameters["outputValidationVideoContrastImprovementQuartile"])
   frameToShow = np.concatenate((img, res),axis=1)
   frameToShow = cv2.cvtColor(frameToShow,cv2.COLOR_GRAY2RGB)
