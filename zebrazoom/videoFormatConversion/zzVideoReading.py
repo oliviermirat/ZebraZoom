@@ -104,9 +104,12 @@ class ZzVideoReading():
       else:
         buffer = np.frombuffer(bytes, dtype=np.uint8)
       
-      nparr2 = buffer.reshape(self.height, self.width)
       
-      nparr2 = cv2.cvtColor(nparr2, cv2.COLOR_GRAY2RGB)
+      if len(buffer) == 3*self.height*self.width:
+        nparr2 = buffer.reshape(self.height, self.width, 3)
+      else:
+        nparr2 = buffer.reshape(self.height, self.width)
+        nparr2 = cv2.cvtColor(nparr2, cv2.COLOR_GRAY2RGB)
       
       self.lastFrameRead = self.lastFrameRead + 1
       

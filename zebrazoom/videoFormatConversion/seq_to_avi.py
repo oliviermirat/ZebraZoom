@@ -81,9 +81,12 @@ def sqb_convert_to_avi(path, videoName, codec='HFYU', lastFrame=-1):
       else:
         buffer = np.frombuffer(bytes, dtype=np.uint8)
       
-      nparr2 = buffer.reshape(height, width)
-      
-      nparr2 = cv2.cvtColor(nparr2, cv2.COLOR_GRAY2RGB) 
+      if len(buffer) == 3*height*width:
+        nparr2 = buffer.reshape(height, width, 3)
+      else:
+        nparr2 = buffer.reshape(height, width)
+        nparr2 = cv2.cvtColor(nparr2, cv2.COLOR_GRAY2RGB)
+        
       out.write(nparr2)
       
       f_bin.close()
