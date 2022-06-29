@@ -365,7 +365,7 @@ class VideoToAnalyze(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Choose video.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("Look for the video you want to analyze.", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        testCheckbox = QCheckBox("Test only on a small number of frames", self)
+        testCheckbox = QCheckBox("Test only on a small number of frames (tracking results will only be saved temporarily)", self)
         layout.addWidget(testCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
         button = util.apply_style(QPushButton("Choose file", self), background_color=util.LIGHT_YELLOW)
         button.clicked.connect(lambda: controller.chooseVideoToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), chooseFramesCheckbox.isChecked(), testCheckbox.isChecked()))
@@ -373,7 +373,7 @@ class VideoToAnalyze(QWidget):
 
         layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
-        chooseFramesCheckbox = QCheckBox("Choose the first and the last frames on which the tracking should run", self)
+        chooseFramesCheckbox = QCheckBox("Choose the first and the last frames on which the tracking should run (tracking results will be saved)", self)
         layout.addWidget(chooseFramesCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
         button = util.apply_style(QPushButton("Click here if you prefer to run the tracking from the command line", self), background_color='green')
