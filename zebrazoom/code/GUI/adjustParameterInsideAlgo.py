@@ -7,7 +7,7 @@ import numpy as np
 
 from PyQt5.QtCore import Qt, pyqtSignal, QPoint, QPointF, QRect, QRectF, QSizeF, QTimer
 from PyQt5.QtGui import QColor, QFont, QIntValidator, QPainter, QPolygon, QPolygonF, QTransform
-from PyQt5.QtWidgets import QApplication, QLabel, QLineEdit, QCheckBox, QPushButton, QHBoxLayout, QSpinBox, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QLabel, QLineEdit, QCheckBox, QMessageBox, QPushButton, QHBoxLayout, QSpinBox, QVBoxLayout, QWidget
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.paths as paths
@@ -420,6 +420,20 @@ def _addEyeTracking(firstFrame, totalFrames):
   segmentBtn.clicked.connect(lambda: _adjustEyeTracking(firstFrame, totalFrames, ellipse=False))
   layout.addWidget(segmentBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   layout.addWidget(QLabel("Recommended for poorer quality images"), alignment=Qt.AlignmentFlag.AlignCenter)
+  layout.addSpacing(50)
+
+  def removeTracking():
+    app = QApplication.instance()
+    if "eyeTracking" in app.configFile:
+      del app.configFile["eyeTracking"]
+    if "eyeTrackingHeadEmbeddedWithSegment" in app.configFile:
+      del app.configFile["eyeTrackingHeadEmbeddedWithSegment"]
+    if "eyeTrackingHeadEmbeddedWithEllipse" in app.configFile:
+      del app.configFile["eyeTrackingHeadEmbeddedWithEllipse"]
+    QMessageBox.information(app.window, "Eye tracking removed", "Eye tracking was removed from the config.")
+  removeBtn = QPushButton("Remove eye tracking")
+  removeBtn.clicked.connect(removeTracking)
+  layout.addWidget(removeBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   layout.addSpacing(50)
 
   buttons = (("Back", None),)
