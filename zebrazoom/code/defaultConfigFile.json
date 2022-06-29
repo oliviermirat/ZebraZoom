@@ -149,6 +149,7 @@
   "readjustCenterOfMassIfNotInsideContour": 0,
   
   "eyeTracking" : 0,
+  "adjustHeadEmbeddedEyeTracking": 0,
   "eyeTrackingHeadEmbeddedWithSegment" : 0,
   "eyeTrackingHeadEmbeddedWithEllipse" : 0,
   "eyeFilterKernelSize" : 7,

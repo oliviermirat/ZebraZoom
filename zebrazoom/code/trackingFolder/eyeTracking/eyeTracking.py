@@ -2,19 +2,20 @@ import numpy as np
 import cv2
 import math
 import zebrazoom.code.util as util
+from zebrazoom.code.adjustHyperparameters import adjustHeadEmbeddedEyeTrackingParamsEllipse, adjustHeadEmbeddedEyeTrackingParamsSegment
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.calculateHeading import computeHeading
 from zebrazoom.code.trackingFolder.trackingFunctions import distBetweenThetas
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import getAccentuateFrameForManualPointSelect
 
-def eyeTrackingHeadEmbedded(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate):
+def eyeTrackingHeadEmbedded(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate, widgets=None):
   
   if hyperparameters["eyeTrackingHeadEmbeddedWithSegment"]:
-    return eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate)
+    return eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate, widgets)
   
   if hyperparameters["eyeTrackingHeadEmbeddedWithEllipse"]:
-    return eyeTrackingHeadEmbeddedEllipse(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate)
+    return eyeTrackingHeadEmbeddedEllipse(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate, widgets)
 
-def eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate):
+def eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate, widgets):
   
   headingLineHalfDiameter = hyperparameters["eyeTrackingHeadEmbeddedHalfDiameter"]
   headingLineWidth        = hyperparameters["eyeTrackingHeadEmbeddedWidth"]
@@ -56,7 +57,7 @@ def eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparamete
   rightEyeAngle = angle[1]
   
   # Debugging Plot
-  if hyperparameters["debugEyeTracking"]:
+  if hyperparameters["debugEyeTracking"] or hyperparameters["adjustHeadEmbeddedEyeTracking"]:
     forEye2 = getAccentuateFrameForManualPointSelect(frame, hyperparameters) * 255
     forEye2 = forEye2.astype(np.uint8)
     colorFrame = forEye2.copy()
@@ -66,7 +67,10 @@ def eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparamete
     # Right eye
     cv2.circle(colorFrame, (rightEyeCoordinate[0], rightEyeCoordinate[1]), 2, (0,255,255), 1)
     cv2.line(colorFrame, (rightEyeCoordinate[0], rightEyeCoordinate[1]), (int(rightEyeCoordinate[0]+headingLineHalfDiameter*math.cos(rightEyeAngle)), int(rightEyeCoordinate[1]+headingLineHalfDiameter*math.sin(rightEyeAngle))), (255,0,255), headingLineWidth)
-    util.showFrame(colorFrame, title='Eye Tracking debugging')
+    if hyperparameters["debugEyeTracking"]:
+      util.showFrame(colorFrame, title='Eye Tracking debugging')
+    if hyperparameters["adjustHeadEmbeddedEyeTracking"]:
+      return adjustHeadEmbeddedEyeTrackingParamsSegment(i, colorFrame, hyperparameters, widgets)
   
   trackingEyesAllAnimals[animalId, i-firstFrame, 0] = leftEyeCoordinate[0]
   trackingEyesAllAnimals[animalId, i-firstFrame, 1] = leftEyeCoordinate[1]
@@ -80,7 +84,7 @@ def eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparamete
   return trackingEyesAllAnimals
 
 
-def eyeTrackingHeadEmbeddedEllipse(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate):
+def eyeTrackingHeadEmbeddedEllipse(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate, widgets):
   
   forEye = getAccentuateFrameForManualPointSelect(frame, hyperparameters) * 255
 
@@ -182,13 +186,16 @@ def eyeTrackingHeadEmbeddedEllipse(animalId, i, firstFrame, frame, hyperparamete
       eyeAngle[idx] = 0
   # Debugging Plot
   headingLineValidationPlotLength = hyperparameters["eyeTrackingHeadEmbeddedHalfDiameter"]
-  if hyperparameters["debugEyeTracking"]:
+  if hyperparameters["debugEyeTracking"] or hyperparameters["adjustHeadEmbeddedEyeTracking"]:
     colorFrame = cv2.cvtColor(threshEye, cv2.COLOR_GRAY2RGB)
     cv2.circle(colorFrame, (eyeX[0], eyeY[0]), 2, (0,255,255), 1)
     cv2.line(colorFrame, (eyeX[0], eyeY[0]), (int(eyeX[0]+headingLineValidationPlotLength*math.cos(eyeAngle[0])), int(eyeY[0]+headingLineValidationPlotLength*math.sin(eyeAngle[0]))), (255,0,255), 1)
     cv2.line(colorFrame, (eyeX[1], eyeY[1]), (int(eyeX[1]+headingLineValidationPlotLength*math.cos(eyeAngle[1])), int(eyeY[1]+headingLineValidationPlotLength*math.sin(eyeAngle[1]))), (255,0,255), 1)
     cv2.circle(colorFrame, (eyeX[1], eyeY[1]), 2, (0,255,255), 1)
-    util.showFrame(colorFrame, title='Eye Tracking debugging')
+    if hyperparameters["adjustHeadEmbeddedEyeTracking"]:
+      return adjustHeadEmbeddedEyeTrackingParamsEllipse(i, colorFrame, hyperparameters, widgets)
+    else:
+      util.showFrame(colorFrame, title='Eye Tracking debugging')
   
   # Storing the (X, Y) coordinates and angles
   trackingEyesAllAnimals[animalId, i-firstFrame, 0] = leftEyeCoordinate[0]

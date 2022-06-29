@@ -264,6 +264,7 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["adjustDetectMovWithRawVideo"] = getConfig(config, "adjustDetectMovWithRawVideo", videoPath)
   
   hyperparameters["adjustHeadEmbededTracking"] = getConfig(config, "adjustHeadEmbededTracking", videoPath)
+  hyperparameters["adjustHeadEmbeddedEyeTracking"] = getConfig(config, "adjustHeadEmbeddedEyeTracking", videoPath)
   hyperparameters["adjustFreelySwimTracking"] = getConfig(config, "adjustFreelySwimTracking", videoPath)
   hyperparameters["adjustFreelySwimTrackingAutomaticParameters"] = getConfig(config, "adjustFreelySwimTrackingAutomaticParameters", videoPath)
   

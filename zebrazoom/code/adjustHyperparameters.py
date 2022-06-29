@@ -19,6 +19,8 @@ def _createWidget(layout, status, values, info, name, widgets, hasCheckbox):
   minn, maxx, hint = info
   double = name == "authorizedRelativeLengthTailEnd"
   slider = util.SliderWithSpinbox(values[name], minn, maxx, name=name, double=double)
+  if name == "eyeFilterKernelSize":
+    slider.setSingleStep(2)
 
   def showHint(fn):
     def inner(evt):
@@ -118,7 +120,7 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
       slider = widgets[name]
       if slider.value() != hyperparameters[name]:
         slider.setValue(hyperparameters[name])
-      if name == "authorizedRelativeLengthTailEnd":
+      if name == "authorizedRelativeLengthTailEnd" or name == "eyeBinaryThreshold":
         continue
       minn = slider.minimum()
       maxx = slider.maximum()
@@ -289,3 +291,26 @@ def adjustFreelySwimTrackingAutoParams(nbTailPoints, i, firstFrame, output, outp
     y = output[k, i-firstFrame][0][1]
 
   return adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frame2, title, organizationTab, widgets, documentationLink=documentationLink)
+
+
+def adjustHeadEmbeddedEyeTrackingParamsSegment(i, frame, hyperparameters, widgets):
+  documentationLink = None
+  hyperparametersListNames = ["eyeTrackingHeadEmbeddedHalfDiameter", "eyeTrackingHeadEmbeddedWidth"]
+  organizationTab = [
+  [1, 255, ""],
+  [1, 255, ""],]
+  title = "Eye Tracking"
+
+  return adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frame, title, organizationTab, widgets, documentationLink=documentationLink)
+
+
+def adjustHeadEmbeddedEyeTrackingParamsEllipse(i, frame, hyperparameters, widgets):
+  documentationLink = None
+  hyperparametersListNames = ["eyeBinaryThreshold", "eyeFilterKernelSize", "eyeTrackingHeadEmbeddedHalfDiameter"]
+  organizationTab = [
+  [0, 255, ""],
+  [1, 255, ""],
+  [1, 255, ""],]
+  title = "Eye Tracking"
+
+  return adjustHyperparameters(i, hyperparameters, hyperparametersListNames, frame, title, organizationTab, widgets, documentationLink=documentationLink)

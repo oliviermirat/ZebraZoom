@@ -1,3 +1,6 @@
+import os
+import pickle
+
 import cv2
 
 import numpy as np
@@ -7,7 +10,9 @@ from PyQt5.QtGui import QColor, QFont, QIntValidator, QPainter, QPolygon, QPolyg
 from PyQt5.QtWidgets import QApplication, QLabel, QLineEdit, QCheckBox, QPushButton, QHBoxLayout, QSpinBox, QVBoxLayout, QWidget
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
+from zebrazoom.mainZZ import mainZZ
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from zebrazoom.code.getImage.headEmbededFrameBackExtract import headEmbededFrameBackExtract
@@ -353,6 +358,74 @@ def _selectROI(config, getFrame):
       app.wellShape = 'rectangle'
     config["nbWells"] = 1
 
+
+def _adjustEyeTracking(firstFrame, totalFrames, ellipse=False):
+  app = QApplication.instance()
+
+  pathToVideo = os.path.dirname(app.videoToCreateConfigFileFor)
+  videoName, videoExt = os.path.basename(app.videoToCreateConfigFileFor).split('.')
+  argv = []
+
+  originalConfig = app.configFile.copy()
+  app.configFile["adjustHeadEmbeddedEyeTracking"] = 1
+  app.configFile["onlyTrackThisOneWell"] = 0
+  app.configFile["reloadBackground"] = 1
+  app.configFile["eyeTracking"] = 1
+  if ellipse:
+    app.configFile["eyeTrackingHeadEmbeddedWithEllipse"] = 1
+    if "eyeTrackingHeadEmbeddedWithSegment" in app.configFile:
+      del app.configFile["eyeTrackingHeadEmbeddedWithSegment"]
+  else:
+    app.configFile["eyeTrackingHeadEmbeddedWithSegment"] = 1
+    if "eyeTrackingHeadEmbeddedWithEllipse" in app.configFile:
+      del app.configFile["eyeTrackingHeadEmbeddedWithEllipse"]
+  app.configFile["firstFrame"] = firstFrame
+  app.configFile["lastFrame"] = min(firstFrame + 500, app.configFile.get("lastFrame", totalFrames - 1))
+
+  saved = False
+  try:
+    if "lastFrame" in app.configFile and "firstFrame" in app.configFile and app.configFile["lastFrame"] < app.configFile["firstFrame"]:
+      del app.configFile["lastFrame"]
+    mainZZ(pathToVideo, videoName, videoExt, app.configFile, argv)
+  except ValueError:
+    saved = True
+  except NameError:
+    print("Configuration file parameters changes discarded.")
+
+  app.configFile = originalConfig
+  if saved:
+    newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
+    for index in newhyperparameters:
+      app.configFile[index] = newhyperparameters[index]
+    app.configFile["eyeTracking"] = 1
+    if ellipse:
+      app.configFile["eyeTrackingHeadEmbeddedWithEllipse"] = 1
+      if "eyeTrackingHeadEmbeddedWithSegment" in app.configFile:
+        del app.configFile["eyeTrackingHeadEmbeddedWithSegment"]
+    else:
+      app.configFile["eyeTrackingHeadEmbeddedWithSegment"] = 1
+      if "eyeTrackingHeadEmbeddedWithEllipse" in app.configFile:
+        del app.configFile["eyeTrackingHeadEmbeddedWithEllipse"]
+
+
+def _addEyeTracking(firstFrame, totalFrames):
+  layout = QVBoxLayout()
+  layout.addSpacing(50)
+  ellipseBtn = QPushButton("Add eye tracking with ellipse method")
+  ellipseBtn.clicked.connect(lambda: _adjustEyeTracking(firstFrame, totalFrames, ellipse=True))
+  layout.addWidget(ellipseBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  layout.addWidget(QLabel("Recommended for high quality images (eyes clearly differentiated from swim bladder)"), alignment=Qt.AlignmentFlag.AlignCenter)
+  layout.addSpacing(50)
+  segmentBtn = QPushButton("Add eye tracking with segment method")
+  segmentBtn.clicked.connect(lambda: _adjustEyeTracking(firstFrame, totalFrames, ellipse=False))
+  layout.addWidget(segmentBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  layout.addWidget(QLabel("Recommended for poorer quality images"), alignment=Qt.AlignmentFlag.AlignCenter)
+  layout.addSpacing(50)
+
+  buttons = (("Back", None),)
+  util.showBlockingPage(layout, title="Add eye tracking", buttons=buttons)
+
+
 def adjustParamInsideAlgoPage(useNext=True):
   app = QApplication.instance()
 
@@ -478,6 +551,9 @@ def adjustParamInsideAlgoPage(useNext=True):
   selectROIBtn = QPushButton("Select a Region of Interest")
   selectROIBtn.clicked.connect(lambda: _selectROI(app.configFile, getFrame))
   adjustButtonsLayout.addWidget(selectROIBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  addEyeTrackingBtn = QPushButton("Add Eye Tracking")
+  addEyeTrackingBtn.clicked.connect(lambda: _addEyeTracking(frameSlider.value(), int(cap.get(7))))
+  adjustButtonsLayout.addWidget(addEyeTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   adjustButtonsLayout.addStretch()
   layout.addLayout(adjustButtonsLayout)
 
