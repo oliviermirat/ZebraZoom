@@ -152,7 +152,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
       else:
         maxDepth = centerOfMassTailTrackFindMaxDepth(headPositionFirstFrame,nbTailPoints,firstFrame,headPositionFirstFrame[0],headPositionFirstFrame[1],thresh1,frame,hyperparameters,oppHeading,tailTipFirstFrame)
   
-  if hyperparameters["adjustHeadEmbededTracking"] == 1 or hyperparameters["adjustFreelySwimTracking"] == 1 or hyperparameters["adjustFreelySwimTrackingAutomaticParameters"] == 1:
+  if hyperparameters["adjustHeadEmbededTracking"] == 1 or hyperparameters["adjustFreelySwimTracking"] == 1 or hyperparameters["adjustFreelySwimTrackingAutomaticParameters"] == 1 or hyperparameters["adjustHeadEmbeddedEyeTracking"]:
     widgets = None
   
   # Performing the tracking on each frame
@@ -178,7 +178,13 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     # Eye tracking for frame i
     if hyperparameters["eyeTracking"]:
       if hyperparameters["headEmbeded"] == 1:
-        trackingEyesAllAnimals = eyeTrackingHeadEmbedded(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate)
+        if hyperparameters["adjustHeadEmbeddedEyeTracking"]:
+          i, widgets = eyeTrackingHeadEmbedded(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate, widgets=widgets)
+          if not hyperparameters["eyeFilterKernelSize"] % 2:
+            hyperparameters["eyeFilterKernelSize"] -= 1
+          continue
+        else:
+          trackingEyesAllAnimals = eyeTrackingHeadEmbedded(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate)
       else:
         trackingEyesAllAnimals = eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals)
     
