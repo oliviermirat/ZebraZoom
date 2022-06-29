@@ -147,7 +147,7 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
               dataToPlot["size"]    = 1
               dataToPlot["Heading"] = leftEyeAngle
               dataToPlot["headingColor"] = (0, 255, 0)
-              dataToPlot["headingWidth"]    = hyperparameters["eyeTrackingHeadEmbeddedWidth"]
+              dataToPlot["headingWidth"]    = 2 # hyperparameters["eyeTrackingHeadEmbeddedWidth"]
               dataToPlot["headingHalfDiam"] = hyperparameters["eyeTrackingHeadEmbeddedHalfDiameter"]
               dataToPlot["numMouv"] = k+1
               dataToPlot["numWell"] = i
@@ -170,7 +170,7 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
               dataToPlot["size"]    = 1
               dataToPlot["Heading"] = rightEyeAngle
               dataToPlot["headingColor"] = (0, 255, 0)
-              dataToPlot["headingWidth"]    = hyperparameters["eyeTrackingHeadEmbeddedWidth"]
+              dataToPlot["headingWidth"]    = 2 # hyperparameters["eyeTrackingHeadEmbeddedWidth"]
               dataToPlot["headingHalfDiam"] = hyperparameters["eyeTrackingHeadEmbeddedHalfDiameter"]
               # dataToPlot["numMouv"] = k+1
               # dataToPlot["numWell"] = i
