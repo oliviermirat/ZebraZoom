@@ -440,8 +440,10 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["colorMapCurvature"]  = getConfig(config, "colorMapCurvature", videoPath)
   
-  hyperparameters["eyeTrackingHeadEmbeddedWidth"]  = getConfig(config, "eyeTrackingHeadEmbeddedWidth", videoPath)
-  hyperparameters["eyeTrackingHeadEmbeddedHalfDiameter"]  = getConfig(config, "eyeTrackingHeadEmbeddedHalfDiameter", videoPath)
+  hyperparameters["eyeTrackingHeadEmbeddedWidth"]        = getConfig(config, "eyeTrackingHeadEmbeddedWidth", videoPath)
+  hyperparameters["eyeTrackingHeadEmbeddedWidthLeft"]    = getConfig(config, "eyeTrackingHeadEmbeddedWidthLeft", videoPath)
+  hyperparameters["eyeTrackingHeadEmbeddedWidthRight"]   = getConfig(config, "eyeTrackingHeadEmbeddedWidthRight", videoPath)
+  hyperparameters["eyeTrackingHeadEmbeddedHalfDiameter"] = getConfig(config, "eyeTrackingHeadEmbeddedHalfDiameter", videoPath)
   
   hyperparameters["eyeTrackingHeadEmbeddedWithSegment"]  = getConfig(config, "eyeTrackingHeadEmbeddedWithSegment", videoPath)
   hyperparameters["eyeTrackingHeadEmbeddedWithEllipse"]  = getConfig(config, "eyeTrackingHeadEmbeddedWithEllipse", videoPath)

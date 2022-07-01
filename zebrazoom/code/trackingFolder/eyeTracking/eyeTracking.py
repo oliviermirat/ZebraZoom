@@ -18,35 +18,38 @@ def eyeTrackingHeadEmbedded(animalId, i, firstFrame, frame, hyperparameters, thr
 def eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate, widgets):
   
   headingLineHalfDiameter = hyperparameters["eyeTrackingHeadEmbeddedHalfDiameter"]
-  headingLineWidth        = hyperparameters["eyeTrackingHeadEmbeddedWidth"]
+  headingLineWidthLeft    = hyperparameters["eyeTrackingHeadEmbeddedWidthLeft"] if hyperparameters["eyeTrackingHeadEmbeddedWidthLeft"] else hyperparameters["eyeTrackingHeadEmbeddedWidth"]
+  headingLineWidthRight   = hyperparameters["eyeTrackingHeadEmbeddedWidthRight"] if hyperparameters["eyeTrackingHeadEmbeddedWidthRight"] else hyperparameters["eyeTrackingHeadEmbeddedWidth"]
+  headingLineWidthArray = [headingLineWidthLeft, headingLineWidthRight]
   
   forEye = getAccentuateFrameForManualPointSelect(frame, hyperparameters) * 255
   forEye = forEye.astype(np.uint8)
   
   angle = []
-  for eyeCoordinate in [leftEyeCoordinate, rightEyeCoordinate]:
+  for eyeIdx, eyeCoordinate in enumerate([leftEyeCoordinate, rightEyeCoordinate]):
+    headingLineWidth = headingLineWidthArray[eyeIdx]
     forSpecificEye = forEye[int(eyeCoordinate[1]-headingLineHalfDiameter):int(eyeCoordinate[1]+headingLineHalfDiameter), int(eyeCoordinate[0]-headingLineHalfDiameter):int(eyeCoordinate[0]+headingLineHalfDiameter)]
     pixelSum  = 0
     bestAngle = 0
-    nTries    = 12
+    nTries    = 20
     for j in range(0, nTries):
       angleOption = j * (math.pi / nTries)
       startPoint = (int(headingLineHalfDiameter - headingLineHalfDiameter * math.cos(angleOption)), int(headingLineHalfDiameter - headingLineHalfDiameter * math.sin(angleOption)))
       endPoint   = (int(headingLineHalfDiameter + headingLineHalfDiameter * math.cos(angleOption)), int(headingLineHalfDiameter + headingLineHalfDiameter * math.sin(angleOption)))
       testImage  = forSpecificEye.copy()
-      testImage  = cv2.line(testImage, startPoint, endPoint, (0), 4)
+      testImage  = cv2.line(testImage, startPoint, endPoint, (0), headingLineWidth)
       nbWhitePixels = np.sum(testImage)
       if nbWhitePixels > pixelSum:
         pixelSum  = nbWhitePixels
         bestAngle = angleOption
     bestAngle1 = bestAngle
-    nTries2     = 20
+    nTries2     = 50
     for j2 in range(0, nTries2):
       angleOption = bestAngle1 - ((math.pi / nTries) / 2) + ((j2 / nTries2) * (math.pi / nTries))
       startPoint = (int(headingLineHalfDiameter - headingLineHalfDiameter * math.cos(angleOption)), int(headingLineHalfDiameter - headingLineHalfDiameter * math.sin(angleOption)))
       endPoint   = (int(headingLineHalfDiameter + headingLineHalfDiameter * math.cos(angleOption)), int(headingLineHalfDiameter + headingLineHalfDiameter * math.sin(angleOption)))
       testImage  = forSpecificEye.copy()
-      testImage  = cv2.line(testImage, startPoint, endPoint, (0), 4)
+      testImage  = cv2.line(testImage, startPoint, endPoint, (0), headingLineWidth)
       nbWhitePixels = np.sum(testImage)
       if nbWhitePixels > pixelSum:
         pixelSum  = nbWhitePixels
@@ -63,10 +66,10 @@ def eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparamete
     colorFrame = forEye2.copy()
     # Left eye
     cv2.circle(colorFrame, (leftEyeCoordinate[0], leftEyeCoordinate[1]), 2, (0,255,255), 1)
-    cv2.line(colorFrame, (leftEyeCoordinate[0], leftEyeCoordinate[1]), (int(leftEyeCoordinate[0]+headingLineHalfDiameter*math.cos(leftEyeAngle)), int(leftEyeCoordinate[1]+headingLineHalfDiameter*math.sin(leftEyeAngle))), (255,0,255), headingLineWidth)
+    cv2.line(colorFrame, (int(leftEyeCoordinate[0]-headingLineHalfDiameter*math.cos(leftEyeAngle)), int(leftEyeCoordinate[1]-headingLineHalfDiameter*math.sin(leftEyeAngle))), (int(leftEyeCoordinate[0]+headingLineHalfDiameter*math.cos(leftEyeAngle)), int(leftEyeCoordinate[1]+headingLineHalfDiameter*math.sin(leftEyeAngle))), (255,0,255), headingLineWidthLeft)
     # Right eye
     cv2.circle(colorFrame, (rightEyeCoordinate[0], rightEyeCoordinate[1]), 2, (0,255,255), 1)
-    cv2.line(colorFrame, (rightEyeCoordinate[0], rightEyeCoordinate[1]), (int(rightEyeCoordinate[0]+headingLineHalfDiameter*math.cos(rightEyeAngle)), int(rightEyeCoordinate[1]+headingLineHalfDiameter*math.sin(rightEyeAngle))), (255,0,255), headingLineWidth)
+    cv2.line(colorFrame, (int(rightEyeCoordinate[0]-headingLineHalfDiameter*math.cos(rightEyeAngle)), int(rightEyeCoordinate[1]-headingLineHalfDiameter*math.sin(rightEyeAngle))), (int(rightEyeCoordinate[0]+headingLineHalfDiameter*math.cos(rightEyeAngle)), int(rightEyeCoordinate[1]+headingLineHalfDiameter*math.sin(rightEyeAngle))), (255,0,255), headingLineWidthRight)
     if hyperparameters["debugEyeTracking"]:
       util.showFrame(colorFrame, title='Eye Tracking debugging')
     if hyperparameters["adjustHeadEmbeddedEyeTracking"]:

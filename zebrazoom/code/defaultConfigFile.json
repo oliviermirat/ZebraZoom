@@ -159,6 +159,8 @@
   "eyeHeadingSearchAreaHalfDiameter" : 40,
   "headingLineValidationPlotLength" : 10,
   "eyeTrackingHeadEmbeddedWidth" : 4,
+  "eyeTrackingHeadEmbeddedWidthLeft"  : 0,
+  "eyeTrackingHeadEmbeddedWidthRight" : 0,
   "eyeTrackingHeadEmbeddedHalfDiameter" : 15,
   
   "backCalculationStep" : -1,
