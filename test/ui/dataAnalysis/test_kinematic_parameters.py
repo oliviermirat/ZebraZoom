@@ -24,42 +24,43 @@ _DEFAULT_KEYS = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Cond
                  'percentTimeSpentSwimming', 'numberOfBouts_NoBoutsRemovedBasedOnBends']
 
 _EXPECTED_RESULTS = {'Trial_ID': [],
-                         'Well_ID': [],
-                         'NumBout': [],
-                         'BoutStart': [],
-                         'BoutEnd': [],
-                         'Condition': [],
-                         'Genotype': [],
-                         'videoDuration': [],
-                         'BoutDuration': [],
-                         'TotalDistance': [],
-                         'Speed': [],
-                         'maxOfInstantaneousTBF': [],
-                         'meanOfInstantaneousTBF': [],
-                         'medianOfInstantaneousTBF': [],
-                         'maxBendAmplitude': [],
-                         'maxBendAmplitudeSigned': [],
-                         'meanBendAmplitude': [],
-                         'medianBendAmplitude': [],
-                         'medianBendAmplitudeSigned': [],
-                         'NumberOfOscillations': [],
-                         'meanTBF': [],
-                         'maxTailAngleAmplitude': [],
-                         'deltaHead': [],
-                         'firstBendTime': [],
-                         'firstBendAmplitude': [],
-                         'firstBendAmplitudeSigned': [],
-                         'IBI': [],
-                         'xmean': [],
-                         'ymean': [],
-                         'binaryClass25degMaxTailAngle': [],
-                         'tailAngleIntegralSigned': [],
-                         'BoutFrameNumberStart': [],
-                         'tailAngleSymmetry': [],
-                         'secondBendAmpDividedByFirst': [],
-                         'tailAngleIntegral': [],
-                         'percentTimeSpentSwimming': [],
-                         'numberOfBouts_NoBoutsRemovedBasedOnBends': []}
+                     'Well_ID': [],
+                     'NumBout': [],
+                     'BoutStart': [],
+                     'BoutEnd': [],
+                     'Condition': [],
+                     'Genotype': [],
+                     'videoDuration': [],
+                     'BoutDuration': [],
+                     'TotalDistance': [],
+                     'Speed': [],
+                     'maxOfInstantaneousTBF': [],
+                     'meanOfInstantaneousTBF': [],
+                     'medianOfInstantaneousTBF': [],
+                     'maxBendAmplitude': [],
+                     'maxBendAmplitudeSigned': [],
+                     'meanBendAmplitude': [],
+                     'medianBendAmplitude': [],
+                     'medianBendAmplitudeSigned': [],
+                     'NumberOfOscillations': [],
+                     'meanTBF': [],
+                     'maxTailAngleAmplitude': [],
+                     'deltaHead': [],
+                     'firstBendTime': [],
+                     'firstBendAmplitude': [],
+                     'firstBendAmplitudeSigned': [],
+                     'IBI': [],
+                     'xmean': [],
+                     'ymean': [],
+                     'binaryClass25degMaxTailAngle': [],
+                     'tailAngleIntegralSigned': [],
+                     'BoutFrameNumberStart': [],
+                     'tailAngleSymmetry': [],
+                     'secondBendAmpDividedByFirst': [],
+                     'tailAngleIntegral': [],
+                     'maxInstantaneousSpeed': [],
+                     'percentTimeSpentSwimming': [],
+                     'numberOfBouts_NoBoutsRemovedBasedOnBends': []}
 _MEDIAN_ONLY_KEYS = {'percentTimeSpentSwimming', 'numberOfBouts_NoBoutsRemovedBasedOnBends'}
 _ALL_ONLY_KEYS = {'NumBout', 'BoutStart', 'BoutEnd'}
 
@@ -156,6 +157,8 @@ def _generateResults():
         _EXPECTED_RESULTS['BoutEnd'].append(startFrame + duration - 1)
         _EXPECTED_RESULTS['BoutDuration'].append(duration / fps)
         _EXPECTED_RESULTS['TotalDistance'].append(math.sqrt(xMove * xMove + yMove * yMove) * pixelSize * (duration - 1))
+        maxStepForDistanceCalculation = 4 if not len(headX) % 4 else (4 + len(headX) % 4 - 1)
+        _EXPECTED_RESULTS['maxInstantaneousSpeed'].append(math.sqrt(xMove * xMove + yMove * yMove) * maxStepForDistanceCalculation * pixelSize * fps)
         _EXPECTED_RESULTS['Speed'].append(math.sqrt(xMove * xMove + yMove * yMove) * pixelSize * fps)
         _EXPECTED_RESULTS['maxOfInstantaneousTBF'].append(max(instantaneousTBF))
         _EXPECTED_RESULTS['meanOfInstantaneousTBF'].append(np.mean(instantaneousTBF))
@@ -282,6 +285,7 @@ def _test_kinematic_parameters_small_check_results():
   outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Experiment 1')
   generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
   generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
+  assert list(generatedExcelAll.columns) == [key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]
   trialIds = {_VIDEO_NAMES[idx]: row for row, idx in enumerate(sorted(videoIndices))}
   expectedResultsDict = {k: [x for video, x in zip(_EXPECTED_RESULTS['Trial_ID'], v) if video in trialIds]
                          for k, v in _EXPECTED_RESULTS.items()}
@@ -290,6 +294,7 @@ def _test_kinematic_parameters_small_check_results():
   expectedResultsAll = pd.DataFrame(expectedResultsDict).astype(generatedExcelAll.dtypes.to_dict())
   assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]])
   generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
+  assert list(generatedExcelMedian.columns) == [key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]
   expectedResultsMedian = expectedResultsAll.groupby(['Trial_ID', 'Well_ID'], as_index=False).median()
   expectedResultsMedian['Condition'] = [conditionsList[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
   expectedResultsMedian['Genotype'] = [genotypesList[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
@@ -337,9 +342,11 @@ def _test_basic_check_results():
   outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Experiment 2')
   generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
   generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
+  assert list(generatedExcelAll.columns) == [key for key in _DEFAULT_KEYS if key not in _MEDIAN_ONLY_KEYS]
   expectedResultsAll = pd.DataFrame(_EXPECTED_RESULTS).astype(generatedExcelAll.dtypes.to_dict())
   assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _DEFAULT_KEYS if key not in _MEDIAN_ONLY_KEYS]])
   generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
+  assert list(generatedExcelMedian.columns) == [key for key in _DEFAULT_KEYS if key not in _ALL_ONLY_KEYS]
   expectedResultsMedian = expectedResultsAll.groupby(['Trial_ID', 'Well_ID'], as_index=False).median()
   trialIds = {trialId: idx for idx, trialId in enumerate(_VIDEO_NAMES)}
   expectedResultsMedian['Condition'] = [_CONDITIONS_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
@@ -436,9 +443,11 @@ def _test_kinematic_parameters_large_check_results():
   os.remove(os.path.join(dataFolder, 'Experiment 2.mat'))  # delete the file so it doesn't mess with later tests
   generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
   generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
+  assert list(generatedExcelAll.columns) == [key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]
   expectedResultsAll = pd.DataFrame(_EXPECTED_RESULTS).astype(generatedExcelAll.dtypes.to_dict())
   assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]])
   generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
+  assert list(generatedExcelMedian.columns) == [key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]
   expectedResultsMedian = expectedResultsAll.groupby(['Trial_ID', 'Well_ID'], as_index=False).median()
   trialIds = {trialId: idx for idx, trialId in enumerate(_VIDEO_NAMES)}
   expectedResultsMedian['Condition'] = [_CONDITIONS_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
@@ -488,15 +497,19 @@ def _test_frames_for_distance_calculation_check_results():
   outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Experiment 2')
   generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
   generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
+  assert list(generatedExcelAll.columns) == [key for key in _DEFAULT_KEYS if key not in _MEDIAN_ONLY_KEYS]
   trialIds = {name: idx for idx, name in enumerate(_VIDEO_NAMES)}
   expectedResultsDict = {k: v[:] for k, v in _EXPECTED_RESULTS.items()}
   expectedResultsDict['Speed'] = [(speed / distance) * (distance + (distance / (end - start)) * 2)for speed, distance, start, end in
                                   zip(expectedResultsDict['Speed'], expectedResultsDict['TotalDistance'], _EXPECTED_RESULTS['BoutStart'], _EXPECTED_RESULTS['BoutEnd'])]
   expectedResultsDict['TotalDistance'] = [distance + (distance / (end - start)) * 2 for distance, start, end in
                                           zip(expectedResultsDict['TotalDistance'], _EXPECTED_RESULTS['BoutStart'], _EXPECTED_RESULTS['BoutEnd'])]
+  expectedResultsDict['maxInstantaneousSpeed'] = [(distance / (end - start)) * 3 for distance, start, end in
+                                                  zip(expectedResultsDict['maxInstantaneousSpeed'], _EXPECTED_RESULTS['BoutStart'], _EXPECTED_RESULTS['BoutEnd'])]
   expectedResultsAll = pd.DataFrame(expectedResultsDict).astype(generatedExcelAll.dtypes.to_dict())
   assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _DEFAULT_KEYS if key not in _MEDIAN_ONLY_KEYS]])
   generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
+  assert list(generatedExcelMedian.columns) == [key for key in _DEFAULT_KEYS if key not in _ALL_ONLY_KEYS]
   expectedResultsMedian = expectedResultsAll.groupby(['Trial_ID', 'Well_ID'], as_index=False).median()
   trialIds = {trialId: idx for idx, trialId in enumerate(_VIDEO_NAMES)}
   expectedResultsMedian['Condition'] = [_CONDITIONS_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
@@ -547,6 +560,7 @@ def _test_minimum_number_of_bends_check_results():
   outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Experiment 2')
   generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
   generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
+  assert list(generatedExcelAll.columns) == [key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]
   colsToKeep = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
   expectedResultsDict = {k: [x if numOfOsc * 2 >= 12 or k in colsToKeep else np.nan for x, numOfOsc in zip(v, _EXPECTED_RESULTS['NumberOfOscillations'])]
                          for k, v in _EXPECTED_RESULTS.items()}
@@ -554,6 +568,7 @@ def _test_minimum_number_of_bends_check_results():
   expectedResultsAll = pd.DataFrame(expectedResultsDict).astype(generatedExcelAll.dtypes.to_dict())
   assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]])
   generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
+  assert list(generatedExcelMedian.columns) == [key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]
   groupedResults = expectedResultsAll.groupby(['Trial_ID', 'Well_ID'], as_index=False)
   expectedResultsMedian = groupedResults.median()
   trialIds = {trialId: idx for idx, trialId in enumerate(_VIDEO_NAMES)}
@@ -600,6 +615,7 @@ def _test_keep_data_for_discarded_bouts_check_results():
   outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Experiment 2')
   generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
   generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
+  assert list(generatedExcelAll.columns) == [key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]
   colsToKeep = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration', 'TotalDistance', 'BoutDuration', 'Speed', 'IBI'}
   expectedResultsDict = {k: [x if numOfOsc * 2 >= 12 or k in colsToKeep else np.nan for x, numOfOsc in zip(v, _EXPECTED_RESULTS['NumberOfOscillations'])]
                          for k, v in _EXPECTED_RESULTS.items()}
@@ -607,6 +623,7 @@ def _test_keep_data_for_discarded_bouts_check_results():
   expectedResultsAll = pd.DataFrame(expectedResultsDict).astype(generatedExcelAll.dtypes.to_dict())
   assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]])
   generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
+  assert list(generatedExcelMedian.columns) == [key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]
   groupedResults = expectedResultsAll.groupby(['Trial_ID', 'Well_ID'], as_index=False)
   expectedResultsMedian = groupedResults.median()
   trialIds = {trialId: idx for idx, trialId in enumerate(_VIDEO_NAMES)}
