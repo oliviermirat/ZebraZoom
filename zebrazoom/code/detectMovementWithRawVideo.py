@@ -83,7 +83,7 @@ def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparisi
   imgFuture22 = imgFuture2[ymin:ymax, xmin:xmax]
   
   blackCircleHalfDiam = hyperparameters["addBlackCircleOfHalfDiamOnHeadForBoutDetect"]
-  if blackCircleHalfDiam:
+  if not(hyperparameters["noPreProcessingOfImageForBoutDetection"]) and blackCircleHalfDiam:
     cv2.circle(img22, (int(headX), int(headY)), int(blackCircleHalfDiam), (0, 0, 0), -1)
     cv2.circle(imgFuture22, (int(headX), int(headY)), int(blackCircleHalfDiam), (0, 0, 0), -1)
     # cv2.imshow("img22", img22)
@@ -91,7 +91,7 @@ def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparisi
   
   res = cv2.absdiff(img22, imgFuture22)
   
-  if type(headPosition) != int and type(tailTip) != int and len(headPosition) and len(tailTip):
+  if not(hyperparameters["noPreProcessingOfImageForBoutDetection"]) and type(headPosition) != int and type(tailTip) != int and len(headPosition) and len(tailTip):
     # Setting to black everything outside of a rectangle centered on the tail
     stencil = np.zeros(res.shape).astype(res.dtype)
     dist = (math.sqrt((headPosition[0] - tailTip[0])**2 + (headPosition[1] - tailTip[1])**2))*1.2

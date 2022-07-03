@@ -44,6 +44,7 @@ zebrazoom/configuration/
 !zebrazoom/configuration/testThresholdsForFastScreen.json
 !zebrazoom/configuration/toCreateConfigFileForBarelyMovingAnimals.json
 !zebrazoom/configuration/barelyMovingFish.json
+!zebrazoom/configuration/noPreProcessingOfImageForBoutDetection.json
 
 zebrazoom/dataAnalysis/classifiers/*
 zebrazoom/dataAnalysis/data/*

@@ -203,6 +203,7 @@
   "boutEdgesWhereZeros" : 0,
   "noBoutsDetection" : 0,
   "addOneFrameAtTheEndForBoutDetection" : 0,
+  "noPreProcessingOfImageForBoutDetection": 0,
   
   "boutsMinNbFrames" : 1,
   "noChecksForBoutSelectionInExtractParams" : 1,
