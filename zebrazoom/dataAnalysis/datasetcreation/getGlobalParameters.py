@@ -40,13 +40,6 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
       
       posX = curbout["HeadX"]
       posY = curbout["HeadY"]
-      rangeUsedForDistanceCalculation   = [frameStepForDistanceCalculation*i for i in range(0, int(len(posX)/frameStepForDistanceCalculation))]
-      if len(rangeUsedForDistanceCalculation) == 0:
-        rangeUsedForDistanceCalculation = [0, len(posX) - 1]
-      else:
-        rangeUsedForDistanceCalculation = rangeUsedForDistanceCalculation + [len(posX) - 1]
-      posX = [posX[i] for i in rangeUsedForDistanceCalculation]
-      posY = [posY[i] for i in rangeUsedForDistanceCalculation]
       instantaneousSpeed = []
       for j in range(0, len(posX)-1):
         instantaneousSpeed.append(math.sqrt((posX[j+1] - posX[j])**2 + (posY[j+1] - posY[j])**2) * pixelSize * fps)
