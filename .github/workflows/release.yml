@@ -181,7 +181,7 @@ jobs:
           curl https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-macosx10.9.pkg -o "python.pkg" && sudo installer -pkg python.pkg -target /
       - name: Install dependencies
         run: |
-          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install --upgrade pip setuptools==62.6.0 wheel  # XXX: a bug was introduced in setuptools 63.0.0, remove the version constraint once it's fixed
           python3 -m pip install pyinstaller
           python3 -m pip install -e .
       - name: Freeze the code
