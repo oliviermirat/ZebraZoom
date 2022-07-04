@@ -17,7 +17,7 @@ def eyeTrackingHeadEmbedded(animalId, i, firstFrame, frame, hyperparameters, thr
 
 def eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate, widgets):
   
-  invertColors = False
+  invertColors = hyperparameters["invertColorsForHeadEmbeddedEyeTracking"]
   
   headingLineHalfDiameter = hyperparameters["eyeTrackingHeadEmbeddedHalfDiameter"]
   headingLineWidthLeft    = hyperparameters["eyeTrackingHeadEmbeddedWidthLeft"] if hyperparameters["eyeTrackingHeadEmbeddedWidthLeft"] else hyperparameters["eyeTrackingHeadEmbeddedWidth"]
@@ -98,7 +98,7 @@ def eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparamete
 
 def eyeTrackingHeadEmbeddedEllipse(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate, widgets):
   
-  invertColors = False
+  invertColors = hyperparameters["invertColorsForHeadEmbeddedEyeTracking"]
   if invertColors:
     forEye = 255 - getAccentuateFrameForManualPointSelect(frame, hyperparameters) * 255
   else:

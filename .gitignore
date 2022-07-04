@@ -45,6 +45,7 @@ zebrazoom/configuration/
 !zebrazoom/configuration/toCreateConfigFileForBarelyMovingAnimals.json
 !zebrazoom/configuration/barelyMovingFish.json
 !zebrazoom/configuration/noPreProcessingOfImageForBoutDetection.json
+!zebrazoom/configuration/invertColorsForHeadEmbeddedEyeTracking.json
 
 zebrazoom/dataAnalysis/classifiers/*
 zebrazoom/dataAnalysis/data/*
