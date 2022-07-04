@@ -157,8 +157,7 @@ def _generateResults():
         _EXPECTED_RESULTS['BoutEnd'].append(startFrame + duration - 1)
         _EXPECTED_RESULTS['BoutDuration'].append(duration / fps)
         _EXPECTED_RESULTS['TotalDistance'].append(math.sqrt(xMove * xMove + yMove * yMove) * pixelSize * (duration - 1))
-        maxStepForDistanceCalculation = 4 if not len(headX) % 4 else (4 + len(headX) % 4 - 1)
-        _EXPECTED_RESULTS['maxInstantaneousSpeed'].append(math.sqrt(xMove * xMove + yMove * yMove) * maxStepForDistanceCalculation * pixelSize * fps)
+        _EXPECTED_RESULTS['maxInstantaneousSpeed'].append(math.sqrt(xMove * xMove + yMove * yMove) * 3 * pixelSize * fps)
         _EXPECTED_RESULTS['Speed'].append(math.sqrt(xMove * xMove + yMove * yMove) * pixelSize * fps)
         _EXPECTED_RESULTS['maxOfInstantaneousTBF'].append(max(instantaneousTBF))
         _EXPECTED_RESULTS['meanOfInstantaneousTBF'].append(np.mean(instantaneousTBF))
@@ -504,8 +503,6 @@ def _test_frames_for_distance_calculation_check_results():
                                   zip(expectedResultsDict['Speed'], expectedResultsDict['TotalDistance'], _EXPECTED_RESULTS['BoutStart'], _EXPECTED_RESULTS['BoutEnd'])]
   expectedResultsDict['TotalDistance'] = [distance + (distance / (end - start)) * 2 for distance, start, end in
                                           zip(expectedResultsDict['TotalDistance'], _EXPECTED_RESULTS['BoutStart'], _EXPECTED_RESULTS['BoutEnd'])]
-  expectedResultsDict['maxInstantaneousSpeed'] = [(distance / (end - start)) * 3 for distance, start, end in
-                                                  zip(expectedResultsDict['maxInstantaneousSpeed'], _EXPECTED_RESULTS['BoutStart'], _EXPECTED_RESULTS['BoutEnd'])]
   expectedResultsAll = pd.DataFrame(expectedResultsDict).astype(generatedExcelAll.dtypes.to_dict())
   assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _DEFAULT_KEYS if key not in _MEDIAN_ONLY_KEYS]])
   generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
