@@ -132,6 +132,9 @@ def eyeTrackingHeadEmbeddedEllipse(animalId, i, firstFrame, frame, hyperparamete
     if M['m00']:
       cx = int(M['m10']/M['m00'])
       cy = int(M['m01']/M['m00'])
+    else:
+      cx = 0
+      cy = 0
     if area < maxArea:
       if (leftEyeCoordinate[0] - cx)**2 + (leftEyeCoordinate[1] - cy)**2 < maxLeft:
         maxLeft  = (leftEyeCoordinate[0] - cx)**2 + (leftEyeCoordinate[1] - cy)**2
