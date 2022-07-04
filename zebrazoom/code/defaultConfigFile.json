@@ -151,6 +151,7 @@
   "eyeTracking" : 0,
   "adjustHeadEmbeddedEyeTracking": 0,
   "invertColorsForHeadEmbeddedEyeTracking": 0,
+  "improveContrastForEyeDetectionOfHeadEmbedded": 1,
   "eyeTrackingHeadEmbeddedWithSegment" : 0,
   "eyeTrackingHeadEmbeddedWithEllipse" : 0,
   "eyeFilterKernelSize" : 7,
