@@ -409,7 +409,43 @@ def _adjustEyeTracking(firstFrame, totalFrames, ellipse=False):
 
 
 def _addEyeTracking(firstFrame, totalFrames):
+  app = QApplication.instance()
   layout = QVBoxLayout()
+
+  originalInvertColorsForHeadEmbeddedEyeTracking = app.configFile.get('invertColorsForHeadEmbeddedEyeTracking')
+  invertColorsCheckbox = QCheckBox("Invert colors for eye tracking")
+
+  def invertColorsCheckboxToggled(checked):
+    if not checked:
+      if originalInvertColorsForHeadEmbeddedEyeTracking is None:
+        if 'invertColorsForHeadEmbeddedEyeTracking' in app.configFile:
+          del app.configFile['invertColorsForHeadEmbeddedEyeTracking']
+      else:
+        app.configFile['invertColorsForHeadEmbeddedEyeTracking'] = 0
+    else:
+      app.configFile['invertColorsForHeadEmbeddedEyeTracking'] = 1
+  invertColorsCheckbox.toggled.connect(invertColorsCheckboxToggled)
+  if originalInvertColorsForHeadEmbeddedEyeTracking:
+    invertColorsCheckbox.setChecked(True)
+  layout.addWidget(invertColorsCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
+  originalImproveContrastForEyeDetectionOfHeadEmbedded = app.configFile.get('improveContrastForEyeDetectionOfHeadEmbedded')
+  improveContrastCheckbox = QCheckBox("Improve contrast for eye detection")
+
+  def improveContrastCheckboxToggled(checked):
+    if not checked:
+      if originalImproveContrastForEyeDetectionOfHeadEmbedded is None:
+        if 'improveContrastForEyeDetectionOfHeadEmbedded' in app.configFile:
+          del app.configFile['improveContrastForEyeDetectionOfHeadEmbedded']
+      else:
+        app.configFile['improveContrastForEyeDetectionOfHeadEmbedded'] = 0
+    else:
+      app.configFile['improveContrastForEyeDetectionOfHeadEmbedded'] = 1
+  improveContrastCheckbox.toggled.connect(improveContrastCheckboxToggled)
+  if originalImproveContrastForEyeDetectionOfHeadEmbedded or originalImproveContrastForEyeDetectionOfHeadEmbedded is None:
+    improveContrastCheckbox.setChecked(True)
+  layout.addWidget(improveContrastCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
   layout.addSpacing(50)
   ellipseBtn = QPushButton("Add eye tracking with ellipse method")
   ellipseBtn.clicked.connect(lambda: _adjustEyeTracking(firstFrame, totalFrames, ellipse=True))
