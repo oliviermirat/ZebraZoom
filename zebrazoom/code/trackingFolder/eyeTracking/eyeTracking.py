@@ -17,20 +17,17 @@ def eyeTrackingHeadEmbedded(animalId, i, firstFrame, frame, hyperparameters, thr
 
 def eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate, widgets):
   
-  invertColors = hyperparameters["invertColorsForHeadEmbeddedEyeTracking"]
-  
   headingLineHalfDiameter = hyperparameters["eyeTrackingHeadEmbeddedHalfDiameter"]
   headingLineWidthLeft    = hyperparameters["eyeTrackingHeadEmbeddedWidthLeft"] if hyperparameters["eyeTrackingHeadEmbeddedWidthLeft"] else hyperparameters["eyeTrackingHeadEmbeddedWidth"]
   headingLineWidthRight   = hyperparameters["eyeTrackingHeadEmbeddedWidthRight"] if hyperparameters["eyeTrackingHeadEmbeddedWidthRight"] else hyperparameters["eyeTrackingHeadEmbeddedWidth"]
   headingLineWidthArray = [headingLineWidthLeft, headingLineWidthRight]
   
   if hyperparameters["improveContrastForEyeDetectionOfHeadEmbedded"]:
-    if invertColors:
-      forEye = 255 - getAccentuateFrameForManualPointSelect(frame, hyperparameters) * 255
-    else:
-      forEye = getAccentuateFrameForManualPointSelect(frame, hyperparameters) * 255
+    forEye = getAccentuateFrameForManualPointSelect(frame, hyperparameters) * 255
   else:
     forEye = frame.copy()
+  if hyperparameters["invertColorsForHeadEmbeddedEyeTracking"]:
+    forEye = 255 - forEye
   
   forEye = forEye.astype(np.uint8)
   
@@ -71,12 +68,11 @@ def eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparamete
   # Debugging Plot
   if hyperparameters["debugEyeTracking"] or hyperparameters["adjustHeadEmbeddedEyeTracking"]:
     if hyperparameters["improveContrastForEyeDetectionOfHeadEmbedded"]:
-      if invertColors:
-        forEye2 = 255 - getAccentuateFrameForManualPointSelect(frame, hyperparameters) * 255
-      else:
-        forEye2 = getAccentuateFrameForManualPointSelect(frame, hyperparameters) * 255
+      forEye2 = getAccentuateFrameForManualPointSelect(frame, hyperparameters) * 255
     else:
       forEye2 = frame.copy()
+    if hyperparameters["invertColorsForHeadEmbeddedEyeTracking"]:
+      forEye2 = 255 - forEye2
     forEye2 = forEye2.astype(np.uint8)
     colorFrame = forEye2.copy()
     # Left eye
@@ -105,13 +101,11 @@ def eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparamete
 def eyeTrackingHeadEmbeddedEllipse(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate, widgets):
   
   if hyperparameters["improveContrastForEyeDetectionOfHeadEmbedded"]:
-    invertColors = hyperparameters["invertColorsForHeadEmbeddedEyeTracking"]
-    if invertColors:
-      forEye = 255 - getAccentuateFrameForManualPointSelect(frame, hyperparameters) * 255
-    else:
-      forEye = getAccentuateFrameForManualPointSelect(frame, hyperparameters) * 255
+    forEye = getAccentuateFrameForManualPointSelect(frame, hyperparameters) * 255
   else:
     forEye = frame.copy()
+  if hyperparameters["invertColorsForHeadEmbeddedEyeTracking"]:
+    forEye = 255 - forEye
 
   forEye = forEye.astype(np.uint8)
   
