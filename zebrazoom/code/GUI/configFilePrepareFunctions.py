@@ -179,7 +179,7 @@ def homegeneousWellsLayout(self, controller, nbRowsOfWells, nbWellsPerRows):
   self.configFile["nbRowsOfWells"] = int(nbRowsOfWells)
   self.configFile["nbWellsPerRows"] = int(nbWellsPerRows)
 
-  controller.show_frame("FinishConfig")
+  controller.calculateBackgroundFreelySwim(controller, 0, boutDetectionsOnly=True)
 
 
 @util.addToHistory

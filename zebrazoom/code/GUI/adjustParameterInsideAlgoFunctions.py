@@ -241,7 +241,7 @@ def _adjustFastFreelySwimTracking(self, controller, oldFirstFrame):
     self.configFile["nbAnimalsPerWell"] = 1
     self.configFile["minPixelDiffForBackExtract"] = configFile["minPixelDiffForBackExtract"]
 
-  util.addToHistory(controller.show_frame)("FinishConfig")
+  util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, boutDetectionsOnly=True)
 
 
 def adjustFastFreelySwimTracking(self, controller):
