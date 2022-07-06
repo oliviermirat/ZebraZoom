@@ -221,8 +221,8 @@ class ZebraZoomApp(PlainApplication):
     def chooseFolderForTailExtremityHE(self):
         GUI_InitialFunctions.chooseFolderForTailExtremityHE(self)
 
-    def chooseFolderForMultipleROIs(self):
-        GUI_InitialFunctions.chooseFolderForMultipleROIs(self)
+    def chooseFolderForMultipleROIs(self, askCoordinatesForAll):
+        GUI_InitialFunctions.chooseFolderForMultipleROIs(self, askCoordinatesForAll)
 
     def chooseConfigFile(self):
         GUI_InitialFunctions.chooseConfigFile(self)
