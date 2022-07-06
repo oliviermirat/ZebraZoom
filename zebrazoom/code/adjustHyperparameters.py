@@ -86,7 +86,10 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
       _createWidget(layout, status, hyperparameters, info, name, widgets, addContrastCheckbox)
 
     mainLayout = QVBoxLayout()
-    mainLayout.addWidget(util.apply_style(QLabel(title), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
+    titleLabel = util.apply_style(QLabel(title), font=util.TITLE_FONT)
+    titleLabel.setMinimumSize(1, 1)
+    titleLabel.resizeEvent = lambda evt: titleLabel.setMinimumWidth(evt.size().width()) or titleLabel.setWordWrap(evt.size().width() <= titleLabel.sizeHint().width())
+    mainLayout.addWidget(titleLabel, alignment=Qt.AlignmentFlag.AlignCenter)
     mainLayout.addLayout(layout)
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch()
@@ -249,7 +252,7 @@ def adjustFreelySwimTrackingParams(nbTailPoints, i, firstFrame, output, outputHe
     organizationTab = [
     [0, 20, "Increase this if some of the background is not completely white. Decrease if you can't see all of the animals. "],]
 
-  title = "Tracking"
+  title = "Adjust parameters in order for the background to be white and the animals to be gray/black."
 
   frame2 = cv2.cvtColor(frame2,cv2.COLOR_GRAY2RGB)
   for k in range(0, hyperparameters["nbAnimalsPerWell"]):
@@ -275,7 +278,7 @@ def adjustFreelySwimTrackingAutoParams(nbTailPoints, i, firstFrame, output, outp
   [0, 20, "Set to 0 for Method 1. For method 2 and 3: increase if the tip of tail is detected to soon, decrease if the tracking looks messy."],
   [0, 20, "For method 1: decrease if the tip of tail is detected to soon, increase if the tracking looks messy"],]
 
-  title = "Tracking"
+  title = "Adjust parameters in order for the background to be white and the animals to be gray/black."
 
   frame2 = cv2.cvtColor(frame2,cv2.COLOR_GRAY2RGB)
   for k in range(0, hyperparameters["nbAnimalsPerWell"]):

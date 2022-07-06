@@ -472,7 +472,7 @@ def _addEyeTracking(firstFrame, totalFrames):
   layout.addWidget(removeBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   layout.addSpacing(50)
 
-  buttons = (("Back", None),)
+  buttons = (("Done! Save changes!", None),)
   util.showBlockingPage(layout, title="Add eye tracking", buttons=buttons)
 
 
@@ -609,7 +609,7 @@ def adjustParamInsideAlgoPage(useNext=True):
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
-  backBtn = QPushButton("Back")
+  backBtn = QPushButton("Back" if useNext else "Done! Save changes!")
   backBtn.clicked.connect(lambda: app.configFileHistory[-2](restoreConfig=useNext))
   backBtn.clicked.connect(lambda: _cleanup(app, page))
   buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -728,7 +728,7 @@ def adjustParamInsideAlgoFreelySwimPage(useNext=True):
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
-  backBtn = QPushButton("Back")
+  backBtn = QPushButton("Back" if useNext else "Done! Save changes!")
   backBtn.clicked.connect(lambda: app.configFileHistory[-2](restoreConfig=useNext))
   backBtn.clicked.connect(lambda: _cleanup(app, page))
   buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -837,7 +837,7 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
-  backBtn = QPushButton("Back")
+  backBtn = QPushButton("Back" if useNext else "Done! Save changes!")
   backBtn.clicked.connect(lambda: app.configFileHistory[-2](restoreConfig=useNext))
   backBtn.clicked.connect(lambda: _cleanup(app, page))
   buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -970,7 +970,7 @@ def adjustBoutDetectionOnlyPage(useNext=True):
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
-  backBtn = QPushButton("Back")
+  backBtn = QPushButton("Back" if useNext else "Done! Save changes!")
   backBtn.clicked.connect(lambda: app.configFileHistory[-2](restoreConfig=useNext))
   backBtn.clicked.connect(lambda: _cleanup(app, page))
   buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
