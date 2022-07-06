@@ -450,12 +450,12 @@ class FolderMultipleROIInitialSelect(QWidget):
 
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Choose folder.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-        sameCoordinatesForAllCheckbox = QCheckBox("Use the same coordinates for all videos")
-        layout.addWidget(sameCoordinatesForAllCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("Select the folder of videos for which you want to define the regions of interest.", self), alignment=Qt.AlignmentFlag.AlignCenter)
         button = util.apply_style(QPushButton("Choose folder", self), background_color=util.LIGHT_YELLOW)
         button.clicked.connect(lambda: controller.chooseFolderForMultipleROIs(not sameCoordinatesForAllCheckbox.isChecked()))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
+        sameCoordinatesForAllCheckbox = QCheckBox("Use the same coordinates for all videos")
+        layout.addWidget(sameCoordinatesForAllCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
         start_page_btn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
         start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))
