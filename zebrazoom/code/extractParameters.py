@@ -189,59 +189,58 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       auDessus        = np.zeros((nbFrames, 1))
       for i in range(0,nbFrames):
         auDessus[i] = 1
-    else:
-      if hyperparameters["boutEdgesWhereZeros"] == 1:
-        auDessus        = np.zeros((nbFrames, 1))
-        for i in range(0,nbFrames):
-          if ((head[i][0] == 0) and (head[i][1] == 0)):
-            auDessus[i] = 0
-          else:
-            auDessus[i] = 1
-      else:
-        if type(auDessusPerAnimal) != int:
-          
-          auDessus = auDessusPerAnimal[animalId]
-          
+    elif hyperparameters["boutEdgesWhereZeros"] == 1:
+      auDessus        = np.zeros((nbFrames, 1))
+      for i in range(0,nbFrames):
+        if ((head[i][0] == 0) and (head[i][1] == 0)):
+          auDessus[i] = 0
         else:
-          if hyperparameters["thresForDetectMovementWithRawVideo"] == 0:
-            
-            # Calculating angle median
-            angle2 = np.transpose(angle)
-            angle2 = angle2[0]
-            rolling_window = hyperparameters["tailAngleMedianFilter"]
-            if rolling_window > 0:
-              shift = int(-rolling_window / 2)
-              angle_median = np.array(pd.Series(angle2).rolling(rolling_window).median())
-              angle_median = np.roll(angle_median, shift)
-              for ii in range(0, rolling_window):
-                angle_median[ii] = angle2[ii]
-              for ii in range(len(angle_median)-rolling_window,len(angle_median)):
-                angle_median[ii] = angle2[ii]
-            else:
-              angle_median = angle2
-            # Calculating angle variation to detect movement
-            angleVariation  = np.zeros((nbFrames, 1))
-            auDessus        = np.zeros((nbFrames, 1))
-            for i in range(0,nbFrames):
-              if (hyperparameters["freqAlgoPosFollow"] != 0) and (i % (hyperparameters["freqAlgoPosFollow"]) == 0):
-                print("Extract Param Middle: wellNumber:",wellNumber," ; frame:",i)
-              min = 10000
-              max = -10000
-              # for j in range(i-hyperparameters["windowForBoutDetectWithAngle"], i+1):
-              for j in range(i-int(hyperparameters["windowForBoutDetectWithAngle"]/2), i+int(hyperparameters["windowForBoutDetectWithAngle"]/2)):
-                if (j >= 0) and (j<nbFrames):
-                  if angle_median[j] > max:
-                    max = angle_median[j]
-                  if angle_median[j] < min:
-                    min = angle_median[j]
-              angleVariation[i] = max - min
-              if debug:
-                print(i,angleVariation[i])
-              if angleVariation[i] > thresAngleBoutDetect:
-                auDessus[i] = 1
-            
-          else:
-            auDessus = detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumber, wellPositions, head, headPositionFirstFrame, tailTipFirstFrame)
+          auDessus[i] = 1
+    elif type(auDessusPerAnimal) != int:
+
+      auDessus = auDessusPerAnimal[animalId]
+    elif hyperparameters["coordinatesOnlyBoutDetection"]:
+      auDessus = [int(math.sqrt(sum((head[i+1] - coords) ** 2)) >= hyperparameters["coordinatesOnlyBoutDetectionMinDist"]) for i, coords in enumerate(head[:-1])]
+      auDessus.append(0)
+    elif hyperparameters["thresForDetectMovementWithRawVideo"] == 0:
+
+      # Calculating angle median
+      angle2 = np.transpose(angle)
+      angle2 = angle2[0]
+      rolling_window = hyperparameters["tailAngleMedianFilter"]
+      if rolling_window > 0:
+        shift = int(-rolling_window / 2)
+        angle_median = np.array(pd.Series(angle2).rolling(rolling_window).median())
+        angle_median = np.roll(angle_median, shift)
+        for ii in range(0, rolling_window):
+          angle_median[ii] = angle2[ii]
+        for ii in range(len(angle_median)-rolling_window,len(angle_median)):
+          angle_median[ii] = angle2[ii]
+      else:
+        angle_median = angle2
+      # Calculating angle variation to detect movement
+      angleVariation  = np.zeros((nbFrames, 1))
+      auDessus        = np.zeros((nbFrames, 1))
+      for i in range(0,nbFrames):
+        if (hyperparameters["freqAlgoPosFollow"] != 0) and (i % (hyperparameters["freqAlgoPosFollow"]) == 0):
+          print("Extract Param Middle: wellNumber:",wellNumber," ; frame:",i)
+        min = 10000
+        max = -10000
+        # for j in range(i-hyperparameters["windowForBoutDetectWithAngle"], i+1):
+        for j in range(i-int(hyperparameters["windowForBoutDetectWithAngle"]/2), i+int(hyperparameters["windowForBoutDetectWithAngle"]/2)):
+          if (j >= 0) and (j<nbFrames):
+            if angle_median[j] > max:
+              max = angle_median[j]
+            if angle_median[j] < min:
+              min = angle_median[j]
+        angleVariation[i] = max - min
+        if debug:
+          print(i,angleVariation[i])
+        if angleVariation[i] > thresAngleBoutDetect:
+          auDessus[i] = 1
+
+    else:
+      auDessus = detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumber, wellPositions, head, headPositionFirstFrame, tailTipFirstFrame)
     
     if (hyperparameters["freqAlgoPosFollow"] != 0):
       print("Extract Param Middle: wellNumber:",wellNumber," ; frame:",i)

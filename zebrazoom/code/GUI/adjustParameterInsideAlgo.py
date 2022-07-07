@@ -940,10 +940,63 @@ def adjustBoutDetectionOnlyPage(useNext=True):
   recalculateLayout.addStretch()
   layout.addLayout(recalculateLayout)
 
+  coordinatesOnlyBoutDetectCheckbox = QCheckBox("Use only the body coordinates to detect bouts")
+  originalCoordinatesOnlyBoutDetection = app.configFile.get("coordinatesOnlyBoutDetection", None)
+  def coordinatesOnlyBoutDetectCheckboxToggled(checked):
+    if checked:
+      app.configFile["coordinatesOnlyBoutDetection"] = 1
+    elif originalCoordinatesOnlyBoutDetection is not None:
+      app.configFile["coordinatesOnlyBoutDetection"] = 0
+    elif "coordinatesOnlyBoutDetection" in app.configFile:
+      del app.configFile["coordinatesOnlyBoutDetection"]
+    minDistLabel.setVisible(checked)
+    minDistLineEdit.setVisible(checked)
+    adjustBoutsBtn.setVisible(not checked)
+  coordinatesOnlyBoutDetectCheckbox.toggled.connect(coordinatesOnlyBoutDetectCheckboxToggled)
+  trackingMethod = app.configFile.get("trackingMethod", None)
+  coordinatesOnlyBoutDetectCheckbox.setVisible(trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction" or trackingMethod == "fastCenterOfMassTracking_ClassicalBackgroundSubtraction")
+  layout.addWidget(coordinatesOnlyBoutDetectCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
+  minDistLayout = QHBoxLayout()
+  minDistLayout.addStretch()
+  originalMinDist = app.configFile.get("coordinatesOnlyBoutDetectionMinDist", None)
+  minDistLineEdit = QLineEdit()
+  minDistLineEdit.setValidator(QIntValidator())
+  minDistLineEdit.validator().setBottom(0)
+  minDistLineEdit.setText(str(originalMinDist) if originalMinDist is not None else '0')
+
+  def updateMinDist(text):
+    if text:
+      app.configFile["coordinatesOnlyBoutDetectionMinDist"] = int(text)
+    elif originalMinDist is not None:
+      app.configFile["coordinatesOnlyBoutDetectionMinDist"] = 0
+    elif "coordinatesOnlyBoutDetectionMinDist" in app.configFile:
+      del app.configFile["coordinatesOnlyBoutDetectionMinDist"]
+  minDistLineEdit.textChanged.connect(updateMinDist)
+  minDistLabel = QPushButton("coordinatesOnlyBoutDetectionMinDist:")
+
+  def adjustMinDistForBoutDetect():
+    cancelled = False
+    def cancel():
+      nonlocal cancelled
+      cancelled = True
+    center, radius = util.getCircle(getFrame(), 'Click on the center of an animal and select the distance it should travel to consider it has moved', cancel)
+    if not cancelled:
+      minDistLineEdit.setText(str(radius))
+  minDistLabel.clicked.connect(adjustMinDistForBoutDetect)
+  minDistLabel.setVisible(False)
+  minDistLayout.addWidget(minDistLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+  minDistLineEdit.setVisible(False)
+  minDistLayout.addWidget(minDistLineEdit, alignment=Qt.AlignmentFlag.AlignCenter)
+  minDistLayout.addStretch()
+  layout.addLayout(minDistLayout)
+
   adjustBoutsBtn = QPushButton("Adjust Bouts Detection")
   adjustBoutsBtn.setToolTip("The aim here is to adjust parameters in order for the red dot on the top left of the image to appear when and only when movement is occurring.")
   adjustBoutsBtn.clicked.connect(lambda: app.detectBouts(app, video.getWell(), frameSlider.value(), False))
   layout.addWidget(adjustBoutsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+  coordinatesOnlyBoutDetectCheckbox.setChecked(coordinatesOnlyBoutDetectCheckbox.isVisible() and app.configFile.get("coordinatesOnlyBoutDetection", False))
 
   fillGapLayout = QHBoxLayout()
   fillGapLayout.addStretch()
