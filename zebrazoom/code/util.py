@@ -214,12 +214,9 @@ def _cvToPixmap(img):
   return QPixmap.fromImage(QImage(img.data.tobytes(), width, height, bytesPerLine, fmt))
 
 
-class ZoomableImage(QGraphicsView):
-  pointSelected = pyqtSignal(QPoint)
-  proceed = pyqtSignal()
-
+class _ZoomableImage(QGraphicsView):
   def __init__(self, parent=None):
-    super(ZoomableImage, self).__init__(parent)
+    super().__init__(parent)
     self._zoom = 0
     self._scene = QGraphicsScene(self)
     self._pixmap = QGraphicsPixmapItem()
@@ -230,7 +227,6 @@ class ZoomableImage(QGraphicsView):
     self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
     self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
     self.setFrameShape(QFrame.Shape.NoFrame)
-    self._point = None
     self._dragging = False
     self._tooltipShown = False
 
@@ -269,10 +265,7 @@ class ZoomableImage(QGraphicsView):
       self._update(0.8)
 
   def keyPressEvent(self, evt):
-    if self._point is not None and (evt.key() == Qt.Key.Key_Enter or evt.key() == Qt.Key.Key_Return):
-      self.proceed.emit()
-      return
-    elif evt.modifiers() & Qt.KeyboardModifier.ControlModifier:
+    if evt.modifiers() & Qt.KeyboardModifier.ControlModifier:
       if evt.key() == Qt.Key.Key_Plus:
         self._zoom += 1
         self._update(1.25)
@@ -289,19 +282,42 @@ class ZoomableImage(QGraphicsView):
       QApplication.setOverrideCursor(Qt.CursorShape.ClosedHandCursor)
     super().mouseMoveEvent(evt)
 
+  def enterEvent(self, evt):
+    QApplication.setOverrideCursor(Qt.CursorShape.CrossCursor)
+    super().enterEvent(evt)
+
+  def leaveEvent(self, evt):
+    QApplication.restoreOverrideCursor()
+    super().leaveEvent(evt)
+
+
+class _ZoomableImagePoint(_ZoomableImage):
+  pointSelected = pyqtSignal(QPoint)
+  proceed = pyqtSignal()
+
+  def __init__(self, parent=None):
+    super().__init__(parent)
+    self._point = None
+
+  def keyPressEvent(self, evt):
+    if self._point is not None and (evt.key() == Qt.Key.Key_Enter or evt.key() == Qt.Key.Key_Return):
+      self.proceed.emit()
+      return
+    super().keyPressEvent(evt)
+
   def mouseReleaseEvent(self, evt):
     if not self._dragging:
       if self._pixmap.isUnderMouse():
         self._point = self.mapToScene(evt.pos()).toPoint()
         self.viewport().update()
         self.pointSelected.emit(self._point)
-        if not self._tooltipShown:
+        if not self._tooltipShown and self._point is not None:
           QToolTip.showText(self.mapToGlobal(self._point), "If you aren't satisfied with the selection, click again.", self, self.rect(), 5000)
           self._tooltipShown = True
     else:
       self._dragging = False
       QApplication.restoreOverrideCursor()
-    super(ZoomableImage, self).mouseReleaseEvent(evt)
+    super().mouseReleaseEvent(evt)
 
   def paintEvent(self, evt):
     super().paintEvent(evt)
@@ -314,13 +330,66 @@ class ZoomableImage(QGraphicsView):
       qp.drawEllipse(self.mapFromScene(QPointF(self._point)), 2, 2)
     qp.end()
 
-  def enterEvent(self, evt):
-    QApplication.setOverrideCursor(Qt.CursorShape.CrossCursor)
-    super().enterEvent(evt)
+
+class _ZoomableImageCircle(_ZoomableImage):
+  circleSelected = pyqtSignal(bool)
+
+  def __init__(self):
+    super().__init__()
+    self._center = None
+    self._currentPosition = None
+    self._borderPoint = None
+    self.viewport().setMouseTracking(True)
+
+  def mouseReleaseEvent(self, evt):
+    if not self._dragging:
+      if self._pixmap.isUnderMouse():
+        if self._center is None or self._borderPoint is not None:
+          self._center = self.mapToScene(evt.pos()).toPoint()
+          self._borderPoint = None
+          self._currentPosition = None
+          self.circleSelected.emit(False)
+        else:
+          self._borderPoint = self.mapToScene(evt.pos()).toPoint()
+          self.circleSelected.emit(True)
+        self.viewport().update()
+        if not self._tooltipShown and self._center is not None and self._borderPoint is not None:
+          QToolTip.showText(self.mapToGlobal(self._center), "If you aren't satisfied with the selection, click again.", self, self.rect(), 5000)
+          self._tooltipShown = True
+    else:
+      self._dragging = False
+      QApplication.restoreOverrideCursor()
+    super().mouseReleaseEvent(evt)
+
+  def mouseMoveEvent(self, evt):
+    super().mouseMoveEvent(evt)
+    if not self._dragging:
+      self._currentPosition = self.mapToScene(evt.pos()).toPoint()
+      self.viewport().update()
 
   def leaveEvent(self, evt):
-    QApplication.restoreOverrideCursor()
+    self._currentPosition = None
+    self.viewport().update()
     super().leaveEvent(evt)
+
+  def paintEvent(self, evt):
+    super().paintEvent(evt)
+    if self._currentPosition is None and self._center is None:
+      return
+    qp = QPainter(self.viewport())
+    if self._center is not None:
+      qp.setBrush(QColor(255, 0, 0))
+      qp.setPen(Qt.PenStyle.NoPen)
+      borderPoint = self._borderPoint if self._borderPoint is not None else self._currentPosition if self._currentPosition is not None else None
+      mappedCenter = self.mapFromScene(self._center)
+      qp.drawEllipse(mappedCenter, 2, 2)
+      if borderPoint is not None:
+        delta = self.mapFromScene(borderPoint) - mappedCenter
+        radius = int(math.sqrt(delta.x() * delta.x() + delta.y() * delta.y()))
+        qp.setBrush(Qt.BrushStyle.NoBrush)
+        qp.setPen(QColor(0, 0, 255))
+        qp.drawEllipse(mappedCenter, radius, radius)
+    qp.end()
 
 
 def setPixmapFromCv(img, label, preferredSize=None, zoomable=False):
@@ -343,7 +412,7 @@ def setPixmapFromCv(img, label, preferredSize=None, zoomable=False):
     label.setPixmap(pixmap)
   else:
     label.hide()
-    image = ZoomableImage()
+    image = _ZoomableImagePoint() if not isinstance(label, _InteractiveLabelCircle) else _ZoomableImageCircle()
     image.sizeHint = lambda: size
     image.setMaximumSize(size)
     image.viewport().setFixedSize(size)
@@ -356,6 +425,14 @@ def setPixmapFromCv(img, label, preferredSize=None, zoomable=False):
         label.getCoordinates = lambda: (point.x(), point.y())
       image.pointSelected.connect(pointSelected)
       image.proceed.connect(label.proceed.emit)
+    if hasattr(image, "circleSelected"):
+      def circleSelected(selected):
+        label.circleSelected.emit(selected)
+      image.circleSelected.connect(circleSelected)
+      def calculateRadius():
+        delta = image._borderPoint - image._center
+        return image._center, int(math.sqrt(delta.x() * delta.x() + delta.y() * delta.y()))
+      label.getInfo = calculateRadius
 
 
 class _DoubleSlider(QSlider):
@@ -993,7 +1070,7 @@ def addToHistory(fn):
 
 class Expander(QWidget):
   def __init__(self, parent, title, layout, animationDuration=200, showFrame=False, addScrollbars=False):
-    super(Expander, self).__init__()
+    super().__init__()
 
     self._toggleButton = toggleButton = QToolButton()
     toggleButton.setStyleSheet("QToolButton { border: none; }")
@@ -1137,7 +1214,7 @@ class _InteractiveLabelCircle(QLabel):
     return center, int(math.sqrt(radius.dx() * radius.dx() + radius.dy() * radius.dy()))
 
 
-def getCircle(frame, title, backBtnCb=None):
+def getCircle(frame, title, backBtnCb=None, zoomable=False):
   height, width, _ = frame.shape
 
   layout = QVBoxLayout()
@@ -1148,7 +1225,7 @@ def getCircle(frame, title, backBtnCb=None):
     buttons = (("Cancel", backBtnCb, True), ("Ok", None, True, video.circleSelected))
   else:
     buttons = (("Ok", None, True, video.circleSelected),)
-  showBlockingPage(layout, title=title, buttons=buttons, labelInfo=(frame, video))
+  showBlockingPage(layout, title=title, buttons=buttons, labelInfo=(frame, video, zoomable))
   return video.getInfo()
 
 
