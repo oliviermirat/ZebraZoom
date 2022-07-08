@@ -430,6 +430,8 @@ def setPixmapFromCv(img, label, preferredSize=None, zoomable=False):
         label.circleSelected.emit(selected)
       image.circleSelected.connect(circleSelected)
       def calculateRadius():
+        if image._borderPoint is None or image._center is None:
+          return None, None
         delta = image._borderPoint - image._center
         return image._center, int(math.sqrt(delta.x() * delta.x() + delta.y() * delta.y()))
       label.getInfo = calculateRadius
