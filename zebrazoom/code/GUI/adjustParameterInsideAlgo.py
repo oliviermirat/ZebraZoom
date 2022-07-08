@@ -940,7 +940,7 @@ def adjustBoutDetectionOnlyPage(useNext=True):
   recalculateLayout.addStretch()
   layout.addLayout(recalculateLayout)
 
-  coordinatesOnlyBoutDetectCheckbox = QCheckBox("Use only the body coordinates to detect bouts")
+  coordinatesOnlyBoutDetectCheckbox = QCheckBox("Use only the body coordinates to detect bouts (faster, but potentially less accurate)")
   originalCoordinatesOnlyBoutDetection = app.configFile.get("coordinatesOnlyBoutDetection", None)
   def coordinatesOnlyBoutDetectCheckboxToggled(checked):
     if checked:
