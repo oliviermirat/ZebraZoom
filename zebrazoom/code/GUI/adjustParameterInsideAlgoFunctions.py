@@ -191,7 +191,7 @@ def adjustFreelySwimTracking(self, controller, wellNumber, firstFrame, adjustOnW
   self.configFile = configFile
 
 
-def _adjustFastFreelySwimTracking(self, controller, oldFirstFrame):
+def _adjustFastFreelySwimTracking(self, controller, oldFirstFrame, detectBouts):
   wellNumber = 0
   adjustOnWholeVideo = True
 
@@ -241,13 +241,16 @@ def _adjustFastFreelySwimTracking(self, controller, oldFirstFrame):
     self.configFile["nbAnimalsPerWell"] = 1
     self.configFile["minPixelDiffForBackExtract"] = configFile["minPixelDiffForBackExtract"]
 
-  util.addToHistory(controller.show_frame)("FinishConfig")
+  if detectBouts:
+    util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, boutDetectionsOnly=True)
+  else:
+    util.addToHistory(controller.show_frame)("FinishConfig")
 
 
-def adjustFastFreelySwimTracking(self, controller):
+def adjustFastFreelySwimTracking(self, controller, detectBouts):
   oldFirstFrame = self.configFile.get("firstFrame")
   util.chooseBeginningPage(QApplication.instance(), self.videoToCreateConfigFileFor, "Choose where you want to start the procedure to adjust parameters.", "Ok, I want the procedure to start at this frame.",
-                           lambda: _adjustFastFreelySwimTracking(self, controller, oldFirstFrame))
+                           lambda: _adjustFastFreelySwimTracking(self, controller, oldFirstFrame, detectBouts))
 
 
 def adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, firstFrame, adjustOnWholeVideo):
@@ -354,14 +357,11 @@ def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalcula
   if "reloadWellPositions" in configFile:
     del configFile["reloadWellPositions"]
 
-
-  if boutDetectionsOnly:
+  if morePreciseFastScreen:
+    adjustFastFreelySwimTracking(self, controller, boutDetectionsOnly)
+  elif boutDetectionsOnly:
     adjustBoutDetectionOnlyPage(useNext=useNext)
+  elif automaticParameters:
+    adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=useNext)
   else:
-    if automaticParameters:
-      adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=useNext)
-    else:
-      if morePreciseFastScreen:
-        adjustFastFreelySwimTracking(self, controller)
-      else:
-        adjustParamInsideAlgoFreelySwimPage(useNext=useNext)
+    adjustParamInsideAlgoFreelySwimPage(useNext=useNext)

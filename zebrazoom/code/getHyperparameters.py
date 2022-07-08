@@ -205,6 +205,10 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["noBoutsDetection"]    = getConfig(config, "noBoutsDetection", videoPath)
   
+  hyperparameters["coordinatesOnlyBoutDetection"] = getConfig(config, "coordinatesOnlyBoutDetection", videoPath)
+
+  hyperparameters["coordinatesOnlyBoutDetectionMinDist"] = getConfig(config, "coordinatesOnlyBoutDetectionMinDist", videoPath)
+
   hyperparameters["setPixDiffBoutDetectParameters"] = getConfig(config, "setPixDiffBoutDetectParameters", videoPath)
   
   hyperparameters["midlineIsInBlobTrackingOptimization"] = getConfig(config, "midlineIsInBlobTrackingOptimization", videoPath)
