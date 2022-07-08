@@ -772,13 +772,16 @@ class HomegeneousWellsLayout(QWidget):
     wellsSublayout.addStretch(1)
     layout.addLayout(wellsSublayout)
 
+    boutDetectCheckbox = QCheckBox("Detect bouts of movement")
+    layout.addWidget(boutDetectCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
     finishBtn = util.apply_style(QPushButton("Use Method 1", self), background_color=util.LIGHT_YELLOW)
-    finishBtn.clicked.connect(lambda: controller.homegeneousWellsLayout(controller, nbRowsOfWells.text(), nbWellsPerRows.text()))
+    finishBtn.clicked.connect(lambda: controller.homegeneousWellsLayout(controller, nbRowsOfWells.text(), nbWellsPerRows.text(), boutDetectCheckbox.isChecked()))
     layout.addWidget(finishBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(QLabel('Method 1 is usually best for "poor quality" video (poor contrast, changing background, etc...)', self), alignment=Qt.AlignmentFlag.AlignCenter)
     
     adjustBtn = util.apply_style(QPushButton("Use Method 2", self), background_color=util.LIGHT_YELLOW)
-    adjustBtn.clicked.connect(lambda: controller.morePreciseFastScreen(controller, nbRowsOfWells.text(), nbWellsPerRows.text()))
+    adjustBtn.clicked.connect(lambda: controller.morePreciseFastScreen(controller, nbRowsOfWells.text(), nbWellsPerRows.text(), boutDetectCheckbox.isChecked()))
     layout.addWidget(adjustBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(QLabel('Method 2 will usually lead to more accurate results for "high quality" video (high contrast, strictly fixed background, no issues on borders, etc..).', self), alignment=Qt.AlignmentFlag.AlignCenter)
     

@@ -123,7 +123,10 @@ def showBlockingPage(layout, title=None, buttons=(), dialog=False, labelInfo=Non
     signal.connect(lambda *args: loop.exit())
   mainLayout = QVBoxLayout()
   if title is not None:
-    mainLayout.addWidget(apply_style(QLabel(title), font=TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
+    titleLabel = apply_style(QLabel(title), font=TITLE_FONT)
+    titleLabel.setMinimumSize(1, 1)
+    titleLabel.resizeEvent = lambda evt: titleLabel.setMinimumWidth(evt.size().width()) or titleLabel.setWordWrap(evt.size().width() <= titleLabel.sizeHint().width())
+    mainLayout.addWidget(titleLabel, alignment=Qt.AlignmentFlag.AlignCenter)
   mainLayout.addLayout(layout)
   mainLayout.addLayout(_getButtonsLayout(buttons, loop))
   app = QApplication.instance()

@@ -261,11 +261,11 @@ class ZebraZoomApp(PlainApplication):
     def regionsOfInterest(self, controller, nbwells):
         configFilePrepareFunctions.regionsOfInterest(self, controller, nbwells)
 
-    def homegeneousWellsLayout(self, controller, nbRowsOfWells, nbWellsPerRows):
-        configFilePrepareFunctions.homegeneousWellsLayout(self, controller, nbRowsOfWells, nbWellsPerRows)
+    def homegeneousWellsLayout(self, controller, nbRowsOfWells, nbWellsPerRows, detectBouts):
+        configFilePrepareFunctions.homegeneousWellsLayout(self, controller, nbRowsOfWells, nbWellsPerRows, detectBouts)
 
-    def morePreciseFastScreen(self, controller, nbRowsOfWells, nbWellsPerRows):
-        configFilePrepareFunctions.morePreciseFastScreen(self, controller, nbRowsOfWells, nbWellsPerRows)
+    def morePreciseFastScreen(self, controller, nbRowsOfWells, nbWellsPerRows, detectBouts):
+        configFilePrepareFunctions.morePreciseFastScreen(self, controller, nbRowsOfWells, nbWellsPerRows, detectBouts)
 
     def circularOrRectangularWells(self, controller, nbRowsOfWells, nbWellsPerRows, nbanimals):
         configFilePrepareFunctions.circularOrRectangularWells(self, controller, nbRowsOfWells, nbWellsPerRows, nbanimals)
