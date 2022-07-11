@@ -1,13 +1,5 @@
 # Releasing new versions
-1. Bump the version in setup.py and GUIAll.py and push the commit to master.
-2. Tag the release and push the tag (git tag -a release/x.x.x, git push --tags).
-3. Make sure the release action on Github was completed successfully (either check it manually on Github or wait for the email). If the action has failed:
-   * determine the cause of failure:
-     * if it was some one-time Github thing, just manually re-run failed jobs from Github UI
-     * otherwise:
-       * manually delete the draft release on Github
-       * manually delete the tag both locally and remotely (git tag -d release/x.x.x, git push -d origin release/x.x.x)
-       * fix the issue and repeat step 2
+Go to Actions, select 'Release a new version' workflow, click on Run workflow, enter the release version and run it.
 
 # Running tests
 Short tests are run automatically on every push. To run long tests on Github, go to Actions, select 'Long running automated tests' workflow and run it using the desired branch. When running tests, temporary folders are used instead of standard zebrazoom data folders, so tests won't interfere with the existing local data and won't leave any files behind.
