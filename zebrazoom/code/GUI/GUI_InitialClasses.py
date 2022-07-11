@@ -224,6 +224,9 @@ class StartPage(QWidget):
           layout.setColumnStretch(idx, 1)
 
         bottomLayout = QHBoxLayout()
+        self._selectZZoutputFolder = QPushButton("Select output folder")
+        self._selectZZoutputFolder.clicked.connect(controller.askForZZoutputLocation)
+        bottomLayout.addWidget(self._selectZZoutputFolder)
         self._troubleshootBtn = QPushButton("Troubleshoot")
         self._troubleshootBtn.clicked.connect(lambda: controller.show_frame("ChooseVideoToTroubleshootSplitVideo"))
         bottomLayout.addWidget(self._troubleshootBtn)
