@@ -8,11 +8,12 @@ if __name__ == '__main__':
   import zebrazoom.code.paths as paths
 
   from zebrazoom.code.vars import getGlobalVariables
-  from zebrazoom.GUIAllPy import PlainApplication, ZebraZoomApp
+  from zebrazoom.GUIAllPy import PlainApplication
   globalVariables = getGlobalVariables()
 
   if len(sys.argv) == 1:
-
+    
+    from zebrazoom.GUIAllPy import ZebraZoomApp
     print("The data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
     app = ZebraZoomApp(sys.argv)
     sys.exit(app.exec())
@@ -20,6 +21,7 @@ if __name__ == '__main__':
   else:
 
     if sys.argv[1] == "selectZZoutput" or sys.argv[1] == "--exit":
+      from zebrazoom.GUIAllPy import ZebraZoomApp
       app = ZebraZoomApp(sys.argv)
     else:
       app = PlainApplication(sys.argv)
