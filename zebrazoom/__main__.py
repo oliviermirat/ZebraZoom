@@ -8,7 +8,6 @@ if __name__ == '__main__':
   import zebrazoom.code.paths as paths
 
   from zebrazoom.code.vars import getGlobalVariables
-  from zebrazoom.GUIAllPy import PlainApplication
   globalVariables = getGlobalVariables()
 
   if len(sys.argv) == 1:
@@ -24,6 +23,7 @@ if __name__ == '__main__':
       from zebrazoom.GUIAllPy import ZebraZoomApp
       app = ZebraZoomApp(sys.argv)
     else:
+      from zebrazoom.GUIAllPy import PlainApplication
       app = PlainApplication(sys.argv)
     if sys.argv[1] == "selectZZoutput":
 
