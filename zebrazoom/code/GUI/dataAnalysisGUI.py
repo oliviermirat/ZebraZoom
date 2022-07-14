@@ -1,5 +1,6 @@
 import math
 import os
+import sys
 import pickle
 import webbrowser
 
@@ -11,7 +12,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvas
 
 from PyQt5.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QEvent, QItemSelectionModel, QModelIndex, QObject, QPoint, QPointF, QRect, QRectF, QSize, QSizeF, QSortFilterProxyModel, QStringListModel, QUrl
 from PyQt5.QtGui import QColor, QDesktopServices, QFont, QFontMetrics, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
-from PyQt5.QtWidgets import QAction, QAbstractItemView, QApplication, QCompleter, QFileDialog, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QListView, QMessageBox, QSpacerItem, QTextEdit, QToolButton, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QTableView, QToolTip, QTreeView
+from PyQt5.QtWidgets import QAction, QAbstractItemView, QApplication, QComboBox, QCompleter, QDoubleSpinBox, QFileDialog, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QListView, QMessageBox, QSpacerItem, QTextEdit, QToolButton, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QTableView, QToolTip, QTreeView
 PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
@@ -1130,6 +1131,49 @@ class _TooltipHelper(QObject):
     return False
 
 
+class _ParameterFilter(QWidget):
+  changed = pyqtSignal()
+
+  def __init__(self, params, removeCallback):
+    super().__init__()
+    layout = QHBoxLayout()
+    self._nameComboBox = QComboBox()
+    self._nameComboBox.addItems(params)
+    self._nameComboBox.currentTextChanged.connect(self.changed.emit)
+    layout.addWidget(self._nameComboBox)
+    layout.addWidget(QLabel('Min:'))
+    self._minimumSpinbox = QDoubleSpinBox()
+    self._minimumSpinbox.setMaximum(sys.float_info.max)
+    self._minimumSpinbox.valueChanged.connect(self.changed.emit)
+    layout.addWidget(self._minimumSpinbox)
+    layout.addWidget(QLabel('Max:'))
+    self._maximumSpinbox = QDoubleSpinBox()
+    self._maximumSpinbox.setMaximum(sys.float_info.max)
+    self._maximumSpinbox.valueChanged.connect(self.changed.emit)
+    layout.addWidget(self._maximumSpinbox)
+    removeBtn = QPushButton('Remove')
+    removeBtn.clicked.connect(removeCallback)
+    layout.addWidget(removeBtn)
+    self.setLayout(layout)
+
+  def updateParams(self, params):
+    blocked = self._nameComboBox.blockSignals(True)
+    text = self._nameComboBox.currentText()
+    self._nameComboBox.clear()
+    self._nameComboBox.addItems(params)
+    self._nameComboBox.setCurrentText(text)
+    self._nameComboBox.blockSignals(blocked)
+
+  def name(self):
+    return self._nameComboBox.currentText()
+
+  def minimum(self):
+    return self._minimumSpinbox.value()
+
+  def maximum(self):
+    return self._maximumSpinbox.value()
+
+
 class KinematicParametersVisualization(util.CollapsibleSplitter):
   _IGNORE_COLUMNS = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
   _FILENAME = 'globalParametersInsideCategories'
@@ -1145,6 +1189,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._allData = allData
     self._medianData = medianData
     self._chartScaleFactor = 1
+    self._filters = []
 
     model = QFileSystemModel()
     model.setFilter(QDir.Filter.NoDotAndDotDot | QDir.Filter.Dirs)
@@ -1180,10 +1225,24 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._recreateMainWidget()
     self.setChildrenCollapsible(False)
 
+  def _addFilter(self):
+    fltr = _ParameterFilter(self._medianParameters if self._medianPerWellRadioBtn.isChecked() else self._allParameters, lambda: self._removeFilter(fltr))
+    fltr.changed.connect(lambda: self._update(clearFigures=True))
+    self._filters.append(fltr)
+    self._checkboxesLayout.addWidget(fltr, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._update(clearFigures=True)
+
+  def _removeFilter(self, fltr):
+    self._filters.remove(fltr)
+    self._checkboxesLayout.removeWidget(fltr)
+    fltr.setParent(None)
+    self._update(clearFigures=True)
+
   def _recreateMainWidget(self):
     app = QApplication.instance()
     self._paramCheckboxes = {}
     self._figures = {'median': {True: {}, False: {}}, 'all': {True: {}, False: {}}}
+    self._filters = []
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Visualize Kinematic Parameters"), font=app.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -1218,7 +1277,8 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       return
 
     middleLayout = QHBoxLayout()
-    checkboxesLayout = QVBoxLayout()
+    self._checkboxesLayout = checkboxesLayout = QVBoxLayout()
+
     checkboxesLayout.addWidget(util.apply_style(QLabel("Visualization options"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
     chartScalingLayout = QHBoxLayout()
     chartScalingLayout.addWidget(QLabel('Chart size'), alignment=Qt.AlignmentFlag.AlignLeft)
@@ -1243,6 +1303,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._plotOutliersAndMeanCheckbox = QCheckBox("Plot outliers and mean")
     self._plotOutliersAndMeanCheckbox.toggled.connect(lambda: self._update(visualizationOptionsChanged=True))
     checkboxesLayout.addWidget(self._plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
+
     checkboxesLayout.addWidget(util.apply_style(QLabel("Parameters"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
     self._selectAllCheckbox = util.apply_style(QCheckBox('Select all'), font_weight='bold')
     self._selectAllCheckbox.stateChanged.connect(self._checkOrUncheckAll)
@@ -1257,6 +1318,15 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       checkbox.toggled.connect(lambda: self._update())
       self._paramCheckboxes[param] = checkbox
       checkboxesLayout.addWidget(checkbox, alignment=Qt.AlignmentFlag.AlignLeft)
+
+    filtersLayout = QHBoxLayout()
+    filtersLayout.addWidget(util.apply_style(QLabel("Filters"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
+    addFilterBtn = QPushButton("Add new")
+    addFilterBtn.clicked.connect(self._addFilter)
+    filtersLayout.addWidget(addFilterBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    filtersLayout.addStretch()
+    checkboxesLayout.addLayout(filtersLayout)
+
     checkboxesLayout.addStretch(1)
     checkboxesWidget = QWidget()
     checkboxesWidget.setLayout(checkboxesLayout)
@@ -1326,6 +1396,12 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     if not figures:
       self._chartsScrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
       return QLabel("Select one or more parameters to visualize.")
+    data = self._medianData if self._medianPerWellRadioBtn.isChecked() else self._allData
+    if self._filters:
+      data = data.query(' & '.join('%s >= %s & %s <= %s' % (fltr.name(), fltr.minimum(), fltr.name(), fltr.maximum()) for fltr in self._filters))
+    if not len(data.index):
+      self._chartsScrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
+      return QLabel("No data found, try adjusting the filters.")
     chartsLayout = QGridLayout()
     chartsWidget = QWidget()
     chartsWidget.setLayout(chartsLayout)
@@ -1346,18 +1422,18 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
         col = 0
       figure.setVisible(True)
       if not figure.figure.get_axes():  # check whether we've already plotted it
-        self._plotFigure(param, figure.figure)
+        self._plotFigure(param, figure.figure, data)
     self._chartsScrollArea.setAlignment(Qt.AlignmentFlag.AlignLeft)
     return chartsWidget
 
-  def _plotFigure(self, param, figure):
-    data = self._medianData if self._medianPerWellRadioBtn.isChecked() else self._allData
+  def _plotFigure(self, param, figure, data):
     plotOutliersAndMean = self._plotOutliersAndMeanCheckbox.isChecked()
     ax = figure.add_subplot(111)
     b = sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean)
     b.set_ylabel('', fontsize=0)
     b.set_xlabel('', fontsize=0)
     b.axes.set_title(param, fontsize=20)
+    figure.figure.canvas.draw()
 
   def _iterAllFigures(self):
     for typeDict in self._figures.values():
@@ -1374,12 +1450,22 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       self._paramCheckboxes[param].blockSignals(blocked)
     self._update()
 
-  def _update(self, visualizationOptionsChanged=False):
-    params = set(self._medianParameters) if self._medianPerWellRadioBtn.isChecked() else set(self._allParameters)
+  def _update(self, visualizationOptionsChanged=False, clearFigures=False):
+    params = self._medianParameters if self._medianPerWellRadioBtn.isChecked() else self._allParameters
+    paramsSet = set(params)
     if visualizationOptionsChanged:
       for param, checkbox in self._paramCheckboxes.items():
-        checkbox.setVisible(param in params)
+        checkbox.setVisible(param in paramsSet)
+      for fltr in self._filters[:]:
+        if fltr.name() not in paramsSet:
+          self._filters.remove(fltr)
+          self._checkboxesLayout.removeWidget(fltr)
+          fltr.setParent(None)
+        else:
+          fltr.updateParams(params)
     for figure in self._iterAllFigures():
+      if clearFigures:  # nuke cache if filters have changed
+        figure.figure.clear()
       figure.hide()
       figure.setParent(None)
     selectedParameters = {param for param, checkbox in self._paramCheckboxes.items() if checkbox.isChecked()}
