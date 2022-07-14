@@ -2,8 +2,6 @@ from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
 
-import zebrazoom.code.util as util
-
 
 def headEmbededFrameSequentialBackExtract(cap, videoPath, background, hyperparameters, frameNumber, wellNumber, wellPositions):
   
@@ -39,6 +37,8 @@ def headEmbededFrameSequentialBackExtract(cap, videoPath, background, hyperparam
   thres1 = cv2.cvtColor(thres1, cv2.COLOR_BGR2GRAY)
 
   if (debug):
+    import zebrazoom.code.util as util
+
     util.showFrame(frame, title='thres1')
   
   putToWhite = ( frame.astype('int32') >= (background.astype('int32') + minPixelDiffForBackExtract) )
@@ -46,6 +46,8 @@ def headEmbededFrameSequentialBackExtract(cap, videoPath, background, hyperparam
   frame[putToWhite] = 255
   
   if (debug):
+    import zebrazoom.code.util as util
+
     util.showFrame(frame, title='thres1')
     # cv2.imshow('thres1', thres1)
     # cv2.waitKey(0)

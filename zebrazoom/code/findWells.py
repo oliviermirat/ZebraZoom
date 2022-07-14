@@ -8,21 +8,19 @@ import json
 import sys
 import os
 from scipy import interpolate
-import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 from zebrazoom.code.adjustHyperparameters import adjustHyperparameters
-
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout
-
-import zebrazoom.code.util as util
 
 
 def _findRectangularWellsAreaQt(frame, videoPath, hyperparameters):
+  import zebrazoom.code.util as util
+
   topLeft, bottomRight = util.getRectangle(frame, "Click on the top left and bottom right of one of the wells")
   return abs(topLeft[0] - bottomRight[0]) * abs(topLeft[1] - bottomRight[1])
 
 
 def findRectangularWellsArea(frame, videoPath, hyperparameters):
+  from PyQt5.QtWidgets import QApplication
+
   return _findRectangularWellsAreaQt(frame, videoPath, hyperparameters, dialog=not hasattr(QApplication.instance(), 'window'))
 
 
@@ -144,6 +142,10 @@ def findCircularWells(frame, videoPath, hyperparameters):
 
   circles2 = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, minWellDistanceForWellDetection)
   if hyperparameters["debugFindWells"] and (hyperparameters["exitAfterBackgroundExtraction"] == 0):
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtWidgets import QLabel, QVBoxLayout
+
+    import zebrazoom.code.util as util
     label = QLabel()
     label.setMinimumSize(1, 1)
     layout = QVBoxLayout()
@@ -192,6 +194,11 @@ def saveWellsRepartitionImage(wellPositions, frame, hyperparameters):
 
 
 def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparameters):
+  from PyQt5.QtCore import Qt, QTimer
+  from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout
+
+  import zebrazoom.code.util as util
+
   cap = zzVideoReading.VideoCapture(videoPath)
   if (cap.isOpened()== False):
     print("Error opening video stream or file")
@@ -268,45 +275,47 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
 
 
 def _multipleROIsDefinedDuringExecutionQt(videoPath, hyperparameters):
-    l = [None] * hyperparameters["nbWells"]
-    frames = l[:]
-    cap = zzVideoReading.VideoCapture(videoPath)
-    if (cap.isOpened()== False):
-      print("Error opening video stream or file")
-    ret, frame = cap.read()
-    if hyperparameters["imagePreProcessMethod"]:
-      frame = preprocessImage(frame, hyperparameters)
-    frameForRepartitionJPG = frame.copy()
-    i = 0
-    app = QApplication.instance()
-    if getattr(app, 'configFileHistory', None):
-      def back():
-        nonlocal i
-        i -= 1
+  import zebrazoom.code.util as util
+
+  l = [None] * hyperparameters["nbWells"]
+  frames = l[:]
+  cap = zzVideoReading.VideoCapture(videoPath)
+  if (cap.isOpened()== False):
+    print("Error opening video stream or file")
+  ret, frame = cap.read()
+  if hyperparameters["imagePreProcessMethod"]:
+    frame = preprocessImage(frame, hyperparameters)
+  frameForRepartitionJPG = frame.copy()
+  i = 0
+  app = QApplication.instance()
+  if getattr(app, 'configFileHistory', None):
+    def back():
+      nonlocal i
+      i -= 1
+  else:
+    back = None
+  while i < hyperparameters["nbWells"]:
+    oldi = i
+    if frames[i] is not None:
+      frame = frames[i].copy()
     else:
-      back = None
-    while i < hyperparameters["nbWells"]:
-      oldi = i
-      if frames[i] is not None:
-        frame = frames[i].copy()
-      else:
-        frames[i] = frame.copy()
-      topLeft, bottomRight = util.getRectangle(frame, "Select one of the regions of interest", backBtnCb=back, dialog=not hasattr(app, 'window'))
-      if oldi != i:
-        if i >= 0:
-          frames[oldi] = None
-          continue
-        QTimer.singleShot(0, app.configFileHistory[-2])
-        return None
-      frame = cv2.rectangle(frame, (topLeft[0], topLeft[1]), (bottomRight[0], bottomRight[1]), (255, 0, 0), 1)
-      frame_width  = bottomRight[0] - topLeft[0]
-      frame_height = bottomRight[1] - topLeft[1]
-      well = {'topLeftX' : topLeft[0], 'topLeftY' : topLeft[1], 'lengthX' : frame_width, 'lengthY': frame_height}
-      l[i] = well
-      i += 1
-    saveWellsRepartitionImage(l, frameForRepartitionJPG, hyperparameters)
-    cap.release()
-    return l
+      frames[i] = frame.copy()
+    topLeft, bottomRight = util.getRectangle(frame, "Select one of the regions of interest", backBtnCb=back, dialog=not hasattr(app, 'window'))
+    if oldi != i:
+      if i >= 0:
+        frames[oldi] = None
+        continue
+      QTimer.singleShot(0, app.configFileHistory[-2])
+      return None
+    frame = cv2.rectangle(frame, (topLeft[0], topLeft[1]), (bottomRight[0], bottomRight[1]), (255, 0, 0), 1)
+    frame_width  = bottomRight[0] - topLeft[0]
+    frame_height = bottomRight[1] - topLeft[1]
+    well = {'topLeftX' : topLeft[0], 'topLeftY' : topLeft[1], 'lengthX' : frame_width, 'lengthY': frame_height}
+    l[i] = well
+    i += 1
+  saveWellsRepartitionImage(l, frameForRepartitionJPG, hyperparameters)
+  cap.release()
+  return l
 
 
 def findWells(videoPath, hyperparameters):
@@ -438,6 +447,11 @@ def findWells(videoPath, hyperparameters):
   saveWellsRepartitionImage(wellPositions, frame, hyperparameters)
   
   if hyperparameters["debugFindWells"]:
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtWidgets import QLabel, QVBoxLayout
+
+    import zebrazoom.code.util as util
+
     label = QLabel()
     label.setMinimumSize(1, 1)
     layout = QVBoxLayout()
@@ -448,6 +462,8 @@ def findWells(videoPath, hyperparameters):
   print("Wells found")
   
   if hyperparameters["popUpAlgoFollow"]:
+    import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
+
     popUpAlgoFollow.prepend("Wells found")
 
   return wellPositions

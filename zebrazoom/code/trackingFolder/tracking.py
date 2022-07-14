@@ -2,7 +2,6 @@ import h5py
 import numpy as np
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
-from zebrazoom.code.popUpAlgoFollow import prepend
 import math
 import os
 import queue
@@ -28,8 +27,6 @@ from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.centerOfMassTailT
 
 from zebrazoom.code.trackingFolder.trackingFunctions import addBlackLineToImgSetParameters
 
-from PyQt5.QtWidgets import QApplication
-import zebrazoom.code.util as util
 
 def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, videoName, dlModel=0):
   
@@ -108,6 +105,10 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     if hyperparameters["eyeTracking"] and hyperparameters["headEmbeded"] == 1:
       forEye = getAccentuateFrameForManualPointSelect(frame, hyperparameters)
       if True:
+        from PyQt5.QtWidgets import QApplication
+
+        import zebrazoom.code.util as util
+
         leftEyeCoordinate = list(util.getPoint(np.uint8(forEye * 255), "Click on the center of the left eye", zoomable=True, dialog=not hasattr(QApplication.instance(), 'window')))
         rightEyeCoordinate = list(util.getPoint(np.uint8(forEye * 255), "Click on the center of the right eye", zoomable=True, dialog=not hasattr(QApplication.instance(), 'window')))
       else:
@@ -164,6 +165,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     if (hyperparameters["freqAlgoPosFollow"] != 0) and (i % hyperparameters["freqAlgoPosFollow"] == 0):
       print("Tracking: wellNumber:",wellNumber," ; frame:",i)
       if hyperparameters["popUpAlgoFollow"]:
+        from zebrazoom.code.popUpAlgoFollow import prepend
         prepend("Tracking: wellNumber:" + str(wellNumber) + " ; frame:" + str(i))
     if hyperparameters["debugTracking"]:
       print("frame:",i)
@@ -280,6 +282,7 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
   
   print("Tracking done for well", wellNumber)
   if hyperparameters["popUpAlgoFollow"]:
+    from zebrazoom.code.popUpAlgoFollow import prepend
     prepend("Tracking done for well "+ str(wellNumber))
   
   if hyperparameters["detectMovementWithRawVideoInsideTracking"]:

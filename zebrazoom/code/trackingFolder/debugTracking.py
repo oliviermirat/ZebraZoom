@@ -2,11 +2,10 @@ import cv2
 import math
 import numpy as np
 
-import zebrazoom.code.util as util
-
-
 def debugTracking(nbTailPoints, i, firstFrame, output, outputHeading, frame2, hyperparameters):
   if hyperparameters["debugTracking"]:
+    import zebrazoom.code.util as util
+
     if type(frame2[0][0]) == int or type(frame2[0][0]) == np.uint8:
       frame2 = cv2.cvtColor(frame2,cv2.COLOR_GRAY2RGB)
     

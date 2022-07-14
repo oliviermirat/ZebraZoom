@@ -5,10 +5,9 @@ import numpy as np
 import math
 import cv2
 
-import zebrazoom.code.util as util
-
 
 def drawWhitePointsOnInitialImages(initialCurFrame, back, hyperparameters):
+  import zebrazoom.code.util as util
 
   img = util.drawPoints(initialCurFrame.copy(), "Draw white points and click on any key when you're done")
   putToWhite = ( img.astype('int32') >= (back.astype('int32') - hyperparameters["minPixelDiffForBackExtract"]) )
@@ -60,6 +59,8 @@ def saveImagesAndData(hyperparameters, bodyContour, initialCurFrame, wellNumber,
     if hyperparameters["bodyMask_saveDataForAllFrames"]:
       answerYes = True        
     else:
+      import zebrazoom.code.util as util
+
       answerYes = False
 
       def saveClicked():

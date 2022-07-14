@@ -5,7 +5,6 @@ import math
 import json
 import sys
 from scipy import interpolate
-import zebrazoom.code.util as util
 from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
 from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from scipy.interpolate import UnivariateSpline
@@ -164,6 +163,8 @@ def findTheTwoSides(headPosition, bodyContour, dst, hyperparameters):
     res[1] = indMin2
     
   if False:
+    import zebrazoom.code.util as util
+
     cv2.circle(dst, (pt1[0],pt1[1]), 1, (0, 0, 255), -1)
     cv2.circle(dst, (pt2[0],pt2[1]), 1, (0, 0, 255), -1)
     util.showFrame(dst, title='Frame')

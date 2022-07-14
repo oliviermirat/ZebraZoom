@@ -5,7 +5,6 @@ import math
 import json
 import os
 import sys
-import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 import pandas as pd
 from scipy.interpolate import UnivariateSpline
 
@@ -351,6 +350,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
   
   print("Parameters extracted for well",wellNumber)
   if hyperparameters["popUpAlgoFollow"]:
+    import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
     popUpAlgoFollow.prepend("Parameters extracted for well " + str(wellNumber))
   
   return data

@@ -4,8 +4,6 @@ import json
 import cv2
 import os
 
-import zebrazoom.code.util as util
-
 def calculateAngle(xStart, yStart, xEnd, yEnd):
   vx = xEnd - xStart
   vy = yEnd - yStart
@@ -42,7 +40,8 @@ def assignValueIfBetweenRange(value, minn, maxx):
   return value
 
 def addBlackLineToImgSetParameters(hyperparameters, frame, videoName):
-  
+  import zebrazoom.code.util as util
+
   hyperparametersToSave = {"addBlackLineToImg_Width": 0}
   
   frame2 = frame.copy()

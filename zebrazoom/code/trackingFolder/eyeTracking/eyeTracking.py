@@ -1,7 +1,6 @@
 import numpy as np
 import cv2
 import math
-import zebrazoom.code.util as util
 from zebrazoom.code.adjustHyperparameters import adjustHeadEmbeddedEyeTrackingParamsEllipse, adjustHeadEmbeddedEyeTrackingParamsSegment
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.calculateHeading import computeHeading
 from zebrazoom.code.trackingFolder.trackingFunctions import distBetweenThetas
@@ -82,6 +81,8 @@ def eyeTrackingHeadEmbeddedSegment(animalId, i, firstFrame, frame, hyperparamete
     cv2.circle(colorFrame, (rightEyeCoordinate[0], rightEyeCoordinate[1]), 2, (0,255,255), 1)
     cv2.line(colorFrame, (int(rightEyeCoordinate[0]-headingLineHalfDiameter*math.cos(rightEyeAngle)), int(rightEyeCoordinate[1]-headingLineHalfDiameter*math.sin(rightEyeAngle))), (int(rightEyeCoordinate[0]+headingLineHalfDiameter*math.cos(rightEyeAngle)), int(rightEyeCoordinate[1]+headingLineHalfDiameter*math.sin(rightEyeAngle))), (255,0,255), headingLineWidthRight)
     if hyperparameters["debugEyeTracking"]:
+      import zebrazoom.code.util as util
+
       util.showFrame(colorFrame, title='Eye Tracking debugging')
     if hyperparameters["adjustHeadEmbeddedEyeTracking"]:
       return adjustHeadEmbeddedEyeTrackingParamsSegment(i, colorFrame, hyperparameters, widgets)
@@ -166,6 +167,8 @@ def eyeTrackingHeadEmbeddedEllipse(animalId, i, firstFrame, frame, hyperparamete
         threshEye1[:, :] = 0
         cv2.fillPoly(threshEye1, pts =[contour], color=(255))
         if hyperparameters["debugEyeTrackingAdvanced"]:
+          import zebrazoom.code.util as util
+
           util.showFrame(threshEye1, title='Frame')
 
         minWhitePixel = 10000000000000000000000
@@ -217,6 +220,8 @@ def eyeTrackingHeadEmbeddedEllipse(animalId, i, firstFrame, frame, hyperparamete
     if hyperparameters["adjustHeadEmbeddedEyeTracking"]:
       return adjustHeadEmbeddedEyeTrackingParamsEllipse(i, colorFrame, hyperparameters, widgets)
     else:
+      import zebrazoom.code.util as util
+
       util.showFrame(colorFrame, title='Eye Tracking debugging')
   
   # Storing the (X, Y) coordinates and angles
@@ -285,6 +290,8 @@ def eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, tracki
           maxArea2    = area
           maxContour2 = contour
   if debugEyeTrackingAdvanced:
+    import zebrazoom.code.util as util
+
     util.showFrame(threshEye, title='Frame')
   # Finding, in the image without the white circle, the contours corresponding to the contours previously found in the image with the white circle
   # This to make sure that we get the blobs that "really" correspond to the eyes in the unlikely event where the white circle would have overlapped with the eyes
@@ -364,6 +371,8 @@ def eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, tracki
         threshEye1[:, :] = 0
         cv2.fillPoly(threshEye1, pts =[contour], color=(255))
         if debugEyeTrackingAdvanced:
+          import zebrazoom.code.util as util
+
           util.showFrame(threshEye1, title='Frame')
         if False:
           angle1 = computeHeading(threshEye1, eyeX[idx], eyeY[idx], eyeHeadingSearchAreaHalfDiameter, hyperparameters)
@@ -408,6 +417,8 @@ def eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, tracki
       eyeAngle[idx] = 0
   # Debugging Plot
   if debugEyeTracking:
+    import zebrazoom.code.util as util
+
     colorFrame = cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
     cv2.line(colorFrame, (int(x),int(y)), (int(x+2*headingLineValidationPlotLength*math.cos(trackingHeadingAllAnimals[animalId, i-firstFrame])), int(y+2*headingLineValidationPlotLength*math.sin(trackingHeadingAllAnimals[animalId, i-firstFrame]))), (255,0,0), 1)
     cv2.circle(colorFrame, (midEyesPointX, midEyesPointY), 2, (255,0,255), 1)

@@ -10,10 +10,6 @@ import os.path
 import csv
 from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 
-from PyQt5.QtWidgets import QApplication
-
-import zebrazoom.code.util as util
-
 
 def getAccentuateFrameForManualPointSelect(image, hyperparameters):
   if hyperparameters["accentuateFrameForManualTailExtremityFind"]:
@@ -34,6 +30,10 @@ def getAccentuateFrameForManualPointSelect(image, hyperparameters):
 
 
 def findTailTipByUserInput(frame, frameNumber, videoPath, hyperparameters, wellNumber, wellPositions):
+  from PyQt5.QtWidgets import QApplication
+
+  import zebrazoom.code.util as util
+
   plus = 0
 
   def tailNotStraight(frameWidget):
@@ -44,6 +44,10 @@ def findTailTipByUserInput(frame, frameNumber, videoPath, hyperparameters, wellN
                             dialog=not hasattr(QApplication.instance(), 'window')))
 
 def findHeadPositionByUserInput(frame, frameNumber, videoPath, hyperparameters, wellNumber, wellPositions):
+  from PyQt5.QtWidgets import QApplication
+
+  import zebrazoom.code.util as util
+
   plus = 0
 
   def tailNotStraight(frameWidget):

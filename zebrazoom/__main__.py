@@ -11,7 +11,7 @@ if __name__ == '__main__':
   globalVariables = getGlobalVariables()
 
   if len(sys.argv) == 1:
-    
+
     from zebrazoom.GUIAllPy import ZebraZoomApp
     print("The data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
     app = ZebraZoomApp(sys.argv)
@@ -22,9 +22,7 @@ if __name__ == '__main__':
     if sys.argv[1] == "selectZZoutput" or sys.argv[1] == "--exit":
       from zebrazoom.GUIAllPy import ZebraZoomApp
       app = ZebraZoomApp(sys.argv)
-    else:
-      from zebrazoom.GUIAllPy import PlainApplication
-      app = PlainApplication(sys.argv)
+
     if sys.argv[1] == "selectZZoutput":
 
       print("The data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
@@ -89,7 +87,7 @@ if __name__ == '__main__':
       time.sleep(2)
       print("Launching the tracking, the data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
       __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
-      mainZZ(path2, videoName, 'avi', configFile, argv2)
+      mainZZ(path2, videoName, 'avi', configFile, argv2, useGUI=False)
 
 
     elif sys.argv[1] == "DL_createMask":
@@ -231,4 +229,4 @@ if __name__ == '__main__':
       argv        = sys.argv
       from zebrazoom.mainZZ import mainZZ
       __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
-      mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+      mainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=False)

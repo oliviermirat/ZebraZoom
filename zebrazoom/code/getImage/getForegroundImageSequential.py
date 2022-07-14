@@ -2,8 +2,6 @@ from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
 
-import zebrazoom.code.util as util
-
 
 def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNumber, wellPositions, hyperparameters, alreadyExtractedImage=0, trackingHeadTailAllAnimals=0):
   
@@ -141,6 +139,8 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
     # curFrame[putToBlack3b] = 0
   
   if (debug):
+    import zebrazoom.code.util as util
+
     # cv2.imshow('Frame', curFrame)
     util.showFrame(frame, title='Frame')
   

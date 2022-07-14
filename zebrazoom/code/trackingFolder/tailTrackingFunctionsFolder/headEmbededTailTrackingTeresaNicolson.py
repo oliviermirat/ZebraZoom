@@ -11,8 +11,6 @@ import os.path
 import csv
 from scipy.interpolate import interp1d
 
-import zebrazoom.code.util as util
-
 
 def smoothTail(points, nbTailPoints):
 
@@ -153,6 +151,8 @@ def findNextPoints(depth,x,y,frame,points,angle,maxDepth,steps,nbList,initialIma
   if ((pixSur < pixSurMax) or (depth < 2*0.85*maxDepth)):
     points = appendPoint(xTot, yTot, points)
     if debug:
+      import zebrazoom.code.util as util
+
       cv2.circle(frame, (xTot, yTot), 3, (255,0,0),   -1)
       util.showFrame(frame, title='HeadEmbeddedTailTracking')
     

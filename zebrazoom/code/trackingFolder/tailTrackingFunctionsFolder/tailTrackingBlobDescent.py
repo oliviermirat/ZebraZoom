@@ -11,7 +11,6 @@ from scipy.interpolate import UnivariateSpline
 from numpy import linspace
 # from kalmanFilter import kalman_xy
 
-import zebrazoom.code.util as util
 from zebrazoom.code.trackingFolder.trackingFunctions import calculateAngle
 from zebrazoom.code.trackingFolder.trackingFunctions import distBetweenThetas
 from zebrazoom.code.trackingFolder.trackingFunctions import assignValueIfBetweenRange
@@ -102,6 +101,8 @@ def findNextPoints(x,y,thresh1,frame,depth,points,lastTheta,debugAdv,nbList,thet
   maxThetaCorrected = -1
 
   if debugAdv:
+    import zebrazoom.code.util as util
+
     util.showFrame(frame, title='Frame')
 
   if (depth < 25): #15):

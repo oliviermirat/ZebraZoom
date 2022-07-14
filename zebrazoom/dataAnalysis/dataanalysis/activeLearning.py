@@ -12,8 +12,6 @@ import json
 import os
 import sys
 
-from PyQt5.QtWidgets import QInputDialog
-
 
 def prepareForActiveLearning(proportions, sortedRepresentativeBouts, outputFolderResult, nbCluster, pca_result, dfParam, sortedRepresentativeBoutsIndex, tailAngles):
   
@@ -90,7 +88,8 @@ def prepareForActiveLearning(proportions, sortedRepresentativeBouts, outputFolde
 
 
 def activeLearning(modelUsed, nbConditions, nbCluster, outputFolderResult, N_QUERIES, manualClassicationPath):
-  
+  from PyQt5.QtWidgets import QInputDialog
+
   from modAL.models import ActiveLearner
   
   nbFramesTakenIntoAccount = 24

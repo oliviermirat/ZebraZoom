@@ -4,18 +4,15 @@ import os
 import pickle
 import webbrowser
 
-from PyQt5.QtCore import Qt, QEventLoop, QPoint, QTimer
-from PyQt5.QtGui import QCursor
-from PyQt5.QtWidgets import QApplication, QCheckBox, QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
-
-import zebrazoom.code.paths as paths
-import zebrazoom.code.util as util
-
 
 MAX_INT32 = 2 ** 31 - 1
 
 
 def _createWidget(layout, status, values, info, name, widgets, hasCheckbox):
+  from PyQt5.QtCore import Qt
+
+  import zebrazoom.code.util as util
+
   minn, maxx, hint = info
   double = name == "authorizedRelativeLengthTailEnd"
   slider = util.SliderWithSpinbox(values[name], minn, maxx, name=name, double=double)
@@ -56,6 +53,13 @@ def _createWidget(layout, status, values, info, name, widgets, hasCheckbox):
 
 
 def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, title, organizationTab, widgets, documentationLink=None, addContrastCheckbox=False):
+  from PyQt5.QtCore import Qt, QEventLoop, QTimer
+  from PyQt5.QtGui import QCursor
+  from PyQt5.QtWidgets import QApplication, QCheckBox, QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+
+  import zebrazoom.code.paths as paths
+  import zebrazoom.code.util as util
+
   app = QApplication.instance()
   stackedLayout = app.window.centralWidget().layout()
   timers = []
@@ -186,6 +190,7 @@ def adjustDetectMouvRawVideosParams(img, res, l, totDiff, hyperparameters, widge
   [0, 50,  "Increase if too much movement is being detected."],]
   title = "Red dot must appear only when movement is occuring"
   if widgets is not None and "contrastCheckbox" in widgets and widgets["contrastCheckbox"].isChecked():
+    import zebrazoom.code.util as util
     img = util.improveContrast(img, hyperparameters["outputValidationVideoContrastImprovementQuartile"])
   frameToShow = np.concatenate((img, res),axis=1)
   frameToShow = cv2.cvtColor(frameToShow,cv2.COLOR_GRAY2RGB)
@@ -221,6 +226,7 @@ def adjustHeadEmbededTrackingParams(nbTailPoints, i, firstFrame, output, outputH
   # frame2 = np.concatenate((frame2, frame),axis=1)
 
   if widgets is not None and widgets["contrastCheckbox"].isChecked():
+    import zebrazoom.code.util as util
     frame2 = util.improveContrast(frame2, hyperparameters["outputValidationVideoContrastImprovementQuartile"])
 
   frame2 = cv2.cvtColor(frame2,cv2.COLOR_GRAY2RGB)

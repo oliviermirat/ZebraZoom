@@ -2,7 +2,6 @@ from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
-import zebrazoom.code.util as util
 
 def headEmbededFrameBackExtract(videoPath, background, hyperparameters, frameNumber, wellNumber, wellPositions):
   
@@ -41,6 +40,8 @@ def headEmbededFrameBackExtract(videoPath, background, hyperparameters, frameNum
   thres1 = cv2.cvtColor(thres1, cv2.COLOR_BGR2GRAY)
 
   if (debug):
+    import zebrazoom.code.util as util
+
     util.showFrame(frame, title='thres1')
   
   putToWhite = ( frame.astype('int32') >= (background.astype('int32') + minPixelDiffForBackExtract) )
@@ -48,6 +49,8 @@ def headEmbededFrameBackExtract(videoPath, background, hyperparameters, frameNum
   frame[putToWhite] = 255
   
   if (debug):
+    import zebrazoom.code.util as util
+
     util.showFrame(frame, title='thres1')
     # cv2.imshow('thres1', thres1)
     # cv2.waitKey(0)

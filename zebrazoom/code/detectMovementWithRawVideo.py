@@ -2,7 +2,6 @@ import numpy as np
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import math
-import zebrazoom.code.util as util
 from zebrazoom.code.getImage.getImageSequential import getImageSequential
 from zebrazoom.code.getImage.getImage import getImage
 from zebrazoom.code.adjustHyperparameters import adjustDetectMouvRawVideosParams
@@ -175,6 +174,7 @@ def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumbe
       if hyperparameters["debugDetectMovWithRawVideo"]:
         print("frame:",l," ; number of different pixel in subsequent frames:",totDiff," ; bout detection threshold:",hyperparameters["minNbPixelForDetectMovementWithRawVideo"])
         if hyperparameters["debugDetectMovWithRawVideoShowVid"]:
+          import zebrazoom.code.util as util
           util.showFrame(res, title="debugDetectMovWithRawVideo")
       
       if totDiff > hyperparameters["minNbPixelForDetectMovementWithRawVideo"]:

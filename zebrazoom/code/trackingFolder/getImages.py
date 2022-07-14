@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 
-import zebrazoom.code.util as util
 from zebrazoom.code.getImage.getForegroundImageSequential import getForegroundImageSequential
 from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
 from zebrazoom.code.getImage.getImageSequential import getImageSequential
@@ -73,6 +72,8 @@ def getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPo
     gray[:, int(len(gray[0])/2):len(gray[0])-1] = 255
   
   if hyperparameters["debugCoverHorizontalPortionBelow"] and i==firstFrame:
+    import zebrazoom.code.util as util
+
     util.showFrame(gray, title='Frame')
   
   # paramGaussianBlur = int((hyperparameters["paramGaussianBlur"] / 2)) * 2 + 1

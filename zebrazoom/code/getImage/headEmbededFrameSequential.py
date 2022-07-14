@@ -2,9 +2,6 @@ from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
 
-import zebrazoom.code.util as util
-
-
 def headEmbededFrameSequential(cap, videoPath, frameNumber, wellNumber, wellPositions, hyperparameters):
   
   debug = 0
@@ -37,6 +34,8 @@ def headEmbededFrameSequential(cap, videoPath, frameNumber, wellNumber, wellPosi
   frame = 255 - frame
   
   if (debug):
+    import zebrazoom.code.util as util
+
     util.showFrame(frame, title='thres1')
     util.showFrame(thres1, title='thres1')
     

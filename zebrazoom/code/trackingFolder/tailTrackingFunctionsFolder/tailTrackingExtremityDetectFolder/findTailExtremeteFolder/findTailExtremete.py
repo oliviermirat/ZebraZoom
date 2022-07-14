@@ -10,7 +10,6 @@ from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from scipy.interpolate import UnivariateSpline
 from numpy import linspace
 
-import zebrazoom.code.util as util
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.functions import initialiseDistance2
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.functions import PointDot
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.functions import calculateJuge
@@ -149,6 +148,8 @@ def findTailExtremete(rotatedContour, bodyContour, aaa, bord1b, bord2b, debug, d
       print("bas wins")
     
   if (debug):
+    import zebrazoom.code.util as util
+
     # Droite
     pt1 = bodyContour[int(ind_droite)][0]
     cv2.circle(dst, (pt1[0],pt1[1]), 1, (255, 0, 0), -1)

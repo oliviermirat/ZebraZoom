@@ -2,7 +2,6 @@ from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
-import zebrazoom.code.util as util
 
 def headEmbededFrame(videoPath, frameNumber, wellNumber, wellPositions, hyperparameters):
   
@@ -39,6 +38,7 @@ def headEmbededFrame(videoPath, frameNumber, wellNumber, wellPositions, hyperpar
   frame = 255 - frame
   
   if (debug):
+    import zebrazoom.code.util as util
     util.showFrame(frame, title='thres1')
     util.showFrame(thres1, title='thres1')
     

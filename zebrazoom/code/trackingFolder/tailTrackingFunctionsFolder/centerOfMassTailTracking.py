@@ -10,8 +10,6 @@ import os.path
 import csv
 import pdb
 
-import zebrazoom.code.util as util
-
 
 def smoothTail(points, nbTailPoints):
   
@@ -88,6 +86,8 @@ def findNextPoints(depth,x,y,frame,points,angle,maxDepth,hyperparameters,debug):
   framecopy[:, xmax:lenX+1]         = 255
   
   if debug:
+    import zebrazoom.code.util as util
+
     util.showFrame(framecopy, title='Frame2')
   
   (minVal, maxVal, headPosition, maxLoc) = cv2.minMaxLoc(framecopy)
@@ -104,6 +104,8 @@ def findNextPoints(depth,x,y,frame,points,angle,maxDepth,hyperparameters,debug):
   distSubsquentPoints = math.sqrt((xNew - x)**2 + (yNew - y)**2)
   
   if debug:
+    import zebrazoom.code.util as util
+
     cv2.circle(frameDisplay, (xNew, yNew), 1, (0,0,255),   -1)
     util.showFrame(frameDisplay, title='Frame2')
     

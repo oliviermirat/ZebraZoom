@@ -1,12 +1,7 @@
 import numpy as np
 import cv2
-import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 from zebrazoom.code.preprocessImage import preprocessImage, preprocessBackgroundImage
-import zebrazoom.code.util as util
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
-
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QLabel, QVBoxLayout
 
 
 def getBackground(videoPath, hyperparameters):
@@ -127,6 +122,11 @@ def getBackground(videoPath, hyperparameters):
     back[:, :] = np.median(back)
   
   if debugExtractBack:
+    from PyQt5.QtCore import Qt
+    from PyQt5.QtWidgets import QLabel, QVBoxLayout
+
+    import zebrazoom.code.util as util
+
     label = QLabel()
     label.setMinimumSize(1, 1)
     layout = QVBoxLayout()
@@ -137,6 +137,7 @@ def getBackground(videoPath, hyperparameters):
   
   print("Background Extracted")
   if hyperparameters["popUpAlgoFollow"]:
+    import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
     popUpAlgoFollow.prepend("Background Extracted")
   
   return back

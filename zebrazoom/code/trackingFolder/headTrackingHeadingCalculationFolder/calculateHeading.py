@@ -2,7 +2,6 @@ import cv2
 import math
 import numpy as np
 
-import zebrazoom.code.util as util
 from zebrazoom.code.trackingFolder.trackingFunctions import calculateAngle
 from zebrazoom.code.trackingFolder.trackingFunctions import distBetweenThetas
 
@@ -47,6 +46,8 @@ def computeHeading(thresh1, x, y, headSize, hyperparameters):
   theta = (theta - math.pi/2) % (2 * math.pi)
   
   if hyperparameters["debugHeadingCalculation"]:
+    import zebrazoom.code.util as util
+
     img2 = img.copy()
     img2 = cv2.cvtColor(img2, cv2.COLOR_GRAY2BGR)
     cv2.line(img2, (int(len(img2[0])/2), int(len(img2)/2)), (int(len(img[0])/2 + 20 * math.cos(theta)), int(len(img)/2 + 20 * math.sin(theta))), (255,0,0), 1)
@@ -66,6 +67,8 @@ def calculateHeading(x, y, i, thresh1, thresh2, takeTheHeadClosestToTheCenter, h
   headEmbeded = hyperparameters["headEmbeded"]
   
   if hyperparameters["debugHeadingCalculation"]:
+    import zebrazoom.code.util as util
+
     util.showFrame(thresh1, title='thresh1')
     util.showFrame(thresh2, title='thresh2')
   

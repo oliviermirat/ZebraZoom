@@ -2,7 +2,6 @@ from zebrazoom.code.preprocessImage import preprocessImage
 import numpy as np
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
-import zebrazoom.code.util as util
 
 def getForegroundImage(videoPath, background, frameNumber, wellNumber, wellPositions, hyperparameters):
   
@@ -106,6 +105,8 @@ def getForegroundImage(videoPath, background, frameNumber, wellNumber, wellPosit
     # curFrame[putToBlack3b] = 0
   
   if (debug):
+    import zebrazoom.code.util as util
+
     # cv2.imshow('Frame', curFrame)
     util.showFrame(frame, title='Frame')
     

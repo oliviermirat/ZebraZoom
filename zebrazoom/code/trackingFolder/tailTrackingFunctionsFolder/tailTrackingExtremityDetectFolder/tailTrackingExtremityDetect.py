@@ -10,7 +10,6 @@ from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from scipy.interpolate import UnivariateSpline
 from numpy import linspace
 
-import zebrazoom.code.util as util
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.getMidline import getMidline
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTailExtremeteFolder.findTailExtremete import findTailExtremete
 from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.tailTrackingExtremityDetectFolder.findTheTwoSides import findTheTwoSides
@@ -35,6 +34,8 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
   lastFrame = hyperparameters["lastFrame"]
   
   if hyperparameters["debugTrackingThreshImg"]:
+    import zebrazoom.code.util as util
+
     if hyperparameters["debugTrackingPtExtremeLargeVerticals"]:
       util.showFrame(thresh1[int(headPosition[1])-200:len(thresh1), :], title='debugTrackingThreshImg')
     else:
@@ -53,6 +54,8 @@ def tailTrackingExtremityDetect(headPosition,nbTailPoints,i,thresh1,frame,debugA
     rotatedContour = Rotate(rotatedContour,int(headPosition[0]),int(headPosition[1]),heading,dst)
     [MostCurvyIndex, distance2] = findTailExtremete(rotatedContour, bodyContour, headPosition[0], int(res[0]), int(res[1]), debugAdv, dst, hyperparameters["tailExtremityMaxJugeDecreaseCoeff"], hyperparameters)
     if debugAdv:
+      import zebrazoom.code.util as util
+
       if True:
         # Head Center
         cv2.circle(dst, (int(headPosition[0]),int(headPosition[1])), 3, (255, 255, 0), -1)

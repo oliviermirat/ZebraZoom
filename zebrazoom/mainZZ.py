@@ -7,7 +7,6 @@ from zebrazoom.code.extractParameters import extractParameters
 from zebrazoom.code.createSuperStruct import createSuperStruct
 from zebrazoom.code.createValidationVideo import createValidationVideo
 from zebrazoom.code.getHyperparameters import getHyperparameters
-import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 from zebrazoom.code.dataPostProcessing.dataPostProcessing import dataPostProcessing
 from zebrazoom.code.fasterMultiprocessing import fasterMultiprocessing
 
@@ -22,18 +21,19 @@ import json
 import subprocess
 import glob
 
-from PyQt5.QtWidgets import QApplication
-
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
 output = 0
 
 # Does the tracking and then the extraction of parameters
-def getParametersForWell(videoPath,background,wellNumber,wellPositions,output,previouslyAcquiredTrackingDataForDebug,hyperparameters, videoName, dlModel):
-  if QApplication.instance() is None:
-    from zebrazoom.GUIAllPy import PlainApplication
-    app = PlainApplication(sys.argv)
+def getParametersForWell(videoPath,background,wellNumber,wellPositions,output,previouslyAcquiredTrackingDataForDebug,hyperparameters, videoName, dlModel, useGUI):
+  if useGUI:
+    from PyQt5.QtWidgets import QApplication
+
+    if QApplication.instance() is None:
+      from zebrazoom.GUIAllPy import PlainApplication
+      app = PlainApplication(sys.argv)
   if hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "noDebug":
     # Normal execution process
     trackingData = tracking(videoPath,background,wellNumber,wellPositions,hyperparameters, videoName, dlModel)
@@ -55,7 +55,7 @@ def getParametersForWell(videoPath,background,wellNumber,wellPositions,output,pr
     output.put([wellNumber,parameters,[]])
 
 
-def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
+def mainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
   
   videoNameWithExt = videoName + '.' + videoExt
   previouslyAcquiredTrackingDataForDebug = []
@@ -104,6 +104,8 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
   
   # Launching GUI algoFollower if necessary
   if hyperparameters["popUpAlgoFollow"]:
+    import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
+
     popUpAlgoFollow.createTraceFile("starting ZebraZoom analysis on " + videoName)
     p = Process(target=popUpAlgoFollow.initialise)
     p.start()
@@ -175,20 +177,25 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
         pickle.dump(wellPositions, outfile2)
         outfile2.close()
     outfile.close()
-    app = QApplication.instance()
-    if hasattr(app, "wellPositions"):
-      if wellPositions is None:
-        return
-      app.wellPositions[:] = [(position['topLeftX'], position['topLeftY'], position['lengthX'], position['lengthY'])
-                              for idx, position in enumerate(wellPositions)]
-      if hyperparameters["wellsAreRectangles"] or len(hyperparameters["oneWellManuallyChosenTopLeft"]) or int(hyperparameters["multipleROIsDefinedDuringExecution"]) or hyperparameters["noWellDetection"] or hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"]:
-        app.wellShape = 'rectangle'
-      else:
-        app.wellShape = 'circle'
+    if useGUI:
+      from PyQt5.QtWidgets import QApplication
+
+      app = QApplication.instance()
+      if hasattr(app, "wellPositions"):
+        if wellPositions is None:
+          return
+        app.wellPositions[:] = [(position['topLeftX'], position['topLeftY'], position['lengthX'], position['lengthY'])
+                                for idx, position in enumerate(wellPositions)]
+        if hyperparameters["wellsAreRectangles"] or len(hyperparameters["oneWellManuallyChosenTopLeft"]) or int(hyperparameters["multipleROIsDefinedDuringExecution"]) or hyperparameters["noWellDetection"] or hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"]:
+          app.wellShape = 'rectangle'
+        else:
+          app.wellShape = 'circle'
 
   if int(hyperparameters["exitAfterWellsDetection"]):
     print("exitAfterWellsDetection")
     if hyperparameters["popUpAlgoFollow"]:
+      import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
+
       popUpAlgoFollow.prepend("ZebraZoom Analysis finished for " + videoName)
     raise ValueError
     
@@ -207,9 +214,12 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
       pickle.dump(background, outfile)
       cv2.imwrite(os.path.join(outputFolderVideo, 'background.png'), background)
     outfile.close()
-    app = QApplication.instance()
-    if hasattr(app, "background"):
-      app.background = background
+    if useGUI:
+      from PyQt5.QtWidgets import QApplication
+
+      app = QApplication.instance()
+      if hasattr(app, "background"):
+        app.background = background
   if hyperparameters["exitAfterBackgroundExtraction"]:
     print("exitAfterBackgroundExtraction")
     raise ValueError
@@ -231,21 +241,21 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
         # for all wells, in parallel
         processes = []
         for wellNumber in range(0,hyperparameters["nbWells"]):
-          p = Process(target=getParametersForWell, args=(os.path.join(pathToVideo, videoNameWithExt), background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName, dlModel))
+          p = Process(target=getParametersForWell, args=(os.path.join(pathToVideo, videoNameWithExt), background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName, dlModel, useGUI))
           p.start()
           processes.append(p)
       else:
         # for just one well
         processes = [1]
-        getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, hyperparameters["onlyTrackThisOneWell"], wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName, dlModel)
+        getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, hyperparameters["onlyTrackThisOneWell"], wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName, dlModel, useGUI)
     else:
       if hyperparameters["onlyTrackThisOneWell"] == -1:
         processes = [1 for i in range(0, hyperparameters["nbWells"])]
         for wellNumber in range(0,hyperparameters["nbWells"]):
-          getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName, dlModel)
+          getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName, dlModel, useGUI)
       else:
         processes = [1]
-        getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, hyperparameters["onlyTrackThisOneWell"], wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName, dlModel)
+        getParametersForWell(os.path.join(pathToVideo, videoNameWithExt), background, hyperparameters["onlyTrackThisOneWell"], wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName, dlModel, useGUI)
   
   # Sorting wells after the end of the parallelized calls end
   if processes != -1:
@@ -327,6 +337,8 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv):
   
   
   if hyperparameters["popUpAlgoFollow"]:
+    import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
+
     popUpAlgoFollow.prepend("ZebraZoom Analysis finished for " + videoName)
     # popUpAlgoFollow.prepend("")
     # if hyperparameters["closePopUpWindowAtTheEnd"]:

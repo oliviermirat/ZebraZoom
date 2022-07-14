@@ -6,7 +6,6 @@ from zebrazoom.code.trackingFolder.eyeTracking.eyeTracking import eyeTracking
 from zebrazoom.code.trackingFolder.postProcessMultipleTrajectories import postProcessMultipleTrajectories
 from zebrazoom.code.trackingFolder.getImages import getImages
 from zebrazoom.code.trackingFolder.debugTracking import debugTracking
-from zebrazoom.code.popUpAlgoFollow import prepend
 from zebrazoom.code.adjustHyperparameters import adjustFreelySwimTrackingParams
 import multiprocessing as mp
 from multiprocessing import Process
@@ -67,6 +66,8 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
     if (hyperparameters["freqAlgoPosFollow"] != 0) and (i % hyperparameters["freqAlgoPosFollow"] == 0):
       print("Tracking: frame:",i)
       if hyperparameters["popUpAlgoFollow"]:
+        from zebrazoom.code.popUpAlgoFollow import prepend
+
         prepend("Tracking: frame:" + str(i))
     
     if hyperparameters["debugTracking"]:
