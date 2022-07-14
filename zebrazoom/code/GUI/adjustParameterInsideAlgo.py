@@ -1026,6 +1026,7 @@ def adjustBoutDetectionOnlyPage(useNext=True):
     minDistLabel.setVisible(checked)
     minDistLineEdit.setVisible(checked)
     adjustBoutsBtn.setVisible(not checked)
+    frameGapSlider.setVisible(checked)
   coordinatesOnlyBoutDetectCheckbox.toggled.connect(coordinatesOnlyBoutDetectCheckboxToggled)
   trackingMethod = app.configFile.get("trackingMethod", None)
   coordinatesOnlyBoutDetectCheckbox.setVisible(trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction" or trackingMethod == "fastCenterOfMassTracking_ClassicalBackgroundSubtraction")
@@ -1069,6 +1070,14 @@ def adjustBoutDetectionOnlyPage(useNext=True):
   adjustBoutsBtn.setToolTip("The aim here is to adjust parameters in order for the red dot on the top left of the image to appear when and only when movement is occurring.")
   adjustBoutsBtn.clicked.connect(lambda: app.detectBouts(app, video.getWell(), frameSlider.value(), False))
   layout.addWidget(adjustBoutsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+  frameGapSlider = util.SliderWithSpinbox(app.configFile.get("frameGapComparision", 1), 1, 15, name="frameGapComparision")
+  frameGapSlider.setVisible(False)
+
+  def frameGapComparisonChanged(value):
+    app.configFile["frameGapComparision"] = value
+  frameGapSlider.valueChanged.connect(frameGapComparisonChanged)
+  layout.addWidget(frameGapSlider, alignment=Qt.AlignmentFlag.AlignCenter)
 
   coordinatesOnlyBoutDetectCheckbox.setChecked(coordinatesOnlyBoutDetectCheckbox.isVisible() and app.configFile.get("coordinatesOnlyBoutDetection", False))
 
