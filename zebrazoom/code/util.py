@@ -523,7 +523,6 @@ class SliderWithSpinbox(QWidget):
     self.isSliderDown = slider.isSliderDown
     self.sliderWidth = slider.width
     self.setPosition = slider.setSliderPosition
-    self.sliderHeight = slider.height
 
 
 def _chooseFrameLayout(cap, spinboxValues, title, titleStyle=None):
