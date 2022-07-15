@@ -7,7 +7,7 @@ import numpy as np
 
 from PyQt5.QtCore import Qt, pyqtSignal, QPoint, QPointF, QRect, QRectF, QSizeF, QTimer
 from PyQt5.QtGui import QColor, QFont, QIntValidator, QPainter, QPolygon, QPolygonF, QTransform
-from PyQt5.QtWidgets import QApplication, QLabel, QLineEdit, QCheckBox, QMessageBox, QPushButton, QHBoxLayout, QSpinBox, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QGridLayout, QLabel, QLineEdit, QCheckBox, QMessageBox, QPushButton, QHBoxLayout, QSlider, QSpinBox, QVBoxLayout, QWidget
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.paths as paths
@@ -476,11 +476,45 @@ def _addEyeTracking(firstFrame, totalFrames):
   util.showBlockingPage(layout, title="Add eye tracking", buttons=buttons)
 
 
+class _AlignedLabel(QWidget):  # this will mimick the alignment of SliderWithSpinbox's labels
+  def __init__(self, text, extraWidget=None):
+    super().__init__()
+
+    layout = QGridLayout()
+    layout.setRowStretch(0, 1)
+    layout.setColumnStretch(0, 1)
+    layout.setRowStretch(3, 1)
+    layout.setColumnStretch(4, 1)
+    layout.setVerticalSpacing(0)
+
+    label = QLabel(text)
+    layout.addWidget(label, 1, 1)
+    slider = QSlider(Qt.Orientation.Horizontal)
+    policy = slider.sizePolicy()
+    policy.setRetainSizeWhenHidden(True)
+    slider.setSizePolicy(policy)
+    slider.setFixedWidth(0)
+    slider.setVisible(False)
+    layout.addWidget(slider, 2, 2)
+    spinbox = QSpinBox()
+    policy = slider.sizePolicy()
+    policy.setRetainSizeWhenHidden(True)
+    spinbox.setSizePolicy(policy)
+    spinbox.setFixedWidth(0)
+    spinbox.setVisible(False)
+    layout.addWidget(spinbox, 2, 3)
+    if extraWidget is not None:
+      layout.addWidget(extraWidget, 2, 1)
+
+    layout.setContentsMargins(20, 5, 20, 5)
+    self.setLayout(layout)
+
+
 def adjustParamInsideAlgoPage(useNext=True):
   app = QApplication.instance()
 
   layout = QVBoxLayout()
-  title = "Select %sfirst frame for advanced parameter adjustment" % ("well and " if app.wellPositions else "")
+  title = "Select %sframe range for advanced parameter adjustment" % ("well and " if app.wellPositions else "")
   layout.addWidget(util.apply_style(QLabel(title), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
 
   cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
@@ -523,6 +557,7 @@ def adjustParamInsideAlgoPage(useNext=True):
 
   sublayout = QHBoxLayout()
   sublayout.addStretch(1)
+  sublayout.addWidget(_AlignedLabel("Select frame range:"), alignment=Qt.AlignmentFlag.AlignRight)
   sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
   if maxFrame > 1000:
     adjustLayout = QVBoxLayout()
@@ -563,9 +598,10 @@ def adjustParamInsideAlgoPage(useNext=True):
     adjustLayout.addWidget(QLabel())
     adjustLayout.addWidget(zoomInSliderBtn, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
     adjustLayout.addStretch()
-    sublayout.addLayout(adjustLayout, stretch=1)
-  else:
-    sublayout.addStretch(1)
+    sublayout.addLayout(adjustLayout)
+  lastFrameLabel = QLabel(str(min(frameSlider.value() + 500, int(maxFrame))))
+  sublayout.addWidget(_AlignedLabel("Last frame:", lastFrameLabel), alignment=Qt.AlignmentFlag.AlignLeft)
+  sublayout.addStretch(1)
   layout.addLayout(sublayout)
 
   recalculateLayout = QHBoxLayout()
@@ -630,7 +666,7 @@ def adjustParamInsideAlgoFreelySwimPage(useNext=True):
   app = QApplication.instance()
 
   layout = QVBoxLayout()
-  title = "Select %sfirst frame for advanced parameter adjustment" % ("well and " if app.wellPositions else "")
+  title = "Select %sframe range for advanced parameter adjustment" % ("well and " if app.wellPositions else "")
   layout.addWidget(util.apply_style(QLabel(title), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
 
   cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
@@ -652,6 +688,7 @@ def adjustParamInsideAlgoFreelySwimPage(useNext=True):
 
   sublayout = QHBoxLayout()
   sublayout.addStretch(1)
+  sublayout.addWidget(_AlignedLabel("Select frame range:"), alignment=Qt.AlignmentFlag.AlignRight)
   sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
   if maxFrame > 1000:
     adjustLayout = QVBoxLayout()
@@ -692,9 +729,10 @@ def adjustParamInsideAlgoFreelySwimPage(useNext=True):
     adjustLayout.addWidget(QLabel())
     adjustLayout.addWidget(zoomInSliderBtn, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
     adjustLayout.addStretch()
-    sublayout.addLayout(adjustLayout, stretch=1)
-  else:
-    sublayout.addStretch(1)
+    sublayout.addLayout(adjustLayout)
+  lastFrameLabel = QLabel(str(min(frameSlider.value() + 500, int(maxFrame))))
+  sublayout.addWidget(_AlignedLabel("Last frame:", lastFrameLabel), alignment=Qt.AlignmentFlag.AlignLeft)
+  sublayout.addStretch(1)
   layout.addLayout(sublayout)
 
   recalculateLayout = QHBoxLayout()
@@ -749,7 +787,7 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
   app = QApplication.instance()
 
   layout = QVBoxLayout()
-  title = "Select %sfirst frame for fish tail tracking parameters adjustment" % ("well and " if app.wellPositions else "")
+  title = "Select %sframe range for fish tail tracking parameters adjustment" % ("well and " if app.wellPositions else "")
   layout.addWidget(util.apply_style(QLabel(title), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
 
   cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
@@ -771,6 +809,7 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
 
   sublayout = QHBoxLayout()
   sublayout.addStretch(1)
+  sublayout.addWidget(_AlignedLabel("Select frame range:"), alignment=Qt.AlignmentFlag.AlignRight)
   sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
   if maxFrame > 1000:
     adjustLayout = QVBoxLayout()
@@ -811,9 +850,10 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
     adjustLayout.addWidget(QLabel())
     adjustLayout.addWidget(zoomInSliderBtn, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
     adjustLayout.addStretch()
-    sublayout.addLayout(adjustLayout, stretch=1)
-  else:
-    sublayout.addStretch(1)
+    sublayout.addLayout(adjustLayout)
+  lastFrameLabel = QLabel(str(min(frameSlider.value() + 500, int(maxFrame))))
+  sublayout.addWidget(_AlignedLabel("Last frame:", lastFrameLabel), alignment=Qt.AlignmentFlag.AlignLeft)
+  sublayout.addStretch(1)
   layout.addLayout(sublayout)
 
   recalculateLayout = QHBoxLayout()
@@ -858,7 +898,7 @@ def adjustBoutDetectionOnlyPage(useNext=True):
   app = QApplication.instance()
 
   layout = QVBoxLayout()
-  title = "Select %sfirst frame for bout detection parameters adjustments" % ("well and " if app.wellPositions else "")
+  title = "Select %sframe range for bout detection parameters adjustments" % ("well and " if app.wellPositions else "")
   layout.addWidget(util.apply_style(QLabel(title), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
 
   cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
@@ -871,7 +911,7 @@ def adjustBoutDetectionOnlyPage(useNext=True):
     cap.set(1, frameSlider.value())
     ret, img = cap.read()
     return img
-  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video))
+  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video) or lastFrameLabel.setText(str(min(frameSlider.value() + 500, int(maxFrame)))))
 
   img = getFrame()
   height, width = img.shape[:2]
@@ -880,6 +920,7 @@ def adjustBoutDetectionOnlyPage(useNext=True):
 
   sublayout = QHBoxLayout()
   sublayout.addStretch(1)
+  sublayout.addWidget(_AlignedLabel("Select frame range:"), alignment=Qt.AlignmentFlag.AlignRight)
   sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
   if maxFrame > 1000:
     adjustLayout = QVBoxLayout()
@@ -920,9 +961,10 @@ def adjustBoutDetectionOnlyPage(useNext=True):
     adjustLayout.addWidget(QLabel())
     adjustLayout.addWidget(zoomInSliderBtn, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
     adjustLayout.addStretch()
-    sublayout.addLayout(adjustLayout, stretch=1)
-  else:
-    sublayout.addStretch(1)
+    sublayout.addLayout(adjustLayout)
+  lastFrameLabel = QLabel(str(min(frameSlider.value() + 500, int(maxFrame))))
+  sublayout.addWidget(_AlignedLabel("Last frame:", lastFrameLabel), alignment=Qt.AlignmentFlag.AlignLeft)
+  sublayout.addStretch(1)
   layout.addLayout(sublayout)
 
   recalculateLayout = QHBoxLayout()
@@ -952,6 +994,7 @@ def adjustBoutDetectionOnlyPage(useNext=True):
     minDistLabel.setVisible(checked)
     minDistLineEdit.setVisible(checked)
     adjustBoutsBtn.setVisible(not checked)
+    frameGapSlider.setVisible(checked)
   coordinatesOnlyBoutDetectCheckbox.toggled.connect(coordinatesOnlyBoutDetectCheckboxToggled)
   trackingMethod = app.configFile.get("trackingMethod", None)
   coordinatesOnlyBoutDetectCheckbox.setVisible(trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction" or trackingMethod == "fastCenterOfMassTracking_ClassicalBackgroundSubtraction")
@@ -995,6 +1038,14 @@ def adjustBoutDetectionOnlyPage(useNext=True):
   adjustBoutsBtn.setToolTip("The aim here is to adjust parameters in order for the red dot on the top left of the image to appear when and only when movement is occurring.")
   adjustBoutsBtn.clicked.connect(lambda: app.detectBouts(app, video.getWell(), frameSlider.value(), False))
   layout.addWidget(adjustBoutsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+  frameGapSlider = util.SliderWithSpinbox(app.configFile.get("frameGapComparision", 1), 1, 15, name="frameGapComparision")
+  frameGapSlider.setVisible(False)
+
+  def frameGapComparisonChanged(value):
+    app.configFile["frameGapComparision"] = value
+  frameGapSlider.valueChanged.connect(frameGapComparisonChanged)
+  layout.addWidget(frameGapSlider, alignment=Qt.AlignmentFlag.AlignCenter)
 
   coordinatesOnlyBoutDetectCheckbox.setChecked(coordinatesOnlyBoutDetectCheckbox.isVisible() and app.configFile.get("coordinatesOnlyBoutDetection", False))
 

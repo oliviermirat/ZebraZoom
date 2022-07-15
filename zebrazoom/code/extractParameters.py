@@ -199,8 +199,9 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
 
       auDessus = auDessusPerAnimal[animalId]
     elif hyperparameters["coordinatesOnlyBoutDetection"]:
-      auDessus = [int(math.sqrt(sum((head[i+1] - coords) ** 2)) >= hyperparameters["coordinatesOnlyBoutDetectionMinDist"]) for i, coords in enumerate(head[:-1])]
-      auDessus.append(0)
+      frameDistance = hyperparameters["frameGapComparision"]
+      auDessus = [int(math.sqrt(sum((head[i+frameDistance] - coords) ** 2)) >= hyperparameters["coordinatesOnlyBoutDetectionMinDist"]) for i, coords in enumerate(head[:-frameDistance])]
+      auDessus.extend([0] * frameDistance)
     elif hyperparameters["thresForDetectMovementWithRawVideo"] == 0:
 
       # Calculating angle median
