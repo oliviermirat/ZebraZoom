@@ -1023,7 +1023,7 @@ def adjustBoutDetectionOnlyPage(useNext=True):
     def cancel():
       nonlocal cancelled
       cancelled = True
-    center, radius = util.getCircle(getFrame(), 'Click on the center of an animal and select the distance it should travel to consider it has moved', backBtnCb=cancel, zoomable=True)
+    center, radius = util.getCircle(getFrame(), 'Click on the center of an animal and select the minimum distance it should travel to consider it has moved', backBtnCb=cancel, zoomable=True)
     if not cancelled:
       minDistLineEdit.setText(str(radius))
   minDistLabel.clicked.connect(adjustMinDistForBoutDetect)
