@@ -7,7 +7,7 @@ import numpy as np
 
 from PyQt5.QtCore import Qt, pyqtSignal, QPoint, QPointF, QRect, QRectF, QSizeF, QTimer
 from PyQt5.QtGui import QColor, QFont, QIntValidator, QPainter, QPolygon, QPolygonF, QTransform
-from PyQt5.QtWidgets import QApplication, QLabel, QLineEdit, QCheckBox, QMessageBox, QPushButton, QHBoxLayout, QSpinBox, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QGridLayout, QLabel, QLineEdit, QCheckBox, QMessageBox, QPushButton, QHBoxLayout, QSlider, QSpinBox, QVBoxLayout, QWidget
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.paths as paths
@@ -476,6 +476,40 @@ def _addEyeTracking(firstFrame, totalFrames):
   util.showBlockingPage(layout, title="Add eye tracking", buttons=buttons)
 
 
+class _AlignedLabel(QWidget):  # this will mimick the alignment of SliderWithSpinbox's labels
+  def __init__(self, text, extraWidget=None):
+    super().__init__()
+
+    layout = QGridLayout()
+    layout.setRowStretch(0, 1)
+    layout.setColumnStretch(0, 1)
+    layout.setRowStretch(3, 1)
+    layout.setColumnStretch(4, 1)
+    layout.setVerticalSpacing(0)
+
+    label = QLabel(text)
+    layout.addWidget(label, 1, 1)
+    slider = QSlider(Qt.Orientation.Horizontal)
+    policy = slider.sizePolicy()
+    policy.setRetainSizeWhenHidden(True)
+    slider.setSizePolicy(policy)
+    slider.setFixedWidth(0)
+    slider.setVisible(False)
+    layout.addWidget(slider, 2, 2)
+    spinbox = QSpinBox()
+    policy = slider.sizePolicy()
+    policy.setRetainSizeWhenHidden(True)
+    spinbox.setSizePolicy(policy)
+    spinbox.setFixedWidth(0)
+    spinbox.setVisible(False)
+    layout.addWidget(spinbox, 2, 3)
+    if extraWidget is not None:
+      layout.addWidget(extraWidget, 2, 1)
+
+    layout.setContentsMargins(20, 5, 20, 5)
+    self.setLayout(layout)
+
+
 def adjustParamInsideAlgoPage(useNext=True):
   app = QApplication.instance()
 
@@ -523,15 +557,7 @@ def adjustParamInsideAlgoPage(useNext=True):
 
   sublayout = QHBoxLayout()
   sublayout.addStretch(1)
-  selectFrameLayout = QVBoxLayout()
-  selectFrameLayout.addStretch()
-  selectFrameLayout.setSpacing(0)
-  selectFrameLayout.addWidget(QLabel())
-  selectFrameLabel = QLabel("Select frame range:")
-  selectFrameLayout.addWidget(selectFrameLabel)
-  selectFrameLayout.addStretch()
-  selectFrameLayout.setContentsMargins(20, 5, 20, 5)
-  sublayout.addLayout(selectFrameLayout)
+  sublayout.addWidget(_AlignedLabel("Select frame range:"), alignment=Qt.AlignmentFlag.AlignRight)
   sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
   if maxFrame > 1000:
     adjustLayout = QVBoxLayout()
@@ -573,15 +599,8 @@ def adjustParamInsideAlgoPage(useNext=True):
     adjustLayout.addWidget(zoomInSliderBtn, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
     adjustLayout.addStretch()
     sublayout.addLayout(adjustLayout)
-  lastFrameLayout = QVBoxLayout()
-  lastFrameLayout.addStretch()
-  lastFrameLayout.setSpacing(0)
-  lastFrameLayout.addWidget(QLabel("Last frame:"))
   lastFrameLabel = QLabel(str(min(frameSlider.value() + 500, int(maxFrame))))
-  lastFrameLayout.addWidget(lastFrameLabel)
-  lastFrameLayout.addStretch()
-  lastFrameLayout.setContentsMargins(20, 5, 20, 5)
-  sublayout.addLayout(lastFrameLayout)
+  sublayout.addWidget(_AlignedLabel("Last frame:", lastFrameLabel), alignment=Qt.AlignmentFlag.AlignLeft)
   sublayout.addStretch(1)
   layout.addLayout(sublayout)
 
@@ -641,8 +660,6 @@ def adjustParamInsideAlgoPage(useNext=True):
   layout.addLayout(buttonsLayout)
 
   page = _showPage(layout, (img, video))
-  lastFrameLabel.resize(lastFrameLabel.width(), frameSlider.sliderHeight())
-  selectFrameLabel.resize(selectFrameLabel.width(), frameSlider.sliderHeight())
 
 
 def adjustParamInsideAlgoFreelySwimPage(useNext=True):
@@ -671,15 +688,7 @@ def adjustParamInsideAlgoFreelySwimPage(useNext=True):
 
   sublayout = QHBoxLayout()
   sublayout.addStretch(1)
-  selectFrameLayout = QVBoxLayout()
-  selectFrameLayout.addStretch()
-  selectFrameLayout.setSpacing(0)
-  selectFrameLayout.addWidget(QLabel())
-  selectFrameLabel = QLabel("Select frame range:")
-  selectFrameLayout.addWidget(selectFrameLabel)
-  selectFrameLayout.addStretch()
-  selectFrameLayout.setContentsMargins(20, 5, 20, 5)
-  sublayout.addLayout(selectFrameLayout)
+  sublayout.addWidget(_AlignedLabel("Select frame range:"), alignment=Qt.AlignmentFlag.AlignRight)
   sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
   if maxFrame > 1000:
     adjustLayout = QVBoxLayout()
@@ -721,15 +730,8 @@ def adjustParamInsideAlgoFreelySwimPage(useNext=True):
     adjustLayout.addWidget(zoomInSliderBtn, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
     adjustLayout.addStretch()
     sublayout.addLayout(adjustLayout)
-  lastFrameLayout = QVBoxLayout()
-  lastFrameLayout.addStretch()
-  lastFrameLayout.setSpacing(0)
-  lastFrameLayout.addWidget(QLabel("Last frame:"))
   lastFrameLabel = QLabel(str(min(frameSlider.value() + 500, int(maxFrame))))
-  lastFrameLayout.addWidget(lastFrameLabel)
-  lastFrameLayout.addStretch()
-  lastFrameLayout.setContentsMargins(20, 5, 20, 5)
-  sublayout.addLayout(lastFrameLayout)
+  sublayout.addWidget(_AlignedLabel("Last frame:", lastFrameLabel), alignment=Qt.AlignmentFlag.AlignLeft)
   sublayout.addStretch(1)
   layout.addLayout(sublayout)
 
@@ -779,8 +781,6 @@ def adjustParamInsideAlgoFreelySwimPage(useNext=True):
   layout.addLayout(buttonsLayout)
 
   page = _showPage(layout, (img, video))
-  lastFrameLabel.resize(lastFrameLabel.width(), frameSlider.sliderHeight())
-  selectFrameLabel.resize(selectFrameLabel.width(), frameSlider.sliderHeight())
 
 
 def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
@@ -809,15 +809,7 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
 
   sublayout = QHBoxLayout()
   sublayout.addStretch(1)
-  selectFrameLayout = QVBoxLayout()
-  selectFrameLayout.addStretch()
-  selectFrameLayout.setSpacing(0)
-  selectFrameLayout.addWidget(QLabel())
-  selectFrameLabel = QLabel("Select frame range:")
-  selectFrameLayout.addWidget(selectFrameLabel)
-  selectFrameLayout.addStretch()
-  selectFrameLayout.setContentsMargins(20, 5, 20, 5)
-  sublayout.addLayout(selectFrameLayout)
+  sublayout.addWidget(_AlignedLabel("Select frame range:"), alignment=Qt.AlignmentFlag.AlignRight)
   sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
   if maxFrame > 1000:
     adjustLayout = QVBoxLayout()
@@ -859,15 +851,8 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
     adjustLayout.addWidget(zoomInSliderBtn, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
     adjustLayout.addStretch()
     sublayout.addLayout(adjustLayout)
-  lastFrameLayout = QVBoxLayout()
-  lastFrameLayout.addStretch()
-  lastFrameLayout.setSpacing(0)
-  lastFrameLayout.addWidget(QLabel("Last frame:"))
   lastFrameLabel = QLabel(str(min(frameSlider.value() + 500, int(maxFrame))))
-  lastFrameLayout.addWidget(lastFrameLabel)
-  lastFrameLayout.addStretch()
-  lastFrameLayout.setContentsMargins(20, 5, 20, 5)
-  sublayout.addLayout(lastFrameLayout)
+  sublayout.addWidget(_AlignedLabel("Last frame:", lastFrameLabel), alignment=Qt.AlignmentFlag.AlignLeft)
   sublayout.addStretch(1)
   layout.addLayout(sublayout)
 
@@ -907,8 +892,6 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
   layout.addLayout(buttonsLayout)
 
   page = _showPage(layout, (img, video))
-  lastFrameLabel.resize(lastFrameLabel.width(), frameSlider.sliderHeight())
-  selectFrameLabel.resize(selectFrameLabel.width(), frameSlider.sliderHeight())
 
 
 def adjustBoutDetectionOnlyPage(useNext=True):
@@ -937,15 +920,7 @@ def adjustBoutDetectionOnlyPage(useNext=True):
 
   sublayout = QHBoxLayout()
   sublayout.addStretch(1)
-  selectFrameLayout = QVBoxLayout()
-  selectFrameLayout.addStretch()
-  selectFrameLayout.setSpacing(0)
-  selectFrameLayout.addWidget(QLabel())
-  selectFrameLabel = QLabel("Select frame range:")
-  selectFrameLayout.addWidget(selectFrameLabel)
-  selectFrameLayout.addStretch()
-  selectFrameLayout.setContentsMargins(20, 5, 20, 5)
-  sublayout.addLayout(selectFrameLayout)
+  sublayout.addWidget(_AlignedLabel("Select frame range:"), alignment=Qt.AlignmentFlag.AlignRight)
   sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
   if maxFrame > 1000:
     adjustLayout = QVBoxLayout()
@@ -987,15 +962,8 @@ def adjustBoutDetectionOnlyPage(useNext=True):
     adjustLayout.addWidget(zoomInSliderBtn, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
     adjustLayout.addStretch()
     sublayout.addLayout(adjustLayout)
-  lastFrameLayout = QVBoxLayout()
-  lastFrameLayout.addStretch()
-  lastFrameLayout.setSpacing(0)
-  lastFrameLayout.addWidget(QLabel("Last frame:"))
   lastFrameLabel = QLabel(str(min(frameSlider.value() + 500, int(maxFrame))))
-  lastFrameLayout.addWidget(lastFrameLabel)
-  lastFrameLayout.addStretch()
-  lastFrameLayout.setContentsMargins(20, 5, 20, 5)
-  sublayout.addLayout(lastFrameLayout)
+  sublayout.addWidget(_AlignedLabel("Last frame:", lastFrameLabel), alignment=Qt.AlignmentFlag.AlignLeft)
   sublayout.addStretch(1)
   layout.addLayout(sublayout)
 
@@ -1121,5 +1089,3 @@ def adjustBoutDetectionOnlyPage(useNext=True):
   layout.addLayout(buttonsLayout)
 
   page = _showPage(layout, (img, video))
-  lastFrameLabel.resize(lastFrameLabel.width(), frameSlider.sliderHeight())
-  selectFrameLabel.resize(selectFrameLabel.width(), frameSlider.sliderHeight())
