@@ -1136,24 +1136,26 @@ class _ParameterFilter(QWidget):
 
   def __init__(self, params, removeCallback):
     super().__init__()
-    layout = QHBoxLayout()
+    layout = QGridLayout()
     self._nameComboBox = QComboBox()
     self._nameComboBox.addItems(params)
     self._nameComboBox.currentTextChanged.connect(self.changed.emit)
-    layout.addWidget(self._nameComboBox)
-    layout.addWidget(QLabel('Min:'))
+    layout.addWidget(self._nameComboBox, 0, 0, 1, 5, Qt.AlignmentFlag.AlignLeft)
+    layout.addWidget(QLabel('Min:'), 1, 0, Qt.AlignmentFlag.AlignLeft)
     self._minimumSpinbox = QDoubleSpinBox()
     self._minimumSpinbox.setMaximum(sys.float_info.max)
     self._minimumSpinbox.valueChanged.connect(self.changed.emit)
-    layout.addWidget(self._minimumSpinbox)
-    layout.addWidget(QLabel('Max:'))
+    self._minimumSpinbox.setMinimumWidth(self._minimumSpinbox.minimumSizeHint().width() // 2)
+    layout.addWidget(self._minimumSpinbox, 1, 1, Qt.AlignmentFlag.AlignLeft)
+    layout.addWidget(QLabel('Max:'), 1, 2, Qt.AlignmentFlag.AlignLeft)
     self._maximumSpinbox = QDoubleSpinBox()
     self._maximumSpinbox.setMaximum(sys.float_info.max)
     self._maximumSpinbox.valueChanged.connect(self.changed.emit)
-    layout.addWidget(self._maximumSpinbox)
+    self._maximumSpinbox.setMinimumWidth(self._maximumSpinbox.minimumSizeHint().width() // 2)
+    layout.addWidget(self._maximumSpinbox, 1, 3, Qt.AlignmentFlag.AlignLeft)
     removeBtn = QPushButton('Remove')
     removeBtn.clicked.connect(removeCallback)
-    layout.addWidget(removeBtn)
+    layout.addWidget(removeBtn, 1, 4, Qt.AlignmentFlag.AlignLeft)
     self.setLayout(layout)
 
   def updateParams(self, params):
@@ -1230,7 +1232,6 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     fltr.changed.connect(lambda: self._update(clearFigures=True))
     self._filters.append(fltr)
     self._checkboxesLayout.addWidget(fltr, alignment=Qt.AlignmentFlag.AlignLeft)
-    self._update(clearFigures=True)
 
   def _removeFilter(self, fltr):
     self._filters.remove(fltr)
