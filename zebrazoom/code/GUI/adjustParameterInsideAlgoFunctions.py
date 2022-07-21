@@ -320,7 +320,7 @@ def calculateBackground(self, controller, nbImagesForBackgroundCalculation, useN
   adjustParamInsideAlgoPage(useNext=useNext)
 
 
-def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False, useNext=True):
+def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False, useNext=True, nextCb=None):
 
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
 
@@ -360,7 +360,7 @@ def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalcula
   if morePreciseFastScreen:
     adjustFastFreelySwimTracking(self, controller, boutDetectionsOnly)
   elif boutDetectionsOnly:
-    adjustBoutDetectionOnlyPage(useNext=useNext)
+    adjustBoutDetectionOnlyPage(useNext=useNext, nextCb=nextCb)
   elif automaticParameters:
     adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=useNext)
   else:

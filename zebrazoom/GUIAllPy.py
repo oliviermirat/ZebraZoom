@@ -298,9 +298,6 @@ class ZebraZoomApp(PlainApplication):
     def chooseCircularWellsRight(self, controller):
         configFilePrepareFunctions.chooseCircularWellsRight(self, controller)
 
-    def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHeadTracking, yesBouts, nooBouts, recommendedMethod, alternativeMethod, yesBends, nooBends, adjustBackgroundExtractionBasedOnNumberOfBlackPixels):
-      configFilePrepareFunctions.numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHeadTracking, yesBouts, nooBouts, recommendedMethod, alternativeMethod, yesBends, nooBends, adjustBackgroundExtractionBasedOnNumberOfBlackPixels)
-
     def chooseHeadCenter(self, controller):
         configFilePrepareFunctions.chooseHeadCenter(self, controller)
 
@@ -325,8 +322,8 @@ class ZebraZoomApp(PlainApplication):
     def calculateBackground(self, controller, nbImagesForBackgroundCalculation, useNext=True):
       adjustParameterInsideAlgoFunctions.calculateBackground(self, controller, nbImagesForBackgroundCalculation, useNext)
 
-    def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False, useNext=True):
-      adjustParameterInsideAlgoFunctions.calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen, automaticParameters, boutDetectionsOnly, useNext)
+    def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False, useNext=True, nextCb=None):
+      adjustParameterInsideAlgoFunctions.calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen, automaticParameters, boutDetectionsOnly, useNext, nextCb)
 
     def goToAdvanceSettings(self, controller, yes, no):
       configFilePrepareFunctions.goToAdvanceSettings(self, controller, yes, no)

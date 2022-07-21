@@ -424,45 +424,37 @@ def identifyMultipleHead(self, controller, nbanimals):
 
 
 @util.addToHistory
-def numberOfAnimals(self, controller, nbanimals, yes, noo, forceBlobMethodForHeadTracking, yesBouts, nooBouts, recommendedMethod, alternativeMethod, yesBends, nooBends, adjustBackgroundExtractionBasedOnNumberOfBlackPixels):
+def numberOfAnimals(nbanimals, animalsAlwaysVisible, forceBlobMethodForHeadTracking, detectBoutsMethod, recommendedMethod, calculateBends, adjustBackgroundExtractionBasedOnNumberOfBlackPixels):
+  app = QApplication.instance()
 
-  self.configFile["noBoutsDetection"] = 1
-  self.configFile["noChecksForBoutSelectionInExtractParams"] = 1
-  self.configFile["trackingPointSizeDisplay"] = 4
-  self.configFile["validationVideoPlotHeading"] = 0
+  app.configFile["noBoutsDetection"] = 1
+  app.configFile["noChecksForBoutSelectionInExtractParams"] = 1
+  app.configFile["trackingPointSizeDisplay"] = 4
+  app.configFile["validationVideoPlotHeading"] = 0
 
-  if int(yesBends):
-    self.configFile["extractAdvanceZebraParameters"] = 1
+  if calculateBends:
+    app.configFile["extractAdvanceZebraParameters"] = 1
 
-  nbanimals = int(nbanimals) if nbanimals is not None else self.configFile["nbWells"] * self.configFile["nbAnimalsPerWell"]
-  if nbanimals == self.configFile["nbWells"]:
-    self.configFile["nbAnimalsPerWell"] = 1
+  nbanimals = int(nbanimals) if nbanimals is not None else app.configFile["nbWells"] * app.configFile["nbAnimalsPerWell"]
+  if nbanimals == app.configFile["nbWells"]:
+    app.configFile["nbAnimalsPerWell"] = 1
   else:
-    self.configFile["nbAnimalsPerWell"] = int(nbanimals / self.configFile["nbWells"])
-    if noo:
-      self.configFile["multipleHeadTrackingIterativelyRelaxAreaCriteria"] = 0
-    else:
-      self.configFile["multipleHeadTrackingIterativelyRelaxAreaCriteria"] = 1
+    app.configFile["nbAnimalsPerWell"] = int(nbanimals / app.configFile["nbWells"])
+    app.configFile["multipleHeadTrackingIterativelyRelaxAreaCriteria"] = int(animalsAlwaysVisible)
 
-  self.forceBlobMethodForHeadTracking = int(forceBlobMethodForHeadTracking)
-  if self.forceBlobMethodForHeadTracking:
-    self.configFile["forceBlobMethodForHeadTracking"] = self.forceBlobMethodForHeadTracking
+  app.forceBlobMethodForHeadTracking = int(forceBlobMethodForHeadTracking)
+  if app.forceBlobMethodForHeadTracking:
+    app.configFile["forceBlobMethodForHeadTracking"] = app.forceBlobMethodForHeadTracking
 
-  if self.organism == 'zebrafish':
-    controller.show_frame("IdentifyHeadCenter")
-  elif self.organism == 'zebrafishNew':
-    detectBouts = 0
-    if int(yesBouts):
-      detectBouts = 1
-    method = 0
-    if int(alternativeMethod):
-      method = 1
-    automaticallyFindOptimalParameters(self, controller, True, detectBouts, method, int(noo), int(adjustBackgroundExtractionBasedOnNumberOfBlackPixels))
-  elif self.organism == 'drosoorrodent' and int(recommendedMethod):
-    automaticallyFindOptimalParameters(self, controller, True, 0, 0, int(noo), int(adjustBackgroundExtractionBasedOnNumberOfBlackPixels))
+  if app.organism == 'zebrafish':
+    app.show_frame("IdentifyHeadCenter")
+  elif app.organism == 'zebrafishNew':
+    automaticallyFindOptimalParameters(app, app, True, detectBoutsMethod, not recommendedMethod, not animalsAlwaysVisible, adjustBackgroundExtractionBasedOnNumberOfBlackPixels)
+  elif app.organism == 'drosoorrodent' and recommendedMethod:
+    automaticallyFindOptimalParameters(app, app, True, 0, False, not animalsAlwaysVisible, adjustBackgroundExtractionBasedOnNumberOfBlackPixels)
   else:
-    identifyMultipleHead(self, controller, nbanimals)
-    util.addToHistory(controller.show_frame)("FinishConfig")
+    identifyMultipleHead(app, app, nbanimals)
+    util.addToHistory(app.show_frame)("FinishConfig")
 
 
 @util.addToHistory

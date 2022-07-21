@@ -8,6 +8,7 @@ PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.util as util
+from zebrazoom.code.GUI.configFilePrepareFunctions import numberOfAnimals
 
 
 class ChooseVideoToCreateConfigFileFor(QWidget):
@@ -1013,7 +1014,7 @@ class NumberOfAnimals(QWidget):
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     nextBtn = util.apply_style(QPushButton("Next", self), background_color=util.LIGHT_YELLOW)
-    nextBtn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text(), yesRadioButton.isChecked(), noRadioButton.isChecked(), forceBlobMethodForHeadTrackingCheckbox.isChecked(), 0, 0, 0, 0, 0, 0, 0))
+    nextBtn.clicked.connect(lambda: numberOfAnimals(nbanimals.text(), yesRadioButton.isChecked(), forceBlobMethodForHeadTrackingCheckbox.isChecked(), 0, False, False, False))
     buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch()
     layout.addLayout(buttonsLayout)
@@ -1056,12 +1057,15 @@ class NumberOfAnimals2(QWidget):
     yesNoLayout2 = QHBoxLayout()
     yesNoLayout2.addStretch()
     btnGroup2 = QButtonGroup(self)
-    yesBoutsRadioButton = QRadioButton("Yes", self)
-    btnGroup2.addButton(yesBoutsRadioButton)
-    yesBoutsRadioButton.setChecked(True)
-    yesNoLayout2.addWidget(yesBoutsRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    slowBoutDetectionRadioButton = QRadioButton("Yes, with slow but more accurate bout detection", self)
+    btnGroup2.addButton(slowBoutDetectionRadioButton, id=1)
+    slowBoutDetectionRadioButton.setChecked(True)
+    yesNoLayout2.addWidget(slowBoutDetectionRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    fastBoutDetectionRadioButton = QRadioButton("Yes, with fast but less accurate bout detection", self)
+    btnGroup2.addButton(fastBoutDetectionRadioButton, id=2)
+    yesNoLayout2.addWidget(fastBoutDetectionRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
     noBoutsRadioButton = QRadioButton("No", self)
-    btnGroup2.addButton(noBoutsRadioButton)
+    btnGroup2.addButton(noBoutsRadioButton, id=0)
     yesNoLayout2.addWidget(noBoutsRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
     yesNoLayout2.addStretch()
     layout.addLayout(yesNoLayout2, 5, 0, Qt.AlignmentFlag.AlignCenter)
@@ -1125,7 +1129,7 @@ class NumberOfAnimals2(QWidget):
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     nextBtn = util.apply_style(QPushButton("Ok, next step", self), background_color=util.LIGHT_YELLOW)
-    nextBtn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text() if nbanimals.isVisible() else None, yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, yesBoutsRadioButton.isChecked(), noBoutsRadioButton.isChecked(), recommendedMethodRadioButton.isChecked(), alternativeMethodRadioButton.isChecked(), yesBendsRadioButton.isChecked(), noBendsRadioButton.isChecked(), recommendedTrackingMethodRadioButton.isChecked()))
+    nextBtn.clicked.connect(lambda: numberOfAnimals(nbanimals.text() if nbanimals.isVisible() else None, yesRadioButton.isChecked(), False, btnGroup2.checkedId(), recommendedMethodRadioButton.isChecked(), yesBendsRadioButton.isChecked(), recommendedTrackingMethodRadioButton.isChecked()))
     buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch()
     layout.addLayout(buttonsLayout, 7, 0, 1, 2)
@@ -1162,13 +1166,13 @@ class NumberOfAnimalsCenterOfMass(QWidget):
     layout.addWidget(noRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
     method1Btn = QPushButton("Automatic Parameters Setting, Method 1: Slower tracking but often more accurate", self)
-    method1Btn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text() if nbanimals.isVisible() else None, yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, 0, 0, 1, 0, 0, 0, 1))
+    method1Btn.clicked.connect(lambda: numberOfAnimals(nbanimals.text() if nbanimals.isVisible() else None, yesRadioButton.isChecked(), noRadioButton.isChecked(), False, 0, True, False, True))
     layout.addWidget(method1Btn, alignment=Qt.AlignmentFlag.AlignCenter)
     method2Btn = QPushButton("Automatic Parameters Setting, Method 2: Faster tracking but often less accurate", self)
-    method2Btn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text() if nbanimals.isVisible() else None, yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, 0, 0, 1, 0, 0, 0, 0))
+    method2Btn.clicked.connect(lambda: numberOfAnimals(nbanimals.text() if nbanimals.isVisible() else None, yesRadioButton.isChecked(), noRadioButton.isChecked(), False, 0, True, False, False))
     layout.addWidget(method2Btn, alignment=Qt.AlignmentFlag.AlignCenter)
     manualBtn = QPushButton("Manual Parameters Setting: More control over the choice of parameters", self)
-    manualBtn.clicked.connect(lambda: controller.numberOfAnimals(controller, nbanimals.text() if nbanimals.isVisible() else None, yesRadioButton.isChecked(), noRadioButton.isChecked(), 0, 0, 0, 0, 1, 0, 0, 0))
+    manualBtn.clicked.connect(lambda: numberOfAnimals(nbanimals.text() if nbanimals.isVisible() else None, yesRadioButton.isChecked(), noRadioButton.isChecked(), False, 0, False, False, False))
     layout.addWidget(manualBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(util.apply_style(QLabel("Try the 'Automatic Parameters Setting, Method 1' first. If it doesn't work, try the other methods.", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(util.apply_style(QLabel("The 'Manual Parameter Settings' makes setting parameter slightly more challenging but offers more control over the choice of parameters.", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)

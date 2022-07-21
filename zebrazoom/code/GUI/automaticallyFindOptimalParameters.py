@@ -8,14 +8,16 @@ import pickle
 import json
 import os
 import re
+
 import zebrazoom.code.util as util
 from zebrazoom.code.getBackground import getBackground
 from zebrazoom.code.findWells import findWells
 from zebrazoom.code.trackingFolder.tracking import tracking
 
+from zebrazoom.code.GUI.adjustParameterInsideAlgo import adjustBoutDetectionOnlyPage
 from zebrazoom.code.GUI.automaticallyFindOptimalParametersFunctions import getGroundTruthFromUser, findBestBackgroundSubstractionParameterForEachImage, findInitialBlobArea, boutDetectionParameters
 
-def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, detectBouts, method, nbOfAnimalToTrackNotConstantOverTime, adjustBackgroundExtractionBasedOnNumberOfBlackPixels):
+def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, detectBoutsMethod, method, nbOfAnimalToTrackNotConstantOverTime, adjustBackgroundExtractionBasedOnNumberOfBlackPixels):
   
   nbOfImagesToManuallyClassify = 3
   saveIntermediary = False # Should be set to False except when debugging
@@ -189,9 +191,9 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, det
   print("Intermediary config file:", configFile)
     
   # Adjusting config file hyperparameters related to bouts detection
-  if detectBouts:
+  if detectBoutsMethod == 1:
     configFile = boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, wellPositions, videoPath)
-  
+
   # Setting recalculateForegroundImageBasedOnBodyArea to 1 when asked by user to try to obtain better tail tracking
   if adjustBackgroundExtractionBasedOnNumberOfBlackPixels and method:
     configFile["recalculateForegroundImageBasedOnBodyArea"] = 1
@@ -200,6 +202,13 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, det
   
   if realExecThroughGUI:
     self.configFile = configFile
+    if detectBoutsMethod == 2:
+      from PyQt5.QtCore import QEventLoop
+      configFile["coordinatesOnlyBoutDetection"] = 1
+      configFile["noBoutsDetection"] = 0
+      loop = QEventLoop()
+      util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, boutDetectionsOnly=True, nextCb=loop.exit)
+      loop.exec()
     util.addToHistory(controller.show_frame)("FinishConfig")
   else:  
     reference = videoName + '_config.json'

@@ -894,7 +894,7 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
   page = _showPage(layout, (img, video))
 
 
-def adjustBoutDetectionOnlyPage(useNext=True):
+def adjustBoutDetectionOnlyPage(useNext=True, nextCb=None):
   app = QApplication.instance()
 
   layout = QVBoxLayout()
@@ -977,7 +977,7 @@ def adjustBoutDetectionOnlyPage(useNext=True):
   nbImagesForBackgroundCalculation.setFixedWidth(50)
   recalculateLayout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
   recalculateBtn = QPushButton("Recalculate")
-  recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text(), False, True, useNext=useNext))
+  recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text(), False, True, useNext=useNext, nextCb=nextCb))
   recalculateLayout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   recalculateLayout.addStretch()
   layout.addLayout(recalculateLayout)
@@ -997,7 +997,7 @@ def adjustBoutDetectionOnlyPage(useNext=True):
     frameGapSlider.setVisible(checked)
   coordinatesOnlyBoutDetectCheckbox.toggled.connect(coordinatesOnlyBoutDetectCheckboxToggled)
   trackingMethod = app.configFile.get("trackingMethod", None)
-  coordinatesOnlyBoutDetectCheckbox.setVisible(trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction" or trackingMethod == "fastCenterOfMassTracking_ClassicalBackgroundSubtraction")
+  coordinatesOnlyBoutDetectCheckbox.setVisible((not trackingMethod and not app.configFile.get("headEmbeded", False)) or trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction" or trackingMethod == "fastCenterOfMassTracking_ClassicalBackgroundSubtraction")
   layout.addWidget(coordinatesOnlyBoutDetectCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
   minDistLayout = QHBoxLayout()
@@ -1083,7 +1083,7 @@ def adjustBoutDetectionOnlyPage(useNext=True):
   buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   if useNext:
     nextBtn = QPushButton("Next")
-    nextBtn.clicked.connect(lambda: util.addToHistory(app.show_frame)("FinishConfig") or _cleanup(app, page))
+    nextBtn.clicked.connect(lambda: (nextCb() if nextCb is not None else util.addToHistory(app.show_frame)("FinishConfig")) or _cleanup(app, page))
     buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   buttonsLayout.addStretch()
   layout.addLayout(buttonsLayout)
