@@ -231,7 +231,8 @@ if __name__ == '__main__':
       from zebrazoom.mainZZ import mainZZ
 
       try:
-        import zebrazoom.GUIAllPy
+        from zebrazoom.GUIAllPy import PlainApplication
+        app = PlainApplication(sys.argv)
         useGUI = True
       except ImportError:
         useGUI = False
