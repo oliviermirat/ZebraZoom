@@ -9,6 +9,7 @@ from zebrazoom.code.createValidationVideo import createValidationVideo
 from zebrazoom.code.getHyperparameters import getHyperparameters
 from zebrazoom.code.dataPostProcessing.dataPostProcessing import dataPostProcessing
 from zebrazoom.code.fasterMultiprocessing import fasterMultiprocessing
+from zebrazoom.code.fasterMultiprocessing2 import fasterMultiprocessing2
 
 import sys
 import pickle
@@ -235,6 +236,9 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
   if hyperparameters["fasterMultiprocessing"] == 1:
     processes = -1
     output2 = fasterMultiprocessing(os.path.join(pathToVideo, videoNameWithExt), background, wellPositions, [], hyperparameters, videoName)
+  elif hyperparameters["fasterMultiprocessing"] == 2:
+    processes = -1
+    output2 = fasterMultiprocessing2(os.path.join(pathToVideo, videoNameWithExt), background, wellPositions, [], hyperparameters, videoName)
   else:
     if globalVariables["noMultiprocessing"] == 0:
       if hyperparameters["onlyTrackThisOneWell"] == -1:
