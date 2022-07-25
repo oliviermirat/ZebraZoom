@@ -85,13 +85,16 @@ def computeHeading2(initialContour, lenX, lenY, headPosition, hyperparameters):
   iterationsForErodeImageForHeadingCalculation = best_iterations
   hyperparameters["iterationsForErodeImageForHeadingCalculation"] = iterationsForErodeImageForHeadingCalculation
   
+  testImage2 = cv2.erode(originalShape.copy(), kernel, iterations = iterationsForErodeImageForHeadingCalculation)
+  
   maxDist = -1
   for i in range(0, nTries):
     angleOption = bestAngleAfterFirstStep - (math.pi / 5) + i * ((2 * (math.pi / 5)) / nTries)
     
     startPoint = (int(headPosition[0]), int(headPosition[1]))
     endPoint   = (int(headPosition[0] + 100000 * math.cos(angleOption)), int(headPosition[1] + 100000 * math.sin(angleOption)))
-    testImage  = originalShape.copy()
+    
+    testImage = testImage2.copy()
     
     testImage  = cv2.line(testImage, startPoint, endPoint, (0), 1)
     nbWhitePixels = cv2.countNonZero(testImage)
