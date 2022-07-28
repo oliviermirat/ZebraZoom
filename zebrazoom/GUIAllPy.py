@@ -136,6 +136,8 @@ class ZebraZoomApp(PlainApplication):
         wrapperLayout = QVBoxLayout()
         wrapperLayout.addWidget(page, alignment=Qt.AlignmentFlag.AlignCenter)
         wrapperWidget.setLayout(wrapperLayout)
+        if hasattr(page, 'setArgs'):
+          wrapperWidget.setArgs = page.setArgs
         return wrapperWidget
 
     def _currentPageChanged(self):
@@ -223,12 +225,6 @@ class ZebraZoomApp(PlainApplication):
 
     def chooseFolderForMultipleROIs(self, askCoordinatesForAll):
         GUI_InitialFunctions.chooseFolderForMultipleROIs(self, askCoordinatesForAll)
-
-    def chooseConfigFile(self):
-        GUI_InitialFunctions.chooseConfigFile(self)
-
-    def launchZebraZoom(self):
-        GUI_InitialFunctions.launchZebraZoom(self)
 
     def showViewParameters(self, folder=None):
         self.show_frame("ViewParameters")

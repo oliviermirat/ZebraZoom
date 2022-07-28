@@ -16,219 +16,273 @@ from zebrazoom.getTailExtremityFirstFrame import getTailExtremityFirstFrame
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QCheckBox, QFileDialog, QMessageBox, QVBoxLayout
+from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex
+from PyQt5.QtWidgets import QApplication, QCheckBox, QFileDialog, QHBoxLayout, QHeaderView, QLabel, QMessageBox, QPushButton, QTableView, QVBoxLayout, QWidget
 
 
 LARGE_FONT= ("Verdana", 12)
 
 def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, chooseFrames, testMode):
-    self.videoName, _ = QFileDialog.getOpenFileName(self.window, 'Select file', os.path.expanduser("~"))
-    if not self.videoName:
+    videoName, _ = QFileDialog.getOpenFileName(self.window, 'Select file', os.path.expanduser("~"))
+    if not videoName:
       return
-    self.folderName = ''
-    self.headEmbedded = 0
-    self.sbatchMode = 0
-
-    self.justExtractParams = int(justExtractParams)
-    self.noValidationVideo = int(noValidationVideo)
-    self.testMode         = testMode
-    self.findMultipleROIs = 0
-    self.askCoordinatesForAll = 1
+    ZZargs = ([videoName],)
+    ZZkwargs = {'justExtractParams': justExtractParams, 'noValidationVideo': noValidationVideo, 'testMode': testMode}
 
     if chooseFrames:
       def beginningAndEndChosen():
         if "firstFrame" in self.configFile:
-          self.firstFrame = self.configFile["firstFrame"]
+          ZZkwargs['firstFrame'] = self.configFile["firstFrame"]
         if "lastFrame" in self.configFile:
-          self.lastFrame = self.configFile["lastFrame"]
+          ZZkwargs['lastFrame'] = self.configFile["lastFrame"]
         self.configFile.clear()
-        self.backgroundExtractionForceUseAllVideoFrames = int(backgroundExtractionForceUseAllVideoFramesCheckbox.isChecked())
+        ZZkwargs['backgroundExtractionForceUseAllVideoFrames'] = backgroundExtractionForceUseAllVideoFramesCheckbox.isChecked()
         self.show_frame("ConfigFilePromp")
+        self.window.centralWidget().layout().currentWidget().setArgs(ZZargs, ZZkwargs)
       layout = QVBoxLayout()
       backgroundExtractionForceUseAllVideoFramesCheckbox = QCheckBox("Use all frames to calculate background")
       backgroundExtractionForceUseAllVideoFramesCheckbox.setChecked(True)
       layout.addWidget(backgroundExtractionForceUseAllVideoFramesCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
-      util.chooseBeginningPage(self, self.videoName, "Choose where the analysis of your video should start.", "Ok, I want the tracking to start at this frame!",
-                               lambda: util.chooseEndPage(self, self.videoName, "Choose where the analysis of your video should end.", "Ok, I want the tracking to end at this frame!", beginningAndEndChosen),
+      util.chooseBeginningPage(self, videoName, "Choose where the analysis of your video should start.", "Ok, I want the tracking to start at this frame!",
+                               lambda: util.chooseEndPage(self, videoName, "Choose where the analysis of your video should end.", "Ok, I want the tracking to end at this frame!", beginningAndEndChosen),
                                additionalLayout=layout)
     else:
       self.show_frame("ConfigFilePromp")
+      self.window.centralWidget().layout().currentWidget().setArgs(ZZargs, ZZkwargs)
+
+
+class _VideosModel(QAbstractTableModel):
+  _COLUMN_TITLES = ["Video", "Config"]
+  _DEFAULT_ZZOUTPUT = paths.getDefaultZZoutputFolder()
+
+  def __init__(self):
+    super().__init__()
+    self._videos = []
+    self._configs = []
+
+  def rowCount(self, parent=None):
+    return len(self._videos)
+
+  def columnCount(self, parent=None):
+    return len(self._COLUMN_TITLES)
+
+  def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+    if index.isValid() and role in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole, Qt.ItemDataRole.ToolTipRole):
+      return self._videos[index.row()] if index.column() == 0 else self._configs[index.row()]
+    return None
+
+  def headerData(self, col, orientation, role):
+    if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
+      return self._COLUMN_TITLES[col]
+    return None
+
+  def addVideos(self, videos):
+    if videos is None:
+      return
+    self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount() + len(videos) - 1)
+    self._videos.extend(videos)
+    self._configs.extend([''] * len(videos))
+    self.endInsertRows()
+
+  def setConfigs(self, idxs, config):
+    if config is None:
+      return
+    self.beginResetModel()
+    for idx in idxs:
+      self._configs[idx] = config
+    self.endResetModel()
+
+  def removeSelectedRows(self, idxs):
+    self.beginResetModel()
+    for idx in reversed(sorted(idxs)):
+      del self._videos[idx]
+      del self._configs[idx]
+    self.endResetModel()
+
+  def getData(self):
+    return self._videos, self._configs
+
+
+class _VideoSelectionPage(QWidget):
+  def __init__(self, ZZkwargs):
+    super().__init__()
+    self._ZZkwargs = ZZkwargs
+
+    app = QApplication.instance()
+
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("Select videos and corresponding config files"), font=app.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self._table = QTableView()
+    self._table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+    self._table.setModel(_VideosModel())
+
+    tableLayout = QVBoxLayout()
+    tableButtonsLayout = QHBoxLayout()
+    self._addVideosBtn = QPushButton("Add video(s)")
+    self._addVideosBtn.clicked.connect(lambda: self._table.model().addVideos(QFileDialog.getOpenFileNames(app.window, 'Select one or more videos', os.path.expanduser("~"))[0]))
+    tableButtonsLayout.addWidget(self._addVideosBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    removeVideosBtn = QPushButton("Choose config for selected videos")
+    removeVideosBtn.clicked.connect(lambda: self._table.model().setConfigs(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))),
+                                                                           QFileDialog.getOpenFileName(app.window, 'Select config file', paths.getConfigurationFolder(), "JSON (*.json)")[0]))
+    tableButtonsLayout.addWidget(removeVideosBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    removeVideosBtn = QPushButton("Remove selected videos")
+    removeVideosBtn.clicked.connect(lambda: self._table.model().removeSelectedRows(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes())))))
+    tableButtonsLayout.addWidget(removeVideosBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._runExperimentBtn = util.apply_style(QPushButton("Run tracking"), background_color=util.LIGHT_YELLOW)
+    self._runExperimentBtn.clicked.connect(self._runTracking)
+    tableButtonsLayout.addWidget(self._runExperimentBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    tableButtonsLayout.addStretch()
+    tableLayout.addLayout(tableButtonsLayout)
+    tableLayout.addWidget(self._table, stretch=1)
+    layout.addLayout(tableLayout)
+
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
+    startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
+
+    self.setLayout(layout)
+
+  def _runTracking(self):
+    app = QApplication.instance()
+    app.show_frame("Patience")
+    app.window.centralWidget().layout().currentWidget().setArgs(self._table.model().getData(), self._ZZkwargs)
+
+
+def _showVideoSelectionPage(ZZkwargs):
+  app = QApplication.instance()
+  layout = app.window.centralWidget().layout()
+  page = _VideoSelectionPage(ZZkwargs)
+  layout.addWidget(page)
+  layout.setCurrentWidget(page)
+  def cleanup():
+    layout.removeWidget(page)
+    layout.currentChanged.disconnect(cleanup)
+  layout.currentChanged.connect(cleanup)
+
 
 def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode):
-    self.folderName =  QFileDialog.getExistingDirectory(self.window, 'Select folder', os.path.expanduser("~"))
-    if not self.folderName:
-      return
-    self.headEmbedded = 0
-    self.justExtractParams = int(justExtractParams)
-    self.noValidationVideo = int(noValidationVideo)
-    self.sbatchMode        = int(sbatchMode)
-    self.testMode = False
-    self.findMultipleROIs = 0
-    self.askCoordinatesForAll = 1
-    self.show_frame("ConfigFilePromp")
+  ZZkwargs = {'justExtractParams': justExtractParams, 'noValidationVideo': noValidationVideo, 'sbatchMode': sbatchMode}
+  _showVideoSelectionPage(ZZkwargs)
+
 
 def chooseFolderForTailExtremityHE(self):
-    self.folderName =  QFileDialog.getExistingDirectory(self.window, 'Select folder', os.path.expanduser("~"))
-    if not self.folderName:
-      return
-    self.sbatchMode = 0
-    self.headEmbedded = 1
-    self.justExtractParams = 0
-    self.noValidationVideo = 0
-    self.testMode = False
-    self.findMultipleROIs = 0
-    self.askCoordinatesForAll = 1
-    self.show_frame("ConfigFilePromp")
+  ZZkwargs = {'headEmbedded': True}
+  _showVideoSelectionPage(ZZkwargs)
+
 
 def chooseFolderForMultipleROIs(self, askCoordinatesForAll):
-    self.folderName =  QFileDialog.getExistingDirectory(self.window, 'Select folder', os.path.expanduser("~"))
-    if not self.folderName:
-      return
-    self.sbatchMode = 0
-    self.headEmbedded = 0
-    self.justExtractParams = 0
-    self.noValidationVideo = 0
-    self.testMode = False
-    self.findMultipleROIs = 1
-    self.askCoordinatesForAll = askCoordinatesForAll
-    self.show_frame("ConfigFilePromp")
+  ZZkwargs = {'findMultipleROIs': True, 'askCoordinatesForAll': askCoordinatesForAll}
+  _showVideoSelectionPage(ZZkwargs)
 
-def chooseConfigFile(self):
 
-  self.configFileName, _ = QFileDialog.getOpenFileName(self.window, 'Select file', paths.getConfigurationFolder(), "JSON (*.json)")
-  if not self.configFileName:
+def chooseConfigFile(ZZargs, ZZkwargs):
+  app = QApplication.instance()
+  configFileName, _ = QFileDialog.getOpenFileName(app.window, 'Select file', paths.getConfigurationFolder(), "JSON (*.json)")
+  if not configFileName:
     return
-  if len(self.folderName) or globalVariables["mac"] or globalVariables["lin"]:
-    self.show_frame("Patience")
+  ZZargs += ([configFileName],)
+  if globalVariables["mac"] or globalVariables["lin"]:
+    app.show_frame("Patience")
+    app.window.centralWidget().layout().currentWidget().setArgs(ZZargs, ZZkwargs)
   else:
-    self.launchZebraZoom()
-
-def findAllFilesRecursivelyInDirectories(folderName):
-  extensions = {'.264', '.3g2', '.3gp', '.3gp2', '.3gpp', '.3gpp2', '.3mm', '.3p2', '.60d', '.787', '.89', '.aaf', '.aec', '.aep', '.aepx', '.aet', '.aetx', '.ajp', '.ale', '.am', '.amc', '.amv', '.amx', '.anim', '.aqt', '.arcut', '.arf', '.asf', '.asx', '.avb', '.avc', '.avd', '.avi', '.avp', '.avs', '.avs', '.avv', '.axm', '.bdm', '.bdmv', '.bdt2', '.bdt3', '.bik', '.bix', '.bmk', '.bnp', '.box', '.bs4', '.bsf', '.bvr', '.byu', '.camproj', '.camrec', '.camv', '.ced', '.cel', '.cine', '.cip', '.clpi', '.cmmp', '.cmmtpl', '.cmproj', '.cmrec', '.cpi', '.cst', '.cvc', '.cx3', '.d2v', '.d3v', '.dat', '.dav', '.dce', '.dck', '.dcr', '.dcr', '.ddat', '.dif', '.dir', '.divx', '.dlx', '.dmb', '.dmsd', '.dmsd3d', '.dmsm', '.dmsm3d', '.dmss', '.dmx', '.dnc', '.dpa', '.dpg', '.dream', '.dsy', '.dv', '.dv-avi', '.dv4', '.dvdmedia', '.dvr', '.dvr-ms', '.dvx', '.dxr', '.dzm', '.dzp', '.dzt', '.edl', '.evo', '.eye', '.ezt', '.f4p', '.f4v', '.fbr', '.fbr', '.fbz', '.fcp', '.fcproject', '.ffd', '.flc', '.flh', '.fli', '.flv', '.flx', '.gfp', '.gl', '.gom', '.grasp', '.gts', '.gvi', '.gvp', '.h264', '.hdmov', '.hkm', '.ifo', '.imovieproj', '.imovieproject', '.ircp', '.irf', '.ism', '.ismc', '.ismv', '.iva', '.ivf', '.ivr', '.ivs', '.izz', '.izzy', '.jss', '.jts', '.jtv', '.k3g', '.kmv', '.ktn', '.lrec', '.lsf', '.lsx', '.m15', '.m1pg', '.m1v', '.m21', '.m21', '.m2a', '.m2p', '.m2t', '.m2ts', '.m2v', '.m4e', '.m4u', '.m4v', '.m75', '.mani', '.meta', '.mgv', '.mj2', '.mjp', '.mjpg', '.mk3d', '.mkv', '.mmv', '.mnv', '.mob', '.mod', '.modd', '.moff', '.moi', '.moov', '.mov', '.movie', '.mp21', '.mp21', '.mp2v', '.mp4', '.mp4v', '.mpe', '.mpeg', '.mpeg1', '.mpeg4', '.mpf', '.mpg', '.mpg2', '.mpgindex', '.mpl', '.mpl', '.mpls', '.mpsub', '.mpv', '.mpv2', '.mqv', '.msdvd', '.mse', '.msh', '.mswmm', '.mts', '.mtv', '.mvb', '.mvc', '.mvd', '.mve', '.mvex', '.mvp', '.mvp', '.mvy', '.mxf', '.mxv', '.mys', '.ncor', '.nsv', '.nut', '.nuv', '.nvc', '.ogm', '.ogv', '.ogx', '.osp', '.otrkey', '.pac', '.par', '.pds', '.pgi', '.photoshow', '.piv', '.pjs', '.playlist', '.plproj', '.pmf', '.pmv', '.pns', '.ppj', '.prel', '.pro', '.prproj', '.prtl', '.psb', '.psh', '.pssd', '.pva', '.pvr', '.pxv', '.qt', '.qtch', '.qtindex', '.qtl', '.qtm', '.qtz', '.r3d', '.rcd', '.rcproject', '.rdb', '.rec', '.rm', '.rmd', '.rmd', '.rmp', '.rms', '.rmv', '.rmvb', '.roq', '.rp', '.rsx', '.rts', '.rts', '.rum', '.rv', '.rvid', '.rvl', '.sbk', '.sbt', '.scc', '.scm', '.scm', '.scn', '.screenflow', '.sec', '.sedprj', '.seq', '.sfd', '.sfvidcap', '.siv', '.smi', '.smi', '.smil', '.smk', '.sml', '.smv', '.spl', '.sqz', '.srt', '.ssf', '.ssm', '.stl', '.str', '.stx', '.svi', '.swf', '.swi', '.swt', '.tda3mt', '.tdx', '.thp', '.tivo', '.tix', '.tod', '.tp', '.tp0', '.tpd', '.tpr', '.trp', '.ts', '.tsp', '.ttxt', '.tvs', '.usf', '.usm', '.vc1', '.vcpf', '.vcr', '.vcv', '.vdo', '.vdr', '.vdx', '.veg','.vem', '.vep', '.vf', '.vft', '.vfw', '.vfz', '.vgz', '.vid', '.video', '.viewlet', '.viv', '.vivo', '.vlab', '.vob', '.vp3', '.vp6', '.vp7', '.vpj', '.vro', '.vs4', '.vse', '.vsp', '.w32', '.wcp', '.webm', '.wlmp', '.wm', '.wmd', '.wmmp', '.wmv', '.wmx', '.wot', '.wp3', '.wpl', '.wtv', '.wve', '.wvx', '.xej', '.xel', '.xesc', '.xfl', '.xlmv', '.xmv', '.xvid', '.y4m', '.yog', '.yuv', '.zeg', '.zm1', '.zm2', '.zm3', '.zmv'}
-  for name in os.listdir(folderName):
-    if os.path.isdir(os.path.join(folderName, name)):
-      yield from findAllFilesRecursivelyInDirectories(os.path.join(folderName, name))
-    else:
-      if len(name) > 3:
-        ext = os.path.splitext(name)[1]
-        if ext in extensions:
-            yield os.path.join(folderName, name)
+    launchZebraZoom(*ZZargs, **ZZkwargs)
 
 
-def launchZebraZoom(self):
-  if self.testMode:
-    with open(self.configFileName) as f:
-      self.configFile = json.load(f)
-    self.videoToCreateConfigFileFor = self.videoName
-    self.testConfig(addToHistory=False)
-    self.headEmbedded      = 0
-    self.justExtractParams = 0
-    self.noValidationVideo = 0
-    self.testMode         = False
-    self.findMultipleROIs  = 0
-    self.configFileName = None
-    self.videoName = None
+def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, justExtractParams=False, noValidationVideo=False, testMode=False,
+                    findMultipleROIs=False, askCoordinatesForAll=True, firstFrame=None, lastFrame=None, backgroundExtractionForceUseAllVideoFrames=None):
+  app = QApplication.instance()
+
+  if testMode:
+    with open(configs[0]) as f:
+      app.configFile = json.load(f)
+    videoToCreateConfigFileFor = videos[0]
+    app.testConfig(addToHistory=False)
     return
 
-  last = 0
-  allVideos = []
-
-  if self.sbatchMode:
+  if sbatchMode:
     commandsFile = open(os.path.join(paths.getRootDataFolder(), "commands.txt"), "w", newline='\n')
     nbVideosToLaunch = 0
 
-  if len(self.folderName):
-    if self.askCoordinatesForAll:
-      allVideos = list(findAllFilesRecursivelyInDirectories(self.folderName))
-    else:
-      videosGenerator = findAllFilesRecursivelyInDirectories(self.folderName)
-      allVideos = [next(videosGenerator)]
-
+  if len(videos) > 1:
+    if not askCoordinatesForAll:
+      videosGenerator = iter(videos)
+      videos = [next(videosGenerator)]
   else:
-    if (os.path.exists(self.videoName + 'HP.csv') or os.path.exists(self.videoName + '.csv')) and \
-        QMessageBox.question(self.window, "Previously stored coordinates found", "Do you want to use the previously stored coordinates?",
+    videoPath = videos[0]
+    if (os.path.exists(videoPath + 'HP.csv') or os.path.exists(videoPath + '.csv')) and \
+        QMessageBox.question(app.window, "Previously stored coordinates found", "Do you want to use the previously stored coordinates?",
                              defaultButton=QMessageBox.StandardButton.Yes) != QMessageBox.StandardButton.Yes:
-      if os.path.exists(self.videoName + 'HP.csv'):
-        os.remove(self.videoName + 'HP.csv')
-      if os.path.exists(self.videoName + '.csv'):
-        os.remove(self.videoName + '.csv')
-    allVideos = [self.videoName]
+      if os.path.exists(videoPath + 'HP.csv'):
+        os.remove(videoPath + 'HP.csv')
+      if os.path.exists(videoPath + '.csv'):
+        os.remove(videoPath + '.csv')
 
-  print("allVideos:", allVideos)
+  print("allVideos:", videos)
 
-  for idx, text in enumerate(allVideos):
+  for idx, (videoPath, config) in enumerate(zip(videos, configs)):
 
-    path        = os.path.split(text)[0]
-    nameWithExt = os.path.split(text)[1]
+    path        = os.path.dirname(videoPath)
+    nameWithExt = os.path.basename(videoPath)
     name        = os.path.splitext(nameWithExt)[0]
     videoExt    = os.path.splitext(nameWithExt)[1][1:]
 
-    if self.headEmbedded == 0:
-      if len(allVideos) == 1:
-        tabParams = ["mainZZ", path, name, videoExt, self.configFileName, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1, "outputFolder", self.ZZoutputLocation]
+    if not headEmbedded:
+      if len(videos) == 1:
+        tabParams = ["mainZZ", path, name, videoExt, config, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1, "outputFolder", app.ZZoutputLocation]
       else:
-        tabParams = ["mainZZ", path, name, videoExt, self.configFileName, "freqAlgoPosFollow", 100, "outputFolder", self.ZZoutputLocation]
-      if hasattr(self, "backgroundExtractionForceUseAllVideoFrames"):
-        tabParams.extend(["backgroundExtractionForceUseAllVideoFrames", self.backgroundExtractionForceUseAllVideoFrames])
-      if hasattr(self, "firstFrame"):
-        tabParams.extend(["firstFrame", self.firstFrame])
-      if hasattr(self, "lastFrame"):
-        tabParams.extend(["lastFrame", self.lastFrame])
-      if self.justExtractParams == 1:
+        tabParams = ["mainZZ", path, name, videoExt, config, "freqAlgoPosFollow", 100, "outputFolder", app.ZZoutputLocation]
+      if backgroundExtractionForceUseAllVideoFrames is not None:
+        tabParams.extend(["backgroundExtractionForceUseAllVideoFrames", int(backgroundExtractionForceUseAllVideoFrames)])
+      if firstFrame is not None:
+        tabParams.extend(["firstFrame", firstFrame])
+      if lastFrame is not None:
+        tabParams.extend(["lastFrame", lastFrame])
+      if justExtractParams:
         tabParams = tabParams + ["reloadWellPositions", 1, "reloadBackground", 1, "debugPauseBetweenTrackAndParamExtract", "justExtractParamFromPreviousTrackData"]
-      if self.noValidationVideo == 1:
+      if noValidationVideo:
           tabParams = tabParams + ["createValidationVideo", 0]
-      if self.findMultipleROIs == 1:
+      if findMultipleROIs:
         tabParams = tabParams + ["exitAfterWellsDetection", 1, "saveWellPositionsToBeReloadedNoMatterWhat", 1]
       try:
-        if self.sbatchMode:
+        if sbatchMode:
           commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]).replace('\\', '/').replace('//lexport/iss02.', '/network/lustre/iss02/') + ' configFile.json\n')
           nbVideosToLaunch = nbVideosToLaunch + 1
         else:
-          mainZZ(path, name, videoExt, self.configFileName, tabParams)
+          mainZZ(path, name, videoExt, config, tabParams)
       except ValueError:
         print("moving on to the next video for ROIs identification")
       except NameError:
-        self.show_frame("Error")
+        app.show_frame("Error")
         return
     else:
-      tabParams = ["outputFolder", self.ZZoutputLocation]
-      if hasattr(self, "backgroundExtractionForceUseAllVideoFrames"):
-        tabParams.extend(["backgroundExtractionForceUseAllVideoFrames", self.backgroundExtractionForceUseAllVideoFrames])
-      if hasattr(self, "firstFrame"):
-        tabParams.extend(["firstFrame", self.firstFrame])
-      if hasattr(self, "lastFrame"):
-        tabParams.extend(["lastFrame", self.lastFrame])
-      getTailExtremityFirstFrame(path, name, videoExt, self.configFileName, tabParams)
+      tabParams = ["outputFolder", app.ZZoutputLocation]
+      if backgroundExtractionForceUseAllVideoFrames is not None:
+        tabParams.extend(["backgroundExtractionForceUseAllVideoFrames", int(backgroundExtractionForceUseAllVideoFrames)])
+      if firstFrame is not None:
+        tabParams.extend(["firstFrame", firstFrame])
+      if lastFrame is not None:
+        tabParams.extend(["lastFrame", lastFrame])
+      getTailExtremityFirstFrame(path, name, videoExt, config, tabParams)
 
-  if self.findMultipleROIs and not self.askCoordinatesForAll:
-    coordinatesFile = os.path.join(self.ZZoutputLocation, os.path.splitext(os.path.basename(allVideos[0]))[0], 'intermediaryWellPositionReloadNoMatterWhat.txt')
+  if findMultipleROIs and not askCoordinatesForAll:
+    coordinatesFile = os.path.join(app.ZZoutputLocation, os.path.splitext(os.path.basename(videos[0]))[0], 'intermediaryWellPositionReloadNoMatterWhat.txt')
     for video in videosGenerator:
-      folderPath = os.path.join(self.ZZoutputLocation, os.path.splitext(os.path.basename(video))[0])
+      folderPath = os.path.join(app.ZZoutputLocation, os.path.splitext(os.path.basename(video))[0])
       if not os.path.exists(folderPath):
         os.makedirs(folderPath)
       shutil.copy2(coordinatesFile, os.path.join(folderPath, 'intermediaryWellPositionReloadNoMatterWhat.txt'))
       shutil.copy2(coordinatesFile, os.path.join(folderPath, 'configUsed.json'))
 
-  self.headEmbedded      = 0
-  self.justExtractParams = 0
-  self.noValidationVideo = 0
-  self.testMode         = False
-  self.findMultipleROIs  = 0
-  self.askCoordinatesForAll = 1
-  if hasattr(self, "backgroundExtractionForceUseAllVideoFrames"):
-    del self.backgroundExtractionForceUseAllVideoFrames
-  if hasattr(self, "firstFrame"):
-    del self.firstFrame
-  if hasattr(self, "lastFrame"):
-    del self.lastFrame
-
-  if self.sbatchMode:
+  if sbatchMode:
 
     commandsFile.close()
 
-    with open(self.configFileName) as f:
+    with open(configs[0]) as f:
       jsonFile = json.load(f)
     nbWells = jsonFile["nbWells"]
     if nbWells > 24:
@@ -261,13 +315,13 @@ def launchZebraZoom(self):
     launchFile.writelines(linesToWrite)
     launchFile.close()
 
-    shutil.copy(self.configFileName, os.path.join(paths.getRootDataFolder(), 'configFile.json'))
+    shutil.copy(configs[0], os.path.join(paths.getRootDataFolder(), 'configFile.json'))
 
-    self.show_frame("ZZoutroSbatch")
+    app.show_frame("ZZoutroSbatch")
 
   else:
 
-    self.show_frame("ZZoutro")
+    app.show_frame("ZZoutro")
 
 
 def openConfigurationFileFolder(self, homeDirectory):
