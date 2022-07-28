@@ -24,6 +24,7 @@ import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 from zebrazoom.code.readValidationVideo import readValidationVideo
 from zebrazoom.code.checkConsistencyOfParameters import checkConsistencyOfParameters
+from zebrazoom.code.GUI.GUI_InitialFunctions import chooseConfigFile, launchZebraZoom
 
 LARGE_FONT= QFont("Verdana", 12)
 
@@ -320,7 +321,7 @@ class SeveralVideos(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Run ZebraZoom on several videos", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
-        button1 = util.apply_style(QPushButton("Run ZebraZoom on an entire folder", self), background_color=util.LIGHT_YELLOW)
+        button1 = util.apply_style(QPushButton("Run ZebraZoom on several videos", self), background_color=util.LIGHT_YELLOW)
         button1.clicked.connect(lambda: controller.show_frame("FolderToAnalyze"))
         layout.addWidget(button1, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -403,9 +404,8 @@ class FolderToAnalyze(QWidget):
         self.controller = controller
 
         layout = QVBoxLayout()
-        layout.addWidget(util.apply_style(QLabel("Choose folder.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QLabel("Look for the folder you want to analyze.", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        button = util.apply_style(QPushButton("Choose folder", self), background_color=util.LIGHT_YELLOW)
+        layout.addWidget(util.apply_style(QLabel("Run ZebraZoom on several videos", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+        button = util.apply_style(QPushButton("Choose videos", self), background_color=util.LIGHT_YELLOW)
         button.clicked.connect(lambda: controller.chooseFolderToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), expert_checkbox.isChecked()))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -433,9 +433,8 @@ class TailExtremityHE(QWidget):
         self.controller = controller
 
         layout = QVBoxLayout()
-        layout.addWidget(util.apply_style(QLabel("Choose folder.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QLabel("Look for the folder of videos where you want to manually label tail extremities.", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        button = util.apply_style(QPushButton("Choose folder", self), background_color=util.LIGHT_YELLOW)
+        layout.addWidget(util.apply_style(QLabel("Manually label tail extremities", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+        button = util.apply_style(QPushButton("Choose videos", self), background_color=util.LIGHT_YELLOW)
         button.clicked.connect(controller.chooseFolderForTailExtremityHE)
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -452,9 +451,8 @@ class FolderMultipleROIInitialSelect(QWidget):
         self.controller = controller
 
         layout = QVBoxLayout()
-        layout.addWidget(util.apply_style(QLabel("Choose folder.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QLabel("Select the folder of videos for which you want to define the regions of interest.", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        button = util.apply_style(QPushButton("Choose folder", self), background_color=util.LIGHT_YELLOW)
+        layout.addWidget(util.apply_style(QLabel("Define regions of interest", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+        button = util.apply_style(QPushButton("Choose videos", self), background_color=util.LIGHT_YELLOW)
         button.clicked.connect(lambda: controller.chooseFolderForMultipleROIs(not sameCoordinatesForAllCheckbox.isChecked()))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
         sameCoordinatesForAllCheckbox = QCheckBox("Use the same coordinates for all videos")
@@ -472,11 +470,13 @@ class ConfigFilePromp(QWidget):
         super().__init__(controller.window)
         self.controller = controller
         self.preferredSize = (300, 300)
+        self._ZZargs = ()
+        self._ZZkwargs = {}
 
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Choose configuration file.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
         button = util.apply_style(QPushButton("Choose file", self), background_color=util.LIGHT_YELLOW)
-        button.clicked.connect(lambda: controller.chooseConfigFile())
+        button.clicked.connect(lambda: chooseConfigFile(self._ZZargs, self._ZZkwargs))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
         start_page_btn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
         start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))
@@ -484,20 +484,30 @@ class ConfigFilePromp(QWidget):
 
         self.setLayout(layout)
 
+    def setArgs(self, args, kwargs):
+        self._ZZargs = args
+        self._ZZkwargs = kwargs
+
 
 class Patience(QWidget):
     def __init__(self, controller):
         super().__init__(controller.window)
         self.controller = controller
         self.preferredSize = (300, 100)
+        self._ZZargs = ()
+        self._ZZkwargs = {}
 
         layout = QVBoxLayout()
         button = util.apply_style(QPushButton("Launch ZebraZoom on your video(s)", self), background_color=util.LIGHT_YELLOW)
-        button.clicked.connect(lambda: controller.launchZebraZoom())
+        button.clicked.connect(lambda: launchZebraZoom(*self._ZZargs, **self._ZZkwargs))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("After clicking on the button above, please wait for ZebraZoom to run, you can look at the console outside of the GUI to check on the progress of ZebraZoom.", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
         self.setLayout(layout)
+
+    def setArgs(self, args, kwargs):
+        self._ZZargs = args
+        self._ZZkwargs = kwargs
 
 
 class ZZoutro(QWidget):
