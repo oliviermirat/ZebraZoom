@@ -10,7 +10,7 @@ def getBackground(videoPath, hyperparameters):
   max_l = int(cap.get(7))
 
   backCalculationStep = hyperparameters["backCalculationStep"]
-  if ("firstFrameForBackExtract" in hyperparameters) and ("lastFrameForBackExtract" in hyperparameters):
+  if ("firstFrameForBackExtract" in hyperparameters) and ("lastFrameForBackExtract" in hyperparameters) and hyperparameters["firstFrameForBackExtract"] != -1 and hyperparameters["lastFrameForBackExtract"] != -1:
     firstFrame = hyperparameters["firstFrameForBackExtract"]
     lastFrame  = hyperparameters["lastFrameForBackExtract"]
   else:
