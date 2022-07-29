@@ -22,6 +22,9 @@ from PyQt5.QtWidgets import QApplication
 
 def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack):
   
+  firstFrameIndex = self.configFile["firstFrame"] if "firstFrame" in self.configFile else -1
+  lastFrameIndex  = self.configFile["lastFrame"]  if "lastFrame"  in self.configFile else -1
+  
   videoPath = self.videoToCreateConfigFileFor
   
   for m in re.finditer('/', videoPath):
@@ -66,11 +69,11 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
     pixelsChange[wellNumberId] = np.sum(abs(firstFrameROI-lastFrameROI)) / np.sum(abs(firstFrameROI)) if np.sum(abs(firstFrameROI)) else 0
   wellNumber = np.argmax(pixelsChange)
   
-  backCalculationStep = int(max_l / nbOfImagesToManuallyClassify)
+  backCalculationStep = int(max_l / nbOfImagesToManuallyClassify) if (firstFrameIndex == -1 or lastFrameIndex == -1) else int((lastFrameIndex - firstFrameIndex + 1) / nbOfImagesToManuallyClassify)
   data = [None] * ((max_l - 1) // backCalculationStep + 1)
   
-  k = 0
-  while k < max_l:
+  k = firstFrameIndex if firstFrameIndex != -1 else 0
+  while k < (lastFrameIndex if lastFrameIndex != -1 else max_l):
       
     cap.set(1, k)
     ret, frame = cap.read()
@@ -161,6 +164,8 @@ def evaluateMinPixelDiffForBackExtractForCenterOfMassTracking(videoPath, backgro
   return tailTipDistError
 
 def findBestBackgroundSubstractionParameterForEachImage(data, videoPath, background, wellPositions, hyperparameters, videoName, zebrafishToTrack):
+  
+  data = [i for i in data if i]
   
   for image in data:
     

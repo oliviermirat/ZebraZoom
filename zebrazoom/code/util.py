@@ -611,6 +611,7 @@ def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBt
   chooseFrameBtn = QPushButton(chooseFrameBtnText)
   def chooseFrameBtnClicked():
     app.configFile["firstFrame"] = valueWidget.value()
+    app.configFile["firstFrameForBackExtract"] = valueWidget.value()
     chooseFrameBtnCb()
   chooseFrameBtn.clicked.connect(chooseFrameBtnClicked)
   buttonsLayout.addWidget(chooseFrameBtn)
@@ -663,6 +664,7 @@ def chooseEndPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb):
   chooseFrameBtn = QPushButton(chooseFrameBtnText)
   def chooseFrameBtnClicked():
     app.configFile["lastFrame"] = valueWidget.value()
+    app.configFile["lastFrameForBackExtract"] = valueWidget.value()
     chooseFrameBtnCb()
   chooseFrameBtn.clicked.connect(chooseFrameBtnClicked)
   buttonsLayout.addWidget(chooseFrameBtn)

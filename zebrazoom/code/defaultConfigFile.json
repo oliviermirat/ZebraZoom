@@ -110,6 +110,8 @@
   "checkThatMovementOccurInVideo" : 0,
   "checkThatMovementOccurInVideoMedianFilterWindow" : 11,
   "setBackgroundToImageMedian" : 0,
+  "firstFrameForBackExtract" : -1,
+  "lastFrameForBackExtract"  : -1,
   
   "findContourPrecision" : "CHAIN_APPROX_SIMPLE",
   
