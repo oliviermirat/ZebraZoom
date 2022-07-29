@@ -278,10 +278,12 @@ class ZebraZoomApp(PlainApplication):
           return
         # Ideally would like to remove these four lines below, once the problem with wrong 'firstFrame' and 'lastFrame' being saved in the configuration file is solved
         if "lastFrame" in self.configFile:
-          del self.configFile["lastFrame"]
+          # del self.configFile["lastFrame"]
+          self.configFile["lastFrameForBackExtract"] = self.configFile["lastFrame"]
         if "firstFrame" in self.configFile:
-          del self.configFile["firstFrame"]
-
+          # del self.configFile["firstFrame"]
+          self.configFile["firstFrameForBackExtract"] = self.configFile["firstFrame"]
+        
         with open(reference, 'w') as outfile:
           json.dump(self.configFile, outfile)
 

@@ -458,6 +458,9 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["invertColorsForHeadEmbeddedEyeTracking"] = getConfig(config, "invertColorsForHeadEmbeddedEyeTracking", videoPath)
   hyperparameters["improveContrastForEyeDetectionOfHeadEmbedded"] = getConfig(config, "improveContrastForEyeDetectionOfHeadEmbedded", videoPath)
   
+  hyperparameters["firstFrameForBackExtract"] = getConfig(config, "firstFrameForBackExtract", videoPath)
+  hyperparameters["lastFrameForBackExtract"]  = getConfig(config, "lastFrameForBackExtract", videoPath)
+  
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1
   
