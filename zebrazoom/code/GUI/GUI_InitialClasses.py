@@ -531,9 +531,9 @@ class ZZoutroSbatch(QWidget):
         self.controller = controller
 
         layout = QVBoxLayout()
-        layout.addWidget(QLabel("Three files have been generated in the folder %s:" % paths.getRootDataFolder(), self), alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QLabel("launchZZ.sh, commands.txt, configFile.json", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QLabel("Place these three files on your server and type: 'sbatch launchZZ.sh' to launch the analysis on all videos in parallel", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("Two files and one folder have been generated in the folder %s:" % paths.getRootDataFolder(), self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("launchZZ.sh, commands.txt and configFiles", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(QLabel("Place these two files and the folder on your server and type: 'sbatch launchZZ.sh' to launch the analysis on all videos in parallel", self), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("Before launching the parrallel tracking with sbatch, you may need to type: 'chmod +x launchZZ.sh'", self), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("You can follow the progress with the commands 'squeueme' and by looking into the slurm* file being generated with 'cat slurm*'", self), alignment=Qt.AlignmentFlag.AlignCenter)
 

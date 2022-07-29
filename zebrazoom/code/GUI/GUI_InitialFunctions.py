@@ -250,7 +250,7 @@ def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, justE
         tabParams = tabParams + ["exitAfterWellsDetection", 1, "saveWellPositionsToBeReloadedNoMatterWhat", 1]
       try:
         if sbatchMode:
-          commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]).replace('\\', '/').replace('//lexport/iss02.', '/network/lustre/iss02/') + ' configFile.json\n')
+          commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]).replace('\\', '/').replace('//lexport/iss02.', '/network/lustre/iss02/') + ' configFiles/%s\n' % os.path.basename(config))
           nbVideosToLaunch = nbVideosToLaunch + 1
         else:
           mainZZ(path, name, videoExt, config, tabParams)
@@ -315,7 +315,12 @@ def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, justE
     launchFile.writelines(linesToWrite)
     launchFile.close()
 
-    shutil.copy(configs[0], os.path.join(paths.getRootDataFolder(), 'configFile.json'))
+    configsFolder = os.path.join(paths.getRootDataFolder(), 'configFiles')
+    if os.path.exists(configsFolder):
+      shutil.rmtree(configsFolder)
+    os.makedirs(configsFolder)
+    for config in configs:
+      shutil.copy2(config, configsFolder)
 
     app.show_frame("ZZoutroSbatch")
 
