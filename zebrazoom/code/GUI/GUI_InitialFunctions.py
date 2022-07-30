@@ -17,7 +17,7 @@ import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 
 from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QSortFilterProxyModel
-from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QFileDialog, QHBoxLayout, QHeaderView, QLabel, QListView, QMessageBox, QPushButton, QTableView, QTreeView, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QFileDialog, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView, QMessageBox, QPushButton, QTableView, QTreeView, QVBoxLayout, QWidget
 
 
 LARGE_FONT= ("Verdana", 12)
@@ -148,6 +148,20 @@ class _VideoSelectionPage(QWidget):
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Select videos and corresponding config files"), font=app.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
+    if ZZkwargs.get('sbatchMode', False):
+      replaceLayout = QHBoxLayout()
+      replaceLayout.addWidget(QLabel('Replace'), alignment=Qt.AlignmentFlag.AlignCenter)
+      self._originalLineEdit = QLineEdit()
+      self._originalLineEdit.setText('//l2export/iss02.')
+      replaceLayout.addWidget(self._originalLineEdit, alignment=Qt.AlignmentFlag.AlignCenter)
+      replaceLayout.addWidget(QLabel('with'), alignment=Qt.AlignmentFlag.AlignCenter)
+      self._replaceLineEdit = QLineEdit()
+      self._replaceLineEdit.setText('/network/lustre/iss02/')
+      replaceLayout.addWidget(self._replaceLineEdit, alignment=Qt.AlignmentFlag.AlignCenter)
+      replaceLayout.addWidget(QLabel('in all paths'), alignment=Qt.AlignmentFlag.AlignCenter)
+      replaceLayout.addStretch()
+      layout.addLayout(replaceLayout)
+
     self._table = QTableView()
     self._table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
     self._table.setModel(_VideosModel())
@@ -202,8 +216,11 @@ class _VideoSelectionPage(QWidget):
 
   def _runTracking(self):
     app = QApplication.instance()
+    videos, configs = self._table.model().getData()
+    if self._ZZkwargs.get('sbatchMode', False):
+      videos = [video.replace(self._originalLineEdit.text(), self._replaceLineEdit.text()) for video in videos]
     app.show_frame("Patience")
-    app.window.centralWidget().layout().currentWidget().setArgs(self._table.model().getData(), self._ZZkwargs)
+    app.window.centralWidget().layout().currentWidget().setArgs((videos, configs), self._ZZkwargs)
 
 
 def _showVideoSelectionPage(ZZkwargs):
@@ -303,7 +320,7 @@ def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, justE
         tabParams = tabParams + ["exitAfterWellsDetection", 1, "saveWellPositionsToBeReloadedNoMatterWhat", 1]
       try:
         if sbatchMode:
-          commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]).replace('\\', '/').replace('//lexport/iss02.', '/network/lustre/iss02/') + ' configFiles/%s\n' % os.path.basename(config))
+          commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]) + ' configFiles/%s\n' % os.path.basename(config))
           nbVideosToLaunch = nbVideosToLaunch + 1
         else:
           mainZZ(path, name, videoExt, config, tabParams)
