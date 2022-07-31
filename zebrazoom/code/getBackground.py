@@ -31,6 +31,26 @@ def getBackground(videoPath, hyperparameters):
       backCalculationStep = 1
   
   ret, back = cap.read()
+  
+  if hyperparameters["useFirstFrameAsBackground"]:
+    if hyperparameters["invertBlackWhiteOnImages"]:
+      back = 255 - back
+    back = cv2.cvtColor(back, cv2.COLOR_BGR2GRAY)
+    if hyperparameters["backgroundPreProcessMethod"]:
+      back = preprocessBackgroundImage(back, hyperparameters)
+    if debugExtractBack:
+      from PyQt5.QtCore import Qt
+      from PyQt5.QtWidgets import QLabel, QVBoxLayout
+      import zebrazoom.code.util as util
+      label = QLabel()
+      label.setMinimumSize(1, 1)
+      layout = QVBoxLayout()
+      layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
+      timeout = 3000 if hyperparameters["exitAfterBackgroundExtraction"] else None
+      util.showDialog(layout, title="Background Extracted", labelInfo=(back, label), timeout=timeout)
+    cap.release()
+    return back
+  
   if ret and hyperparameters["invertBlackWhiteOnImages"]:
     back = 255 - back
   back = cv2.cvtColor(back, cv2.COLOR_BGR2GRAY)

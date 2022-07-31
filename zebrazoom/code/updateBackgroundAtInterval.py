@@ -20,14 +20,14 @@ def updateBackgroundAtInterval(i, hyperparameters, background, wellPositions, we
     xmax = int(xmax + dist) if xmax + dist < len(frame[0]) else len(frame[0]) - 1
     ymin = int(ymin - dist) if ymin - dist >= 0 else 0
     ymax = int(ymax + dist) if ymax + dist < len(frame) else len(frame) - 1
-    if xmin != 0 and xmax != 0 and ymin != 0 and ymax != 0 and np.sum(xvalues[1:]) != 0 and np.sum(yvalues[1:]) != 0:
+    if xmin != xmax and ymin != ymax:
       partOfBackgroundToSave = background[wellPositions[wellNumber]["topLeftY"]+ymin:wellPositions[wellNumber]["topLeftY"]+ymax, wellPositions[wellNumber]["topLeftX"]+xmin:wellPositions[wellNumber]["topLeftX"]+xmax].copy() # copy ???
       if showImages and i > firstFrameToShow:
         util.showFrame(partOfBackgroundToSave, title='partOfBackgroundToSave')
     background[wellPositions[wellNumber]["topLeftY"]:wellPositions[wellNumber]["topLeftY"]+wellPositions[wellNumber]["lengthY"], wellPositions[wellNumber]["topLeftX"]:wellPositions[wellNumber]["topLeftX"]+wellPositions[wellNumber]["lengthX"]] = initialCurFrame.copy()
     if showImages and i > firstFrameToShow:
       util.showFrame(background, title='background middle')
-    if xmin != 0 and xmax != 0 and ymin != 0 and ymax != 0 and np.sum(xvalues[1:]) != 0 and np.sum(yvalues[1:]) != 0:
+    if xmin != xmax and ymin != ymax:
       background[wellPositions[wellNumber]["topLeftY"]+ymin:wellPositions[wellNumber]["topLeftY"]+ymax, wellPositions[wellNumber]["topLeftX"]+xmin:wellPositions[wellNumber]["topLeftX"]+xmax] = partOfBackgroundToSave
     if showImages and i > firstFrameToShow:
       util.showFrame(background, title='background after')

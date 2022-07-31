@@ -1,6 +1,7 @@
 import numpy as np
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+from zebrazoom.code.preprocessImage import preprocessImage
 import math
 import json
 import random
@@ -200,6 +201,9 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
         print("Validation video creation: frame:", l)
     
       ret, frame = cap.read()
+      
+      if hyperparameters["imagePreProcessMethod"]:
+        frame = preprocessImage(frame, hyperparameters)
       
       if ret:
         if hyperparameters["reduceImageResolutionPercentage"]:

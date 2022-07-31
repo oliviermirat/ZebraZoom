@@ -462,6 +462,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["lastFrameForBackExtract"]  = getConfig(config, "lastFrameForBackExtract", videoPath)
   hyperparameters["updateBackgroundAtInterval"]  = getConfig(config, "updateBackgroundAtInterval", videoPath)
   
+  hyperparameters["useFirstFrameAsBackground"]  = getConfig(config, "useFirstFrameAsBackground", videoPath)
+  
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1
   
