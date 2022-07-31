@@ -16,8 +16,8 @@ from zebrazoom.getTailExtremityFirstFrame import getTailExtremityFirstFrame
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 
-from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex
-from PyQt5.QtWidgets import QApplication, QCheckBox, QFileDialog, QHBoxLayout, QHeaderView, QLabel, QMessageBox, QPushButton, QTableView, QVBoxLayout, QWidget
+from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QSortFilterProxyModel
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QFileDialog, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView, QMessageBox, QPushButton, QTableView, QTreeView, QVBoxLayout, QWidget
 
 
 LARGE_FONT= ("Verdana", 12)
@@ -103,6 +103,41 @@ class _VideosModel(QAbstractTableModel):
     return self._videos, self._configs
 
 
+_VIDEO_EXTENSIONS = {'.264', '.3g2', '.3gp', '.3gp2', '.3gpp', '.3gpp2', '.3mm', '.3p2', '.60d', '.787', '.89', '.aaf', '.aec', '.aep', '.aepx', '.aet', '.aetx', '.ajp',
+                     '.ale', '.am', '.amc', '.amv', '.amx', '.anim', '.aqt', '.arcut', '.arf', '.asf', '.asx', '.avb', '.avc', '.avd', '.avi', '.avp', '.avs', '.avs',
+                     '.avv', '.axm', '.bdm', '.bdmv', '.bdt2', '.bdt3', '.bik', '.bix', '.bmk', '.bnp', '.box', '.bs4', '.bsf', '.bvr', '.byu', '.camproj', '.camrec',
+                     '.camv', '.ced', '.cel', '.cine', '.cip', '.clpi', '.cmmp', '.cmmtpl', '.cmproj', '.cmrec', '.cpi', '.cst', '.cvc', '.cx3', '.d2v', '.d3v', '.dat',
+                     '.dav', '.dce', '.dck', '.dcr', '.dcr', '.ddat', '.dif', '.dir', '.divx', '.dlx', '.dmb', '.dmsd', '.dmsd3d', '.dmsm', '.dmsm3d', '.dmss', '.dmx', '.dnc',
+                     '.dpa', '.dpg', '.dream', '.dsy', '.dv', '.dv-avi', '.dv4', '.dvdmedia', '.dvr', '.dvr-ms', '.dvx', '.dxr', '.dzm', '.dzp', '.dzt', '.edl', '.evo', '.eye',
+                     '.ezt', '.f4p', '.f4v', '.fbr', '.fbr', '.fbz', '.fcp', '.fcproject', '.ffd', '.flc', '.flh', '.fli', '.flv', '.flx', '.gfp', '.gl', '.gom', '.grasp',
+                     '.gts', '.gvi', '.gvp', '.h264', '.hdmov', '.hkm', '.ifo', '.imovieproj', '.imovieproject', '.ircp', '.irf', '.ism', '.ismc', '.ismv', '.iva', '.ivf',
+                     '.ivr', '.ivs', '.izz', '.izzy', '.jss', '.jts', '.jtv', '.k3g', '.kmv', '.ktn', '.lrec', '.lsf', '.lsx', '.m15', '.m1pg', '.m1v', '.m21', '.m21', '.m2a',
+                     '.m2p', '.m2t', '.m2ts', '.m2v', '.m4e', '.m4u', '.m4v', '.m75', '.mani', '.meta', '.mgv', '.mj2', '.mjp', '.mjpg', '.mk3d', '.mkv', '.mmv', '.mnv',
+                     '.mob', '.mod', '.modd', '.moff', '.moi', '.moov', '.mov', '.movie', '.mp21', '.mp21', '.mp2v', '.mp4', '.mp4v', '.mpe', '.mpeg', '.mpeg1', '.mpeg4',
+                     '.mpf', '.mpg', '.mpg2', '.mpgindex', '.mpl', '.mpl', '.mpls', '.mpsub', '.mpv', '.mpv2', '.mqv', '.msdvd', '.mse', '.msh', '.mswmm', '.mts', '.mtv',
+                     '.mvb', '.mvc', '.mvd', '.mve', '.mvex', '.mvp', '.mvp', '.mvy', '.mxf', '.mxv', '.mys', '.ncor', '.nsv', '.nut', '.nuv', '.nvc', '.ogm', '.ogv', '.ogx',
+                     '.osp', '.otrkey', '.pac', '.par', '.pds', '.pgi', '.photoshow', '.piv', '.pjs', '.playlist', '.plproj', '.pmf', '.pmv', '.pns', '.ppj', '.prel', '.pro',
+                     '.prproj', '.prtl', '.psb', '.psh', '.pssd', '.pva', '.pvr', '.pxv', '.qt', '.qtch', '.qtindex', '.qtl', '.qtm', '.qtz', '.r3d', '.rcd', '.rcproject',
+                     '.rdb', '.rec', '.rm', '.rmd', '.rmd', '.rmp', '.rms', '.rmv', '.rmvb', '.roq', '.rp', '.rsx', '.rts', '.rts', '.rum', '.rv', '.rvid', '.rvl', '.sbk',
+                     '.sbt', '.scc', '.scm', '.scm', '.scn', '.screenflow', '.sec', '.sedprj', '.seq', '.sfd', '.sfvidcap', '.siv', '.smi', '.smi', '.smil', '.smk', '.sml',
+                     '.smv', '.spl', '.sqz', '.srt', '.ssf', '.ssm', '.stl', '.str', '.stx', '.svi', '.swf', '.swi', '.swt', '.tda3mt', '.tdx', '.thp', '.tivo', '.tix',
+                     '.tod', '.tp', '.tp0', '.tpd', '.tpr', '.trp', '.ts', '.tsp', '.ttxt', '.tvs', '.usf', '.usm', '.vc1', '.vcpf', '.vcr', '.vcv', '.vdo', '.vdr', '.vdx',
+                     '.veg','.vem', '.vep', '.vf', '.vft', '.vfw', '.vfz', '.vgz', '.vid', '.video', '.viewlet', '.viv', '.vivo', '.vlab', '.vob', '.vp3', '.vp6', '.vp7',
+                     '.vpj', '.vro', '.vs4', '.vse', '.vsp', '.w32', '.wcp', '.webm', '.wlmp', '.wm', '.wmd', '.wmmp', '.wmv', '.wmx', '.wot', '.wp3', '.wpl', '.wtv', '.wve',
+                     '.wvx', '.xej', '.xel', '.xesc', '.xfl', '.xlmv', '.xmv', '.xvid', '.y4m', '.yog', '.yuv', '.zeg', '.zm1', '.zm2', '.zm3', '.zmv'}
+
+
+class _VideoFileFilterProxyModel(QSortFilterProxyModel):
+  def lessThan(self, left, right):
+    leftPath = self.sourceModel().filePath(left)
+    rightPath = self.sourceModel().filePath(right)
+    return (not os.path.isdir(leftPath), leftPath.casefold()) < (not os.path.isdir(rightPath), rightPath.casefold())
+
+  def filterAcceptsRow(self, sourceRow, sourceParent):
+    path = self.sourceModel().filePath(self.sourceModel().index(sourceRow, 0, sourceParent))
+    return os.path.isdir(path) or os.path.splitext(os.path.basename(path))[1] in _VIDEO_EXTENSIONS
+
+
 class _VideoSelectionPage(QWidget):
   def __init__(self, ZZkwargs):
     super().__init__()
@@ -113,6 +148,20 @@ class _VideoSelectionPage(QWidget):
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Select videos and corresponding config files"), font=app.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
+    if ZZkwargs.get('sbatchMode', False):
+      replaceLayout = QHBoxLayout()
+      replaceLayout.addWidget(QLabel('Replace'), alignment=Qt.AlignmentFlag.AlignCenter)
+      self._originalLineEdit = QLineEdit()
+      self._originalLineEdit.setText('//l2export/iss02.')
+      replaceLayout.addWidget(self._originalLineEdit, alignment=Qt.AlignmentFlag.AlignCenter)
+      replaceLayout.addWidget(QLabel('with'), alignment=Qt.AlignmentFlag.AlignCenter)
+      self._replaceLineEdit = QLineEdit()
+      self._replaceLineEdit.setText('/network/lustre/iss02/')
+      replaceLayout.addWidget(self._replaceLineEdit, alignment=Qt.AlignmentFlag.AlignCenter)
+      replaceLayout.addWidget(QLabel('in all paths'), alignment=Qt.AlignmentFlag.AlignCenter)
+      replaceLayout.addStretch()
+      layout.addLayout(replaceLayout)
+
     self._table = QTableView()
     self._table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
     self._table.setModel(_VideosModel())
@@ -120,7 +169,7 @@ class _VideoSelectionPage(QWidget):
     tableLayout = QVBoxLayout()
     tableButtonsLayout = QHBoxLayout()
     self._addVideosBtn = QPushButton("Add video(s)")
-    self._addVideosBtn.clicked.connect(lambda: self._table.model().addVideos(QFileDialog.getOpenFileNames(app.window, 'Select one or more videos', os.path.expanduser("~"))[0]))
+    self._addVideosBtn.clicked.connect(lambda: self._table.model().addVideos(self._getFilesAndFolders()))
     tableButtonsLayout.addWidget(self._addVideosBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     removeVideosBtn = QPushButton("Choose config for selected videos")
     removeVideosBtn.clicked.connect(lambda: self._table.model().setConfigs(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))),
@@ -147,10 +196,31 @@ class _VideoSelectionPage(QWidget):
 
     self.setLayout(layout)
 
+  def _getFilesAndFolders(self):
+    dialog = QFileDialog()
+    dialog.setWindowTitle('Select one or more video files or folders (use Ctrl or Shift key to select multiple)')
+    dialog.setDirectory(os.path.expanduser("~"))
+    dialog.setFileMode(QFileDialog.FileMode.Directory)
+    dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
+    dialog.setProxyModel(_VideoFileFilterProxyModel())
+    listView = dialog.findChild(QListView, 'listView')
+    if listView:
+      listView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+    treeView = dialog.findChild(QTreeView)
+    if treeView:
+      treeView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+
+    if not dialog.exec():
+      return None
+    return [os.path.normpath(p) for path in dialog.selectedFiles() for p in ((os.path.join(root, f) for root, _dirs, files in os.walk(path) for f in files if os.path.splitext(f)[1] in _VIDEO_EXTENSIONS) if os.path.isdir(path) else [path])]
+
   def _runTracking(self):
     app = QApplication.instance()
+    videos, configs = self._table.model().getData()
+    if self._ZZkwargs.get('sbatchMode', False):
+      videos = [video.replace(self._originalLineEdit.text(), self._replaceLineEdit.text()) for video in videos]
     app.show_frame("Patience")
-    app.window.centralWidget().layout().currentWidget().setArgs(self._table.model().getData(), self._ZZkwargs)
+    app.window.centralWidget().layout().currentWidget().setArgs((videos, configs), self._ZZkwargs)
 
 
 def _showVideoSelectionPage(ZZkwargs):
@@ -250,7 +320,7 @@ def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, justE
         tabParams = tabParams + ["exitAfterWellsDetection", 1, "saveWellPositionsToBeReloadedNoMatterWhat", 1]
       try:
         if sbatchMode:
-          commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]).replace('\\', '/').replace('//lexport/iss02.', '/network/lustre/iss02/') + ' configFiles/%s\n' % os.path.basename(config))
+          commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]) + ' configFiles/%s\n' % os.path.basename(config))
           nbVideosToLaunch = nbVideosToLaunch + 1
         else:
           mainZZ(path, name, videoExt, config, tabParams)
