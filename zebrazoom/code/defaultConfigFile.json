@@ -35,6 +35,7 @@
   "reloadBackground" : 0,
   "saveWellPositionsToBeReloadedNoMatterWhat" : 0,
   "backgroundExtractionForceUseAllVideoFrames" : 0,
+  "updateBackgroundAtInterval" : 0,
   "exitAfterBackgroundExtraction" : 0,
   "exitAfterWellsDetection" : 0,
   "fasterMultiprocessing" : 0,

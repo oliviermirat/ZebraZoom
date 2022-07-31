@@ -27,6 +27,8 @@ from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.centerOfMassTailT
 
 from zebrazoom.code.trackingFolder.trackingFunctions import addBlackLineToImgSetParameters
 
+from zebrazoom.code.updateBackgroundAtInterval import updateBackgroundAtInterval
+
 
 def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, videoName, dlModel=0):
   
@@ -173,10 +175,15 @@ def tracking(videoPath, background, wellNumber, wellPositions, hyperparameters, 
     [frame, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back, xHead, yHead] = getImages(hyperparameters, cap, videoPath, i, background, wellNumber, wellPositions, 0, trackingHeadTailAllAnimals)
     # Head tracking and heading calculation
     [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, i, blur, thresh1, thresh2, gray, hyperparameters["erodeSize"], frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, headPositionFirstFrame, wellPositions[wellNumber]["lengthX"], xHead, yHead)
+    
     # Tail tracking for frame i
     if hyperparameters["trackTail"] == 1 :
       for animalId in range(0, hyperparameters["nbAnimalsPerWell"]):
         [trackingHeadTailAllAnimals, trackingHeadingAllAnimals] = tailTracking(animalId, i, firstFrame, videoPath, frame, hyperparameters, thresh1, nbTailPoints, threshForBlackFrames, thetaDiffAccept, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, lastFirstTheta, maxDepth, tailTipFirstFrame, initialCurFrame, back, wellNumber, xHead, yHead)
+    
+    if hyperparameters["updateBackgroundAtInterval"]:
+      background = updateBackgroundAtInterval(i, hyperparameters, background, wellPositions, wellNumber, initialCurFrame, firstFrame, trackingHeadTailAllAnimals, frame)
+    
     # Eye tracking for frame i
     if hyperparameters["eyeTracking"]:
       if hyperparameters["headEmbeded"] == 1:

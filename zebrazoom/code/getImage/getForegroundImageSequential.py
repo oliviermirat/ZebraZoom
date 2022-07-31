@@ -42,9 +42,9 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
   grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
   curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
   
-  if hyperparameters["trackOnlyOnROI_halfDiameter"] != 0 and frameNumber != hyperparameters["firstFrame"]:
-    xHead = trackingHeadTailAllAnimals[0][frameNumber - hyperparameters["firstFrame"] - 1][0][0]
-    yHead = trackingHeadTailAllAnimals[0][frameNumber - hyperparameters["firstFrame"] - 1][0][1]
+  xHead = trackingHeadTailAllAnimals[0][frameNumber - hyperparameters["firstFrame"] - 1][0][0]
+  yHead = trackingHeadTailAllAnimals[0][frameNumber - hyperparameters["firstFrame"] - 1][0][1]
+  if hyperparameters["trackOnlyOnROI_halfDiameter"] != 0 and frameNumber != hyperparameters["firstFrame"] and xHead != 0 and yHead != 0:
     xHeadMin = xHead
     xHeadMax = xHead
     yHeadMin = yHead
@@ -64,6 +64,7 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
     curFrameInitial = curFrame.copy()
     backInitial     = back.copy()
     initialCurFrameInitial = curFrame.copy()
+    initialCurFrame = curFrame.copy()
     curFrame = curFrame[ymin:ymax, xmin:xmax]
     back     = back[ymin:ymax, xmin:xmax]
   else:
@@ -72,8 +73,7 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
     initialCurFrameInitial = 0
     curFrameInitial = 0
     backInitial     = 0
-  
-  initialCurFrame = curFrame.copy()
+    initialCurFrame = curFrame.copy()
   
   putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
   
@@ -122,7 +122,7 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
       curFrame = curFrame[ymin:ymax, xmin:xmax]
       curFrameInitial = curFrame
       backInitial     = back
-      initialCurFrameInitial = curFrame
+      # initialCurFrameInitial = curFrame
     putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
     curFrame[putToWhite] = 255      
     
