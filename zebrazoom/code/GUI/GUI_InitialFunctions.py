@@ -218,7 +218,7 @@ class _VideoSelectionPage(QWidget):
     app = QApplication.instance()
     videos, configs = self._table.model().getData()
     if self._ZZkwargs.get('sbatchMode', False):
-      videos = [video.replace(self._originalLineEdit.text(), self._replaceLineEdit.text()) for video in videos]
+      videos = [video.replace('\\', '/').replace(self._originalLineEdit.text(), self._replaceLineEdit.text()) for video in videos]
     app.show_frame("Patience")
     app.window.centralWidget().layout().currentWidget().setArgs((videos, configs), self._ZZkwargs)
 
