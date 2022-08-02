@@ -8,6 +8,7 @@ import subprocess
 from matplotlib.figure import Figure
 import math
 import scipy.io as sio
+import pandas as pd
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
@@ -16,8 +17,9 @@ from zebrazoom.getTailExtremityFirstFrame import getTailExtremityFirstFrame
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 
-from PyQt5.QtCore import Qt, QAbstractTableModel, QModelIndex, QSortFilterProxyModel
-from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QFileDialog, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView, QMessageBox, QPushButton, QTableView, QTreeView, QVBoxLayout, QWidget
+from PyQt5.QtCore import Qt, QAbstractTableModel, QItemSelectionModel, QModelIndex, QSize, QUrl
+from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QFileDialog, QFileSystemModel, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView, QMessageBox, QPushButton, QScrollArea, QTableView, QTreeView, QVBoxLayout, QWidget
 
 
 LARGE_FONT= ("Verdana", 12)
@@ -51,14 +53,48 @@ def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, chooseFrame
       self.window.centralWidget().layout().currentWidget().setArgs(ZZargs, ZZkwargs)
 
 
+class _VideoFilesModel(QFileSystemModel):
+  def __init__(self):
+    super().__init__()
+    self.setReadOnly(False)
+    self.setNameFilterDisables(False)
+    self.setNameFilters(("*.csv",))
+
+  def data(self, index, role=Qt.ItemDataRole.DisplayRole):
+    data = super().data(index, role=role)
+    if role == Qt.ItemDataRole.EditRole:
+      return os.path.splitext(data)[0]
+    return data
+
+  def setData(self, index, value, role=None):
+    extension = os.path.splitext(self.data(index))[1]
+    return super().setData(index, "%s%s" % (value, extension), role=role)
+
+
+class _TrackingConfigurationsTreeView(QTreeView):
+  def __init__(self):
+    super().__init__()
+    self.sizeHint = lambda: QSize(150, 1)
+    self.header().setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
+    self.setRootIsDecorated(False)
+
+  def resizeEvent(self, evt):
+    super().resizeEvent(evt)
+    self.setColumnWidth(0, evt.size().width())
+
+  def flags(self, index):
+    return super().flags(index) | Qt.ItemFlag.ItemIsEditable
+
+
 class _VideosModel(QAbstractTableModel):
   _COLUMN_TITLES = ["Video", "Config"]
   _DEFAULT_ZZOUTPUT = paths.getDefaultZZoutputFolder()
 
-  def __init__(self):
+  def __init__(self, filename):
     super().__init__()
-    self._videos = []
-    self._configs = []
+    data = pd.read_csv(filename).fillna('')
+    self._videos = data['Video'].tolist()
+    self._configs = data['Config'].tolist()
 
   def rowCount(self, parent=None):
     return len(self._videos)
@@ -79,6 +115,7 @@ class _VideosModel(QAbstractTableModel):
   def addVideos(self, videos):
     if videos is None:
       return
+    videos = [video for video in videos if video not in self._videos]
     self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount() + len(videos) - 1)
     self._videos.extend(videos)
     self._configs.extend([''] * len(videos))
@@ -101,6 +138,37 @@ class _VideosModel(QAbstractTableModel):
 
   def getData(self):
     return self._videos, self._configs
+
+  def hasUnsavedChanges(self, filename):
+    if not os.path.exists(filename):  # file was deleted
+      return False
+    fileData = pd.read_csv(filename).fillna('')
+    return not (fileData['Video'].tolist() == self._videos and fileData['Config'].tolist() == self._configs)
+
+  def saveFile(self, filename):
+    pd.DataFrame(columns=_VideosModel._COLUMN_TITLES, data=zip(self._videos, self._configs)).to_csv(filename, index=False)
+
+
+class _TrackingConfigurationsSelectionModel(QItemSelectionModel): # TODO: rename
+  def __init__(self, window, table, *args):
+    super().__init__(*args)
+    self._window = window
+    self._table = table
+    self._blockSelection = False
+
+  def setCurrentIndex(self, index, command):
+    if index != self.currentIndex() and self._table.model() is not None and self._table.model().hasUnsavedChanges(self.model().filePath(self.currentIndex())) and \
+        QMessageBox.question(self._window, "Unsaved changes", "Are you sure you want to proceed? Unsaved changes will be lost.",
+                             defaultButton=QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+      self._blockSelection = True
+      return None
+    return super().setCurrentIndex(index, command)
+
+  def select(self, index, command):
+    if self._blockSelection:
+      self._blockSelection = False
+      return None
+    return super().select(index, command)
 
 
 class _VideoSelectionPage(QWidget):
@@ -150,9 +218,31 @@ class _VideoSelectionPage(QWidget):
       replaceLayout.addStretch()
       layout.addLayout(replaceLayout)
 
+    folderPath = os.path.join(paths.getRootDataFolder(), 'trackingConfigurations')
+    if not os.path.exists(folderPath):
+      os.makedirs(folderPath)
+    model = _VideoFilesModel()
+    model.setRootPath(folderPath)
+    self._tree = tree = _TrackingConfigurationsTreeView()
+    tree.setModel(model)
+    for idx in range(1, model.columnCount()):
+      tree.hideColumn(idx)
+    tree.setRootIndex(model.index(model.rootPath()))
     self._table = QTableView()
-    self._table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
-    self._table.setModel(_VideosModel())
+    selectionModel = _TrackingConfigurationsSelectionModel(app.window, self._table, model)
+    tree.setSelectionModel(selectionModel)
+    selectionModel.currentRowChanged.connect(lambda current, previous: current.row() == -1 or self._fileSelected(model.filePath(current)))
+
+    treeLayout = QVBoxLayout()
+    self._newConfigurationBtn = QPushButton("New configuration") # TODO: rename, fix all texts
+    self._newConfigurationBtn.clicked.connect(self._newConfiguration)
+    treeLayout.addWidget(self._newConfigurationBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    treeLayout.addWidget(tree, stretch=1)
+    treeWidget = QWidget()
+    treeLayout.setContentsMargins(0, 0, 0, 0)
+    treeWidget.setLayout(treeLayout)
+    horizontalSplitter = util.CollapsibleSplitter()
+    horizontalSplitter.addWidget(treeWidget)
 
     tableLayout = QVBoxLayout()
     tableButtonsLayout = QHBoxLayout()
@@ -173,23 +263,105 @@ class _VideoSelectionPage(QWidget):
     removeVideosBtn = QPushButton("Remove selected videos")
     removeVideosBtn.clicked.connect(lambda: self._table.model().removeSelectedRows(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes())))))
     tableButtonsLayout.addWidget(removeVideosBtn, alignment=Qt.AlignmentFlag.AlignLeft)
-    self._runExperimentBtn = util.apply_style(QPushButton("Run tracking"), background_color=util.LIGHT_YELLOW)
-    self._runExperimentBtn.clicked.connect(self._runTracking)
-    tableButtonsLayout.addWidget(self._runExperimentBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    saveChangesBtn = QPushButton("Save changes")
+    saveChangesBtn.clicked.connect(lambda: self._table.model().saveFile(self._tree.model().filePath(selectionModel.currentIndex())) or QMessageBox.information(app.window, "Configuration saved", "Changes made to the configuration were saved."))
+    tableButtonsLayout.addWidget(saveChangesBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    deleteConfigurationBtn = QPushButton("Delete configuration")
+    deleteConfigurationBtn.clicked.connect(self._removeConfiguration)
+    tableButtonsLayout.addWidget(deleteConfigurationBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    openConfigurationsFolderBtn = QPushButton("Open configurations folder")
+    openConfigurationsFolderBtn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(folderPath)))
+    tableButtonsLayout.addWidget(openConfigurationsFolderBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._runTrackingBtn = util.apply_style(QPushButton("Run tracking"), background_color=util.LIGHT_YELLOW)
+    self._runTrackingBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: self._runTracking(), forceSave=True))
+    tableButtonsLayout.addWidget(self._runTrackingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     tableButtonsLayout.addStretch()
     tableLayout.addLayout(tableButtonsLayout)
     tableLayout.addWidget(self._table, stretch=1)
-    layout.addLayout(tableLayout)
+
+    self._mainWidget = QWidget()
+    tableLayout.setContentsMargins(0, 0, 0, 0)
+    self._mainWidget.setLayout(tableLayout)
+
+    scrollArea = QScrollArea()
+    scrollArea.setFrameShape(QFrame.Shape.NoFrame)
+    scrollArea.setWidgetResizable(True)
+    scrollArea.setWidget(self._mainWidget)
+    horizontalSplitter.addWidget(scrollArea)
+    horizontalSplitter.setStretchFactor(1, 1)
+    horizontalSplitter.setChildrenCollapsible(False)
+    layout.addWidget(horizontalSplitter, stretch=1)
 
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch()
     startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
-    startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
+    startPageBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: controller.show_frame("StartPage")))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch()
     layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
+    self._mainWidget.hide()
+
+  def _unsavedChangesWarning(self, fn, forceSave=False):
+    app = QApplication.instance()
+    def inner(*args, **kwargs):
+      if forceSave:
+        text = "Do you want to save the changes and proceed?"
+      else:
+        text = "Are you sure you want to proceed? Unsaved changes will be lost."
+      filename = self._tree.model().filePath(self._tree.selectionModel().currentIndex())
+      if self._table.model() is not None and self._table.model().hasUnsavedChanges(filename):
+        if QMessageBox.question(app.window, "Unsaved changes", text, defaultButton=QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+          return
+        elif forceSave:
+          self._table.model().saveFile(filename)
+      return fn(*args, **kwargs)
+    return inner
+
+  def _newConfiguration(self):
+    number = 1
+    while os.path.exists(os.path.join(self._tree.model().rootPath(), 'Configuration %d.csv' % number)):
+      number += 1
+    path = os.path.join(self._tree.model().rootPath(), 'Configuration %d.csv' % number)
+    pd.DataFrame(columns=_VideosModel._COLUMN_TITLES).to_csv(path, index=False)
+    index = self._tree.model().index(path)
+    self._tree.selectionModel().setCurrentIndex(index, QItemSelectionModel.SelectionFlag.ClearAndSelect)
+    self._tree.edit(index)
+
+  def _removeConfiguration(self):
+    app = QApplication.instance()
+    if QMessageBox.question(app.window, "Delete configuration", "Are you sure you want to delete the configuration? This action removes the file from disk and cannot be undone.",
+                            defaultButton=QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+      return
+    pathToRemove = self._tree.model().filePath(self._tree.selectionModel().currentIndex())
+    self._tree.model().remove(self._tree.selectionModel().currentIndex())
+    if pathToRemove == self._tree.model().filePath(self._tree.selectionModel().currentIndex()):  # last valid file removed
+      self._mainWidget.hide()
+
+  def _fileSelected(self, filename):
+    self._mainWidget.show()
+    self._table.setModel(_VideosModel(filename))
+    self._table.horizontalHeader().resizeSections(QHeaderView.ResizeMode.Stretch)
+
+  def _getMultipleFolderVideos(self):
+    dialog = QFileDialog()
+    dialog.setWindowTitle('Select one or more folders (use Ctrl or Shift key to select multiple)')
+    dialog.setDirectory(os.path.expanduser("~"))
+    dialog.setFileMode(QFileDialog.FileMode.Directory)
+    dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
+    dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
+    listView = dialog.findChild(QListView, 'listView')
+    if listView:
+      listView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+    treeView = dialog.findChild(QTreeView)
+    if treeView:
+      treeView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+
+    if not dialog.exec():
+      return None
+    return [os.path.normpath(os.path.join(root, f)) for path in dialog.selectedFiles()
+            for root, _dirs, files in os.walk(path) for f in files if os.path.splitext(f)[1] in self._VIDEO_EXTENSIONS]
 
   def _getFolderVideos(self):
     app = QApplication.instance()
