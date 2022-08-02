@@ -73,6 +73,7 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
   data = [None] * ((max_l - 1) // backCalculationStep + 1)
   
   k = firstFrameIndex if firstFrameIndex != -1 else 0
+  firstK = k
   while k < (lastFrameIndex if lastFrameIndex != -1 else max_l):
       
     cap.set(1, k)
@@ -102,8 +103,19 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
         QApplication.instance().configFileHistory[-2]()
         return None
     frame2 = cv2.circle(frame, tuple(headCoordinates), 2, (0, 0, 255), -1)
+
+    goToOptimize = False
+    def callback2(video):
+      nonlocal goToOptimize
+      goToOptimize = True
+    extraButtons = (('I want to manually adjust tracking parameters', callback2, True, None),) if k == firstK else ()
     tailTipCoordinates = list(util.getPoint(frame2, "Click on the tip of the tail of the same animal" if zebrafishToTrack else "Click on a point on the border of the same animal",
-                              backBtnCb=callback, zoomable=True))
+                              backBtnCb=callback, zoomable=True, extraButtons=extraButtons))
+    if goToOptimize:
+      # TODO: add calculations here
+      util.addToHistory(controller.optimizeConfigFile)()
+      return None
+
     if oldk != k:
       k = oldk
       if data[k//backCalculationStep] is not None:

@@ -777,7 +777,15 @@ def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=Non
       zoomableImage.hide()
       video.show()
     cb(video)
-  extraButtons = tuple((text, lambda: callback(cb), exitLoop) for text, cb, exitLoop in extraButtons)
+
+  def updateButton(args):
+    text, cb, exitLoop = args[:3]
+    retval = (text, lambda: callback(cb), exitLoop)
+    if len(args) == 4:
+      retval += (video.pointSelected,)
+    return retval
+
+  extraButtons = tuple(updateButton(button) for button in extraButtons)
   buttons = (("Back", backBtnCb, True),) if backBtnCb is not None else ()
   buttons += (("Next", None, True, video.pointSelected),) if useNext else ()
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
