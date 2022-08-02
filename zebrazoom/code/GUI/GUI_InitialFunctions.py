@@ -163,6 +163,9 @@ class _VideoSelectionPage(QWidget):
     self._addFolderBtn = QPushButton("Add folder")
     self._addFolderBtn.clicked.connect(lambda: self._table.model().addVideos(self._getFolderVideos()))
     tableButtonsLayout.addWidget(self._addFolderBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._addMultipleFoldersBtn = QPushButton("Add multiple folders")
+    self._addMultipleFoldersBtn.clicked.connect(lambda: self._table.model().addVideos(self._getMultipleFolderVideos()))
+    tableButtonsLayout.addWidget(self._addMultipleFoldersBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     removeVideosBtn = QPushButton("Choose config for selected videos")
     removeVideosBtn.clicked.connect(lambda: self._table.model().setConfigs(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))),
                                                                            QFileDialog.getOpenFileName(app.window, 'Select config file', paths.getConfigurationFolder(), "JSON (*.json)")[0]))
