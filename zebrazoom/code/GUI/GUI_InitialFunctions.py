@@ -5,6 +5,9 @@ import json
 import shutil
 import sys
 import subprocess
+from functools import partial
+from multiprocessing import Pool
+
 from matplotlib.figure import Figure
 import math
 import scipy.io as sio
@@ -19,7 +22,7 @@ import zebrazoom.code.util as util
 
 from PyQt5.QtCore import Qt, QAbstractTableModel, QItemSelectionModel, QModelIndex, QSize, QUrl
 from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QFileDialog, QFileSystemModel, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView, QMessageBox, QPushButton, QScrollArea, QTableView, QTreeView, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QFileDialog, QFileSystemModel, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView, QMessageBox, QPushButton, QScrollArea, QSpinBox, QTableView, QTreeView, QVBoxLayout, QWidget
 
 
 LARGE_FONT= ("Verdana", 12)
@@ -149,7 +152,7 @@ class _VideosModel(QAbstractTableModel):
     pd.DataFrame(columns=_VideosModel._COLUMN_TITLES, data=zip(self._videos, self._configs)).to_csv(filename, index=False)
 
 
-class _TrackingConfigurationsSelectionModel(QItemSelectionModel): # TODO: rename
+class _TrackingConfigurationsSelectionModel(QItemSelectionModel):
   def __init__(self, window, table, *args):
     super().__init__(*args)
     self._window = window
@@ -217,6 +220,22 @@ class _VideoSelectionPage(QWidget):
       replaceLayout.addWidget(QLabel('in all paths'), alignment=Qt.AlignmentFlag.AlignCenter)
       replaceLayout.addStretch()
       layout.addLayout(replaceLayout)
+    else:
+      parallelTrackingLayout = QHBoxLayout()
+      self._parallelTrackingCheckbox = QCheckBox("Track multiple videos in parallel")
+      self._parallelTrackingCheckbox.toggled.connect(lambda checked: self._processesLabel.setVisible(checked) or self._processesSpinBox.setVisible(checked))
+      self._parallelTrackingCheckbox.setVisible(False)
+      parallelTrackingLayout.addWidget(self._parallelTrackingCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+      self._processesLabel = QLabel('Number of processes:')
+      self._processesLabel.setVisible(False)
+      parallelTrackingLayout.addWidget(self._processesLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+      self._processesSpinBox = QSpinBox()
+      self._processesSpinBox.setVisible(False)
+      self._processesSpinBox.setValue(4)
+      self._processesSpinBox.setRange(1, os.cpu_count())
+      parallelTrackingLayout.addWidget(self._processesSpinBox, alignment=Qt.AlignmentFlag.AlignCenter)
+      parallelTrackingLayout.addStretch()
+      layout.addLayout(parallelTrackingLayout)
 
     folderPath = os.path.join(paths.getRootDataFolder(), 'trackingConfigurations')
     if not os.path.exists(folderPath):
@@ -234,7 +253,7 @@ class _VideoSelectionPage(QWidget):
     selectionModel.currentRowChanged.connect(lambda current, previous: current.row() == -1 or self._fileSelected(model.filePath(current)))
 
     treeLayout = QVBoxLayout()
-    self._newConfigurationBtn = QPushButton("New configuration") # TODO: rename, fix all texts
+    self._newConfigurationBtn = QPushButton("New configuration")
     self._newConfigurationBtn.clicked.connect(self._newConfiguration)
     treeLayout.addWidget(self._newConfigurationBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     treeLayout.addWidget(tree, stretch=1)
@@ -249,19 +268,24 @@ class _VideoSelectionPage(QWidget):
     self._addVideosBtn = QPushButton("Add video(s)")
     self._addVideosBtn.clicked.connect(lambda: self._table.model().addVideos(QFileDialog.getOpenFileNames(app.window, 'Select one or more videos', os.path.expanduser("~"),
                                                                                                           "Video files (%s)" % ' '.join('*%s' % ext for ext in self._VIDEO_EXTENSIONS))[0]))
+    self._addVideosBtn.clicked.connect(self._updateParallelTracking)
     tableButtonsLayout.addWidget(self._addVideosBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     self._addFolderBtn = QPushButton("Add folder")
     self._addFolderBtn.clicked.connect(lambda: self._table.model().addVideos(self._getFolderVideos()))
+    self._addFolderBtn.clicked.connect(self._updateParallelTracking)
     tableButtonsLayout.addWidget(self._addFolderBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     self._addMultipleFoldersBtn = QPushButton("Add multiple folders")
     self._addMultipleFoldersBtn.clicked.connect(lambda: self._table.model().addVideos(self._getMultipleFolderVideos()))
+    self._addMultipleFoldersBtn.clicked.connect(self._updateParallelTracking)
     tableButtonsLayout.addWidget(self._addMultipleFoldersBtn, alignment=Qt.AlignmentFlag.AlignLeft)
-    removeVideosBtn = QPushButton("Choose config for selected videos")
-    removeVideosBtn.clicked.connect(lambda: self._table.model().setConfigs(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))),
+    chooseConfigsBtn = QPushButton("Choose config for selected videos")
+    chooseConfigsBtn.clicked.connect(lambda: self._table.model().setConfigs(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))),
                                                                            QFileDialog.getOpenFileName(app.window, 'Select config file', paths.getConfigurationFolder(), "JSON (*.json)")[0]))
-    tableButtonsLayout.addWidget(removeVideosBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    chooseConfigsBtn.clicked.connect(self._updateParallelTracking)
+    tableButtonsLayout.addWidget(chooseConfigsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     removeVideosBtn = QPushButton("Remove selected videos")
     removeVideosBtn.clicked.connect(lambda: self._table.model().removeSelectedRows(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes())))))
+    removeVideosBtn.clicked.connect(self._updateParallelTracking)
     tableButtonsLayout.addWidget(removeVideosBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     saveChangesBtn = QPushButton("Save changes")
     saveChangesBtn.clicked.connect(lambda: self._table.model().saveFile(self._tree.model().filePath(selectionModel.currentIndex())) or QMessageBox.information(app.window, "Configuration saved", "Changes made to the configuration were saved."))
@@ -295,13 +319,30 @@ class _VideoSelectionPage(QWidget):
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch()
     startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
-    startPageBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: controller.show_frame("StartPage")))
+    startPageBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: app.show_frame("StartPage")))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch()
     layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
     self._mainWidget.hide()
+
+  def _updateParallelTracking(self):
+    if self._ZZkwargs.get('sbatchMode', False):
+      return
+    videos, configs = self._table.model().getData()
+    enabled = bool(configs)
+    for config in configs:
+      if not os.path.exists(config):
+        enabled = False
+        break
+      with open(config) as f:
+        if not json.load(f).get('fasterMultiprocessing', False):
+          enabled = False
+          break
+    self._parallelTrackingCheckbox.setVisible(enabled)
+    self._processesLabel.setVisible(enabled and self._parallelTrackingCheckbox.isChecked())
+    self._processesSpinBox.setVisible(enabled and self._parallelTrackingCheckbox.isChecked())
 
   def _unsavedChangesWarning(self, fn, forceSave=False):
     app = QApplication.instance()
@@ -343,6 +384,7 @@ class _VideoSelectionPage(QWidget):
     self._mainWidget.show()
     self._table.setModel(_VideosModel(filename))
     self._table.horizontalHeader().resizeSections(QHeaderView.ResizeMode.Stretch)
+    self._updateParallelTracking()
 
   def _getMultipleFolderVideos(self):
     dialog = QFileDialog()
@@ -375,6 +417,8 @@ class _VideoSelectionPage(QWidget):
     videos, configs = self._table.model().getData()
     if self._ZZkwargs.get('sbatchMode', False):
       videos = [video.replace('\\', '/').replace(self._originalLineEdit.text(), self._replaceLineEdit.text()) for video in videos]
+    elif self._processesSpinBox.isVisible():
+      self._ZZkwargs['processes'] = self._processesSpinBox.value()
     app.show_frame("Patience")
     app.window.centralWidget().layout().currentWidget().setArgs((videos, configs), self._ZZkwargs)
 
@@ -419,8 +463,29 @@ def chooseConfigFile(ZZargs, ZZkwargs):
     launchZebraZoom(*ZZargs, **ZZkwargs)
 
 
+def _runTracking(args, justExtractParams, noValidationVideo, ZZoutputLocation):
+  videoPath, config = args
+  path        = os.path.dirname(videoPath)
+  nameWithExt = os.path.basename(videoPath)
+  name        = os.path.splitext(nameWithExt)[0]
+  videoExt    = os.path.splitext(nameWithExt)[1][1:]
+
+  tabParams = ["mainZZ", path, name, videoExt, config, "freqAlgoPosFollow", 100, "outputFolder", ZZoutputLocation]
+  if justExtractParams:
+    tabParams.extend(["reloadWellPositions", 1, "reloadBackground", 1, "debugPauseBetweenTrackAndParamExtract", "justExtractParamFromPreviousTrackData"])
+  if noValidationVideo:
+    tabParams.extend(["createValidationVideo", 0])
+  try:
+    mainZZ(path, name, videoExt, config, tabParams)
+  except ValueError:
+    print("moving on to the next video for ROIs identification")
+  except NameError:
+    return
+
+
 def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, justExtractParams=False, noValidationVideo=False, testMode=False,
-                    findMultipleROIs=False, askCoordinatesForAll=True, firstFrame=None, lastFrame=None, backgroundExtractionForceUseAllVideoFrames=None):
+                    findMultipleROIs=False, askCoordinatesForAll=True, firstFrame=None, lastFrame=None, backgroundExtractionForceUseAllVideoFrames=None,
+                    processes=1):
   app = QApplication.instance()
 
   if testMode:
@@ -450,50 +515,54 @@ def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, justE
 
   print("allVideos:", videos)
 
-  for idx, (videoPath, config) in enumerate(zip(videos, configs)):
+  if processes > 1 and len(videos) > 1 and not sbatchMode:
+    with Pool(min(processes, len(videos))) as pool:
+      pool.map(partial(_runTracking, justExtractParams=justExtractParams, noValidationVideo=noValidationVideo, ZZoutputLocation=app.ZZoutputLocation), zip(videos, configs))
+  else:
+    for videoPath, config in zip(videos, configs):
 
-    path        = os.path.dirname(videoPath)
-    nameWithExt = os.path.basename(videoPath)
-    name        = os.path.splitext(nameWithExt)[0]
-    videoExt    = os.path.splitext(nameWithExt)[1][1:]
+      path        = os.path.dirname(videoPath)
+      nameWithExt = os.path.basename(videoPath)
+      name        = os.path.splitext(nameWithExt)[0]
+      videoExt    = os.path.splitext(nameWithExt)[1][1:]
 
-    if not headEmbedded:
-      if len(videos) == 1:
-        tabParams = ["mainZZ", path, name, videoExt, config, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1, "outputFolder", app.ZZoutputLocation]
-      else:
-        tabParams = ["mainZZ", path, name, videoExt, config, "freqAlgoPosFollow", 100, "outputFolder", app.ZZoutputLocation]
-      if backgroundExtractionForceUseAllVideoFrames is not None:
-        tabParams.extend(["backgroundExtractionForceUseAllVideoFrames", int(backgroundExtractionForceUseAllVideoFrames)])
-      if firstFrame is not None:
-        tabParams.extend(["firstFrame", firstFrame])
-      if lastFrame is not None:
-        tabParams.extend(["lastFrame", lastFrame])
-      if justExtractParams:
-        tabParams = tabParams + ["reloadWellPositions", 1, "reloadBackground", 1, "debugPauseBetweenTrackAndParamExtract", "justExtractParamFromPreviousTrackData"]
-      if noValidationVideo:
-          tabParams = tabParams + ["createValidationVideo", 0]
-      if findMultipleROIs:
-        tabParams = tabParams + ["exitAfterWellsDetection", 1, "saveWellPositionsToBeReloadedNoMatterWhat", 1]
-      try:
-        if sbatchMode:
-          commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]) + ' configFiles/%s\n' % os.path.basename(config))
-          nbVideosToLaunch = nbVideosToLaunch + 1
+      if not headEmbedded:
+        if len(videos) == 1:
+          tabParams = ["mainZZ", path, name, videoExt, config, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1, "outputFolder", app.ZZoutputLocation]
         else:
-          mainZZ(path, name, videoExt, config, tabParams)
-      except ValueError:
-        print("moving on to the next video for ROIs identification")
-      except NameError:
-        app.show_frame("Error")
-        return
-    else:
-      tabParams = ["outputFolder", app.ZZoutputLocation]
-      if backgroundExtractionForceUseAllVideoFrames is not None:
-        tabParams.extend(["backgroundExtractionForceUseAllVideoFrames", int(backgroundExtractionForceUseAllVideoFrames)])
-      if firstFrame is not None:
-        tabParams.extend(["firstFrame", firstFrame])
-      if lastFrame is not None:
-        tabParams.extend(["lastFrame", lastFrame])
-      getTailExtremityFirstFrame(path, name, videoExt, config, tabParams)
+          tabParams = ["mainZZ", path, name, videoExt, config, "freqAlgoPosFollow", 100, "outputFolder", app.ZZoutputLocation]
+        if backgroundExtractionForceUseAllVideoFrames is not None:
+          tabParams.extend(["backgroundExtractionForceUseAllVideoFrames", int(backgroundExtractionForceUseAllVideoFrames)])
+        if firstFrame is not None:
+          tabParams.extend(["firstFrame", firstFrame])
+        if lastFrame is not None:
+          tabParams.extend(["lastFrame", lastFrame])
+        if justExtractParams:
+          tabParams = tabParams + ["reloadWellPositions", 1, "reloadBackground", 1, "debugPauseBetweenTrackAndParamExtract", "justExtractParamFromPreviousTrackData"]
+        if noValidationVideo:
+            tabParams = tabParams + ["createValidationVideo", 0]
+        if findMultipleROIs:
+          tabParams = tabParams + ["exitAfterWellsDetection", 1, "saveWellPositionsToBeReloadedNoMatterWhat", 1]
+        try:
+          if sbatchMode:
+            commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]) + ' configFiles/%s\n' % os.path.basename(config))
+            nbVideosToLaunch = nbVideosToLaunch + 1
+          else:
+            mainZZ(path, name, videoExt, config, tabParams)
+        except ValueError:
+          print("moving on to the next video for ROIs identification")
+        except NameError:
+          app.show_frame("Error")
+          return
+      else:
+        tabParams = ["outputFolder", app.ZZoutputLocation]
+        if backgroundExtractionForceUseAllVideoFrames is not None:
+          tabParams.extend(["backgroundExtractionForceUseAllVideoFrames", int(backgroundExtractionForceUseAllVideoFrames)])
+        if firstFrame is not None:
+          tabParams.extend(["firstFrame", firstFrame])
+        if lastFrame is not None:
+          tabParams.extend(["lastFrame", lastFrame])
+        getTailExtremityFirstFrame(path, name, videoExt, config, tabParams)
 
   if findMultipleROIs and not askCoordinatesForAll:
     coordinatesFile = os.path.join(app.ZZoutputLocation, os.path.splitext(os.path.basename(videos[0]))[0], 'intermediaryWellPositionReloadNoMatterWhat.txt')
