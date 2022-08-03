@@ -163,6 +163,9 @@ def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumbe
   while ((l < max_l) and (l-firstFrame < len(head))) or hyperparameters["adjustDetectMovWithRawVideo"]:
     if l >= debut_l:
       
+      if (hyperparameters["freqAlgoPosFollow"] != 0) and (l % hyperparameters["freqAlgoPosFollow"] == 0):
+        print("Detect movement with raw video: wellNumber:", wellNumber, " ; frame:", l)
+      
       if l < hyperparameters["firstFrame"]:
         l = hyperparameters["firstFrame"]
   

@@ -20,6 +20,9 @@ zebrazoom/code/deepLearningFunctions/PyTorchFunctions/__pycache__/
 zebrazoom/otherScripts/__pycache__/
 zebrazoom/dataAnalysis/createCustomDataStructure/__pycache__/
 zebrazoom/code/trackingFolder/refactoredCode2022/__pycache__/
+zebrazoom/trackingConfigurations/__pycache__/
+
+zebrazoom/trackingConfigurations/*.csv
 
 zebrazoom/newhyperparameters
 zebrazoom/trace.txt

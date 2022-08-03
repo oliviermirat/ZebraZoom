@@ -29,7 +29,7 @@ setup(
     "pandas!=1.3.*",
     "openpyxl",
     "filterpy",
-    "opencv-python-headless<=4.5.1.48",
+    "opencv-python-headless<4.5.1.48",
     "xlrd>=2.0.1",
     "seaborn",
     "PyQt5>=5.15.0",

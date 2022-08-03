@@ -28,6 +28,8 @@ from zebrazoom.code.trackingFolder.refactoredCode2022.headingCompute import comp
 from zebrazoom.code.trackingFolder.refactoredCode2022.findTheTwoSides2 import findTheTwoSides2
 from zebrazoom.code.trackingFolder.refactoredCode2022.identitiesLinkage import findOptimalIdCorrespondance, switchIdentities
 
+from zebrazoom.code.updateBackgroundAtInterval import updateBackgroundAtInterval
+
 def fasterMultiprocessing2(videoPath, background, wellPositions, output, hyperparameters, videoName):
   
   cap = zzVideoReading.VideoCapture(videoPath)
@@ -183,6 +185,9 @@ def fasterMultiprocessing2(videoPath, background, wellPositions, output, hyperpa
         [trackingHeadTailAllAnimalsList, trackingHeadingAllAnimalsList] = switchIdentities(correspondance, trackingHeadTailAllAnimalsList, trackingHeadingAllAnimalsList, wellNumber, animal_Id, i, firstFrame)
         
         debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimalsList[wellNumber], trackingHeadingAllAnimalsList[wellNumber], curFrame, hyperparameters)
+        
+        if hyperparameters["updateBackgroundAtInterval"]:
+          background = updateBackgroundAtInterval(i, hyperparameters, background, wellPositions, wellNumber, initialCurFrame, firstFrame, trackingHeadTailAllAnimalsList[wellNumber], initialCurFrame)
         
         if hyperparameters["freqAlgoPosFollow"]:
           if i % hyperparameters["freqAlgoPosFollow"] == 0:

@@ -87,7 +87,7 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
     while (minPixelDiffForBackExtract > 0) and (countTries < 30) and not(minPixelDiffForBackExtract in minPixel2nbBlackPixels):
       if countTries > 0:
         curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
-        if hyperparameters["trackOnlyOnROI_halfDiameter"] != 0 and frameNumber != hyperparameters["firstFrame"]:
+        if hyperparameters["trackOnlyOnROI_halfDiameter"] != 0 and frameNumber != hyperparameters["firstFrame"] and xHead != 0 and yHead != 0:
           curFrame = curFrame[ymin:ymax, xmin:xmax]
         putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
         curFrame[putToWhite] = 255
