@@ -10,14 +10,40 @@ if __name__ == '__main__':
   from zebrazoom.code.vars import getGlobalVariables
   globalVariables = getGlobalVariables()
 
+  requiredFolders = (paths.getDefaultZZoutputFolder(), paths.getConfigurationFolder(),
+                     os.path.join(paths.getDataAnalysisFolder(), 'data'),
+                     os.path.join(paths.getDataAnalysisFolder(), 'experimentOrganizationExcel'),
+                     os.path.join(paths.getDataAnalysisFolder(), 'resultsClustering'),
+                     os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'))
+  errors = []
+  for folder in requiredFolders:
+    try:
+      os.makedirs(folder, exist_ok=True)
+    except OSError:
+      errors.append(folder)
+  if errors:
+    errorMessage = "Some of the folders required by ZebraZoom are missing and could not be created:\n" \
+                   "%s\n\nZebraZoom cannot work without these folders, please make sure you have adequate " \
+                   "write permissions or try an alternative installation method." % '\n'.join(errors)
+
   if len(sys.argv) == 1:
 
+    if errors:
+      from PyQt5.QtWidgets import QMessageBox
+      from zebrazoom.GUIAllPy import PlainApplication
+      app = PlainApplication(sys.argv)
+      QMessageBox.critical(None, "Required folders missing", errorMessage)
+      sys.exit(1)
     from zebrazoom.GUIAllPy import ZebraZoomApp
     print("The data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
     app = ZebraZoomApp(sys.argv)
     sys.exit(app.exec())
 
   else:
+
+    if errors:
+      print(errorMessage)
+      sys.exit(1)
 
     if sys.argv[1] == "selectZZoutput" or sys.argv[1] == "--exit":
       from zebrazoom.GUIAllPy import ZebraZoomApp
