@@ -118,7 +118,7 @@ def getForegroundImageSequential(cap, videoPath, background, frameNumber, wellNu
     minPixelDiffForBackExtract = best_minPixelDiffForBackExtract
     hyperparameters["minPixelDiffForBackExtractHead"] = minPixelDiffForBackExtract
     curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
-    if hyperparameters["trackOnlyOnROI_halfDiameter"] != 0 and frameNumber != hyperparameters["firstFrame"]:
+    if hyperparameters["trackOnlyOnROI_halfDiameter"] != 0 and frameNumber != hyperparameters["firstFrame"] and xHead != 0 and yHead != 0:
       curFrame = curFrame[ymin:ymax, xmin:xmax]
       curFrameInitial = curFrame
       backInitial     = back
