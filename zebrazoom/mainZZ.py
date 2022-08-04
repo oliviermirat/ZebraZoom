@@ -240,7 +240,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
     processes = -1
     output2 = fasterMultiprocessing2(os.path.join(pathToVideo, videoNameWithExt), background, wellPositions, [], hyperparameters, videoName)
   else:
-    if globalVariables["noMultiprocessing"] == 0:
+    if globalVariables["noMultiprocessing"] == 0 and not hyperparameters['headEmbeded']:
       if hyperparameters["onlyTrackThisOneWell"] == -1:
         # for all wells, in parallel
         processes = []
@@ -271,7 +271,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
   for data in dataPerWellUnsorted:
     paramDataPerWell[data[0]]    = data[1]
     trackingDataPerWell[data[0]] = data[2]
-  if processes != -1 and hyperparameters["onlyTrackThisOneWell"] == -1 and globalVariables["noMultiprocessing"] == 0:
+  if processes != -1 and hyperparameters["onlyTrackThisOneWell"] == -1 and (globalVariables["noMultiprocessing"] == 0 and not hyperparameters['headEmbeded']):
     for p in processes:
       p.join()
   if (hyperparameters["freqAlgoPosFollow"] != 0):

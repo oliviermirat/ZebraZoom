@@ -337,9 +337,10 @@ class _VideoSelectionPage(QWidget):
         enabled = False
         break
       with open(config) as f:
-        if not json.load(f).get('fasterMultiprocessing', False):
-          enabled = False
-          break
+        cfg = json.load(f)
+      if not (cfg.get('fasterMultiprocessing', False) or cfg.get('headEmbeded', False)):
+        enabled = False
+        break
     self._parallelTrackingCheckbox.setVisible(enabled)
     self._processesLabel.setVisible(enabled and self._parallelTrackingCheckbox.isChecked())
     self._processesSpinBox.setVisible(enabled and self._parallelTrackingCheckbox.isChecked())
