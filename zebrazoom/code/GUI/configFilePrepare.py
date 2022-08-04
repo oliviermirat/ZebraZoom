@@ -1334,7 +1334,6 @@ class FinishConfig(QWidget):
     videoFPS.validator().setBottom(0)
     videoFPS.textChanged.connect(lambda text: text and controller.configFile.update({"videoFPS": float(text)}))
     videoFPS.textChanged.connect(updateSaveBtn)
-    self.setFPS = lambda fps: videoFPS.setText(str(fps))
     analysisInfoLayout.addWidget(videoFPS, 0, 1, Qt.AlignmentFlag.AlignLeft)
     analysisInfoLayout.addWidget(QLabel("videoPixelSize:"), 1, 0, Qt.AlignmentFlag.AlignLeft)
     videoPixelSize = QLineEdit(self)
