@@ -420,6 +420,38 @@ class _VideoSelectionPage(QWidget):
       videos = [video.replace('\\', '/').replace(self._originalLineEdit.text(), self._replaceLineEdit.text()) for video in videos]
     elif self._processesSpinBox.isVisible():
       self._ZZkwargs['processes'] = self._processesSpinBox.value()
+    defineWellsVideos = []
+    headEmbeddedVideos = []
+    for video, config in zip(videos, configs):
+      if self._ZZkwargs.get('findMultipleROIs', False) or self._ZZkwargs.get('headEmbedded', False):
+        break
+      with open(config) as f:
+        cfg = json.load(f)
+      if (cfg.get("multipleROIsDefinedDuringExecution", False) or cfg.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False)) and \
+          not os.path.exists(os.path.join(app.ZZoutputLocation, os.path.splitext(os.path.basename(video))[0], 'intermediaryWellPositionReloadNoMatterWhat.txt')):
+        defineWellsVideos.append((video, config))
+      if cfg.get("headEmbeded", False) and (not os.path.exists('%s.csv' % video) or not os.path.exists('%sHP.csv' % video)):
+        headEmbeddedVideos.append((video, config))
+    if defineWellsVideos:
+      text = 'Some of the videos do not have the regions defined. Would you like to define them before running tracking?'
+      sameCoordinatesCheckbox = QCheckBox("Use the same coordinates for all videos")
+      msgbox = QMessageBox(QMessageBox.Icon.Question, "Missing required coordinates", text, parent=app.window,
+                           buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+      msgbox.setDefaultButton(QMessageBox.StandardButton.Yes)
+      msgbox.setCheckBox(sameCoordinatesCheckbox)
+      if msgbox.exec() == QMessageBox.StandardButton.Yes:
+        ZZkwargs = self._ZZkwargs.copy()
+        ZZkwargs.update({'findMultipleROIs': True, 'askCoordinatesForAll': not sameCoordinatesCheckbox.isChecked(), 'processes': 1})
+        launchZebraZoom(*zip(*defineWellsVideos), **ZZkwargs)
+    if headEmbeddedVideos:
+      text = 'Some of the head-embedded videos do not have the required head and tail coordinates defined. Would you like to define them before running tracking?'
+      msgbox = QMessageBox(QMessageBox.Icon.Question, "Missing required coordinates", text, parent=app.window,
+                           buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
+      msgbox.setDefaultButton(QMessageBox.StandardButton.Yes)
+      if msgbox.exec() == QMessageBox.StandardButton.Yes:
+        ZZkwargs = self._ZZkwargs.copy()
+        ZZkwargs.update({'headEmbedded': True, 'processes': 1})
+        launchZebraZoom(*zip(*headEmbeddedVideos), **ZZkwargs)
     app.show_frame("Patience")
     app.window.centralWidget().layout().currentWidget().setArgs((videos, configs), self._ZZkwargs)
 
