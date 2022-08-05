@@ -23,7 +23,7 @@ import zebrazoom.code.util as util
 
 from PyQt5.QtCore import Qt, QAbstractTableModel, QItemSelection, QItemSelectionModel, QModelIndex, QSize, QUrl
 from PyQt5.QtGui import QDesktopServices
-from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QFileDialog, QFileSystemModel, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView, QMessageBox, QPushButton, QScrollArea, QSpinBox, QTableView, QTreeView, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QFileDialog, QFileSystemModel, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView, QMessageBox, QPushButton, QScrollArea, QSpacerItem, QSpinBox, QTableView, QTextEdit, QTreeView, QVBoxLayout, QWidget
 
 
 LARGE_FONT= ("Verdana", 12)
@@ -438,6 +438,26 @@ class _VideoSelectionPage(QWidget):
   def _runTracking(self):
     app = QApplication.instance()
     videos, configs = self._table.model().getData()
+    errors = []
+    for video, config in zip(videos, configs):
+      if not config:
+        errors.append('Config is not specified for video %s.' % video)
+      elif not os.path.exists(config):
+        errors.append('Config %s does not exist.' % config)
+      if not os.path.exists(video):
+        errors.append('Video %s does not exist.' % video)
+    if errors:
+      error = QMessageBox(app.window)
+      error.setIcon(QMessageBox.Icon.Critical)
+      error.setWindowTitle("Specification contains some error")
+      error.setText("Cannot run tracking becase the specified video and config combinations contain some errors:")
+      error.setDetailedText("\n".join(errors))
+      textEdit = error.findChild(QTextEdit)
+      textEdit.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
+      layout = error.layout()
+      layout.addItem(QSpacerItem(600, 0), layout.rowCount(), 0, 1, layout.columnCount())
+      error.exec()
+      return
     if self._ZZkwargs.get('sbatchMode', False):
       videos = [video.replace('\\', '/').replace(self._originalLineEdit.text(), self._replaceLineEdit.text()) for video in videos]
     elif self._processesSpinBox.isVisible():
