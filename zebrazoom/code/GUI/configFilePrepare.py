@@ -359,7 +359,10 @@ class OptimizeConfigFile(QWidget):
       video = QLabel()
       layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
 
-      angle = float(self._rotationAngleLineEdit.text())
+      try:
+        angle = float(self._rotationAngleLineEdit.text())
+      except ValueError:
+        angle = 0.
       frameSlider = util.SliderWithSpinbox(angle, -180, 180, name="Rotation angle (degrees)", double=True)
 
       def getFrame():
