@@ -1,6 +1,8 @@
 import os
 import webbrowser
 
+import cv2
+
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QCursor, QFont, QIcon, QDoubleValidator, QIntValidator, QPixmap
 from PyQt5.QtWidgets import QApplication, QFrame, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup, QSpacerItem
@@ -101,7 +103,7 @@ class OptimizeConfigFile(QWidget):
     advancedOptionsLayout = QGridLayout()
     vframe = QFrame(self)
     vframe.setFrameShape(QFrame.Shape.VLine)
-    advancedOptionsLayout.addWidget(vframe, 0, 2, 15, 1)
+    advancedOptionsLayout.addWidget(vframe, 0, 2, 22, 1)
     self._freelySwimmingWidgets.add(vframe)
     self._fastCenterOfMassWidgets.add(vframe)
     self._centerOfMassWidgets.add(vframe)
@@ -135,7 +137,7 @@ class OptimizeConfigFile(QWidget):
         controller.configFile["backgroundPreProcessParameters"] = [[int(text)]]
       else:
         if self._originalBackgroundPreProcessMethod is not None:
-          controller.configFile["backgroundPreProcessParameters"] = self._originalBackgroundPreProcessMethod
+          controller.configFile["backgroundPreProcessMethod"] = self._originalBackgroundPreProcessMethod
         elif "backgroundPreProcessMethod" in controller.configFile:
           del controller.configFile["backgroundPreProcessMethod"]
         if self._originalBackgroundPreProcessParameters is not None:
@@ -243,6 +245,24 @@ class OptimizeConfigFile(QWidget):
     self._fastCenterOfMassWidgets.add(optimizeDataAnalysisLabel)
     self._centerOfMassWidgets.add(optimizeDataAnalysisLabel)
 
+    plotOnlyOneTailPointForVisuLabel = util.apply_style(QLabel("Validation video options"), font_size='16px')
+    advancedOptionsLayout.addWidget(plotOnlyOneTailPointForVisuLabel, 5, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(plotOnlyOneTailPointForVisuLabel)
+    self._headEmbeddedWidgets.add(plotOnlyOneTailPointForVisuLabel)
+    def updatePlotOnlyOneTailPointForVisu(checked):
+      if checked:
+        controller.configFile["plotOnlyOneTailPointForVisu"] = 1
+      elif self._originalPlotOnlyOneTailPointForVisu is None:
+        if "plotOnlyOneTailPointForVisu" in controller.configFile:
+          del controller.configFile["plotOnlyOneTailPointForVisu"]
+      else:
+        controller.configFile["plotOnlyOneTailPointForVisu"] = 0
+    self._plotOnlyOneTailPointForVisu = QCheckBox("Display tracking point only on the tail tip in validation videos", self)
+    self._plotOnlyOneTailPointForVisu.toggled.connect(updatePlotOnlyOneTailPointForVisu)
+    advancedOptionsLayout.addWidget(self._plotOnlyOneTailPointForVisu, 6, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(self._plotOnlyOneTailPointForVisu)
+    self._headEmbeddedWidgets.add(self._plotOnlyOneTailPointForVisu)
+
     def speedUpAnalysisToggled(checked):
       analysisInfoWidget.setVisible(checked)
       if not checked:
@@ -322,38 +342,134 @@ class OptimizeConfigFile(QWidget):
     advancedOptionsLayout.addWidget(self._recalculateForegroundImageBasedOnBodyArea, 13, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(self._recalculateForegroundImageBasedOnBodyArea)
 
-    plotOnlyOneTailPointForVisuLabel = util.apply_style(QLabel("Validation video options"), font_size='16px')
-    advancedOptionsLayout.addWidget(plotOnlyOneTailPointForVisuLabel, 5, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(plotOnlyOneTailPointForVisuLabel)
-    self._headEmbeddedWidgets.add(plotOnlyOneTailPointForVisuLabel)
-    def updatePlotOnlyOneTailPointForVisu(checked):
-      if checked:
-        controller.configFile["plotOnlyOneTailPointForVisu"] = 1
-      elif self._originalPlotOnlyOneTailPointForVisu is None:
-        if "plotOnlyOneTailPointForVisu" in controller.configFile:
-          del controller.configFile["plotOnlyOneTailPointForVisu"]
-      else:
-        controller.configFile["plotOnlyOneTailPointForVisu"] = 0
-    self._plotOnlyOneTailPointForVisu = QCheckBox("Display tracking point only on the tail tip in validation videos", self)
-    self._plotOnlyOneTailPointForVisu.toggled.connect(updatePlotOnlyOneTailPointForVisu)
-    advancedOptionsLayout.addWidget(self._plotOnlyOneTailPointForVisu, 6, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(self._plotOnlyOneTailPointForVisu)
-    self._headEmbeddedWidgets.add(self._plotOnlyOneTailPointForVisu)
-
     hframe = QFrame(self)
     hframe.setFrameShape(QFrame.Shape.HLine)
     advancedOptionsLayout.addWidget(hframe, 10, 0, 1, 5)
     self._freelySwimmingWidgets.add(hframe)
+    videoRotationLabel = util.apply_style(QLabel("Video rotation"), font_size='16px')
+    advancedOptionsLayout.addWidget(videoRotationLabel, 11, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(videoRotationLabel)
+    rotationAngleLabel = QPushButton("Rotation angle (degrees):")
+    def modifyRotationAngle():
+      cap = zzVideoReading.VideoCapture(controller.videoToCreateConfigFileFor)
+      cap.set(1, controller.configFile.get("firstFrame", 1))
+      ret, frame = cap.read()
+
+      layout = QVBoxLayout()
+      video = QLabel()
+      layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
+
+      angle = float(self._rotationAngleLineEdit.text())
+      frameSlider = util.SliderWithSpinbox(angle, -180, 180, name="Rotation angle (degrees)", double=True)
+
+      def getFrame():
+        nonlocal angle
+        angle = frameSlider.value()
+        return cv2.warpAffine(frame, cv2.getRotationMatrix2D(tuple(x / 2 for x in frame.shape[1::-1]), angle, 1.0), frame.shape[1::-1], flags=cv2.INTER_LINEAR)
+      frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video))
+      layout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+
+      cancelled = False
+      def cancel():
+        nonlocal cancelled
+        cancelled = True
+      buttons = (("Cancel", cancel, True), ("Ok", None, True))
+      util.showBlockingPage(layout, title="Select the video rotation angle", buttons=buttons, labelInfo=(getFrame(), video))
+      if not cancelled:
+        self._rotationAngleLineEdit.setText(str(angle))
+    rotationAngleLabel.clicked.connect(modifyRotationAngle)
+    advancedOptionsLayout.addWidget(rotationAngleLabel, 12, 3, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(rotationAngleLabel)
+    self._rotationAngleLineEdit = QLineEdit()
+    def updateRotationAngle(text):
+      if text:
+        try:
+          value = float(text)
+        except ValueError:
+          return
+        controller.configFile["backgroundPreProcessMethod"] = ["rotate"]
+        controller.configFile["imagePreProcessMethod"] = ["rotate"]
+        controller.configFile["backgroundPreProcessParameters"] = [[value]]
+        controller.configFile["imagePreProcessParameters"] = [[value]]
+      else:
+        if self._originalBackgroundPreProcessMethod is not None:
+          controller.configFile["backgroundPreProcessMethod"] = self._originalBackgroundPreProcessMethod
+        elif "backgroundPreProcessMethod" in controller.configFile:
+          del controller.configFile["backgroundPreProcessMethod"]
+        if self._originalBackgroundPreProcessParameters is not None:
+          controller.configFile["backgroundPreProcessParameters"] = self._originalBackgroundPreProcessParameters
+        elif "backgroundPreProcessParameters" in controller.configFile:
+          del controller.configFile["backgroundPreProcessParameters"]
+        if self._originalImagePreProcessMethod is not None:
+          controller.configFile["imagePreProcessMethod"] = self._originalImagePreProcessMethod
+        elif "imagePreProcessMethod" in controller.configFile:
+          del controller.configFile["imagePreProcessMethod"]
+        if self._originalImagePreProcessParameters is not None:
+          controller.configFile["imagePreProcessParameters"] = self._originalImagePreProcessParameters
+        elif "imagePreProcessParameters" in controller.configFile:
+          del controller.configFile["imagePreProcessParameters"]
+    self._rotationAngleLineEdit.textChanged.connect(updateRotationAngle)
+    advancedOptionsLayout.addWidget(self._rotationAngleLineEdit, 12, 4, Qt.AlignmentFlag.AlignLeft)
+    self._freelySwimmingWidgets.add(self._rotationAngleLineEdit)
+
+    hframe = QFrame(self)
+    hframe.setFrameShape(QFrame.Shape.HLine)
+    advancedOptionsLayout.addWidget(hframe, 14, 0, 1, 5)
+    self._freelySwimmingWidgets.add(hframe)
+    nonStationaryBackgroundLabel = util.apply_style(QLabel("Non stationary background"), font_size='16px')
+    advancedOptionsLayout.addWidget(nonStationaryBackgroundLabel, 15, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(nonStationaryBackgroundLabel)
+    self._updateBackgroundOnEveryFrameCheckbox = QCheckBox("Update background on every frame")
+    def updateBackroundOnEveryFrame(checked):
+      if checked:
+        controller.configFile["updateBackgroundAtInterval"] = 1
+        controller.configFile["useFirstFrameAsBackground"] = 1
+      else:
+        if self._originalUpdateBackgroundAtInterval is None:
+          if "updateBackgroundAtInterval" in controller.configFile:
+            del controller.configFile["updateBackgroundAtInterval"]
+        else:
+          controller.configFile["updateBackgroundAtInterval"] = 0
+        if self._originalUseFirstFrameAsBackground is None:
+          if "useFirstFrameAsBackground" in controller.configFile:
+            del controller.configFile["useFirstFrameAsBackground"]
+        else:
+          controller.configFile["useFirstFrameAsBackground"] = 0
+    self._updateBackgroundOnEveryFrameCheckbox.toggled.connect(updateBackroundOnEveryFrame)
+    advancedOptionsLayout.addWidget(self._updateBackgroundOnEveryFrameCheckbox, 16, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(self._updateBackgroundOnEveryFrameCheckbox)
+
+    noMultiprocessingOverWellsLabel = util.apply_style(QLabel("No multiprocessing over wells"), font_size='16px')
+    advancedOptionsLayout.addWidget(noMultiprocessingOverWellsLabel, 15, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(noMultiprocessingOverWellsLabel)
+    self._noMultiprocessingCheckbox = QCheckBox("No multiprocessing over wells")
+    def noMultiprocessingToggled(checked):
+      if checked:
+        controller.configFile["fasterMultiprocessing"] = 2
+      else:
+        if self._originalNoMultiprocessing is None:
+          if "fasterMultiprocessing" in controller.configFile:
+            del controller.configFile["fasterMultiprocessing"]
+        else:
+          controller.configFile["fasterMultiprocessing"] = 0
+    self._noMultiprocessingCheckbox.toggled.connect(noMultiprocessingToggled)
+    advancedOptionsLayout.addWidget(self._noMultiprocessingCheckbox, 16, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(self._noMultiprocessingCheckbox)
+
+    hframe = QFrame(self)
+    hframe.setFrameShape(QFrame.Shape.HLine)
+    advancedOptionsLayout.addWidget(hframe, 17, 0, 1, 5)
+    self._freelySwimmingWidgets.add(hframe)
     advancedOptionsLabel = util.apply_style(QLabel("Documentation links"), font_size='16px')
-    advancedOptionsLayout.addWidget(advancedOptionsLabel, 11, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(advancedOptionsLabel, 18, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(advancedOptionsLabel)
     speedUpTrackingBtn = util.apply_style(QPushButton("Speed up tracking for 'Track heads and tails of freely swimming fish'", self), background_color=util.LIGHT_YELLOW)
     speedUpTrackingBtn.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingSpeedOptimization.md"))
-    advancedOptionsLayout.addWidget(speedUpTrackingBtn, 12, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(speedUpTrackingBtn, 19, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(speedUpTrackingBtn)
     documentationBtn = util.apply_style(QPushButton("Help", self), background_color=util.LIGHT_YELLOW)
     documentationBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/configurationFile/throughGUI/trackingFreelySwimmingConfigOptimization"))
-    advancedOptionsLayout.addWidget(documentationBtn, 13, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(documentationBtn, 20, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(documentationBtn)
 
     for idx in range(advancedOptionsLayout.columnCount()):
@@ -419,10 +535,23 @@ class OptimizeConfigFile(QWidget):
 
     self._originalBackgroundPreProcessMethod = app.configFile.get("backgroundPreProcessMethod")
     self._originalBackgroundPreProcessParameters = app.configFile.get("backgroundPreProcessParameters")
-    if self._originalBackgroundPreProcessParameters is not None:
-      self._backgroundPreProcessParameters.setText(str(self._originalBackgroundPreProcessParameters[0][0]))
+    if self._originalBackgroundPreProcessParameters is not None and self._originalBackgroundPreProcessMethod is not None:
+      if self._originalBackgroundPreProcessMethod[0] == 'erodeThenMin':
+        self._backgroundPreProcessParameters.setText(str(self._originalBackgroundPreProcessParameters[0][0]))
+      elif self._originalBackgroundPreProcessMethod[0] == 'rotate':
+        self._rotationAngleLineEdit.setText(str(self._originalBackgroundPreProcessParameters[0][0]))
+      else:
+        self._backgroundPreProcessParameters.setText('')
+        self._rotationAngleLineEdit.setText('')
     else:
       self._backgroundPreProcessParameters.setText('')
+      self._rotationAngleLineEdit.setText('')
+    self._originalImagePreProcessMethod = app.configFile.get("imagePreProcessMethod")
+    self._originalImagePreProcessParameters = app.configFile.get("imagePreProcessParameters")
+    if self._originalImagePreProcessParameters is not None and self._originalImagePreProcessMethod is not None and self._originalBackgroundPreProcessMethod[0] == 'rotate':
+      self._rotationAngleLineEdit.setText(str(self._originalImagePreProcessParameters[0][0]))
+    else:
+      self._rotationAngleLineEdit.setText('')
     self._originalPostProcessMultipleTrajectories = app.configFile.get("postProcessMultipleTrajectories")
     self._originalPostProcessMaxDistanceAuthorized = app.configFile.get("postProcessMaxDistanceAuthorized")
     if self._originalPostProcessMaxDistanceAuthorized is not None:
@@ -444,11 +573,22 @@ class OptimizeConfigFile(QWidget):
       self._recalculateForegroundImageBasedOnBodyArea.setChecked(bool(self._originalRecalculateForegroundImageBasedOnBodyArea))
     else:
       self._recalculateForegroundImageBasedOnBodyArea.setChecked(False)
+    self._originalUpdateBackgroundAtInterval = app.configFile.get("updateBackgroundAtInterval")
+    self._originalUseFirstFrameAsBackground = app.configFile.get("useFirstFrameAsBackground")
+    if self._originalUpdateBackgroundAtInterval is not None and self._originalUseFirstFrameAsBackground is not None:
+      self._updateBackgroundOnEveryFrameCheckbox.setChecked(self._originalUpdateBackgroundAtInterval and self._originalUseFirstFrameAsBackground)
+    else:
+      self._updateBackgroundOnEveryFrameCheckbox.setChecked(False)
     self._originalPlotOnlyOneTailPointForVisu = app.configFile.get("plotOnlyOneTailPointForVisu")
     if self._originalPlotOnlyOneTailPointForVisu is not None:
       self._plotOnlyOneTailPointForVisu.setChecked(bool(self._originalPlotOnlyOneTailPointForVisu))
     else:
       self._plotOnlyOneTailPointForVisu.setChecked(False)
+    self._originalNoMultiprocessing = app.configFile.get("fasterMultiprocessing")
+    if self._originalNoMultiprocessing is not None:
+      self._noMultiprocessingCheckbox.setChecked(self._originalNoMultiprocessing == 2)
+    else:
+      self._noMultiprocessingCheckbox.setChecked(False)
     if "createPandasDataFrameOfParameters" in app.configFile:
       self._speedUpAnalysisCheckbox.setChecked(app.configFile["createPandasDataFrameOfParameters"])
     else:
