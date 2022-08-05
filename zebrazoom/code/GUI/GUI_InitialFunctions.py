@@ -1,4 +1,5 @@
 import cv2
+import contextlib
 import re
 import os
 import json
@@ -20,7 +21,7 @@ from zebrazoom.getTailExtremityFirstFrame import getTailExtremityFirstFrame
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 
-from PyQt5.QtCore import Qt, QAbstractTableModel, QItemSelectionModel, QModelIndex, QSize, QUrl
+from PyQt5.QtCore import Qt, QAbstractTableModel, QItemSelection, QItemSelectionModel, QModelIndex, QSize, QUrl
 from PyQt5.QtGui import QDesktopServices
 from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QFileDialog, QFileSystemModel, QFrame, QHBoxLayout, QHeaderView, QLabel, QLineEdit, QListView, QMessageBox, QPushButton, QScrollArea, QSpinBox, QTableView, QTreeView, QVBoxLayout, QWidget
 
@@ -266,16 +267,15 @@ class _VideoSelectionPage(QWidget):
     tableLayout = QVBoxLayout()
     tableButtonsLayout = QHBoxLayout()
     self._addVideosBtn = QPushButton("Add video(s)")
-    self._addVideosBtn.clicked.connect(lambda: self._table.model().addVideos(QFileDialog.getOpenFileNames(app.window, 'Select one or more videos', os.path.expanduser("~"),
-                                                                                                          "Video files (%s)" % ' '.join('*%s' % ext for ext in self._VIDEO_EXTENSIONS))[0]))
+    self._addVideosBtn.clicked.connect(self._addVideos)
     self._addVideosBtn.clicked.connect(self._updateParallelTracking)
     tableButtonsLayout.addWidget(self._addVideosBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     self._addFolderBtn = QPushButton("Add folder")
-    self._addFolderBtn.clicked.connect(lambda: self._table.model().addVideos(self._getFolderVideos()))
+    self._addFolderBtn.clicked.connect(self._addFolder)
     self._addFolderBtn.clicked.connect(self._updateParallelTracking)
     tableButtonsLayout.addWidget(self._addFolderBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     self._addMultipleFoldersBtn = QPushButton("Add multiple folders")
-    self._addMultipleFoldersBtn.clicked.connect(lambda: self._table.model().addVideos(self._getMultipleFolderVideos()))
+    self._addMultipleFoldersBtn.clicked.connect(self._addMultipleFolders)
     self._addMultipleFoldersBtn.clicked.connect(self._updateParallelTracking)
     tableButtonsLayout.addWidget(self._addMultipleFoldersBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     chooseConfigsBtn = QPushButton("Choose config for selected videos")
@@ -326,6 +326,54 @@ class _VideoSelectionPage(QWidget):
 
     self.setLayout(layout)
     self._mainWidget.hide()
+
+  @contextlib.contextmanager
+  def __selectAddedRows(self):
+    app = QApplication.instance()
+    model = self._table.model()
+    firstNewRow = model.rowCount()
+    yield
+    if firstNewRow == model.rowCount():
+      return  # no videos added
+    addedRows = QItemSelection()
+    addedRows.select(model.index(firstNewRow, 0), model.index(model.rowCount() - 1, 0))
+    self._table.selectionModel().setCurrentIndex(model.index(firstNewRow, 0), QItemSelectionModel.SelectionFlag.ClearAndSelect | QItemSelectionModel.SelectionFlag.Rows)
+    self._table.selectionModel().select(addedRows, QItemSelectionModel.SelectionFlag.ClearAndSelect | QItemSelectionModel.SelectionFlag.Rows)
+    self._table.setFocus()
+
+  def _addVideos(self):
+    app = QApplication.instance()
+    with self.__selectAddedRows():
+      self._table.model().addVideos(QFileDialog.getOpenFileNames(app.window, 'Select one or more videos', os.path.expanduser("~"), "Video files (%s)" % ' '.join('*%s' % ext for ext in self._VIDEO_EXTENSIONS))[0])
+
+  def _addFolder(self):
+    app = QApplication.instance()
+    selectedFolder = QFileDialog.getExistingDirectory(app.window, "Select a folder", os.path.expanduser("~"))
+    if selectedFolder is None:
+      return
+    with self.__selectAddedRows():
+      return self._table.model().addVideos([os.path.normpath(os.path.join(root, f)) for root, _dirs, files in os.walk(selectedFolder) for f in files if os.path.splitext(f)[1] in self._VIDEO_EXTENSIONS])
+
+  def _addMultipleFolders(self):
+    app = QApplication.instance()
+    dialog = QFileDialog(app.window)
+    dialog.setWindowTitle('Select one or more folders (use Ctrl or Shift key to select multiple)')
+    dialog.setDirectory(os.path.expanduser("~"))
+    dialog.setFileMode(QFileDialog.FileMode.Directory)
+    dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
+    dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
+    listView = dialog.findChild(QListView, 'listView')
+    if listView:
+      listView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+    treeView = dialog.findChild(QTreeView)
+    if treeView:
+      treeView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+
+    if not dialog.exec():
+      return None
+    with self.__selectAddedRows():
+      self._table.model().addVideos([os.path.normpath(os.path.join(root, f)) for path in dialog.selectedFiles()
+                                     for root, _dirs, files in os.walk(path) for f in files if os.path.splitext(f)[1] in self._VIDEO_EXTENSIONS])
 
   def _updateParallelTracking(self):
     if self._ZZkwargs.get('sbatchMode', False):
@@ -386,32 +434,6 @@ class _VideoSelectionPage(QWidget):
     self._table.setModel(_VideosModel(filename))
     self._table.horizontalHeader().resizeSections(QHeaderView.ResizeMode.Stretch)
     self._updateParallelTracking()
-
-  def _getMultipleFolderVideos(self):
-    dialog = QFileDialog()
-    dialog.setWindowTitle('Select one or more folders (use Ctrl or Shift key to select multiple)')
-    dialog.setDirectory(os.path.expanduser("~"))
-    dialog.setFileMode(QFileDialog.FileMode.Directory)
-    dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
-    dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
-    listView = dialog.findChild(QListView, 'listView')
-    if listView:
-      listView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-    treeView = dialog.findChild(QTreeView)
-    if treeView:
-      treeView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-
-    if not dialog.exec():
-      return None
-    return [os.path.normpath(os.path.join(root, f)) for path in dialog.selectedFiles()
-            for root, _dirs, files in os.walk(path) for f in files if os.path.splitext(f)[1] in self._VIDEO_EXTENSIONS]
-
-  def _getFolderVideos(self):
-    app = QApplication.instance()
-    selectedFolder = QFileDialog.getExistingDirectory(app.window, "Select a folder", os.path.expanduser("~"))
-    if selectedFolder is None:
-      return None
-    return [os.path.normpath(os.path.join(root, f)) for root, _dirs, files in os.walk(selectedFolder) for f in files if os.path.splitext(f)[1] in self._VIDEO_EXTENSIONS]
 
   def _runTracking(self):
     app = QApplication.instance()
