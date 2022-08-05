@@ -27,12 +27,12 @@ from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QFileDia
 
 LARGE_FONT= ("Verdana", 12)
 
-def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, chooseFrames, testMode):
+def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, chooseFrames):
     videoName, _ = QFileDialog.getOpenFileName(self.window, 'Select file', os.path.expanduser("~"))
     if not videoName:
       return
     ZZargs = ([videoName],)
-    ZZkwargs = {'justExtractParams': justExtractParams, 'noValidationVideo': noValidationVideo, 'testMode': testMode}
+    ZZkwargs = {'justExtractParams': justExtractParams, 'noValidationVideo': noValidationVideo}
 
     if chooseFrames:
       def beginningAndEndChosen():
@@ -516,17 +516,9 @@ def _runTracking(args, justExtractParams, noValidationVideo, ZZoutputLocation):
     return
 
 
-def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, justExtractParams=False, noValidationVideo=False, testMode=False,
-                    findMultipleROIs=False, askCoordinatesForAll=True, firstFrame=None, lastFrame=None, backgroundExtractionForceUseAllVideoFrames=None,
-                    processes=1):
+def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, justExtractParams=False, noValidationVideo=False, findMultipleROIs=False,
+                    askCoordinatesForAll=True, firstFrame=None, lastFrame=None, backgroundExtractionForceUseAllVideoFrames=None, processes=1):
   app = QApplication.instance()
-
-  if testMode:
-    with open(configs[0]) as f:
-      app.configFile = json.load(f)
-    videoToCreateConfigFileFor = videos[0]
-    app.testConfig(addToHistory=False)
-    return
 
   if sbatchMode:
     commandsFile = open(os.path.join(paths.getRootDataFolder(), "commands.txt"), "w", newline='\n')

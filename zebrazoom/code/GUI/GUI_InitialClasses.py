@@ -369,10 +369,8 @@ class VideoToAnalyze(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Choose video.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("Look for the video you want to analyze.", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        testCheckbox = QCheckBox("Test only on a small number of frames (tracking results will only be saved temporarily)", self)
-        layout.addWidget(testCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
         button = util.apply_style(QPushButton("Choose file", self), background_color=util.LIGHT_YELLOW)
-        button.clicked.connect(lambda: controller.chooseVideoToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), chooseFramesCheckbox.isChecked(), testCheckbox.isChecked()))
+        button.clicked.connect(lambda: controller.chooseVideoToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), chooseFramesCheckbox.isChecked()))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
 
         layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
