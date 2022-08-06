@@ -321,7 +321,7 @@ class SeveralVideos(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Run ZebraZoom on several videos", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
-        button1 = util.apply_style(QPushButton("Run ZebraZoom on several videos", self), background_color=util.LIGHT_YELLOW)
+        button1 = util.apply_style(QPushButton("Run ZebraZoom on several videos", self), background_color=util.DEFAULT_BUTTON_COLOR)
         button1.clicked.connect(lambda: controller.show_frame("FolderToAnalyze"))
         layout.addWidget(button1, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -353,7 +353,7 @@ class SeveralVideos(QWidget):
         sublayout3.addWidget(util.apply_style(QLabel("", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addLayout(sublayout3)
 
-        start_page_btn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
+        start_page_btn = QPushButton("Go to the start page", self)
         start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))
         layout.addWidget(start_page_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -369,7 +369,7 @@ class VideoToAnalyze(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Choose video.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("Look for the video you want to analyze.", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        button = util.apply_style(QPushButton("Choose file", self), background_color=util.LIGHT_YELLOW)
+        button = util.apply_style(QPushButton("Choose file", self), background_color=util.DEFAULT_BUTTON_COLOR)
         button.clicked.connect(lambda: controller.chooseVideoToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), chooseFramesCheckbox.isChecked()))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -389,7 +389,7 @@ class VideoToAnalyze(QWidget):
         layout.addWidget(no_validation_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
-        start_page_btn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
+        start_page_btn = QPushButton("Go to the start page", self)
         start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))
         layout.addWidget(start_page_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -403,7 +403,7 @@ class FolderToAnalyze(QWidget):
 
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Run ZebraZoom on several videos", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-        button = util.apply_style(QPushButton("Choose videos", self), background_color=util.LIGHT_YELLOW)
+        button = util.apply_style(QPushButton("Choose videos", self), background_color=util.DEFAULT_BUTTON_COLOR)
         button.clicked.connect(lambda: controller.chooseFolderToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), expert_checkbox.isChecked()))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -418,7 +418,7 @@ class FolderToAnalyze(QWidget):
         layout.addWidget(expert_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
-        start_page_btn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
+        start_page_btn = QPushButton("Go to the start page", self)
         start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))
         layout.addWidget(start_page_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -432,11 +432,11 @@ class TailExtremityHE(QWidget):
 
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Manually label tail extremities", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-        button = util.apply_style(QPushButton("Choose videos", self), background_color=util.LIGHT_YELLOW)
+        button = util.apply_style(QPushButton("Choose videos", self), background_color=util.DEFAULT_BUTTON_COLOR)
         button.clicked.connect(controller.chooseFolderForTailExtremityHE)
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        start_page_btn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
+        start_page_btn = QPushButton("Go to the start page", self)
         start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))
         layout.addWidget(start_page_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -450,13 +450,13 @@ class FolderMultipleROIInitialSelect(QWidget):
 
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Define regions of interest", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-        button = util.apply_style(QPushButton("Choose videos", self), background_color=util.LIGHT_YELLOW)
+        button = util.apply_style(QPushButton("Choose videos", self), background_color=util.DEFAULT_BUTTON_COLOR)
         button.clicked.connect(lambda: controller.chooseFolderForMultipleROIs(not sameCoordinatesForAllCheckbox.isChecked()))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
         sameCoordinatesForAllCheckbox = QCheckBox("Use the same coordinates for all videos")
         layout.addWidget(sameCoordinatesForAllCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        start_page_btn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
+        start_page_btn = QPushButton("Go to the start page", self)
         start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))
         layout.addWidget(start_page_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -473,10 +473,10 @@ class ConfigFilePromp(QWidget):
 
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Choose configuration file.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-        button = util.apply_style(QPushButton("Choose file", self), background_color=util.LIGHT_YELLOW)
+        button = util.apply_style(QPushButton("Choose file", self), background_color=util.DEFAULT_BUTTON_COLOR)
         button.clicked.connect(lambda: chooseConfigFile(self._ZZargs, self._ZZkwargs))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
-        start_page_btn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
+        start_page_btn = QPushButton("Go to the start page", self)
         start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))
         layout.addWidget(start_page_btn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -496,7 +496,7 @@ class Patience(QWidget):
         self._ZZkwargs = {}
 
         layout = QVBoxLayout()
-        button = util.apply_style(QPushButton("Launch ZebraZoom on your video(s)", self), background_color=util.LIGHT_YELLOW)
+        button = util.apply_style(QPushButton("Launch ZebraZoom on your video(s)", self), background_color=util.DEFAULT_BUTTON_COLOR)
         button.clicked.connect(lambda: launchZebraZoom(*self._ZZargs, **self._ZZkwargs))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("After clicking on the button above, please wait for ZebraZoom to run, you can look at the console outside of the GUI to check on the progress of ZebraZoom.", self), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -516,7 +516,7 @@ class ZZoutro(QWidget):
 
         layout = QVBoxLayout()
         layout.addWidget(QLabel("Finished.", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        button = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_YELLOW)
+        button = util.apply_style(QPushButton("Go to the start page", self), background_color=util.DEFAULT_BUTTON_COLOR)
         button.clicked.connect(lambda: controller.show_frame("StartPage"))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -535,7 +535,7 @@ class ZZoutroSbatch(QWidget):
         layout.addWidget(QLabel("Before launching the parrallel tracking with sbatch, you may need to type: 'chmod +x launchZZ.sh'", self), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("You can follow the progress with the commands 'squeueme' and by looking into the slurm* file being generated with 'cat slurm*'", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
-        startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
+        startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.DEFAULT_BUTTON_COLOR)
         startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
         layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
         self.setLayout(layout)
@@ -570,7 +570,7 @@ class EnhanceZZOutput(QWidget):
         linkBtn2.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/configurationFile/advanced/angleSmoothBoutsAndBendsDetection"))
         layout.addWidget(linkBtn2, alignment=Qt.AlignmentFlag.AlignCenter)
         self.setLayout(layout)
-        startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
+        startPageBtn = QPushButton("Go to the start page", self)
         startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
         layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -714,7 +714,7 @@ class ViewParameters(util.CollapsibleSplitter):
         kine_btn.clicked.connect(lambda: checkConsistencyOfParameters([self.currentResultFolder]))
         layout.addWidget(kine_btn, 10, 2, Qt.AlignmentFlag.AlignCenter)
 
-        startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_YELLOW)
+        startPageBtn = QPushButton("Go to the start page", self)
         startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
         layout.addWidget(startPageBtn, 10, 1, Qt.AlignmentFlag.AlignCenter)
 
@@ -1186,7 +1186,7 @@ class Error(QWidget):
         layout.addWidget(QLabel("There was an error somewhere.", self), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("Check the command line to see what the error was.", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
-        startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
+        startPageBtn = QPushButton("Go to the start page", self)
         startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
         layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
         self.setLayout(layout)

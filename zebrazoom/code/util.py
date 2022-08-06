@@ -29,6 +29,7 @@ LIGHT_YELLOW = '#FFFFE0'
 LIGHT_CYAN = '#E0FFFF'
 LIGHT_GREEN = '#90ee90'
 GOLD = '#FFD700'
+DEFAULT_BUTTON_COLOR = LIGHT_GREEN
 SPINBOX_STYLESHEET = '''
 QSpinBox::down-button {
   subcontrol-origin: border;
@@ -94,17 +95,19 @@ def _getButtonsLayout(buttons, loop, dialog=None):
       loop.exit()
 
   for text, *args in buttons:
+    enabledSignal = None
+    color = None
     if len(args) == 1:
       cb, = args
       exitLoop = True
-      enabledSignal = None
     elif len(args) == 2:
       cb, exitLoop = args
-      enabledSignal = None
-    else:
-      assert len(args) == 3
+    elif len(args) == 3:
       cb, exitLoop, enabledSignal = args
-    button = QPushButton(text)
+    else:
+      assert len(args) == 4
+      cb, exitLoop, enabledSignal, color = args
+    button = QPushButton(text) if color is None else apply_style(QPushButton(text), background_color=color)
     if enabledSignal is not None:
       button.setEnabled(False)
       enabledSignal.connect(lambda enabled, btn=button: btn.setEnabled(bool(enabled)))
@@ -787,12 +790,12 @@ def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=Non
 
   extraButtons = tuple(updateButton(button) for button in extraButtons)
   buttons = (("Back", backBtnCb, True),) if backBtnCb is not None else ()
-  buttons += (("Next", None, True, video.pointSelected),) if useNext else ()
+  buttons += (("Next", None, True, video.pointSelected, DEFAULT_BUTTON_COLOR),) if useNext else ()
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
   if not useNext:
     video.pointSelected.connect(lambda: QApplication.restoreOverrideCursor())
   if not dialog:
-    showBlockingPage(layout, title=title, buttons=buttons + extraButtons, labelInfo=(frame, video, zoomable), exitSignals=(video.proceed,) if useNext else (video.pointSelected,))
+    showBlockingPage(layout, title=title, buttons=extraButtons + buttons, labelInfo=(frame, video, zoomable), exitSignals=(video.proceed,) if useNext else (video.pointSelected,))
   else:
     showDialog(layout, title=title, buttons=buttons + extraButtons, labelInfo=(frame, video, zoomable), exitSignals=(video.proceed,) if useNext else (video.pointSelected,))
   return video.getCoordinates()
@@ -913,9 +916,9 @@ def getRectangle(frame, title, backBtnCb=None, dialog=False, buttons=None, initi
     video.regionSelected.connect(clearRectangleBtn.setEnabled)
   if buttons is None:
     if backBtnCb is not None:
-      buttons = (("Back", backBtnCb, True), ("Next", None, True, video.regionSelected))
+      buttons = (("Back", backBtnCb, True), ("Next", None, True, video.regionSelected, DEFAULT_BUTTON_COLOR))
     else:
-      buttons = (("Next", None, True, video.regionSelected),)
+      buttons = (("Next", None, True, video.regionSelected, DEFAULT_BUTTON_COLOR),)
   else:
     assert backBtnCb is None
   if not dialog:
@@ -1234,9 +1237,9 @@ def getCircle(frame, title, backBtnCb=None, zoomable=False):
   video = _InteractiveLabelCircle(width, height)
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
   if backBtnCb is not None:
-    buttons = (("Cancel", backBtnCb, True), ("Ok", None, True, video.circleSelected))
+    buttons = (("Cancel", backBtnCb, True), ("Ok", None, True, video.circleSelected, DEFAULT_BUTTON_COLOR))
   else:
-    buttons = (("Ok", None, True, video.circleSelected),)
+    buttons = (("Ok", None, True, video.circleSelected, DEFAULT_BUTTON_COLOR),)
   showBlockingPage(layout, title=title, buttons=buttons, labelInfo=(frame, video, zoomable))
   return video.getInfo()
 

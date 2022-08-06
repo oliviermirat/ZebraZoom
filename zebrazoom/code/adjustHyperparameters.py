@@ -97,6 +97,10 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
     mainLayout.addLayout(layout)
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch()
+    if documentationLink is not None:
+      documentationBtn = util.apply_style(QPushButton("Help"), background_color="red")
+      documentationBtn.clicked.connect(lambda: webbrowser.open_new(documentationLink))
+      buttonsLayout.addWidget(documentationBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def saveClicked():
       widgets['saved'] = True
@@ -104,14 +108,10 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
     def discardClicked():
       widgets['discarded'] = True
       widgets['loop'].exit()
-    for text, cb in (("Done! Save changes!", saveClicked), ("Discard changes.", discardClicked)):
-      button = QPushButton(text)
+    for text, cb, color in (("Discard changes.", discardClicked, None), ("Done! Save changes!", saveClicked, util.DEFAULT_BUTTON_COLOR)):
+      button = QPushButton(text) if color is None else util.apply_style(QPushButton(text), background_color=color)
       button.clicked.connect(cb)
       buttonsLayout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
-    if documentationLink is not None:
-      documentationBtn = util.apply_style(QPushButton("Help"), background_color="red")
-      documentationBtn.clicked.connect(lambda: webbrowser.open_new(documentationLink))
-      buttonsLayout.addWidget(documentationBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch()
     mainLayout.addLayout(buttonsLayout)
     temporaryPage = QWidget()

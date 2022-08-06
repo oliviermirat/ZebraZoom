@@ -6,8 +6,7 @@ import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.GUI.adjustParameterInsideAlgo import adjustParamInsideAlgoPage, adjustBoutDetectionOnlyPage, adjustParamInsideAlgoFreelySwimPage, adjustParamInsideAlgoFreelySwimAutomaticParametersPage
 
-from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QDialog, QLabel, QPushButton, QVBoxLayout
+from PyQt5.QtWidgets import QApplication
 
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util

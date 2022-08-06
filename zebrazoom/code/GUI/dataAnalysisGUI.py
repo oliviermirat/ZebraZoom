@@ -485,7 +485,7 @@ class CreateExperimentOrganizationExcel(QWidget):
     openExperimentFolderBtn = QPushButton("Open experiment folder")
     openExperimentFolderBtn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(folderPath)))
     tableButtonsLayout.addWidget(openExperimentFolderBtn, alignment=Qt.AlignmentFlag.AlignLeft)
-    self._runExperimentBtn = util.apply_style(QPushButton("Run analysis"), background_color=util.LIGHT_YELLOW)
+    self._runExperimentBtn = util.apply_style(QPushButton("Run analysis"), background_color=util.DEFAULT_BUTTON_COLOR)
     self._runExperimentBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: self._runExperiment(), forceSave=True))
     tableButtonsLayout.addWidget(self._runExperimentBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     tableButtonsLayout.addStretch()
@@ -559,7 +559,7 @@ class CreateExperimentOrganizationExcel(QWidget):
 
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch()
-    startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
+    startPageBtn = QPushButton("Go to the start page")
     startPageBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: controller.show_frame("StartPage")))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     previousParameterResultsBtn = util.apply_style(QPushButton("View previous kinematic parameter analysis results"), background_color=util.LIGHT_YELLOW)
@@ -880,14 +880,14 @@ class ChooseDataAnalysisMethod(QWidget):
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Choose the analysis you want to perform:"), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    self._compareBtn = util.apply_style(QPushButton("Compare populations with kinematic parameters"), background_color=util.LIGHT_YELLOW)
+    self._compareBtn = util.apply_style(QPushButton("Compare populations with kinematic parameters"), background_color=util.DEFAULT_BUTTON_COLOR)
     self._compareBtn.clicked.connect(lambda: controller.show_frame("PopulationComparison"))
     layout.addWidget(self._compareBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    self._clusterBtn = util.apply_style(QPushButton("Cluster bouts of movements  (for zebrafish only)"), background_color=util.LIGHT_YELLOW)
+    self._clusterBtn = util.apply_style(QPushButton("Cluster bouts of movements  (for zebrafish only)"), background_color=util.DEFAULT_BUTTON_COLOR)
     self._clusterBtn.clicked.connect(lambda: controller.show_frame("BoutClustering"))
     layout.addWidget(self._clusterBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    self._startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
+    self._startPageBtn = QPushButton("Go to the start page")
     self._startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     layout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -941,10 +941,10 @@ class PopulationComparison(QWidget):
     self._advancedOptionsExpander = util.Expander(self, "Show advanced options", advancedOptionsLayout)
     layout.addWidget(self._advancedOptionsExpander)
 
-    self._launchBtn = util.apply_style(QPushButton("Launch Analysis"), background_color=util.LIGHT_YELLOW)
+    self._launchBtn = util.apply_style(QPushButton("Launch Analysis"), background_color=util.DEFAULT_BUTTON_COLOR)
     self._launchBtn.clicked.connect(lambda: self._populationComparison(self._tailTrackingParametersCheckbox.isChecked(), self._saveInMatlabFormatCheckbox.isChecked(), self._saveRawDataCheckbox.isChecked(), self._forcePandasRecreation.isChecked(), self._minNbBendForBoutDetect.text(), self._discardRadioButton.isChecked(), self._keepRadioButton.isChecked(), self._frameStepForDistanceCalculation.text()))
     layout.addWidget(self._launchBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    self._startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
+    self._startPageBtn = QPushButton("Go to the start page")
     self._startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     layout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -1077,10 +1077,10 @@ class BoutClustering(QWidget):
 
     layout.addWidget(util.Expander(self, "Show advanced options", advancedOptionsLayout))
 
-    launchBtn = util.apply_style(QPushButton("Launch Analysis", self), background_color=util.LIGHT_YELLOW)
+    launchBtn = util.apply_style(QPushButton("Launch Analysis", self), background_color=util.DEFAULT_BUTTON_COLOR)
     launchBtn.clicked.connect(lambda: controller.boutClustering(controller, nbClustersToFind.text(), freelySwimmingRadioButton.isChecked(), headEmbeddedRadioButton.isChecked(), minNbBendForBoutDetect.text(), nbVideosToSave.text(), modelUsedForClusteringCheckbox.isChecked(), removeOutliersCheckbox.isChecked(), frameStepForDistanceCalculation.text(), removeBoutsContainingNanValuesInParametersUsedForClustering.isChecked(), self._forcePandasRecreation.isChecked()))
     layout.addWidget(launchBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
+    startPageBtn = QPushButton("Go to the start page", self)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -1103,7 +1103,7 @@ class AnalysisOutputFolderClustering(QWidget):
     viewRawBtn.clicked.connect(lambda: controller.openAnalysisFolder(controller.homeDirectory, 'data'))
     layout.addWidget(viewRawBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    startPageBtn = util.apply_style(QPushButton("Go to the start page", self), background_color=util.LIGHT_CYAN)
+    startPageBtn = QPushButton("Go to the start page", self)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     layout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -1261,7 +1261,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       self._linkBtn = util.apply_style(QPushButton("Video data analysis online documentation"), background_color=util.LIGHT_YELLOW)
       self._linkBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/behaviorAnalysis/behaviorAnalysisGUI"))
       buttonsLayout.addWidget(self._linkBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-      self._startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
+      self._startPageBtn = QPushButton("Go to the start page")
       self._startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
       buttonsLayout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
       buttonsLayout.addStretch(1)
@@ -1356,7 +1356,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._linkBtn = util.apply_style(QPushButton("Video data analysis online documentation"), background_color=util.LIGHT_YELLOW)
     self._linkBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/behaviorAnalysis/behaviorAnalysisGUI"))
     buttonsLayout.addWidget(self._linkBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    self._startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
+    self._startPageBtn = QPushButton("Go to the start page")
     self._startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
     buttonsLayout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch(1)

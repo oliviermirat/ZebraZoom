@@ -324,7 +324,7 @@ def _addBlackSegments(config, videoPath, frameNumber, wellNumber, cap):
         del config["imagePreProcessMethod"]
     else:
       config["imagePreProcessParameters"] = imagePreProcessParameters
-  buttons = (("Done! Save changes!", saveClicked), ("Discard changes.", None))
+  buttons = (("Discard changes.", None), ("Done! Save changes!", saveClicked, True, None, util.DEFAULT_BUTTON_COLOR))
   util.showBlockingPage(layout, labelInfo=(frame, label), title="Click in the beginning and end of segment to set to black pixels", buttons=buttons)
 
 
@@ -333,7 +333,7 @@ def _selectROI(config, getFrame):
   def saveClicked():
     nonlocal save
     save = True
-  buttons = (("Done! Save changes!", saveClicked, True), ("Discard changes.", None, True))
+  buttons = (("Discard changes.", None, True), ("Done! Save changes!", saveClicked, True, None, util.DEFAULT_BUTTON_COLOR))
   topLeft = config.get("oneWellManuallyChosenTopLeft")
   bottomRight = config.get("oneWellManuallyChosenBottomRight")
   initialRect = None if topLeft is None or bottomRight is None else (QPoint(*topLeft), QPoint(*bottomRight))
@@ -472,7 +472,7 @@ def _addEyeTracking(firstFrame, totalFrames):
   layout.addWidget(removeBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   layout.addSpacing(50)
 
-  buttons = (("Done! Save changes!", None),)
+  buttons = (("Done! Save changes!", None, True, None, util.DEFAULT_BUTTON_COLOR),)
   util.showBlockingPage(layout, title="Add eye tracking", buttons=buttons)
 
 
@@ -645,15 +645,15 @@ def adjustParamInsideAlgoPage(useNext=True):
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
-  backBtn = QPushButton("Back" if useNext else "Done! Save changes!")
+  startPageBtn = QPushButton("Go to the start page")
+  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage") or _cleanup(app, page))
+  buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  backBtn = QPushButton("Back") if useNext else util.apply_style(QPushButton("Done! Save changes!"), background_color=util.DEFAULT_BUTTON_COLOR)
   backBtn.clicked.connect(lambda: app.configFileHistory[-2](restoreConfig=useNext))
   backBtn.clicked.connect(lambda: _cleanup(app, page))
   buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-  startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
-  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage") or _cleanup(app, page))
-  buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   if useNext:
-    nextBtn = QPushButton("Next")
+    nextBtn = util.apply_style(QPushButton("Next"), background_color=util.DEFAULT_BUTTON_COLOR)
     nextBtn.clicked.connect(lambda: util.addToHistory(app.show_frame)("FinishConfig") or _cleanup(app, page))
     buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   buttonsLayout.addStretch()
@@ -766,15 +766,15 @@ def adjustParamInsideAlgoFreelySwimPage(useNext=True):
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
-  backBtn = QPushButton("Back" if useNext else "Done! Save changes!")
+  startPageBtn = QPushButton("Go to the start page")
+  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage") or _cleanup(app, page))
+  buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  backBtn = QPushButton("Back") if useNext else util.apply_style(QPushButton("Done! Save changes!"), background_color=util.DEFAULT_BUTTON_COLOR)
   backBtn.clicked.connect(lambda: app.configFileHistory[-2](restoreConfig=useNext))
   backBtn.clicked.connect(lambda: _cleanup(app, page))
   buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-  startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
-  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage") or _cleanup(app, page))
-  buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   if useNext:
-    nextBtn = QPushButton("Next")
+    nextBtn = util.apply_style(QPushButton("Next"), background_color=util.DEFAULT_BUTTON_COLOR)
     nextBtn.clicked.connect(lambda: util.addToHistory(app.show_frame)("FinishConfig") or _cleanup(app, page))
     buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   buttonsLayout.addStretch()
@@ -877,15 +877,15 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
-  backBtn = QPushButton("Back" if useNext else "Done! Save changes!")
+  startPageBtn = QPushButton("Go to the start page")
+  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage") or _cleanup(app, page))
+  buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  backBtn = QPushButton("Back") if useNext else util.apply_style(QPushButton("Done! Save changes!"), background_color=util.DEFAULT_BUTTON_COLOR)
   backBtn.clicked.connect(lambda: app.configFileHistory[-2](restoreConfig=useNext))
   backBtn.clicked.connect(lambda: _cleanup(app, page))
   buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-  startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
-  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage") or _cleanup(app, page))
-  buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   if useNext:
-    nextBtn = QPushButton("Next")
+    nextBtn = util.apply_style(QPushButton("Next"), background_color=util.DEFAULT_BUTTON_COLOR)
     nextBtn.clicked.connect(lambda: util.addToHistory(app.show_frame)("FinishConfig") or _cleanup(app, page))
     buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   buttonsLayout.addStretch()
@@ -1074,15 +1074,15 @@ def adjustBoutDetectionOnlyPage(useNext=True, nextCb=None):
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
-  backBtn = QPushButton("Back" if useNext else "Done! Save changes!")
+  startPageBtn = QPushButton("Go to the start page")
+  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage") or _cleanup(app, page))
+  buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  backBtn = QPushButton("Back") if useNext else util.apply_style(QPushButton("Done! Save changes!"), background_color=util.DEFAULT_BUTTON_COLOR)
   backBtn.clicked.connect(lambda: app.configFileHistory[-2](restoreConfig=useNext))
   backBtn.clicked.connect(lambda: _cleanup(app, page))
   buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-  startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
-  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage") or _cleanup(app, page))
-  buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   if useNext:
-    nextBtn = QPushButton("Next")
+    nextBtn = util.apply_style(QPushButton("Next"), background_color=util.DEFAULT_BUTTON_COLOR)
     nextBtn.clicked.connect(lambda: (nextCb() if nextCb is not None else util.addToHistory(app.show_frame)("FinishConfig")) or _cleanup(app, page))
     buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
   buttonsLayout.addStretch()

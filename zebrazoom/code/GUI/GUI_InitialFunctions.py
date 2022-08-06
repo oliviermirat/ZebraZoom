@@ -296,7 +296,7 @@ class _VideoSelectionPage(QWidget):
     openConfigurationsFolderBtn = QPushButton("Open configurations folder")
     openConfigurationsFolderBtn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(folderPath)))
     tableButtonsLayout.addWidget(openConfigurationsFolderBtn, alignment=Qt.AlignmentFlag.AlignLeft)
-    self._runTrackingBtn = util.apply_style(QPushButton("Run tracking"), background_color=util.LIGHT_YELLOW)
+    self._runTrackingBtn = util.apply_style(QPushButton("Run tracking"), background_color=util.DEFAULT_BUTTON_COLOR)
     self._runTrackingBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: self._runTracking(), forceSave=True))
     tableButtonsLayout.addWidget(self._runTrackingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     tableButtonsLayout.addStretch()
@@ -318,7 +318,7 @@ class _VideoSelectionPage(QWidget):
 
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch()
-    startPageBtn = util.apply_style(QPushButton("Go to the start page"), background_color=util.LIGHT_CYAN)
+    startPageBtn = QPushButton("Go to the start page")
     startPageBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: app.show_frame("StartPage")))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch()
