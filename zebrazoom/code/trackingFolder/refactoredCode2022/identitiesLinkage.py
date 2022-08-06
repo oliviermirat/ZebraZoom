@@ -2,7 +2,7 @@ from scipy.optimize import linear_sum_assignment
 import numpy as np
 import math
 
-def findOptimalIdCorrespondance(trackingHeadTailAllAnimalsList, wellNumber, animal_Id, i, firstFrame):
+def findOptimalIdCorrespondance(trackingHeadTailAllAnimalsList, wellNumber, i, firstFrame):
   
   if i > firstFrame:
     
@@ -26,7 +26,7 @@ def findOptimalIdCorrespondance(trackingHeadTailAllAnimalsList, wellNumber, anim
     return np.array([k for k in range(0, len(trackingHeadTailAllAnimalsList[wellNumber]))])
 
 
-def switchIdentities(correspondance, trackingHeadTailAllAnimalsList, trackingHeadingAllAnimalsList, wellNumber, animal_Id, i, firstFrame):
+def switchIdentities(correspondance, trackingHeadTailAllAnimalsList, trackingHeadingAllAnimalsList, wellNumber, i, firstFrame):
   
   trackingHeadTailAllAnimalsListWellNumberOriginal = trackingHeadTailAllAnimalsList[wellNumber].copy()
   trackingHeadingAllAnimalsListWellNumberOriginal  = trackingHeadingAllAnimalsList[wellNumber].copy()
