@@ -29,23 +29,8 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   with open(os.path.join(initialPath, os.path.join(s2, 'configUsed.json'))) as f:
     configTemp = json.load(f)
   hyperparameters = getHyperparametersSimple(configTemp)
-
-  if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] and os.path.exists(os.path.join(initialPath, os.path.join(s1, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi')))):
-    # The "exist" check above is only to insure compatibility with videos tracked prior to this update
-    videoPath = os.path.join(initialPath, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'))
-  else:
-    videoPath = os.path.join(initialPath, os.path.join(s2, s4 + s5))
-
+  
   resultsPath = os.path.join(initialPath, os.path.join(s2, s3b + s4 + s5b))
-
-  if not(os.path.exists(videoPath)):
-    mypath = os.path.join(initialPath, s2)
-    onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
-    resultFile = ''
-    for fileName in onlyfiles:
-      if '.avi' in fileName:
-        resultFile = fileName
-    videoPath = os.path.join(initialPath, os.path.join(s2, resultFile))
 
   if not(os.path.exists(resultsPath)):
     mypath = os.path.join(initialPath, s2)
@@ -56,14 +41,32 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
         resultFile = fileName
     resultsPath = os.path.join(initialPath, os.path.join(s2, resultFile))
 
+  with open(resultsPath) as f:
+    supstruct = json.load(f)
+  
+  if hyperparameters["savePathToOriginalVideoForValidationVideo"]:
+    videoPath = supstruct["pathToOriginalVideo"]
+  else:
+    if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] and os.path.exists(os.path.join(initialPath, os.path.join(s1, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi')))):
+      # The "exist" check above is only to insure compatibility with videos tracked prior to this update
+      videoPath = os.path.join(initialPath, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'))
+    else:
+      videoPath = os.path.join(initialPath, os.path.join(s2, s4 + s5))
+
+  if not(os.path.exists(videoPath)):
+    mypath = os.path.join(initialPath, s2)
+    onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
+    resultFile = ''
+    for fileName in onlyfiles:
+      if '.avi' in fileName:
+        resultFile = fileName
+    videoPath = os.path.join(initialPath, os.path.join(s2, resultFile))
+
   cap = zzVideoReading.VideoCapture(videoPath)
 
   nx    = int(cap.get(3))
   ny    = int(cap.get(4))
   max_l = int(cap.get(7))
-
-  with open(resultsPath) as f:
-    supstruct = json.load(f)
 
   if not("firstFrame" in supstruct):
     supstruct["firstFrame"] = 1
@@ -122,23 +125,38 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
       infoWells.append([x, y, lengthX, lengthY])
   else:
     infoWells.append([0, 0, nx, ny])
-
+  
   frameToPosToPlot = None
-  if hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
+  if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"]:
     frameToPosToPlot = {}
-    for frameNumber in range(l, max_l + 400):
+    for frameNumber in range(0, max_l + 400):
       frameToPosToPlot[frameNumber] = []
-    for numWell in range(0, len(supstruct["wellPoissMouv"])):
-      for numAnimal in range(0, len(supstruct["wellPoissMouv"][numWell])):
-        for numBout in range(0, len(supstruct["wellPoissMouv"][numWell][numAnimal])):
-          boutStart = supstruct["wellPoissMouv"][numWell][numAnimal][numAnimal]["BoutStart"]
-          for i in range(0, len(supstruct["wellPoissMouv"][numWell][numAnimal][numAnimal]["HeadX"])):
-            if boutStart + i in frameToPosToPlot:
-              if (type(framesToShow) != np.ndarray) or (framesToShow[boutStart + i][numWell]):
-                xPos = int(supstruct["wellPositions"][numWell]["topLeftX"] + supstruct["wellPoissMouv"][numWell][numAnimal][numAnimal]["HeadX"][i])
-                yPos = int(supstruct["wellPositions"][numWell]["topLeftY"] + supstruct["wellPoissMouv"][numWell][numAnimal][numAnimal]["HeadY"][i])
+    
+    def plotBout(supstruct, numWell2, numAnimal2, frameToPosToPlot):
+      for numBout in range(0, len(supstruct["wellPoissMouv"][numWell2][numAnimal2])):
+        boutStart = supstruct["wellPoissMouv"][numWell2][numAnimal2][numBout]["BoutStart"]
+        for i in range(0, len(supstruct["wellPoissMouv"][numWell2][numAnimal2][numBout]["HeadX"])):
+          if boutStart + i in frameToPosToPlot:
+            if (type(framesToShow) != np.ndarray) or (framesToShow[boutStart + i][numWell2]):
+              xPos = int(supstruct["wellPositions"][numWell2]["topLeftX"] + supstruct["wellPoissMouv"][numWell2][numAnimal2][numBout]["HeadX"][i])
+              yPos = int(supstruct["wellPositions"][numWell2]["topLeftY"] + supstruct["wellPoissMouv"][numWell2][numAnimal2][numBout]["HeadY"][i])
+              frameToPosToPlot[boutStart + i].append([xPos, yPos])
+              tailX = supstruct["wellPoissMouv"][numWell2][numAnimal2][numBout]["TailX_VideoReferential"][i]
+              tailY = supstruct["wellPoissMouv"][numWell2][numAnimal2][numBout]["TailY_VideoReferential"][i]
+              for idx, tailPointX in enumerate(tailX):
+                tailPointY = tailY[idx]
+                xPos = int(supstruct["wellPositions"][numWell2]["topLeftX"] + tailPointX)
+                yPos = int(supstruct["wellPositions"][numWell2]["topLeftY"] + tailPointY)
                 frameToPosToPlot[boutStart + i].append([xPos, yPos])
-
+      return frameToPosToPlot
+    
+    if numWell == -1:
+      for numWell2 in range(0, len(supstruct["wellPoissMouv"])):
+        for numAnimal2 in range(0, len(supstruct["wellPoissMouv"][numWell2])):
+          frameToPosToPlot = plotBout(supstruct, numWell2, numAnimal2, frameToPosToPlot)
+    else:
+      frameToPosToPlot = plotBout(supstruct, numWell, numAnimal, frameToPosToPlot)
+  
   x = 0
   y = 0
   lengthX = 0

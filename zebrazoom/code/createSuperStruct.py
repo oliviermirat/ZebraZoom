@@ -73,7 +73,7 @@ def IsMinOrMax(maxpeaks, minpeaks, val ):
   # return [tailangles_arr, tailangles_arr_smoothed]
 
 
-def createSuperStruct(dataPerWell, wellPositions, hyperparameters):
+def createSuperStruct(dataPerWell, wellPositions, hyperparameters, pathToOriginalVideo=''):
 
   if (hyperparameters["freqAlgoPosFollow"] != 0):
     print("Starting the creation of the super structure")
@@ -242,6 +242,9 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters):
     videoDataResults['videoFPS']    = hyperparameters["videoFPS"]
   if hyperparameters["videoPixelSize"]:
     videoDataResults['videoPixelSize']    = hyperparameters["videoPixelSize"]
+  
+  if hyperparameters['savePathToOriginalVideoForValidationVideo']:
+    videoDataResults['pathToOriginalVideo'] = pathToOriginalVideo
     
   if (hyperparameters["freqAlgoPosFollow"] != 0):
     print("Super Structure created")

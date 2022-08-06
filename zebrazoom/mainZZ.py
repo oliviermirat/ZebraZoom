@@ -287,14 +287,15 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
     
   if hyperparameters["debugPauseBetweenTrackAndParamExtract"] != "justSaveTrackData":
     # Creating super structure
-    superStruct = createSuperStruct(paramDataPerWell, wellPositions, hyperparameters)
+    superStruct = createSuperStruct(paramDataPerWell, wellPositions, hyperparameters, os.path.join(pathToVideo, videoNameWithExt))
   
     # Creating validation video
-    if hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
-      shutil.copyfile(os.path.join(pathToVideo, videoNameWithExt), os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'))
-    else:
-      if hyperparameters["createValidationVideo"]:
-        infoFrame = createValidationVideo(os.path.join(pathToVideo, videoNameWithExt), superStruct, hyperparameters)
+    if not(hyperparameters["savePathToOriginalVideoForValidationVideo"]):
+      if hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
+        shutil.copyfile(os.path.join(pathToVideo, videoNameWithExt), os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'))
+      else:
+        if hyperparameters["createValidationVideo"]:
+          infoFrame = createValidationVideo(os.path.join(pathToVideo, videoNameWithExt), superStruct, hyperparameters)
     
     # Various post-processing options depending on configuration file choices
     superStruct = dataPostProcessing(outputFolderVideo, superStruct, hyperparameters, videoName, videoExt)
