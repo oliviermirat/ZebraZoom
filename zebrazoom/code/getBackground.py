@@ -49,6 +49,7 @@ def getBackground(videoPath, hyperparameters):
       timeout = 3000 if hyperparameters["exitAfterBackgroundExtraction"] else None
       util.showDialog(layout, title="Background Extracted", labelInfo=(back, label), timeout=timeout)
     cap.release()
+    print("Background Extracted from first frame")
     return back
   
   if ret and hyperparameters["invertBlackWhiteOnImages"]:

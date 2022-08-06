@@ -100,6 +100,17 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
   tailTipFirstFrame          = trackingData[4]
   auDessusPerAnimal          = trackingData[5] if len(trackingData) == 6 else 0
   
+  if hyperparameters["saveAllDataEvenIfNotInBouts"]:
+    for animalId in range(0, len(trackingHeadTailAllAnimals)):
+      trackingFlatten = [trackingHeadTailAllAnimals[animalId][i].flatten().tolist() + [trackingHeadingAllAnimals[animalId][i]] for i in range(0, len(trackingHeadTailAllAnimals[animalId]))]
+      trackingFlattenColumnsNames = ['HeadPosX', 'HeadPosY']
+      for i in range(0, int((len(trackingHeadTailAllAnimals[0][0].flatten().tolist()) - 2) / 2)):
+        trackingFlattenColumnsNames += ['TailPosX' + str(i + 1)]
+        trackingFlattenColumnsNames += ['TailPosY' + str(i + 1)]
+      trackingFlattenColumnsNames += ['Heading']
+      trackingFlattenPandas = pd.DataFrame(np.array(trackingFlatten), columns=trackingFlattenColumnsNames)
+      trackingFlattenPandas.to_csv(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'allData_' + hyperparameters["videoName"] + '_wellNumber' + str(wellNumber) + '_animal' + str(animalId) + '.cvs'))
+  
   data = []
   
   for animalId in range(0, len(trackingHeadTailAllAnimals)):

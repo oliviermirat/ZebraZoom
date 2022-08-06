@@ -220,12 +220,12 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters):
             item['Bend_Timing'] = []
             item['Bend_TimingAbsolute'] = []
             item['Bend_Amplitude'] = []
-            item['TailAngle_raw'] = []
+            item['TailAngle_Raw'] = []
             item['TailAngle_smoothed'] = []
             tab[item["AnimalNumber"]].append(item)
           
         else:
-          item['TailAngle_raw'] = []
+          item['TailAngle_Raw'] = []
           item['TailAngle_smoothed'] = []
           tab[item["AnimalNumber"]].append(item)
       else:

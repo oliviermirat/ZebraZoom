@@ -45,6 +45,7 @@
   "searchPreviousFramesIfCurrentFrameIsCorrupted" : 1,
   "reduceImageResolutionPercentage" : 1,
   "trackingMethod" : "",
+  "saveAllDataEvenIfNotInBouts" : 0,
   
   "setPixDiffBoutDetectParameters" : 0,
   

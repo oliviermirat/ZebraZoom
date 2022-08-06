@@ -464,6 +464,9 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["useFirstFrameAsBackground"]  = getConfig(config, "useFirstFrameAsBackground", videoPath)
   
+  hyperparameters["saveAllDataEvenIfNotInBouts"]  = getConfig(config, "saveAllDataEvenIfNotInBouts", videoPath)
+  
+  
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1
   
