@@ -5,7 +5,7 @@ import numpy as np
 
 import cv2
 
-from PyQt5.QtCore import pyqtSignal, Qt, QAbstractAnimation, QEventLoop, QLine, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, QStandardPaths, QTimer
+from PyQt5.QtCore import pyqtSignal, Qt, QAbstractAnimation, QAbstractEventDispatcher, QEventLoop, QLine, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, QStandardPaths, QTimer
 from PyQt5.QtGui import QBrush, QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygonF, QTransform
 from PyQt5.QtWidgets import QApplication, QDoubleSpinBox, QFrame, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QSplitter, QSplitterHandle, QToolButton, QToolTip, QVBoxLayout, QWidget
 PYQT6 = False
@@ -154,6 +154,28 @@ def showBlockingPage(layout, title=None, buttons=(), dialog=False, labelInfo=Non
     loop.exec()
     stackedLayout.setCurrentWidget(oldWidget)
   stackedLayout.removeWidget(temporaryPage)
+
+
+def showInProgressPage(text):
+  def decorator(fn):
+    def inner(*args, **kwargs):
+      app = QApplication.instance()
+      layout = QVBoxLayout()
+      layout.addWidget(apply_style(QLabel("%s in progress..." % text), font=TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
+      temporaryPage = QWidget()
+      temporaryPage.setLayout(layout)
+      stackedLayout = app.window.centralWidget().layout()
+      oldWidget = stackedLayout.currentWidget()
+      stackedLayout.addWidget(temporaryPage)
+      stackedLayout.setCurrentWidget(temporaryPage)
+      QAbstractEventDispatcher.instance().processEvents(QEventLoop.ProcessEventsFlag.AllEvents)  # XXX: this is ugly, but required to make sure the page is displayed before the function is executed, since the GUI will get blocked while the function is executing
+      try:
+        retval = fn(*args, **kwargs)  # XXX: GUI and non-GUI parts are still mixed so this function is expected to set the new page
+      finally:
+        stackedLayout.removeWidget(temporaryPage)
+      return retval
+    return inner
+  return decorator
 
 
 def showDialog(layout, title=None, buttons=(), labelInfo=None, timeout=None, exitSignals=()):

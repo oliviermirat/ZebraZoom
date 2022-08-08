@@ -17,19 +17,10 @@ from zebrazoom.code.trackingFolder.tracking import tracking
 from zebrazoom.code.GUI.adjustParameterInsideAlgo import adjustBoutDetectionOnlyPage
 from zebrazoom.code.GUI.automaticallyFindOptimalParametersFunctions import getGroundTruthFromUser, findBestBackgroundSubstractionParameterForEachImage, findInitialBlobArea, boutDetectionParameters
 
-def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, detectBoutsMethod, method, nbOfAnimalToTrackNotConstantOverTime, adjustBackgroundExtractionBasedOnNumberOfBlackPixels):
-  
-  nbOfImagesToManuallyClassify = 3
-  saveIntermediary = False # Should be set to False except when debugging
-  zebrafishToTrack = True
-  
-  # # # Getting ground truth from user: head center and tail extremity coordinates for a few frames
-  
+
+@util.showInProgressPage('Calculation')
+def _automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, detectBoutsMethod, method, nbOfAnimalToTrackNotConstantOverTime, adjustBackgroundExtractionBasedOnNumberOfBlackPixels, groundTruth, zebrafishToTrack):
   if realExecThroughGUI:
-    zebrafishToTrack = (self.organism == 'zebrafishNew')
-    groundTruth = getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack)
-    if groundTruth is None:
-      return
     [initialConfigFile, videoPath, data, wellPositions, pathToVideo, videoNameWithExt, videoName, videoExt] = groundTruth
   else:
     toSave = pickle.load(open(self, 'rb'))
@@ -42,9 +33,9 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, det
     videoName         = toSave[6]
     videoExt          = toSave[7]
     zebrafishToTrack  = toSave[8]
-  
+
   print("initialConfigFile:", initialConfigFile)
-  
+
   # # # Starting the process of finding the best hyperparameters to track the video
   
   if zebrafishToTrack:
@@ -216,4 +207,22 @@ def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, det
       json.dump(configFile, outfile)
   
   print("final Config File", configFile)
-  
+
+
+def automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, detectBoutsMethod, method, nbOfAnimalToTrackNotConstantOverTime, adjustBackgroundExtractionBasedOnNumberOfBlackPixels):
+
+  nbOfImagesToManuallyClassify = 3
+  saveIntermediary = False # Should be set to False except when debugging
+  zebrafishToTrack = True
+
+  # # # Getting ground truth from user: head center and tail extremity coordinates for a few frames
+
+  if realExecThroughGUI:
+    zebrafishToTrack = (self.organism == 'zebrafishNew')
+    groundTruth = getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack)
+    if groundTruth is None:
+      return
+  else:
+    groundTruth = None
+
+  _automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, detectBoutsMethod, method, nbOfAnimalToTrackNotConstantOverTime, adjustBackgroundExtractionBasedOnNumberOfBlackPixels, groundTruth, zebrafishToTrack)

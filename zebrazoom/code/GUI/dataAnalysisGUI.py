@@ -950,6 +950,7 @@ class PopulationComparison(QWidget):
 
     self.setLayout(layout)
 
+  @util.showInProgressPage('Parameters calculation')
   def _populationComparison(self, TailTrackingParameters=0, saveInMatlabFormat=0, saveRawData=0, forcePandasRecreation=0, minNbBendForBoutDetect=3, discard=0, keep=1, frameStepForDistanceCalculation='4'):
     if len(frameStepForDistanceCalculation) == 0:
       frameStepForDistanceCalculation = '4'

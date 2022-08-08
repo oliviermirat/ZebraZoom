@@ -558,6 +558,7 @@ def _runTracking(args, justExtractParams, noValidationVideo, ZZoutputLocation):
     return
 
 
+@util.showInProgressPage('Tracking')
 def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, justExtractParams=False, noValidationVideo=False, findMultipleROIs=False,
                     askCoordinatesForAll=True, firstFrame=None, lastFrame=None, backgroundExtractionForceUseAllVideoFrames=None, processes=1):
   app = QApplication.instance()

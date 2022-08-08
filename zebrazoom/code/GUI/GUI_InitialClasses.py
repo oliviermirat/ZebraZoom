@@ -325,6 +325,8 @@ class SeveralVideos(QWidget):
         button1.clicked.connect(lambda: controller.show_frame("FolderToAnalyze"))
         layout.addWidget(button1, alignment=Qt.AlignmentFlag.AlignCenter)
 
+        advancedOptionsLayout = QVBoxLayout()
+
         sublayout1 = QVBoxLayout()
         button2 = util.apply_style(QPushButton("Manual first frame tail extremity for head embedded", self), background_color=util.LIGHT_YELLOW)
         button2.clicked.connect(lambda: controller.show_frame("TailExtremityHE"))
@@ -332,7 +334,7 @@ class SeveralVideos(QWidget):
         sublayout1.addWidget(QLabel("This button allows you to only manually select the tail extremities,", self), alignment=Qt.AlignmentFlag.AlignCenter)
         sublayout1.addWidget(QLabel("you will be able to run the tracking on multiple videos without interruptions with the 'Run ZebraZoom on an entire folder' button above afterwards.", self), alignment=Qt.AlignmentFlag.AlignCenter)
         sublayout1.addWidget(util.apply_style(QLabel("", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addLayout(sublayout1)
+        advancedOptionsLayout.addLayout(sublayout1)
 
         sublayout2 = QVBoxLayout()
         button3 = util.apply_style(QPushButton("Only select the regions of interest", self), background_color=util.LIGHT_YELLOW)
@@ -342,7 +344,7 @@ class SeveralVideos(QWidget):
         sublayout2.addWidget(QLabel("This button allows you to only select the ROIs,", self), alignment=Qt.AlignmentFlag.AlignCenter)
         sublayout2.addWidget(QLabel("you will be able to run the tracking on multiple videos without interruptions with the 'Run ZebraZoom on an entire folder' button above afterwards.", self), alignment=Qt.AlignmentFlag.AlignCenter)
         sublayout2.addWidget(util.apply_style(QLabel("", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addLayout(sublayout2)
+        advancedOptionsLayout.addLayout(sublayout2)
 
         sublayout3 = QVBoxLayout()
         button4 = util.apply_style(QPushButton("'Grid System' wells detection coordinates pre-selection", self), background_color=util.LIGHT_YELLOW)
@@ -351,7 +353,9 @@ class SeveralVideos(QWidget):
         sublayout3.addWidget(QLabel("This button allows you to only select the coordinates relative to the 'grid system',", self), alignment=Qt.AlignmentFlag.AlignCenter)
         sublayout3.addWidget(QLabel("you will be able to run the tracking on multiple videos without interruptions with the 'Run ZebraZoom on an entire folder' button above afterwards.", self), alignment=Qt.AlignmentFlag.AlignCenter)
         sublayout3.addWidget(util.apply_style(QLabel("", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addLayout(sublayout3)
+        advancedOptionsLayout.addLayout(sublayout3)
+
+        layout.addWidget(util.Expander(self, "Show advanced options", advancedOptionsLayout))
 
         start_page_btn = QPushButton("Go to the start page", self)
         start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))
@@ -373,21 +377,23 @@ class VideoToAnalyze(QWidget):
         button.clicked.connect(lambda: controller.chooseVideoToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), chooseFramesCheckbox.isChecked()))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        advancedOptionsLayout = QVBoxLayout()
 
         chooseFramesCheckbox = QCheckBox("Choose the first and the last frames on which the tracking should run (tracking results will be saved)", self)
-        layout.addWidget(chooseFramesCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+        advancedOptionsLayout.addWidget(chooseFramesCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
         button = util.apply_style(QPushButton("Click here if you prefer to run the tracking from the command line", self), background_color='green')
         button.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/tracking/launchingTracking#launching-the-tracking-through-the-command-line"))
-        layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
+        advancedOptionsLayout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
 
         just_extract_checkbox = util.apply_style(QCheckBox("I ran the tracking already, I only want to redo the extraction of parameters.", self), color='purple')
-        layout.addWidget(just_extract_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        advancedOptionsLayout.addWidget(just_extract_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
+        advancedOptionsLayout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
         no_validation_checkbox = util.apply_style(QCheckBox("Don't (re)generate a validation video (for speed efficiency).", self), color='purple')
-        layout.addWidget(no_validation_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        advancedOptionsLayout.addWidget(no_validation_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
+        advancedOptionsLayout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+        layout.addWidget(util.Expander(self, "Show advanced options", advancedOptionsLayout))
 
         start_page_btn = QPushButton("Go to the start page", self)
         start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))
