@@ -13,6 +13,7 @@ globalVariables = getGlobalVariables()
 from PyQt5.QtWidgets import QFileDialog
 
 import zebrazoom.code.paths as paths
+import zebrazoom.code.util as util
 from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
 from zebrazoom.dataAnalysis.dataanalysis.applyClustering import applyClustering
 
@@ -28,6 +29,7 @@ def openAnalysisFolder(self, homeDirectory, specificDirectory):
     subprocess.call([opener, dir_path])
 
 
+@util.showInProgressPage('Parameters calculation')
 def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering=0, removeOutliers=False, frameStepForDistanceCalculation='4', removeBoutsContainingNanValuesInParametersUsedForClustering=True, forcePandasRecreation=0):
 
   if len(frameStepForDistanceCalculation) == 0:
