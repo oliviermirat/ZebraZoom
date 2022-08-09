@@ -635,7 +635,7 @@ def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBt
     backBtn = QPushButton("Back")
     backBtn.setObjectName("back")
     buttonsLayout.addWidget(backBtn)
-  chooseFrameBtn = QPushButton(chooseFrameBtnText) if extraButtonInfo is not None else util.apply_style(QPushButton(chooseFrameBtnText), background_color=DEFAULT_BUTTON_COLOR)
+  chooseFrameBtn = QPushButton(chooseFrameBtnText) if extraButtonInfo is not None else apply_style(QPushButton(chooseFrameBtnText), background_color=DEFAULT_BUTTON_COLOR)
   def chooseFrameBtnClicked():
     app.configFile["firstFrame"] = valueWidget.value()
     app.configFile["firstFrameForBackExtract"] = valueWidget.value()
@@ -688,7 +688,7 @@ def chooseEndPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb):
     backBtn = QPushButton("Back")
     backBtn.setObjectName("back")
     buttonsLayout.addWidget(backBtn)
-  chooseFrameBtn = util.apply_style(QPushButton(chooseFrameBtnText), background_color=DEFAULT_BUTTON_COLOR)
+  chooseFrameBtn = apply_style(QPushButton(chooseFrameBtnText), background_color=DEFAULT_BUTTON_COLOR)
   def chooseFrameBtnClicked():
     app.configFile["lastFrame"] = valueWidget.value()
     app.configFile["lastFrameForBackExtract"] = valueWidget.value()
