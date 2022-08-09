@@ -2,7 +2,7 @@ from scipy.optimize import linear_sum_assignment
 import numpy as np
 import math
 
-def findOptimalIdCorrespondance(trackingHeadTailAllAnimalsList, wellNumber, i, firstFrame):
+def findOptimalIdCorrespondance(trackingHeadTailAllAnimalsList, wellNumber, i,  firstFrame):
   
   if i > firstFrame:
     

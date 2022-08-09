@@ -194,7 +194,7 @@ def fasterMultiprocessing2(videoPath, background, wellPositions, output, hyperpa
         # if hyperparameters["eyeTracking"]:
           # trackingEyesAllAnimalsList[wellNumber] = eyeTracking(animalId, i, firstFrame, frame, hyperparameters, thresh1, trackingHeadingAllAnimalsList[wellNumber], trackingHeadTailAllAnimalsList[wellNumber], trackingEyesAllAnimalsList[wellNumber])
         
-        correspondance = findOptimalIdCorrespondance(trackingHeadTailAllAnimalsList, wellNumber, i, firstFrame)
+        correspondance = findOptimalIdCorrespondance(trackingHeadTailAllAnimalsList, wellNumber,  i, firstFrame)
         
         [trackingHeadTailAllAnimalsList, trackingHeadingAllAnimalsList] = switchIdentities(correspondance, trackingHeadTailAllAnimalsList, trackingHeadingAllAnimalsList, wellNumber, i, firstFrame)
         
