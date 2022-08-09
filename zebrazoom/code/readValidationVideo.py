@@ -1,5 +1,6 @@
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+from zebrazoom.code.preprocessImage import preprocessImage
 import json
 import numpy as np
 import sys
@@ -187,7 +188,10 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
 
     cap.set(1, l)
     ret, img = cap.read()
-
+    
+    if hyperparameters["imagePreProcessMethod"]:
+      img = preprocessImage(img, hyperparameters)
+    
     if frameToPosToPlot is not None:
       if l in frameToPosToPlot:
         for pos in frameToPosToPlot[l]:

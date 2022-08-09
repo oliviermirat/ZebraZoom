@@ -208,7 +208,8 @@ def fasterMultiprocessing2(videoPath, background, wellPositions, output, hyperpa
             print("Tracking at frame", i)
         
       if hyperparameters["detectMovementWithRawVideoInsideTracking"]:
-        [auDessusPerAnimalIdList, previousFrames] = detectMovementWithRawVideoInsideTracking2(hyperparameters, trackingHeadTailAllAnimalsList, previousFrames, animal_Id, i, firstFrame, auDessusPerAnimalIdList, grey, wellPositions)
+        for numFish in range(0, hyperparameters["nbAnimalsPerWell"]):
+          [auDessusPerAnimalIdList, previousFrames] = detectMovementWithRawVideoInsideTracking2(hyperparameters, trackingHeadTailAllAnimalsList, previousFrames, numFish, i, firstFrame, auDessusPerAnimalIdList, grey, wellPositions)
       
     # if hyperparameters["adjustFreelySwimTracking"] == 1:
       # i, widgets = adjustFreelySwimTrackingParams(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters, widgets)

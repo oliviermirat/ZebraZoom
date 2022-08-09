@@ -99,18 +99,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
   headPositionFirstFrame     = trackingData[3]
   tailTipFirstFrame          = trackingData[4]
   auDessusPerAnimal          = trackingData[5] if len(trackingData) == 6 else 0
-  
-  if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-    for animalId in range(0, len(trackingHeadTailAllAnimals)):
-      trackingFlatten = [trackingHeadTailAllAnimals[animalId][i].flatten().tolist() + [trackingHeadingAllAnimals[animalId][i]] for i in range(0, len(trackingHeadTailAllAnimals[animalId]))]
-      trackingFlattenColumnsNames = ['HeadPosX', 'HeadPosY']
-      for i in range(0, int((len(trackingHeadTailAllAnimals[0][0].flatten().tolist()) - 2) / 2)):
-        trackingFlattenColumnsNames += ['TailPosX' + str(i + 1)]
-        trackingFlattenColumnsNames += ['TailPosY' + str(i + 1)]
-      trackingFlattenColumnsNames += ['Heading']
-      trackingFlattenPandas = pd.DataFrame(np.array(trackingFlatten), columns=trackingFlattenColumnsNames)
-      trackingFlattenPandas.to_csv(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'allData_' + hyperparameters["videoName"] + '_wellNumber' + str(wellNumber) + '_animal' + str(animalId) + '.cvs'))
-  
+    
   data = []
   
   for animalId in range(0, len(trackingHeadTailAllAnimals)):
@@ -194,6 +183,18 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       
       tailX[i]   = trackingTail[i,:,0]
       tailY[i]   = trackingTail[i,:,1]
+    
+    if hyperparameters["saveAllDataEvenIfNotInBouts"]:
+      trackingFlatten = [trackingHeadTailAllAnimals[animalId][i].flatten().tolist() + [trackingHeadingAllAnimals[animalId][i]] + angle[i].tolist() for i in range(0, len(trackingHeadTailAllAnimals[animalId]))]
+      trackingFlattenColumnsNames = ['HeadPosX', 'HeadPosY']
+      for i in range(0, int((len(trackingHeadTailAllAnimals[0][0].flatten().tolist()) - 2) / 2)):
+        trackingFlattenColumnsNames += ['TailPosX' + str(i + 1)]
+        trackingFlattenColumnsNames += ['TailPosY' + str(i + 1)]
+      trackingFlattenColumnsNames += ['Heading']
+      trackingFlattenColumnsNames += ['tailAngle']
+      trackingFlattenPandas = pd.DataFrame(np.array(trackingFlatten), columns=trackingFlattenColumnsNames)
+      trackingFlattenPandas.to_csv(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'allData_' + hyperparameters["videoName"] + '_wellNumber' + str(wellNumber) + '_animal' + str(animalId) + '.cvs'))
+
     
     if hyperparameters["noBoutsDetection"] == 1:
       auDessus        = np.zeros((nbFrames, 1))
