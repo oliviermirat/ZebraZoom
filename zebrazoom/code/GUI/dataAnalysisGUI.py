@@ -4,6 +4,7 @@ import sys
 import pickle
 import webbrowser
 
+import cv2
 import json
 import pandas as pd
 import seaborn as sns
@@ -647,11 +648,13 @@ class CreateExperimentOrganizationExcel(QWidget):
         QMessageBox.critical(self.controller.window, "Could not read well positions", "Well positions file could not be read.")
     return None
 
-  def _findValidationVideo(self, folder):
+  def _findExampleFrame(self, folder):
     expectedName = os.path.join(folder, '%s.avi' % os.path.basename(folder))
-    if os.path.exists(expectedName):
-      return expectedName
-    return next((os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) if f.endswith('.avi')), None)
+    validationVideo = expectedName if os.path.exists(expectedName) else next((os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) if f.endswith('.avi')), None)
+    if validationVideo is not None:
+      return zzVideoReading.VideoCapture(validationVideo).read()[1]
+    backgroundPath = os.path.join(folder, 'background.png')
+    return cv2.imread(backgroundPath) if os.path.exists(backgroundPath) else None
 
   def _videoSelected(self, rows):
     if not rows:
@@ -671,10 +674,10 @@ class CreateExperimentOrganizationExcel(QWidget):
     newWellLengths = {len(wells) if wells is not None else None for wells in newSelection.values()}
     self._previousSelection = newSelection
     videoToShow = self._table.model().videoPath(rows[0])
-    validationVideo = self._findValidationVideo(videoToShow)
+    exampleFrame = self._findExampleFrame(videoToShow)
     self._wellsSelected()
     if len(rows) > 1:
-      if (newWellLengths == oldWellLengths and self._shownVideo is not None and validationVideo is None == self._findValidationVideo(self._shownVideo) is None) or \
+      if (newWellLengths == oldWellLengths and self._shownVideo is not None and exampleFrame is None == self._findExampleFrame(self._shownVideo) is None) or \
           (len(newWellLengths) > 1 and len(oldWellLengths) > 1):
         return
       if len(newWellLengths) > 1:
@@ -704,7 +707,7 @@ class CreateExperimentOrganizationExcel(QWidget):
       with open(os.path.join(videoToShow, 'configUsed.json')) as f:
         config = json.load(f)
       self._frame.wellShape = 'rectangle' if config.get("wellsAreRectangles", False) or len(config.get("oneWellManuallyChosenTopLeft", '')) or int(config.get("multipleROIsDefinedDuringExecution", 0)) or config.get("noWellDetection", False) or config.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
-    if validationVideo is None:
+    if exampleFrame is None:
       self._placeholderVideo.setText("Validation video not found. Data must be modified manually in the table.")
       self._placeholderDetail.hide()
       self._placeholderVideo.show()
@@ -713,7 +716,7 @@ class CreateExperimentOrganizationExcel(QWidget):
       self._frame.setOriginalPixmap(None)
     else:
       self._placeholderVideo.hide()
-      self._frame.setOriginalPixmap(QPixmap(util._cvToPixmap(zzVideoReading.VideoCapture(validationVideo).read()[1])))
+      self._frame.setOriginalPixmap(QPixmap(util._cvToPixmap(exampleFrame)))
       self._wellsSelected()
 
   def _findResultsFile(self, path):
