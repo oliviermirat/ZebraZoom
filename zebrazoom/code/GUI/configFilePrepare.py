@@ -355,31 +355,14 @@ class OptimizeConfigFile(QWidget):
       cap.set(1, controller.configFile.get("firstFrame", 1))
       ret, frame = cap.read()
 
-      layout = QVBoxLayout()
-      video = QLabel()
-      layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
-
       try:
         angle = float(self._rotationAngleLineEdit.text())
       except ValueError:
         angle = 0.
-      frameSlider = util.SliderWithSpinbox(angle, -180, 180, name="Rotation angle (degrees)", double=True)
 
-      def getFrame():
-        nonlocal angle
-        angle = frameSlider.value()
-        return cv2.warpAffine(frame, cv2.getRotationMatrix2D(tuple(x / 2 for x in frame.shape[1::-1]), angle, 1.0), frame.shape[1::-1], flags=cv2.INTER_LINEAR)
-      frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video))
-      layout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
-
-      cancelled = False
-      def cancel():
-        nonlocal cancelled
-        cancelled = True
-      buttons = (("Cancel", cancel, True), ("Ok", None, True))
-      util.showBlockingPage(layout, title="Select the video rotation angle", buttons=buttons, labelInfo=(getFrame(), video))
-      if not cancelled:
-        self._rotationAngleLineEdit.setText(str(angle))
+      angle = util.getRotationAngle(frame, angle)
+      if angle is not None:
+        self._rotationAngleLineEdit.setText("{:.2f}".format(angle))
     rotationAngleLabel.clicked.connect(modifyRotationAngle)
     advancedOptionsLayout.addWidget(rotationAngleLabel, 12, 3, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(rotationAngleLabel)

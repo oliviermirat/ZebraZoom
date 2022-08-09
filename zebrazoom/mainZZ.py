@@ -118,7 +118,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
     outfile.close()
   else:
     # Creating output folder
-    if not(hyperparameters["reloadWellPositions"]) and not(hyperparameters["reloadBackground"]) and not(os.path.exists(os.path.join(outputFolderVideo, 'intermediaryWellPositionReloadNoMatterWhat.txt'))) and not(hyperparameters["dontDeleteOutputFolderIfAlreadyExist"]):
+    if not(hyperparameters["reloadWellPositions"]) and not(hyperparameters["reloadBackground"]) and not(os.path.exists(os.path.join(outputFolderVideo, 'intermediaryWellPositionReloadNoMatterWhat.txt'))) and not os.path.exists(os.path.join(outputFolderVideo, 'rotationAngle.txt')) and not(hyperparameters["dontDeleteOutputFolderIfAlreadyExist"]):
       if os.path.exists(outputFolderVideo):
         if glob.glob(os.path.join(outputFolderVideo, 'results_*.txt')) and glob.glob(os.path.join(outputFolderVideo, '*.avi')):
           pastNumbersTaken = 1
@@ -156,6 +156,11 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
     wellPositions = [{"topLeftX":0, "topLeftY":0, "lengthX": hyperparameters["videoWidth"], "lengthY": hyperparameters["videoHeight"]}]
   else:
     print("start find wells")
+    if hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"] and not hyperparameters["exitAfterBackgroundExtraction"]:
+      rotationAngleFile = os.path.join(outputFolderVideo, 'rotationAngle.txt')
+      if os.path.exists(rotationAngleFile):
+        with open(rotationAngleFile, 'rb') as f:
+          hyperparameters.update(pickle.load(f))
     if hyperparameters["saveWellPositionsToBeReloadedNoMatterWhat"]:
       outfile = open(os.path.join(outputFolderVideo, 'intermediaryWellPositionReloadNoMatterWhat.txt'),'wb')
       wellPositions = findWells(os.path.join(pathToVideo, videoNameWithExt), hyperparameters)

@@ -205,7 +205,7 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
   ret, frame = cap.read()
   if hyperparameters["imagePreProcessMethod"]:
     frame = preprocessImage(frame, hyperparameters)
-  frameForRepartitionJPG = frame.copy()
+  nonRotatedFrame = frame.copy()
 
   accepted = False
   while not accepted:
@@ -221,7 +221,35 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
       back = None
     while idx < len(positions):
       oldidx = idx
-      posCoord[positions[idx]] = np.array(list(util.getPoint(frame, "Click on the " + positions[idx] + " of the group of wells",
+      if not idx and not hyperparameters["exitAfterBackgroundExtraction"]:
+
+        def rotateVideo(video):
+          nonlocal frame
+          if hyperparameters["backgroundPreProcessMethod"] == ["rotate"] and hyperparameters["imagePreProcessMethod"] == ["rotate"] and \
+              hyperparameters["imagePreProcessParameters"][0][0] == hyperparameters["backgroundPreProcessParameters"][0][0]:
+            angle = hyperparameters["imagePreProcessParameters"][0][0]
+          else:
+            angle = 0.
+
+          angle = util.getRotationAngle(nonRotatedFrame, angle)
+          if angle is None:
+            return
+          value = float("{:.2f}".format(angle))
+          rotationAngleParams = {"backgroundPreProcessMethod": ["rotate"],
+                                 "imagePreProcessMethod": ["rotate"],
+                                 "backgroundPreProcessParameters": [[value]],
+                                 "imagePreProcessParameters": [[value]]}
+          hyperparameters.update(rotationAngleParams)
+          rotationAngleFile = os.path.join(hyperparameters["outputFolder"], os.path.splitext(os.path.basename(videoPath))[0], 'rotationAngle.txt')
+          import pickle
+          with open(rotationAngleFile, 'wb') as outfile:
+            pickle.dump(rotationAngleParams, outfile)
+          frame = cv2.warpAffine(nonRotatedFrame, cv2.getRotationMatrix2D(tuple(x / 2 for x in frame.shape[1::-1]), value, 1.0), frame.shape[1::-1], flags=cv2.INTER_LINEAR)
+          util.setPixmapFromCv(frame, video)
+        extraBtns = (('Rotate video', rotateVideo, False),)
+      else:
+        extraBtns = ()
+      posCoord[positions[idx]] = np.array(list(util.getPoint(frame, "Click on the " + positions[idx] + " of the group of wells", extraButtons=extraBtns,
                                                              selectingRegion=True, backBtnCb=back, useNext=False, dialog=not hasattr(app, 'window'))))
       if idx != oldidx:
         if idx >= 0:
@@ -254,7 +282,7 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
         well = {'topLeftX' : int(minX), 'topLeftY' : int(minY), 'lengthX' : int(maxX - minX), 'lengthY': int(maxY - minY)}
         l.append(well)
 
-    possibleRepartition = saveWellsRepartitionImage(l, frameForRepartitionJPG.copy(), hyperparameters)
+    possibleRepartition = saveWellsRepartitionImage(l, frame.copy(), hyperparameters)
 
     label = QLabel()
     label.setMinimumSize(1, 1)

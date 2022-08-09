@@ -511,6 +511,8 @@ class SliderWithSpinbox(QWidget):
     layout.addWidget(slider, 2, 1, 1, 3)
 
     spinbox = QSpinBox() if not double else QDoubleSpinBox()
+    if double:
+      spinbox.setSingleStep(0.1)
     spinbox.setStyleSheet(SPINBOX_STYLESHEET)
     spinbox.setMinimumWidth(90)
     spinbox.setRange(minimum, maximum)
@@ -819,7 +821,7 @@ def getPoint(frame, title, extraButtons=(), selectingRegion=False, backBtnCb=Non
   if not dialog:
     showBlockingPage(layout, title=title, buttons=extraButtons + buttons, labelInfo=(frame, video, zoomable), exitSignals=(video.proceed,) if useNext else (video.pointSelected,))
   else:
-    showDialog(layout, title=title, buttons=buttons + extraButtons, labelInfo=(frame, video, zoomable), exitSignals=(video.proceed,) if useNext else (video.pointSelected,))
+    showDialog(layout, title=title, buttons=extraButtons + buttons, labelInfo=(frame, video, zoomable), exitSignals=(video.proceed,) if useNext else (video.pointSelected,))
   return video.getCoordinates()
 
 
@@ -1339,3 +1341,56 @@ def improveContrast(frame, quartile):
   if frameIsBGR:
     frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
   return frame
+
+
+class _RotationAngleLabel(QLabel):
+  def __init__(self):
+    super().__init__()
+    self._currentPosition = None
+    self.setMouseTracking(True)
+
+  def mouseMoveEvent(self, evt):
+    self._currentPosition = evt.pos()
+    self.update()
+
+  def enterEvent(self, evt):
+    QApplication.setOverrideCursor(Qt.CursorShape.CrossCursor)
+
+  def leaveEvent(self, evt):
+    QApplication.restoreOverrideCursor()
+    self._currentPosition = None
+    self.update()
+
+  def paintEvent(self, evt):
+    super().paintEvent(evt)
+    if self._currentPosition is None:
+      return
+    qp = QPainter()
+    qp.begin(self)
+    qp.setPen(QColor(255, 0, 0))
+    qp.drawLine(0, self._currentPosition.y(), self.width(), self._currentPosition.y())
+    qp.drawLine(self._currentPosition.x(), 0, self._currentPosition.x(), self.height())
+    qp.end()
+
+
+def getRotationAngle(frame, angle):
+  layout = QVBoxLayout()
+  video = _RotationAngleLabel()
+  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
+
+  frameSlider = SliderWithSpinbox(angle, -180, 180, name="Rotation angle (degrees)", double=True)
+
+  def getFrame():
+    nonlocal angle
+    angle = frameSlider.value()
+    return cv2.warpAffine(frame, cv2.getRotationMatrix2D(tuple(x / 2 for x in frame.shape[1::-1]), angle, 1.0), frame.shape[1::-1], flags=cv2.INTER_LINEAR)
+  frameSlider.valueChanged.connect(lambda: setPixmapFromCv(getFrame(), video))
+  layout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+
+  cancelled = False
+  def cancel():
+    nonlocal cancelled
+    cancelled = True
+  buttons = (("Cancel", cancel, True), ("Ok", None, True))
+  showBlockingPage(layout, title="Select the video rotation angle", buttons=buttons, labelInfo=(getFrame(), video))
+  return None if cancelled else angle
