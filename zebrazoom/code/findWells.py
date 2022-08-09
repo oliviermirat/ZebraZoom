@@ -203,9 +203,9 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
   if (cap.isOpened()== False):
     print("Error opening video stream or file")
   ret, frame = cap.read()
+  nonRotatedFrame = frame.copy()
   if hyperparameters["imagePreProcessMethod"]:
     frame = preprocessImage(frame, hyperparameters)
-  nonRotatedFrame = frame.copy()
 
   accepted = False
   while not accepted:
@@ -231,7 +231,7 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
           else:
             angle = 0.
 
-          angle = util.getRotationAngle(nonRotatedFrame, angle)
+          angle = util.getRotationAngle(nonRotatedFrame, angle, dialog=not hasattr(app, 'window'))
           if angle is None:
             return
           value = float("{:.2f}".format(angle))

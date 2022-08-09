@@ -1373,7 +1373,7 @@ class _RotationAngleLabel(QLabel):
     qp.end()
 
 
-def getRotationAngle(frame, angle):
+def getRotationAngle(frame, angle, dialog=False):
   layout = QVBoxLayout()
   video = _RotationAngleLabel()
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
@@ -1392,5 +1392,8 @@ def getRotationAngle(frame, angle):
     nonlocal cancelled
     cancelled = True
   buttons = (("Cancel", cancel, True), ("Ok", None, True))
-  showBlockingPage(layout, title="Select the video rotation angle", buttons=buttons, labelInfo=(getFrame(), video))
+  if not dialog:
+    showBlockingPage(layout, title="Select the video rotation angle", buttons=buttons, labelInfo=(getFrame(), video), dialog=dialog)
+  else:
+    showDialog(layout, title="Select the video rotation angle", buttons=buttons, labelInfo=(getFrame(), video))
   return None if cancelled else angle
