@@ -224,6 +224,7 @@ class _VideoSelectionPage(QWidget):
     else:
       parallelTrackingLayout = QHBoxLayout()
       self._parallelTrackingCheckbox = QCheckBox("Track multiple videos in parallel")
+      self._parallelTrackingCheckbox.setChecked(True)
       self._parallelTrackingCheckbox.toggled.connect(lambda checked: self._processesLabel.setVisible(checked) or self._processesSpinBox.setVisible(checked))
       self._parallelTrackingCheckbox.setVisible(False)
       parallelTrackingLayout.addWidget(self._parallelTrackingCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
