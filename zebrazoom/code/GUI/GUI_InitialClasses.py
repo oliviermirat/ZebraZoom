@@ -376,11 +376,10 @@ class VideoToAnalyze(QWidget):
         button = util.apply_style(QPushButton("Choose file", self), background_color=util.DEFAULT_BUTTON_COLOR)
         button.clicked.connect(lambda: controller.chooseVideoToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), chooseFramesCheckbox.isChecked()))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
+        chooseFramesCheckbox = QCheckBox("Choose the first and the last frames on which the tracking should run (tracking results will be saved)", self)
+        layout.addWidget(chooseFramesCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
         advancedOptionsLayout = QVBoxLayout()
-
-        chooseFramesCheckbox = QCheckBox("Choose the first and the last frames on which the tracking should run (tracking results will be saved)", self)
-        advancedOptionsLayout.addWidget(chooseFramesCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
         button = util.apply_style(QPushButton("Click here if you prefer to run the tracking from the command line", self), background_color='green')
         button.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/tracking/launchingTracking#launching-the-tracking-through-the-command-line"))
@@ -414,15 +413,18 @@ class FolderToAnalyze(QWidget):
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
+        advancedOptionsLayout = QVBoxLayout()
+
         just_extract_checkbox = QCheckBox("I ran the tracking already, I only want to redo the extraction of parameters.", self)
-        layout.addWidget(just_extract_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        advancedOptionsLayout.addWidget(just_extract_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
+        advancedOptionsLayout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
         no_validation_checkbox = QCheckBox("Don't (re)generate a validation video (for speed efficiency).", self)
-        layout.addWidget(no_validation_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        advancedOptionsLayout.addWidget(no_validation_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
+        advancedOptionsLayout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
         expert_checkbox = QCheckBox("Expert use (don't click here unless you know what you're doing): Only generate a script to launch all videos in parallel with sbatch.", self)
-        layout.addWidget(expert_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
+        advancedOptionsLayout.addWidget(expert_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        layout.addWidget(util.Expander(self, "Show advanced options", advancedOptionsLayout))
 
         start_page_btn = QPushButton("Go to the start page", self)
         start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))
