@@ -240,10 +240,15 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
                                  "backgroundPreProcessParameters": [[value]],
                                  "imagePreProcessParameters": [[value]]}
           hyperparameters.update(rotationAngleParams)
-          rotationAngleFile = os.path.join(hyperparameters["outputFolder"], os.path.splitext(os.path.basename(videoPath))[0], 'rotationAngle.txt')
+          outputFolderVideo = os.path.join(hyperparameters["outputFolder"], os.path.splitext(os.path.basename(videoPath))[0])
           import pickle
-          with open(rotationAngleFile, 'wb') as outfile:
+          with open(os.path.join(outputFolderVideo, 'rotationAngle.txt'), 'wb') as outfile:
             pickle.dump(rotationAngleParams, outfile)
+          with open(os.path.join(outputFolderVideo, 'configUsed.json'), 'r') as f:
+            config = json.load(f)
+          config.update(rotationAngleParams)
+          with open(os.path.join(outputFolderVideo, 'configUsed.json'), 'w') as f:
+            json.dump(config, f)
           frame = cv2.warpAffine(nonRotatedFrame, cv2.getRotationMatrix2D(tuple(x / 2 for x in frame.shape[1::-1]), value, 1.0), frame.shape[1::-1], flags=cv2.INTER_LINEAR)
           util.setPixmapFromCv(frame, video)
         extraBtns = (('Rotate video', rotateVideo, False),)
