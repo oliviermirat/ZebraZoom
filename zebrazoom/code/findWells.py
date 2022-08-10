@@ -221,7 +221,7 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
       back = None
     while idx < len(positions):
       oldidx = idx
-      if not idx and not hyperparameters["exitAfterBackgroundExtraction"]:
+      if not idx and not hyperparameters["exitAfterBackgroundExtraction"] and back is None:
 
         def rotateVideo(video):
           nonlocal frame
