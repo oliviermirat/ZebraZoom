@@ -8,39 +8,24 @@ import random
 import os
 
 
-def createValidationVideo(videoPath, superStruct, hyperparameters):
-
-  if (hyperparameters["freqAlgoPosFollow"] != 0):
-    print("Starting the creation of the validation video")
-
-  firstFrame                  = hyperparameters["firstFrame"]
-  lastFrame                   = hyperparameters["lastFrame"]
+def calculateInfoFrame(superStruct, hyperparameters, nbFrames):
   plotOnlyOneTailPointForVisu = hyperparameters["plotOnlyOneTailPointForVisu"]
   trackingPointSizeDisplay    = hyperparameters["trackingPointSizeDisplay"]
-  
-  cap = zzVideoReading.VideoCapture(videoPath)
-  if (cap.isOpened()== False): 
-    print("Error opening video stream or file")
 
-  frame_width  = int(cap.get(3))
-  frame_height = int(cap.get(4))
-  nbFrames     = int(cap.get(7))
-  inputFps     = int(cap.get(5))
-  
   infoFrame = [[]] * nbFrames
   infoWells = []
-  
+
   for i in range(0, len(superStruct["wellPositions"])):
     x = superStruct["wellPositions"][i]["topLeftX"]
     y = superStruct["wellPositions"][i]["topLeftY"]
     infoWells.append([x, y])
-  
+
   for i in range(0, len(superStruct["wellPoissMouv"])):
     colorModifTab = [{"red": random.randrange(255), "green": random.randrange(255), "blue": random.randrange(255)} for i in range(1, hyperparameters["nbAnimalsPerWell"])]
     colorModifTab.insert(0, {"red": 0, "green": 0, "blue": 0})
     for j in range(0, len(superStruct["wellPoissMouv"][i])):
       for k in range(0, len(superStruct["wellPoissMouv"][i][j])):
-      
+
         BoutStart = superStruct["wellPoissMouv"][i][j][k]["BoutStart"]
         BoutEnd = superStruct["wellPoissMouv"][i][j][k]["BoutEnd"]
         mouvLength = len(superStruct["wellPoissMouv"][i][j][k]["HeadX"])
@@ -48,7 +33,7 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
           Bend_TimingAbsolute = superStruct["wellPoissMouv"][i][j][k]["Bend_TimingAbsolute"]
         else:
           Bend_TimingAbsolute = []
-        
+
         anglePointsBefore = []
         anglePointsBaseBefore = []
         x0 = superStruct["wellPoissMouv"][i][j][k]["HeadX"][0]
@@ -58,7 +43,7 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
             x = superStruct["wellPoissMouv"][i][j][k]["HeadX"][l]
             y = superStruct["wellPoissMouv"][i][j][k]["HeadY"][l]
             Heading = superStruct["wellPoissMouv"][i][j][k]["Heading"][l]
-            
+
             x = x + infoWells[i][0]
             y = y + infoWells[i][1]
             dataToPlot = {}
@@ -73,12 +58,12 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
             dataToPlot["red"]     = 255
             dataToPlot["green"]   = 0
             dataToPlot["blue"]    = 0
-            
+
             t = infoFrame[BoutStart + l]
             t2 = t.copy()
             t2.append(dataToPlot)
             infoFrame[BoutStart + l] = t2
-            
+
             # Points along the Tail
             nbPointsToPlot   = 0
             firstPointToPlot = 0
@@ -88,7 +73,7 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
             else:
               firstPointToPlot = 0
               nbPointsToPlot = len(superStruct["wellPoissMouv"][i][j][k]["TailX_VideoReferential"][l])
-            
+
             for m in range(firstPointToPlot, nbPointsToPlot):
               tailX = superStruct["wellPoissMouv"][i][j][k]["TailX_VideoReferential"][l][m]
               tailY = superStruct["wellPoissMouv"][i][j][k]["TailY_VideoReferential"][l][m]
@@ -127,12 +112,12 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
                   dataToPlot["green"] = 255 - colorModifTab[j]["green"]
                   dataToPlot["blue"]  = 0   + colorModifTab[j]["blue"]
               dataToPlot["Heading"] = -10
-              
+
               t = infoFrame[BoutStart + l]
               t2 = t.copy()
               t2.append(dataToPlot)
               infoFrame[BoutStart + l] = t2
-            
+
             if hyperparameters["eyeTracking"]:
               leftEyeX     = superStruct["wellPoissMouv"][i][j][k]["leftEyeX"][l]
               leftEyeY     = superStruct["wellPoissMouv"][i][j][k]["leftEyeY"][l]
@@ -156,7 +141,7 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
               t2 = t.copy()
               t2.append(dataToPlot)
               infoFrame[BoutStart + l] = t2
-              
+
               rightEyeX     = superStruct["wellPoissMouv"][i][j][k]["rightEyeX"][l]
               rightEyeY     = superStruct["wellPoissMouv"][i][j][k]["rightEyeY"][l]
               rightEyeAngle = superStruct["wellPoissMouv"][i][j][k]["rightEyeAngle"][l]
@@ -179,6 +164,62 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
               t2 = t.copy()
               t2.append(dataToPlot)
               infoFrame[BoutStart + l] = t2
+  return infoFrame, colorModifTab
+
+
+def drawInfoFrame(l, frame, infoFrame, colorModifTab, hyperparameters):
+  for i in range(0, len(infoFrame[l])):
+    x = infoFrame[l][i]["x"]
+    y = infoFrame[l][i]["y"]
+    size  = infoFrame[l][i]["size"]
+    red   = infoFrame[l][i]["red"]
+    green = infoFrame[l][i]["green"]
+    blue  = infoFrame[l][i]["blue"]
+    if (infoFrame[l][i]["Heading"] != -10):
+      heading = infoFrame[l][i]["Heading"]
+      headingColor = infoFrame[l][i]["headingColor"] if "headingColor" in infoFrame[l][i] else (255,0,0)
+      headingWidth = infoFrame[l][i]["headingWidth"] if "headingWidth" in infoFrame[l][i] else hyperparameters["trackingPointSizeDisplay"]
+      headingHalfDiam = infoFrame[l][i]["headingHalfDiam"] if "headingHalfDiam" in infoFrame[l][i] else 20
+      if hyperparameters["validationVideoPlotHeading"]:
+        if hyperparameters["debugValidationVideoHeading"] == 0:
+          cv2.line(frame,(int(x),int(y)),(int(x+headingHalfDiam*math.cos(heading)),int(y+headingHalfDiam*math.sin(heading))), headingColor, headingWidth)
+        else:
+          cv2.line(frame,(int(x),int(y)),(int(x-250*math.cos(heading)),int(y-250*math.sin(heading))), headingColor, headingWidth)
+
+      # if ("numMouv" in infoFrame[l][i]) and ("numWell" in infoFrame[l][i]):
+        # numMouv = infoFrame[l][i]["numMouv"]
+        # numWell = infoFrame[l][i]["numWell"]
+        # cv2.putText(frame,str(numMouv),(15+infoWells[numWell][0],25+infoWells[numWell][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255))
+
+    cv2.circle(frame, (int(x),int(y)), size, (red,green,blue), -1)
+
+    if hyperparameters["validationVideoPlotAnimalNumber"]:
+      if "numAnimal" in infoFrame[l][i]:
+        numAnimal = int(infoFrame[l][i]["numAnimal"])
+        red       = int(0   + colorModifTab[numAnimal]["red"])
+        green     = int(255 - colorModifTab[numAnimal]["green"])
+        blue      = int(0   + colorModifTab[numAnimal]["blue"])
+        cv2.putText(frame, str(numAnimal), (int(x + 10), int(y + 10)), cv2.FONT_HERSHEY_SIMPLEX, 1, (red, green, blue), 2)
+
+
+def createValidationVideo(videoPath, superStruct, hyperparameters):
+
+  if (hyperparameters["freqAlgoPosFollow"] != 0):
+    print("Starting the creation of the validation video")
+
+  firstFrame                  = hyperparameters["firstFrame"]
+  lastFrame                   = hyperparameters["lastFrame"]
+
+  cap = zzVideoReading.VideoCapture(videoPath)
+  if (cap.isOpened() == False):
+    print("Error opening video stream or file")
+
+  frame_width  = int(cap.get(3))
+  frame_height = int(cap.get(4))
+  nbFrames     = int(cap.get(7))
+  inputFps     = int(cap.get(5))
+
+  infoFrame, colorModifTab = calculateInfoFrame(superStruct, hyperparameters, nbFrames)
             
   # Going through the video and printing stuff on it.
   outputName = os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), hyperparameters["videoName"] + '.avi')
@@ -224,38 +265,7 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
           if frameIsBGR:
             frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
         
-        for i in range(0, len(infoFrame[l])):
-          x = infoFrame[l][i]["x"]
-          y = infoFrame[l][i]["y"]
-          size  = infoFrame[l][i]["size"]
-          red   = infoFrame[l][i]["red"]
-          green = infoFrame[l][i]["green"]
-          blue  = infoFrame[l][i]["blue"]
-          if (infoFrame[l][i]["Heading"] != -10):
-            heading = infoFrame[l][i]["Heading"]
-            headingColor = infoFrame[l][i]["headingColor"] if "headingColor" in infoFrame[l][i] else (255,0,0)
-            headingWidth = infoFrame[l][i]["headingWidth"] if "headingWidth" in infoFrame[l][i] else trackingPointSizeDisplay
-            headingHalfDiam = infoFrame[l][i]["headingHalfDiam"] if "headingHalfDiam" in infoFrame[l][i] else 20
-            if hyperparameters["validationVideoPlotHeading"]:
-              if hyperparameters["debugValidationVideoHeading"] == 0:
-                cv2.line(frame,(int(x),int(y)),(int(x+headingHalfDiam*math.cos(heading)),int(y+headingHalfDiam*math.sin(heading))), headingColor, headingWidth)
-              else:
-                cv2.line(frame,(int(x),int(y)),(int(x-250*math.cos(heading)),int(y-250*math.sin(heading))), headingColor, headingWidth)
-            
-            # if ("numMouv" in infoFrame[l][i]) and ("numWell" in infoFrame[l][i]):
-              # numMouv = infoFrame[l][i]["numMouv"]
-              # numWell = infoFrame[l][i]["numWell"]
-              # cv2.putText(frame,str(numMouv),(15+infoWells[numWell][0],25+infoWells[numWell][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255))
-
-          cv2.circle(frame, (int(x),int(y)), size, (red,green,blue), -1)
-          
-          if hyperparameters["validationVideoPlotAnimalNumber"]:
-            if "numAnimal" in infoFrame[l][i]:
-              numAnimal = int(infoFrame[l][i]["numAnimal"])
-              red       = int(0   + colorModifTab[numAnimal]["red"])
-              green     = int(255 - colorModifTab[numAnimal]["green"])
-              blue      = int(0   + colorModifTab[numAnimal]["blue"])
-              cv2.putText(frame, str(numAnimal), (int(x + 10), int(y + 10)), cv2.FONT_HERSHEY_SIMPLEX, 1, (red, green, blue), 2)
+        drawInfoFrame(l, frame, infoFrame, colorModifTab, hyperparameters)
           
         out.write(frame)
   

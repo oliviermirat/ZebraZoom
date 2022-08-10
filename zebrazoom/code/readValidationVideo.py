@@ -1,17 +1,20 @@
-from zebrazoom.code.getHyperparameters import getHyperparametersSimple
-import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
-from zebrazoom.code.preprocessImage import preprocessImage
+import math
+import os
+import sys
+
+import cv2
 import json
 import numpy as np
-import sys
-import os
-import cv2
 
 from PyQt5.QtCore import Qt, QSize, QTimer
 from PyQt5.QtWidgets import QLabel, QSlider, QVBoxLayout
 
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+from zebrazoom.code.createValidationVideo import calculateInfoFrame, drawInfoFrame
+from zebrazoom.code.getHyperparameters import getHyperparametersSimple
+from zebrazoom.code.preprocessImage import preprocessImage
 
 
 def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation=''):
@@ -127,36 +130,9 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   else:
     infoWells.append([0, 0, nx, ny])
   
-  frameToPosToPlot = None
+  infoFrame = None
   if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"]:
-    frameToPosToPlot = {}
-    for frameNumber in range(0, max_l + 400):
-      frameToPosToPlot[frameNumber] = []
-    
-    def plotBout(supstruct, numWell2, numAnimal2, frameToPosToPlot):
-      for numBout in range(0, len(supstruct["wellPoissMouv"][numWell2][numAnimal2])):
-        boutStart = supstruct["wellPoissMouv"][numWell2][numAnimal2][numBout]["BoutStart"]
-        for i in range(0, len(supstruct["wellPoissMouv"][numWell2][numAnimal2][numBout]["HeadX"])):
-          if boutStart + i in frameToPosToPlot:
-            if (type(framesToShow) != np.ndarray) or (framesToShow[boutStart + i][numWell2]):
-              xPos = int(supstruct["wellPositions"][numWell2]["topLeftX"] + supstruct["wellPoissMouv"][numWell2][numAnimal2][numBout]["HeadX"][i])
-              yPos = int(supstruct["wellPositions"][numWell2]["topLeftY"] + supstruct["wellPoissMouv"][numWell2][numAnimal2][numBout]["HeadY"][i])
-              frameToPosToPlot[boutStart + i].append([xPos, yPos])
-              tailX = supstruct["wellPoissMouv"][numWell2][numAnimal2][numBout]["TailX_VideoReferential"][i]
-              tailY = supstruct["wellPoissMouv"][numWell2][numAnimal2][numBout]["TailY_VideoReferential"][i]
-              for idx, tailPointX in enumerate(tailX):
-                tailPointY = tailY[idx]
-                xPos = int(supstruct["wellPositions"][numWell2]["topLeftX"] + tailPointX)
-                yPos = int(supstruct["wellPositions"][numWell2]["topLeftY"] + tailPointY)
-                frameToPosToPlot[boutStart + i].append([xPos, yPos])
-      return frameToPosToPlot
-    
-    if numWell == -1:
-      for numWell2 in range(0, len(supstruct["wellPoissMouv"])):
-        for numAnimal2 in range(0, len(supstruct["wellPoissMouv"][numWell2])):
-          frameToPosToPlot = plotBout(supstruct, numWell2, numAnimal2, frameToPosToPlot)
-    else:
-      frameToPosToPlot = plotBout(supstruct, numWell, numAnimal, frameToPosToPlot)
+    infoFrame, colorModifTab = calculateInfoFrame(supstruct, hyperparameters, max_l)
   
   x = 0
   y = 0
@@ -192,10 +168,8 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
     if hyperparameters["imagePreProcessMethod"]:
       img = preprocessImage(img, hyperparameters)
     
-    if frameToPosToPlot is not None:
-      if l in frameToPosToPlot:
-        for pos in frameToPosToPlot[l]:
-          cv2.circle(img, (pos[0], pos[1]), hyperparameters["trackingPointSizeDisplay"], (0, 255, 0), -1)
+    if infoFrame is not None:
+      drawInfoFrame(l, img, infoFrame, colorModifTab, hyperparameters)
 
     if numWell != -1 and zoom:
       length = 250
