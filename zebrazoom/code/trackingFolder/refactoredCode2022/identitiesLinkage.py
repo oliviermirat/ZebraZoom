@@ -28,14 +28,14 @@ def findOptimalIdCorrespondance(trackingHeadTailAllAnimalsList, wellNumber, i,  
 
 def switchIdentities(correspondance, trackingHeadTailAllAnimalsList, trackingHeadingAllAnimalsList, wellNumber, i, firstFrame):
   
-  trackingHeadTailAllAnimalsListWellNumberOriginal = trackingHeadTailAllAnimalsList[wellNumber].copy()
-  trackingHeadingAllAnimalsListWellNumberOriginal  = trackingHeadingAllAnimalsList[wellNumber].copy()
+  trackingHeadTailAllAnimalsListWellNumberOriginal = trackingHeadTailAllAnimalsList[wellNumber][:, i-firstFrame].copy()
+  trackingHeadingAllAnimalsListWellNumberOriginal  = trackingHeadingAllAnimalsList[wellNumber][:, i-firstFrame].copy()
   
   for previousId, newId in enumerate(correspondance):
-    trackingHeadTailAllAnimalsList[wellNumber][previousId, i-firstFrame] = trackingHeadTailAllAnimalsListWellNumberOriginal[newId, i-firstFrame]
+    trackingHeadTailAllAnimalsList[wellNumber][previousId, i-firstFrame] = trackingHeadTailAllAnimalsListWellNumberOriginal[newId]
 
   for previousId, newId in enumerate(correspondance):
-    trackingHeadingAllAnimalsList[wellNumber][previousId, i-firstFrame] = trackingHeadingAllAnimalsListWellNumberOriginal[newId, i-firstFrame]
+    trackingHeadingAllAnimalsList[wellNumber][previousId, i-firstFrame] = trackingHeadingAllAnimalsListWellNumberOriginal[newId]
   
   return [trackingHeadTailAllAnimalsList, trackingHeadingAllAnimalsList]
 
