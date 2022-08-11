@@ -149,7 +149,7 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters, pathToOrigina
           minpeaks, properties = find_peaks(-TailAngle_smoothed, prominence=minProminenceForBendsDetect, width=hyperparameters["windowForLocalBendMinMaxFind"])
           
           if (len(minpeaks) + len(maxpeaks) >= hyperparameters["minNbPeaksForBoutDetect"] ):
-          
+            
             ind = 1
             minDiffBetweenSubsequentBendAmp = hyperparameters["minDiffBetweenSubsequentBendAmp"]
             
@@ -220,13 +220,13 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters, pathToOrigina
             item['Bend_Timing'] = []
             item['Bend_TimingAbsolute'] = []
             item['Bend_Amplitude'] = []
-            item['TailAngle_Raw'] = []
-            item['TailAngle_smoothed'] = []
+            # item['TailAngle_Raw'] = []
+            # item['TailAngle_smoothed'] = []
             tab[item["AnimalNumber"]].append(item)
           
         else:
-          item['TailAngle_Raw'] = []
-          item['TailAngle_smoothed'] = []
+          # item['TailAngle_Raw'] = []
+          # item['TailAngle_smoothed'] = []
           tab[item["AnimalNumber"]].append(item)
       else:
         tab[item["AnimalNumber"]].append(item)
