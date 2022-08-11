@@ -20,7 +20,7 @@ from zebrazoom.code.GUI.dataAnalysisGUI import KinematicParametersVisualization,
 
 
 _DEFAULT_KEYS = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition',
-                 'Genotype', 'videoDuration', 'BoutDuration', 'TotalDistance', 'Speed',
+                 'Genotype', 'videoDuration', 'BoutDuration', 'Bout Distance (mm)', 'Bout Speed (mm/s)',
                  'percentTimeSpentSwimming', 'numberOfBouts_NoBoutsRemovedBasedOnBends']
 
 _EXPECTED_RESULTS = {'Trial_ID': [],
@@ -32,24 +32,24 @@ _EXPECTED_RESULTS = {'Trial_ID': [],
                      'Genotype': [],
                      'videoDuration': [],
                      'BoutDuration': [],
-                     'TotalDistance': [],
-                     'Speed': [],
-                     'maxOfInstantaneousTBF': [],
-                     'meanOfInstantaneousTBF': [],
+                     'Bout Distance (mm)': [],
+                     'Bout Speed (mm/s)': [],
+                     'Max TBF (Hz)': [],
+                     'Mean TBF (Hz)': [],
                      'medianOfInstantaneousTBF': [],
-                     'maxBendAmplitude': [],
+                     'Max absolute TBA (deg.)': [],
                      'maxBendAmplitudeSigned': [],
-                     'meanBendAmplitude': [],
-                     'medianBendAmplitude': [],
+                     'Mean absolute TBA (deg.)': [],
+                     'Median absolute TBA (deg.)': [],
                      'medianBendAmplitudeSigned': [],
-                     'NumberOfOscillations': [],
+                     'Number of Oscillations': [],
                      'meanTBF': [],
                      'maxTailAngleAmplitude': [],
-                     'deltaHead': [],
-                     'firstBendTime': [],
-                     'firstBendAmplitude': [],
+                     'Absolute Yaw (deg)': [],
+                     'TBA#1 timing (deg)': [],
+                     'TBA#1 Amplitude (deg)': [],
                      'firstBendAmplitudeSigned': [],
-                     'IBI': [],
+                     'IBI (s)': [],
                      'xmean': [],
                      'ymean': [],
                      'binaryClass25degMaxTailAngle': [],
@@ -156,25 +156,25 @@ def _generateResults():
         _EXPECTED_RESULTS['BoutStart'].append(startFrame)
         _EXPECTED_RESULTS['BoutEnd'].append(startFrame + duration - 1)
         _EXPECTED_RESULTS['BoutDuration'].append(duration / fps)
-        _EXPECTED_RESULTS['TotalDistance'].append(math.sqrt(xMove * xMove + yMove * yMove) * pixelSize * (duration - 1))
+        _EXPECTED_RESULTS['Bout Distance (mm)'].append(math.sqrt(xMove * xMove + yMove * yMove) * pixelSize * (duration - 1))
         _EXPECTED_RESULTS['maxInstantaneousSpeed'].append(math.sqrt(xMove * xMove + yMove * yMove) * 3 * pixelSize * fps)
-        _EXPECTED_RESULTS['Speed'].append(math.sqrt(xMove * xMove + yMove * yMove) * pixelSize * fps)
-        _EXPECTED_RESULTS['maxOfInstantaneousTBF'].append(max(instantaneousTBF))
-        _EXPECTED_RESULTS['meanOfInstantaneousTBF'].append(np.mean(instantaneousTBF))
+        _EXPECTED_RESULTS['Bout Speed (mm/s)'].append(math.sqrt(xMove * xMove + yMove * yMove) * pixelSize * fps)
+        _EXPECTED_RESULTS['Max TBF (Hz)'].append(max(instantaneousTBF))
+        _EXPECTED_RESULTS['Mean TBF (Hz)'].append(np.mean(instantaneousTBF))
         _EXPECTED_RESULTS['medianOfInstantaneousTBF'].append(np.median(instantaneousTBF))
-        _EXPECTED_RESULTS['maxBendAmplitude'].append(max(map(abs, degreeBendAmplitudes)))
+        _EXPECTED_RESULTS['Max absolute TBA (deg.)'].append(max(map(abs, degreeBendAmplitudes)))
         _EXPECTED_RESULTS['maxBendAmplitudeSigned'].append(max(degreeBendAmplitudes, key=abs))
-        _EXPECTED_RESULTS['meanBendAmplitude'].append(np.mean(list(map(abs, degreeBendAmplitudes))))
-        _EXPECTED_RESULTS['medianBendAmplitude'].append(np.median(list(map(abs, degreeBendAmplitudes))))
+        _EXPECTED_RESULTS['Mean absolute TBA (deg.)'].append(np.mean(list(map(abs, degreeBendAmplitudes))))
+        _EXPECTED_RESULTS['Median absolute TBA (deg.)'].append(np.median(list(map(abs, degreeBendAmplitudes))))
         _EXPECTED_RESULTS['medianBendAmplitudeSigned'].append(np.median(degreeBendAmplitudes))
-        _EXPECTED_RESULTS['NumberOfOscillations'].append(len(degreeBendAmplitudes) / 2)
+        _EXPECTED_RESULTS['Number of Oscillations'].append(len(degreeBendAmplitudes) / 2)
         _EXPECTED_RESULTS['meanTBF'].append((len(degreeBendAmplitudes) * fps)  / (2 * duration))
         _EXPECTED_RESULTS['maxTailAngleAmplitude'].append(max(map(lambda x: math.degrees(abs(x)), angles)))
-        _EXPECTED_RESULTS['deltaHead'].append(math.degrees(math.atan(yMove / xMove)))
-        _EXPECTED_RESULTS['firstBendTime'].append(bendTimings[0] / fps)
-        _EXPECTED_RESULTS['firstBendAmplitude'].append(abs(degreeBendAmplitudes[0]))
+        _EXPECTED_RESULTS['Absolute Yaw (deg)'].append(math.degrees(math.atan(yMove / xMove)))
+        _EXPECTED_RESULTS['TBA#1 timing (deg)'].append(bendTimings[0] / fps)
+        _EXPECTED_RESULTS['TBA#1 Amplitude (deg)'].append(abs(degreeBendAmplitudes[0]))
         _EXPECTED_RESULTS['firstBendAmplitudeSigned'].append(degreeBendAmplitudes[0])
-        _EXPECTED_RESULTS['IBI'].append((startFrame - (boutStartFrames[boutIdx-1] + boutDurations[boutIdx-1] - 1 if boutIdx else 0)) / fps)
+        _EXPECTED_RESULTS['IBI (s)'].append((startFrame - (boutStartFrames[boutIdx-1] + boutDurations[boutIdx-1] - 1 if boutIdx else 0)) / fps)
         _EXPECTED_RESULTS['xmean'].append(sum(headX) * pixelSize / len(headX))
         _EXPECTED_RESULTS['ymean'].append(sum(headY) * pixelSize / len(headY))
         _EXPECTED_RESULTS['binaryClass25degMaxTailAngle'].append(1 if max(map(lambda x: math.degrees(abs(x)), angles)) > 25 else 0)
@@ -499,10 +499,10 @@ def _test_frames_for_distance_calculation_check_results():
   assert list(generatedExcelAll.columns) == [key for key in _DEFAULT_KEYS if key not in _MEDIAN_ONLY_KEYS]
   trialIds = {name: idx for idx, name in enumerate(_VIDEO_NAMES)}
   expectedResultsDict = {k: v[:] for k, v in _EXPECTED_RESULTS.items()}
-  expectedResultsDict['Speed'] = [(speed / distance) * (distance + (distance / (end - start)) * 2)for speed, distance, start, end in
-                                  zip(expectedResultsDict['Speed'], expectedResultsDict['TotalDistance'], _EXPECTED_RESULTS['BoutStart'], _EXPECTED_RESULTS['BoutEnd'])]
-  expectedResultsDict['TotalDistance'] = [distance + (distance / (end - start)) * 2 for distance, start, end in
-                                          zip(expectedResultsDict['TotalDistance'], _EXPECTED_RESULTS['BoutStart'], _EXPECTED_RESULTS['BoutEnd'])]
+  expectedResultsDict['Bout Speed (mm/s)'] = [(speed / distance) * (distance + (distance / (end - start)) * 2)for speed, distance, start, end in
+                                  zip(expectedResultsDict['Bout Speed (mm/s)'], expectedResultsDict['Bout Distance (mm)'], _EXPECTED_RESULTS['BoutStart'], _EXPECTED_RESULTS['BoutEnd'])]
+  expectedResultsDict['Bout Distance (mm)'] = [distance + (distance / (end - start)) * 2 for distance, start, end in
+                                          zip(expectedResultsDict['Bout Distance (mm)'], _EXPECTED_RESULTS['BoutStart'], _EXPECTED_RESULTS['BoutEnd'])]
   expectedResultsAll = pd.DataFrame(expectedResultsDict).astype(generatedExcelAll.dtypes.to_dict())
   assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _DEFAULT_KEYS if key not in _MEDIAN_ONLY_KEYS]])
   generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
@@ -559,7 +559,7 @@ def _test_minimum_number_of_bends_check_results():
   generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
   assert list(generatedExcelAll.columns) == [key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]
   colsToKeep = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
-  expectedResultsDict = {k: [x if numOfOsc * 2 >= 12 or k in colsToKeep else np.nan for x, numOfOsc in zip(v, _EXPECTED_RESULTS['NumberOfOscillations'])]
+  expectedResultsDict = {k: [x if numOfOsc * 2 >= 12 or k in colsToKeep else np.nan for x, numOfOsc in zip(v, _EXPECTED_RESULTS['Number of Oscillations'])]
                          for k, v in _EXPECTED_RESULTS.items()}
   assert expectedResultsDict['BoutDuration'].count(np.nan) > 0  # make sure some bouts were discarded
   expectedResultsAll = pd.DataFrame(expectedResultsDict).astype(generatedExcelAll.dtypes.to_dict())
@@ -613,8 +613,8 @@ def _test_keep_data_for_discarded_bouts_check_results():
   generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
   generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
   assert list(generatedExcelAll.columns) == [key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]
-  colsToKeep = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration', 'TotalDistance', 'BoutDuration', 'Speed', 'IBI'}
-  expectedResultsDict = {k: [x if numOfOsc * 2 >= 12 or k in colsToKeep else np.nan for x, numOfOsc in zip(v, _EXPECTED_RESULTS['NumberOfOscillations'])]
+  colsToKeep = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration', 'Bout Distance (mm)', 'BoutDuration', 'Bout Speed (mm/s)', 'IBI (s)'}
+  expectedResultsDict = {k: [x if numOfOsc * 2 >= 12 or k in colsToKeep else np.nan for x, numOfOsc in zip(v, _EXPECTED_RESULTS['Number of Oscillations'])]
                          for k, v in _EXPECTED_RESULTS.items()}
   assert expectedResultsDict['xmean'].count(np.nan) > 0  # make sure some bouts were discarded
   expectedResultsAll = pd.DataFrame(expectedResultsDict).astype(generatedExcelAll.dtypes.to_dict())

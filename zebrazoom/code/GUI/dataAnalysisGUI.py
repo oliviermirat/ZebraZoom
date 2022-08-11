@@ -998,13 +998,13 @@ class PopulationComparison(QWidget):
     advancedOptionsLayout.addWidget(self._minNbBendForBoutDetect, alignment=Qt.AlignmentFlag.AlignCenter)
 
     advancedOptionsLayout.addWidget(util.apply_style(QLabel("If, for a bout, the tail tracking related kinematic parameters are being discarded because of a low amount of bends,"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    advancedOptionsLayout.addWidget(util.apply_style(QLabel("should the BoutDuration, TotalDistance, Speed and IBI also be discarded for that bout?"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    self._discardRadioButton = QRadioButton("Yes, discard BoutDuration, TotalDistance, Speed and IBI in that situation")
+    advancedOptionsLayout.addWidget(util.apply_style(QLabel("should the Bout Duration (s), Bout Distance (mm), Bout Speed (mm/s) and IBI (s) also be discarded for that bout?"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    self._discardRadioButton = QRadioButton("Yes, discard Bout Duration (s), Bout Distance (mm), Bout Speed (mm/s) and IBI (s) in that situation")
     self._discardRadioButton.setChecked(True)
     advancedOptionsLayout.addWidget(self._discardRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    self._keepRadioButton = QRadioButton("No, keep BoutDuration, TotalDistance, Speed and IBI in that situation")
+    self._keepRadioButton = QRadioButton("No, keep Bout Duration (s), Bout Distance (mm), Bout Speed (mm/s) and IBI (s) in that situation")
     advancedOptionsLayout.addWidget(self._keepRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    advancedOptionsLayout.addWidget(util.apply_style(QLabel("Please ignore the two questions above if you're only looking at BoutDuration, TotalDistance, Speed and IBI."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(util.apply_style(QLabel("Please ignore the two questions above if you're only looking at Bout Duration (s), Bout Distance (mm), Bout Speed (mm/s) and IBI (s)."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
 
     self._advancedOptionsExpander = util.Expander(self, "Show advanced options", advancedOptionsLayout)
     layout.addWidget(self._advancedOptionsExpander)
@@ -1378,7 +1378,8 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._selectAllCheckbox = util.apply_style(QCheckBox('Select all'), font_weight='bold')
     self._selectAllCheckbox.stateChanged.connect(self._checkOrUncheckAll)
     checkboxesLayout.addWidget(self._selectAllCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
-    precheckedParams = {'BoutDuration', 'TotalDistance', 'Speed', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude'}
+    precheckedParams = {'Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Numer of Oscillations', 'meanTBF', 'maxTailAngleAmplitude',
+                        'BoutDuration', 'TotalDistance', 'Speed', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude'}  # keep the old names for compatibility
     for param in self._allParameters + self._medianParameters:
       if param in self._paramCheckboxes:
         continue

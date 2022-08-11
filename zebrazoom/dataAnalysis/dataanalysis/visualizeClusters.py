@@ -404,9 +404,9 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
   if globalParametersCalculations:
     
     for plotOutliersAndMean in [0, 1]:
-      globParam1 = ['BoutDuration', 'TotalDistance', 'Speed', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude']
-      globParam2 = ['maxOfInstantaneousTBF', 'meanOfInstantaneousTBF', 'medianOfInstantaneousTBF', 'maxBendAmplitude', 'meanBendAmplitude', 'medianBendAmplitude']
-      globParam3 = ['deltaHead', 'firstBendTime', 'firstBendAmplitude', 'IBI', 'xmean', 'ymean']
+      globParam1 = ['BoutDuration', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Number of Oscillations', 'meanTBF', 'maxTailAngleAmplitude']
+      globParam2 = ['Max TBF (Hz)', 'Mean TBF (Hz)', 'medianOfInstantaneousTBF', 'Max absolute TBA (deg.)', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)']
+      globParam3 = ['Absolute Yaw (deg)', 'TBA#1 timing (deg)', 'TBA#1 Amplitude (deg)', 'IBI (s)', 'xmean', 'ymean']
       globParam4 = ['binaryClass25degMaxTailAngle', 'BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst']
       
       for idxGlobParam, globParam in enumerate([globParam1, globParam2, globParam3, globParam4]):
@@ -427,9 +427,9 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
     
     ###
     
-    globParam1 = ['BoutDuration', 'TotalDistance', 'Speed', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude']
-    globParam2 = ['maxOfInstantaneousTBF', 'meanOfInstantaneousTBF', 'medianOfInstantaneousTBF', 'maxBendAmplitude', 'meanBendAmplitude', 'medianBendAmplitude']
-    globParam3 = ['deltaHead', 'firstBendTime', 'firstBendAmplitude', 'IBI', 'xmean', 'ymean']
+    globParam1 = ['BoutDuration', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Number of Oscillations', 'meanTBF', 'maxTailAngleAmplitude']
+    globParam2 = ['Max TBF (Hz)', 'Mean TBF (Hz)', 'medianOfInstantaneousTBF', 'Max absolute TBA (deg.)', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)']
+    globParam3 = ['Absolute Yaw (deg)', 'TBA#1 timing (deg)', 'TBA#1 Amplitude (deg)', 'IBI (s)', 'xmean', 'ymean']
     globParam4 = ['binaryClass25degMaxTailAngle', 'BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst']
     
     for calculateKinematicParametersPerFish in [True, False]:

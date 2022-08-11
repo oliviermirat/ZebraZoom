@@ -94,9 +94,9 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   basicInformation = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration']
   # Global parameters
   if tailAngleKinematicParameterCalculation:
-    globParam  = ['BoutDuration', 'TotalDistance', 'Speed', 'maxOfInstantaneousTBF', 'meanOfInstantaneousTBF', 'medianOfInstantaneousTBF', 'maxBendAmplitude', 'maxBendAmplitudeSigned', 'meanBendAmplitude', 'medianBendAmplitude', 'medianBendAmplitudeSigned', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude', 'deltaHead', 'firstBendTime', 'firstBendAmplitude', 'firstBendAmplitudeSigned', 'IBI', 'xmean', 'ymean', 'binaryClass25degMaxTailAngle', 'tailAngleIntegralSigned', 'BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral', 'maxInstantaneousSpeed']
+    globParam  = ['BoutDuration', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Max TBF (Hz)', 'Mean TBF (Hz)', 'medianOfInstantaneousTBF', 'Max absolute TBA (deg.)', 'maxBendAmplitudeSigned', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)', 'medianBendAmplitudeSigned', 'Number of Oscillations', 'meanTBF', 'maxTailAngleAmplitude', 'Absolute Yaw (deg)', 'TBA#1 timing (deg)', 'TBA#1 Amplitude (deg)', 'firstBendAmplitudeSigned', 'IBI (s)', 'xmean', 'ymean', 'binaryClass25degMaxTailAngle', 'tailAngleIntegralSigned', 'BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral', 'maxInstantaneousSpeed']
   else:
-    globParam  = ['BoutDuration', 'TotalDistance', 'Speed']
+    globParam  = ['BoutDuration', 'Bout Distance (mm)', 'Bout Speed (mm/s)']
   
   if type(addToGlobalParameters) == list:
     globParam = globParam + addToGlobalParameters  
@@ -141,7 +141,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   conditions = []
   # This is for the potential reload from previously calculated parameters (stored in the pkl file)
   if keepSpeedDistDurWhenLowNbBends == 1:
-    onlyKeepTheseColumns = basicInformation + ['BoutDuration', 'TotalDistance', 'Speed', 'IBI']
+    onlyKeepTheseColumns = basicInformation + ['BoutDuration', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'IBI (s)']
   else:
     onlyKeepTheseColumns = basicInformation
   removeColumnsWhenAppropriate = [col for col in dfCols if not(col in onlyKeepTheseColumns)]
@@ -186,7 +186,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
           dfReloadedVid.loc[indForWellId, 'Condition'] = cond
           dfReloadedVid.loc[indForWellId, 'Genotype']  = genotype[idx]
           if minNbBendForBoutDetect > 0:
-            ind           = (dfReloadedVid['NumberOfOscillations'] < minNbBendForBoutDetect/2)
+            ind           = (dfReloadedVid['Number of Oscillations'] < minNbBendForBoutDetect/2)
             dfReloadedVid.loc[ind, removeColumnsWhenAppropriate] = float('NaN')
           if not(genotype[idx] in genotypes):
             genotypes.append(genotype[idx])
@@ -296,9 +296,9 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
                   # Calculating the global kinematic parameters and more and stores them the dataframe
                   
                   previousBoutEnd = supstruct["wellPoissMouv"][Well_ID][fishId][NumBout-1]["BoutEnd"] if NumBout > 0 else 0
-                  listOfGlobalParameters = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation, previousBoutEnd, ['BoutDuration', 'TotalDistance', 'Speed', 'IBI'] + addToGlobalParameters, firstFrame, lastFrame, minimumFrameToFrameDistanceToBeConsideredAsMoving)
+                  listOfGlobalParameters = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation, previousBoutEnd, ['BoutDuration', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'IBI (s)'] + addToGlobalParameters, firstFrame, lastFrame, minimumFrameToFrameDistanceToBeConsideredAsMoving)
                   
-                  toPutInDataFrameColumn = toPutInDataFrameColumn + ['BoutDuration', 'TotalDistance', 'Speed', 'IBI'] + addToGlobalParameters
+                  toPutInDataFrameColumn = toPutInDataFrameColumn + ['BoutDuration', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'IBI (s)'] + addToGlobalParameters
                   toPutInDataFrame       = toPutInDataFrame       + listOfGlobalParameters
                   
                 # Adding bout parameters to the dataframe created for the current well
