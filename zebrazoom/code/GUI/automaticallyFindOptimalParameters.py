@@ -85,12 +85,14 @@ def _automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, de
   bestMinPixelDiffForBackExtract = -1
   bestMinPixelDiffForBackExtractOptions = []
   bodyContourAreaOptions = []
+  lowestTailTipDistErrorOptions = []
   tailLengthOptions = []
   for image in data:
     if image["lowestTailTipDistError"] != 1000000000 and (not("tailLength" in image) or (image["tailLength"] < 10 * maxTailLengthManual)):
       if image["bodyContourArea"] != -1:
         bestMinPixelDiffForBackExtractOptions.append(image["bestMinPixelDiffForBackExtract"])
         bodyContourAreaOptions.append(image["bodyContourArea"])
+        lowestTailTipDistErrorOptions.append(image["lowestTailTipDistError"])
         if zebrafishToTrack:
           tailLengthOptions.append(image["tailLength"])
   
@@ -99,7 +101,10 @@ def _automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, de
   print("bodyContourAreaOptions:", bodyContourAreaOptions)
   
   if len(bestMinPixelDiffForBackExtractOptions):
-    ind = np.argmin(bodyContourAreaOptions)
+    if adjustBackgroundExtractionBasedOnNumberOfBlackPixels:
+      ind = np.argmin(bodyContourAreaOptions)
+    else:
+      ind = np.argmin(lowestTailTipDistErrorOptions)
     bestMinPixelDiffForBackExtract = bestMinPixelDiffForBackExtractOptions[ind] # THIS IS THE MOST IMPORTANT PART
     bodyContourArea = bodyContourAreaOptions[ind]
     if zebrafishToTrack:
