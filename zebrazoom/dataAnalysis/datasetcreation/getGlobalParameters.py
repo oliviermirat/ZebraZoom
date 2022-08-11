@@ -18,7 +18,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
-    elif parameterToCalculate == 'TotalDistance':
+    elif parameterToCalculate == 'Bout Distance (mm)':
       
       TotalDistance = 0
       posX = curbout["HeadX"]
@@ -64,14 +64,14 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
-    elif parameterToCalculate == 'Speed':
+    elif parameterToCalculate == 'Bout Speed (mm/s)':
       
       Speed = TotalDistance * fps / (curbout["BoutEnd"] - curbout["BoutStart"]) # This is a bit of a "hack" (not very "clean"), it only works because the listOfParametersToCalculate provided contains TotalDistance before Speed
       listOfParametersCalculated.append(Speed)
     
     
     
-    elif parameterToCalculate == 'NumberOfOscillations':
+    elif parameterToCalculate == 'Number of Oscillations':
       
       if "Bend_Timing" in curbout and type(curbout["Bend_Timing"]) == list:
         NumberOfOscillations = len(curbout["Bend_Timing"]) / 2
@@ -88,7 +88,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
-    elif parameterToCalculate == 'maxOfInstantaneousTBF':
+    elif parameterToCalculate == 'Max TBF (Hz)':
       
       if "Bend_Timing" in curbout and type(curbout["Bend_Timing"]) == list and len(curbout["Bend_Timing"]):
         maxOfInstantaneousTBF = np.max(fps / (2 * np.diff([0] + curbout['Bend_Timing'])))
@@ -98,7 +98,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
-    elif parameterToCalculate == 'meanOfInstantaneousTBF':
+    elif parameterToCalculate == 'Mean TBF (Hz)':
       
       if "Bend_Timing" in curbout and type(curbout["Bend_Timing"]) == list and len(curbout["Bend_Timing"]):
         meanOfInstantaneousTBF = np.mean(fps / (2 * np.diff([0] + curbout['Bend_Timing'])))
@@ -118,7 +118,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
-    elif parameterToCalculate == 'maxBendAmplitude':
+    elif parameterToCalculate == 'Max absolute TBA (deg.)':
       
       if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
         maxBendAmplitude = max(list(map(abs, curbout["Bend_Amplitude"]))) * (180 / math.pi)
@@ -138,7 +138,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
-    elif parameterToCalculate == 'medianBendAmplitude':
+    elif parameterToCalculate == 'Median absolute TBA (deg.)':
       
       if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
         medianBendAmplitude = np.median(list(map(abs, curbout["Bend_Amplitude"]))) * (180 / math.pi)
@@ -151,14 +151,14 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     elif parameterToCalculate == 'medianBendAmplitudeSigned':
       
       if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
-        medianBendAmplitude = np.median(curbout["Bend_Amplitude"]) * (180 / math.pi)
+        medianBendAmplitudeSigned = np.median(curbout["Bend_Amplitude"]) * (180 / math.pi)
       else:
-        medianBendAmplitude = float('NaN')
-      listOfParametersCalculated.append(medianBendAmplitude)
+        medianBendAmplitudeSigned = float('NaN')
+      listOfParametersCalculated.append(medianBendAmplitudeSigned)
 
 
 
-    elif parameterToCalculate == 'meanBendAmplitude':
+    elif parameterToCalculate == 'Mean absolute TBA (deg.)':
       
       if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
         meanBendAmplitude = np.mean(list(map(abs, curbout["Bend_Amplitude"]))) * (180 / math.pi)
@@ -192,7 +192,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
-    elif parameterToCalculate == 'deltaHead':
+    elif parameterToCalculate == 'Absolute Yaw (deg)':
       
       deltahead  = abs(getDeltaHead(curbout))
       listOfParametersCalculated.append(deltahead)
@@ -243,7 +243,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
-    elif parameterToCalculate == 'firstBendTime':
+    elif parameterToCalculate == 'TBA#1 timing (deg)':
     
       if "Bend_Timing" in curbout and type(curbout["Bend_Timing"]) == list and len(curbout["Bend_Timing"]):
         firstBendTime = curbout["Bend_Timing"][0] / fps
@@ -253,7 +253,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
-    elif parameterToCalculate == 'firstBendAmplitude':
+    elif parameterToCalculate == 'TBA#1 Amplitude (deg)':
       
       if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
         firstBendAmplitude = abs(curbout["Bend_Amplitude"][0]) * (180 / math.pi)
@@ -266,14 +266,14 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     elif parameterToCalculate == 'firstBendAmplitudeSigned':
       
       if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
-        firstBendAmplitude = curbout["Bend_Amplitude"][0] * (180 / math.pi)
+        firstBendAmplitudeSigned = curbout["Bend_Amplitude"][0] * (180 / math.pi)
       else:
-        firstBendAmplitude = float('NaN')
-      listOfParametersCalculated.append(firstBendAmplitude)
+        firstBendAmplitudeSigned = float('NaN')
+      listOfParametersCalculated.append(firstBendAmplitudeSigned)
 
 
 
-    elif parameterToCalculate == 'IBI':
+    elif parameterToCalculate == 'IBI (s)':
       
       IBI = (curbout["BoutStart"] - previousBoutEnd) / fps
       listOfParametersCalculated.append(IBI)
