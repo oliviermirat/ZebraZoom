@@ -13,7 +13,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvas
 
 from PyQt5.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QEvent, QItemSelectionModel, QModelIndex, QObject, QPoint, QPointF, QRect, QRectF, QSize, QSizeF, QSortFilterProxyModel, QStringListModel, QUrl
 from PyQt5.QtGui import QColor, QDesktopServices, QFont, QFontMetrics, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
-from PyQt5.QtWidgets import QAction, QAbstractItemView, QApplication, QComboBox, QCompleter, QDoubleSpinBox, QFileDialog, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QListView, QMessageBox, QSpacerItem, QTextEdit, QToolButton, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QTableView, QToolTip, QTreeView
+from PyQt5.QtWidgets import QAction, QAbstractItemView, QApplication, QComboBox, QCompleter, QDialog, QDialogButtonBox, QDoubleSpinBox, QFileDialog, QFileSystemModel, QFrame, QFormLayout, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QListView, QMessageBox, QSpacerItem, QTextEdit, QToolButton, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QTableView, QToolTip, QTreeView
 PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
@@ -430,6 +430,57 @@ class _ExperimentOrganizationSelectionModel(QItemSelectionModel):
     return super().select(index, command)
 
 
+class _MultipleInputDialog(QDialog):
+  def __init__(self, parent, width, height):
+    super().__init__(parent)
+
+    self._pixelWidth = QLineEdit()
+    self._pixelWidth.setText(width)
+    self._pixelHeight = QLineEdit()
+    self._pixelHeight.setText(height)
+    self._mmWidth = QLineEdit()
+    self._mmHeight = QLineEdit()
+
+    def updateOKButton():
+      try:
+        all(float(lineEdit.text()) for lineEdit in (self._pixelWidth, self._pixelHeight, self._mmWidth, self._mmHeight))
+        enabled = True
+      except ValueError:
+        enabled = False
+      buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(enabled)
+    self._pixelWidth.textChanged.connect(updateOKButton)
+    self._pixelHeight.textChanged.connect(updateOKButton)
+    self._mmWidth.textChanged.connect(updateOKButton)
+    self._mmHeight.textChanged.connect(updateOKButton)
+
+    buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel);
+
+    layout = QFormLayout(self)
+    layout.addRow("Video width (pixels)", self._pixelWidth)
+    layout.addRow("Video height (pixels)", self._pixelHeight)
+    layout.addRow("Video width (mm)", self._mmWidth)
+    layout.addRow("Video height (mm)", self._mmHeight)
+    layout.addWidget(buttonBox)
+
+    buttonBox.accepted.connect(self.accept)
+    buttonBox.rejected.connect(self.reject)
+    updateOKButton()
+
+  def accept(self):
+    if self.getPixelSize() is None:
+      QMessageBox.critical(self, "Could not calculate pixel size", "The deviation between width and height is too large, please check your inputs.")
+      return
+    super().accept()
+
+  def getPixelSize(self):
+    widthPixelSize = float(self._mmWidth.text()) / float(self._pixelWidth.text())
+    heightPixelSize = float(self._mmHeight.text()) / float(self._pixelHeight.text())
+    ratio = widthPixelSize / heightPixelSize
+    if ratio < 0.9 or ratio > 1.1:
+      return None
+    return (widthPixelSize + heightPixelSize) / 2
+
+
 class CreateExperimentOrganizationExcel(QWidget):
   _POTENTIAL_WELLS_FILENAMES = ("intermediaryWellPosition.txt", "intermediaryWellPositionReloadNoMatterWhat.txt")
 
@@ -507,10 +558,24 @@ class CreateExperimentOrganizationExcel(QWidget):
     self._FPSLineEdit = QLineEdit()
     self._FPSLineEdit.editingFinished.connect(self._FPSChanged)
     videoDetailsLayout.addWidget(self._FPSLineEdit, 0, 1, alignment=Qt.AlignmentFlag.AlignLeft)
-    videoDetailsLayout.addWidget(QLabel("Pixel size:"), 1, 0, alignment=Qt.AlignmentFlag.AlignLeft)
+    videoDetailsLayout.addWidget(QLabel("Pixel size (mm):"), 1, 0, alignment=Qt.AlignmentFlag.AlignLeft)
     self._pixelSizeLineEdit = QLineEdit()
     self._pixelSizeLineEdit.editingFinished.connect(self._pixelSizeChanged)
     videoDetailsLayout.addWidget(self._pixelSizeLineEdit, 1, 1, alignment=Qt.AlignmentFlag.AlignLeft)
+    pixelSizeDialogButton = QPushButton("Calculate pixel size")
+
+    def calculatePixelSize():
+      exampleFrame = self._findExampleFrame(self._shownVideo)
+      if exampleFrame is not None:
+        height, width = map(str, exampleFrame.shape[:2])
+      else:
+        height, width = '', ''
+      dialog = _MultipleInputDialog(controller.window, width, height)
+      dialog.setWindowTitle("Enter video dimensions")
+      if dialog.exec():
+        self._pixelSizeLineEdit.setText("{:.2f}".format(dialog.getPixelSize()))
+    pixelSizeDialogButton.clicked.connect(calculatePixelSize)
+    videoDetailsLayout.addWidget(pixelSizeDialogButton, 1, 2, alignment=Qt.AlignmentFlag.AlignLeft)
     videoDetailsLayout.addWidget(QLabel("Condition:"), 2, 0, alignment=Qt.AlignmentFlag.AlignLeft)
     self._conditionLineEdit = QLineEdit()
     conditionCompleter = QCompleter()
