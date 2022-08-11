@@ -11,7 +11,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
-    if parameterToCalculate == 'BoutDuration':
+    if parameterToCalculate == 'Bout Duration (s)':
       
       BoutDuration = (curbout["BoutEnd"] - curbout["BoutStart"] + 1) / fps
       listOfParametersCalculated.append(BoutDuration)

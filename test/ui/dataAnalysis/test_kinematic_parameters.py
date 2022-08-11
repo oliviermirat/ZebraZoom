@@ -20,7 +20,7 @@ from zebrazoom.code.GUI.dataAnalysisGUI import KinematicParametersVisualization,
 
 
 _DEFAULT_KEYS = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition',
-                 'Genotype', 'videoDuration', 'BoutDuration', 'Bout Distance (mm)', 'Bout Speed (mm/s)',
+                 'Genotype', 'videoDuration', 'Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)',
                  'percentTimeSpentSwimming', 'numberOfBouts_NoBoutsRemovedBasedOnBends']
 
 _EXPECTED_RESULTS = {'Trial_ID': [],
@@ -31,7 +31,7 @@ _EXPECTED_RESULTS = {'Trial_ID': [],
                      'Condition': [],
                      'Genotype': [],
                      'videoDuration': [],
-                     'BoutDuration': [],
+                     'Bout Duration (s)': [],
                      'Bout Distance (mm)': [],
                      'Bout Speed (mm/s)': [],
                      'Max TBF (Hz)': [],
@@ -155,7 +155,7 @@ def _generateResults():
         _EXPECTED_RESULTS['NumBout'].append(boutIdx)
         _EXPECTED_RESULTS['BoutStart'].append(startFrame)
         _EXPECTED_RESULTS['BoutEnd'].append(startFrame + duration - 1)
-        _EXPECTED_RESULTS['BoutDuration'].append(duration / fps)
+        _EXPECTED_RESULTS['Bout Duration (s)'].append(duration / fps)
         _EXPECTED_RESULTS['Bout Distance (mm)'].append(math.sqrt(xMove * xMove + yMove * yMove) * pixelSize * (duration - 1))
         _EXPECTED_RESULTS['maxInstantaneousSpeed'].append(math.sqrt(xMove * xMove + yMove * yMove) * 3 * pixelSize * fps)
         _EXPECTED_RESULTS['Bout Speed (mm/s)'].append(math.sqrt(xMove * xMove + yMove * yMove) * pixelSize * fps)
@@ -561,7 +561,7 @@ def _test_minimum_number_of_bends_check_results():
   colsToKeep = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
   expectedResultsDict = {k: [x if numOfOsc * 2 >= 12 or k in colsToKeep else np.nan for x, numOfOsc in zip(v, _EXPECTED_RESULTS['Number of Oscillations'])]
                          for k, v in _EXPECTED_RESULTS.items()}
-  assert expectedResultsDict['BoutDuration'].count(np.nan) > 0  # make sure some bouts were discarded
+  assert expectedResultsDict['Bout Duration (s)'].count(np.nan) > 0  # make sure some bouts were discarded
   expectedResultsAll = pd.DataFrame(expectedResultsDict).astype(generatedExcelAll.dtypes.to_dict())
   assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]])
   generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
@@ -573,7 +573,7 @@ def _test_minimum_number_of_bends_check_results():
   expectedResultsMedian['Genotype'] = [_GENOTYPES_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
   seen = set()
   expectedResultsMedian['Trial_ID'] = [x if x not in seen and not seen.add(x) else np.nan for x in expectedResultsMedian['Trial_ID']]
-  expectedResultsMedian['percentTimeSpentSwimming'] = groupedResults['BoutDuration'].sum()['BoutDuration'].div(expectedResultsMedian['videoDuration']).mul(100)
+  expectedResultsMedian['percentTimeSpentSwimming'] = groupedResults['Bout Duration (s)'].sum()['Bout Duration (s)'].div(expectedResultsMedian['videoDuration']).mul(100)
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
@@ -613,7 +613,7 @@ def _test_keep_data_for_discarded_bouts_check_results():
   generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
   generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
   assert list(generatedExcelAll.columns) == [key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]
-  colsToKeep = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration', 'Bout Distance (mm)', 'BoutDuration', 'Bout Speed (mm/s)', 'IBI (s)'}
+  colsToKeep = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration', 'Bout Distance (mm)', 'Bout Duration (s)', 'Bout Speed (mm/s)', 'IBI (s)'}
   expectedResultsDict = {k: [x if numOfOsc * 2 >= 12 or k in colsToKeep else np.nan for x, numOfOsc in zip(v, _EXPECTED_RESULTS['Number of Oscillations'])]
                          for k, v in _EXPECTED_RESULTS.items()}
   assert expectedResultsDict['xmean'].count(np.nan) > 0  # make sure some bouts were discarded
@@ -628,7 +628,7 @@ def _test_keep_data_for_discarded_bouts_check_results():
   expectedResultsMedian['Genotype'] = [_GENOTYPES_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
   seen = set()
   expectedResultsMedian['Trial_ID'] = [x if x not in seen and not seen.add(x) else np.nan for x in expectedResultsMedian['Trial_ID']]
-  expectedResultsMedian['percentTimeSpentSwimming'] = groupedResults['BoutDuration'].sum()['BoutDuration'].div(expectedResultsMedian['videoDuration']).mul(100)
+  expectedResultsMedian['percentTimeSpentSwimming'] = groupedResults['Bout Duration (s)'].sum()['Bout Duration (s)'].div(expectedResultsMedian['videoDuration']).mul(100)
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):

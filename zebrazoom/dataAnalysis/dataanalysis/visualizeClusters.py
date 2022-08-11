@@ -404,7 +404,7 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
   if globalParametersCalculations:
     
     for plotOutliersAndMean in [0, 1]:
-      globParam1 = ['BoutDuration', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Number of Oscillations', 'meanTBF', 'maxTailAngleAmplitude']
+      globParam1 = ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Number of Oscillations', 'meanTBF', 'maxTailAngleAmplitude']
       globParam2 = ['Max TBF (Hz)', 'Mean TBF (Hz)', 'medianOfInstantaneousTBF', 'Max absolute TBA (deg.)', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)']
       globParam3 = ['Absolute Yaw (deg)', 'TBA#1 timing (deg)', 'TBA#1 Amplitude (deg)', 'IBI (s)', 'xmean', 'ymean']
       globParam4 = ['binaryClass25degMaxTailAngle', 'BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst']
@@ -427,7 +427,7 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
     
     ###
     
-    globParam1 = ['BoutDuration', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Number of Oscillations', 'meanTBF', 'maxTailAngleAmplitude']
+    globParam1 = ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Number of Oscillations', 'meanTBF', 'maxTailAngleAmplitude']
     globParam2 = ['Max TBF (Hz)', 'Mean TBF (Hz)', 'medianOfInstantaneousTBF', 'Max absolute TBA (deg.)', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)']
     globParam3 = ['Absolute Yaw (deg)', 'TBA#1 timing (deg)', 'TBA#1 Amplitude (deg)', 'IBI (s)', 'xmean', 'ymean']
     globParam4 = ['binaryClass25degMaxTailAngle', 'BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst']

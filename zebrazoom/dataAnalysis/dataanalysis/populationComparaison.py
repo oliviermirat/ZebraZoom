@@ -58,9 +58,9 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
     if numberOfBoutsPerSecond:
       dfCount['numberOfBoutsPerSecond'] = dfCount['numberOfBouts_NoBoutsRemovedBasedOnBends'] / dfKinematicValues['videoDuration']
       dfCount.drop(columns=['numberOfBouts_NoBoutsRemovedBasedOnBends'])
-    dfTotalTimeMove = dfParam[['Trial_ID', 'Well_ID', 'BoutDuration']].copy()
+    dfTotalTimeMove = dfParam[['Trial_ID', 'Well_ID', 'Bout Duration (s)']].copy()
     dfTotalTimeMove = dfTotalTimeMove.groupby(['Trial_ID', 'Well_ID']).sum()
-    dfKinematicValues['percentTimeSpentSwimming'] = (dfTotalTimeMove['BoutDuration'] / dfKinematicValues['videoDuration']) * 100
+    dfKinematicValues['percentTimeSpentSwimming'] = (dfTotalTimeMove['Bout Duration (s)'] / dfKinematicValues['videoDuration']) * 100
     dfParam = pd.concat([dfCondGeno, dfKinematicValues], axis=1)
     dfParam = pd.concat([dfParam, dfCount], axis=1)
     if numberOfBoutsPerSecond:
@@ -79,9 +79,9 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
     if numberOfBoutsPerSecond:
       dfCount['numberOfBoutsPerSecond'] = dfCount['numberOfBouts_NoBoutsRemovedBasedOnBends'] / dfKinematicValues['videoDuration']
       dfCount.drop(columns=['numberOfBouts_NoBoutsRemovedBasedOnBends'])
-    dfTotalTimeMove = dfParam[['Trial_ID', 'Well_ID', 'BoutDuration']].copy()
+    dfTotalTimeMove = dfParam[['Trial_ID', 'Well_ID', 'Bout Duration (s)']].copy()
     dfTotalTimeMove = dfTotalTimeMove.groupby(['Trial_ID', 'Well_ID']).sum()
-    dfKinematicValues['percentTimeSpentSwimming'] = (dfTotalTimeMove['BoutDuration'] / dfKinematicValues['videoDuration']) * 100
+    dfKinematicValues['percentTimeSpentSwimming'] = (dfTotalTimeMove['Bout Duration (s)'] / dfKinematicValues['videoDuration']) * 100
     dfParam = pd.concat([dfCond, dfKinematicValues], axis=1)
     dfParam = pd.concat([dfParam, dfCount], axis=1)
     if numberOfBoutsPerSecond:
