@@ -1450,7 +1450,7 @@ class FinishConfig(QWidget):
     layout.addWidget(fasterTrackingCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
     changingBackgroundCheckbox = QCheckBox("Check this box if the background of your video changes over time")
-    def changingBackgroundToggled():
+    def changingBackgroundToggled(checked):
       if checked:
         controller.configFile["updateBackgroundAtInterval"] = 1
         controller.configFile["useFirstFrameAsBackground"] = 1
@@ -1463,7 +1463,7 @@ class FinishConfig(QWidget):
     layout.addWidget(changingBackgroundCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
     alwaysSaveCheckbox = QCheckBox("Save coordinates and tail angle even when fish isn't moving")
-    def alwaysSaveToggled():
+    def alwaysSaveToggled(checked):
       if checked:
         controller.configFile["saveAllDataEvenIfNotInBouts"] = 1
       else:
