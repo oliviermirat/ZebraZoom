@@ -175,30 +175,44 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     else:
       print("reloading previously calculated parameters")
       dfReloadedVid = pd.read_pickle(os.path.join(path, trial_id + '.pkl'))
-      
-      nbFramesTakenIntoAccountReloaded = max([np.sum(['instaTBF' in param for param in dfReloadedVid.columns.tolist()]), np.sum(['tailAnglesRecalculated' in param for param in dfReloadedVid.columns.tolist()]), np.sum(['instaSpeed' in param for param in dfReloadedVid.columns.tolist()])])
-      if nbFramesTakenIntoAccountReloaded < nbFramesTakenIntoAccount:
-        raise ValueError("nbFramesTakenIntoAccount was too low when pre-generating the pkl file of a video:" + str(np.sum(['instaTBF' in param for param in dfReloadedVid.columns.tolist()])) + " , " + str(np.sum(['tailAnglesRecalculated' in param for param in dfReloadedVid.columns.tolist()])) + " , " + str(np.sum(['instaSpeed' in param for param in dfReloadedVid.columns.tolist()])) + " ; nbFramesTakenIntoAccount :" + str(nbFramesTakenIntoAccount))
-        
-      for idx, cond in enumerate(condition):
-        indForWellId = (dfReloadedVid['Well_ID'] == idx)
-        if include[idx]:
-          dfReloadedVid.loc[indForWellId, 'Condition'] = cond
-          dfReloadedVid.loc[indForWellId, 'Genotype']  = genotype[idx]
-          if minNbBendForBoutDetect > 0:
-            ind           = (dfReloadedVid['Number of Oscillations'] < minNbBendForBoutDetect/2)
-            dfReloadedVid.loc[ind, removeColumnsWhenAppropriate] = float('NaN')
-          if not(genotype[idx] in genotypes):
-            genotypes.append(genotype[idx])
-          if not(condition[idx] in conditions):
-            conditions.append(condition[idx])
+      if 'BoutDuration' in dfReloadedVid:  # pickle file contains old parameter names, recreate it
+        forcePandasDfRecreation = True
+        if len(supstructOverwrite):
+          supstruct = supstructOverwrite
         else:
-          dfReloadedVid = dfReloadedVid.drop([idx2 for idx2, belongsToWell in enumerate(indForWellId) if belongsToWell])
-          if 'level_0' in dfReloadedVid.columns:
-            dfReloadedVid = dfReloadedVid.drop(['level_0'], axis=1)
-          dfReloadedVid = dfReloadedVid.reset_index()
+          with open(os.path.join(path, 'results_' + trial_id + '.txt')) as f:
+            supstruct = json.load(f)
+        firstFrame = supstruct["firstFrame"]
+        lastFrame  = supstruct["lastFrame"]
+        with open(os.path.join(path, 'parametersUsedForCalculation.json'), 'w') as outfile:
+          print('frameStepForDistanceCalculation', frameStepForDistanceCalculation)
+          print('videoFPS', excelFile.loc[videoId, 'fq'])
+          print('videoPixelSize', excelFile.loc[videoId, 'pixelsize'])
+          json.dump({'frameStepForDistanceCalculation': int(frameStepForDistanceCalculation), 'videoFPS': float(excelFile.loc[videoId, 'fq']), 'videoPixelSize': float(excelFile.loc[videoId, 'pixelsize'])}, outfile)
+      else:
+        nbFramesTakenIntoAccountReloaded = max([np.sum(['instaTBF' in param for param in dfReloadedVid.columns.tolist()]), np.sum(['tailAnglesRecalculated' in param for param in dfReloadedVid.columns.tolist()]), np.sum(['instaSpeed' in param for param in dfReloadedVid.columns.tolist()])])
+        if nbFramesTakenIntoAccountReloaded < nbFramesTakenIntoAccount:
+          raise ValueError("nbFramesTakenIntoAccount was too low when pre-generating the pkl file of a video:" + str(np.sum(['instaTBF' in param for param in dfReloadedVid.columns.tolist()])) + " , " + str(np.sum(['tailAnglesRecalculated' in param for param in dfReloadedVid.columns.tolist()])) + " , " + str(np.sum(['instaSpeed' in param for param in dfReloadedVid.columns.tolist()])) + " ; nbFramesTakenIntoAccount :" + str(nbFramesTakenIntoAccount))
           
-      dfParam = pd.concat([dfParam, dfReloadedVid])
+        for idx, cond in enumerate(condition):
+          indForWellId = (dfReloadedVid['Well_ID'] == idx)
+          if include[idx]:
+            dfReloadedVid.loc[indForWellId, 'Condition'] = cond
+            dfReloadedVid.loc[indForWellId, 'Genotype']  = genotype[idx]
+            if minNbBendForBoutDetect > 0:
+              ind           = (dfReloadedVid['Number of Oscillations'] < minNbBendForBoutDetect/2)
+              dfReloadedVid.loc[ind, removeColumnsWhenAppropriate] = float('NaN')
+            if not(genotype[idx] in genotypes):
+              genotypes.append(genotype[idx])
+            if not(condition[idx] in conditions):
+              conditions.append(condition[idx])
+          else:
+            dfReloadedVid = dfReloadedVid.drop([idx2 for idx2, belongsToWell in enumerate(indForWellId) if belongsToWell])
+            if 'level_0' in dfReloadedVid.columns:
+              dfReloadedVid = dfReloadedVid.drop(['level_0'], axis=1)
+            dfReloadedVid = dfReloadedVid.reset_index()
+
+        dfParam = pd.concat([dfParam, dfReloadedVid])
     
     # Going through each well of the video
     for Well_ID, Cond in enumerate(condition):
