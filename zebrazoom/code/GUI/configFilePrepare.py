@@ -1433,6 +1433,47 @@ class FinishConfig(QWidget):
       else:
         saveBtn.setToolTip(None)
 
+    fasterTrackingCheckbox = QCheckBox("Make tracking run faster (new feature, unstable)")
+    def fasterTrackingToggled(checked):
+      if checked:
+        controller.configFile["fasterMultiprocessing"] = 2
+        controller.configFile["detectMovementWithRawVideoInsideTracking"] = 1
+        controller.configFile["savePathToOriginalVideoForValidationVideo"] = 1
+      else:
+        if "fasterMultiprocessing" in controller.configFile:
+          del controller.configFile["fasterMultiprocessing"]
+        if "detectMovementWithRawVideoInsideTracking" in controller.configFile:
+          del controller.configFile["detectMovementWithRawVideoInsideTracking"]
+        if "savePathToOriginalVideoForValidationVideo" in controller.configFile:
+          del controller.configFile["savePathToOriginalVideoForValidationVideo"]
+    fasterTrackingCheckbox.toggled.connect(fasterTrackingToggled)
+    layout.addWidget(fasterTrackingCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    changingBackgroundCheckbox = QCheckBox("Check this box if the background of your video changes over time")
+    def changingBackgroundToggled():
+      if checked:
+        controller.configFile["updateBackgroundAtInterval"] = 1
+        controller.configFile["useFirstFrameAsBackground"] = 1
+      else:
+        if "updateBackgroundAtInterval" in controller.configFile:
+          del controller.configFile["updateBackgroundAtInterval"]
+        if "useFirstFrameAsBackground" in controller.configFile:
+          del controller.configFile["useFirstFrameAsBackground"]
+    changingBackgroundCheckbox.toggled.connect(changingBackgroundToggled)
+    layout.addWidget(changingBackgroundCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    alwaysSaveCheckbox = QCheckBox("Save coordinates and tail angle even when fish isn't moving")
+    def alwaysSaveToggled():
+      if checked:
+        controller.configFile["saveAllDataEvenIfNotInBouts"] = 1
+      else:
+        if "saveAllDataEvenIfNotInBouts" in controller.configFile:
+          del controller.configFile["saveAllDataEvenIfNotInBouts"]
+    alwaysSaveCheckbox.toggled.connect(alwaysSaveToggled)
+    layout.addWidget(alwaysSaveCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self._freelySwimmingWidgets = (fasterTrackingCheckbox, changingBackgroundCheckbox, alwaysSaveCheckbox)
+
     def speedUpAnalysisToggled(checked):
       analysisInfoWidget.setVisible(checked)
       if not checked:
@@ -1448,7 +1489,7 @@ class FinishConfig(QWidget):
           controller.configFile["videoFPS"] = float(videoFPS.text())
         if videoPixelSize.text():
           controller.configFile["videoPixelSize"] = float(videoPixelSize.text())
-    speedUpAnalysisCheckbox = QCheckBox("Speed up final ZebraZoom behavior analysis", self)
+    speedUpAnalysisCheckbox = QCheckBox("Pre-calculate kinematic parameters during tracking", self)
     speedUpAnalysisCheckbox.toggled.connect(speedUpAnalysisToggled)
     speedUpAnalysisCheckbox.toggled.connect(updateSaveBtn)
     layout.addWidget(speedUpAnalysisCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -1497,3 +1538,10 @@ class FinishConfig(QWidget):
     layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
+
+  def showEvent(self, evt):
+    freelySwimming = not self.controller.configFile.get("trackingMethod", None) and not self.controller.configFile.get("headEmbeded", False)
+    for widget in self._freelySwimmingWidgets:
+      widget.setChecked(False)
+      widget.setVisible(freelySwimming)
+    super().showEvent(evt)
