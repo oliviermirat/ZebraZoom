@@ -85,11 +85,16 @@ jobs:
           asset_path: ZebraZoom.exe
           asset_content_type: application/octet-stream
       - name: Create archive
-        uses: thedoctor0/zip-release@master
-        with:
-          type: zip
-          filename: ZebraZoom.zip
-          directory: build/dist/ZebraZoom
+        run: |
+          cd build/dist
+          $shortcutPath=Join-Path $pwd ZebraZoom.lnk
+          $s=(New-Object -COM WScript.Shell).CreateShortcut($shortcutPath)
+          $s.TargetPath='%windir%\explorer.exe'
+          $s.Arguments='"ZebraZoom\ZebraZoom.exe"'
+          $exePath=Join-Path $pwd ZebraZoom\ZebraZoom.exe
+          $s.IconLocation=$exePath
+          $s.Save()
+          7z a -tzip ZebraZoom.zip ZebraZoom ZebraZoom.lnk
       - name: Upload archive
         uses: actions/upload-release-asset@latest
         env:
@@ -149,11 +154,10 @@ jobs:
               f.write('\n'.join(map(os.path.relpath, walk('.'))))
           EOF
       - name: Create archive
-        uses: thedoctor0/zip-release@master
-        with:
-          type: zip
-          filename: ZebraZoom.zip
-          directory: build/dist/ZebraZoom
+        run: |
+          cd build/dist
+          ln -s ZebraZoom/ZebraZoom ZebraZoom.lnk
+          zip -r --symlinks ZebraZoom.zip ZebraZoom ZebraZoom.lnk
       - name: Upload archive
         uses: actions/upload-release-asset@latest
         env:
@@ -242,11 +246,10 @@ jobs:
       #    asset_path: build/dist/ZebraZoom.dmg
       #    asset_content_type: application/octet-stream
       - name: Create archive
-        uses: thedoctor0/zip-release@master
-        with:
-          type: zip
-          filename: ZebraZoom.zip
-          directory: build/dist/ZebraZoomApp
+        run: |
+          cd build/dist
+          ln -s ZebraZoomApp/ZebraZoomApp ZebraZoom.lnk
+          zip -r --symlinks ZebraZoom.zip ZebraZoomApp ZebraZoom.lnk
       - name: Upload archive
         uses: actions/upload-release-asset@latest
         env:
