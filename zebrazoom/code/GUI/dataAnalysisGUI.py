@@ -981,7 +981,6 @@ class PopulationComparison(QWidget):
     self._saveRawDataCheckbox.setVisible(False)  # XXX: hidden from the moment because of a bug, unhide it once it's fixed
     advancedOptionsLayout.addWidget(self._saveRawDataCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
     self._forcePandasRecreation = QCheckBox("Force recalculation of all parameters even if they have already been calculated and saved.")
-    self._forcePandasRecreation.setChecked(True)
     advancedOptionsLayout.addWidget(self._forcePandasRecreation, alignment=Qt.AlignmentFlag.AlignCenter)
 
     advancedOptionsLayout.addWidget(util.apply_style(QLabel("Number of frames between each frame used for distance calculation (to avoid noise due to close-by subsequent points) (default value is 4):"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)

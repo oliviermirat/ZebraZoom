@@ -1166,14 +1166,14 @@ class NumberOfAnimals2(QWidget):
 
     layout.addWidget(util.apply_style(QLabel("Tracking: Choose an option below:", self), font_size='16px'), 3, 1, Qt.AlignmentFlag.AlignCenter)
     btnGroup5 = QButtonGroup(self)
-    recommendedTrackingMethodRadioButton = QRadioButton("Recommended Method in most cases: Slower Tracking but often more accurate.", self)
+    recommendedTrackingMethodRadioButton = QRadioButton("Original algorithm: Slow tracking, but thoroughly tested, might be more accurate in some cases.", self)
     btnGroup5.addButton(recommendedTrackingMethodRadioButton)
     recommendedTrackingMethodRadioButton.setChecked(True)
     layout.addWidget(recommendedTrackingMethodRadioButton, 4, 1, Qt.AlignmentFlag.AlignCenter)
-    alternativeTrackingMethodRadioButton = QRadioButton("Alternative Method: Faster tracking, sometimes less accurate.", self)
+    alternativeTrackingMethodRadioButton = QRadioButton("New algorithm: Much faster tracking, but not thoroughly tested yet.", self)
     btnGroup5.addButton(alternativeTrackingMethodRadioButton)
     layout.addWidget(alternativeTrackingMethodRadioButton, 5, 1, Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(util.apply_style(QLabel("The alternative method can also work better for animals of different sizes.", self), font=QFont("Helvetica", 10)), 6, 1, Qt.AlignmentFlag.AlignCenter)
+    # layout.addWidget(util.apply_style(QLabel("The alternative method can also work better for animals of different sizes.", self), font=QFont("Helvetica", 10)), 6, 1, Qt.AlignmentFlag.AlignCenter)
 
     layout.addWidget(util.apply_style(QLabel("Do you want bouts of movement to be detected?", self), font_size='16px'), 3, 0, Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(QLabel("Warning: at the moment, the parameters related to the bouts detection are a little challenging to set.", self), 4, 0, Qt.AlignmentFlag.AlignCenter)
