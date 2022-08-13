@@ -455,6 +455,7 @@ def numberOfAnimals(nbanimals, animalsAlwaysVisible, forceBlobMethodForHeadTrack
   else:
     identifyMultipleHead(app, app, nbanimals)
     util.addToHistory(app.show_frame)("FinishConfig")
+  app.window.centralWidget().layout().currentWidget().refreshPage(showFasterTracking=not adjustBackgroundExtractionBasedOnNumberOfBlackPixels)
 
 
 @util.addToHistory

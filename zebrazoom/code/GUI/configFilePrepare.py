@@ -1166,13 +1166,13 @@ class NumberOfAnimals2(QWidget):
 
     layout.addWidget(util.apply_style(QLabel("Tracking: Choose an option below:", self), font_size='16px'), 3, 1, Qt.AlignmentFlag.AlignCenter)
     btnGroup5 = QButtonGroup(self)
-    recommendedTrackingMethodRadioButton = QRadioButton("Original algorithm: Slow tracking, but thoroughly tested, might be more accurate in some cases.", self)
+    recommendedTrackingMethodRadioButton = QRadioButton("Original algorithm:\nSlow tracking, but thoroughly tested, might be more accurate in some cases.", self)
     btnGroup5.addButton(recommendedTrackingMethodRadioButton)
     recommendedTrackingMethodRadioButton.setChecked(True)
-    layout.addWidget(recommendedTrackingMethodRadioButton, 4, 1, Qt.AlignmentFlag.AlignCenter)
-    alternativeTrackingMethodRadioButton = QRadioButton("New algorithm: Much faster tracking, but not thoroughly tested yet.", self)
+    layout.addWidget(recommendedTrackingMethodRadioButton, 4, 1, Qt.AlignmentFlag.AlignLeft)
+    alternativeTrackingMethodRadioButton = QRadioButton("New algorithm:\nMuch faster tracking, but not thoroughly tested yet.", self)
     btnGroup5.addButton(alternativeTrackingMethodRadioButton)
-    layout.addWidget(alternativeTrackingMethodRadioButton, 5, 1, Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(alternativeTrackingMethodRadioButton, 5, 1, Qt.AlignmentFlag.AlignLeft)
     # layout.addWidget(util.apply_style(QLabel("The alternative method can also work better for animals of different sizes.", self), font=QFont("Helvetica", 10)), 6, 1, Qt.AlignmentFlag.AlignCenter)
 
     layout.addWidget(util.apply_style(QLabel("Do you want bouts of movement to be detected?", self), font_size='16px'), 3, 0, Qt.AlignmentFlag.AlignCenter)
@@ -1433,7 +1433,7 @@ class FinishConfig(QWidget):
       else:
         saveBtn.setToolTip(None)
 
-    fasterTrackingCheckbox = QCheckBox("Make tracking run faster (new feature, unstable)")
+    self._fasterTrackingCheckbox = QCheckBox("Make tracking run faster")
     def fasterTrackingToggled(checked):
       if checked:
         controller.configFile["fasterMultiprocessing"] = 2
@@ -1446,10 +1446,10 @@ class FinishConfig(QWidget):
           del controller.configFile["detectMovementWithRawVideoInsideTracking"]
         if "savePathToOriginalVideoForValidationVideo" in controller.configFile:
           del controller.configFile["savePathToOriginalVideoForValidationVideo"]
-    fasterTrackingCheckbox.toggled.connect(fasterTrackingToggled)
-    layout.addWidget(fasterTrackingCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._fasterTrackingCheckbox.toggled.connect(fasterTrackingToggled)
+    layout.addWidget(self._fasterTrackingCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    changingBackgroundCheckbox = QCheckBox("Check this box if the background of your video changes over time")
+    self._changingBackgroundCheckbox = QCheckBox("Check this box if the background of your video changes over time")
     def changingBackgroundToggled(checked):
       if checked:
         controller.configFile["updateBackgroundAtInterval"] = 1
@@ -1459,20 +1459,18 @@ class FinishConfig(QWidget):
           del controller.configFile["updateBackgroundAtInterval"]
         if "useFirstFrameAsBackground" in controller.configFile:
           del controller.configFile["useFirstFrameAsBackground"]
-    changingBackgroundCheckbox.toggled.connect(changingBackgroundToggled)
-    layout.addWidget(changingBackgroundCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._changingBackgroundCheckbox.toggled.connect(changingBackgroundToggled)
+    layout.addWidget(self._changingBackgroundCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    alwaysSaveCheckbox = QCheckBox("Save coordinates and tail angle even when fish isn't moving")
+    self._alwaysSaveCheckbox = QCheckBox("Save coordinates and tail angle even when fish isn't moving")
     def alwaysSaveToggled(checked):
       if checked:
         controller.configFile["saveAllDataEvenIfNotInBouts"] = 1
       else:
         if "saveAllDataEvenIfNotInBouts" in controller.configFile:
           del controller.configFile["saveAllDataEvenIfNotInBouts"]
-    alwaysSaveCheckbox.toggled.connect(alwaysSaveToggled)
-    layout.addWidget(alwaysSaveCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
-
-    self._freelySwimmingWidgets = (fasterTrackingCheckbox, changingBackgroundCheckbox, alwaysSaveCheckbox)
+    self._alwaysSaveCheckbox.toggled.connect(alwaysSaveToggled)
+    layout.addWidget(self._alwaysSaveCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def speedUpAnalysisToggled(checked):
       analysisInfoWidget.setVisible(checked)
@@ -1539,9 +1537,15 @@ class FinishConfig(QWidget):
 
     self.setLayout(layout)
 
-  def showEvent(self, evt):
+  def refreshPage(self, showFasterTracking=False):
     freelySwimming = not self.controller.configFile.get("trackingMethod", None) and not self.controller.configFile.get("headEmbeded", False)
-    for widget in self._freelySwimmingWidgets:
+    for widget in (self._fasterTrackingCheckbox, self._changingBackgroundCheckbox, self._alwaysSaveCheckbox):
       widget.setChecked(False)
       widget.setVisible(freelySwimming)
+    if freelySwimming:
+      self._fasterTrackingCheckbox.setVisible(showFasterTracking)
+      self._fasterTrackingCheckbox.setChecked(showFasterTracking)
+
+  def showEvent(self, evt):
+    self.refreshPage()
     super().showEvent(evt)
