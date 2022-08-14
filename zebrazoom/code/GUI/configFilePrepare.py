@@ -1176,7 +1176,6 @@ class NumberOfAnimals2(QWidget):
     # layout.addWidget(util.apply_style(QLabel("The alternative method can also work better for animals of different sizes.", self), font=QFont("Helvetica", 10)), 6, 1, Qt.AlignmentFlag.AlignCenter)
 
     layout.addWidget(util.apply_style(QLabel("Do you want bouts of movement to be detected?", self), font_size='16px'), 3, 0, Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(QLabel("Warning: at the moment, the parameters related to the bouts detection are a little challenging to set.", self), 4, 0, Qt.AlignmentFlag.AlignCenter)
     yesNoLayout2 = QHBoxLayout()
     yesNoLayout2.addStretch()
     btnGroup2 = QButtonGroup(self)
@@ -1191,7 +1190,7 @@ class NumberOfAnimals2(QWidget):
     yesNoLayout2.addWidget(noBoutsRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
     noBoutsRadioButton.setChecked(True)
     yesNoLayout2.addStretch()
-    layout.addLayout(yesNoLayout2, 5, 0, Qt.AlignmentFlag.AlignCenter)
+    layout.addLayout(yesNoLayout2, 4, 0, Qt.AlignmentFlag.AlignCenter)
 
     advancedOptionsLayout = QGridLayout()
     advancedOptionsLayout.addWidget(util.apply_style(QLabel("Do you want bends and associated paramaters to be calculated?", self), font_size='16px'), 0, 1, Qt.AlignmentFlag.AlignCenter)
