@@ -1494,6 +1494,9 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       figure.setVisible(True)
       if not figure.figure.get_axes():  # check whether we've already plotted it
         self._plotFigure(param, figure.figure, data)
+      ax = figure.figure.get_axes()[0]
+      ax.set_title(param, fontsize=16 * self._chartScaleFactor)
+      ax.tick_params(axis='both', which='major', labelsize=10 * self._chartScaleFactor)
     self._chartsScrollArea.setAlignment(Qt.AlignmentFlag.AlignLeft)
     return chartsWidget
 
