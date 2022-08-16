@@ -104,7 +104,7 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters, pathToOrigina
         
         angle_raw = item["TailAngle_Raw"]
         
-        if len(angle_raw) > 10 and len(angle_raw) < 10000:
+        if len(angle_raw) > 10 and len(angle_raw) < 10000 and hyperparameters["noBoutsDetection"] == 0:
         
           rolling_window = hyperparameters["tailAngleMedianFilter"]
           if rolling_window > 0:
