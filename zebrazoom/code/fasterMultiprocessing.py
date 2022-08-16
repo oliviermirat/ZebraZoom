@@ -13,6 +13,8 @@ import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import numpy as np
 import math
+import queue
+from zebrazoom.code.trackingFolder.refactoredCode2022.detectMovementWithRawVideoInsideTracking2 import detectMovementWithRawVideoInsideTracking2
 
 def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperparameters, videoName):
   
@@ -32,6 +34,12 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
   else:
     trackingEyesAllAnimals = 0
   trackingDataList               = []
+  
+  if hyperparameters["detectMovementWithRawVideoInsideTracking"]:
+    previousFrames   = queue.Queue(hyperparameters["frameGapComparision"])
+    auDessusPerAnimalIdList = []
+    for wellNumber in range(0, hyperparameters["nbWells"]):
+      auDessusPerAnimalIdList.append([np.zeros((lastFrame-firstFrame+1, 1)) for nbAnimalsPerWell in range(0, hyperparameters["nbAnimalsPerWell"])])
   
   if not(hyperparameters["nbAnimalsPerWell"] > 1) and not(hyperparameters["headEmbeded"]) and (hyperparameters["findHeadPositionByUserInput"] == 0) and (hyperparameters["takeTheHeadClosestToTheCenter"] == 0):
     trackingProbabilityOfGoodDetectionList = []
@@ -135,6 +143,10 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
         if hyperparameters["freqAlgoPosFollow"]:
           if i % hyperparameters["freqAlgoPosFollow"] == 0:
             print("Tracking at frame", i)
+            
+      if hyperparameters["detectMovementWithRawVideoInsideTracking"]:
+        for numFish in range(0, hyperparameters["nbAnimalsPerWell"]):
+          [auDessusPerAnimalIdList, previousFrames] = detectMovementWithRawVideoInsideTracking2(hyperparameters, trackingHeadTailAllAnimalsList, previousFrames, numFish, i, firstFrame, auDessusPerAnimalIdList, grey, wellPositions)
         
     if hyperparameters["adjustFreelySwimTracking"] == 1:
       i, widgets = adjustFreelySwimTrackingParams(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters, widgets)
@@ -146,8 +158,11 @@ def fasterMultiprocessing(videoPath, background, wellPositions, output, hyperpar
     if hyperparameters["postProcessMultipleTrajectories"]:
       [trackingHeadingAllAnimalsList[wellNumber], trackingHeadTailAllAnimalsList[wellNumber], trackingEyesAllAnimals] = postProcessMultipleTrajectories(trackingHeadingAllAnimalsList[wellNumber], trackingHeadTailAllAnimalsList[wellNumber], [], trackingProbabilityOfGoodDetectionList[wellNumber], hyperparameters, wellPositions)
     
-    trackingDataList.append([trackingHeadTailAllAnimalsList[wellNumber], trackingHeadingAllAnimalsList[wellNumber], [], 0, 0])
-  
+    if hyperparameters["detectMovementWithRawVideoInsideTracking"]:
+      trackingDataList.append([trackingHeadTailAllAnimalsList[wellNumber], trackingHeadingAllAnimalsList[wellNumber], [], 0, 0, auDessusPerAnimalIdList[wellNumber]])
+    else:
+      trackingDataList.append([trackingHeadTailAllAnimalsList[wellNumber], trackingHeadingAllAnimalsList[wellNumber], [], 0, 0])
+    
   wellNumberBeginLoop = 0 if hyperparameters["onlyTrackThisOneWell"] == -1 else hyperparameters["onlyTrackThisOneWell"]
   for wellNumber in range(wellNumberBeginLoop, hyperparameters["nbWells"] if hyperparameters["onlyTrackThisOneWell"] == -1 else hyperparameters["onlyTrackThisOneWell"] + 1):
     parameters = extractParameters(trackingDataList[wellNumber-wellNumberBeginLoop], wellNumber, hyperparameters, videoPath, wellPositions, background)
