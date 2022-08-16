@@ -418,6 +418,8 @@ class _ZoomableImageCircle(_ZoomableImage):
 
 
 def setPixmapFromCv(img, label, preferredSize=None, zoomable=False):
+  if img is None:
+    img = np.zeros((1, 1, 3), np.uint8)
   originalPixmap = _cvToPixmap(img)
   if not label.isVisible():
     label.setPixmap(originalPixmap)
@@ -678,8 +680,12 @@ def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBt
 def chooseEndPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb):
   cap = zzVideoReading.VideoCapture(videoPath)
   maximum = cap.get(7) - 2
-  cap.set(1, maximum)
-  ret, frame = cap.read()
+  while True:
+    cap.set(1, maximum)
+    ret, frame = cap.read()
+    if ret:
+      break
+    maximum -= 1
   layout, label, valueWidget = _chooseFrameLayout(cap, (maximum, app.configFile["firstFrame"] + 1, maximum), title)
 
   buttonsLayout = QHBoxLayout()
