@@ -59,7 +59,7 @@ if __name__ == '__main__' and getattr(sys, 'frozen', False):  # running an insta
     app = _Application(sys.argv)
     loop = QEventLoop()
     networkManager = QNetworkAccessManager()
-    assetName = 'ZebraZoom-update-%s.zip' % ('Windows' if sys.platform.startswith('win') else 'macOS' if sys.platform == 'darwin' else 'Linux',)
+    assetName = 'ZebraZoom-%s.zip' % ('update-Windows' if sys.platform.startswith('win') else 'update-macOS' if sys.platform == 'darwin' else 'Linux',)
     window = _UpdaterWindow()
     window.show()
     rect = window.geometry()

@@ -168,9 +168,8 @@ jobs:
           EOF
       - name: Create archive
         run: |
-          cd build/dist
-          ln -s ZebraZoom/ZebraZoom ZebraZoom.lnk
-          zip -r --symlinks ZebraZoom.zip ZebraZoom ZebraZoom.lnk
+          cd build/dist/ZebraZoom
+          zip -r ../ZebraZoom.zip *
       - name: Upload archive
         uses: Wandalen/wretry.action@v1.0.25
         env:
@@ -181,23 +180,6 @@ jobs:
             upload_url: ${{ needs.create_release.outputs.upload_url }}
             asset_name: ZebraZoom-${{ runner.os }}.zip
             asset_path: build/dist/ZebraZoom.zip
-            asset_content_type: application/zip
-          attempt_limit: 10
-          attempt_delay: 2000
-      - name: Create update archive
-        run: |
-          cd build/dist/ZebraZoom
-          zip -r ../ZebraZoomUpdate.zip *
-      - name: Upload update archive
-        uses: Wandalen/wretry.action@v1.0.25
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          action: actions/upload-release-asset@latest
-          with: |
-            upload_url: ${{ needs.create_release.outputs.upload_url }}
-            asset_name: ZebraZoom-update-${{ runner.os }}.zip
-            asset_path: build/dist/ZebraZoomUpdate.zip
             asset_content_type: application/zip
           attempt_limit: 10
           attempt_delay: 2000
