@@ -53,20 +53,15 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
     dfCondGeno = dfParam[['Trial_ID', 'Well_ID', 'Condition', 'Genotype']]
     dfCondGeno = dfCondGeno.groupby(['Trial_ID', 'Well_ID']).first()
     dfCount = dfParam[['Trial_ID', 'Well_ID']].copy()
-    dfCount['numberOfBouts_NoBoutsRemovedBasedOnBends'] = [0 for i in range(len(dfCount['Trial_ID']))]
+    dfCount['Bout Counts'] = dfParam['Bout Duration (s)']
     dfCount = dfCount.groupby(['Trial_ID', 'Well_ID']).count()
-    if numberOfBoutsPerSecond:
-      dfCount['numberOfBoutsPerSecond'] = dfCount['numberOfBouts_NoBoutsRemovedBasedOnBends'] / dfKinematicValues['videoDuration']
-      dfCount.drop(columns=['numberOfBouts_NoBoutsRemovedBasedOnBends'])
+    dfCount['Bout Rate (bouts / s)'] = dfCount['Bout Counts'] / dfKinematicValues['videoDuration']
     dfTotalTimeMove = dfParam[['Trial_ID', 'Well_ID', 'Bout Duration (s)']].copy()
     dfTotalTimeMove = dfTotalTimeMove.groupby(['Trial_ID', 'Well_ID']).sum()
     dfKinematicValues['percentTimeSpentSwimming'] = (dfTotalTimeMove['Bout Duration (s)'] / dfKinematicValues['videoDuration']) * 100
     dfParam = pd.concat([dfCondGeno, dfKinematicValues], axis=1)
     dfParam = pd.concat([dfParam, dfCount], axis=1)
-    if numberOfBoutsPerSecond:
-      globParam = globParam + ['percentTimeSpentSwimming', 'numberOfBoutsPerSecond']
-    else:
-      globParam = globParam + ['percentTimeSpentSwimming', 'numberOfBouts_NoBoutsRemovedBasedOnBends']
+    globParam = globParam + ['percentTimeSpentSwimming', 'Bout Counts', 'Bout Rate (bouts / s)']
   elif medianPerGenotypeFirstForEachKinematicParameter:
     dfKinematicValues = dfParam[columnsForRawDataExport]
     dfKinematicValues = dfKinematicValues.astype({param: float for param in globParam})
@@ -74,20 +69,15 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
     dfCond = dfParam[['Genotype', 'Well_ID', 'Condition']]
     dfCond = dfCond.groupby(['Genotype', 'Well_ID']).first()
     dfCount = dfParam[['Genotype', 'Well_ID']].copy()
-    dfCount['numberOfBouts_NoBoutsRemovedBasedOnBends'] = [0 for i in range(len(dfCount['Genotype']))]
+    dfCount['Bout Counts'] = [0 for i in range(len(dfCount['Genotype']))]
     dfCount = dfCount.groupby(['Genotype', 'Well_ID']).count()
-    if numberOfBoutsPerSecond:
-      dfCount['numberOfBoutsPerSecond'] = dfCount['numberOfBouts_NoBoutsRemovedBasedOnBends'] / dfKinematicValues['videoDuration']
-      dfCount.drop(columns=['numberOfBouts_NoBoutsRemovedBasedOnBends'])
+    dfCount['Bout Rate (bouts / s)'] = dfCount['Bout Counts'] / dfKinematicValues['videoDuration']
     dfTotalTimeMove = dfParam[['Trial_ID', 'Well_ID', 'Bout Duration (s)']].copy()
     dfTotalTimeMove = dfTotalTimeMove.groupby(['Trial_ID', 'Well_ID']).sum()
     dfKinematicValues['percentTimeSpentSwimming'] = (dfTotalTimeMove['Bout Duration (s)'] / dfKinematicValues['videoDuration']) * 100
     dfParam = pd.concat([dfCond, dfKinematicValues], axis=1)
     dfParam = pd.concat([dfParam, dfCount], axis=1)
-    if numberOfBoutsPerSecond:
-      globParam = globParam + ['percentTimeSpentSwimming', 'numberOfBoutsPerSecond']
-    else:
-      globParam = globParam + ['percentTimeSpentSwimming', 'numberOfBouts_NoBoutsRemovedBasedOnBends']
+    globParam = globParam + ['percentTimeSpentSwimming', 'Bout Counts', 'Bout Rate (bouts / s)']
   else:
     dfParam  = dfParam[columnsForRawDataExport]
   

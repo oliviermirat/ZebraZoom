@@ -21,7 +21,7 @@ from zebrazoom.code.GUI.dataAnalysisGUI import KinematicParametersVisualization,
 
 _DEFAULT_KEYS = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition',
                  'Genotype', 'videoDuration', 'Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)',
-                 'percentTimeSpentSwimming', 'numberOfBouts_NoBoutsRemovedBasedOnBends']
+                 'percentTimeSpentSwimming', 'Bout Counts', 'Bout Rate (bouts / s)']
 
 _EXPECTED_RESULTS = {'Trial_ID': [],
                      'Well_ID': [],
@@ -46,6 +46,7 @@ _EXPECTED_RESULTS = {'Trial_ID': [],
                      'meanTBF': [],
                      'maxTailAngleAmplitude': [],
                      'Absolute Yaw (deg)': [],
+                     'Signed Yaw (deg)': [],
                      'TBA#1 timing (deg)': [],
                      'TBA#1 Amplitude (deg)': [],
                      'firstBendAmplitudeSigned': [],
@@ -60,8 +61,9 @@ _EXPECTED_RESULTS = {'Trial_ID': [],
                      'tailAngleIntegral': [],
                      'maxInstantaneousSpeed': [],
                      'percentTimeSpentSwimming': [],
-                     'numberOfBouts_NoBoutsRemovedBasedOnBends': []}
-_MEDIAN_ONLY_KEYS = {'percentTimeSpentSwimming', 'numberOfBouts_NoBoutsRemovedBasedOnBends'}
+                     'Bout Counts': [],
+                     'Bout Rate (bouts / s)': [],}
+_MEDIAN_ONLY_KEYS = {'percentTimeSpentSwimming', 'Bout Counts', 'Bout Rate (bouts / s)'}
 _ALL_ONLY_KEYS = {'NumBout', 'BoutStart', 'BoutEnd'}
 
 _VIDEO_NAMES = ['test%d' % idx for idx in range(1, 7)]
@@ -171,6 +173,7 @@ def _generateResults():
         _EXPECTED_RESULTS['meanTBF'].append((len(degreeBendAmplitudes) * fps)  / (2 * duration))
         _EXPECTED_RESULTS['maxTailAngleAmplitude'].append(max(map(lambda x: math.degrees(abs(x)), angles)))
         _EXPECTED_RESULTS['Absolute Yaw (deg)'].append(math.degrees(math.atan(yMove / xMove)))
+        _EXPECTED_RESULTS['Signed Yaw (deg)'].append(-math.degrees(math.atan(yMove / xMove)))
         _EXPECTED_RESULTS['TBA#1 timing (deg)'].append(bendTimings[0] / fps)
         _EXPECTED_RESULTS['TBA#1 Amplitude (deg)'].append(abs(degreeBendAmplitudes[0]))
         _EXPECTED_RESULTS['firstBendAmplitudeSigned'].append(degreeBendAmplitudes[0])
@@ -184,7 +187,8 @@ def _generateResults():
         _EXPECTED_RESULTS['secondBendAmpDividedByFirst'].append(degreeBendAmplitudes[1] / degreeBendAmplitudes[0])
         _EXPECTED_RESULTS['tailAngleIntegral'].append(sum(map(lambda x: abs(math.degrees(x)), angles)))
         _EXPECTED_RESULTS['percentTimeSpentSwimming'].append(100 * sum(boutDurations) / (lastFrame - firstFrame))
-        _EXPECTED_RESULTS['numberOfBouts_NoBoutsRemovedBasedOnBends'].append(numberOfBouts)
+        _EXPECTED_RESULTS['Bout Counts'].append(numberOfBouts)
+        _EXPECTED_RESULTS['Bout Rate (bouts / s)'].append(numberOfBouts * fps / (lastFrame - firstFrame))
       wellPoissMouv.append([wellBouts])
     results['wellPoissMouv'] = wellPoissMouv
     resultsList.append(results)
@@ -302,8 +306,9 @@ def _test_kinematic_parameters_small_check_results():
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
-    assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)}
+    chartCount = 6 if folder == 'allBoutsMixed' else 7
+    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
+    assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
 
 def test_kinematic_parameters_small(qapp, qtbot, monkeypatch):
@@ -462,8 +467,9 @@ def _test_kinematic_parameters_large_check_results():
     assert_series_equal(expectedResultsAll[col], dataframe[col])
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
-    assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)}
+    chartCount = 6 if folder == 'allBoutsMixed' else 7
+    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
+    assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
 
 @pytest.mark.long
@@ -573,12 +579,15 @@ def _test_minimum_number_of_bends_check_results():
   expectedResultsMedian['Genotype'] = [_GENOTYPES_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
   seen = set()
   expectedResultsMedian['Trial_ID'] = [x if x not in seen and not seen.add(x) else np.nan for x in expectedResultsMedian['Trial_ID']]
+  expectedResultsMedian['Bout Counts'] = expectedResultsAll.groupby(['Trial_ID', 'Well_ID'])['Number of Oscillations'].apply(lambda x: (x * 2 >= 12).sum()).reset_index(name='count')['count']
+  expectedResultsMedian['Bout Rate (bouts / s)'] = expectedResultsMedian['Bout Counts'] / expectedResultsMedian['videoDuration']
   expectedResultsMedian['percentTimeSpentSwimming'] = groupedResults['Bout Duration (s)'].sum()['Bout Duration (s)'].div(expectedResultsMedian['videoDuration']).mul(100)
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
-    assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)}
+    chartCount = 6 if folder == 'allBoutsMixed' else 7
+    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
+    assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
 
 @pytest.mark.long
@@ -632,8 +641,9 @@ def _test_keep_data_for_discarded_bouts_check_results():
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
-    assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, 6)}
+    chartCount = 6 if folder == 'allBoutsMixed' else 7
+    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
+    assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
 
 @pytest.mark.long

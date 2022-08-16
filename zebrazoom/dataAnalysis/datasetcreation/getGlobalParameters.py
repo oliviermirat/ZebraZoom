@@ -197,8 +197,10 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
       deltahead  = abs(getDeltaHead(curbout))
       listOfParametersCalculated.append(deltahead)
     
-    
-    
+    elif parameterToCalculate == 'Signed Yaw (deg)':
+      deltahead  = getDeltaHead(curbout)
+      listOfParametersCalculated.append(deltahead)
+
     elif parameterToCalculate == 'xstart':
       
       posX = curbout["HeadY"]

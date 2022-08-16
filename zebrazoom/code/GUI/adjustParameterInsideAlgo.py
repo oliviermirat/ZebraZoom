@@ -984,7 +984,16 @@ def adjustBoutDetectionOnlyPage(useNext=True, nextCb=None):
 
   coordinatesOnlyBoutDetectCheckbox = QCheckBox("Use only the body coordinates to detect bouts (faster, but potentially less accurate)")
   originalCoordinatesOnlyBoutDetection = app.configFile.get("coordinatesOnlyBoutDetection", None)
+  trackingMethod = app.configFile.get("trackingMethod", None)
+  if useNext and trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction":
+    app.configFile["detectMovementWithRawVideoInsideTracking"] = 1
+
   def coordinatesOnlyBoutDetectCheckboxToggled(checked):
+    if useNext and trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction":
+      if checked:
+        app.configFile["detectMovementWithRawVideoInsideTracking"] = 1
+      elif "detectMovementWithRawVideoInsideTracking" in app.configFile:
+        del app.configFile["detectMovementWithRawVideoInsideTracking"]
     if checked:
       app.configFile["coordinatesOnlyBoutDetection"] = 1
     elif originalCoordinatesOnlyBoutDetection is not None:
