@@ -1005,7 +1005,6 @@ def adjustBoutDetectionOnlyPage(useNext=True, nextCb=None):
     adjustBoutsBtn.setVisible(not checked)
     frameGapSlider.setVisible(checked)
   coordinatesOnlyBoutDetectCheckbox.toggled.connect(coordinatesOnlyBoutDetectCheckboxToggled)
-  trackingMethod = app.configFile.get("trackingMethod", None)
   coordinatesOnlyBoutDetectCheckbox.setVisible((not trackingMethod and not app.configFile.get("headEmbeded", False)) or trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction" or trackingMethod == "fastCenterOfMassTracking_ClassicalBackgroundSubtraction")
   layout.addWidget(coordinatesOnlyBoutDetectCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
