@@ -1349,6 +1349,10 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     middleLayout = QHBoxLayout()
     self._checkboxesLayout = checkboxesLayout = QVBoxLayout()
 
+    checkboxesLayout.addWidget(util.apply_style(QLabel("Legend"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
+    self._legend = FigureCanvas(Figure(figsize=(3, 2)))
+    checkboxesLayout.addWidget(self._legend, alignment=Qt.AlignmentFlag.AlignLeft)
+
     checkboxesLayout.addWidget(util.apply_style(QLabel("Visualization options"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
     chartScalingLayout = QHBoxLayout()
     chartScalingLayout.addWidget(QLabel('Chart size'), alignment=Qt.AlignmentFlag.AlignLeft)
@@ -1506,7 +1510,16 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     b = sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean)
     b.set_ylabel('', fontsize=0)
     b.set_xlabel('', fontsize=0)
-    b.axes.set_title(param, fontsize=20)
+
+    legendFigure = self._legend.figure
+    if not legendFigure.get_axes():
+      legendAx = legendFigure.add_subplot(111)
+      legend = legendAx.legend(*ax.get_legend_handles_labels(), title=ax.get_legend().get_title().get_text(), loc='center')
+      legendAx.axis('off')
+      legendFigure.canvas.draw()
+      self._legend.setFixedSize(*legend.get_window_extent().bounds[2:])
+
+    ax.legend().remove()
     figure.figure.canvas.draw()
 
   def _iterAllFigures(self):
