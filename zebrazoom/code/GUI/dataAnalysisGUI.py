@@ -1473,7 +1473,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       return QLabel("Select one or more parameters to visualize.")
     data = self._medianData if self._medianPerWellRadioBtn.isChecked() else self._allData
     if self._filters:
-      data = data.query(' & '.join('%s >= %s & %s <= %s' % (fltr.name(), fltr.minimum(), fltr.name(), fltr.maximum()) for fltr in self._filters))
+      data = data.query(' & '.join('`%s` >= %s & `%s` <= %s' % (fltr.name(), fltr.minimum(), fltr.name(), fltr.maximum()) for fltr in self._filters))
     if not len(data.index):
       self._chartsScrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
       return QLabel("No data found, try adjusting the filters.")
@@ -1501,6 +1501,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       ax = figure.figure.get_axes()[0]
       ax.set_title(param, fontsize=16 * self._chartScaleFactor)
       ax.tick_params(axis='both', which='major', labelsize=10 * self._chartScaleFactor)
+      figure.figure.canvas.draw()
     self._chartsScrollArea.setAlignment(Qt.AlignmentFlag.AlignLeft)
     return chartsWidget
 
@@ -1520,7 +1521,6 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       self._legend.setFixedSize(*legend.get_window_extent().bounds[2:])
 
     ax.legend().remove()
-    figure.figure.canvas.draw()
 
   def _iterAllFigures(self):
     for typeDict in self._figures.values():
