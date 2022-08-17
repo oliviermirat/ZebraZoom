@@ -64,7 +64,7 @@ def computeHeading2(initialContour, lenX, lenY, headPosition, hyperparameters):
   else:
     iterationsForErodeImageForHeadingCalculation = 4
   kernel = np.ones((3, 3), np.uint8)
-  nbWhitePixelsMax = 75
+  nbWhitePixelsMax = 0.3 * cv2.contourArea(initialContour)
   while (iterationsForErodeImageForHeadingCalculation > 0) and (countTries < 50) and not(iterationsForErodeImageForHeadingCalculation in nbIterations2nbWhitePixels):
     testImage2 = cv2.erode(testImage, kernel, iterations = iterationsForErodeImageForHeadingCalculation)
     nbWhitePixels = cv2.countNonZero(testImage2)

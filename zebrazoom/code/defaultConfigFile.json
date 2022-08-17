@@ -220,7 +220,7 @@
   "detectBoutMinNbFrames" : 2,
   "detectBoutMinDist" : 4,
   "detectBoutMinAngleDiff" : -1,
-  "minNbPeaksForBoutDetect" : 0,
+  "minNbPeaksForBoutDetect" : 1,
 
   "tailAngleSmoothingFactor" : 0.001,
   "tailAngleMedianFilter" : 3,

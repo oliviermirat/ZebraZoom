@@ -147,7 +147,7 @@ def fasterMultiprocessing2(videoPath, background, wellPositions, output, hyperpa
           maxArea = -1
           maxInd  = -1
           for idx, area in enumerate(areas):
-            if area > maxArea and area > hyperparameters["minAreaBody"] and area < hyperparameters["maxAreaBody"]:
+            if area > maxArea and area > 0.7 * hyperparameters["minAreaBody"] and area < 1.3 * hyperparameters["maxAreaBody"]:
               maxArea = area
               maxInd  = idx
           areas[maxInd] = -1
