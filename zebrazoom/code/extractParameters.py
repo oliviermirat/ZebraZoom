@@ -185,7 +185,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       tailY[i]   = trackingTail[i,:,1]
     
     if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-      trackingFlatten = [trackingHeadTailAllAnimals[animalId][i].flatten().tolist() + [trackingHeadingAllAnimals[animalId][i]] + angle[i].tolist() for i in range(0, len(trackingHeadTailAllAnimals[animalId]))]
+      trackingFlatten = [trackingHeadTailAllAnimals[animalId][i].flatten().tolist() + [heading[i]] + angle[i].tolist() for i in range(0, len(heading))]
       trackingFlattenColumnsNames = ['HeadPosX', 'HeadPosY']
       for i in range(0, int((len(trackingHeadTailAllAnimals[0][0].flatten().tolist()) - 2) / 2)):
         trackingFlattenColumnsNames += ['TailPosX' + str(i + 1)]
