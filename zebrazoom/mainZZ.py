@@ -160,7 +160,13 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
       rotationAngleFile = os.path.join(outputFolderVideo, 'rotationAngle.txt')
       if os.path.exists(rotationAngleFile):
         with open(rotationAngleFile, 'rb') as f:
-          hyperparameters.update(pickle.load(f))
+          rotationAngleParams = pickle.load(f)
+        hyperparameters.update(rotationAngleParams)
+        with open(os.path.join(outputFolderVideo, 'configUsed.json'), 'r') as f:
+          config = json.load(f)
+        config.update(rotationAngleParams)
+        with open(os.path.join(outputFolderVideo, 'configUsed.json'), 'w') as f:
+          json.dump(config, f)
     if hyperparameters["saveWellPositionsToBeReloadedNoMatterWhat"]:
       outfile = open(os.path.join(outputFolderVideo, 'intermediaryWellPositionReloadNoMatterWhat.txt'),'wb')
       wellPositions = findWells(os.path.join(pathToVideo, videoNameWithExt), hyperparameters)

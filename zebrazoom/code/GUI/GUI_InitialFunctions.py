@@ -635,12 +635,16 @@ def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, justE
 
   if findMultipleROIs and not askCoordinatesForAll:
     coordinatesFile = os.path.join(app.ZZoutputLocation, os.path.splitext(os.path.basename(videos[0]))[0], 'intermediaryWellPositionReloadNoMatterWhat.txt')
+    configUsedFile = os.path.join(app.ZZoutputLocation, os.path.splitext(os.path.basename(videos[0]))[0], 'intermediaryWellPositionReloadNoMatterWhat.txt')
+    rotationFile = os.path.join(app.ZZoutputLocation, os.path.splitext(os.path.basename(videos[0]))[0], 'rotationAngle.txt')
     for video in videosGenerator:
       folderPath = os.path.join(app.ZZoutputLocation, os.path.splitext(os.path.basename(video))[0])
       if not os.path.exists(folderPath):
         os.makedirs(folderPath)
       shutil.copy2(coordinatesFile, os.path.join(folderPath, 'intermediaryWellPositionReloadNoMatterWhat.txt'))
-      shutil.copy2(coordinatesFile, os.path.join(folderPath, 'configUsed.json'))
+      shutil.copy2(configUsedFile, os.path.join(folderPath, 'configUsed.json'))
+      if os.path.exists(rotationFile):
+        shutil.copy2(rotationFile, os.path.join(folderPath, 'rotationAngle.txt'))
 
   if sbatchMode:
 
