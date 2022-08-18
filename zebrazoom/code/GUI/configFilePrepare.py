@@ -1537,13 +1537,17 @@ class FinishConfig(QWidget):
     self.setLayout(layout)
 
   def refreshPage(self, showFasterTracking=False):
-    freelySwimming = not self.controller.configFile.get("trackingMethod", None) and not self.controller.configFile.get("headEmbeded", False)
+    trackingMethod = self.controller.configFile.get("trackingMethod", None)
+    freelySwimming = not trackingMethod and not self.controller.configFile.get("headEmbeded", False)
     for widget in (self._fasterTrackingCheckbox, self._changingBackgroundCheckbox, self._alwaysSaveCheckbox):
       widget.setChecked(False)
       widget.setVisible(freelySwimming)
     if freelySwimming:
       self._fasterTrackingCheckbox.setVisible(showFasterTracking)
       self._fasterTrackingCheckbox.setChecked(showFasterTracking)
+    if (trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction" or trackingMethod == "fastCenterOfMassTracking_ClassicalBackgroundSubtraction") and \
+        not self.controller.configFile.get("noBoutsDetection", False) and not self.controller.configFile.get("coordinatesOnlyBoutDetection", False):
+      self.controller.configFile["detectMovementWithRawVideoInsideTracking"] = 1
 
   def showEvent(self, evt):
     self.refreshPage()
