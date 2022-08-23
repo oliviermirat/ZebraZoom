@@ -13,7 +13,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvas
 
 from PyQt5.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QEvent, QItemSelectionModel, QModelIndex, QObject, QPoint, QPointF, QRect, QRectF, QSize, QSizeF, QSortFilterProxyModel, QStringListModel, QUrl
 from PyQt5.QtGui import QColor, QDesktopServices, QFont, QFontMetrics, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
-from PyQt5.QtWidgets import QAction, QAbstractItemView, QApplication, QComboBox, QCompleter, QDialog, QDialogButtonBox, QDoubleSpinBox, QFileDialog, QFileSystemModel, QFrame, QFormLayout, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QListView, QMessageBox, QSpacerItem, QTextEdit, QToolButton, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QTableView, QToolTip, QTreeView
+from PyQt5.QtWidgets import QAction, QAbstractItemView, QApplication, QComboBox, QCompleter, QDialog, QDialogButtonBox, QDoubleSpinBox, QFileDialog, QFileSystemModel, QFrame, QFormLayout, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QListView, QMessageBox, QSpacerItem, QTabWidget, QTextEdit, QToolButton, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QTableView, QToolTip, QTreeView
 PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
@@ -1249,6 +1249,10 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
   _IGNORE_COLUMNS = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
   _FILENAME = 'globalParametersInsideCategories'
   _CHART_SIZE = QSize(580, 435)
+  _BOUT_OCCURRENCE_PARAMS = ['Bout Rate (bouts / s)', 'IBI (s)', 'Bout Counts']
+  _SPEED_RELATED_PARAMS = ['Bout Distance (mm)', 'Bout Duration (s)', 'Bout Speed (mm/s)', 'Number of Oscillations', 'Max TBF (Hz)', 'Mean TBF (Hz)']
+  _AMPLITUDE_RELATED_PARAMS = ['Max absolute TBA (deg.)', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)', 'TBA#1 Amplitude (deg)', 'TBA#1 timing (deg)', 'Absolute Yaw (deg)', 'Signed Yaw (deg)']
+
 
   def __init__(self, data):
     super().__init__()
@@ -1261,6 +1265,11 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._medianData = medianData
     self._chartScaleFactor = 1
     self._filters = []
+    self._figures = {}
+    self._bout_occurrence_figures = {}
+    self._speed_related_figures = {}
+    self._amplitude_related_figures = {}
+    self._legends = []
 
     model = QFileSystemModel()
     model.setFilter(QDir.Filter.NoDotAndDotDot | QDir.Filter.Dirs)
@@ -1308,63 +1317,258 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     fltr.setParent(None)
     self._update(clearFigures=True)
 
-  def _recreateMainWidget(self):
-    app = QApplication.instance()
-    self._paramCheckboxes = {}
-    self._figures = {'median': {True: {}, False: {}}, 'all': {True: {}, False: {}}}
-    self._filters = []
+  def _updateBoutOccurrenceTab(self, chartsScrollArea, plotOutliersAndMean):
+    figures = [(param, self._bout_occurrence_figures[plotOutliersAndMean][param]) for param in self._BOUT_OCCURRENCE_PARAMS]
+    for figure in self._bout_occurrence_figures[not plotOutliersAndMean].values():
+      figure.hide()
+      figure.setParent(None)
+    self._createChartsWidget(figures, chartsScrollArea, data=self._medianData, plotOutliersAndMean=plotOutliersAndMean)
 
-    layout = QVBoxLayout()
-    layout.addWidget(util.apply_style(QLabel("Visualize Kinematic Parameters"), font=app.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-
-    if self._tree.selectionModel().currentIndex().row() == -1:
-      layout.addWidget(QLabel("Select an experiment to visualize kinematic parameters."), alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
-      buttonsLayout = QHBoxLayout()
-      buttonsLayout.addStretch(1)
-      self._viewProcessedBtn = util.apply_style(QPushButton("View 'plots and processed data' folders"), background_color=util.LIGHT_YELLOW)
-      self._viewProcessedBtn.clicked.connect(lambda: app.openAnalysisFolder(app.homeDirectory, 'resultsKinematic'))
-      buttonsLayout.addWidget(self._viewProcessedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-      self._viewRawBtn = util.apply_style(QPushButton("View raw data"), background_color=util.LIGHT_YELLOW)
-      self._viewRawBtn.clicked.connect(lambda: app.openAnalysisFolder(app.homeDirectory, 'data'))
-      buttonsLayout.addWidget(self._viewRawBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-      self._linkBtn = util.apply_style(QPushButton("Video data analysis online documentation"), background_color=util.LIGHT_YELLOW)
-      self._linkBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/behaviorAnalysis/behaviorAnalysisGUI"))
-      buttonsLayout.addWidget(self._linkBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-      self._startPageBtn = QPushButton("Go to the start page")
-      self._startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
-      buttonsLayout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-      buttonsLayout.addStretch(1)
-      layout.addLayout(buttonsLayout)
-
-      replace = hasattr(self, '_mainWidget')
-      self._mainWidget = QWidget()
-      self._mainWidget.setLayout(layout)
-      if replace:
-        self.replaceWidget(1, self._mainWidget)
-      else:
-        self.addWidget(self._mainWidget)
-      self.setStretchFactor(1, 1)
-      return
-
-    middleLayout = QHBoxLayout()
-    self._checkboxesLayout = checkboxesLayout = QVBoxLayout()
+  def _initializeBoutOccurrenceTab(self, widget):
+    layout = QHBoxLayout()
+    checkboxesLayout = QVBoxLayout()
 
     checkboxesLayout.addWidget(util.apply_style(QLabel("Legend"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
-    self._legend = FigureCanvas(Figure(figsize=(3, 2)))
-    checkboxesLayout.addWidget(self._legend, alignment=Qt.AlignmentFlag.AlignLeft)
+    checkboxesLayout.addWidget(self._legends[0], alignment=Qt.AlignmentFlag.AlignLeft)
 
     checkboxesLayout.addWidget(util.apply_style(QLabel("Visualization options"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
     chartScalingLayout = QHBoxLayout()
     chartScalingLayout.addWidget(QLabel('Chart size'), alignment=Qt.AlignmentFlag.AlignLeft)
-    self._decreaseScalingBtn = QToolButton()
-    self._decreaseScalingBtn.setDefaultAction(QAction('-'))
-    self._decreaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 0.8) or self._update())
-    chartScalingLayout.addWidget(self._decreaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
-    self._increaseScalingBtn = QToolButton()
-    self._decreaseScalingBtn.sizeHint = self._increaseScalingBtn.sizeHint
-    self._increaseScalingBtn.setDefaultAction(QAction('+'))
-    self._increaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 1.25) or self._update())
-    chartScalingLayout.addWidget(self._increaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    decreaseScalingBtn = QToolButton()
+    decreaseScalingBtn.setDefaultAction(QAction('-'))
+    decreaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 0.8) or self._updateBoutOccurrenceTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked()))
+    chartScalingLayout.addWidget(decreaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    increaseScalingBtn = QToolButton()
+    decreaseScalingBtn.sizeHint = increaseScalingBtn.sizeHint
+    increaseScalingBtn.setDefaultAction(QAction('+'))
+    increaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 1.25) or self._updateBoutOccurrenceTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked()))
+    chartScalingLayout.addWidget(increaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    chartScalingLayout.addStretch(1)
+    checkboxesLayout.addLayout(chartScalingLayout)
+    plotOutliersAndMeanCheckbox = QCheckBox("Plot outliers and mean")
+    plotOutliersAndMeanCheckbox.setChecked(True)
+    plotOutliersAndMeanCheckbox.toggled.connect(lambda checked: self._updateBoutOccurrenceTab(chartsScrollArea, checked))
+    checkboxesLayout.addWidget(plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
+
+    checkboxesLayout.addStretch(1)
+    checkboxesWidget = QWidget()
+    checkboxesWidget.setLayout(checkboxesLayout)
+    checkboxesScrollArea = QScrollArea()
+    checkboxesScrollArea.setWidgetResizable(True)
+    checkboxesScrollArea.setWidget(checkboxesWidget)
+    layout.addWidget(checkboxesScrollArea)
+
+    for figuresDict in self._bout_occurrence_figures.values():
+      for param in self._BOUT_OCCURRENCE_PARAMS:
+        figuresDict[param] = FigureCanvas(Figure(figsize=(5.8, 4.35), tight_layout=True))
+
+    chartsScrollArea = QScrollArea()
+    layout.addWidget(chartsScrollArea, stretch=1)
+    widget.setLayout(layout)
+    self._updateBoutOccurrenceTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked())
+
+  def _updateSpeedRelatedTab(self, chartsScrollArea, plotOutliersAndMean):
+    figures = [(param, self._speed_related_figures[plotOutliersAndMean][param]) for param in self._SPEED_RELATED_PARAMS]
+    for figure in self._speed_related_figures[not plotOutliersAndMean].values():
+      figure.hide()
+      figure.setParent(None)
+    self._createChartsWidget(figures, chartsScrollArea, data=self._medianData, plotOutliersAndMean=plotOutliersAndMean)
+
+  def _initializeSpeedRelatedTab(self, widget):
+    layout = QHBoxLayout()
+    checkboxesLayout = QVBoxLayout()
+
+    checkboxesLayout.addWidget(util.apply_style(QLabel("Legend"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
+    checkboxesLayout.addWidget(self._legends[1], alignment=Qt.AlignmentFlag.AlignLeft)
+
+    checkboxesLayout.addWidget(util.apply_style(QLabel("Visualization options"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
+    chartScalingLayout = QHBoxLayout()
+    chartScalingLayout.addWidget(QLabel('Chart size'), alignment=Qt.AlignmentFlag.AlignLeft)
+    decreaseScalingBtn = QToolButton()
+    decreaseScalingBtn.setDefaultAction(QAction('-'))
+    decreaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 0.8) or self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked()))
+    chartScalingLayout.addWidget(decreaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    increaseScalingBtn = QToolButton()
+    decreaseScalingBtn.sizeHint = increaseScalingBtn.sizeHint
+    increaseScalingBtn.setDefaultAction(QAction('+'))
+    increaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 1.25) or self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked()))
+    chartScalingLayout.addWidget(increaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    chartScalingLayout.addStretch(1)
+    checkboxesLayout.addLayout(chartScalingLayout)
+    plotOutliersAndMeanCheckbox = QCheckBox("Plot outliers and mean")
+    plotOutliersAndMeanCheckbox.setChecked(True)
+    plotOutliersAndMeanCheckbox.toggled.connect(lambda checked: self._updateSpeedRelatedTab(chartsScrollArea, checked))
+    checkboxesLayout.addWidget(plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
+
+    checkboxesLayout.addStretch(1)
+    checkboxesWidget = QWidget()
+    checkboxesWidget.setLayout(checkboxesLayout)
+    checkboxesScrollArea = QScrollArea()
+    checkboxesScrollArea.setWidgetResizable(True)
+    checkboxesScrollArea.setWidget(checkboxesWidget)
+    layout.addWidget(checkboxesScrollArea)
+
+    for figuresDict in self._speed_related_figures.values():
+      for param in self._SPEED_RELATED_PARAMS:
+        figuresDict[param] = FigureCanvas(Figure(figsize=(5.8, 4.35), tight_layout=True))
+
+    chartsScrollArea = QScrollArea()
+    layout.addWidget(chartsScrollArea, stretch=1)
+    widget.setLayout(layout)
+    chartsScrollArea.show()
+    self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked())
+
+  def _updateAmplitudeRelatedTab(self, chartsScrollArea, plotOutliersAndMean):
+    figures = [(param, self._amplitude_related_figures[plotOutliersAndMean][param]) for param in self._AMPLITUDE_RELATED_PARAMS]
+    for figure in self._amplitude_related_figures[not plotOutliersAndMean].values():
+      figure.hide()
+      figure.setParent(None)
+    self._createChartsWidget(figures, chartsScrollArea, data=self._medianData, plotOutliersAndMean=plotOutliersAndMean)
+
+  def _initializeAmplitudeRelatedTab(self, widget):
+    layout = QHBoxLayout()
+    checkboxesLayout = QVBoxLayout()
+
+    checkboxesLayout.addWidget(util.apply_style(QLabel("Legend"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
+    checkboxesLayout.addWidget(self._legends[2], alignment=Qt.AlignmentFlag.AlignLeft)
+
+    checkboxesLayout.addWidget(util.apply_style(QLabel("Visualization options"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
+    chartScalingLayout = QHBoxLayout()
+    chartScalingLayout.addWidget(QLabel('Chart size'), alignment=Qt.AlignmentFlag.AlignLeft)
+    decreaseScalingBtn = QToolButton()
+    decreaseScalingBtn.setDefaultAction(QAction('-'))
+    decreaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 0.8) or self._updateAmplitudeRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked()))
+    chartScalingLayout.addWidget(decreaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    increaseScalingBtn = QToolButton()
+    decreaseScalingBtn.sizeHint = increaseScalingBtn.sizeHint
+    increaseScalingBtn.setDefaultAction(QAction('+'))
+    increaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 1.25) or self._updateAmplitudeRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked()))
+    chartScalingLayout.addWidget(increaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    chartScalingLayout.addStretch(1)
+    checkboxesLayout.addLayout(chartScalingLayout)
+    plotOutliersAndMeanCheckbox = QCheckBox("Plot outliers and mean")
+    plotOutliersAndMeanCheckbox.setChecked(True)
+    plotOutliersAndMeanCheckbox.toggled.connect(lambda checked: self._updateAmplitudeRelatedTab(chartsScrollArea, checked))
+    checkboxesLayout.addWidget(plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
+
+    checkboxesLayout.addStretch(1)
+    checkboxesWidget = QWidget()
+    checkboxesWidget.setLayout(checkboxesLayout)
+    checkboxesScrollArea = QScrollArea()
+    checkboxesScrollArea.setWidgetResizable(True)
+    checkboxesScrollArea.setWidget(checkboxesWidget)
+    layout.addWidget(checkboxesScrollArea)
+
+    for figuresDict in self._amplitude_related_figures.values():
+      for param in self._AMPLITUDE_RELATED_PARAMS:
+        figuresDict[param] = FigureCanvas(Figure(figsize=(5.8, 4.35), tight_layout=True))
+
+    chartsScrollArea = QScrollArea()
+    layout.addWidget(chartsScrollArea, stretch=1)
+    widget.setLayout(layout)
+    chartsScrollArea.show()
+    self._updateAmplitudeRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked())
+
+  def _pieChartFormatter(self, pct, allvals):
+    return "{:d}\n({:.2f}%)".format(int(round(pct / 100. * sum(allvals))), pct)
+
+  def _createBoutTypeCharts(self, scrollArea, legendWidget):
+    grouped = self._allData[['Genotype', 'Condition', 'binaryClass25degMaxTailAngle']].groupby(['Genotype', 'Condition'])
+    highAngles = grouped.sum()
+    lowAngles = grouped.count() - grouped.sum()
+    data = pd.merge(highAngles, lowAngles, on=['Genotype', 'Condition'])
+    chartsLayout = QGridLayout()
+    chartsWidget = QWidget()
+    chartsWidget.setLayout(chartsLayout)
+    availableHeight = scrollArea.size().height() - 10  # subtract 10 for padding
+    chartSize = self._CHART_SIZE * self._chartScaleFactor
+    chartHeight = chartSize.height()
+    rows = max(1, availableHeight // chartHeight)
+    cols = math.ceil(len(data.index) / rows)
+    row = 0
+    col = 0
+    for combination, highAngles, lowAngles in data.itertuples():
+      figure = FigureCanvas(Figure(figsize=(5.8, 4.35), tight_layout=True))
+      figure.setFixedSize(chartSize)
+      chartsLayout.addWidget(figure, row, col)
+      if col < cols - 1:
+        col += 1
+      else:
+        row += 1
+        col = 0
+      if not figure.figure.get_axes():  # check whether we've already plotted it
+        ax = figure.figure.add_subplot(111)
+        data = [highAngles, lowAngles]
+        wedges, texts, autotexts = ax.pie(data, autopct=lambda pct: self._pieChartFormatter(pct, data), textprops={'fontsize': 10 * self._chartScaleFactor})
+      ax = figure.figure.get_axes()[0]
+      ax.set_title('Genotype: %s\nCondition: %s' % combination, fontsize=16 * self._chartScaleFactor)
+      legendFigure = legendWidget.figure
+      if not legendFigure.get_axes():
+        legendAx = legendFigure.add_subplot(111)
+        legend = legendAx.legend(wedges, ['High angle bouts', 'Low angle bouts'], loc='center')
+        legendAx.axis('off')
+        legendFigure.canvas.draw()
+        legendWidget.setFixedSize(*legend.get_window_extent().bounds[2:])
+      figure.figure.canvas.draw()
+    scrollArea.setAlignment(Qt.AlignmentFlag.AlignLeft)
+    scrollArea.setWidget(chartsWidget)
+
+  def _initializeBoutTypesTab(self, widget):
+    layout = QHBoxLayout()
+    checkboxesLayout = QVBoxLayout()
+
+    checkboxesLayout.addWidget(util.apply_style(QLabel("Legend"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
+    legend = FigureCanvas(Figure(figsize=(3, 2)))
+    checkboxesLayout.addWidget(legend, alignment=Qt.AlignmentFlag.AlignLeft)
+
+    checkboxesLayout.addWidget(util.apply_style(QLabel("Visualization options"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
+    chartScalingLayout = QHBoxLayout()
+    chartScalingLayout.addWidget(QLabel('Chart size'), alignment=Qt.AlignmentFlag.AlignLeft)
+    decreaseScalingBtn = QToolButton()
+    decreaseScalingBtn.setDefaultAction(QAction('-'))
+    decreaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 0.8) or self._createBoutTypeCharts(chartsScrollArea, legend))
+    chartScalingLayout.addWidget(decreaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    increaseScalingBtn = QToolButton()
+    decreaseScalingBtn.sizeHint = increaseScalingBtn.sizeHint
+    increaseScalingBtn.setDefaultAction(QAction('+'))
+    increaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 1.25) or self._createBoutTypeCharts(chartsScrollArea, legend))
+    chartScalingLayout.addWidget(increaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    chartScalingLayout.addStretch(1)
+    checkboxesLayout.addLayout(chartScalingLayout)
+
+    checkboxesLayout.addStretch(1)
+    checkboxesWidget = QWidget()
+    checkboxesWidget.setLayout(checkboxesLayout)
+    checkboxesScrollArea = QScrollArea()
+    checkboxesScrollArea.setWidgetResizable(True)
+    checkboxesScrollArea.setWidget(checkboxesWidget)
+    layout.addWidget(checkboxesScrollArea)
+
+    chartsScrollArea = QScrollArea()
+    layout.addWidget(chartsScrollArea, stretch=1)
+    widget.setLayout(layout)
+    chartsScrollArea.show()
+    self._createBoutTypeCharts(chartsScrollArea, legend)
+
+  def _initializeAllParametersTabLayout(self, widget):
+    layout = QHBoxLayout()
+    self._checkboxesLayout = checkboxesLayout = QVBoxLayout()
+
+    checkboxesLayout.addWidget(util.apply_style(QLabel("Legend"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
+    checkboxesLayout.addWidget(self._legends[-1], alignment=Qt.AlignmentFlag.AlignLeft)
+
+    checkboxesLayout.addWidget(util.apply_style(QLabel("Visualization options"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
+    chartScalingLayout = QHBoxLayout()
+    chartScalingLayout.addWidget(QLabel('Chart size'), alignment=Qt.AlignmentFlag.AlignLeft)
+    decreaseScalingBtn = QToolButton()
+    decreaseScalingBtn.setDefaultAction(QAction('-'))
+    decreaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 0.8) or self._update())
+    chartScalingLayout.addWidget(decreaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    increaseScalingBtn = QToolButton()
+    decreaseScalingBtn.sizeHint = increaseScalingBtn.sizeHint
+    increaseScalingBtn.setDefaultAction(QAction('+'))
+    increaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 1.25) or self._update())
+    chartScalingLayout.addWidget(increaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     chartScalingLayout.addStretch(1)
     checkboxesLayout.addLayout(chartScalingLayout)
     self._allBoutsRadioBtn = QRadioButton("All bouts")
@@ -1375,6 +1579,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._medianPerWellRadioBtn.toggled.connect(lambda: self._update(visualizationOptionsChanged=True))
     checkboxesLayout.addWidget(self._medianPerWellRadioBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     self._plotOutliersAndMeanCheckbox = QCheckBox("Plot outliers and mean")
+    self._plotOutliersAndMeanCheckbox.setChecked(True)
     self._plotOutliersAndMeanCheckbox.toggled.connect(lambda: self._update(visualizationOptionsChanged=True))
     checkboxesLayout.addWidget(self._plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1408,16 +1613,91 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     checkboxesScrollArea = QScrollArea()
     checkboxesScrollArea.setWidgetResizable(True)
     checkboxesScrollArea.setWidget(checkboxesWidget)
-    middleLayout.addWidget(checkboxesScrollArea)
+    layout.addWidget(checkboxesScrollArea)
 
+    self._chartsScrollArea = QScrollArea()
+    layout.addWidget(self._chartsScrollArea, stretch=1)
+    widget.setLayout(layout)
+    self._chartsScrollArea.show()
+    self._update(visualizationOptionsChanged=True)
+
+  def _recreateMainWidget(self):
+    app = QApplication.instance()
+    self._paramCheckboxes = {}
+    self._figures = {'median': {True: {}, False: {}}, 'all': {True: {}, False: {}}}
+    self._filters = []
+    self._bout_occurrence_figures = {True: {}, False: {}}
+    self._speed_related_figures = {True: {}, False: {}}
+    self._amplitude_related_figures = {True: {}, False: {}}
+    self._legends = []
+
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("Visualize Kinematic Parameters"), font=app.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    if self._tree.selectionModel().currentIndex().row() == -1:
+      layout.addWidget(QLabel("Select an experiment to visualize kinematic parameters."), alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
+      buttonsLayout = QHBoxLayout()
+      buttonsLayout.addStretch(1)
+      self._viewProcessedBtn = util.apply_style(QPushButton("View 'plots and processed data' folders"), background_color=util.LIGHT_YELLOW)
+      self._viewProcessedBtn.clicked.connect(lambda: app.openAnalysisFolder(app.homeDirectory, 'resultsKinematic'))
+      buttonsLayout.addWidget(self._viewProcessedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+      self._viewRawBtn = util.apply_style(QPushButton("View raw data"), background_color=util.LIGHT_YELLOW)
+      self._viewRawBtn.clicked.connect(lambda: app.openAnalysisFolder(app.homeDirectory, 'data'))
+      buttonsLayout.addWidget(self._viewRawBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+      self._linkBtn = util.apply_style(QPushButton("Video data analysis online documentation"), background_color=util.LIGHT_YELLOW)
+      self._linkBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/behaviorAnalysis/behaviorAnalysisGUI"))
+      buttonsLayout.addWidget(self._linkBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+      self._startPageBtn = QPushButton("Go to the start page")
+      self._startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
+      buttonsLayout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+      buttonsLayout.addStretch(1)
+      layout.addLayout(buttonsLayout)
+
+      replace = hasattr(self, '_mainWidget')
+      self._mainWidget = QWidget()
+      self._mainWidget.setLayout(layout)
+      if replace:
+        self.replaceWidget(1, self._mainWidget)
+      else:
+        self.addWidget(self._mainWidget)
+      self.setStretchFactor(1, 1)
+      return
+
+    showTabs = 'Number of Oscillations' in self._medianData.columns
+    self._legends = [FigureCanvas(Figure(figsize=(3, 2))) for _ in range(4 if showTabs else 1)]
     for params, typeDict in zip((self._medianParameters, self._allParameters), self._figures.values()):
       for figuresDict in typeDict.values():
         for param in params:
           figuresDict[param] = FigureCanvas(Figure(figsize=(5.8, 4.35), tight_layout=True))
 
-    self._chartsScrollArea = QScrollArea()
-    middleLayout.addWidget(self._chartsScrollArea, stretch=1)
-    layout.addLayout(middleLayout)
+    if showTabs:
+      tabs = QTabWidget()
+      tabs.setStyleSheet("""
+  QTabWidget::pane {
+    border: 0px;
+    background-color: white;}
+  """)  # remove the border
+      boutOccurrenceTab = QWidget()
+      self._initializeBoutOccurrenceTab(boutOccurrenceTab)
+      tabs.addTab(boutOccurrenceTab, 'Bout Occurrence')
+      tabs.addTab(QWidget(), 'Speed-related parameters')
+      tabs.addTab(QWidget(), 'Amplitude-related parameters')
+      tabs.addTab(QWidget(), 'Bout types')
+      tabs.addTab(QWidget(), 'All kinematic parameters')
+
+      def tabChanged(index):  # create tabs lazily
+        widget = tabs.widget(index)
+        if widget.layout() is not None:
+          return
+        tabFactories = (self._initializeBoutOccurrenceTab, self._initializeSpeedRelatedTab, self._initializeAmplitudeRelatedTab,
+                        self._initializeBoutTypesTab, self._initializeAllParametersTabLayout)
+        tabFactories[index](widget)
+      tabs.currentChanged.connect(tabChanged)
+      layout.addWidget(tabs)
+    else:
+      widget = QWidget()
+      self._initializeAllParametersTabLayout(widget)
+      layout.addWidget(widget)
 
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch(1)
@@ -1444,7 +1724,6 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     else:
       self.addWidget(self._mainWidget)
     self.setStretchFactor(1, 1)
-    self._update(visualizationOptionsChanged=True)
 
   def _findResultsFiles(self, folder):
     allBoutsMixedXlsx = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'allBoutsMixed', self._FILENAME + '.xlsx')
@@ -1467,20 +1746,23 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._medianParameters = [param for param in self._medianData.columns if param not in self._IGNORE_COLUMNS]
     self._recreateMainWidget()
 
-  def _createChartsWidget(self, figures):
+  def _createChartsWidget(self, figures, scrollArea, data=None, plotOutliersAndMean=None):
+    if plotOutliersAndMean is None:
+      plotOutliersAndMean = self._plotOutliersAndMeanCheckbox.isChecked()
     if not figures:
-      self._chartsScrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
-      return QLabel("Select one or more parameters to visualize.")
-    data = self._medianData if self._medianPerWellRadioBtn.isChecked() else self._allData
-    if self._filters:
+      scrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
+      scrollArea.setWidget(QLabel("Select one or more parameters to visualize."))
+    applyFilters = data is None
+    data = data if data is not None else self._medianData if self._medianPerWellRadioBtn.isChecked() else self._allData
+    if applyFilters and self._filters:
       data = data.query(' & '.join('`%s` >= %s & `%s` <= %s' % (fltr.name(), fltr.minimum(), fltr.name(), fltr.maximum()) for fltr in self._filters))
     if not len(data.index):
-      self._chartsScrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
+      scrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
       return QLabel("No data found, try adjusting the filters.")
     chartsLayout = QGridLayout()
     chartsWidget = QWidget()
     chartsWidget.setLayout(chartsLayout)
-    availableHeight = self._chartsScrollArea.size().height() - 10  # subtract 10 for padding
+    availableHeight = scrollArea.size().height() - 10  # subtract 10 for padding
     chartSize = self._CHART_SIZE * self._chartScaleFactor
     chartHeight = chartSize.height()
     rows = max(1, availableHeight // chartHeight)
@@ -1497,28 +1779,30 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
         col = 0
       figure.setVisible(True)
       if not figure.figure.get_axes():  # check whether we've already plotted it
-        self._plotFigure(param, figure.figure, data)
+        self._plotFigure(param, figure.figure, data, plotOutliersAndMean)
       ax = figure.figure.get_axes()[0]
       ax.set_title(param, fontsize=16 * self._chartScaleFactor)
       ax.tick_params(axis='both', which='major', labelsize=10 * self._chartScaleFactor)
       figure.figure.canvas.draw()
-    self._chartsScrollArea.setAlignment(Qt.AlignmentFlag.AlignLeft)
-    return chartsWidget
+    scrollArea.setAlignment(Qt.AlignmentFlag.AlignLeft)
+    scrollArea.setWidget(chartsWidget)
 
-  def _plotFigure(self, param, figure, data):
-    plotOutliersAndMean = self._plotOutliersAndMeanCheckbox.isChecked()
+  def _plotFigure(self, param, figure, data, plotOutliersAndMean):
     ax = figure.add_subplot(111)
     b = sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean)
     b.set_ylabel('', fontsize=0)
     b.set_xlabel('', fontsize=0)
 
-    legendFigure = self._legend.figure
-    if not legendFigure.get_axes():
-      legendAx = legendFigure.add_subplot(111)
-      legend = legendAx.legend(*ax.get_legend_handles_labels(), title=ax.get_legend().get_title().get_text(), loc='center')
-      legendAx.axis('off')
-      legendFigure.canvas.draw()
-      self._legend.setFixedSize(*legend.get_window_extent().bounds[2:])
+    for legendWidget in self._legends:
+      legendFigure = legendWidget.figure
+      if not legendFigure.get_axes():
+        legendAx = legendFigure.add_subplot(111)
+        legend = legendAx.legend(*ax.get_legend_handles_labels(), title=ax.get_legend().get_title().get_text(), loc='center')
+        legendAx.axis('off')
+        legendFigure.canvas.draw()
+        legendWidget.setFixedSize(*legend.get_window_extent().bounds[2:])
+      else:
+        break
 
     ax.legend().remove()
 
@@ -1564,4 +1848,4 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     shownFigures = [(param, figure) for param, figure in
                     self._figures['median' if self._medianPerWellRadioBtn.isChecked() else 'all'][self._plotOutliersAndMeanCheckbox.isChecked()].items()
                     if param in selectedParameters]
-    self._chartsScrollArea.setWidget(self._createChartsWidget(shownFigures))
+    self._createChartsWidget(shownFigures, self._chartsScrollArea)
