@@ -102,14 +102,6 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
   
   # Setting output folder
   outputFolderVideo = os.path.join(hyperparameters["outputFolder"], videoName)
-  
-  # Launching GUI algoFollower if necessary
-  if hyperparameters["popUpAlgoFollow"]:
-    import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
-
-    popUpAlgoFollow.createTraceFile("starting ZebraZoom analysis on " + videoName)
-    p = Process(target=popUpAlgoFollow.initialise)
-    p.start()
 
   if hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justExtractParamFromPreviousTrackData":
     # Reloading previously extracted tracking data if debugging option selected
@@ -210,7 +202,15 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
 
       popUpAlgoFollow.prepend("ZebraZoom Analysis finished for " + videoName)
     raise ValueError
-    
+
+  # Launching GUI algoFollower if necessary
+  if hyperparameters["popUpAlgoFollow"]:
+    import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
+
+    popUpAlgoFollow.createTraceFile("starting ZebraZoom analysis on " + videoName)
+    p = Process(target=popUpAlgoFollow.initialise)
+    p.start()
+
   # Getting background
   if hyperparameters["backgroundSubtractorKNN"] or (hyperparameters["headEmbeded"] and hyperparameters["headEmbededRemoveBack"] == 0 and hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0 and hyperparameters["adjustHeadEmbededTracking"] == 0) or hyperparameters["trackingDL"] or hyperparameters["fishTailTrackingDifficultBackground"]:
     background = []
