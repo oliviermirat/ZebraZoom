@@ -918,10 +918,10 @@ class ViewParameters(util.CollapsibleSplitter):
                 self.a.set_ylim(-140, 140)
 
               if len(tailAngleSmoothed):
-                self.a.plot([i for i in range(self.begMove,endMove+1)],tailAngleSmoothed)
-                self.a.plot(fx,fy)
+                tailAngle, = self.a.plot([i for i in range(self.begMove,endMove+1)],tailAngleSmoothed)
+                bend, = self.a.plot(fx,fy)
                 self.a.plot([i for i in range(self.begMove,endMove+1)],[0 for i in range(0,len(tailAngleSmoothed))])
-
+                self.a.legend([tailAngle, bend], ['Tail angle', 'Bend'])
             elif self.visualization == 1:
 
               tailAngleSmoothed = self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()][self.numMouv()]["TailAngle_Raw"].copy()
