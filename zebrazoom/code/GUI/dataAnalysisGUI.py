@@ -1512,7 +1512,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       legendFigure = legendWidget.figure
       if not legendFigure.get_axes():
         legendAx = legendFigure.add_subplot(111)
-        legend = legendAx.legend(wedges, ['High angle bouts', 'Low angle bouts'], loc='center')
+        legend = legendAx.legend(wedges, ['High angle bouts\n(> 25 deg)', 'Low angle bouts\n(<= 25 deg)'], loc='center')
         legendAx.axis('off')
         legendFigure.canvas.draw()
         legendWidget.setFixedSize(*legend.get_window_extent().bounds[2:])
