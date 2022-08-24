@@ -1245,11 +1245,12 @@ class _ParameterFilter(QWidget):
     return self._maximumSpinbox.value()
 
 
-class FigureCanvas(FigureCanvas):
-  def resizeEvent(self, event):  # XXX: this is a workaround for https://github.com/matplotlib/matplotlib/issues/22409
-    super().resizeEvent(event)
-    import gc
-    gc.collect()
+class FigureCanvas(FigureCanvas):  # XXX: this is a workaround for https://github.com/matplotlib/matplotlib/issues/22409
+  def enterEvent(self, event):
+    pass
+
+  def leaveEvent(self, event):
+    pass
 
 
 class KinematicParametersVisualization(util.CollapsibleSplitter):
