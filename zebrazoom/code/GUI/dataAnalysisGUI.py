@@ -1245,6 +1245,13 @@ class _ParameterFilter(QWidget):
     return self._maximumSpinbox.value()
 
 
+class _FigureCanvas(FigureCanvas):
+  def resizeEvent(self, event):  # XXX: this is a workaround for https://github.com/matplotlib/matplotlib/issues/22409
+    super().resizeEvent(event)
+    import gc
+    gc.collect()
+
+
 class KinematicParametersVisualization(util.CollapsibleSplitter):
   _IGNORE_COLUMNS = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
   _FILENAME = 'globalParametersInsideCategories'
