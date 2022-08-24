@@ -1255,7 +1255,7 @@ class _FigureCanvas(FigureCanvas):
 class KinematicParametersVisualization(util.CollapsibleSplitter):
   _IGNORE_COLUMNS = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
   _FILENAME = 'globalParametersInsideCategories'
-  _CHART_SIZE = QSize(580, 435)
+  _CHART_SIZE = QSize(464, 348)
   _BOUT_OCCURRENCE_PARAMS = ['Bout Rate (bouts / s)', 'IBI (s)', 'Bout Counts']
   _SPEED_RELATED_PARAMS = ['Bout Distance (mm)', 'Bout Duration (s)', 'Bout Speed (mm/s)', 'Number of Oscillations', 'Max TBF (Hz)', 'Mean TBF (Hz)']
   _AMPLITUDE_RELATED_PARAMS = ['Max absolute TBA (deg.)', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)', 'TBA#1 Amplitude (deg)', 'TBA#1 timing (deg)', 'Absolute Yaw (deg)', 'Signed Yaw (deg)']
@@ -1367,7 +1367,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
 
     for figuresDict in self._bout_occurrence_figures.values():
       for param in self._BOUT_OCCURRENCE_PARAMS:
-        figuresDict[param] = FigureCanvas(Figure(figsize=(5.8, 4.35), tight_layout=True))
+        figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
 
     chartsScrollArea = QScrollArea()
     layout.addWidget(chartsScrollArea, stretch=1)
@@ -1417,7 +1417,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
 
     for figuresDict in self._speed_related_figures.values():
       for param in self._SPEED_RELATED_PARAMS:
-        figuresDict[param] = FigureCanvas(Figure(figsize=(5.8, 4.35), tight_layout=True))
+        figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
 
     chartsScrollArea = QScrollArea()
     layout.addWidget(chartsScrollArea, stretch=1)
@@ -1468,7 +1468,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
 
     for figuresDict in self._amplitude_related_figures.values():
       for param in self._AMPLITUDE_RELATED_PARAMS:
-        figuresDict[param] = FigureCanvas(Figure(figsize=(5.8, 4.35), tight_layout=True))
+        figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
 
     chartsScrollArea = QScrollArea()
     layout.addWidget(chartsScrollArea, stretch=1)
@@ -1495,7 +1495,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     row = 0
     col = 0
     for combination, highAngles, lowAngles in data.itertuples():
-      figure = FigureCanvas(Figure(figsize=(5.8, 4.35), tight_layout=True))
+      figure = _FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
       figure.setFixedSize(chartSize)
       chartsLayout.addWidget(figure, row, col)
       if col < cols - 1:
@@ -1675,7 +1675,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     for params, typeDict in zip((self._medianParameters, self._allParameters), self._figures.values()):
       for figuresDict in typeDict.values():
         for param in params:
-          figuresDict[param] = FigureCanvas(Figure(figsize=(5.8, 4.35), tight_layout=True))
+          figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
 
     if showTabs:
       tabs = QTabWidget()
