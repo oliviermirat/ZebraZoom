@@ -1245,7 +1245,7 @@ class _ParameterFilter(QWidget):
     return self._maximumSpinbox.value()
 
 
-class _FigureCanvas(FigureCanvas):
+class FigureCanvas(FigureCanvas):
   def resizeEvent(self, event):  # XXX: this is a workaround for https://github.com/matplotlib/matplotlib/issues/22409
     super().resizeEvent(event)
     import gc
@@ -1495,7 +1495,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     row = 0
     col = 0
     for combination, highAngles, lowAngles in data.itertuples():
-      figure = _FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
+      figure = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
       figure.setFixedSize(chartSize)
       chartsLayout.addWidget(figure, row, col)
       if col < cols - 1:
