@@ -573,7 +573,8 @@ class CreateExperimentOrganizationExcel(QWidget):
       dialog = _MultipleInputDialog(controller.window, width, height)
       dialog.setWindowTitle("Enter video dimensions")
       if dialog.exec():
-        self._pixelSizeLineEdit.setText("{:.2f}".format(dialog.getPixelSize()))
+        self._pixelSizeLineEdit.setText(str(dialog.getPixelSize()))
+        self._pixelSizeChanged()
     pixelSizeDialogButton.clicked.connect(calculatePixelSize)
     videoDetailsLayout.addWidget(pixelSizeDialogButton, 1, 2, alignment=Qt.AlignmentFlag.AlignLeft)
     videoDetailsLayout.addWidget(QLabel("Condition:"), 2, 0, alignment=Qt.AlignmentFlag.AlignLeft)
@@ -675,12 +676,16 @@ class CreateExperimentOrganizationExcel(QWidget):
 
   def _conditionChanged(self):
     condition = self._conditionLineEdit.text()
+    if not condition:
+      return
     self._table.model().updateArrayValues(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))), 4, self._frame.getWells(), condition)
     self._updateConditionCompletion()
     self._updateWellInfos()
 
   def _genotypeChanged(self):
     genotype = self._genotypeLineEdit.text()
+    if not genotype:
+      return
     self._table.model().updateArrayValues(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))), 5, self._frame.getWells(), genotype)
     self._updateGenotypeCompletion()
     self._updateWellInfos()
