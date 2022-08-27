@@ -275,7 +275,8 @@ def _resetPopulationComparisonPageState(page, qapp):  # this is required because
     checkable.setChecked(False)
   page._frameStepForDistanceCalculation.setText('')
   page._minNbBendForBoutDetect.setText('')
-  page._discardRadioButton.setChecked(True)
+  page._keepDiscardedBoutsCheckbox.setChecked(False)
+  page._noOutlierRemovalButton.setChecked(True)
   qapp.processEvents()
 
 
@@ -329,8 +330,6 @@ def test_kinematic_parameters_small(qapp, qtbot, monkeypatch):
   qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison))
 
   populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-  qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked)
   qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(populationComparisonPage._tailTrackingParametersCheckbox.isChecked)
   qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
@@ -602,6 +601,8 @@ def test_minimum_number_of_bends(qapp, qtbot):
   _resetPopulationComparisonPageState(populationComparisonPage, qapp)
   qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked)
+  qtbot.mouseClick(populationComparisonPage._bendsOutlierRemovalButton, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(populationComparisonPage._bendsOutlierRemovalButton.isChecked)
   qtbot.mouseClick(populationComparisonPage._minNbBendForBoutDetect, Qt.MouseButton.LeftButton)
   qtbot.keyClicks(populationComparisonPage._minNbBendForBoutDetect, '12')
   qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
@@ -660,8 +661,10 @@ def test_keep_data_for_discarded_bouts(qapp, qtbot):
   qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked)
   qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(populationComparisonPage._tailTrackingParametersCheckbox.isChecked)
-  qtbot.mouseClick(populationComparisonPage._keepRadioButton, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._keepRadioButton.isChecked)
+  qtbot.mouseClick(populationComparisonPage._bendsOutlierRemovalButton, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(populationComparisonPage._bendsOutlierRemovalButton.isChecked)
+  qtbot.mouseClick(populationComparisonPage._keepDiscardedBoutsCheckbox, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(populationComparisonPage._keepDiscardedBoutsCheckbox.isChecked)
   qtbot.mouseClick(populationComparisonPage._minNbBendForBoutDetect, Qt.MouseButton.LeftButton)
   qtbot.keyClicks(populationComparisonPage._minNbBendForBoutDetect, '12')
 

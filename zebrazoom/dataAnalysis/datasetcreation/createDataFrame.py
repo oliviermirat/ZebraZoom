@@ -1,4 +1,5 @@
 import os
+import scipy
 import scipy.io
 import pandas as pd
 import json
@@ -46,7 +47,9 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   saveAllBoutsSuperStructuresInMatlabFormat = int(dataframeOptions['saveAllBoutsSuperStructuresInMatlabFormat']) if 'saveAllBoutsSuperStructuresInMatlabFormat' in dataframeOptions else 0
   
   getTailAngleSignMultNormalized = int(dataframeOptions['getTailAngleSignMultNormalized']) if 'getTailAngleSignMultNormalized' in dataframeOptions else 0
-  
+
+  gaussianFitOutlierRemoval = dataframeOptions.get('gaussianFitOutlierRemoval', False)
+
   # If nbFramesTakenIntoAccount was not specified, finds an appropriate value for it
   nbFramesTakenIntoAccount          = dataframeOptions['nbFramesTakenIntoAccount']
   if len(pathToExcelFile):
@@ -327,7 +330,12 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   if 'level_0' in dfParam.columns:
     dfParam = dfParam.drop(['level_0'], axis=1)
   dfParam = dfParam.reset_index()
-  
+
+  # Gaussian fit outlier removal
+  if gaussianFitOutlierRemoval:
+    columnsToCheck = [col for col in ('Bout Duration (s)', 'Bout Distance (mm)', 'Number of Oscillations', 'Max absolute TBA (deg.)', 'Absolute Yaw (deg)') if col in dfParam.columns]
+    dfParam.loc[(np.abs(scipy.stats.zscore(dfParam[columnsToCheck].astype(float), nan_policy='omit')) > 3).all(axis=1), ~dfParam.columns.isin(basicInformation)] = np.nan
+
   # Saving dataframe for the whole set of videos as a pickle file
   outfile = open(os.path.join(resFolder, nameOfFile + '.pkl'), 'wb')
   pickle.dump(dfParam,outfile)
