@@ -988,6 +988,7 @@ class PopulationComparison(QWidget):
     self._bendsOutlierRemovalButton.toggled.connect(lambda checked: bendsRemovalWidget.setVisible(checked))
     outlierRemovalLayout.addWidget(self._bendsOutlierRemovalButton, 1, 1, alignment=Qt.AlignmentFlag.AlignCenter)
     self._gaussianOutlierRemovalButton = QRadioButton("Outlier removal based on gaussian fit")
+    self._gaussianOutlierRemovalButton.toggled.connect(lambda checked: gaussianRemovalWidget.setVisible(checked))
     outlierRemovalLayout.addWidget(self._gaussianOutlierRemovalButton, 1, 2, alignment=Qt.AlignmentFlag.AlignCenter)
 
     bendsRemovalLayout = QVBoxLayout()
@@ -1008,6 +1009,14 @@ class PopulationComparison(QWidget):
     bendsRemovalWidget.setVisible(False)
     bendsRemovalWidget.setLayout(bendsRemovalLayout)
     outlierRemovalLayout.addWidget(bendsRemovalWidget, 2, 0, 1, 3)
+
+    gaussianRemovalLayout = QVBoxLayout()
+    gaussianRemovalLayout.addWidget(util.apply_style(QLabel("Outliers are found and removed based on mean +/- 3 standard deviations of the parameters"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    gaussianRemovalLayout.addWidget(util.apply_style(QLabel("Bout Duration (s), Bout Distance (mm), Number of Oscillations, Max absolute TBA (deg.) and Absolute Yaw (deg)"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    gaussianRemovalWidget = QWidget()
+    gaussianRemovalWidget.setVisible(False)
+    gaussianRemovalWidget.setLayout(gaussianRemovalLayout)
+    outlierRemovalLayout.addWidget(gaussianRemovalWidget, 2, 0, 1, 3)
 
     layout.addLayout(outlierRemovalLayout)
 
