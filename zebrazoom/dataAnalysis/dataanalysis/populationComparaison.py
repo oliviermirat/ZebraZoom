@@ -31,9 +31,10 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
         break
       except:
         print("waiting to create folder:", outputFolderResult)
+    outputFolderCharts = outputFolderResult
   else:
-    outputFolderResult = os.path.join(outputFolderResult, 'noMeanAndOutliersPlotted')
-    os.mkdir(outputFolderResult)
+    outputFolderCharts = os.path.join(outputFolderResult, 'noMeanAndOutliersPlotted')
+    os.makedirs(outputFolderCharts)
   
   dataPlotted = {}
   
@@ -81,7 +82,7 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
   else:
     dfParam  = dfParam[columnsForRawDataExport]
   
-  if plotOutliersAndMean:
+  if not os.path.exists(os.path.join(outputFolderResult, 'globalParametersInsideCategories.xlsx')):
     dfParam.to_excel(os.path.join(outputFolderResult, 'globalParametersInsideCategories.xlsx'))
     dfParam.to_csv(os.path.join(outputFolderResult, 'globalParametersInsideCategories.csv'), index=False)
   
@@ -167,11 +168,11 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
               # tabAx[int(idx/nbColumns), idx%nbColumns].plot(np.random.normal(idx2+1, 0.005*len(concatenatedValues), size=len(values)), values, 'b.', alpha=0.3, c=color[idx2] if idx2 < len(color) else 'b')
           # tabAx[int(idx/nbColumns), idx%nbColumns].set_xticklabels(labels)
     
-    plt.savefig(os.path.join(outputFolderResult, 'globalParametersInsideCategories_' + str(i+1) + '.png'))
+    plt.savefig(os.path.join(outputFolderCharts, 'globalParametersInsideCategories_' + str(i+1) + '.png'))
     plt.close(fig)
   
   if saveDataPlottedInJson:
-    outputFile = open(os.path.join(outputFolderResult, 'dataPlotted.txt'), 'w')
+    outputFile = open(os.path.join(outputFolderCharts, 'dataPlotted.txt'), 'w')
     outputFile.write(json.dumps(dataPlotted))
     outputFile.close()
   return globParam, dfParam

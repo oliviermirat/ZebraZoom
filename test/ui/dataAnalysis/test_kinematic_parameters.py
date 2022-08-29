@@ -275,7 +275,8 @@ def _resetPopulationComparisonPageState(page, qapp):  # this is required because
     checkable.setChecked(False)
   page._frameStepForDistanceCalculation.setText('')
   page._minNbBendForBoutDetect.setText('')
-  page._discardRadioButton.setChecked(True)
+  page._keepDiscardedBoutsCheckbox.setChecked(False)
+  page._noOutlierRemovalButton.setChecked(True)
   qapp.processEvents()
 
 
@@ -329,8 +330,6 @@ def test_kinematic_parameters_small(qapp, qtbot, monkeypatch):
   qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison))
 
   populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-  qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked)
   qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(populationComparisonPage._tailTrackingParametersCheckbox.isChecked)
   qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
@@ -584,9 +583,9 @@ def _test_minimum_number_of_bends_check_results():
   expectedResultsMedian['percentTimeSpentSwimming'] = groupedResults['Bout Duration (s)'].sum()['Bout Duration (s)'].div(expectedResultsMedian['videoDuration']).mul(100)
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
-  for folder in ('allBoutsMixed', 'medianPerWellFirst'):
+  for folder in ('allBoutsMixed', 'medianPerWellFirst'):  # no charts with outliers
     chartCount = 6 if folder == 'allBoutsMixed' else 7
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
+    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
 
@@ -602,6 +601,8 @@ def test_minimum_number_of_bends(qapp, qtbot):
   _resetPopulationComparisonPageState(populationComparisonPage, qapp)
   qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked)
+  qtbot.mouseClick(populationComparisonPage._bendsOutlierRemovalButton, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(populationComparisonPage._bendsOutlierRemovalButton.isChecked)
   qtbot.mouseClick(populationComparisonPage._minNbBendForBoutDetect, Qt.MouseButton.LeftButton)
   qtbot.keyClicks(populationComparisonPage._minNbBendForBoutDetect, '12')
   qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
@@ -640,9 +641,9 @@ def _test_keep_data_for_discarded_bouts_check_results():
   expectedResultsMedian['percentTimeSpentSwimming'] = groupedResults['Bout Duration (s)'].sum()['Bout Duration (s)'].div(expectedResultsMedian['videoDuration']).mul(100)
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
-  for folder in ('allBoutsMixed', 'medianPerWellFirst'):
+  for folder in ('allBoutsMixed', 'medianPerWellFirst'):  # no charts with outliers
     chartCount = 6 if folder == 'allBoutsMixed' else 7
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
+    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
 
@@ -660,8 +661,10 @@ def test_keep_data_for_discarded_bouts(qapp, qtbot):
   qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked)
   qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(populationComparisonPage._tailTrackingParametersCheckbox.isChecked)
-  qtbot.mouseClick(populationComparisonPage._keepRadioButton, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._keepRadioButton.isChecked)
+  qtbot.mouseClick(populationComparisonPage._bendsOutlierRemovalButton, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(populationComparisonPage._bendsOutlierRemovalButton.isChecked)
+  qtbot.mouseClick(populationComparisonPage._keepDiscardedBoutsCheckbox, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(populationComparisonPage._keepDiscardedBoutsCheckbox.isChecked)
   qtbot.mouseClick(populationComparisonPage._minNbBendForBoutDetect, Qt.MouseButton.LeftButton)
   qtbot.keyClicks(populationComparisonPage._minNbBendForBoutDetect, '12')
 
@@ -685,11 +688,11 @@ def test_command_line(monkeypatch): # here we simply run the same experiments th
 
   # pathToExcelFile frameStepForDistanceCalculation minimumNumberOfBendsPerBout keepSpeedDistDurWhenLowNbBends thresholdInDegreesBetweenSfsAndTurns tailAngleKinematicParameterCalculation
   # saveRawDataInAllBoutsSuperStructure saveAllBoutsSuperStructuresInMatlabFormat forcePandasDfRecreation
-  test_kinematic_parameters_small_params = [experiment1, '4', '3', '0', '-1', '1', '0', '0']
-  test_basic_params = [experiment2, '4', '3', '0', '-1', '0', '0', '0']
-  test_force_recalculation_params = [experiment3, '4', '3', '0', '-1', '0', '0', '0', '1']
-  test_kinematic_parameters_large_params = [experiment2, '4', '3', '0', '-1', '1', '0', '1']
-  test_frames_for_distance_calculation_params = [experiment2, '1', '3', '0', '-1', '0', '0', '0']
+  test_kinematic_parameters_small_params = [experiment1, '4', '0', '0', '-1', '1', '0', '0']
+  test_basic_params = [experiment2, '4', '0', '0', '-1', '0', '0', '0']
+  test_force_recalculation_params = [experiment3, '4', '0', '0', '-1', '0', '0', '0', '1']
+  test_kinematic_parameters_large_params = [experiment2, '4', '0', '0', '-1', '1', '0', '1']
+  test_frames_for_distance_calculation_params = [experiment2, '1', '0', '0', '-1', '0', '0', '0']
   test_minimum_number_of_bends_params = [experiment2, '4', '12', '0', '-1', '1', '0', '0']
   test_keep_data_for_discarded_bouts_params = [experiment2, '4', '12', '1', '-1', '1', '0', '0']
 

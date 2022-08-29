@@ -1,5 +1,6 @@
 import math
 import os
+import shutil
 import sys
 import pickle
 import webbrowser
@@ -979,11 +980,52 @@ class PopulationComparison(QWidget):
     self._tailTrackingParametersCheckbox = QCheckBox("I want fish tail tracking related kinematic parameters (number of oscillation, tail beat frequency, etc..) to be calculated.")
     layout.addWidget(self._tailTrackingParametersCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
+    outlierRemovalLayout = QGridLayout()
+    outlierRemovalLayout.addWidget(util.apply_style(QLabel("Outlier removal"), font_size='16px'), 0, 0, 1, 3, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._noOutlierRemovalButton = QRadioButton("No outlier removal")
+    self._noOutlierRemovalButton.setChecked(True)
+    outlierRemovalLayout.addWidget(self._noOutlierRemovalButton, 1, 0, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._bendsOutlierRemovalButton = QRadioButton("Outlier removal based on bends")
+    self._bendsOutlierRemovalButton.toggled.connect(lambda checked: bendsRemovalWidget.setVisible(checked))
+    outlierRemovalLayout.addWidget(self._bendsOutlierRemovalButton, 1, 1, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._gaussianOutlierRemovalButton = QRadioButton("Outlier removal based on gaussian fit")
+    self._gaussianOutlierRemovalButton.toggled.connect(lambda checked: gaussianRemovalWidget.setVisible(checked))
+    outlierRemovalLayout.addWidget(self._gaussianOutlierRemovalButton, 1, 2, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    bendsRemovalLayout = QVBoxLayout()
+    bendsRemovalLayout.addWidget(util.apply_style(QLabel("If you are calculating fish tail tracking related kinematic parameters:"), font_size="16px"), alignment=Qt.AlignmentFlag.AlignCenter)
+    bendsRemovalLayout.addWidget(util.apply_style(QLabel("What's the minimum number of bends a bout should have to be taken into account for the analysis?"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    bendsRemovalLayout.addWidget(util.apply_style(QLabel("(put 0 if you want all bends to be taken into account)"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    self._minNbBendForBoutDetect = QLineEdit()
+    self._minNbBendForBoutDetect.setValidator(QIntValidator())
+    self._minNbBendForBoutDetect.validator().setBottom(0)
+    self._minNbBendForBoutDetect.setText('3')
+    bendsRemovalLayout.addWidget(self._minNbBendForBoutDetect, alignment=Qt.AlignmentFlag.AlignCenter)
+    bendsRemovalLayout.addWidget(util.apply_style(QLabel("If, for a bout, the tail tracking related kinematic parameters are being discarded because of a low amount of bends,"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    bendsRemovalLayout.addWidget(util.apply_style(QLabel("should the Bout Duration (s), Bout Distance (mm), Bout Speed (mm/s) and IBI (s) also be discarded for that bout?"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    self._keepDiscardedBoutsCheckbox = QCheckBox("Keep Bout Duration (s), Bout Distance (mm), Bout Speed (mm/s) and IBI (s) in that situation")
+    bendsRemovalLayout.addWidget(self._keepDiscardedBoutsCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+    bendsRemovalLayout.addWidget(util.apply_style(QLabel("Please ignore the two questions above if you're only looking at Bout Duration (s), Bout Distance (mm), Bout Speed (mm/s) and IBI (s)."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    bendsRemovalWidget = QWidget()
+    bendsRemovalWidget.setVisible(False)
+    bendsRemovalWidget.setLayout(bendsRemovalLayout)
+    outlierRemovalLayout.addWidget(bendsRemovalWidget, 2, 0, 1, 3)
+
+    gaussianRemovalLayout = QVBoxLayout()
+    gaussianRemovalLayout.addWidget(util.apply_style(QLabel("Outliers are found and removed based on mean +/- 3 standard deviations of the parameters"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    gaussianRemovalLayout.addWidget(util.apply_style(QLabel("Bout Duration (s), Bout Distance (mm), Number of Oscillations, Max absolute TBA (deg.) and Absolute Yaw (deg)"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    gaussianRemovalWidget = QWidget()
+    gaussianRemovalWidget.setVisible(False)
+    gaussianRemovalWidget.setLayout(gaussianRemovalLayout)
+    outlierRemovalLayout.addWidget(gaussianRemovalWidget, 2, 0, 1, 3)
+
+    layout.addLayout(outlierRemovalLayout)
+
     advancedOptionsLayout = QVBoxLayout()
     self._saveInMatlabFormatCheckbox = QCheckBox("The result structure is always saved in the pickle format. Also save it in the matlab format.")
     advancedOptionsLayout.addWidget(self._saveInMatlabFormatCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
     self._saveRawDataCheckbox = QCheckBox("Save original raw data in result structure.")
-    self._saveRawDataCheckbox.setVisible(False)  # XXX: hidden from the moment because of a bug, unhide it once it's fixed
+    self._saveRawDataCheckbox.setVisible(False)  # XXX: hidden for the moment because of a bug, unhide it once it's fixed
     advancedOptionsLayout.addWidget(self._saveRawDataCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
     self._forcePandasRecreation = QCheckBox("Force recalculation of all parameters even if they have already been calculated and saved.")
     advancedOptionsLayout.addWidget(self._forcePandasRecreation, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -994,28 +1036,11 @@ class PopulationComparison(QWidget):
     self._frameStepForDistanceCalculation.validator().setBottom(0)
     advancedOptionsLayout.addWidget(self._frameStepForDistanceCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    advancedOptionsLayout.addWidget(util.apply_style(QLabel("If you are calculating fish tail tracking related kinematic parameters:"), font_size="16px"), alignment=Qt.AlignmentFlag.AlignCenter)
-    advancedOptionsLayout.addWidget(util.apply_style(QLabel("What's the minimum number of bends a bout should have to be taken into account for the analysis?"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    advancedOptionsLayout.addWidget(util.apply_style(QLabel("(the default value is 3) (put 0 if you want all bends to be taken into account)"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    self._minNbBendForBoutDetect = QLineEdit()
-    self._minNbBendForBoutDetect.setValidator(QIntValidator())
-    self._minNbBendForBoutDetect.validator().setBottom(0)
-    advancedOptionsLayout.addWidget(self._minNbBendForBoutDetect, alignment=Qt.AlignmentFlag.AlignCenter)
-
-    advancedOptionsLayout.addWidget(util.apply_style(QLabel("If, for a bout, the tail tracking related kinematic parameters are being discarded because of a low amount of bends,"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    advancedOptionsLayout.addWidget(util.apply_style(QLabel("should the Bout Duration (s), Bout Distance (mm), Bout Speed (mm/s) and IBI (s) also be discarded for that bout?"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    self._discardRadioButton = QRadioButton("Yes, discard Bout Duration (s), Bout Distance (mm), Bout Speed (mm/s) and IBI (s) in that situation")
-    self._discardRadioButton.setChecked(True)
-    advancedOptionsLayout.addWidget(self._discardRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    self._keepRadioButton = QRadioButton("No, keep Bout Duration (s), Bout Distance (mm), Bout Speed (mm/s) and IBI (s) in that situation")
-    advancedOptionsLayout.addWidget(self._keepRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    advancedOptionsLayout.addWidget(util.apply_style(QLabel("Please ignore the two questions above if you're only looking at Bout Duration (s), Bout Distance (mm), Bout Speed (mm/s) and IBI (s)."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-
     self._advancedOptionsExpander = util.Expander(self, "Show advanced options", advancedOptionsLayout)
     layout.addWidget(self._advancedOptionsExpander)
 
     self._launchBtn = util.apply_style(QPushButton("Launch Analysis"), background_color=util.DEFAULT_BUTTON_COLOR)
-    self._launchBtn.clicked.connect(lambda: self._populationComparison(self._tailTrackingParametersCheckbox.isChecked(), self._saveInMatlabFormatCheckbox.isChecked(), self._saveRawDataCheckbox.isChecked(), self._forcePandasRecreation.isChecked(), self._minNbBendForBoutDetect.text(), self._discardRadioButton.isChecked(), self._keepRadioButton.isChecked(), self._frameStepForDistanceCalculation.text()))
+    self._launchBtn.clicked.connect(lambda: self._populationComparison(self._tailTrackingParametersCheckbox.isChecked(), self._saveInMatlabFormatCheckbox.isChecked(), self._saveRawDataCheckbox.isChecked(), self._forcePandasRecreation.isChecked(), '0' if self._noOutlierRemovalButton.isChecked() else self._minNbBendForBoutDetect.text() if self._bendsOutlierRemovalButton.isChecked() else None, self._keepDiscardedBoutsCheckbox.isChecked(), self._frameStepForDistanceCalculation.text()))
     layout.addWidget(self._launchBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     self._startPageBtn = QPushButton("Go to the start page")
     self._startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
@@ -1024,14 +1049,15 @@ class PopulationComparison(QWidget):
     self.setLayout(layout)
 
   @util.showInProgressPage('Parameters calculation')
-  def _populationComparison(self, TailTrackingParameters=0, saveInMatlabFormat=0, saveRawData=0, forcePandasRecreation=0, minNbBendForBoutDetect=3, discard=0, keep=1, frameStepForDistanceCalculation='4'):
+  def _populationComparison(self, TailTrackingParameters, saveInMatlabFormat, saveRawData, forcePandasRecreation, minNbBendForBoutDetect, keep, frameStepForDistanceCalculation):
     if len(frameStepForDistanceCalculation) == 0:
       frameStepForDistanceCalculation = '4'
 
-    if discard == 0 and keep == 0:
-      keep = 1
-
-    if len(minNbBendForBoutDetect) == 0:
+    gaussianFitOutlierRemoval = False
+    if minNbBendForBoutDetect is None:
+      minNbBendForBoutDetect = 0
+      gaussianFitOutlierRemoval = True
+    elif len(minNbBendForBoutDetect) == 0:
       minNbBendForBoutDetect = 3
 
     if len(self.controller.ZZoutputLocation) == 0:
@@ -1057,7 +1083,8 @@ class PopulationComparison(QWidget):
       'tailAngleKinematicParameterCalculation'    : TailTrackingParameters,
       'saveRawDataInAllBoutsSuperStructure'       : saveRawData,
       'saveAllBoutsSuperStructuresInMatlabFormat' : saveInMatlabFormat,
-      'frameStepForDistanceCalculation'           : frameStepForDistanceCalculation
+      'frameStepForDistanceCalculation'           : frameStepForDistanceCalculation,
+      'gaussianFitOutlierRemoval': gaussianFitOutlierRemoval,
     }
 
     generatePklDataFileForVideo(os.path.join(self.controller.experimentOrganizationExcelFileAndFolder, self.controller.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation)
@@ -1068,17 +1095,25 @@ class PopulationComparison(QWidget):
     nameOfFile = dataframeOptions['nameOfFile']
     resFolder  = dataframeOptions['resFolder']
 
-    # Mixing up all the bouts
-    populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 0, True)
+    outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic')
+    resultFolder = os.path.join(outputFolder, nameOfFile)
+    if os.path.exists(resultFolder):
+      shutil.rmtree(resultFolder)  # if the result folder exists, remove it manually, since populationComparaison only removes it if plotOutliersAndMean argument is True
 
-    allParameters, allData = populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 0, False)
+    outliersRemoved = gaussianFitOutlierRemoval or int(minNbBendForBoutDetect)
+    # Mixing up all the bouts
+    if not outliersRemoved:  # check if outliers are already removed from results
+      populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, 0, True)
+
+    allParameters, allData = populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, 0, False)
 
     # First median per well for each kinematic parameter
-    populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 1, True)
+    if not outliersRemoved:  # check if outliers are already removed from results
+      populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, 1, True)
 
-    medianParameters, medianData = populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 1, False)
+    medianParameters, medianData = populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, 1, False)
 
-    _showKinematicParametersVisualization((nameOfFile, allParameters, medianParameters, allData, medianData))
+    _showKinematicParametersVisualization((nameOfFile, allParameters, medianParameters, allData, medianData, outliersRemoved))
 
 
 def _showKinematicParametersVisualization(data=None):
@@ -1117,10 +1152,11 @@ class BoutClustering(QWidget):
 
     advancedOptionsLayout = QVBoxLayout()
     advancedOptionsLayout.addWidget(util.apply_style(QLabel("What's the minimum number of bends a bout should have to be taken into account for the analysis?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    advancedOptionsLayout.addWidget(util.apply_style(QLabel("(the default value is 3) (put 0 if you want all bends to be taken into account)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(util.apply_style(QLabel("(put 0 if you want all bends to be taken into account)", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     minNbBendForBoutDetect = QLineEdit(controller.window)
     minNbBendForBoutDetect.setValidator(QIntValidator(minNbBendForBoutDetect))
     minNbBendForBoutDetect.validator().setBottom(0)
+    minNbBendForBoutDetect.setText('3')
     advancedOptionsLayout.addWidget(minNbBendForBoutDetect, alignment=Qt.AlignmentFlag.AlignCenter)
 
     advancedOptionsLayout.addWidget(util.apply_style(QLabel("Optional: generate videos containing the most representative bouts for each cluster: enter below the number of bouts for each video:", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -1270,8 +1306,8 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
   def __init__(self, data):
     super().__init__()
     if data is None:
-      data = (None, [], [], [], [])
-    experimentName, allParameters, medianParameters, allData, medianData = data
+      data = (None, [], [], [], [], False)
+    experimentName, allParameters, medianParameters, allData, medianData, outliersRemoved = data
     self._allParameters = allParameters
     self._medianParameters = medianParameters
     self._allData = allData
@@ -1283,6 +1319,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._speed_related_figures = {}
     self._amplitude_related_figures = {}
     self._legends = []
+    self._outliersRemoved = outliersRemoved
 
     model = QFileSystemModel()
     model.setFilter(QDir.Filter.NoDotAndDotDot | QDir.Filter.Dirs)
@@ -1359,7 +1396,10 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     chartScalingLayout.addStretch(1)
     checkboxesLayout.addLayout(chartScalingLayout)
     plotOutliersAndMeanCheckbox = QCheckBox("Plot outliers and mean")
-    plotOutliersAndMeanCheckbox.setChecked(True)
+    if not self._outliersRemoved:
+      plotOutliersAndMeanCheckbox.setChecked(True)
+    else:
+      plotOutliersAndMeanCheckbox.setVisible(False)
     plotOutliersAndMeanCheckbox.toggled.connect(lambda checked: self._updateBoutOccurrenceTab(chartsScrollArea, checked))
     checkboxesLayout.addWidget(plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1409,7 +1449,10 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     chartScalingLayout.addStretch(1)
     checkboxesLayout.addLayout(chartScalingLayout)
     plotOutliersAndMeanCheckbox = QCheckBox("Plot outliers and mean")
-    plotOutliersAndMeanCheckbox.setChecked(True)
+    if not self._outliersRemoved:
+      plotOutliersAndMeanCheckbox.setChecked(True)
+    else:
+      plotOutliersAndMeanCheckbox.setVisible(False)
     plotOutliersAndMeanCheckbox.toggled.connect(lambda checked: self._updateSpeedRelatedTab(chartsScrollArea, checked))
     checkboxesLayout.addWidget(plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1460,7 +1503,10 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     chartScalingLayout.addStretch(1)
     checkboxesLayout.addLayout(chartScalingLayout)
     plotOutliersAndMeanCheckbox = QCheckBox("Plot outliers and mean")
-    plotOutliersAndMeanCheckbox.setChecked(True)
+    if not self._outliersRemoved:
+      plotOutliersAndMeanCheckbox.setChecked(True)
+    else:
+      plotOutliersAndMeanCheckbox.setVisible(False)
     plotOutliersAndMeanCheckbox.toggled.connect(lambda checked: self._updateAmplitudeRelatedTab(chartsScrollArea, checked))
     checkboxesLayout.addWidget(plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1592,7 +1638,10 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._medianPerWellRadioBtn.toggled.connect(lambda: self._update(visualizationOptionsChanged=True))
     checkboxesLayout.addWidget(self._medianPerWellRadioBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     self._plotOutliersAndMeanCheckbox = QCheckBox("Plot outliers and mean")
-    self._plotOutliersAndMeanCheckbox.setChecked(True)
+    if not self._outliersRemoved:
+      self._plotOutliersAndMeanCheckbox.setChecked(True)
+    else:
+      self._plotOutliersAndMeanCheckbox.setVisible(False)
     self._plotOutliersAndMeanCheckbox.toggled.connect(lambda: self._update(visualizationOptionsChanged=True))
     checkboxesLayout.addWidget(self._plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1757,6 +1806,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._medianData = pd.read_csv(medianPerWell) if medianPerWell.endswith('.csv') else pd.read_excel(medianPerWell)
     self._medianData = self._medianData.loc[:, ~self._medianData.columns.str.contains('^Unnamed')]
     self._medianParameters = [param for param in self._medianData.columns if param not in self._IGNORE_COLUMNS]
+    self._outliersRemoved = not os.path.exists(os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'allBoutsMixed', 'globalParametersInsideCategories_1.png'))  # if the charts with outliers don't exist, we can assume outliers were removed from the results
     self._recreateMainWidget()
 
   def _createChartsWidget(self, figures, scrollArea, data=None, plotOutliersAndMean=None):
