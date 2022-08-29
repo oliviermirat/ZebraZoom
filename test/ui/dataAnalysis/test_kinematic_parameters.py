@@ -583,9 +583,9 @@ def _test_minimum_number_of_bends_check_results():
   expectedResultsMedian['percentTimeSpentSwimming'] = groupedResults['Bout Duration (s)'].sum()['Bout Duration (s)'].div(expectedResultsMedian['videoDuration']).mul(100)
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
-  for folder in ('allBoutsMixed', 'medianPerWellFirst'):
+  for folder in ('allBoutsMixed', 'medianPerWellFirst'):  # no charts with outliers
     chartCount = 6 if folder == 'allBoutsMixed' else 7
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
+    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
 
@@ -641,9 +641,9 @@ def _test_keep_data_for_discarded_bouts_check_results():
   expectedResultsMedian['percentTimeSpentSwimming'] = groupedResults['Bout Duration (s)'].sum()['Bout Duration (s)'].div(expectedResultsMedian['videoDuration']).mul(100)
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
-  for folder in ('allBoutsMixed', 'medianPerWellFirst'):
+  for folder in ('allBoutsMixed', 'medianPerWellFirst'):  # no charts with outliers
     chartCount = 6 if folder == 'allBoutsMixed' else 7
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
+    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
 
@@ -688,11 +688,11 @@ def test_command_line(monkeypatch): # here we simply run the same experiments th
 
   # pathToExcelFile frameStepForDistanceCalculation minimumNumberOfBendsPerBout keepSpeedDistDurWhenLowNbBends thresholdInDegreesBetweenSfsAndTurns tailAngleKinematicParameterCalculation
   # saveRawDataInAllBoutsSuperStructure saveAllBoutsSuperStructuresInMatlabFormat forcePandasDfRecreation
-  test_kinematic_parameters_small_params = [experiment1, '4', '3', '0', '-1', '1', '0', '0']
-  test_basic_params = [experiment2, '4', '3', '0', '-1', '0', '0', '0']
-  test_force_recalculation_params = [experiment3, '4', '3', '0', '-1', '0', '0', '0', '1']
-  test_kinematic_parameters_large_params = [experiment2, '4', '3', '0', '-1', '1', '0', '1']
-  test_frames_for_distance_calculation_params = [experiment2, '1', '3', '0', '-1', '0', '0', '0']
+  test_kinematic_parameters_small_params = [experiment1, '4', '0', '0', '-1', '1', '0', '0']
+  test_basic_params = [experiment2, '4', '0', '0', '-1', '0', '0', '0']
+  test_force_recalculation_params = [experiment3, '4', '0', '0', '-1', '0', '0', '0', '1']
+  test_kinematic_parameters_large_params = [experiment2, '4', '0', '0', '-1', '1', '0', '1']
+  test_frames_for_distance_calculation_params = [experiment2, '1', '0', '0', '-1', '0', '0', '0']
   test_minimum_number_of_bends_params = [experiment2, '4', '12', '0', '-1', '1', '0', '0']
   test_keep_data_for_discarded_bouts_params = [experiment2, '4', '12', '1', '-1', '1', '0', '0']
 
