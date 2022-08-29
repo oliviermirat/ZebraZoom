@@ -1,5 +1,6 @@
 import math
 import os
+import shutil
 import sys
 import pickle
 import webbrowser
@@ -1094,17 +1095,25 @@ class PopulationComparison(QWidget):
     nameOfFile = dataframeOptions['nameOfFile']
     resFolder  = dataframeOptions['resFolder']
 
-    # Mixing up all the bouts
-    populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 0, True)
+    outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic')
+    resultFolder = os.path.join(outputFolder, nameOfFile)
+    if os.path.exists(resultFolder):
+      shutil.rmtree(resultFolder)  # if the result folder exists, remove it manually, since populationComparaison only removes it if plotOutliersAndMean argument is True
 
-    allParameters, allData = populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 0, False)
+    outliersRemoved = gaussianFitOutlierRemoval or int(minNbBendForBoutDetect)
+    # Mixing up all the bouts
+    if not outliersRemoved:  # check if outliers are already removed from results
+      populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, 0, True)
+
+    allParameters, allData = populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, 0, False)
 
     # First median per well for each kinematic parameter
-    populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 1, True)
+    if not outliersRemoved:  # check if outliers are already removed from results
+      populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, 1, True)
 
-    medianParameters, medianData = populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic'), 1, False)
+    medianParameters, medianData = populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, 1, False)
 
-    _showKinematicParametersVisualization((nameOfFile, allParameters, medianParameters, allData, medianData))
+    _showKinematicParametersVisualization((nameOfFile, allParameters, medianParameters, allData, medianData, outliersRemoved))
 
 
 def _showKinematicParametersVisualization(data=None):
@@ -1297,8 +1306,8 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
   def __init__(self, data):
     super().__init__()
     if data is None:
-      data = (None, [], [], [], [])
-    experimentName, allParameters, medianParameters, allData, medianData = data
+      data = (None, [], [], [], [], False)
+    experimentName, allParameters, medianParameters, allData, medianData, outliersRemoved = data
     self._allParameters = allParameters
     self._medianParameters = medianParameters
     self._allData = allData
@@ -1310,6 +1319,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._speed_related_figures = {}
     self._amplitude_related_figures = {}
     self._legends = []
+    self._outliersRemoved = outliersRemoved
 
     model = QFileSystemModel()
     model.setFilter(QDir.Filter.NoDotAndDotDot | QDir.Filter.Dirs)
@@ -1386,7 +1396,10 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     chartScalingLayout.addStretch(1)
     checkboxesLayout.addLayout(chartScalingLayout)
     plotOutliersAndMeanCheckbox = QCheckBox("Plot outliers and mean")
-    plotOutliersAndMeanCheckbox.setChecked(True)
+    if not self._outliersRemoved:
+      plotOutliersAndMeanCheckbox.setChecked(True)
+    else:
+      plotOutliersAndMeanCheckbox.setVisible(False)
     plotOutliersAndMeanCheckbox.toggled.connect(lambda checked: self._updateBoutOccurrenceTab(chartsScrollArea, checked))
     checkboxesLayout.addWidget(plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1436,7 +1449,10 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     chartScalingLayout.addStretch(1)
     checkboxesLayout.addLayout(chartScalingLayout)
     plotOutliersAndMeanCheckbox = QCheckBox("Plot outliers and mean")
-    plotOutliersAndMeanCheckbox.setChecked(True)
+    if not self._outliersRemoved:
+      plotOutliersAndMeanCheckbox.setChecked(True)
+    else:
+      plotOutliersAndMeanCheckbox.setVisible(False)
     plotOutliersAndMeanCheckbox.toggled.connect(lambda checked: self._updateSpeedRelatedTab(chartsScrollArea, checked))
     checkboxesLayout.addWidget(plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1487,7 +1503,10 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     chartScalingLayout.addStretch(1)
     checkboxesLayout.addLayout(chartScalingLayout)
     plotOutliersAndMeanCheckbox = QCheckBox("Plot outliers and mean")
-    plotOutliersAndMeanCheckbox.setChecked(True)
+    if not self._outliersRemoved:
+      plotOutliersAndMeanCheckbox.setChecked(True)
+    else:
+      plotOutliersAndMeanCheckbox.setVisible(False)
     plotOutliersAndMeanCheckbox.toggled.connect(lambda checked: self._updateAmplitudeRelatedTab(chartsScrollArea, checked))
     checkboxesLayout.addWidget(plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1619,7 +1638,10 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._medianPerWellRadioBtn.toggled.connect(lambda: self._update(visualizationOptionsChanged=True))
     checkboxesLayout.addWidget(self._medianPerWellRadioBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     self._plotOutliersAndMeanCheckbox = QCheckBox("Plot outliers and mean")
-    self._plotOutliersAndMeanCheckbox.setChecked(True)
+    if not self._outliersRemoved:
+      self._plotOutliersAndMeanCheckbox.setChecked(True)
+    else:
+      self._plotOutliersAndMeanCheckbox.setVisible(False)
     self._plotOutliersAndMeanCheckbox.toggled.connect(lambda: self._update(visualizationOptionsChanged=True))
     checkboxesLayout.addWidget(self._plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1784,6 +1806,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._medianData = pd.read_csv(medianPerWell) if medianPerWell.endswith('.csv') else pd.read_excel(medianPerWell)
     self._medianData = self._medianData.loc[:, ~self._medianData.columns.str.contains('^Unnamed')]
     self._medianParameters = [param for param in self._medianData.columns if param not in self._IGNORE_COLUMNS]
+    self._outliersRemoved = not os.path.exists(os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'allBoutsMixed', 'globalParametersInsideCategories_1.png'))  # if the charts with outliers don't exist, we can assume outliers were removed from the results
     self._recreateMainWidget()
 
   def _createChartsWidget(self, figures, scrollArea, data=None, plotOutliersAndMean=None):
