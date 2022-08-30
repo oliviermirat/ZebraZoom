@@ -334,7 +334,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   # Gaussian fit outlier removal
   if gaussianFitOutlierRemoval:
     columnsToCheck = [col for col in ('Bout Duration (s)', 'Bout Distance (mm)', 'Number of Oscillations', 'Max absolute TBA (deg.)', 'Absolute Yaw (deg)') if col in dfParam.columns]
-    dfParam.loc[(np.abs(scipy.stats.zscore(dfParam[columnsToCheck].astype(float), nan_policy='omit')) > 3).all(axis=1), ~dfParam.columns.isin(basicInformation)] = np.nan
+    dfParam.loc[(np.abs(scipy.stats.zscore(dfParam[columnsToCheck].astype(float), nan_policy='omit')) > 3).any(axis=1), ~dfParam.columns.isin(basicInformation)] = np.nan
 
   # Saving dataframe for the whole set of videos as a pickle file
   outfile = open(os.path.join(resFolder, nameOfFile + '.pkl'), 'wb')

@@ -7,6 +7,7 @@ import random
 
 import numpy as np
 import pandas as pd
+import scipy
 from pandas.testing import assert_frame_equal, assert_series_equal
 
 import pytest
@@ -672,6 +673,63 @@ def test_keep_data_for_discarded_bouts(qapp, qtbot):
   qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
 
   _test_keep_data_for_discarded_bouts_check_results()
+
+  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage))
+
+
+def _test_gaussian_outlier_removal():
+  outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Experiment 2')
+  dataFolder = os.path.join(paths.getDataAnalysisFolder(), 'data')
+  generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
+  generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
+  assert list(generatedExcelAll.columns) == [key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]
+  expectedResultsAll = pd.DataFrame(_EXPECTED_RESULTS).astype(generatedExcelAll.dtypes.to_dict())
+  colsToKeep = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
+  columnsToCheckForOutliers = ('Bout Duration (s)', 'Bout Distance (mm)', 'Number of Oscillations', 'Max absolute TBA (deg.)', 'Absolute Yaw (deg)')
+  expectedResultsAll.loc[(np.abs(scipy.stats.zscore(expectedResultsAll[columnsToCheck].astype(float), nan_policy='omit')) > 3).any(axis=1), ~expectedResultsAll.columns.isin(colsToKeep)] = np.nan
+  assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]])
+  generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
+  assert list(generatedExcelMedian.columns) == [key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]
+  expectedResultsMedian = expectedResultsAll.groupby(['Trial_ID', 'Well_ID'], as_index=False).median()
+  trialIds = {trialId: idx for idx, trialId in enumerate(_VIDEO_NAMES)}
+  expectedResultsMedian['Condition'] = [_CONDITIONS_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
+  expectedResultsMedian['Genotype'] = [_GENOTYPES_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
+  seen = set()
+  expectedResultsMedian['Trial_ID'] = [x if x not in seen and not seen.add(x) else np.nan for x in expectedResultsMedian['Trial_ID']]
+  assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
+  pickleFile = os.path.join(dataFolder, 'Experiment 2.pkl')
+  assert os.path.exists(pickleFile)
+  with open(pickleFile, 'rb') as f:
+    dataframe = pickle.load(f).astype(generatedExcelAll.dtypes.to_dict())
+  for col in (key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS):
+    assert_series_equal(expectedResultsAll[col], dataframe[col])
+
+  for folder in ('allBoutsMixed', 'medianPerWellFirst'):
+    chartCount = 6 if folder == 'allBoutsMixed' else 7
+    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
+    assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
+
+
+@pytest.mark.long
+def test_gaussian_outlier_removal(qapp, qtbot, monkeypatch):
+  createExcelPage = _goToCreateExcelPage(qapp, qtbot)
+  _selectExperiment(createExcelPage, qapp, qtbot, 'Experiment 2.xlsx')
+  qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod))
+  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison))
+
+  populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
+  _resetPopulationComparisonPageState(populationComparisonPage, qapp)
+  qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(populationComparisonPage._tailTrackingParametersCheckbox.isChecked)
+  qtbot.mouseClick(populationComparisonPage._gaussianOutlierRemovalButton, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(populationComparisonPage._gaussianOutlierRemovalButton.isChecked)
+  qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
+
+  _test_kinematic_parameters_small_check_results()
 
   qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage))
