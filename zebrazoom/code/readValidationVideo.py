@@ -7,7 +7,7 @@ import json
 import numpy as np
 
 from PyQt5.QtCore import Qt, QSize, QTimer
-from PyQt5.QtWidgets import QLabel, QSlider, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox, QLabel, QSlider, QVBoxLayout
 
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
@@ -50,6 +50,15 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   
   if hyperparameters["savePathToOriginalVideoForValidationVideo"]:
     videoPath = supstruct["pathToOriginalVideo"]
+    if not os.path.exists(videoPath):
+      app = QApplication.instance()
+      if QMessageBox.critical(app.window, "Video not found", "Cannot display the validation video because the video used to run the tracking can no longer be found. Would you like to update the video path stored in the results file?",
+                              buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, defaultButton=QMessageBox.StandardButton.Yes) != QMessageBox.StandardButton.Yes:
+        return
+      videoName, _ = QFileDialog.getOpenFileName(app.window, 'Select video', os.path.expanduser("~"))
+      videoPath = supstruct["pathToOriginalVideo"] = videoName
+      with open(resultsPath, 'w') as f:
+        json.dump(supstruct, f)
   else:
     if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] and os.path.exists(os.path.join(initialPath, os.path.join(s1, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi')))):
       # The "exist" check above is only to insure compatibility with videos tracked prior to this update
