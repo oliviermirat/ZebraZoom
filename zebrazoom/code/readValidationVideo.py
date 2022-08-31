@@ -71,6 +71,7 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   nx    = int(cap.get(3))
   ny    = int(cap.get(4))
   max_l = int(cap.get(7))
+  sliderRange = (supstruct["firstFrame"], supstruct["lastFrame"]) if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"] else (0, max_l -1)
 
   if not("firstFrame" in supstruct):
     supstruct["firstFrame"] = 1
@@ -148,6 +149,8 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
     lengthY = ny
 
   l = start - supstruct["firstFrame"] + 1 if start > 0 else 0
+  if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"]:
+    l += supstruct["firstFrame"]
 
   xOriginal = x
   yOriginal = y
@@ -191,15 +194,16 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
     if (numWell != -1):
       img = img[y:y+lengthY, x:x+lengthX]
 
+    frameNumber = l if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"] else (l + supstruct["firstFrame"])
     if lengthX > 100 and lengthY > 100:
       font = cv2.FONT_HERSHEY_SIMPLEX
-      cv2.putText(img,str(l + supstruct["firstFrame"]),(int(lengthX-110), int(lengthY-30)),font,1,(0,255,0))
+      cv2.putText(img,str(frameNumber),(int(lengthX-110), int(lengthY-30)),font,1,(0,255,0))
     else:
       blank_image = np.zeros((len(img)+30, len(img[0]), 3), np.uint8)
       blank_image[0:len(img), 0:len(img[0])] = img
       img = blank_image
       font = cv2.FONT_HERSHEY_SIMPLEX
-      cv2.putText(img, str(l + supstruct["firstFrame"]), (int(0), int(lengthY+25)), font, 1, (0,255,0))
+      cv2.putText(img, str(frameNumber), (int(0), int(lengthY+25)), font, 1, (0,255,0))
 
     return img
 
@@ -211,7 +215,7 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   frameSlider = QSlider(Qt.Orientation.Horizontal)
   frameSlider.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
   frameSlider.setPageStep(50)
-  frameSlider.setRange(0, max_l - 1)
+  frameSlider.setRange(*sliderRange)
   frameSlider.setValue(l)
   frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video))
   layout.addWidget(frameSlider)
