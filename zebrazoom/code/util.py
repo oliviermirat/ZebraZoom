@@ -623,7 +623,7 @@ def _chooseFrameLayout(cap, spinboxValues, title, titleStyle=None):
 
   return layout, video, frameSlider
 
-def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb, extraButtonInfo=None, titleStyle=None, additionalLayout=None):
+def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb, extraButtonInfo=None, titleStyle=None, additionalLayout=None, leftButtonInfo=None):
   cap = zzVideoReading.VideoCapture(videoPath)
   cap.set(1, 1)
   ret, frame = cap.read()
@@ -633,6 +633,11 @@ def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBt
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
+  if leftButtonInfo is not None:
+    text, cb = leftButtonInfo
+    leftBtn = QPushButton(text)
+    leftBtn.clicked.connect(cb)
+    buttonsLayout.addWidget(leftBtn)
   if app.configFileHistory:
     backBtn = QPushButton("Back")
     backBtn.setObjectName("back")
@@ -677,7 +682,7 @@ def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBt
     btn.clicked.connect(lambda: stackedLayout.removeWidget(page))
 
 
-def chooseEndPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb):
+def chooseEndPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb, leftButtonInfo=None):
   cap = zzVideoReading.VideoCapture(videoPath)
   maximum = cap.get(7) - 2
   while True:
@@ -690,6 +695,11 @@ def chooseEndPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb):
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()
+  if leftButtonInfo is not None:
+    text, cb = leftButtonInfo
+    leftBtn = QPushButton(text)
+    leftBtn.clicked.connect(cb)
+    buttonsLayout.addWidget(leftBtn)
   if app.configFileHistory:
     backBtn = QPushButton("Back")
     backBtn.setObjectName("back")

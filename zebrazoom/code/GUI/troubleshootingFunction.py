@@ -64,4 +64,6 @@ def chooseVideoToTroubleshootSplitVideo(self, controller):
   configFile = self.configFile.copy()
   # User input of beginning and end of subvideo
   util.chooseBeginningPage(self, self.videoToTroubleshootSplitVideo, "Choose where the beginning of your sub-video should be", "Ok, I want the sub-video to start at this frame!",
-                           lambda: util.chooseEndPage(self, self.videoToTroubleshootSplitVideo, "Choose where the sub-video should end.", "Ok, I want the sub-video to end at this frame!", beginningAndEndChosen),)
+                           lambda: util.chooseEndPage(self, self.videoToTroubleshootSplitVideo, "Choose where the sub-video should end.", "Ok, I want the sub-video to end at this frame!", beginningAndEndChosen,
+                                                      leftButtonInfo=("Go to the start page", lambda: setattr(self, 'configFile', configFile) or self.show_frame("StartPage"))),
+                           leftButtonInfo=("Go to the start page", lambda: self.show_frame("StartPage")))
