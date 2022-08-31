@@ -6,7 +6,7 @@ from zebrazoom.code.trackingFolder.eyeTracking.eyeTracking import eyeTracking
 from zebrazoom.code.trackingFolder.postProcessMultipleTrajectories import postProcessMultipleTrajectories
 from zebrazoom.code.trackingFolder.getImages import getImages
 from zebrazoom.code.trackingFolder.debugTracking import debugTracking
-from zebrazoom.code.adjustHyperparameters import adjustFreelySwimTrackingParams
+from zebrazoom.code.adjustHyperparameters import adjustFreelySwimTrackingParams, adjustFreelySwimTrackingAutoParams
 from zebrazoom.code.preprocessImage import preprocessImage
 import multiprocessing as mp
 from multiprocessing import Process
@@ -210,12 +210,37 @@ def fasterMultiprocessing2(videoPath, background, wellPositions, output, hyperpa
       if hyperparameters["detectMovementWithRawVideoInsideTracking"]:
         for numFish in range(0, hyperparameters["nbAnimalsPerWell"]):
           [auDessusPerAnimalIdList, previousFrames] = detectMovementWithRawVideoInsideTracking2(hyperparameters, trackingHeadTailAllAnimalsList, previousFrames, numFish, i, firstFrame, auDessusPerAnimalIdList, grey, wellPositions)
-      
-    # if hyperparameters["adjustFreelySwimTracking"] == 1:
-      # i, widgets = adjustFreelySwimTrackingParams(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, frame, frame2, hyperparameters, widgets)
-    # else:
 
-    i = i + 1
+    if hyperparameters["adjustFreelySwimTracking"]:
+      i, widgets = adjustFreelySwimTrackingParams(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimalsList[hyperparameters["onlyTrackThisOneWell"]], trackingHeadingAllAnimalsList[hyperparameters["onlyTrackThisOneWell"]], frame, frame, hyperparameters, widgets)
+    elif hyperparameters["adjustFreelySwimTrackingAutomaticParameters"]:
+      # Preparing image to show
+      if hyperparameters["recalculateForegroundImageBasedOnBodyArea"] and "minPixelDiffForBackExtractBody" in hyperparameters:
+        minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtractBody"]
+      else:
+        if hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] and "minPixelDiffForBackExtractHead" in hyperparameters:
+          minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtractHead"]
+          del hyperparameters["minPixelDiffForBackExtractHead"] # Not sure why this is necessary: need to check the code to make sure there isn't a bug somewhere
+        else:
+          minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtract"]
+      curFrame = initialCurFrame
+      putToWhite = (curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
+      curFrame[putToWhite] = 255
+      ret, frame2 = cv2.threshold(curFrame, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
+      # Showing current image and waiting for next parameter/frame change
+      i, widgets = adjustFreelySwimTrackingAutoParams(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimalsList[hyperparameters["onlyTrackThisOneWell"]], trackingHeadingAllAnimalsList[hyperparameters["onlyTrackThisOneWell"]], frame, frame2, hyperparameters, widgets)
+      # Puts hyperparameters values to accepted values
+      hyperparameters["recalculateForegroundImageBasedOnBodyArea"] = 0 if hyperparameters["recalculateForegroundImageBasedOnBodyArea"] < 0.5 else 1
+      if hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] < 0:
+        hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] = 0
+      if hyperparameters["minPixelDiffForBackExtract"] < 0:
+        hyperparameters["minPixelDiffForBackExtract"] = 0
+      else:
+        if hyperparameters["minPixelDiffForBackExtract"] > 255:
+          hyperparameters["minPixelDiffForBackExtract"] = 255
+      hyperparameters["minPixelDiffForBackExtract"] = int(hyperparameters["minPixelDiffForBackExtract"])
+    else:
+      i = i + 1
     
   for wellNumber in range(0 if hyperparameters["onlyTrackThisOneWell"] == -1 else hyperparameters["onlyTrackThisOneWell"], hyperparameters["nbWells"] if hyperparameters["onlyTrackThisOneWell"] == -1 else hyperparameters["onlyTrackThisOneWell"] + 1):
     

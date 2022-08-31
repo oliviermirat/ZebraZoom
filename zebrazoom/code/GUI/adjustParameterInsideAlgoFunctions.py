@@ -61,6 +61,8 @@ def detectBouts(self, controller, wellNumber, firstFrame, adjustOnWholeVideo, re
 
   initialFirstFrameValue, initialLastFrameValue = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrame, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
 
+  temporarilyRemovedParams = {param: configFile.pop(param, None) for param in ("fasterMultiprocessing", "useFirstFrameAsBackground", "updateBackgroundAtInterval", "detectMovementWithRawVideoInsideTracking")}
+
   configFile["noBoutsDetection"] = 0
   if "trackTail" in configFile:
     trackTailOriginalValue = configFile["trackTail"]
@@ -114,7 +116,9 @@ def detectBouts(self, controller, wellNumber, firstFrame, adjustOnWholeVideo, re
     configFile["freqAlgoPosFollow"] = freqAlgoPosFollowInitial
   
   configFile["reloadBackground"] = 0
-  
+
+  configFile.update({param: value for param, value in temporarilyRemovedParams.items() if value is not None})
+
   self.configFile = configFile
 
 
