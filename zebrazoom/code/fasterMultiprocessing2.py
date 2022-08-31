@@ -213,6 +213,7 @@ def fasterMultiprocessing2(videoPath, background, wellPositions, output, hyperpa
 
     if hyperparameters["adjustFreelySwimTracking"]:
       i, widgets = adjustFreelySwimTrackingParams(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimalsList[hyperparameters["onlyTrackThisOneWell"]], trackingHeadingAllAnimalsList[hyperparameters["onlyTrackThisOneWell"]], frame, frame, hyperparameters, widgets)
+      cap.set(1, i)
     elif hyperparameters["adjustFreelySwimTrackingAutomaticParameters"]:
       # Preparing image to show
       if hyperparameters["recalculateForegroundImageBasedOnBodyArea"] and "minPixelDiffForBackExtractBody" in hyperparameters:
@@ -229,6 +230,7 @@ def fasterMultiprocessing2(videoPath, background, wellPositions, output, hyperpa
       ret, frame2 = cv2.threshold(curFrame, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
       # Showing current image and waiting for next parameter/frame change
       i, widgets = adjustFreelySwimTrackingAutoParams(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimalsList[hyperparameters["onlyTrackThisOneWell"]], trackingHeadingAllAnimalsList[hyperparameters["onlyTrackThisOneWell"]], frame, frame2, hyperparameters, widgets)
+      cap.set(1, i)
       # Puts hyperparameters values to accepted values
       hyperparameters["recalculateForegroundImageBasedOnBodyArea"] = 0 if hyperparameters["recalculateForegroundImageBasedOnBodyArea"] < 0.5 else 1
       if hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] < 0:
