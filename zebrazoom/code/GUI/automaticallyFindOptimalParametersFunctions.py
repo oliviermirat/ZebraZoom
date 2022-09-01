@@ -40,9 +40,20 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
   
   initialHyperparameters = getHyperparametersSimple(initialConfigFile)
   initialHyperparameters["videoName"]      = videoName
-  wellPositions = findWells(os.path.join(pathToVideo, videoNameWithExt), initialHyperparameters)
-  if wellPositions is None:
+  initialConfigFile["exitAfterWellsDetection"] = 1
+  app = QApplication.instance()
+  app.wellPositions = wellPositions = []
+  try:
+    with app.busyCursor():
+      mainZZ(pathToVideo, videoName, videoExt, initialConfigFile, [])
+  except ValueError:
+    pass
+  finally:
+    del initialConfigFile["exitAfterWellsDetection"]
+    del app.wellPositions
+  if not wellPositions:
     return None
+  wellPositions = [dict(zip(('topLeftX', 'topLeftY', 'lengthX', 'lengthY'), values)) for idx, values in enumerate(wellPositions)]
 
   cap   = zzVideoReading.VideoCapture(videoPath)
   max_l = int(cap.get(7))
@@ -295,6 +306,7 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
   configFile["exitAfterBackgroundExtraction"] = 1
   configFile["debugExtractBack"]              = 1
   configFile["debugFindWells"]                = 1
+  configFile["reloadWellPositions"] = 1
   
   app = QApplication.instance()
   with app.busyCursor():
@@ -306,6 +318,7 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
   del configFile["exitAfterBackgroundExtraction"]
   del configFile["debugExtractBack"]
   del configFile["debugFindWells"]
+  del configFile["reloadWellPositions"]
 
   # Finding the frame with the most movement
   

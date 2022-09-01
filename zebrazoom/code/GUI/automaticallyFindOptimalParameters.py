@@ -203,7 +203,7 @@ def _automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, de
       configFile["coordinatesOnlyBoutDetection"] = 1
       configFile["noBoutsDetection"] = 0
       loop = QEventLoop()
-      util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, boutDetectionsOnly=True, nextCb=loop.exit)
+      util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, boutDetectionsOnly=True, nextCb=loop.exit, reloadWellPositions=True)
       loop.exec()
     util.addToHistory(controller.show_frame)("FinishConfig")
   else:  

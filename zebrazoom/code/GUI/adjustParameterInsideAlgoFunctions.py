@@ -323,13 +323,14 @@ def calculateBackground(self, controller, nbImagesForBackgroundCalculation, useN
   adjustParamInsideAlgoPage(useNext=useNext)
 
 
-def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False, useNext=True, nextCb=None):
+def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False, useNext=True, nextCb=None, reloadWellPositions=False):
 
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
 
   configFile["exitAfterBackgroundExtraction"] = 1
   configFile["debugExtractBack"]              = 1
   configFile["debugFindWells"]                = 1
+  configFile["reloadWellPositions"] = int(reloadWellPositions)
 
   if int(nbImagesForBackgroundCalculation):
     configFile["nbImagesForBackgroundCalculation"] = int(nbImagesForBackgroundCalculation)

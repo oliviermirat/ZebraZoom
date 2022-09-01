@@ -317,8 +317,8 @@ class ZebraZoomApp(PlainApplication):
     def calculateBackground(self, controller, nbImagesForBackgroundCalculation, useNext=True):
       adjustParameterInsideAlgoFunctions.calculateBackground(self, controller, nbImagesForBackgroundCalculation, useNext)
 
-    def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False, useNext=True, nextCb=None):
-      adjustParameterInsideAlgoFunctions.calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen, automaticParameters, boutDetectionsOnly, useNext, nextCb)
+    def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False, useNext=True, nextCb=None, reloadWellPositions=False):
+      adjustParameterInsideAlgoFunctions.calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen, automaticParameters, boutDetectionsOnly, useNext, nextCb, reloadWellPositions=reloadWellPositions)
 
     def goToAdvanceSettings(self, controller, yes, no):
       configFilePrepareFunctions.goToAdvanceSettings(self, controller, yes, no)
