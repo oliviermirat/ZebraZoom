@@ -224,7 +224,7 @@ def fasterMultiprocessing2(videoPath, background, wellPositions, output, hyperpa
           del hyperparameters["minPixelDiffForBackExtractHead"] # Not sure why this is necessary: need to check the code to make sure there isn't a bug somewhere
         else:
           minPixelDiffForBackExtract = hyperparameters["minPixelDiffForBackExtract"]
-      curFrame = initialCurFrame
+      curFrame = initialCurFrame.copy()
       putToWhite = (curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
       curFrame[putToWhite] = 255
       ret, frame2 = cv2.threshold(curFrame, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
