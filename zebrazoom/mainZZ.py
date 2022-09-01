@@ -110,34 +110,45 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
     outfile.close()
   else:
     # Creating output folder
-    if not(hyperparameters["reloadWellPositions"]) and not(hyperparameters["reloadBackground"]) and not(os.path.exists(os.path.join(outputFolderVideo, 'intermediaryWellPositionReloadNoMatterWhat.txt'))) and not os.path.exists(os.path.join(outputFolderVideo, 'rotationAngle.txt')) and not(hyperparameters["dontDeleteOutputFolderIfAlreadyExist"]):
+    if not hyperparameters["reloadWellPositions"] and not hyperparameters["reloadBackground"] and not hyperparameters["dontDeleteOutputFolderIfAlreadyExist"]:
+      filesToKeep = {'intermediaryWellPositionReloadNoMatterWhat.txt', 'rotationAngle.txt'}
+      filesToCopy = []
       if os.path.exists(outputFolderVideo):
-        if glob.glob(os.path.join(outputFolderVideo, 'results_*.txt')) and glob.glob(os.path.join(outputFolderVideo, '*.avi')):
+        if glob.glob(os.path.join(outputFolderVideo, 'results_*.txt')):
           pastNumbersTaken = 1
           while os.path.exists(outputFolderVideo + '_PastTracking_' + str(pastNumbersTaken)) and pastNumbersTaken < 99:
             pastNumbersTaken += 1
-          shutil.move(outputFolderVideo, outputFolderVideo + '_PastTracking_' + str(pastNumbersTaken))
+          movedFolderName = outputFolderVideo + '_PastTracking_' + str(pastNumbersTaken)
+          shutil.move(outputFolderVideo, movedFolderName)
+          for filename in os.listdir(movedFolderName):
+            if filename in filesToKeep:
+              filesToCopy.append(os.path.join(movedFolderName, filename))
         else:
-          shutil.rmtree(outputFolderVideo)
-      if hyperparameters["tryCreatingFolderUntilSuccess"]:
-        while True:
+          for filename in os.listdir(outputFolderVideo):
+            if filename not in filesToKeep:
+              os.remove(os.path.join(outputFolderVideo, filename))
+      if not os.path.exists(outputFolderVideo):
+        if hyperparameters["tryCreatingFolderUntilSuccess"]:
+          while True:
+            try:
+              os.mkdir(outputFolderVideo)
+              break
+            except OSError as e:
+              print("waiting inside except")
+              time.sleep(0.1)
+            else:
+              print("waiting")
+              time.sleep(0.1)
+        else:
           try:
             os.mkdir(outputFolderVideo)
-            break
           except OSError as e:
-            print("waiting inside except")
             time.sleep(0.1)
           else:
-            print("waiting")
             time.sleep(0.1)
-      else:
-        try:
-          os.mkdir(outputFolderVideo)
-        except OSError as e:
-          time.sleep(0.1)
-        else:
-          time.sleep(0.1)
-  
+      for filename in filesToCopy:
+        shutil.copy2(filename, outputFolderVideo)
+
   # Saving the configuration file used
   with open(os.path.join(outputFolderVideo, 'configUsed.json'), 'w') as outfile:
     json.dump(configFile, outfile)
