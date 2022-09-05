@@ -159,7 +159,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
     wellPositions = [{"topLeftX":0, "topLeftY":0, "lengthX": hyperparameters["videoWidth"], "lengthY": hyperparameters["videoHeight"]}]
   else:
     print("start find wells")
-    if hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"] and not hyperparameters["exitAfterBackgroundExtraction"]:
+    if hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"]:
       rotationAngleFile = os.path.join(outputFolderVideo, 'rotationAngle.txt')
       if os.path.exists(rotationAngleFile):
         with open(rotationAngleFile, 'rb') as f:
