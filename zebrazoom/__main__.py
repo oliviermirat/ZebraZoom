@@ -241,6 +241,58 @@ if __name__ == '__main__':
         from zebrazoom.otherScripts.launchReapplyClustering import launchReapplyClustering
         launchReapplyClustering()
 
+    elif sys.argv[1] == 'createSmallValidationVideosForFlagged':
+      import cv2
+      import json
+      import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+
+      resultFolderPath = sys.argv[2].rstrip(r'\/')
+      offset = int(sys.argv[3])
+      videoName = os.path.basename(resultFolderPath)
+      expectedResultsFile = os.path.join(resultFolderPath, 'results_%s.txt' % videoName)
+      if os.path.exists(expectedResultsFile):
+        resultsFile = expectedResultsFile
+      else:
+        if not os.path.exists(resultFolderPath):
+          raise ValueError('path %s does not exist' % resultFolderPath)
+        resultsFile = next((f for f in os.listdir(resultFolderPath) if os.path.isfile(os.path.join(resultFolderPath, f)) and f.startswith('results_')), None)
+        if resultsFile is None:
+          raise ValueError('folder %s does not contain the results file' % resultFolderPath)
+        resultsFile = os.path.join(resultFolderPath, resultsFile)
+      with open(resultsFile) as f:
+        supstruct = json.load(f)
+      wellPositions = [(max(well["topLeftX"], 0), max(well["topLeftY"], 0), well["lengthX"], well["lengthY"]) for well in supstruct["wellPositions"]]
+      flaggedBouts = [(wellIdx, animalIdx, boutIdx, bout["BoutStart"] - offset, bout["BoutEnd"] + offset) for wellIdx, well in enumerate(supstruct["wellPoissMouv"]) for animalIdx, animal in enumerate(well) for boutIdx, bout in enumerate(animal) if bout.get("flag", False)]
+
+      expectedVideoFile = os.path.join(resultFolderPath, '%s.avi' % videoName)
+      if os.path.exists(expectedVideoFile):
+        videoPath = expectedVideoFile
+      else:
+        videoFile = next((f for f in os.listdir(resultFolderPath) if os.path.isfile(os.path.join(resultFolderPath, f)) and f.endswith('.avi')), None)
+        if videoFile is None:
+          raise ValueError('folder %s does not contain the validation video' % resultFolderPath)
+        videoPath = os.path.join(resultFolderPath, videoFile)
+      cap = zzVideoReading.VideoCapture(videoPath)
+      if not cap.isOpened():
+        raise ValueError("could not open video file %s" % videoPath)
+
+      outputDirectory = os.path.join(resultFolderPath, 'flaggedBouts')
+      if not os.path.exists(outputDirectory):
+        os.mkdir(outputDirectory)
+      for subvideoIdx, (wellIdx, animalIdx, boutIdx, firstFrame, lastFrame) in enumerate(flaggedBouts):
+        frameIdx = max(0, firstFrame)
+        x, y, width, height = wellPositions[wellIdx]
+        writer = cv2.VideoWriter(os.path.join(outputDirectory, '%s_well%d_animal%d_bout%d.avi' % (videoName, wellIdx, animalIdx, boutIdx)), cv2.VideoWriter_fourcc('M','J','P','G'), 10, (width, height))
+        cap.set(1, frameIdx)
+        while cap.isOpened() and frameIdx < lastFrame:
+          frameIdx += 1
+          ret, frame = cap.read()
+          if not ret:
+            continue
+          writer.write(frame[y:y+height,x:x+width])
+        writer.release()
+      cap.release()
+      print('No flagged bouts found in the results.' if not flaggedBouts else 'Subvideos created in %s' % outputDirectory)
     elif sys.argv[1] == "--exit":
       from PyQt5.QtCore import QTimer
       QTimer.singleShot(0, app.window.close)
