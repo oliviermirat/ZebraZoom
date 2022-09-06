@@ -791,7 +791,7 @@ class ViewParameters(util.CollapsibleSplitter):
         mypath = os.path.join(self.controller.ZZoutputLocation, folder)
         if not os.path.exists(mypath):
           return None
-        resultsFile = next((f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f)) if f.startswith('results_')), None)
+        resultsFile = next((f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f)) and f.startswith('results_')), None)
         if resultsFile is None:
           return None
         return os.path.join(self.controller.ZZoutputLocation, os.path.join(folder, resultsFile))
@@ -1156,9 +1156,7 @@ class ViewParameters(util.CollapsibleSplitter):
             self.spinbox3.setValue(self.nbMouv - 1)
 
     def saveSuperStruct(self):
-        name = self.currentResultFolder
-
-        reference = os.path.join(self.controller.ZZoutputLocation, os.path.join(name, 'results_' + name + '.txt'))
+        reference = os.path.join(self._findResultsFile(self.currentResultFolder))
         print("reference:", reference)
 
         with open(reference,'w') as out:
