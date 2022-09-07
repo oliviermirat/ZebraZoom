@@ -943,6 +943,9 @@ class CreateExperimentOrganizationExcel(QWidget):
     path = self._tree.model().filePath(self._tree.selectionModel().currentIndex())
     self.controller.experimentOrganizationExcel = os.path.basename(path)
     self.controller.experimentOrganizationExcelFileAndFolder = os.path.dirname(path)
+    with open(os.path.join(self._table.model().videoPath(0), 'configUsed.json')) as f:
+      config = json.load(f)
+    self.controller.tailTrackingPerformed = config.get("trackTail", 1)
     self.controller.show_frame("ChooseDataAnalysisMethod")
 
 
@@ -1116,6 +1119,11 @@ class PopulationComparison(QWidget):
     medianParameters, medianData = populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, 1, False)
 
     _showKinematicParametersVisualization((nameOfFile, allParameters, medianParameters, allData, medianData, outliersRemoved))
+
+  def showEvent(self, evt):
+    if not evt.spontaneous():
+      self._tailTrackingParametersCheckbox.setChecked(self.controller.tailTrackingPerformed)
+    super().showEvent(evt)
 
 
 def _showKinematicParametersVisualization(data=None):
