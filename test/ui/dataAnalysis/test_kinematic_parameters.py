@@ -16,7 +16,7 @@ from PyQt5.QtCore import Qt, QPoint
 from PyQt5.QtWidgets import QMessageBox
 
 from zebrazoom.code import paths
-from zebrazoom.code.GUI.GUI_InitialClasses import StartPage
+from zebrazoom.code.GUI.GUI_InitialClasses import StartPage, ViewParameters
 from zebrazoom.code.GUI.dataAnalysisGUI import KinematicParametersVisualization, ChooseDataAnalysisMethod, CreateExperimentOrganizationExcel, PopulationComparison
 
 
@@ -65,6 +65,7 @@ _EXPECTED_RESULTS = {'Trial_ID': [],
                      'Bout Counts': [],
                      'Bout Rate (bouts / s)': [],}
 _MEDIAN_ONLY_KEYS = {'percentTimeSpentSwimming', 'Bout Counts', 'Bout Rate (bouts / s)'}
+_FIRST_BOUT_REMOVED_RESULTS = {key: [] for key in _MEDIAN_ONLY_KEYS}
 _ALL_ONLY_KEYS = {'NumBout', 'BoutStart', 'BoutEnd'}
 
 _VIDEO_NAMES = ['test%d' % idx for idx in range(1, 7)]
@@ -188,8 +189,11 @@ def _generateResults():
         _EXPECTED_RESULTS['secondBendAmpDividedByFirst'].append(degreeBendAmplitudes[1] / degreeBendAmplitudes[0])
         _EXPECTED_RESULTS['tailAngleIntegral'].append(sum(map(lambda x: abs(math.degrees(x)), angles)))
         _EXPECTED_RESULTS['percentTimeSpentSwimming'].append(100 * sum(boutDurations) / (lastFrame - firstFrame))
+        _FIRST_BOUT_REMOVED_RESULTS['percentTimeSpentSwimming'].append(100 * sum(boutDurations[1:]) / (lastFrame - firstFrame) if not videoIdx and not wellIdx else _EXPECTED_RESULTS['percentTimeSpentSwimming'][-1])
         _EXPECTED_RESULTS['Bout Counts'].append(numberOfBouts)
+        _FIRST_BOUT_REMOVED_RESULTS['Bout Counts'].append(numberOfBouts - 1 if not videoIdx and not wellIdx else _EXPECTED_RESULTS['Bout Counts'][-1])
         _EXPECTED_RESULTS['Bout Rate (bouts / s)'].append(numberOfBouts * fps / (lastFrame - firstFrame))
+        _FIRST_BOUT_REMOVED_RESULTS['Bout Rate (bouts / s)'].append((numberOfBouts - 1) * fps / (lastFrame - firstFrame) if not videoIdx and not wellIdx else _EXPECTED_RESULTS['Bout Rate (bouts / s)'][-1])
       wellPoissMouv.append([wellBouts])
     results['wellPoissMouv'] = wellPoissMouv
     resultsList.append(results)
@@ -271,13 +275,13 @@ def _createExperimentOrganizationExcel(createExcelPage, qapp, qtbot, monkeypatch
 
 
 def _resetPopulationComparisonPageState(page, qapp):  # this is required because the page is persisted as long as the app is running
-  for checkable in (page._tailTrackingParametersCheckbox, page._saveInMatlabFormatCheckbox, page._saveRawDataCheckbox,
+  for checkable in (page._keepDiscardedBoutsCheckbox, page._saveInMatlabFormatCheckbox, page._saveRawDataCheckbox,
                     page._forcePandasRecreation, page._advancedOptionsExpander._toggleButton):
     checkable.setChecked(False)
   page._frameStepForDistanceCalculation.setText('')
   page._minNbBendForBoutDetect.setText('')
-  page._keepDiscardedBoutsCheckbox.setChecked(False)
   page._noOutlierRemovalButton.setChecked(True)
+  page._tailTrackingParametersCheckbox.setChecked(True)
   qapp.processEvents()
 
 
@@ -331,8 +335,6 @@ def test_kinematic_parameters_small(qapp, qtbot, monkeypatch):
   qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison))
 
   populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-  qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._tailTrackingParametersCheckbox.isChecked)
   qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
 
@@ -342,12 +344,12 @@ def test_kinematic_parameters_small(qapp, qtbot, monkeypatch):
   qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage))
 
 
-def _test_basic_check_results():
+def _test_basic_check_results(expectedResults=_EXPECTED_RESULTS):
   outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Experiment 2')
   generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
   generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
   assert list(generatedExcelAll.columns) == [key for key in _DEFAULT_KEYS if key not in _MEDIAN_ONLY_KEYS]
-  expectedResultsAll = pd.DataFrame(_EXPECTED_RESULTS).astype(generatedExcelAll.dtypes.to_dict())
+  expectedResultsAll = pd.DataFrame(expectedResults).astype(generatedExcelAll.dtypes.to_dict())
   assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _DEFAULT_KEYS if key not in _MEDIAN_ONLY_KEYS]])
   generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
   assert list(generatedExcelMedian.columns) == [key for key in _DEFAULT_KEYS if key not in _ALL_ONLY_KEYS]
@@ -384,6 +386,8 @@ def test_basic(qapp, qtbot, monkeypatch):
 
   populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
   _resetPopulationComparisonPageState(populationComparisonPage, qapp)
+  qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: not populationComparisonPage._tailTrackingParametersCheckbox.isChecked())
   qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
 
@@ -408,6 +412,8 @@ def test_force_recalculation(qapp, qtbot, monkeypatch):
 
   populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
   _resetPopulationComparisonPageState(populationComparisonPage, qapp)
+  qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: not populationComparisonPage._tailTrackingParametersCheckbox.isChecked())
   qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
 
@@ -485,8 +491,6 @@ def test_kinematic_parameters_large(qapp, qtbot):
   _resetPopulationComparisonPageState(populationComparisonPage, qapp)
   qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked)
-  qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._tailTrackingParametersCheckbox.isChecked)
   qtbot.mouseClick(populationComparisonPage._saveInMatlabFormatCheckbox, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(populationComparisonPage._saveInMatlabFormatCheckbox.isChecked)
   qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
@@ -544,6 +548,8 @@ def test_frames_for_distance_calculation(qapp, qtbot):
 
   populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
   _resetPopulationComparisonPageState(populationComparisonPage, qapp)
+  qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: not populationComparisonPage._tailTrackingParametersCheckbox.isChecked())
   qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked)
   qtbot.mouseClick(populationComparisonPage._frameStepForDistanceCalculation, Qt.MouseButton.LeftButton)
@@ -606,8 +612,6 @@ def test_minimum_number_of_bends(qapp, qtbot):
   qtbot.waitUntil(populationComparisonPage._bendsOutlierRemovalButton.isChecked)
   qtbot.mouseClick(populationComparisonPage._minNbBendForBoutDetect, Qt.MouseButton.LeftButton)
   qtbot.keyClicks(populationComparisonPage._minNbBendForBoutDetect, '12')
-  qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._tailTrackingParametersCheckbox.isChecked)
   qtbot.waitUntil(lambda: populationComparisonPage._minNbBendForBoutDetect.text() == '12')
 
   qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
@@ -660,8 +664,6 @@ def test_keep_data_for_discarded_bouts(qapp, qtbot):
   _resetPopulationComparisonPageState(populationComparisonPage, qapp)
   qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked)
-  qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._tailTrackingParametersCheckbox.isChecked)
   qtbot.mouseClick(populationComparisonPage._bendsOutlierRemovalButton, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(populationComparisonPage._bendsOutlierRemovalButton.isChecked)
   qtbot.mouseClick(populationComparisonPage._keepDiscardedBoutsCheckbox, Qt.MouseButton.LeftButton)
@@ -722,8 +724,6 @@ def test_gaussian_outlier_removal(qapp, qtbot, monkeypatch):
 
   populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
   _resetPopulationComparisonPageState(populationComparisonPage, qapp)
-  qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._tailTrackingParametersCheckbox.isChecked)
   qtbot.mouseClick(populationComparisonPage._gaussianOutlierRemovalButton, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(populationComparisonPage._gaussianOutlierRemovalButton.isChecked)
   qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
@@ -731,6 +731,86 @@ def test_gaussian_outlier_removal(qapp, qtbot, monkeypatch):
 
   _test_kinematic_parameters_small_check_results()
 
+  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage))
+
+
+def _goToVisualizationPage(qapp, qtbot):
+  startPage = qapp.window.centralWidget().layout().currentWidget()
+  assert isinstance(startPage, StartPage)
+  circle = list(startPage._flowchart.iterCircleRects())[-2]
+  qtbot.mouseMove(startPage, pos=QPoint(circle.x() + circle.width() // 2, circle.y() + circle.height()))
+  qtbot.waitUntil(lambda: startPage._shownDetail is startPage._detailsWidgets[-2])
+  qtbot.mouseClick(startPage._shownDetail._visualizeOutputBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ViewParameters))
+  viewParametersPage = qapp.window.centralWidget().layout().currentWidget()
+  qapp.processEvents()
+  assert viewParametersPage._tree.selectedIndexes() == []
+  return viewParametersPage
+
+
+@pytest.mark.long
+def test_flagged_bouts(qapp, qtbot, monkeypatch):
+  viewParametersPage = _goToVisualizationPage(qapp, qtbot)
+
+  # Select the first test result folder
+  resultsIndex = viewParametersPage._tree.model().mapFromSource(viewParametersPage._tree.model().sourceModel().index(os.path.join(viewParametersPage._tree.model().sourceModel().rootPath(), 'test1'))).siblingAtColumn(0)
+  qtbot.mouseClick(viewParametersPage._tree.viewport(), Qt.MouseButton.LeftButton, pos=viewParametersPage._tree.visualRect(resultsIndex).center())
+  qapp.processEvents()
+  qtbot.waitUntil(lambda: [index.row() for index in viewParametersPage._tree.selectedIndexes()] == [resultsIndex.row()])
+
+  # Flag the first bout and save the changes
+  assert viewParametersPage.flag_movement_btn.text() == 'Flag Movement'
+  qtbot.mouseClick(viewParametersPage.flag_movement_btn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(viewParametersPage.superstruct_btn.isVisible)
+  qtbot.mouseClick(viewParametersPage.superstruct_btn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: not viewParametersPage.superstruct_btn.isVisible())
+
+  # Go back to the start page
+  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage))
+
+  createExcelPage = _goToCreateExcelPage(qapp, qtbot)
+  _selectExperiment(createExcelPage, qapp, qtbot, 'Experiment 2.xlsx')
+  qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod))
+  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison))
+
+  populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
+  _resetPopulationComparisonPageState(populationComparisonPage, qapp)
+  qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: not populationComparisonPage._tailTrackingParametersCheckbox.isChecked())
+  qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked)
+  qtbot.mouseClick(populationComparisonPage._forcePandasRecreation, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(populationComparisonPage._forcePandasRecreation.isChecked)
+  qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
+
+  expectedResults = _EXPECTED_RESULTS.copy()
+  expectedResults.update(_FIRST_BOUT_REMOVED_RESULTS)
+  _test_basic_check_results(expectedResults={param: values[1:] for param, values in expectedResults.items()})
+
+  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage))
+
+  viewParametersPage = _goToVisualizationPage(qapp, qtbot)
+
+  # Select the first test result folder
+  resultsIndex = viewParametersPage._tree.model().mapFromSource(viewParametersPage._tree.model().sourceModel().index(os.path.join(viewParametersPage._tree.model().sourceModel().rootPath(), 'test1'))).siblingAtColumn(0)
+  qtbot.mouseClick(viewParametersPage._tree.viewport(), Qt.MouseButton.LeftButton, pos=viewParametersPage._tree.visualRect(resultsIndex).center())
+  qapp.processEvents()
+  qtbot.waitUntil(lambda: [index.row() for index in viewParametersPage._tree.selectedIndexes()] == [resultsIndex.row()])
+
+  # Unflag the first bout so it doesn't mess with later tests and save the changes
+  assert viewParametersPage.flag_movement_btn.text() == 'UnFlag Movement'
+  qtbot.mouseClick(viewParametersPage.flag_movement_btn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(viewParametersPage.superstruct_btn.isVisible)
+  qtbot.mouseClick(viewParametersPage.superstruct_btn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: not viewParametersPage.superstruct_btn.isVisible())
+
+  # Go back to the start page
   qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage))
 

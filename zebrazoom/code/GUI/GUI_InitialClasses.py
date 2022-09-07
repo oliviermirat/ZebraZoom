@@ -169,15 +169,15 @@ class _VisualizationDetails(QFrame):
 
     app = QApplication.instance()
     layout = QVBoxLayout()
-    visualizeOutputBtn = util.apply_style(QPushButton("Visualize tracking results", self), background_color=util.LIGHT_YELLOW)
-    visualizeOutputBtn.clicked.connect(lambda: app.showViewParameters())
-    layout.addWidget(visualizeOutputBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._visualizeOutputBtn = util.apply_style(QPushButton("Visualize tracking results", self), background_color=util.LIGHT_YELLOW)
+    self._visualizeOutputBtn.clicked.connect(lambda: app.showViewParameters())
+    layout.addWidget(self._visualizeOutputBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     label = QLabel('Make sure that the tracking results are good enough. If they are not, adjust/optimize the configuration file you used.')
     label.setWordWrap(True)
     layout.addWidget(label, alignment=Qt.AlignmentFlag.AlignCenter)
-    enhanceOutputBtn = util.apply_style(QPushButton("Enhance ZebraZoom's output", self), background_color=util.LIGHT_YELLOW)
-    enhanceOutputBtn.clicked.connect(lambda: app.show_frame("EnhanceZZOutput"))
-    layout.addWidget(enhanceOutputBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._enhanceOutputBtn = util.apply_style(QPushButton("Enhance ZebraZoom's output", self), background_color=util.LIGHT_YELLOW)
+    self._enhanceOutputBtn.clicked.connect(lambda: app.show_frame("EnhanceZZOutput"))
+    layout.addWidget(self._enhanceOutputBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     self.setLayout(layout)
 
 
@@ -722,9 +722,9 @@ class ViewParameters(util.CollapsibleSplitter):
         kine_btn.clicked.connect(lambda: checkConsistencyOfParameters([self.currentResultFolder]))
         layout.addWidget(kine_btn, 10, 2, Qt.AlignmentFlag.AlignCenter)
 
-        startPageBtn = QPushButton("Go to the start page", self)
-        startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-        layout.addWidget(startPageBtn, 10, 1, Qt.AlignmentFlag.AlignCenter)
+        self._startPageBtn = QPushButton("Go to the start page", self)
+        self._startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+        layout.addWidget(self._startPageBtn, 10, 1, Qt.AlignmentFlag.AlignCenter)
 
         def _updateConfigWidgets():
           if controller.configFile:  # page shown while testing config
@@ -770,8 +770,8 @@ class ViewParameters(util.CollapsibleSplitter):
         centralWidget.setLayout(layout)
         self.addWidget(tree)
         self._centralWidget = wrapperWidget = QWidget()
-        wrapperWidget.showChildren = lambda: [child.show() for child in centralWidget.findChildren(QWidget) if child is not startPageBtn]
-        wrapperWidget.hideChildren = lambda: [child.hide() for child in centralWidget.findChildren(QWidget) if child is not startPageBtn]
+        wrapperWidget.showChildren = lambda: [child.show() for child in centralWidget.findChildren(QWidget) if child is not self._startPageBtn]
+        wrapperWidget.hideChildren = lambda: [child.hide() for child in centralWidget.findChildren(QWidget) if child is not self._startPageBtn]
         wrapperLayout = QHBoxLayout()
         wrapperLayout.addWidget(centralWidget, alignment=Qt.AlignmentFlag.AlignCenter)
         wrapperWidget.setLayout(wrapperLayout)
