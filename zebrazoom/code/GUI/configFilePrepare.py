@@ -1168,10 +1168,10 @@ class NumberOfAnimals2(QWidget):
     btnGroup5 = QButtonGroup(self)
     recommendedTrackingMethodRadioButton = QRadioButton("Original algorithm:\nSlow tracking, but thoroughly tested, might be more accurate in some cases.", self)
     btnGroup5.addButton(recommendedTrackingMethodRadioButton)
-    recommendedTrackingMethodRadioButton.setChecked(True)
     layout.addWidget(recommendedTrackingMethodRadioButton, 4, 1, Qt.AlignmentFlag.AlignLeft)
     alternativeTrackingMethodRadioButton = QRadioButton("New algorithm:\nMuch faster tracking, but not thoroughly tested yet.", self)
     btnGroup5.addButton(alternativeTrackingMethodRadioButton)
+    alternativeTrackingMethodRadioButton.setChecked(True)
     layout.addWidget(alternativeTrackingMethodRadioButton, 5, 1, Qt.AlignmentFlag.AlignLeft)
     # layout.addWidget(util.apply_style(QLabel("The alternative method can also work better for animals of different sizes.", self), font=QFont("Helvetica", 10)), 6, 1, Qt.AlignmentFlag.AlignCenter)
 
