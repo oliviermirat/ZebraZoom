@@ -953,22 +953,21 @@ class ChooseDataAnalysisMethod(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
-    self.preferredSize = (1152, 768)
 
     layout = QVBoxLayout()
-    layout.addWidget(util.apply_style(QLabel("Choose the analysis you want to perform:"), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignBottom, stretch=0.5)
+    layout.addWidget(util.apply_style(QLabel("Choose the analysis you want to perform:"), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(QLabel("Warning: all the bouts flagged on the visualization page will be excluded from the analysis"), alignment=Qt.AlignmentFlag.AlignCenter)
 
     self._compareBtn = util.apply_style(QPushButton("Compare populations with kinematic parameters"), background_color=util.DEFAULT_BUTTON_COLOR)
     self._compareBtn.clicked.connect(lambda: controller.show_frame("PopulationComparison"))
-    layout.addWidget(self._compareBtn, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
+    layout.addWidget(self._compareBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     self._clusterBtn = util.apply_style(QPushButton("Cluster bouts of movements  (for zebrafish only)"), background_color=util.DEFAULT_BUTTON_COLOR)
     self._clusterBtn.clicked.connect(lambda: controller.show_frame("BoutClustering"))
-    layout.addWidget(self._clusterBtn, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
+    layout.addWidget(self._clusterBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     self._startPageBtn = QPushButton("Go to the start page")
     self._startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
+    layout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     self.setLayout(layout)
 
