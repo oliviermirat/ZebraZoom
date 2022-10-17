@@ -33,6 +33,7 @@ setup(
     "xlrd>=2.0.1",
     "seaborn",
     "PyQt5>=5.15.0",
+    "xlwt",
   ],
   packages=setuptools.find_packages(),
   data_files=[
