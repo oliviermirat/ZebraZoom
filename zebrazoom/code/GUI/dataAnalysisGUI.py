@@ -12,8 +12,8 @@ import seaborn as sns
 from matplotlib.figure import Figure
 from matplotlib.backends.backend_qtagg import FigureCanvas
 
-from PyQt5.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QEvent, QItemSelectionModel, QModelIndex, QObject, QPoint, QPointF, QRect, QRectF, QSize, QSizeF, QSortFilterProxyModel, QStringListModel, QUrl
-from PyQt5.QtGui import QColor, QDesktopServices, QFont, QFontMetrics, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
+from PyQt5.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QEvent, QItemSelectionModel, QModelIndex, QObject, QPoint, QPointF, QRect, QRectF, QRegularExpression, QSize, QSizeF, QSortFilterProxyModel, QStringListModel, QUrl
+from PyQt5.QtGui import QColor, QDesktopServices, QFont, QFontMetrics, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QRegularExpressionValidator, QTransform
 from PyQt5.QtWidgets import QAction, QAbstractItemView, QApplication, QComboBox, QCompleter, QDialog, QDialogButtonBox, QDoubleSpinBox, QFileDialog, QFileSystemModel, QFrame, QFormLayout, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QListView, QMessageBox, QSpacerItem, QTabWidget, QTextEdit, QToolButton, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QTableView, QToolTip, QTreeView
 PYQT6 = False
 
@@ -580,6 +580,7 @@ class CreateExperimentOrganizationExcel(QWidget):
     videoDetailsLayout.addWidget(pixelSizeDialogButton, 1, 2, alignment=Qt.AlignmentFlag.AlignLeft)
     videoDetailsLayout.addWidget(QLabel("Condition:"), 2, 0, alignment=Qt.AlignmentFlag.AlignLeft)
     self._conditionLineEdit = QLineEdit()
+    self._conditionLineEdit.setValidator(QRegularExpressionValidator(QRegularExpression('^[^\[\],]*$')))
     conditionCompleter = QCompleter()
     conditionCompleter.setModel(QStringListModel())
     conditionCompleter.setCompletionMode(QCompleter.CompletionMode.UnfilteredPopupCompletion)
@@ -588,6 +589,7 @@ class CreateExperimentOrganizationExcel(QWidget):
     videoDetailsLayout.addWidget(self._conditionLineEdit, 2, 1, alignment=Qt.AlignmentFlag.AlignLeft)
     videoDetailsLayout.addWidget(QLabel("Genotype:"), 3, 0, alignment=Qt.AlignmentFlag.AlignLeft)
     self._genotypeLineEdit = QLineEdit()
+    self._genotypeLineEdit.setValidator(QRegularExpressionValidator(QRegularExpression('^[^\[\],]*$')))
     genotypeCompleter = QCompleter()
     genotypeCompleter.setModel(QStringListModel())
     genotypeCompleter.setCompletionMode(QCompleter.CompletionMode.UnfilteredPopupCompletion)
