@@ -344,6 +344,93 @@ def test_kinematic_parameters_small(qapp, qtbot, monkeypatch):
   qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage))
 
 
+def _enterChar(qapp, qtbot, widget, text):
+  for _ in range(10):
+    qtbot.keyClick(widget, Qt.Key.Key_Delete)
+  qtbot.keyClick(widget, text)
+  qtbot.keyClick(widget, Qt.Key.Key_Return)
+  qapp.processEvents()
+
+
+def test_visualization_filters(qapp, qtbot, monkeypatch):
+  # Generate results files
+  allBoutsFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Test Experiment', 'allBoutsMixed')
+  os.makedirs(allBoutsFolder)
+  medianFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Test Experiment', 'medianPerWellFirst')
+  os.makedirs(medianFolder)
+  columns = ['Bout Speed (mm/s)', 'Number of Oscillations', 'maxTailAngleAmplitude']
+  ignoredKeys = [key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS | set(columns)]
+  medianData = pd.DataFrame(index=pd.MultiIndex.from_product([[0, 1]] * len(columns), names=columns)).reset_index()
+  rowCount = 2 ** len(columns)
+  for key in ignoredKeys:
+    if key == 'Bout Duration (s)' or key == 'Trial_ID':
+      continue
+    medianData.insert(len(medianData.columns), key, 1)
+  medianData.insert(0, 'Bout Duration (s)', 1)
+  medianData.insert(0, 'Trial_ID', ['trial%d' % idx for idx in range(rowCount)])
+  medianData.to_excel(os.path.join(medianFolder, 'globalParametersInsideCategories.xlsx'), index=False)
+  pd.DataFrame().to_excel(os.path.join(allBoutsFolder, 'globalParametersInsideCategories.xlsx'), index=False)
+
+  # Go to previous results page and select test results
+  qtbot.mouseClick(_goToCreateExcelPage(qapp, qtbot)._previousParameterResultsBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: not isinstance(qapp.window.centralWidget().layout().currentWidget(), CreateExperimentOrganizationExcel))
+  resultsPage = qapp.window.centralWidget().layout().currentWidget()
+  assert resultsPage._tree.selectedIndexes() == []
+  resultsIndex = resultsPage._tree.model().mapFromSource(resultsPage._tree.model().sourceModel().index(os.path.join(resultsPage._tree.model().sourceModel().rootPath(), 'Test Experiment'))).siblingAtColumn(0)
+  qtbot.mouseClick(resultsPage._tree.viewport(), Qt.MouseButton.LeftButton, pos=resultsPage._tree.visualRect(resultsIndex).center())
+  qapp.processEvents()  # this needs to be called at various places to make sure the charts are redrawn
+  qtbot.waitUntil(lambda: [index.row() for index in resultsPage._tree.selectedIndexes()] == [resultsIndex.row()])
+
+  # Go to All parameters tab
+  tabBar = resultsPage._mainWidget.layout().itemAt(1).widget().tabBar()
+  qtbot.mouseClick(tabBar, Qt.MouseButton.LeftButton, pos=tabBar.tabRect(4).center())
+  qtbot.waitUntil(lambda: tabBar.currentIndex() == 4)
+
+  # Prepare test function
+  expectedTrialIds = None
+
+  originalMethod = resultsPage._plotFigure
+  def _plotFigure(param, figure, data, plotOutliersAndMean):
+    assert expectedTrialIds is not None
+    assert expectedTrialIds == set(data['Trial_ID'])
+    originalMethod(param, figure, data, plotOutliersAndMean)
+  monkeypatch.setattr(resultsPage, '_plotFigure', _plotFigure)
+
+  # Add and modify some filters
+  assert not resultsPage._filters
+  qtbot.mouseClick(resultsPage._addFilterBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: len(resultsPage._filters) == 1)
+  qapp.processEvents()
+  filter0 = resultsPage._filters[0]
+  _enterChar(qapp, qtbot, filter0._minimumSpinbox, '1')
+  expectedTrialIds = {'trial%d' % idx for idx in range(rowCount)}
+  _enterChar(qapp, qtbot, filter0._maximumSpinbox, '1')
+  expectedTrialIds = {'trial%d' % idx for idx in range(rowCount // 2, rowCount)}
+  _enterChar(qapp, qtbot, filter0._nameComboBox, columns[0][0])
+  expectedTrialIds = {'trial%d' % idx for idx in range(1, rowCount, 2)}
+  _enterChar(qapp, qtbot, filter0._nameComboBox, columns[-1][0])
+
+  qtbot.mouseClick(resultsPage._addFilterBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: len(resultsPage._filters) == 2)
+  qapp.processEvents()
+  filter1 = resultsPage._filters[1]
+  _enterChar(qapp, qtbot, filter1._maximumSpinbox, '1')
+  _enterChar(qapp, qtbot, filter1._minimumSpinbox, '1')
+  expectedTrialIds = {'trial%d' % idx for idx in range(rowCount // 2 + 1, rowCount, 2)}
+  _enterChar(qapp, qtbot, filter1._nameComboBox, columns[0][0])
+
+  # Remove filters
+  expectedTrialIds = {'trial%d' % idx for idx in range(rowCount // 2, rowCount)}
+  qtbot.mouseClick(filter0._removeBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: len(resultsPage._filters) == 1)
+  qapp.processEvents()
+
+  expectedTrialIds = {'trial%d' % idx for idx in range(rowCount)}
+  qtbot.mouseClick(filter1._removeBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: not resultsPage._filters)
+  qapp.processEvents()
+
+
 def _test_basic_check_results(expectedResults=_EXPECTED_RESULTS):
   outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Experiment 2')
   generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))

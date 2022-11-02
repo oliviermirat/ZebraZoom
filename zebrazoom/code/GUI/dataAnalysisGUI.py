@@ -632,9 +632,9 @@ class CreateExperimentOrganizationExcel(QWidget):
     startPageBtn = QPushButton("Go to the start page")
     startPageBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: controller.show_frame("StartPage")))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    previousParameterResultsBtn = util.apply_style(QPushButton("View previous kinematic parameter analysis results"), background_color=util.LIGHT_YELLOW)
-    previousParameterResultsBtn.clicked.connect(lambda: _showKinematicParametersVisualization())
-    buttonsLayout.addWidget(previousParameterResultsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._previousParameterResultsBtn = util.apply_style(QPushButton("View previous kinematic parameter analysis results"), background_color=util.LIGHT_YELLOW)
+    self._previousParameterResultsBtn.clicked.connect(lambda: _showKinematicParametersVisualization())
+    buttonsLayout.addWidget(self._previousParameterResultsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     previousClusteringResultsBtn = util.apply_style(QPushButton("View previous clustering analysis results"), background_color=util.LIGHT_YELLOW)
     previousClusteringResultsBtn.clicked.connect(lambda: controller.show_frame("AnalysisOutputFolderClustering"))
     buttonsLayout.addWidget(previousClusteringResultsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -1274,9 +1274,9 @@ class _ParameterFilter(QWidget):
     self._maximumSpinbox.valueChanged.connect(self.changed.emit)
     self._maximumSpinbox.setMinimumWidth(self._maximumSpinbox.minimumSizeHint().width() // 2)
     layout.addWidget(self._maximumSpinbox, 1, 3, Qt.AlignmentFlag.AlignLeft)
-    removeBtn = QPushButton('Remove')
-    removeBtn.clicked.connect(removeCallback)
-    layout.addWidget(removeBtn, 1, 4, Qt.AlignmentFlag.AlignLeft)
+    self._removeBtn = QPushButton('Remove')
+    self._removeBtn.clicked.connect(removeCallback)
+    layout.addWidget(self._removeBtn, 1, 4, Qt.AlignmentFlag.AlignLeft)
     self.setLayout(layout)
 
   def updateParams(self, params):
@@ -1660,7 +1660,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._selectAllCheckbox = util.apply_style(QCheckBox('Select all'), font_weight='bold')
     self._selectAllCheckbox.stateChanged.connect(self._checkOrUncheckAll)
     checkboxesLayout.addWidget(self._selectAllCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
-    precheckedParams = {'Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Numer of Oscillations', 'meanTBF', 'maxTailAngleAmplitude',
+    precheckedParams = {'Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Number of Oscillations', 'meanTBF', 'maxTailAngleAmplitude',
                         'BoutDuration', 'TotalDistance', 'Speed', 'NumberOfOscillations', 'meanTBF', 'maxTailAngleAmplitude'}  # keep the old names for compatibility
     for param in self._allParameters + self._medianParameters:
       if param in self._paramCheckboxes:
@@ -1674,9 +1674,9 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
 
     filtersLayout = QHBoxLayout()
     filtersLayout.addWidget(util.apply_style(QLabel("Filters"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
-    addFilterBtn = QPushButton("Add new")
-    addFilterBtn.clicked.connect(self._addFilter)
-    filtersLayout.addWidget(addFilterBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._addFilterBtn = QPushButton("Add new")
+    self._addFilterBtn.clicked.connect(self._addFilter)
+    filtersLayout.addWidget(self._addFilterBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     filtersLayout.addStretch()
     checkboxesLayout.addLayout(filtersLayout)
 
@@ -1832,7 +1832,8 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       data = data.query(' & '.join('`%s` >= %s & `%s` <= %s' % (fltr.name(), fltr.minimum(), fltr.name(), fltr.maximum()) for fltr in self._filters))
     if not len(data.index):
       scrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
-      return QLabel("No data found, try adjusting the filters.")
+      scrollArea.setWidget(QLabel("No data found, try adjusting the filters."))
+      return
     chartsLayout = QGridLayout()
     chartsWidget = QWidget()
     chartsWidget.setLayout(chartsLayout)
