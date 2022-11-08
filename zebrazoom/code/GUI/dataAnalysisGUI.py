@@ -1323,6 +1323,8 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._medianParameters = medianParameters
     self._allData = allData
     self._medianData = medianData
+    genotypes = medianData["Genotype"].unique().tolist() if medianData else []
+    self._palette = dict(zip(genotypes, sns.color_palette(n_colors=len(genotypes))))
     self._chartScaleFactor = 1
     self._filters = []
     self._figures = {}
@@ -1816,6 +1818,8 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._allParameters = [param for param in self._allData.columns if param not in self._IGNORE_COLUMNS]
     self._medianData = pd.read_csv(medianPerWell) if medianPerWell.endswith('.csv') else pd.read_excel(medianPerWell)
     self._medianData = self._medianData.loc[:, ~self._medianData.columns.str.contains('^Unnamed')]
+    genotypes = self._medianData["Genotype"].unique().tolist()
+    self._palette = dict(zip(genotypes, sns.color_palette(n_colors=len(genotypes))))
     self._medianParameters = [param for param in self._medianData.columns if param not in self._IGNORE_COLUMNS]
     self._outliersRemoved = not os.path.exists(os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'allBoutsMixed', 'globalParametersInsideCategories_1.png'))  # if the charts with outliers don't exist, we can assume outliers were removed from the results
     self._recreateMainWidget()
@@ -1864,7 +1868,8 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
 
   def _plotFigure(self, param, figure, data, plotOutliersAndMean):
     ax = figure.add_subplot(111)
-    b = sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean)
+    b = sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean,
+                    palette=self._palette, hue_order=self._palette.keys())
     b.set_ylabel('', fontsize=0)
     b.set_xlabel('', fontsize=0)
 
