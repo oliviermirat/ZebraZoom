@@ -1317,13 +1317,13 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
   def __init__(self, data):
     super().__init__()
     if data is None:
-      data = (None, [], [], [], [], False)
+      data = (None, [], [], [], None, False)
     experimentName, allParameters, medianParameters, allData, medianData, outliersRemoved = data
     self._allParameters = allParameters
     self._medianParameters = medianParameters
     self._allData = allData
-    self._medianData = medianData
-    genotypes = medianData["Genotype"].unique().tolist() if medianData else []
+    self._medianData = medianData if medianData is not None else []
+    genotypes = medianData["Genotype"].unique().tolist() if medianData is not None else []
     self._palette = dict(zip(genotypes, sns.color_palette(n_colors=len(genotypes))))
     self._chartScaleFactor = 1
     self._filters = []
