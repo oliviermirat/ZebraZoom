@@ -89,72 +89,74 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
       
     cap.set(1, k)
     ret, frame = cap.read()
+    
+    if ret:
+      
+      xtop  = wellPositions[wellNumber]['topLeftX']
+      ytop  = wellPositions[wellNumber]['topLeftY']
+      lenX  = wellPositions[wellNumber]['lengthX']
+      lenY  = wellPositions[wellNumber]['lengthY']
+      frame = frame[ytop:ytop+lenY, xtop:xtop+lenX]
 
-    xtop  = wellPositions[wellNumber]['topLeftX']
-    ytop  = wellPositions[wellNumber]['topLeftY']
-    lenX  = wellPositions[wellNumber]['lengthX']
-    lenY  = wellPositions[wellNumber]['lengthY']
-    frame = frame[ytop:ytop+lenY, xtop:xtop+lenX]
-
-    def callback():
-      nonlocal k
-      k -= backCalculationStep
-    oldk = k
-    if data[k//backCalculationStep] is None:
-      headCoordinates = list(util.getPoint(frame, "Click on the center of the head of one animal" if zebrafishToTrack else "Click on the center of mass of an animal",
-                                           backBtnCb=callback, zoomable=True))
-    else:
-      headCoordinates = data[k//backCalculationStep]["headCoordinates"]
-    if oldk != k:
-      if k >= 0:
-        continue
-      elif initialHyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"] or initialHyperparameters["multipleROIsDefinedDuringExecution"]:
-        return getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack)
+      def callback():
+        nonlocal k
+        k -= backCalculationStep
+      oldk = k
+      if data[k//backCalculationStep] is None:
+        headCoordinates = list(util.getPoint(frame, "Click on the center of the head of one animal" if zebrafishToTrack else "Click on the center of mass of an animal",
+                                             backBtnCb=callback, zoomable=True))
       else:
-        QApplication.instance().configFileHistory[-2]()
+        headCoordinates = data[k//backCalculationStep]["headCoordinates"]
+      if oldk != k:
+        if k >= 0:
+          continue
+        elif initialHyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"] or initialHyperparameters["multipleROIsDefinedDuringExecution"]:
+          return getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack)
+        else:
+          QApplication.instance().configFileHistory[-2]()
+          return None
+      frame2 = cv2.circle(frame, tuple(headCoordinates), 2, (0, 0, 255), -1)
+
+      goToOptimize = False
+      def callback2(video):
+        nonlocal goToOptimize
+        goToOptimize = True
+      extraButtons = (('I want to manually adjust tracking parameters', callback2, True, None),) if k == firstK else ()
+      tailTipCoordinates = list(util.getPoint(frame2, "Click on the tip of the tail of the same animal" if zebrafishToTrack else "Click on a point on the border of the same animal",
+                                backBtnCb=callback, zoomable=True, extraButtons=extraButtons))
+      if goToOptimize:
+        # TODO: add calculations here
+        util.addToHistory(controller.optimizeConfigFile)()
         return None
-    frame2 = cv2.circle(frame, tuple(headCoordinates), 2, (0, 0, 255), -1)
 
-    goToOptimize = False
-    def callback2(video):
-      nonlocal goToOptimize
-      goToOptimize = True
-    extraButtons = (('I want to manually adjust tracking parameters', callback2, True, None),) if k == firstK else ()
-    tailTipCoordinates = list(util.getPoint(frame2, "Click on the tip of the tail of the same animal" if zebrafishToTrack else "Click on a point on the border of the same animal",
-                              backBtnCb=callback, zoomable=True, extraButtons=extraButtons))
-    if goToOptimize:
-      # TODO: add calculations here
-      util.addToHistory(controller.optimizeConfigFile)()
-      return None
+      if oldk != k:
+        k = oldk
+        if data[k//backCalculationStep] is not None:
+          data[k//backCalculationStep] = None
+        continue
 
-    if oldk != k:
-      k = oldk
-      if data[k//backCalculationStep] is not None:
-        data[k//backCalculationStep] = None
-      continue
+      if True: # Centered on the animal
+        minX = min(headCoordinates[0], tailTipCoordinates[0])
+        maxX = max(headCoordinates[0], tailTipCoordinates[0])
+        minY = min(headCoordinates[1], tailTipCoordinates[1])
+        maxY = max(headCoordinates[1], tailTipCoordinates[1])
+        lengthX = maxX - minX
+        lengthY = maxY - minY
+        
+        widdeningFactor = 2
+        minX = minX - int(widdeningFactor * lengthX)
+        maxX = maxX + int(widdeningFactor * lengthX)
+        minY = minY - int(widdeningFactor * lengthY)
+        maxY = maxY + int(widdeningFactor * lengthY)
+        
+        oneWellManuallyChosenTopLeft     = [minX, minY]
+        oneWellManuallyChosenBottomRight = [maxX, maxY]
+      else: # Focused on the initial well
+        oneWellManuallyChosenTopLeft     = [xtop, ytop]
+        oneWellManuallyChosenBottomRight = [xtop + lenX, ytop + lenY]
 
-    if True: # Centered on the animal
-      minX = min(headCoordinates[0], tailTipCoordinates[0])
-      maxX = max(headCoordinates[0], tailTipCoordinates[0])
-      minY = min(headCoordinates[1], tailTipCoordinates[1])
-      maxY = max(headCoordinates[1], tailTipCoordinates[1])
-      lengthX = maxX - minX
-      lengthY = maxY - minY
-      
-      widdeningFactor = 2
-      minX = minX - int(widdeningFactor * lengthX)
-      maxX = maxX + int(widdeningFactor * lengthX)
-      minY = minY - int(widdeningFactor * lengthY)
-      maxY = maxY + int(widdeningFactor * lengthY)
-      
-      oneWellManuallyChosenTopLeft     = [minX, minY]
-      oneWellManuallyChosenBottomRight = [maxX, maxY]
-    else: # Focused on the initial well
-      oneWellManuallyChosenTopLeft     = [xtop, ytop]
-      oneWellManuallyChosenBottomRight = [xtop + lenX, ytop + lenY]
-
-    data[k//backCalculationStep] = {"image": frame, "headCoordinates": headCoordinates, "tailTipCoordinates": tailTipCoordinates, "oneWellManuallyChosenTopLeft": oneWellManuallyChosenTopLeft, "oneWellManuallyChosenBottomRight": oneWellManuallyChosenBottomRight, "frameNumber": k, "wellNumber": wellNumber}
-    k += backCalculationStep
+      data[k//backCalculationStep] = {"image": frame, "headCoordinates": headCoordinates, "tailTipCoordinates": tailTipCoordinates, "oneWellManuallyChosenTopLeft": oneWellManuallyChosenTopLeft, "oneWellManuallyChosenBottomRight": oneWellManuallyChosenBottomRight, "frameNumber": k, "wellNumber": wellNumber}
+      k += backCalculationStep
 
   if saveIntermediary:
     toSave    = [initialConfigFile, videoPath, data, wellPositions, pathToVideo, videoNameWithExt, videoName, videoExt, zebrafishToTrack]
