@@ -1851,7 +1851,10 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     applyFilters = data is None
     data = data if data is not None else self._medianData if self._medianPerWellRadioBtn.isChecked() else self._allData
     if applyFilters and self._filters:
-      data = data.query(' & '.join('`%s` >= %s & `%s` <= %s' % (fltr.name(), fltr.minimum(), fltr.name(), fltr.maximum()) for fltr in self._filters))
+      problematicNames = {fltr.name() for fltr in self._filters if '#' in fltr.name()}  # there are other potentially problematic characters, but the only one used in our names is #
+      oldNames = data.columns.tolist()
+      temporaryNames = [name if name not in problematicNames else name.replace('#', '') for name in oldNames]
+      data = pd.DataFrame(pd.DataFrame(data.values, columns=temporaryNames).query(' & '.join('`%s` >= %s & `%s` <= %s' % (fltr.name().replace('#', ''), fltr.minimum(), fltr.name().replace('#', ''), fltr.maximum()) for fltr in self._filters)).values, columns=oldNames)
     if not len(data.index):
       scrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
       scrollArea.setWidget(QLabel("No data found, try adjusting the filters."))
