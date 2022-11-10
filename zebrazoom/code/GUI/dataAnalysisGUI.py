@@ -1631,11 +1631,22 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
 
   def _initializeAllParametersTabLayout(self, widget):
     layout = QHBoxLayout()
+    sideLayout = QVBoxLayout()
+
+    legendWidget = QFrame()
+    dummy = QScrollArea()
+    legendWidget.setFrameShadow(dummy.frameShadow())
+    legendWidget.setFrameShape(dummy.frameShape())
+    legendWidget.setFrameStyle(dummy.frameStyle())
+    legendWidget.setStyleSheet(dummy.viewport().styleSheet())
+    legendWidget.setAutoFillBackground(True)
+    legendLayout = QVBoxLayout()
+    legendLayout.addWidget(util.apply_style(QLabel("Legend"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
+    legendLayout.addWidget(self._legends[-1], alignment=Qt.AlignmentFlag.AlignLeft)
+    legendWidget.setLayout(legendLayout)
+    sideLayout.addWidget(legendWidget)
+
     self._checkboxesLayout = checkboxesLayout = QVBoxLayout()
-
-    checkboxesLayout.addWidget(util.apply_style(QLabel("Legend"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
-    checkboxesLayout.addWidget(self._legends[-1], alignment=Qt.AlignmentFlag.AlignLeft)
-
     checkboxesLayout.addWidget(util.apply_style(QLabel("Visualization options"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
     chartScalingLayout = QHBoxLayout()
     chartScalingLayout.addWidget(QLabel('Chart size'), alignment=Qt.AlignmentFlag.AlignLeft)
@@ -1695,7 +1706,8 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     checkboxesScrollArea = QScrollArea()
     checkboxesScrollArea.setWidgetResizable(True)
     checkboxesScrollArea.setWidget(checkboxesWidget)
-    layout.addWidget(checkboxesScrollArea)
+    sideLayout.addWidget(checkboxesScrollArea, stretch=1)
+    layout.addLayout(sideLayout)
 
     self._chartsScrollArea = QScrollArea()
     layout.addWidget(self._chartsScrollArea, stretch=1)
