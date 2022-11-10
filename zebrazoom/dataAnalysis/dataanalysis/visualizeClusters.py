@@ -406,7 +406,7 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
     for plotOutliersAndMean in [0, 1]:
       globParam1 = ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Number of Oscillations', 'meanTBF', 'maxTailAngleAmplitude']
       globParam2 = ['Max TBF (Hz)', 'Mean TBF (Hz)', 'medianOfInstantaneousTBF', 'Max absolute TBA (deg.)', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)']
-      globParam3 = ['Absolute Yaw (deg)', 'TBA#1 timing (deg)', 'TBA#1 Amplitude (deg)', 'IBI (s)', 'xmean', 'ymean']
+      globParam3 = ['Absolute Yaw (deg)', 'TBA#1 timing (s)', 'TBA#1 Amplitude (deg)', 'IBI (s)', 'xmean', 'ymean']
       globParam4 = ['binaryClass25degMaxTailAngle', 'BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst']
       
       for idxGlobParam, globParam in enumerate([globParam1, globParam2, globParam3, globParam4]):
@@ -429,7 +429,7 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
     
     globParam1 = ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Number of Oscillations', 'meanTBF', 'maxTailAngleAmplitude']
     globParam2 = ['Max TBF (Hz)', 'Mean TBF (Hz)', 'medianOfInstantaneousTBF', 'Max absolute TBA (deg.)', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)']
-    globParam3 = ['Absolute Yaw (deg)', 'TBA#1 timing (deg)', 'TBA#1 Amplitude (deg)', 'IBI (s)', 'xmean', 'ymean']
+    globParam3 = ['Absolute Yaw (deg)', 'TBA#1 timing (s)', 'TBA#1 Amplitude (deg)', 'IBI (s)', 'xmean', 'ymean']
     globParam4 = ['binaryClass25degMaxTailAngle', 'BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst']
     
     for calculateKinematicParametersPerFish in [True, False]:

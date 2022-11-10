@@ -48,7 +48,7 @@ _EXPECTED_RESULTS = {'Trial_ID': [],
                      'maxTailAngleAmplitude': [],
                      'Absolute Yaw (deg)': [],
                      'Signed Yaw (deg)': [],
-                     'TBA#1 timing (deg)': [],
+                     'TBA#1 timing (s)': [],
                      'TBA#1 Amplitude (deg)': [],
                      'firstBendAmplitudeSigned': [],
                      'IBI (s)': [],
@@ -176,7 +176,7 @@ def _generateResults():
         _EXPECTED_RESULTS['maxTailAngleAmplitude'].append(max(map(lambda x: math.degrees(abs(x)), angles)))
         _EXPECTED_RESULTS['Absolute Yaw (deg)'].append(math.degrees(math.atan(yMove / xMove)))
         _EXPECTED_RESULTS['Signed Yaw (deg)'].append(-math.degrees(math.atan(yMove / xMove)))
-        _EXPECTED_RESULTS['TBA#1 timing (deg)'].append(bendTimings[0] / fps)
+        _EXPECTED_RESULTS['TBA#1 timing (s)'].append(bendTimings[0] / fps)
         _EXPECTED_RESULTS['TBA#1 Amplitude (deg)'].append(abs(degreeBendAmplitudes[0]))
         _EXPECTED_RESULTS['firstBendAmplitudeSigned'].append(degreeBendAmplitudes[0])
         _EXPECTED_RESULTS['IBI (s)'].append((startFrame - (boutStartFrames[boutIdx-1] + boutDurations[boutIdx-1] - 1 if boutIdx else 0)) / fps)

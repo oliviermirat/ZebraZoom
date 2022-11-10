@@ -1311,7 +1311,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
   _CHART_SIZE = QSize(464, 348)
   _BOUT_OCCURRENCE_PARAMS = ['Bout Rate (bouts / s)', 'IBI (s)', 'Bout Counts']
   _SPEED_RELATED_PARAMS = ['Bout Distance (mm)', 'Bout Duration (s)', 'Bout Speed (mm/s)', 'Number of Oscillations', 'Max TBF (Hz)', 'Mean TBF (Hz)']
-  _AMPLITUDE_RELATED_PARAMS = ['Max absolute TBA (deg.)', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)', 'TBA#1 Amplitude (deg)', 'TBA#1 timing (deg)', 'Absolute Yaw (deg)', 'Signed Yaw (deg)']
+  _AMPLITUDE_RELATED_PARAMS = ['Max absolute TBA (deg.)', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)', 'TBA#1 Amplitude (deg)', 'TBA#1 timing (s)', 'Absolute Yaw (deg)', 'Signed Yaw (deg)']
 
 
   def __init__(self, data):
@@ -1491,11 +1491,13 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._updateFns[1] = lambda: self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), clearFigures=True)
 
   def _updateAmplitudeRelatedTab(self, chartsScrollArea, plotOutliersAndMean, clearFigures=False):
+    # handle deprecated parameter name
+    amplitude_related_params = [param if param != 'TBA#1 timing (s)' or param in self._medianParameters else 'TBA#1 timing (deg)' for param in self._AMPLITUDE_RELATED_PARAMS]
     if clearFigures:
       for figuresDict in self._amplitude_related_figures.values():
-        for param in self._AMPLITUDE_RELATED_PARAMS:
+        for param in amplitude_related_params:
           figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
-    figures = [(param, self._amplitude_related_figures[plotOutliersAndMean][param]) for param in self._AMPLITUDE_RELATED_PARAMS]
+    figures = [(param, self._amplitude_related_figures[plotOutliersAndMean][param]) for param in amplitude_related_params]
     for figure in self._amplitude_related_figures[not plotOutliersAndMean].values():
       figure.hide()
       figure.setParent(None)

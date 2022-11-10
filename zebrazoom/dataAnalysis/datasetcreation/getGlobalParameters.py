@@ -245,7 +245,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
-    elif parameterToCalculate == 'TBA#1 timing (deg)':
+    elif parameterToCalculate == 'TBA#1 timing (s)':
     
       if "Bend_Timing" in curbout and type(curbout["Bend_Timing"]) == list and len(curbout["Bend_Timing"]):
         firstBendTime = curbout["Bend_Timing"][0] / fps

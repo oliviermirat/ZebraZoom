@@ -97,7 +97,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   basicInformation = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration']
   # Global parameters
   if tailAngleKinematicParameterCalculation:
-    globParam  = ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Max TBF (Hz)', 'Mean TBF (Hz)', 'medianOfInstantaneousTBF', 'Max absolute TBA (deg.)', 'maxBendAmplitudeSigned', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)', 'medianBendAmplitudeSigned', 'Number of Oscillations', 'meanTBF', 'maxTailAngleAmplitude', 'Absolute Yaw (deg)', 'Signed Yaw (deg)', 'TBA#1 timing (deg)', 'TBA#1 Amplitude (deg)', 'firstBendAmplitudeSigned', 'IBI (s)', 'xmean', 'ymean', 'binaryClass25degMaxTailAngle', 'tailAngleIntegralSigned', 'BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral', 'maxInstantaneousSpeed']
+    globParam  = ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Max TBF (Hz)', 'Mean TBF (Hz)', 'medianOfInstantaneousTBF', 'Max absolute TBA (deg.)', 'maxBendAmplitudeSigned', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)', 'medianBendAmplitudeSigned', 'Number of Oscillations', 'meanTBF', 'maxTailAngleAmplitude', 'Absolute Yaw (deg)', 'Signed Yaw (deg)', 'TBA#1 timing (s)', 'TBA#1 Amplitude (deg)', 'firstBendAmplitudeSigned', 'IBI (s)', 'xmean', 'ymean', 'binaryClass25degMaxTailAngle', 'tailAngleIntegralSigned', 'BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral', 'maxInstantaneousSpeed']
   else:
     globParam  = ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)']
   
