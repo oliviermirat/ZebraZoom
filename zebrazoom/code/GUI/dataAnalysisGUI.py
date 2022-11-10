@@ -1333,6 +1333,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._amplitude_related_figures = {}
     self._legends = []
     self._outliersRemoved = outliersRemoved
+    self._tabs = None
 
     model = QFileSystemModel()
     model.setFilter(QDir.Filter.NoDotAndDotDot | QDir.Filter.Dirs)
@@ -1380,7 +1381,11 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     fltr.setParent(None)
     self._update(clearFigures=True)
 
-  def _updateBoutOccurrenceTab(self, chartsScrollArea, plotOutliersAndMean):
+  def _updateBoutOccurrenceTab(self, chartsScrollArea, plotOutliersAndMean, clearFigures=False):
+    if clearFigures:
+      for figuresDict in self._bout_occurrence_figures.values():
+        for param in self._BOUT_OCCURRENCE_PARAMS:
+          figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
     figures = [(param, self._bout_occurrence_figures[plotOutliersAndMean][param]) for param in self._BOUT_OCCURRENCE_PARAMS]
     for figure in self._bout_occurrence_figures[not plotOutliersAndMean].values():
       figure.hide()
@@ -1424,16 +1429,17 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     checkboxesScrollArea.setWidget(checkboxesWidget)
     layout.addWidget(checkboxesScrollArea)
 
-    for figuresDict in self._bout_occurrence_figures.values():
-      for param in self._BOUT_OCCURRENCE_PARAMS:
-        figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
-
     chartsScrollArea = QScrollArea()
     layout.addWidget(chartsScrollArea, stretch=1)
     widget.setLayout(layout)
-    self._updateBoutOccurrenceTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked())
+    self._updateBoutOccurrenceTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), clearFigures=True)
+    self._updateFns[0] = lambda: self._updateBoutOccurrenceTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), clearFigures=True)
 
-  def _updateSpeedRelatedTab(self, chartsScrollArea, plotOutliersAndMean):
+  def _updateSpeedRelatedTab(self, chartsScrollArea, plotOutliersAndMean, clearFigures=False):
+    if clearFigures:
+      for figuresDict in self._speed_related_figures.values():
+        for param in self._SPEED_RELATED_PARAMS:
+          figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
     figures = [(param, self._speed_related_figures[plotOutliersAndMean][param]) for param in self._SPEED_RELATED_PARAMS]
     for figure in self._speed_related_figures[not plotOutliersAndMean].values():
       figure.hide()
@@ -1477,17 +1483,18 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     checkboxesScrollArea.setWidget(checkboxesWidget)
     layout.addWidget(checkboxesScrollArea)
 
-    for figuresDict in self._speed_related_figures.values():
-      for param in self._SPEED_RELATED_PARAMS:
-        figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
-
     chartsScrollArea = QScrollArea()
     layout.addWidget(chartsScrollArea, stretch=1)
     widget.setLayout(layout)
     chartsScrollArea.show()
-    self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked())
+    self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), clearFigures=True)
+    self._updateFns[1] = lambda: self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), clearFigures=True)
 
-  def _updateAmplitudeRelatedTab(self, chartsScrollArea, plotOutliersAndMean):
+  def _updateAmplitudeRelatedTab(self, chartsScrollArea, plotOutliersAndMean, clearFigures=False):
+    if clearFigures:
+      for figuresDict in self._amplitude_related_figures.values():
+        for param in self._AMPLITUDE_RELATED_PARAMS:
+          figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
     figures = [(param, self._amplitude_related_figures[plotOutliersAndMean][param]) for param in self._AMPLITUDE_RELATED_PARAMS]
     for figure in self._amplitude_related_figures[not plotOutliersAndMean].values():
       figure.hide()
@@ -1531,15 +1538,12 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     checkboxesScrollArea.setWidget(checkboxesWidget)
     layout.addWidget(checkboxesScrollArea)
 
-    for figuresDict in self._amplitude_related_figures.values():
-      for param in self._AMPLITUDE_RELATED_PARAMS:
-        figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
-
     chartsScrollArea = QScrollArea()
     layout.addWidget(chartsScrollArea, stretch=1)
     widget.setLayout(layout)
     chartsScrollArea.show()
-    self._updateAmplitudeRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked())
+    self._updateAmplitudeRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), clearFigures=True)
+    self._updateFns[2] = lambda: self._updateAmplitudeRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), clearFigures=True)
 
   def _pieChartFormatter(self, pct, allvals):
     return "{:d}\n({:.2f}%)".format(int(round(pct / 100. * sum(allvals))), pct)
@@ -1621,6 +1625,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     widget.setLayout(layout)
     chartsScrollArea.show()
     self._createBoutTypeCharts(chartsScrollArea, legend)
+    self._updateFns[3] = lambda: self._createBoutTypeCharts(chartsScrollArea, legend)
 
   def _initializeAllParametersTabLayout(self, widget):
     layout = QHBoxLayout()
@@ -1694,10 +1699,20 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     layout.addWidget(self._chartsScrollArea, stretch=1)
     widget.setLayout(layout)
     self._chartsScrollArea.show()
-    self._update(visualizationOptionsChanged=True)
 
-  def _recreateMainWidget(self):
+    self._update(visualizationOptionsChanged=True)
+    self._updateFns[4] = lambda: self._update(visualizationOptionsChanged=True, clearFigures=True)
+
+  def _recreateMainWidget(self, reuseExisting=False):
     app = QApplication.instance()
+    if reuseExisting:
+      for idx, updateFn in zip(range(self._tabs.count()), self._updateFns):
+        widget = self._tabs.widget(idx)
+        if widget.layout() is None:
+          continue
+        updateFn()
+      return
+
     self._paramCheckboxes = {}
     self._figures = {'median': {True: {}, False: {}}, 'all': {True: {}, False: {}}}
     self._filters = []
@@ -1705,6 +1720,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._speed_related_figures = {True: {}, False: {}}
     self._amplitude_related_figures = {True: {}, False: {}}
     self._legends = []
+    self._updateFns = [lambda: None] * 5
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Visualize Kinematic Parameters"), font=app.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -1746,7 +1762,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
           figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
 
     if showTabs:
-      tabs = QTabWidget()
+      tabs = self._tabs = QTabWidget()
       tabs.setStyleSheet("""
   QTabWidget::pane {
     border: 0px;
@@ -1770,6 +1786,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       tabs.currentChanged.connect(tabChanged)
       layout.addWidget(tabs)
     else:
+      self._tabs = None
       widget = QWidget()
       self._initializeAllParametersTabLayout(widget)
       layout.addWidget(widget)
@@ -1813,6 +1830,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
 
   def _readResults(self, folder):
     allBoutsMixed, medianPerWell = self._findResultsFiles(folder)
+    oldParameters = set(self._allParameters) | set(self._medianParameters)
     self._allData = pd.read_csv(allBoutsMixed) if allBoutsMixed.endswith('.csv') else pd.read_excel(allBoutsMixed)
     self._allData = self._allData.loc[:, ~self._allData.columns.str.contains('^Unnamed')]
     self._allParameters = [param for param in self._allData.columns if param not in self._IGNORE_COLUMNS]
@@ -1822,7 +1840,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._palette = dict(zip(genotypes, sns.color_palette(n_colors=len(genotypes))))
     self._medianParameters = [param for param in self._medianData.columns if param not in self._IGNORE_COLUMNS]
     self._outliersRemoved = not os.path.exists(os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'allBoutsMixed', 'globalParametersInsideCategories_1.png'))  # if the charts with outliers don't exist, we can assume outliers were removed from the results
-    self._recreateMainWidget()
+    self._recreateMainWidget(reuseExisting=self._tabs is not None and oldParameters == set(self._allParameters) | set(self._medianParameters))
 
   def _createChartsWidget(self, figures, scrollArea, data=None, plotOutliersAndMean=None):
     if plotOutliersAndMean is None:
