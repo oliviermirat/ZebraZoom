@@ -1720,6 +1720,8 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
   def _recreateMainWidget(self, reuseExisting=False):
     app = QApplication.instance()
     if reuseExisting:
+      for legend in self._legends:
+        legend.figure.clear()
       for idx, updateFn in zip(range(self._tabs.count()), self._updateFns):
         widget = self._tabs.widget(idx)
         if widget.layout() is None:
