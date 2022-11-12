@@ -223,7 +223,15 @@ if __name__ == '__main__':
       from zebrazoom.dataAnalysis.createCustomDataStructure.createDistanceBetweenFramesExcelFile import createDistanceBetweenFramesExcelFile
       createDistanceBetweenFramesExcelFile(paths.getDefaultZZoutputFolder(), sys.argv) # fps, pixelSize
       
-
+    elif sys.argv[1] == "filterLatencyAndMergeBoutsInSameTrials":
+      
+      nameOfExperiment        = sys.argv[2]
+      minFrameNumberBoutStart = int(sys.argv[3])
+      maxFrameNumberBoutStart = int(sys.argv[4])
+      
+      from zebrazoom.dataAnalysis.createCustomDataStructure.filterLatencyAndMergeBoutsInSameTrials import filterLatencyAndMergeBoutsInSameTrials
+      filterLatencyAndMergeBoutsInSameTrials(nameOfExperiment, minFrameNumberBoutStart, maxFrameNumberBoutStart)
+      
     elif sys.argv[1] == "otherScripts":
 
       if sys.argv[2] == "launchActiveLearning":
