@@ -13,7 +13,7 @@ from pandas.testing import assert_frame_equal, assert_series_equal
 import pytest
 
 from PyQt5.QtCore import Qt, QPoint
-from PyQt5.QtWidgets import QMessageBox
+from PyQt5.QtWidgets import QFileDialog, QMessageBox
 
 from zebrazoom.code import paths
 from zebrazoom.code.GUI.GUI_InitialClasses import StartPage, ViewParameters
@@ -237,6 +237,7 @@ def _goToCreateExcelPage(qapp, qtbot):
   startPage = qapp.window.centralWidget().layout().currentWidget()
   assert isinstance(startPage, StartPage)
   circle = list(startPage._flowchart.iterCircleRects())[-1]
+  qtbot.mouseMove(startPage, pos=QPoint(0, 0))
   qtbot.mouseMove(startPage, pos=QPoint(circle.x() + circle.width() // 2, circle.y() + circle.height()))
   qtbot.waitUntil(lambda: startPage._shownDetail is startPage._detailsWidgets[-1])
   qtbot.mouseClick(startPage._shownDetail._analyzeOutputBtn, Qt.MouseButton.LeftButton)
@@ -352,7 +353,7 @@ def _enterChar(qapp, qtbot, widget, text):
   qapp.processEvents()
 
 
-def test_visualization_filters(qapp, qtbot, monkeypatch):
+def test_visualization_filters(qapp, qtbot, monkeypatch, tmp_path):
   # Generate results files
   allBoutsFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Test Experiment', 'allBoutsMixed')
   os.makedirs(allBoutsFolder)
@@ -363,11 +364,11 @@ def test_visualization_filters(qapp, qtbot, monkeypatch):
   medianData = pd.DataFrame(index=pd.MultiIndex.from_product([[0, 1]] * len(columns), names=columns)).reset_index()
   rowCount = 2 ** len(columns)
   for key in ignoredKeys:
-    if key == 'Bout Duration (s)' or key == 'Trial_ID':
+    if key == 'Bout Duration (s)' or key == 'Genotype':
       continue
     medianData.insert(len(medianData.columns), key, 1)
   medianData.insert(0, 'Bout Duration (s)', 1)
-  medianData.insert(0, 'Trial_ID', ['trial%d' % idx for idx in range(rowCount)])
+  medianData.insert(0, 'Genotype', ['trial%d' % idx for idx in range(rowCount)])
   medianData.to_excel(os.path.join(medianFolder, 'globalParametersInsideCategories.xlsx'), index=False)
   pd.DataFrame().to_excel(os.path.join(allBoutsFolder, 'globalParametersInsideCategories.xlsx'), index=False)
 
@@ -387,14 +388,26 @@ def test_visualization_filters(qapp, qtbot, monkeypatch):
   qtbot.waitUntil(lambda: tabBar.currentIndex() == 4)
 
   # Prepare test function
-  expectedTrialIds = None
+  expectedGenotypes = None
 
   originalMethod = resultsPage._plotFigure
   def _plotFigure(param, figure, data, plotOutliersAndMean):
-    assert expectedTrialIds is not None
-    assert expectedTrialIds == set(data['Trial_ID'])
+    assert expectedGenotypes is not None
+    assert expectedGenotypes == set(data['Genotype'])
     originalMethod(param, figure, data, plotOutliersAndMean)
+    qapp.processEvents()
+    # Test export
+    qtbot.mouseClick(resultsPage._exportDataBtn, Qt.MouseButton.LeftButton)
+    exportedData = pd.read_excel(exportedFile)
+    columnsValues = {genotype: dict(zip(columns, map(int, "{0:03b}".format(int(genotype[-1]))))) for genotype in expectedGenotypes}
+    expectedData = {'%s %s 1' % (param, genotype): [columnsValues[genotype][param] if param in columns else 1] for param, checkbox in resultsPage._paramCheckboxes.items() if checkbox.isChecked() for genotype in expectedGenotypes}
+    assert set(exportedData.columns) == set(expectedData)
+    assert_frame_equal(exportedData, pd.DataFrame({col: expectedData[col] for col in exportedData.columns}))
   monkeypatch.setattr(resultsPage, '_plotFigure', _plotFigure)
+
+  # Prepare for testing export
+  exportedFile = tmp_path / "asd.xlsx"
+  monkeypatch.setattr(QFileDialog, 'getSaveFileName', lambda *args: (exportedFile, None))
 
   # Add and modify some filters
   assert not resultsPage._filters
@@ -403,11 +416,11 @@ def test_visualization_filters(qapp, qtbot, monkeypatch):
   qapp.processEvents()
   filter0 = resultsPage._filters[0]
   _enterChar(qapp, qtbot, filter0._minimumSpinbox, '1')
-  expectedTrialIds = {'trial%d' % idx for idx in range(rowCount)}
+  expectedGenotypes = {'trial%d' % idx for idx in range(rowCount)}
   _enterChar(qapp, qtbot, filter0._maximumSpinbox, '1')
-  expectedTrialIds = {'trial%d' % idx for idx in range(rowCount // 2, rowCount)}
+  expectedGenotypes = {'trial%d' % idx for idx in range(rowCount // 2, rowCount)}
   _enterChar(qapp, qtbot, filter0._nameComboBox, columns[0][0])
-  expectedTrialIds = {'trial%d' % idx for idx in range(1, rowCount, 2)}
+  expectedGenotypes = {'trial%d' % idx for idx in range(1, rowCount, 2)}
   _enterChar(qapp, qtbot, filter0._nameComboBox, columns[-1][0])
 
   qtbot.mouseClick(resultsPage._addFilterBtn, Qt.MouseButton.LeftButton)
@@ -416,16 +429,16 @@ def test_visualization_filters(qapp, qtbot, monkeypatch):
   filter1 = resultsPage._filters[1]
   _enterChar(qapp, qtbot, filter1._maximumSpinbox, '1')
   _enterChar(qapp, qtbot, filter1._minimumSpinbox, '1')
-  expectedTrialIds = {'trial%d' % idx for idx in range(rowCount // 2 + 1, rowCount, 2)}
+  expectedGenotypes = {'trial%d' % idx for idx in range(rowCount // 2 + 1, rowCount, 2)}
   _enterChar(qapp, qtbot, filter1._nameComboBox, columns[0][0])
 
   # Remove filters
-  expectedTrialIds = {'trial%d' % idx for idx in range(rowCount // 2, rowCount)}
+  expectedGenotypes = {'trial%d' % idx for idx in range(rowCount // 2, rowCount)}
   qtbot.mouseClick(filter0._removeBtn, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(lambda: len(resultsPage._filters) == 1)
   qapp.processEvents()
 
-  expectedTrialIds = {'trial%d' % idx for idx in range(rowCount)}
+  expectedGenotypes = {'trial%d' % idx for idx in range(rowCount)}
   qtbot.mouseClick(filter1._removeBtn, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(lambda: not resultsPage._filters)
   qapp.processEvents()

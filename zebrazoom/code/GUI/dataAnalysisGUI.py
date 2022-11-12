@@ -1708,6 +1708,10 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     filtersLayout.addStretch()
     checkboxesLayout.addLayout(filtersLayout)
 
+    self._exportDataBtn = QPushButton("Export plotted data")
+    self._exportDataBtn.clicked.connect(lambda: self._exportData())
+    checkboxesLayout.addWidget(self._exportDataBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+
     checkboxesLayout.addStretch(1)
     checkboxesWidget = QWidget()
     checkboxesWidget.setLayout(checkboxesLayout)
@@ -1872,17 +1876,31 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     if not figures:
       scrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
       scrollArea.setWidget(QLabel("Select one or more parameters to visualize."))
+    updatingAllBoutsTab = scrollArea is getattr(self, '_chartsScrollArea', None) is not None
     applyFilters = data is None
-    data = data if data is not None else self._medianData if self._medianPerWellRadioBtn.isChecked() else self._allData
+    shownParams = [param for param, _ in figures]
+    data = (data if data is not None else self._medianData if self._medianPerWellRadioBtn.isChecked() else self._allData)[['Genotype', 'Condition'] + shownParams + [fltr.name() for fltr in self._filters if fltr.name() not in shownParams]]
     if applyFilters and self._filters:
       problematicNames = {fltr.name() for fltr in self._filters if '#' in fltr.name()}  # there are other potentially problematic characters, but the only one used in our names is #
       oldNames = data.columns.tolist()
       temporaryNames = [name if name not in problematicNames else name.replace('#', '') for name in oldNames]
       data = pd.DataFrame(pd.DataFrame(data.values, columns=temporaryNames).query(' & '.join('`%s` >= %s & `%s` <= %s' % (fltr.name().replace('#', ''), fltr.minimum(), fltr.name().replace('#', ''), fltr.maximum()) for fltr in self._filters)).values, columns=oldNames)
     if not len(data.index):
+      if updatingAllBoutsTab:
+        self._exportDataBtn.setEnabled(False)
       scrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
       scrollArea.setWidget(QLabel("No data found, try adjusting the filters."))
       return
+
+    if updatingAllBoutsTab:
+      self._exportDataBtn.setEnabled(True)
+      def exportData():
+        app = QApplication.instance()
+        groupedData = data.groupby(['Genotype', 'Condition'])
+        filename, _ = QFileDialog.getSaveFileName(app.window, 'Select file', os.path.expanduser('~'), "Excel (*.xlsx)")
+        pd.concat([groupedData.get_group(key)[shownParams].add_suffix(' %s %s' % key).reset_index(drop=True) for key in groupedData.groups], axis=1).to_excel(filename, index=False)
+      self._exportData = exportData
+
     chartsLayout = QGridLayout()
     chartsWidget = QWidget()
     chartsWidget.setLayout(chartsLayout)
