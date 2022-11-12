@@ -1382,11 +1382,13 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._update(clearFigures=True)
 
   def _updateBoutOccurrenceTab(self, chartsScrollArea, plotOutliersAndMean, clearFigures=False):
+    medianParameters = set(self._medianParameters)
+    boutOccurrenceParams = [param for param in self._BOUT_OCCURRENCE_PARAMS if param in medianParameters]
     if clearFigures:
       for figuresDict in self._bout_occurrence_figures.values():
-        for param in self._BOUT_OCCURRENCE_PARAMS:
+        for param in boutOccurrenceParams:
           figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
-    figures = [(param, self._bout_occurrence_figures[plotOutliersAndMean][param]) for param in self._BOUT_OCCURRENCE_PARAMS]
+    figures = [(param, self._bout_occurrence_figures[plotOutliersAndMean][param]) for param in boutOccurrenceParams]
     for figure in self._bout_occurrence_figures[not plotOutliersAndMean].values():
       figure.hide()
       figure.setParent(None)
@@ -1436,11 +1438,13 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._updateFns[0] = lambda: self._updateBoutOccurrenceTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), clearFigures=True)
 
   def _updateSpeedRelatedTab(self, chartsScrollArea, plotOutliersAndMean, clearFigures=False):
+    medianParameters = set(self._medianParameters)
+    speedRelatedParams = [param for param in self._SPEED_RELATED_PARAMS if param in medianParameters]
     if clearFigures:
       for figuresDict in self._speed_related_figures.values():
-        for param in self._SPEED_RELATED_PARAMS:
+        for param in speedRelatedParams:
           figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
-    figures = [(param, self._speed_related_figures[plotOutliersAndMean][param]) for param in self._SPEED_RELATED_PARAMS]
+    figures = [(param, self._speed_related_figures[plotOutliersAndMean][param]) for param in speedRelatedParams]
     for figure in self._speed_related_figures[not plotOutliersAndMean].values():
       figure.hide()
       figure.setParent(None)
@@ -1491,13 +1495,17 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._updateFns[1] = lambda: self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), clearFigures=True)
 
   def _updateAmplitudeRelatedTab(self, chartsScrollArea, plotOutliersAndMean, clearFigures=False):
+    medianParameters = set(self._medianParameters)
     # handle deprecated parameter name
-    amplitude_related_params = [param if param != 'TBA#1 timing (s)' or param in self._medianParameters else 'TBA#1 timing (deg)' for param in self._AMPLITUDE_RELATED_PARAMS]
+    amplitudeRelatedParams = self._AMPLITUDE_RELATED_PARAMS[:]
+    if 'TBA#1 timing (deg)' in medianParameters:
+      amplitudeRelatedParams[amplitudeRelatedParams.index('TBA#1 timing (s)')] = 'TBA#1 timing (deg)'
+    amplitudeRelatedParams = [param for param in amplitudeRelatedParams if param in medianParameters]
     if clearFigures:
       for figuresDict in self._amplitude_related_figures.values():
-        for param in amplitude_related_params:
+        for param in amplitudeRelatedParams:
           figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
-    figures = [(param, self._amplitude_related_figures[plotOutliersAndMean][param]) for param in amplitude_related_params]
+    figures = [(param, self._amplitude_related_figures[plotOutliersAndMean][param]) for param in amplitudeRelatedParams]
     for figure in self._amplitude_related_figures[not plotOutliersAndMean].values():
       figure.hide()
       figure.setParent(None)
