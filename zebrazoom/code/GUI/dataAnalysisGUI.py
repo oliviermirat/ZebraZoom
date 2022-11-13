@@ -1732,6 +1732,32 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
   def _recreateMainWidget(self, reuseExisting=False):
     app = QApplication.instance()
     if reuseExisting:
+      availableParameters = set(self._medianParameters) | set(self._allParameters)
+      if set(self._paramCheckboxes) != availableParameters:  # if the parameters have changed, recreate all the checkboxes and figures
+        for params, typeDict in zip((self._medianParameters, self._allParameters), self._figures.values()):
+          for figuresDict in typeDict.values():
+            for param in list(figuresDict.keys()):
+              if param not in availableParameters:
+                del figuresDict[param]
+            for param in params:
+              if param not in figuresDict:
+                figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
+        firstCheckbox = next(iter(self._paramCheckboxes.values()), None)
+        if firstCheckbox is not None:
+          checkboxesIndex = self._checkboxesLayout.indexOf(firstCheckbox)
+          for checkbox in self._paramCheckboxes.values():
+            self._checkboxesLayout.removeWidget(checkbox)
+          newParamCheckboxes = {}
+          for param in self._allParameters + self._medianParameters:
+            if param in newParamCheckboxes:
+              continue
+            checkbox = QCheckBox(param)
+            if param in self._paramCheckboxes and self._paramCheckboxes[param].isChecked():
+              checkbox.setChecked(True)
+            checkbox.toggled.connect(lambda: self._update())
+            self._checkboxesLayout.insertWidget(checkboxesIndex + len(newParamCheckboxes), checkbox, alignment=Qt.AlignmentFlag.AlignLeft)
+            newParamCheckboxes[param] = checkbox
+          self._paramCheckboxes = newParamCheckboxes
       for legend in self._legends:
         legend.figure.clear()
       for idx, updateFn in zip(range(self._tabs.count()), self._updateFns):
@@ -1868,7 +1894,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._palette = dict(zip(genotypes, sns.color_palette(n_colors=len(genotypes))))
     self._medianParameters = [param for param in self._medianData.columns if param not in self._IGNORE_COLUMNS]
     self._outliersRemoved = not os.path.exists(os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'allBoutsMixed', 'globalParametersInsideCategories_1.png'))  # if the charts with outliers don't exist, we can assume outliers were removed from the results
-    self._recreateMainWidget(reuseExisting=self._tabs is not None and oldParameters == set(self._allParameters) | set(self._medianParameters))
+    self._recreateMainWidget(reuseExisting=self._tabs is not None and 'Number of Oscillations' in self._medianParameters and oldParameters & (set(self._allParameters) | set(self._medianParameters)))
 
   def _createChartsWidget(self, figures, scrollArea, data=None, plotOutliersAndMean=None):
     if plotOutliersAndMean is None:
@@ -1879,7 +1905,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     updatingAllBoutsTab = scrollArea is getattr(self, '_chartsScrollArea', None) is not None
     applyFilters = data is None
     shownParams = [param for param, _ in figures]
-    data = (data if data is not None else self._medianData if self._medianPerWellRadioBtn.isChecked() else self._allData)[['Genotype', 'Condition'] + shownParams + [fltr.name() for fltr in self._filters if fltr.name() not in shownParams]]
+    data = (data if data is not None else self._medianData if self._medianPerWellRadioBtn.isChecked() else self._allData)[['Genotype', 'Condition'] + shownParams + [fltr.name() for fltr in self._filters if fltr.name() not in shownParams and fltr.name() in self._paramCheckboxes]]
     if applyFilters and self._filters:
       problematicNames = {fltr.name() for fltr in self._filters if '#' in fltr.name()}  # there are other potentially problematic characters, but the only one used in our names is #
       oldNames = data.columns.tolist()
