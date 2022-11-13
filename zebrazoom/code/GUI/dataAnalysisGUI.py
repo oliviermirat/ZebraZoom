@@ -1891,6 +1891,8 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._medianData = pd.read_csv(medianPerWell) if medianPerWell.endswith('.csv') else pd.read_excel(medianPerWell)
     self._medianData = self._medianData.loc[:, ~self._medianData.columns.str.contains('^Unnamed')]
     genotypes = self._medianData["Genotype"].unique().tolist()
+    if set(genotypes) == set(self._palette):
+      genotypes = self._palette.keys()
     self._palette = dict(zip(genotypes, sns.color_palette(n_colors=len(genotypes))))
     self._medianParameters = [param for param in self._medianData.columns if param not in self._IGNORE_COLUMNS]
     self._outliersRemoved = not os.path.exists(os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'allBoutsMixed', 'globalParametersInsideCategories_1.png'))  # if the charts with outliers don't exist, we can assume outliers were removed from the results
