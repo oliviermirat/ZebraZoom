@@ -1764,6 +1764,16 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
         widget = self._tabs.widget(idx)
         if widget.layout() is None:
           continue
+        plotOutliersAndMeanCheckbox = next(child for child in widget.findChildren(QCheckBox) if child.text() == 'Plot outliers and mean')
+        blocked = plotOutliersAndMeanCheckbox.blockSignals(True)
+        if not self._outliersRemoved:
+          if plotOutliersAndMeanCheckbox.isHidden():
+            plotOutliersAndMeanCheckbox.setChecked(True)
+            plotOutliersAndMeanCheckbox.setVisible(True)
+        else:
+          plotOutliersAndMeanCheckbox.setVisible(False)
+          plotOutliersAndMeanCheckbox.setChecked(False)
+        plotOutliersAndMeanCheckbox.blockSignals(blocked)
         updateFn()
       return
 
