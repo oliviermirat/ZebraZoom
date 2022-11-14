@@ -228,9 +228,13 @@ if __name__ == '__main__':
       nameOfExperiment        = sys.argv[2]
       minFrameNumberBoutStart = int(sys.argv[3])
       maxFrameNumberBoutStart = int(sys.argv[4])
-      
+      if len(sys.argv) > 5:
+        calculationMethod = sys.argv[5] # Should be equal to 'mean' or 'median'
+      else:
+        calculationMethod = 'median'
+      dropDuplicates = int(sys.argv[6]) if len(sys.argv) > 6 else 0
       from zebrazoom.dataAnalysis.createCustomDataStructure.filterLatencyAndMergeBoutsInSameTrials import filterLatencyAndMergeBoutsInSameTrials
-      filterLatencyAndMergeBoutsInSameTrials(nameOfExperiment, minFrameNumberBoutStart, maxFrameNumberBoutStart)
+      filterLatencyAndMergeBoutsInSameTrials(nameOfExperiment, minFrameNumberBoutStart, maxFrameNumberBoutStart, calculationMethod, dropDuplicates)
       
     elif sys.argv[1] == "otherScripts":
 
