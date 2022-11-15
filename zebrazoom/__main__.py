@@ -221,6 +221,8 @@ if __name__ == '__main__':
     elif sys.argv[1] == "createDistanceBetweenFramesExcelFile":
 
       from zebrazoom.dataAnalysis.createCustomDataStructure.createDistanceBetweenFramesExcelFile import createDistanceBetweenFramesExcelFile
+      from zebrazoom.GUIAllPy import PlainApplication
+      app = PlainApplication(sys.argv)
       createDistanceBetweenFramesExcelFile(paths.getDefaultZZoutputFolder(), sys.argv) # fps, pixelSize
       
     elif sys.argv[1] == "filterLatencyAndMergeBoutsInSameTrials":
