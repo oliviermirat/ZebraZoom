@@ -1996,8 +1996,8 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     if plotPoints:
       b = sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean,
                       palette=self._palette, hue_order=self._palette.keys(), boxprops={'facecolor': 'none', 'zorder': 1})
-      sns.stripplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", size=7, hue_order=self._palette.keys(), dodge=True,
-                    palette=self._palette, jitter=0.25, zorder=0)
+      sns.stripplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", size=5, hue_order=self._palette.keys(), dodge=True,
+                    palette=self._palette, jitter=0.25, alpha=0.4, zorder=0)
     else:
       b = sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean,
                       palette=self._palette, hue_order=self._palette.keys())
