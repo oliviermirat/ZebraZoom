@@ -391,10 +391,10 @@ def test_visualization_filters(qapp, qtbot, monkeypatch, tmp_path):
   expectedGenotypes = None
 
   originalMethod = resultsPage._plotFigure
-  def _plotFigure(param, figure, data, plotOutliersAndMean):
+  def _plotFigure(param, figure, data, plotOutliersAndMean, plotPoints):
     assert expectedGenotypes is not None
     assert expectedGenotypes == set(data['Genotype'])
-    originalMethod(param, figure, data, plotOutliersAndMean)
+    originalMethod(param, figure, data, plotOutliersAndMean, plotPoints)
     qapp.processEvents()
     # Test export
     qtbot.mouseClick(resultsPage._exportDataBtn, Qt.MouseButton.LeftButton)

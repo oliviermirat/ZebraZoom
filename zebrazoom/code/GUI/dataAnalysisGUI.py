@@ -1,3 +1,4 @@
+import itertools
 import math
 import os
 import shutil
@@ -1381,18 +1382,21 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     fltr.setParent(None)
     self._update(clearFigures=True)
 
-  def _updateBoutOccurrenceTab(self, chartsScrollArea, plotOutliersAndMean, clearFigures=False):
+  def _updateBoutOccurrenceTab(self, chartsScrollArea, plotOutliersAndMean, plotPoints, clearFigures=False):
     medianParameters = set(self._medianParameters)
     boutOccurrenceParams = [param for param in self._BOUT_OCCURRENCE_PARAMS if param in medianParameters]
     if clearFigures:
       for figuresDict in self._bout_occurrence_figures.values():
         for param in boutOccurrenceParams:
           figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
-    figures = [(param, self._bout_occurrence_figures[plotOutliersAndMean][param]) for param in boutOccurrenceParams]
-    for figure in self._bout_occurrence_figures[not plotOutliersAndMean].values():
-      figure.hide()
-      figure.setParent(None)
-    self._createChartsWidget(figures, chartsScrollArea, data=self._medianData, plotOutliersAndMean=plotOutliersAndMean)
+    figures = [(param, self._bout_occurrence_figures[(plotOutliersAndMean, plotPoints)][param]) for param in boutOccurrenceParams]
+    for key, figuresDict in self._bout_occurrence_figures.items():
+      if key == (plotOutliersAndMean, plotPoints):
+        continue
+      for figure in figuresDict.values():
+        figure.hide()
+        figure.setParent(None)
+    self._createChartsWidget(figures, chartsScrollArea, data=self._medianData, plotOutliersAndMean=plotOutliersAndMean, plotPoints=plotPoints)
 
   def _initializeBoutOccurrenceTab(self, widget):
     layout = QHBoxLayout()
@@ -1406,12 +1410,12 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     chartScalingLayout.addWidget(QLabel('Chart size'), alignment=Qt.AlignmentFlag.AlignLeft)
     decreaseScalingBtn = QToolButton()
     decreaseScalingBtn.setDefaultAction(QAction('-'))
-    decreaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 0.8) or self._updateBoutOccurrenceTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked()))
+    decreaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 0.8) or self._updateBoutOccurrenceTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), plotPointsCheckbox.isChecked()))
     chartScalingLayout.addWidget(decreaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     increaseScalingBtn = QToolButton()
     decreaseScalingBtn.sizeHint = increaseScalingBtn.sizeHint
     increaseScalingBtn.setDefaultAction(QAction('+'))
-    increaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 1.25) or self._updateBoutOccurrenceTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked()))
+    increaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 1.25) or self._updateBoutOccurrenceTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), plotPointsCheckbox.isChecked()))
     chartScalingLayout.addWidget(increaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     chartScalingLayout.addStretch(1)
     checkboxesLayout.addLayout(chartScalingLayout)
@@ -1420,10 +1424,13 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       plotOutliersAndMeanCheckbox.setChecked(True)
     else:
       plotOutliersAndMeanCheckbox.setVisible(False)
-    plotOutliersAndMeanCheckbox.toggled.connect(lambda checked: self._updateBoutOccurrenceTab(chartsScrollArea, checked))
+    plotOutliersAndMeanCheckbox.toggled.connect(lambda checked: self._updateBoutOccurrenceTab(chartsScrollArea, checked, plotPointsCheckbox.isChecked()))
     checkboxesLayout.addWidget(plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
-
+    plotPointsCheckbox = QCheckBox("Plot points")
+    plotPointsCheckbox.toggled.connect(lambda checked: self._updateBoutOccurrenceTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), checked))
+    checkboxesLayout.addWidget(plotPointsCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
     checkboxesLayout.addStretch(1)
+
     checkboxesWidget = QWidget()
     checkboxesWidget.setLayout(checkboxesLayout)
     checkboxesScrollArea = QScrollArea()
@@ -1434,21 +1441,24 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     chartsScrollArea = QScrollArea()
     layout.addWidget(chartsScrollArea, stretch=1)
     widget.setLayout(layout)
-    self._updateBoutOccurrenceTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), clearFigures=True)
-    self._updateFns[0] = lambda: self._updateBoutOccurrenceTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), clearFigures=True)
+    self._updateBoutOccurrenceTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), plotPointsCheckbox.isChecked(), clearFigures=True)
+    self._updateFns[0] = lambda: self._updateBoutOccurrenceTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), plotPointsCheckbox.isChecked(), clearFigures=True)
 
-  def _updateSpeedRelatedTab(self, chartsScrollArea, plotOutliersAndMean, clearFigures=False):
+  def _updateSpeedRelatedTab(self, chartsScrollArea, plotOutliersAndMean, plotPoints, clearFigures=False):
     medianParameters = set(self._medianParameters)
     speedRelatedParams = [param for param in self._SPEED_RELATED_PARAMS if param in medianParameters]
     if clearFigures:
       for figuresDict in self._speed_related_figures.values():
         for param in speedRelatedParams:
           figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
-    figures = [(param, self._speed_related_figures[plotOutliersAndMean][param]) for param in speedRelatedParams]
-    for figure in self._speed_related_figures[not plotOutliersAndMean].values():
-      figure.hide()
-      figure.setParent(None)
-    self._createChartsWidget(figures, chartsScrollArea, data=self._medianData, plotOutliersAndMean=plotOutliersAndMean)
+    figures = [(param, self._speed_related_figures[(plotOutliersAndMean, plotPoints)][param]) for param in speedRelatedParams]
+    for key, figuresDict in self._speed_related_figures.items():
+      if key == (plotOutliersAndMean, plotPoints):
+        continue
+      for figure in figuresDict.values():
+        figure.hide()
+        figure.setParent(None)
+    self._createChartsWidget(figures, chartsScrollArea, data=self._medianData, plotOutliersAndMean=plotOutliersAndMean, plotPoints=plotPoints)
 
   def _initializeSpeedRelatedTab(self, widget):
     layout = QHBoxLayout()
@@ -1462,12 +1472,12 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     chartScalingLayout.addWidget(QLabel('Chart size'), alignment=Qt.AlignmentFlag.AlignLeft)
     decreaseScalingBtn = QToolButton()
     decreaseScalingBtn.setDefaultAction(QAction('-'))
-    decreaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 0.8) or self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked()))
+    decreaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 0.8) or self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), plotPointsCheckbox.isChecked()))
     chartScalingLayout.addWidget(decreaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     increaseScalingBtn = QToolButton()
     decreaseScalingBtn.sizeHint = increaseScalingBtn.sizeHint
     increaseScalingBtn.setDefaultAction(QAction('+'))
-    increaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 1.25) or self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked()))
+    increaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 1.25) or self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), plotPointsCheckbox.isChecked()))
     chartScalingLayout.addWidget(increaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     chartScalingLayout.addStretch(1)
     checkboxesLayout.addLayout(chartScalingLayout)
@@ -1476,8 +1486,11 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       plotOutliersAndMeanCheckbox.setChecked(True)
     else:
       plotOutliersAndMeanCheckbox.setVisible(False)
-    plotOutliersAndMeanCheckbox.toggled.connect(lambda checked: self._updateSpeedRelatedTab(chartsScrollArea, checked))
+    plotOutliersAndMeanCheckbox.toggled.connect(lambda checked: self._updateSpeedRelatedTab(chartsScrollArea, checked, plotPointsCheckbox.isChecked()))
     checkboxesLayout.addWidget(plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
+    plotPointsCheckbox = QCheckBox("Plot points")
+    plotPointsCheckbox.toggled.connect(lambda checked: self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), checked))
+    checkboxesLayout.addWidget(plotPointsCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
 
     checkboxesLayout.addStretch(1)
     checkboxesWidget = QWidget()
@@ -1491,10 +1504,10 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     layout.addWidget(chartsScrollArea, stretch=1)
     widget.setLayout(layout)
     chartsScrollArea.show()
-    self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), clearFigures=True)
-    self._updateFns[1] = lambda: self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), clearFigures=True)
+    self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), plotPointsCheckbox.isChecked(), clearFigures=True)
+    self._updateFns[1] = lambda: self._updateSpeedRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), plotPointsCheckbox.isChecked(), clearFigures=True)
 
-  def _updateAmplitudeRelatedTab(self, chartsScrollArea, plotOutliersAndMean, clearFigures=False):
+  def _updateAmplitudeRelatedTab(self, chartsScrollArea, plotOutliersAndMean, plotPoints, clearFigures=False):
     medianParameters = set(self._medianParameters)
     # handle deprecated parameter name
     amplitudeRelatedParams = self._AMPLITUDE_RELATED_PARAMS[:]
@@ -1505,11 +1518,14 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       for figuresDict in self._amplitude_related_figures.values():
         for param in amplitudeRelatedParams:
           figuresDict[param] = FigureCanvas(Figure(figsize=(4.64, 3.48), tight_layout=True))
-    figures = [(param, self._amplitude_related_figures[plotOutliersAndMean][param]) for param in amplitudeRelatedParams]
-    for figure in self._amplitude_related_figures[not plotOutliersAndMean].values():
-      figure.hide()
-      figure.setParent(None)
-    self._createChartsWidget(figures, chartsScrollArea, data=self._medianData, plotOutliersAndMean=plotOutliersAndMean)
+    figures = [(param, self._amplitude_related_figures[(plotOutliersAndMean, plotPoints)][param]) for param in amplitudeRelatedParams]
+    for key, figuresDict in self._amplitude_related_figures.items():
+      if key == (plotOutliersAndMean, plotPoints):
+        continue
+      for figure in figuresDict.values():
+        figure.hide()
+        figure.setParent(None)
+    self._createChartsWidget(figures, chartsScrollArea, data=self._medianData, plotOutliersAndMean=plotOutliersAndMean, plotPoints=plotPoints)
 
   def _initializeAmplitudeRelatedTab(self, widget):
     layout = QHBoxLayout()
@@ -1523,12 +1539,12 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     chartScalingLayout.addWidget(QLabel('Chart size'), alignment=Qt.AlignmentFlag.AlignLeft)
     decreaseScalingBtn = QToolButton()
     decreaseScalingBtn.setDefaultAction(QAction('-'))
-    decreaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 0.8) or self._updateAmplitudeRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked()))
+    decreaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 0.8) or self._updateAmplitudeRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), plotPointsCheckbox.isChecked()))
     chartScalingLayout.addWidget(decreaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     increaseScalingBtn = QToolButton()
     decreaseScalingBtn.sizeHint = increaseScalingBtn.sizeHint
     increaseScalingBtn.setDefaultAction(QAction('+'))
-    increaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 1.25) or self._updateAmplitudeRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked()))
+    increaseScalingBtn.clicked.connect(lambda: setattr(self, '_chartScaleFactor', self._chartScaleFactor * 1.25) or self._updateAmplitudeRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), plotPointsCheckbox.isChecked()))
     chartScalingLayout.addWidget(increaseScalingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     chartScalingLayout.addStretch(1)
     checkboxesLayout.addLayout(chartScalingLayout)
@@ -1537,8 +1553,11 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       plotOutliersAndMeanCheckbox.setChecked(True)
     else:
       plotOutliersAndMeanCheckbox.setVisible(False)
-    plotOutliersAndMeanCheckbox.toggled.connect(lambda checked: self._updateAmplitudeRelatedTab(chartsScrollArea, checked))
+    plotOutliersAndMeanCheckbox.toggled.connect(lambda checked: self._updateAmplitudeRelatedTab(chartsScrollArea, checked, plotPointsCheckbox.isChecked()))
     checkboxesLayout.addWidget(plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
+    plotPointsCheckbox = QCheckBox("Plot points")
+    plotPointsCheckbox.toggled.connect(lambda checked: self._updateAmplitudeRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), checked))
+    checkboxesLayout.addWidget(plotPointsCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
 
     checkboxesLayout.addStretch(1)
     checkboxesWidget = QWidget()
@@ -1552,8 +1571,8 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     layout.addWidget(chartsScrollArea, stretch=1)
     widget.setLayout(layout)
     chartsScrollArea.show()
-    self._updateAmplitudeRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), clearFigures=True)
-    self._updateFns[2] = lambda: self._updateAmplitudeRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), clearFigures=True)
+    self._updateAmplitudeRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), plotPointsCheckbox.isChecked(), clearFigures=True)
+    self._updateFns[2] = lambda: self._updateAmplitudeRelatedTab(chartsScrollArea, plotOutliersAndMeanCheckbox.isChecked(), plotPointsCheckbox.isChecked(), clearFigures=True)
 
   def _pieChartFormatter(self, pct, allvals):
     return "{:d}\n({:.2f}%)".format(int(round(pct / 100. * sum(allvals))), pct)
@@ -1683,6 +1702,9 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       self._plotOutliersAndMeanCheckbox.setVisible(False)
     self._plotOutliersAndMeanCheckbox.toggled.connect(lambda: self._update(visualizationOptionsChanged=True))
     checkboxesLayout.addWidget(self._plotOutliersAndMeanCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._plotPointsCheckbox = QCheckBox("Plot points")
+    self._plotPointsCheckbox.toggled.connect(lambda: self._update(visualizationOptionsChanged=True))
+    checkboxesLayout.addWidget(self._plotPointsCheckbox, alignment=Qt.AlignmentFlag.AlignLeft)
 
     checkboxesLayout.addWidget(util.apply_style(QLabel("Parameters"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignLeft)
     self._selectAllCheckbox = util.apply_style(QCheckBox('Select all'), font_weight='bold')
@@ -1778,11 +1800,11 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       return
 
     self._paramCheckboxes = {}
-    self._figures = {'median': {True: {}, False: {}}, 'all': {True: {}, False: {}}}
+    self._figures = {'median': {combination: {} for combination in itertools.product((True, False), (True, False))}, 'all': {combination: {} for combination in itertools.product((True, False), (True, False))}}
     self._filters = []
-    self._bout_occurrence_figures = {True: {}, False: {}}
-    self._speed_related_figures = {True: {}, False: {}}
-    self._amplitude_related_figures = {True: {}, False: {}}
+    self._bout_occurrence_figures = {combination: {} for combination in itertools.product((True, False), (True, False))}
+    self._speed_related_figures = {combination: {} for combination in itertools.product((True, False), (True, False))}
+    self._amplitude_related_figures = {combination: {} for combination in itertools.product((True, False), (True, False))}
     self._legends = []
     self._updateFns = [lambda: None] * 5
 
@@ -1908,9 +1930,11 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._outliersRemoved = not os.path.exists(os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'allBoutsMixed', 'globalParametersInsideCategories_1.png'))  # if the charts with outliers don't exist, we can assume outliers were removed from the results
     self._recreateMainWidget(reuseExisting=self._tabs is not None and 'Number of Oscillations' in self._medianParameters and oldParameters & (set(self._allParameters) | set(self._medianParameters)))
 
-  def _createChartsWidget(self, figures, scrollArea, data=None, plotOutliersAndMean=None):
+  def _createChartsWidget(self, figures, scrollArea, data=None, plotOutliersAndMean=None, plotPoints=None):
     if plotOutliersAndMean is None:
       plotOutliersAndMean = self._plotOutliersAndMeanCheckbox.isChecked()
+    if plotPoints is None:
+      plotPoints = self._plotPointsCheckbox.isChecked()
     if not figures:
       scrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
       scrollArea.setWidget(QLabel("Select one or more parameters to visualize."))
@@ -1959,7 +1983,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
         col = 0
       figure.setVisible(True)
       if not figure.figure.get_axes():  # check whether we've already plotted it
-        self._plotFigure(param, figure.figure, data, plotOutliersAndMean)
+        self._plotFigure(param, figure.figure, data, plotOutliersAndMean, plotPoints)
       ax = figure.figure.get_axes()[0]
       ax.set_title(param, fontsize=16 * self._chartScaleFactor)
       ax.tick_params(axis='both', which='major', labelsize=10 * self._chartScaleFactor)
@@ -1967,10 +1991,13 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     scrollArea.setAlignment(Qt.AlignmentFlag.AlignLeft)
     scrollArea.setWidget(chartsWidget)
 
-  def _plotFigure(self, param, figure, data, plotOutliersAndMean):
+  def _plotFigure(self, param, figure, data, plotOutliersAndMean, plotPoints):
     ax = figure.add_subplot(111)
     b = sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean,
                     palette=self._palette, hue_order=self._palette.keys())
+    if plotPoints:
+      sns.stripplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", marker="$\circ$", size=10, hue_order=self._palette.keys(), dodge=True,
+                    palette={genotype: 'lightgray' for genotype in self._palette.keys()})
     b.set_ylabel('', fontsize=0)
     b.set_xlabel('', fontsize=0)
 
@@ -1978,7 +2005,11 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       legendFigure = legendWidget.figure
       if not legendFigure.get_axes():
         legendAx = legendFigure.add_subplot(111)
-        legend = legendAx.legend(*ax.get_legend_handles_labels(), title=ax.get_legend().get_title().get_text(), loc='center')
+        handles, labels = ax.get_legend_handles_labels()
+        if plotPoints:  # legend contains duplicated genotypes (one for boxplot, one for stripplot)
+          handles = handles[:len(handles)//2]
+          labels = labels[:len(labels)//2]
+        legend = legendAx.legend(handles, labels, title=ax.get_legend().get_title().get_text(), loc='center')
         legendAx.axis('off')
         legendFigure.canvas.draw()
         legendWidget.setFixedSize(*legend.get_window_extent().bounds[2:])
@@ -2027,6 +2058,6 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._selectAllCheckbox.setCheckState(state)
     self._selectAllCheckbox.blockSignals(blocked)
     shownFigures = [(param, figure) for param, figure in
-                    self._figures['median' if self._medianPerWellRadioBtn.isChecked() else 'all'][self._plotOutliersAndMeanCheckbox.isChecked()].items()
+                    self._figures['median' if self._medianPerWellRadioBtn.isChecked() else 'all'][(self._plotOutliersAndMeanCheckbox.isChecked(), self._plotPointsCheckbox.isChecked())].items()
                     if param in selectedParameters]
     self._createChartsWidget(shownFigures, self._chartsScrollArea)
