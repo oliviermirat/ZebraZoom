@@ -7,6 +7,10 @@ from zebrazoom.code.trackingFolder.trackingFunctions import distBetweenThetas
 
 def computeHeading(thresh1, x, y, headSize, hyperparameters):
   
+  if headSize == -1:
+    print("Setting headSize to 25 instead of -1, this may be a problem in some cases")
+    headSize = 25 # This was introduced to fix bug when config file creation for center of mass only tracking 16/11/22
+  
   videoWidth  = hyperparameters["videoWidth"]
   videoHeight = hyperparameters["videoHeight"]
   
