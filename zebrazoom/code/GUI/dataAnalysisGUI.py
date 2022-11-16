@@ -1993,11 +1993,14 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
 
   def _plotFigure(self, param, figure, data, plotOutliersAndMean, plotPoints):
     ax = figure.add_subplot(111)
-    b = sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean,
-                    palette=self._palette, hue_order=self._palette.keys())
     if plotPoints:
-      sns.stripplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", marker="$\circ$", size=10, hue_order=self._palette.keys(), dodge=True,
-                    palette={genotype: 'lightgray' for genotype in self._palette.keys()})
+      b = sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean,
+                      palette=self._palette, hue_order=self._palette.keys(), boxprops={'facecolor': 'none', 'zorder': 1})
+      sns.stripplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", size=7, hue_order=self._palette.keys(), dodge=True,
+                    palette=self._palette, zorder=0)
+    else:
+      b = sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean,
+                      palette=self._palette, hue_order=self._palette.keys())
     b.set_ylabel('', fontsize=0)
     b.set_xlabel('', fontsize=0)
 
