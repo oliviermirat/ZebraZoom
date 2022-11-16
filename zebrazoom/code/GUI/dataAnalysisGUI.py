@@ -1,6 +1,7 @@
 import itertools
 import math
 import os
+import re
 import shutil
 import sys
 import pickle
@@ -15,7 +16,7 @@ from matplotlib.backends.backend_qtagg import FigureCanvas
 
 from PyQt5.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QEvent, QItemSelectionModel, QModelIndex, QObject, QPoint, QPointF, QRect, QRectF, QRegularExpression, QSize, QSizeF, QSortFilterProxyModel, QStringListModel, QUrl
 from PyQt5.QtGui import QColor, QDesktopServices, QFont, QFontMetrics, QIntValidator, QPainter, QPixmap, QPolygon, QPolygonF, QRegularExpressionValidator, QTransform
-from PyQt5.QtWidgets import QAction, QAbstractItemView, QApplication, QComboBox, QCompleter, QDialog, QDialogButtonBox, QDoubleSpinBox, QFileDialog, QFileSystemModel, QFrame, QFormLayout, QGridLayout, QHeaderView, QHBoxLayout, QLabel, QListView, QMessageBox, QSpacerItem, QTabWidget, QTextEdit, QToolButton, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QTableView, QToolTip, QTreeView
+from PyQt5.QtWidgets import QAction, QAbstractItemView, QApplication, QComboBox, QCompleter, QDialog, QDialogButtonBox, QDoubleSpinBox, QFileDialog, QFileSystemModel, QFrame, QFormLayout, QGridLayout, QHeaderView, QHBoxLayout, QInputDialog, QLabel, QListView, QMessageBox, QSpacerItem, QTabWidget, QTextEdit, QToolButton, QWidget, QPushButton, QLineEdit, QCheckBox, QVBoxLayout, QRadioButton, QButtonGroup, QScrollArea, QTableView, QToolTip, QTreeView
 PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
@@ -1733,6 +1734,9 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._exportDataBtn = QPushButton("Export plotted data")
     self._exportDataBtn.clicked.connect(lambda: self._exportData())
     checkboxesLayout.addWidget(self._exportDataBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._exportFiguresBtn = QPushButton("Export figures")
+    self._exportFiguresBtn.clicked.connect(self._exportFigures)
+    checkboxesLayout.addWidget(self._exportFiguresBtn, alignment=Qt.AlignmentFlag.AlignLeft)
 
     checkboxesLayout.addStretch(1)
     checkboxesWidget = QWidget()
@@ -1930,14 +1934,33 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._outliersRemoved = not os.path.exists(os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'allBoutsMixed', 'globalParametersInsideCategories_1.png'))  # if the charts with outliers don't exist, we can assume outliers were removed from the results
     self._recreateMainWidget(reuseExisting=self._tabs is not None and 'Number of Oscillations' in self._medianParameters and oldParameters & (set(self._allParameters) | set(self._medianParameters)))
 
+  def _exportFigures(self):
+    app = QApplication.instance()
+    choices = {'%s (%s)' % (name, ', '.join(extensions)): extensions[0] for name, extensions in next(self._iterAllFigures()).figure.canvas.get_supported_filetypes_grouped().items()}
+    choice, proceed = QInputDialog.getItem(app.window, 'Select image type', 'Image type:', choices.keys())
+    if not proceed:
+      return
+    extension = choices[choice]
+    selectedFolder = QFileDialog.getExistingDirectory(app.window, "Select output folder", os.path.expanduser("~"))
+    if not selectedFolder:
+      return
+    for param, figure in self._figures['median' if self._medianPerWellRadioBtn.isChecked() else 'all'][(self._plotOutliersAndMeanCheckbox.isChecked(), self._plotPointsCheckbox.isChecked())].items():
+      if figure.isHidden():
+        continue
+      figure.figure.savefig(os.path.normpath(os.path.join(selectedFolder, '%s.%s' % (re.sub(r'[/\\:*"?<>|]+', '_', param), extension))))  # sanitize parameter name before using it as filename
+
   def _createChartsWidget(self, figures, scrollArea, data=None, plotOutliersAndMean=None, plotPoints=None):
     if plotOutliersAndMean is None:
       plotOutliersAndMean = self._plotOutliersAndMeanCheckbox.isChecked()
     if plotPoints is None:
       plotPoints = self._plotPointsCheckbox.isChecked()
     if not figures:
+      if updatingAllBoutsTab:
+        self._exportDataBtn.setEnabled(False)
+        self._exportFiguresBtn.setEnabled(False)
       scrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
       scrollArea.setWidget(QLabel("Select one or more parameters to visualize."))
+      return
     updatingAllBoutsTab = scrollArea is getattr(self, '_chartsScrollArea', None) is not None
     applyFilters = data is None
     shownParams = [param for param, _ in figures]
@@ -1950,6 +1973,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     if not len(data.index):
       if updatingAllBoutsTab:
         self._exportDataBtn.setEnabled(False)
+        self._exportFiguresBtn.setEnabled(False)
       scrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
       scrollArea.setWidget(QLabel("No data found, try adjusting the filters."))
       return
@@ -1962,6 +1986,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
         filename, _ = QFileDialog.getSaveFileName(app.window, 'Select file', os.path.expanduser('~'), "Excel (*.xlsx)")
         pd.concat([groupedData.get_group(key)[shownParams].add_suffix(' %s %s' % key).reset_index(drop=True) for key in groupedData.groups], axis=1).to_excel(filename, index=False)
       self._exportData = exportData
+      self._exportFiguresBtn.setEnabled(True)
 
     chartsLayout = QGridLayout()
     chartsWidget = QWidget()
