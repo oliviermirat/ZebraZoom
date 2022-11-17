@@ -1947,7 +1947,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     for param, figure in self._figures['median' if self._medianPerWellRadioBtn.isChecked() else 'all'][(self._plotOutliersAndMeanCheckbox.isChecked(), self._plotPointsCheckbox.isChecked())].items():
       if figure.isHidden():
         continue
-      figure.figure.savefig(os.path.normpath(os.path.join(selectedFolder, '%s.%s' % (re.sub(r'[/\\:*"?<>|]+', '_', param), extension))))  # sanitize parameter name before using it as filename
+      figure.figure.savefig(os.path.normpath(os.path.join(selectedFolder, '%s.%s' % (re.sub(r'[/\\:*"?<>|]+', '_', param), extension))), dpi=300)  # sanitize parameter name before using it as filename
 
   def _createChartsWidget(self, figures, scrollArea, data=None, plotOutliersAndMean=None, plotPoints=None):
     if plotOutliersAndMean is None:
