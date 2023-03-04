@@ -54,7 +54,7 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
     dfCondGeno = dfParam[['Trial_ID', 'Well_ID', 'Condition', 'Genotype']]
     dfCondGeno = dfCondGeno.groupby(['Trial_ID', 'Well_ID']).first()
     dfCount = dfParam[['Trial_ID', 'Well_ID']].copy()
-    dfCount['Bout Counts'] = dfParam['Bout Duration (s)']
+    dfCount['Bout Counts'] = dfParam['Bout Duration (s)'] # IS THERE A PROBLEM HERE???
     dfCount = dfCount.groupby(['Trial_ID', 'Well_ID']).count()
     dfCount['Bout Rate (bouts / s)'] = dfCount['Bout Counts'] / dfKinematicValues['videoDuration']
     dfTotalTimeMove = dfParam[['Trial_ID', 'Well_ID', 'Bout Duration (s)']].copy()
