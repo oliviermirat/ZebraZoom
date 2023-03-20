@@ -308,6 +308,7 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
 
 
 def _multipleROIsDefinedDuringExecutionQt(videoPath, hyperparameters):
+  from PyQt5.QtWidgets import QApplication
   import zebrazoom.code.util as util
 
   l = [None] * hyperparameters["nbWells"]
