@@ -1056,6 +1056,11 @@ class PopulationComparison(QWidget):
 
     self.setLayout(layout)
 
+  def _warnParametersReused(self):
+    return QMessageBox.question(self.controller.window, "Parameters not recalculated", "Previously calculated parameters will be used for some videos. Would you like to recalculate them instead?",
+                                defaultButton=QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes
+
+
   @util.showInProgressPage('Parameters calculation')
   def _populationComparison(self, TailTrackingParameters, saveInMatlabFormat, saveRawData, forcePandasRecreation, minNbBendForBoutDetect, keep, frameStepForDistanceCalculation):
     if len(frameStepForDistanceCalculation) == 0:
@@ -1097,7 +1102,7 @@ class PopulationComparison(QWidget):
 
     generatePklDataFileForVideo(os.path.join(self.controller.experimentOrganizationExcelFileAndFolder, self.controller.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation)
 
-    [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", forcePandasRecreation, [])
+    [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", forcePandasRecreation, [], reusingParametersCb=self._warnParametersReused)
 
     # Plotting for the different conditions
     nameOfFile = dataframeOptions['nameOfFile']

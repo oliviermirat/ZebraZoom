@@ -19,7 +19,7 @@ from zebrazoom.dataAnalysis.datasetcreation.getTailAngleRecalculated2 import get
 from zebrazoom.dataAnalysis.datasetcreation.gatherInitialRawData import gatherInitialRawData
 import pickle
 
-def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecreation=0, addToGlobalParameters=0, minimumFrameToFrameDistanceToBeConsideredAsMoving=0, supstructOverwrite={}):
+def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecreation=0, addToGlobalParameters=0, minimumFrameToFrameDistanceToBeConsideredAsMoving=0, supstructOverwrite={}, reusingParametersCb=None):
 
   # Gathering user-inputed information about how to create the dataframe of parameters for the whole set of videos
   
@@ -181,6 +181,10 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
       dfReloadedVid = pd.read_pickle(os.path.join(path, trial_id + '.pkl'))
       if 'BoutDuration' in dfReloadedVid:  # pickle file contains old parameter names, recreate it
         forcePandasDfRecreation = True
+      elif reusingParametersCb is not None:
+        forcePandasDfRecreation = reusingParametersCb()
+        reusingParametersCb = None
+      if forcePandasDfRecreation:
         if len(supstructOverwrite):
           supstruct = supstructOverwrite
         else:
