@@ -107,6 +107,7 @@ def _getRegion(controller):
 @util.addToHistory
 def wellOrganisation(self, controller, circular, rectangular, roi, other, multipleROIs, groupSameSizeAndShapeEquallySpacedWells):
   if multipleROIs:
+    self.shape = None
     controller.show_frame("NbRegionsOfInterest")
   else:
     if groupSameSizeAndShapeEquallySpacedWells:
