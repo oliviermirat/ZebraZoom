@@ -27,7 +27,7 @@ setup(
     "matplotlib>=3.5.2",
     "scipy",
     "pandas!=1.3.*",
-    "openpyxl",
+    "openpyxl>=3.1.2",
     "filterpy",
     "opencv-python-headless<4.5.1.48",
     "xlrd>=2.0.1",

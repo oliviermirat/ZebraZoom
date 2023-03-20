@@ -468,6 +468,7 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["savePathToOriginalVideoForValidationVideo"]  = getConfig(config, "savePathToOriginalVideoForValidationVideo", videoPath)
   
+  hyperparameters["removeLargeInstantaneousDistanceData"]  = getConfig(config, "removeLargeInstantaneousDistanceData", videoPath)
   
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1

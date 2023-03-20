@@ -245,7 +245,23 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters, pathToOrigina
   
   if hyperparameters['savePathToOriginalVideoForValidationVideo']:
     videoDataResults['pathToOriginalVideo'] = pathToOriginalVideo
-    
+  
+  if hyperparameters["removeLargeInstantaneousDistanceData"]:
+    for numWell in range(0, len(videoDataResults['wellPoissMouv'])):  
+      for numAnimal in range(0, len(videoDataResults['wellPoissMouv'][numWell])):
+        for numBout in range(0, len(videoDataResults['wellPoissMouv'][numWell][numAnimal])):
+          bout = videoDataResults['wellPoissMouv'][numWell][numAnimal][numBout]
+          HeadX = bout['HeadX']
+          HeadY = bout['HeadY']
+          for i in range(0, len(HeadX)-1):
+            if (HeadX[i] != float('nan') and HeadY[i] != float('nan')):
+              distance = math.sqrt((HeadX[i] - HeadX[i+1])**2 + (HeadY[i] - HeadY[i+1])**2)
+              if (distance > hyperparameters["removeLargeInstantaneousDistanceData"]):
+                HeadX[i + 1] = float('nan')
+                HeadY[i + 1] = float('nan')
+          videoDataResults['wellPoissMouv'][numWell][numAnimal][numBout]['HeadX'] = HeadX
+          videoDataResults['wellPoissMouv'][numWell][numAnimal][numBout]['HeadY'] = HeadY
+  
   if (hyperparameters["freqAlgoPosFollow"] != 0):
     print("Super Structure created")
   if hyperparameters["popUpAlgoFollow"]:

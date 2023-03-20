@@ -28,13 +28,53 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
         rangeUsedForDistanceCalculation = [0, len(posX) - 1]
       else:
         rangeUsedForDistanceCalculation = rangeUsedForDistanceCalculation + [len(posX) - 1]
+      # if removeLargeInstantaneousDistanceData is set, then some nan values may be present which we must propogate for frameStepForDistanceCalculation frames to enable the discarding of frame below
+      for i in range(frameStepForDistanceCalculation, len(posX)):
+        if np.isnan(posX[i]) or np.isnan(posY[i]):
+          for j in range(i - frameStepForDistanceCalculation, i):
+            posX[j] = float('nan')
+            posY[j] = float('nan')
       posX = [posX[i] for i in rangeUsedForDistanceCalculation]
       posY = [posY[i] for i in rangeUsedForDistanceCalculation]
+      # if removeLargeInstantaneousDistanceData is set, we must discard the nan frames as they correspond to "jumps"
+      countNotTakingIntoAccount = 0
       for j in range(0, len(posX)-1):
+        if not(np.isnan(posX[j+1])) and not(np.isnan(posX[j])) and not(np.isnan(posY[j+1])) and not(np.isnan(posY[j])):
           TotalDistance = TotalDistance + math.sqrt((posX[j+1] - posX[j])**2 + (posY[j+1] - posY[j])**2)
+        else:
+          countNotTakingIntoAccount = countNotTakingIntoAccount + 1
       TotalDistance = TotalDistance * pixelSize
+      if countNotTakingIntoAccount != 0:
+        takingIntoAccount = len(posX) - 1 - countNotTakingIntoAccount
+        TotalDistance = TotalDistance * ((len(posX) - 1) / takingIntoAccount)
       listOfParametersCalculated.append(TotalDistance)
     
+    
+    elif parameterToCalculate == 'Angular Velocity (deg/s)':
+      
+      if ("Heading" in curbout) and (len(curbout["Heading"]) > 1):
+        heading = curbout["Heading"]
+        posX = curbout["HeadX"]
+        posY = curbout["HeadY"]
+        rangeUsedForDistanceCalculation   = [frameStepForDistanceCalculation*i for i in range(0, int(len(heading)/frameStepForDistanceCalculation))]
+        if len(rangeUsedForDistanceCalculation) == 0:
+          rangeUsedForDistanceCalculation = [0, len(heading) - 1]
+        else:
+          rangeUsedForDistanceCalculation = rangeUsedForDistanceCalculation + [len(heading) - 1]
+        # if removeLargeInstantaneousDistanceData is set, then some nan values may be present which we must propogate for frameStepForDistanceCalculation frames to enable the discarding of frame below
+        for i in range(frameStepForDistanceCalculation, len(heading)):
+          if np.isnan(heading[i]) or np.isnan(posX[i]) or np.isnan(posY[i]):
+            for j in range(i - frameStepForDistanceCalculation, i + 1):
+              heading[j] = float('nan')
+        heading = [heading[i] for i in rangeUsedForDistanceCalculation]
+        # if removeLargeInstantaneousDistanceData is set, we must discard the nan frames as they correspond to "jumps"
+        angularDifferential = []
+        for j in range(0, len(heading)-1):
+          if not(np.isnan(heading[j+1])) and not(np.isnan(heading[j])):
+            angularDifferential = angularDifferential + [(min(abs((heading[j+1] - heading[j]) * (180 / np.pi)) % 180, abs((heading[j+1] - heading[j] + 2 * np.pi) * (180 / np.pi)) % 180, abs((heading[j+1] - heading[j] - 2 * np.pi) * (180 / np.pi)) % 180)) / (frameStepForDistanceCalculation / fps)]
+        listOfParametersCalculated.append(np.mean(angularDifferential))
+      else:
+        listOfParametersCalculated.append(0)
     
     elif parameterToCalculate == 'maxInstantaneousSpeed':
       
