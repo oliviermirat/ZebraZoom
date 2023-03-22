@@ -1100,9 +1100,9 @@ class PopulationComparison(QWidget):
       'gaussianFitOutlierRemoval': gaussianFitOutlierRemoval,
     }
 
-    generatePklDataFileForVideo(os.path.join(self.controller.experimentOrganizationExcelFileAndFolder, self.controller.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation)
+    forcePandasRecreation = generatePklDataFileForVideo(os.path.join(self.controller.experimentOrganizationExcelFileAndFolder, self.controller.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation, reusingParametersCb=self._warnParametersReused)
 
-    [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", forcePandasRecreation, [], reusingParametersCb=self._warnParametersReused)
+    [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", forcePandasRecreation, [])
 
     # Plotting for the different conditions
     nameOfFile = dataframeOptions['nameOfFile']
