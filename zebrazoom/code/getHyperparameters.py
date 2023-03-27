@@ -468,6 +468,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   
   hyperparameters["savePathToOriginalVideoForValidationVideo"]  = getConfig(config, "savePathToOriginalVideoForValidationVideo", videoPath)
   
+  hyperparameters["alternativeCurvatureCalculation"]  = getConfig(config, "alternativeCurvatureCalculation", videoPath)
+  
   
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1

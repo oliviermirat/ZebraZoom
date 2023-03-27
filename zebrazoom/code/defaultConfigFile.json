@@ -244,6 +244,7 @@
   "perBoutOutputYaxis" : 0,
   "smoothTailHeadEmbeded" : -1,
   "smoothTailHeadEmbededNbOfIterations" : 1,
+  "alternativeCurvatureCalculation" : 0,
   "curvatureMedianFilterSmoothingWindow" : 3,
   "nbPointsToIgnoreAtCurvatureBeginning" : 0,
   "nbPointsToIgnoreAtCurvatureEnd" : 0,

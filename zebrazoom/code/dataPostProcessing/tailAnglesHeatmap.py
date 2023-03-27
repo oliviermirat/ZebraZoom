@@ -78,8 +78,9 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoName):
         # Creation of tail angle heatmap
         if plotTailAngleHeatmap:
           fig = plt.figure(1)
+          maxAngle = np.max(np.abs(tailAngleHeatmap))
           # plt.pcolor(tailAngleHeatmap)
-          plt.pcolor(tailAngleHeatmap, vmin=-180, vmax=180)
+          plt.pcolor(tailAngleHeatmap[::-1], vmin=-maxAngle, vmax=maxAngle)
           ax = fig.axes
           ax[0].set_xlabel('Frame number')
           ax[0].set_ylabel('Tail angle: Tail base to tail extremity')
