@@ -13,9 +13,9 @@ if __name__ == '__main__':
                                headers=headers).json()['tag_name']
     commits = requests.get('%s/compare/%s...HEAD' % (base_url, release_tag),
                            headers=headers).json()['commits']
-    notes = (' '.join(comment['body']
-                      for comment in requests.get(commit['comments_url'],
-                                                  headers=headers).json())
+    notes = ('\n'.join(comment['body']
+                       for comment in requests.get(commit['comments_url'],
+                                                   headers=headers).json())
              for commit in commits)
-    sys.stdout.write('\n'.join('- %s' % note for note in notes if note))
+    sys.stdout.write('\n'.join(note for note in notes if note))
     sys.stdout.flush()
