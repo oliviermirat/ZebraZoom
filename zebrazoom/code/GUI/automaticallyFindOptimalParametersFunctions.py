@@ -45,7 +45,7 @@ def _selectWell(app, cap, wellPositions):
   sublayout = QHBoxLayout()
   sublayout.addStretch(1)
   sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
-  if maxFrame > 1:
+  if maxFrame - firstFrame > 1000:
     adjustLayout = QVBoxLayout()
     adjustLayout.setSpacing(0)
     adjustLayout.addStretch()
