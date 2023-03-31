@@ -183,7 +183,7 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
         nonlocal changeWell
         changeWell = True
 
-      def callback(video):
+      def callback():
         nonlocal k
         k -= backCalculationStep
       oldk = k
@@ -212,7 +212,7 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
       frame2 = cv2.circle(frame, tuple(headCoordinates), 2, (0, 0, 255), -1)
 
       goToOptimize = False
-      def callback2(video):
+      def callback2():
         nonlocal goToOptimize
         goToOptimize = True
       extraButtons = (('I want to manually adjust tracking parameters', callback2, True, None),) if k == firstK else ()
