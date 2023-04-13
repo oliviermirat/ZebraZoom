@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.smoothBasedOnCurvature import smoothBasedOnCurvature
 from zebrazoom.code.trackingFolder.trackingFunctions import calculateAngle
 from zebrazoom.code.trackingFolder.trackingFunctions import distBetweenThetas
 from zebrazoom.code.trackingFolder.trackingFunctions import assignValueIfBetweenRange
@@ -289,6 +290,7 @@ def headEmbededTailTracking(headPosition,nbTailPoints,i,thresh1,frame,hyperparam
   gaussian_blur = hyperparameters["headEmbededParamGaussianBlur"]
   
   frame = cv2.GaussianBlur(frame, (gaussian_blur, gaussian_blur), 0)
+  
   # angle = hyperparameters["headEmbededParamInitialAngle"]
   angle = calculateAngle(x, y, tailTip[0], tailTip[1])
   
@@ -315,12 +317,18 @@ def headEmbededTailTracking(headPosition,nbTailPoints,i,thresh1,frame,hyperparam
         tab      = [int((i/9)*nDist) for i in range(0,10)]
         points   = [[points[0][i] for i in tab], [points[1][i] for i in tab]]
   
+  
+  if False:
+    polynomialDegree = 5
+    points = smoothBasedOnCurvature(points, polynomialDegree)
+  
+  
   output = np.zeros((1, len(points[0]), 2))
 
   for idx, x in enumerate(points[0]):
     output[0][idx][0] = x
     output[0][idx][1] = points[1][idx]
-
+  
   return output
 
 

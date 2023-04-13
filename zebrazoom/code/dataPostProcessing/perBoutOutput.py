@@ -1,5 +1,7 @@
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+from zebrazoom.code.extractParameters import calculateAngle
+from zebrazoom.code.extractParameters import calculateTailAngle
 import os
 import shutil
 import math
@@ -49,7 +51,57 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
     lengthY = superStruct["wellPositions"][i]["lengthY"]
     infoWells.append([x, y, lengthX, lengthY])
   
-  # Going through each well, each fish and each bout
+  # alternativeCurvatureCalculation: Going through each well, each fish and each bout
+  if hyperparameters["alternativeCurvatureCalculation"]:
+    for i in range(0, len(superStruct["wellPoissMouv"])):
+      for j in range(0, len(superStruct["wellPoissMouv"][i])):
+        for k in range(0, len(superStruct["wellPoissMouv"][i][j])):
+          
+          # Creation of the curvature graph for bout k
+          TailX_VideoReferential = superStruct["wellPoissMouv"][i][j][k]["TailX_VideoReferential"]
+          TailY_VideoReferential = superStruct["wellPoissMouv"][i][j][k]["TailY_VideoReferential"]
+          
+          alternativeCurvatureCalculation = []
+          for l in range(0, len(TailX_VideoReferential)):
+            tailX = TailX_VideoReferential[l]
+            tailY = TailY_VideoReferential[l]
+
+            l = len(tailX)
+            alternativeCurvatureCalculationForFrame = np.zeros(l-2)
+            av = 0
+            for ii in range(1, l-1):
+              angleBef = calculateAngle(np.array([tailX[ii-1], tailY[ii-1]]), np.array([tailX[ii],   tailY[ii]]))
+              angleAft = calculateAngle(np.array([tailX[ii],   tailY[ii]]),   np.array([tailX[ii+1], tailY[ii+1]]))
+              alternativeCurvatureCalculationForFrame[ii-1] = calculateTailAngle(angleBef, angleAft)
+            alternativeCurvatureCalculation.append(alternativeCurvatureCalculationForFrame)
+          
+          rolling_window = hyperparameters["curvatureMedianFilterSmoothingWindow"]
+          if rolling_window:
+            alternativeCurvatureCalculation = ndimage.median_filter(alternativeCurvatureCalculation, size=rolling_window) # 2d median filter
+          else:
+            alternativeCurvatureCalculation = np.array(alternativeCurvatureCalculation)
+          
+          alternativeCurvatureCalculation = np.flip(np.transpose(alternativeCurvatureCalculation), 0)
+          
+          superStruct["wellPoissMouv"][i][j][k]["alternativeCurvatureCalculation"] = alternativeCurvatureCalculation.tolist()
+          
+          if hyperparameters["saveCurvaturePlots"]:
+            fig = plt.figure(1)
+            maxx = max([max(abs(np.array(t))) for t in alternativeCurvatureCalculation])
+            plt.pcolor(alternativeCurvatureCalculation, vmin=-maxx, vmax=maxx, cmap=hyperparameters["colorMapCurvature"])
+            ax = fig.axes
+            ax[0].set_ylabel('Rostral to Caudal')
+            if hyperparameters["videoFPS"]:
+              ax[0].set_xlabel('Second')
+              plt.xticks([i for i in range(0, len(alternativeCurvatureCalculation[0]), int(len(alternativeCurvatureCalculation[0])/10))], [int(100*(i/hyperparameters["videoFPS"]))/100 for i in range(0, len(alternativeCurvatureCalculation[0]), int(len(alternativeCurvatureCalculation[0])/10))])
+            else:
+              ax[0].set_xlabel('Frame number')
+            plt.colorbar()
+            plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_alternativeCurvatureCalculation_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.png'))
+            plt.close(1)
+  
+  
+  # Curvature calculation: Going through each well, each fish and each bout
   for i in range(0, len(superStruct["wellPoissMouv"])):
     for j in range(0, len(superStruct["wellPoissMouv"][i])):
       for k in range(0, len(superStruct["wellPoissMouv"][i][j])):
@@ -70,12 +122,12 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
           curv = xdiff2
           l = len(curv)
           av = 0
-          for ii in range(0, l-1):
+          for ii in range(0, l):#-1):
             num = xdiff[ii] * ydiff2[ii] - ydiff[ii] * xdiff2[ii]
             den = (xdiff[ii]**2 + ydiff[ii]**2)**1.5
             curv[ii] = num / den
           
-          curv = curv[hyperparameters["nbPointsToIgnoreAtCurvatureBeginning"]: l-1-hyperparameters["nbPointsToIgnoreAtCurvatureEnd"]]
+          curv = curv[hyperparameters["nbPointsToIgnoreAtCurvatureBeginning"]: l-hyperparameters["nbPointsToIgnoreAtCurvatureEnd"]]
           curvature.append(curv)
         
         rolling_window = hyperparameters["curvatureMedianFilterSmoothingWindow"]

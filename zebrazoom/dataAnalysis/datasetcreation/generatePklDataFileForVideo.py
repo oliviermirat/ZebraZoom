@@ -3,7 +3,7 @@ import pandas as pd
 import json
 import os
 
-def generatePklDataFileForVideo(excelFileName, ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation=0):
+def generatePklDataFileForVideo(excelFileName, ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation=0, reusingParametersCb=None):
   
   # Generate .pkl data file inside the result video folder if it doesn't already exist
   excelFile = pd.read_excel(excelFileName)
@@ -17,8 +17,13 @@ def generatePklDataFileForVideo(excelFileName, ZZoutputLocation, frameStepForDis
       parametersUsedForCalculation = {}
     
     # Generates the .pkl data file if it doesn't already exist OR if a frameStepForDistanceCalculationUsed different than before is requested or if a videoFPS or videoPixelSize different than before is used
-    if not(os.path.exists(os.path.join(os.path.join(ZZoutputLocation if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder" else excelFile.loc[videoId, 'path'], excelFile.loc[videoId, 'trial_id']), excelFile.loc[videoId, 'trial_id'] + '.pkl'))) or not(len(parametersUsedForCalculation)) or int(frameStepForDistanceCalculation) != int(parametersUsedForCalculation['frameStepForDistanceCalculation']) or float(excelFile.loc[videoId, 'fq']) != float(parametersUsedForCalculation['videoFPS']) or float(excelFile.loc[videoId, 'pixelsize']) != float(parametersUsedForCalculation['videoPixelSize']):
-      
+    regenerate = forcePandasRecreation or (not(os.path.exists(os.path.join(os.path.join(ZZoutputLocation if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder" else excelFile.loc[videoId, 'path'], excelFile.loc[videoId, 'trial_id']), excelFile.loc[videoId, 'trial_id'] + '.pkl'))) or not(len(parametersUsedForCalculation)) or int(frameStepForDistanceCalculation) != int(parametersUsedForCalculation['frameStepForDistanceCalculation']) or float(excelFile.loc[videoId, 'fq']) != float(parametersUsedForCalculation['videoFPS']) or float(excelFile.loc[videoId, 'pixelsize']) != float(parametersUsedForCalculation['videoPixelSize']))
+    if not regenerate and reusingParametersCb is not None:
+      forcePandasRecreation = reusingParametersCb()
+      regenerate = forcePandasRecreation
+      reusingParametersCb = None
+
+    if regenerate:
       print("Generating pkl datafile for video " + excelFile.loc[videoId, 'trial_id'] + " , because:")
       if not(os.path.exists(os.path.join(os.path.join(ZZoutputLocation if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder" else excelFile.loc[videoId, 'path'], excelFile.loc[videoId, 'trial_id']), excelFile.loc[videoId, 'trial_id'] + '.pkl'))):
         print("the path", os.path.join(os.path.join(ZZoutputLocation if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder" else excelFile.loc[videoId, 'path'], excelFile.loc[videoId, 'trial_id']), excelFile.loc[videoId, 'trial_id'] + '.pkl'), "does not exist")
@@ -40,3 +45,4 @@ def generatePklDataFileForVideo(excelFileName, ZZoutputLocation, frameStepForDis
       hyperparameters["videoFPS"]       = float(excelFile.loc[videoId, 'fq'])
       hyperparameters["videoPixelSize"] = float(excelFile.loc[videoId, 'pixelsize'])
       createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension, ZZoutputLocation if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder" else excelFile.loc[videoId, 'path'])
+  return forcePandasRecreation

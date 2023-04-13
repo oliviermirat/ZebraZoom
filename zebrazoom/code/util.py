@@ -5,8 +5,8 @@ import numpy as np
 
 import cv2
 
-from PyQt5.QtCore import pyqtSignal, Qt, QAbstractAnimation, QAbstractEventDispatcher, QEventLoop, QLine, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRectF, QSize, QSizeF, QStandardPaths, QTimer
-from PyQt5.QtGui import QBrush, QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygonF, QTransform
+from PyQt5.QtCore import pyqtSignal, Qt, QAbstractAnimation, QAbstractEventDispatcher, QEventLoop, QLine, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRect, QRectF, QSize, QSizeF, QStandardPaths, QTimer
+from PyQt5.QtGui import QBrush, QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygon, QPolygonF, QTransform
 from PyQt5.QtWidgets import QApplication, QDoubleSpinBox, QFrame, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QSplitter, QSplitterHandle, QToolButton, QToolTip, QVBoxLayout, QWidget
 PYQT6 = False
 
@@ -1413,3 +1413,102 @@ def getRotationAngle(frame, angle, dialog=False):
   else:
     showDialog(layout, title="Select the video rotation angle", buttons=buttons, labelInfo=(getFrame(), video))
   return None if cancelled else angle
+
+
+class WellSelectionLabel(QLabel):
+  def __init__(self, width, height):
+    super().__init__()
+    self._width = width
+    self._height = height
+    self._well = 0
+    self._hoveredWell = None
+    if QApplication.instance().wellPositions:
+      self.setMouseTracking(True)
+
+  def mouseMoveEvent(self, evt):
+    app = QApplication.instance()
+    if not app.wellPositions:
+      return
+    oldHovered = self._hoveredWell
+    if app.wellShape == 'rectangle':
+      def test_func(point, x, y, width, height):
+        return QRect(x, y, width, height).contains(point)
+    else:
+      assert app.wellShape == 'circle'
+      def test_func(point, x, y, width, height):
+        radius = width / 2;
+        centerX = x + radius;
+        centerY = y + radius;
+        dx = abs(point.x() - centerX)
+        if dx > radius:
+          return False
+        dy = abs(point.y() - centerY)
+        if dy > radius:
+          return False
+        if dx + dy <= radius:
+          return True
+        return dx * dx + dy * dy <= radius * radius
+    for idx, positions in enumerate(app.wellPositions):
+      if test_func(self._transformToOriginal.map(evt.pos()), *positions):
+        self._hoveredWell = idx
+        break
+    else:
+      self._hoveredWell = None
+    if self._hoveredWell != oldHovered:
+      self.update()
+
+  def mousePressEvent(self, evt):
+    if not QApplication.instance().wellPositions:
+      return
+    if self._hoveredWell is not None:
+      self._well = self._hoveredWell
+      self.update()
+
+  def enterEvent(self, evt):
+    QApplication.setOverrideCursor(Qt.CursorShape.CrossCursor)
+
+  def leaveEvent(self, evt):
+    QApplication.restoreOverrideCursor()
+    self._hoveredWell = None
+    self.update()
+
+  def paintEvent(self, evt):
+    super().paintEvent(evt)
+    app = QApplication.instance()
+    if not app.wellPositions:
+      return
+    qp = QPainter()
+    qp.begin(self)
+    factory = qp.drawRect if app.wellShape == 'rectangle' else qp.drawEllipse
+    font = QFont()
+    font.setPointSize(16)
+    font.setWeight(QFont.Weight.Bold)
+    qp.setFont(font)
+    for idx, positions in enumerate(app.wellPositions):
+      if idx == self._well:
+        qp.setPen(QColor(255, 0, 0))
+      elif idx == self._hoveredWell:
+        qp.setPen(QColor(0, 255, 0))
+      else:
+        qp.setPen(QColor(0, 0, 255))
+      rect = self._transformFromOriginal.map(QPolygon(QRect(*positions))).boundingRect()
+      qp.drawText(rect, Qt.AlignmentFlag.AlignCenter, str(idx))
+      factory(rect)
+    qp.end()
+
+  def resizeEvent(self, evt):
+    super().resizeEvent(evt)
+    self._size = self.size()
+    originalRect = QRectF(QPointF(0, 0), QSizeF(self._width, self._height))
+    currentRect = QRectF(QPointF(0, 0), QSizeF(self._size))
+    self._transformToOriginal = QTransform()
+    QTransform.quadToQuad(QPolygonF((currentRect.topLeft(), currentRect.topRight(), currentRect.bottomLeft(), currentRect.bottomRight())),
+                          QPolygonF((originalRect.topLeft(), originalRect.topRight(), originalRect.bottomLeft(), originalRect.bottomRight())),
+                          self._transformToOriginal)
+    self._transformFromOriginal = QTransform()
+    QTransform.quadToQuad(QPolygonF((originalRect.topLeft(), originalRect.topRight(), originalRect.bottomLeft(), originalRect.bottomRight())),
+                          QPolygonF((currentRect.topLeft(), currentRect.topRight(), currentRect.bottomLeft(), currentRect.bottomRight())),
+                          self._transformFromOriginal)
+
+  def getWell(self):
+    return self._well

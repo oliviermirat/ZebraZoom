@@ -26,6 +26,9 @@ jobs:
         with:
           message: Bump version to ${{ inputs.new_version }}
           tag: release/${{ inputs.new_version }}
+      - name: Generate release notes
+        run: |
+          python generate_release_notes.py ${{ secrets.GITHUB_TOKEN }} > release_notes.txt
       - name: Create a new release draft
         id: create_release
         uses: actions/create-release@latest
@@ -36,6 +39,7 @@ jobs:
           release_name: release/${{ inputs.new_version }}
           draft: true
           prerelease: false
+          body_path: release_notes.txt
 
   deploy_windows:
     name: Deploy on Windows

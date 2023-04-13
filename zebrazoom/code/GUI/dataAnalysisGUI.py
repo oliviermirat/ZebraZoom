@@ -1056,6 +1056,11 @@ class PopulationComparison(QWidget):
 
     self.setLayout(layout)
 
+  def _warnParametersReused(self):
+    return QMessageBox.question(self.controller.window, "Parameters not recalculated", "Previously calculated parameters will be used for some videos. Would you like to recalculate them instead?",
+                                defaultButton=QMessageBox.StandardButton.No) == QMessageBox.StandardButton.Yes
+
+
   @util.showInProgressPage('Parameters calculation')
   def _populationComparison(self, TailTrackingParameters, saveInMatlabFormat, saveRawData, forcePandasRecreation, minNbBendForBoutDetect, keep, frameStepForDistanceCalculation):
     if len(frameStepForDistanceCalculation) == 0:
@@ -1095,7 +1100,7 @@ class PopulationComparison(QWidget):
       'gaussianFitOutlierRemoval': gaussianFitOutlierRemoval,
     }
 
-    generatePklDataFileForVideo(os.path.join(self.controller.experimentOrganizationExcelFileAndFolder, self.controller.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation)
+    forcePandasRecreation = generatePklDataFileForVideo(os.path.join(self.controller.experimentOrganizationExcelFileAndFolder, self.controller.experimentOrganizationExcel), ZZoutputLocation, frameStepForDistanceCalculation, forcePandasRecreation, reusingParametersCb=self._warnParametersReused)
 
     [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, "", forcePandasRecreation, [])
 

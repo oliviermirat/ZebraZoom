@@ -17,10 +17,89 @@ from zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions import prepareConfigF
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
 
-def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack):
+def _selectWell(app, cap, wellPositions):
+  layout = QVBoxLayout()
+
+  app.wellPositions = [(position['topLeftX'], position['topLeftY'], position['lengthX'], position['lengthY'])
+                       for position in wellPositions]
+
+  firstFrame = app.configFile.get("firstFrame", 1)
+  maxFrame = app.configFile.get("lastFrame", cap.get(7) - 1)
+  frameSlider = util.SliderWithSpinbox(firstFrame, 0, maxFrame, name="Frame")
+
+  def getFrame():
+    cap.set(1, frameSlider.value())
+    ret, frame = cap.read()
+    return frame
+  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video))
+
+  img = getFrame()
+  height, width = img.shape[:2]
+  video = util.WellSelectionLabel(width, height)
+  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
+
+  sublayout = QHBoxLayout()
+  sublayout.addStretch(1)
+  sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+  if maxFrame - firstFrame > 1000:
+    adjustLayout = QVBoxLayout()
+    adjustLayout.setSpacing(0)
+    adjustLayout.addStretch()
+    zoomInSliderBtn = QPushButton("Zoom in slider")
+
+    def updatePreciseFrameSlider(value):
+      if frameSlider.minimum() == value and frameSlider.minimum():
+        frameSlider.setMinimum(frameSlider.minimum() - 1)
+        frameSlider.setMaximum(frameSlider.maximum() - 1)
+      elif value == frameSlider.maximum() and frameSlider.maximum() != maxFrame:
+        frameSlider.setMinimum(frameSlider.minimum() + 1)
+        frameSlider.setMaximum(frameSlider.maximum() + 1)
+
+    def zoomInButtonClicked():
+      if "in" in zoomInSliderBtn.text():
+        zoomInSliderBtn.setText("Zoom out slider")
+        value = frameSlider.value()
+        minimum = value - 250
+        maximum = value + 250
+        if minimum < 0:
+          maximum = 500
+          minimum = 0
+        if maximum > frameSlider.maximum():
+          maximum = frameSlider.maximum()
+          minimum = maximum - 500
+        frameSlider.setMinimum(max(0, minimum))
+        frameSlider.setMaximum(min(frameSlider.maximum(), maximum))
+        frameSlider.setValue(value)
+        frameSlider.valueChanged.connect(updatePreciseFrameSlider)
+      else:
+        zoomInSliderBtn.setText("Zoom in slider")
+        frameSlider.setMinimum(0)
+        frameSlider.setMaximum(maxFrame)
+        frameSlider.valueChanged.disconnect(updatePreciseFrameSlider)
+    zoomInSliderBtn.clicked.connect(zoomInButtonClicked)
+    adjustLayout.addWidget(QLabel())
+    adjustLayout.addWidget(zoomInSliderBtn, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
+    adjustLayout.addStretch()
+    sublayout.addLayout(adjustLayout)
+  sublayout.addStretch(1)
+  layout.addLayout(sublayout)
+
+  cancelled = False
+  def cancelCb():
+    nonlocal cancelled
+    cancelled = True
+  buttons = (("Cancel", cancelCb, True), ("Ok", None, True, None, util.DEFAULT_BUTTON_COLOR))
+  util.showBlockingPage(layout, title='Select the well with the most movement', buttons=buttons, labelInfo=(img, video, False))
+  wellNumber = None if cancelled else video.getWell()
+  del app.wellPositions
+  return wellNumber
+
+
+def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack, wellNumber=None):
   
   firstFrameIndex = self.configFile["firstFrame"] if "firstFrame" in self.configFile else -1
   lastFrameIndex  = self.configFile["lastFrame"]  if "lastFrame"  in self.configFile else -1
@@ -53,32 +132,33 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
     del app.wellPositions
   if not wellPositions:
     return None
-  wellPositions = [dict(zip(('topLeftX', 'topLeftY', 'lengthX', 'lengthY'), values)) for idx, values in enumerate(wellPositions)]
+  wellPositions = [dict(zip(('topLeftX', 'topLeftY', 'lengthX', 'lengthY'), values)) for values in wellPositions]
 
   cap   = zzVideoReading.VideoCapture(videoPath)
   max_l = int(cap.get(7))
-  
-  # Finding the well with the most movement
-  cap.set(1, 0)
-  ret, firstFrame = cap.read()
-  firstFrame = cv2.cvtColor(firstFrame, cv2.COLOR_BGR2GRAY)
-  cap.set(1, max_l-1)
-  ret, lastFrame = cap.read()
-  while not(ret):
-    max_l = max_l - 1
+
+  if wellNumber is None:
+    # Finding the well with the most movement
+    cap.set(1, 0)
+    ret, firstFrame = cap.read()
+    firstFrame = cv2.cvtColor(firstFrame, cv2.COLOR_BGR2GRAY)
     cap.set(1, max_l-1)
     ret, lastFrame = cap.read()
-  lastFrame = cv2.cvtColor(lastFrame, cv2.COLOR_BGR2GRAY)
-  pixelsChange = np.zeros((len(wellPositions)))
-  for wellNumberId in range(0, len(wellPositions)):
-    xtop  = wellPositions[wellNumberId]['topLeftX']
-    ytop  = wellPositions[wellNumberId]['topLeftY']
-    lenX  = wellPositions[wellNumberId]['lengthX']
-    lenY  = wellPositions[wellNumberId]['lengthY']
-    firstFrameROI = firstFrame[ytop:ytop+lenY, xtop:xtop+lenX]
-    lastFrameROI  = lastFrame[ytop:ytop+lenY, xtop:xtop+lenX]
-    pixelsChange[wellNumberId] = np.sum(abs(firstFrameROI-lastFrameROI)) / np.sum(abs(firstFrameROI)) if np.sum(abs(firstFrameROI)) else 0
-  wellNumber = np.argmax(pixelsChange)
+    while not(ret):
+      max_l = max_l - 1
+      cap.set(1, max_l-1)
+      ret, lastFrame = cap.read()
+    lastFrame = cv2.cvtColor(lastFrame, cv2.COLOR_BGR2GRAY)
+    pixelsChange = np.zeros((len(wellPositions)))
+    for wellNumberId in range(0, len(wellPositions)):
+      xtop  = wellPositions[wellNumberId]['topLeftX']
+      ytop  = wellPositions[wellNumberId]['topLeftY']
+      lenX  = wellPositions[wellNumberId]['lengthX']
+      lenY  = wellPositions[wellNumberId]['lengthY']
+      firstFrameROI = firstFrame[ytop:ytop+lenY, xtop:xtop+lenX]
+      lastFrameROI  = lastFrame[ytop:ytop+lenY, xtop:xtop+lenX]
+      pixelsChange[wellNumberId] = np.sum(abs(firstFrameROI-lastFrameROI)) / np.sum(abs(firstFrameROI)) if np.sum(abs(firstFrameROI)) else 0
+    wellNumber = np.argmax(pixelsChange)
   
   backCalculationStep = int(max_l / nbOfImagesToManuallyClassify) if (firstFrameIndex == -1 or lastFrameIndex == -1) else int((lastFrameIndex - firstFrameIndex + 1) / nbOfImagesToManuallyClassify)
   data = [None] * ((max_l - 1) // backCalculationStep + 1)
@@ -98,36 +178,60 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
       lenY  = wellPositions[wellNumber]['lengthY']
       frame = frame[ytop:ytop+lenY, xtop:xtop+lenX]
 
+      changeWell = False
+      def changeWellCallback(video):
+        nonlocal changeWell
+        changeWell = True
+
       def callback():
         nonlocal k
         k -= backCalculationStep
       oldk = k
       if data[k//backCalculationStep] is None:
+        extraButtons = (('Switch well', changeWellCallback, True),)
         headCoordinates = list(util.getPoint(frame, "Click on the center of the head of one animal" if zebrafishToTrack else "Click on the center of mass of an animal",
-                                             backBtnCb=callback, zoomable=True))
+                                             backBtnCb=callback, zoomable=True, extraButtons=extraButtons))
+        while changeWell:
+          newWellNumber = _selectWell(controller, cap, wellPositions)
+          if newWellNumber is None:
+            changeWell = False
+            headCoordinates = list(util.getPoint(frame, "Click on the center of the head of one animal" if zebrafishToTrack else "Click on the center of mass of an animal",
+                                                 backBtnCb=callback, zoomable=True, extraButtons=extraButtons))
+          else:
+            return getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack, wellNumber=newWellNumber)
       else:
         headCoordinates = data[k//backCalculationStep]["headCoordinates"]
       if oldk != k:
         if k >= 0:
           continue
         elif initialHyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"] or initialHyperparameters["multipleROIsDefinedDuringExecution"]:
-          return getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack)
+          return getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack, wellNumber=wellNumber)
         else:
           QApplication.instance().configFileHistory[-2]()
           return None
       frame2 = cv2.circle(frame, tuple(headCoordinates), 2, (0, 0, 255), -1)
 
       goToOptimize = False
-      def callback2(video):
+      def callback2():
         nonlocal goToOptimize
         goToOptimize = True
       extraButtons = (('I want to manually adjust tracking parameters', callback2, True, None),) if k == firstK else ()
+      extraButtons += (('Switch well', changeWellCallback, True),)
       tailTipCoordinates = list(util.getPoint(frame2, "Click on the tip of the tail of the same animal" if zebrafishToTrack else "Click on a point on the border of the same animal",
                                 backBtnCb=callback, zoomable=True, extraButtons=extraButtons))
       if goToOptimize:
         # TODO: add calculations here
         util.addToHistory(controller.optimizeConfigFile)()
         return None
+
+      while changeWell:
+        newWellNumber = _selectWell(controller, cap, wellPositions)
+        if newWellNumber is None:
+          changeWell = False
+          tailTipCoordinates = list(util.getPoint(frame2, "Click on the tip of the tail of the same animal" if zebrafishToTrack else "Click on a point on the border of the same animal",
+                                                  backBtnCb=callback, zoomable=True, extraButtons=extraButtons))
+        else:
+          return getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack, wellNumber=newWellNumber)
 
       if oldk != k:
         k = oldk

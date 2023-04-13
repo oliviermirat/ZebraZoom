@@ -824,12 +824,19 @@ class NbRegionsOfInterest(QWidget):
     self.controller = controller
     self.preferredSize = (450, 300)
 
+    def updateButtons():
+      enabled = bool(nbwells.text())
+      nextBtn.setEnabled(enabled)
+      nextBtn.setToolTip("Values must be entered in all fields." if not enabled else None)
+    self._updateButtons = updateButtons
+
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addWidget(util.apply_style(QLabel("How many regions of interest / wells are there in your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     nbwells = QLineEdit(controller.window)
     nbwells.setValidator(QIntValidator(nbwells))
     nbwells.validator().setBottom(0)
+    nbwells.textChanged.connect(updateButtons)
     layout.addWidget(nbwells, alignment=Qt.AlignmentFlag.AlignCenter)
 
     buttonsLayout = QHBoxLayout()
@@ -847,6 +854,9 @@ class NbRegionsOfInterest(QWidget):
     layout.addLayout(buttonsLayout)
 
     self.setLayout(layout)
+
+  def showEvent(self, evt):
+    self._updateButtons()
 
 
 class HomegeneousWellsLayout(QWidget):
@@ -1114,10 +1124,17 @@ class NumberOfAnimals(QWidget):
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
+    def updateButtons():
+      enabled = bool(nbanimals.text())
+      nextBtn.setEnabled(enabled)
+      nextBtn.setToolTip("Values must be entered in all fields." if not enabled else None)
+    self._updateButtons = updateButtons
+
     layout.addWidget(util.apply_style(QLabel("What's the total number of animals in your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     nbanimals = QLineEdit(controller.window)
     nbanimals.setValidator(QIntValidator(nbanimals))
     nbanimals.validator().setBottom(0)
+    nbanimals.textChanged.connect(updateButtons)
     layout.addWidget(nbanimals, alignment=Qt.AlignmentFlag.AlignCenter)
 
     layout.addWidget(util.apply_style(QLabel("Are all of those animals ALWAYS visible throughout the video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -1147,6 +1164,9 @@ class NumberOfAnimals(QWidget):
 
     self.setLayout(layout)
 
+  def showEvent(self, evt):
+    self._updateButtons()
+
 
 class NumberOfAnimals2(QWidget):
   def __init__(self, controller):
@@ -1157,11 +1177,18 @@ class NumberOfAnimals2(QWidget):
     layout = QGridLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
+    def updateButtons():
+      enabled = bool(nbanimals.text())
+      nextBtn.setEnabled(enabled)
+      nextBtn.setToolTip("Values must be entered in all fields." if not enabled else None)
+    self._updateButtons = updateButtons
+
     self._nbanimalsLabel = util.apply_style(QLabel("What's the total number of animals in your video?", self), font_size='16px')
     layout.addWidget(self._nbanimalsLabel, 1, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._nbanimals = nbanimals = QLineEdit(controller.window)
     nbanimals.setValidator(QIntValidator(nbanimals))
     nbanimals.validator().setBottom(0)
+    nbanimals.textChanged.connect(updateButtons)
     layout.addWidget(nbanimals, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
     layout.addWidget(util.apply_style(QLabel("Tracking: Choose an option below:", self), font_size='16px'), 3, 1, Qt.AlignmentFlag.AlignCenter)
@@ -1264,6 +1291,7 @@ class NumberOfAnimals2(QWidget):
   def showEvent(self, evt):
     self._nbanimals.setVisible(self.controller.shape not in ('groupSameSizeAndShapeEquallySpacedWells', 'circular', 'rectangular'))
     self._nbanimalsLabel.setVisible(self.controller.shape not in ('groupSameSizeAndShapeEquallySpacedWells', 'circular', 'rectangular'))
+    self._updateButtons()
     super().showEvent(evt)
 
 
@@ -1276,11 +1304,19 @@ class NumberOfAnimalsCenterOfMass(QWidget):
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
+    def updateButtons():
+      enabled = bool(nbanimals.text())
+      for btn in (method1Btn, method2Btn, manualBtn):
+        btn.setEnabled(enabled)
+        btn.setToolTip("Values must be entered in all fields." if not enabled else None)
+    self._updateButtons = updateButtons
+
     self._nbanimalsLabel = util.apply_style(QLabel("What's the total number of animals in your video?", self), font=QFont("Helvetica", 10))
     layout.addWidget(self._nbanimalsLabel, alignment=Qt.AlignmentFlag.AlignCenter)
     self._nbanimals = nbanimals = QLineEdit(controller.window)
     nbanimals.setValidator(QIntValidator(nbanimals))
     nbanimals.validator().setBottom(0)
+    nbanimals.textChanged.connect(updateButtons)
     layout.addWidget(nbanimals, alignment=Qt.AlignmentFlag.AlignCenter)
 
     layout.addWidget(util.apply_style(QLabel("Are all of those animals ALWAYS visible throughout the video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -1318,6 +1354,7 @@ class NumberOfAnimalsCenterOfMass(QWidget):
   def showEvent(self, evt):
     self._nbanimals.setVisible(self.controller.shape not in ('groupSameSizeAndShapeEquallySpacedWells', 'circular', 'rectangular'))
     self._nbanimalsLabel.setVisible(self.controller.shape not in ('groupSameSizeAndShapeEquallySpacedWells', 'circular', 'rectangular'))
+    self._updateButtons()
     super().showEvent(evt)
 
 

@@ -377,7 +377,7 @@ class _VideoSelectionPage(QWidget):
                                      for root, _dirs, files in os.walk(path) for f in files if os.path.splitext(f)[1] in self._VIDEO_EXTENSIONS])
 
   def _updateParallelTracking(self):
-    if self._ZZkwargs.get('sbatchMode', False):
+    if self._ZZkwargs.get('sbatchMode', False) or self._ZZkwargs.get('findMultipleROIs', False) or self._ZZkwargs.get('headEmbedded', False):
       return
     videos, configs = self._table.model().getData()
     enabled = bool(configs)
