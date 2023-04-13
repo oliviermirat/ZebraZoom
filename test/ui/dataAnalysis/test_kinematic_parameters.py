@@ -22,7 +22,7 @@ from zebrazoom.code.GUI.dataAnalysisGUI import KinematicParametersVisualization,
 
 _DEFAULT_KEYS = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition',
                  'Genotype', 'videoDuration', 'Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)',
-                 'percentTimeSpentSwimming', 'Bout Counts', 'Bout Rate (bouts / s)']
+                 'Angular Velocity (deg/s)', 'percentTimeSpentSwimming', 'Bout Counts', 'Bout Rate (bouts / s)']
 
 _EXPECTED_RESULTS = {'Trial_ID': [],
                      'Well_ID': [],
@@ -35,6 +35,7 @@ _EXPECTED_RESULTS = {'Trial_ID': [],
                      'Bout Duration (s)': [],
                      'Bout Distance (mm)': [],
                      'Bout Speed (mm/s)': [],
+                     'Angular Velocity (deg/s)': [],
                      'Max TBF (Hz)': [],
                      'Mean TBF (Hz)': [],
                      'medianOfInstantaneousTBF': [],
@@ -163,6 +164,7 @@ def _generateResults():
         _EXPECTED_RESULTS['Bout Distance (mm)'].append(math.sqrt(xMove * xMove + yMove * yMove) * pixelSize * (duration - 1))
         _EXPECTED_RESULTS['maxInstantaneousSpeed'].append(math.sqrt(xMove * xMove + yMove * yMove) * 3 * pixelSize * fps)
         _EXPECTED_RESULTS['Bout Speed (mm/s)'].append(math.sqrt(xMove * xMove + yMove * yMove) * pixelSize * fps)
+        _EXPECTED_RESULTS['Angular Velocity (deg/s)'].append(0) # XXX: modify test data to include non-zero angular velocity?
         _EXPECTED_RESULTS['Max TBF (Hz)'].append(max(instantaneousTBF))
         _EXPECTED_RESULTS['Mean TBF (Hz)'].append(np.mean(instantaneousTBF))
         _EXPECTED_RESULTS['medianOfInstantaneousTBF'].append(np.median(instantaneousTBF))
@@ -784,7 +786,7 @@ def _test_keep_data_for_discarded_bouts_check_results():
   generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
   generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
   assert list(generatedExcelAll.columns) == [key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]
-  colsToKeep = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration', 'Bout Distance (mm)', 'Bout Duration (s)', 'Bout Speed (mm/s)', 'IBI (s)'}
+  colsToKeep = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration', 'Bout Distance (mm)', 'Bout Duration (s)', 'Bout Speed (mm/s)', 'IBI (s)', 'Angular Velocity (deg/s)'}
   expectedResultsDict = {k: [x if numOfOsc * 2 >= 12 or k in colsToKeep else np.nan for x, numOfOsc in zip(v, _EXPECTED_RESULTS['Number of Oscillations'])]
                          for k, v in _EXPECTED_RESULTS.items()}
   assert expectedResultsDict['xmean'].count(np.nan) > 0  # make sure some bouts were discarded
