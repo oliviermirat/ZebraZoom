@@ -50,7 +50,7 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
   if medianPerWellFirstForEachKinematicParameter:
     dfKinematicValues = dfParam[columnsForRawDataExport]
     dfKinematicValues = dfKinematicValues.astype({param: float for param in globParam + ['videoDuration']})
-    dfKinematicValues = dfKinematicValues.groupby(['Trial_ID', 'Well_ID']).median()
+    dfKinematicValues = dfKinematicValues.groupby(['Trial_ID', 'Well_ID']).median(numeric_only=True)
     dfCondGeno = dfParam[['Trial_ID', 'Well_ID', 'Condition', 'Genotype']]
     dfCondGeno = dfCondGeno.groupby(['Trial_ID', 'Well_ID']).first()
     dfCount = dfParam[['Trial_ID', 'Well_ID']].copy()
@@ -66,7 +66,7 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
   elif medianPerGenotypeFirstForEachKinematicParameter:
     dfKinematicValues = dfParam[columnsForRawDataExport]
     dfKinematicValues = dfKinematicValues.astype({param: float for param in globParam})
-    dfKinematicValues = dfKinematicValues.groupby(['Genotype', 'Well_ID']).median()
+    dfKinematicValues = dfKinematicValues.groupby(['Genotype', 'Well_ID']).median(numeric_only=True)
     dfCond = dfParam[['Genotype', 'Well_ID', 'Condition']]
     dfCond = dfCond.groupby(['Genotype', 'Well_ID']).first()
     dfCount = dfParam[['Genotype', 'Well_ID']].copy()

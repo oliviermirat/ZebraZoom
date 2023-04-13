@@ -1927,7 +1927,8 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     allBoutsMixed, medianPerWell = self._findResultsFiles(folder)
     oldParameters = set(self._allParameters) | set(self._medianParameters)
     self._allData = pd.read_csv(allBoutsMixed) if allBoutsMixed.endswith('.csv') else pd.read_excel(allBoutsMixed)
-    self._allData = self._allData.loc[:, ~self._allData.columns.str.contains('^Unnamed')]
+    if not self._allData.empty:
+        self._allData = self._allData.loc[:, ~self._allData.columns.str.contains('^Unnamed')]
     self._allParameters = [param for param in self._allData.columns if param not in self._IGNORE_COLUMNS]
     self._medianData = pd.read_csv(medianPerWell) if medianPerWell.endswith('.csv') else pd.read_excel(medianPerWell)
     self._medianData = self._medianData.loc[:, ~self._medianData.columns.str.contains('^Unnamed')]
