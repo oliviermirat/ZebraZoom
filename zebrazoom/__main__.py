@@ -224,6 +224,13 @@ if __name__ == '__main__':
       from zebrazoom.GUIAllPy import PlainApplication
       app = PlainApplication(sys.argv)
       createDistanceBetweenFramesExcelFile(paths.getDefaultZZoutputFolder(), sys.argv) # fps, pixelSize
+
+    elif sys.argv[1] == "removeLargeInstantaneousDistanceData":
+
+      from zebrazoom.dataAnalysis.createCustomDataStructure.removeLargeInstantaneousDistanceData import removeLargeInstantaneousDistanceData
+      from zebrazoom.GUIAllPy import PlainApplication
+      app = PlainApplication(sys.argv)
+      removeLargeInstantaneousDistanceData(paths.getDefaultZZoutputFolder(), sys.argv)
       
     elif sys.argv[1] == "filterLatencyAndMergeBoutsInSameTrials":
       

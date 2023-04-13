@@ -233,6 +233,7 @@
   "removeFirstSmallBend" : 0,
   
   "saveSuperStructToMatlab" : 0,
+  "removeLargeInstantaneousDistanceData" : 0,
   
   "plotOnlyOneTailPointForVisu" : 0,
   "trackingPointSizeDisplay" : 1,

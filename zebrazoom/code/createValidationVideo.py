@@ -180,7 +180,7 @@ def drawInfoFrame(l, frame, infoFrame, colorModifTab, hyperparameters):
       headingColor = infoFrame[l][i]["headingColor"] if "headingColor" in infoFrame[l][i] else (255,0,0)
       headingWidth = infoFrame[l][i]["headingWidth"] if "headingWidth" in infoFrame[l][i] else hyperparameters["trackingPointSizeDisplay"]
       headingHalfDiam = infoFrame[l][i]["headingHalfDiam"] if "headingHalfDiam" in infoFrame[l][i] else 20
-      if hyperparameters["validationVideoPlotHeading"]:
+      if hyperparameters["validationVideoPlotHeading"] and not(np.isnan(x)) and not(np.isnan(y)) and not(np.isnan(heading)):
         if hyperparameters["debugValidationVideoHeading"] == 0:
           cv2.line(frame,(int(x),int(y)),(int(x+headingHalfDiam*math.cos(heading)),int(y+headingHalfDiam*math.sin(heading))), headingColor, headingWidth)
         else:
@@ -190,8 +190,9 @@ def drawInfoFrame(l, frame, infoFrame, colorModifTab, hyperparameters):
         # numMouv = infoFrame[l][i]["numMouv"]
         # numWell = infoFrame[l][i]["numWell"]
         # cv2.putText(frame,str(numMouv),(15+infoWells[numWell][0],25+infoWells[numWell][1]),cv2.FONT_HERSHEY_SIMPLEX,1,(255,255,255))
-
-    cv2.circle(frame, (int(x),int(y)), size, (red,green,blue), -1)
+    
+    if x != float('nan') and y != float('nan') and not(math.isnan(x)) and not(math.isnan(y)):
+      cv2.circle(frame, (int(x),int(y)), size, (red,green,blue), -1)
 
     if hyperparameters["validationVideoPlotAnimalNumber"]:
       if "numAnimal" in infoFrame[l][i]:
