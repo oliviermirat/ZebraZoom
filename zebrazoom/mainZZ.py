@@ -383,7 +383,7 @@ class MainZZ:
   def _storeInAdditionalFolder(self):
       if os.path.isdir(self._hyperparameters["additionalOutputFolder"]):
         if self._hyperparameters["additionalOutputFolderOverwriteIfAlreadyExist"]:
-          shutil.rmtree(self8.hyperparameters["additionalOutputFolder"])
+          shutil.rmtree(self.hyperparameters["additionalOutputFolder"])
           while True:
             try:
               shutil.copytree(self._outputFolderVideo, self._hyperparameters["additionalOutputFolder"])
