@@ -16,7 +16,7 @@ import pandas as pd
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
-from zebrazoom.mainZZ import mainZZ
+from zebrazoom.mainZZ import MainZZ
 from zebrazoom.getTailExtremityFirstFrame import getTailExtremityFirstFrame
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
@@ -552,7 +552,7 @@ def _runTracking(args, justExtractParams, noValidationVideo, ZZoutputLocation):
   if noValidationVideo:
     tabParams.extend(["createValidationVideo", 0])
   try:
-    mainZZ(path, name, videoExt, config, tabParams)
+    MainZZ(path, name, videoExt, config, tabParams).runTracking()
   except ValueError:
     print("moving on to the next video for ROIs identification")
   except NameError:
@@ -617,12 +617,10 @@ def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, justE
             commandsFile.write('python -m zebrazoom ' + ' '.join(tabParams[1:4]) + ' configFiles/%s\n' % os.path.basename(config))
             nbVideosToLaunch = nbVideosToLaunch + 1
           else:
-            mainZZ(path, name, videoExt, config, tabParams)
+            MainZZ(path, name, videoExt, config, tabParams).runTracking()
         except ValueError:
           print("moving on to the next video for ROIs identification")
-        except NameError:
-          app.show_frame("Error")
-          return
+
       else:
         tabParams = ["outputFolder", app.ZZoutputLocation]
         if backgroundExtractionForceUseAllVideoFrames is not None:

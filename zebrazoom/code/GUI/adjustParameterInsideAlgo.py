@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QApplication, QGridLayout, QLabel, QLineEdit, QCheck
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
-from zebrazoom.mainZZ import mainZZ
+from zebrazoom.mainZZ import MainZZ
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
 from zebrazoom.code.getImage.headEmbededFrameBackExtract import headEmbededFrameBackExtract
@@ -287,7 +287,7 @@ def _adjustEyeTracking(firstFrame, totalFrames, ellipse=False):
   try:
     if "lastFrame" in app.configFile and "firstFrame" in app.configFile and app.configFile["lastFrame"] < app.configFile["firstFrame"]:
       del app.configFile["lastFrame"]
-    mainZZ(pathToVideo, videoName, videoExt, app.configFile, argv)
+    MainZZ(pathToVideo, videoName, videoExt, app.configFile, argv).runTracking()
   except ValueError:
     saved = True
   except NameError:

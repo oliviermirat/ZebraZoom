@@ -24,7 +24,7 @@ import zebrazoom.code.GUI.configFileZebrafishFunctions as configFileZebrafishFun
 import zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions as adjustParameterInsideAlgoFunctions
 import zebrazoom.code.GUI.dataAnalysisGUIFunctions as dataAnalysisGUIFunctions
 import zebrazoom.code.GUI.troubleshootingFunction as troubleshootingFunction
-from zebrazoom.mainZZ import mainZZ
+from zebrazoom.mainZZ import MainZZ
 from zebrazoom.code.GUI.GUI_InitialClasses import StartPage, VideoToAnalyze, ConfigFilePromp, Patience, ZZoutro, ZZoutroSbatch, SeveralVideos, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, EnhanceZZOutput, ViewParameters, Error
 from zebrazoom.code.GUI.configFilePrepare import ChooseVideoToCreateConfigFileFor, OptimizeConfigFile, ChooseGeneralExperiment, ChooseCenterOfMassTracking, WellOrganisation, FreelySwimmingExperiment, NbRegionsOfInterest, HomegeneousWellsLayout, CircularOrRectangularWells, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings
 from zebrazoom.code.GUI.configFileZebrafish import HeadEmbeded
@@ -353,7 +353,7 @@ class ZebraZoomApp(PlainApplication):
                          "firstFrame", firstFrame, "lastFrame", lastFrame, "freqAlgoPosFollow", 100,
                          "popUpAlgoFollow", 1, "outputFolder", self.ZZoutputLocation,
                          "backgroundExtractionForceUseAllVideoFrames", int(backgroundExtractionForceUseAllVideoFramesCheckbox.isChecked())]
-            mainZZ(pathToVideo, videoName, videoExt, self.configFile, tabParams)
+            MainZZ(pathToVideo, videoName, videoExt, self.configFile, tabParams).runTracking()
           except NameError:
             self.show_frame("Error")
             self.ZZoutputLocation = outputLocation

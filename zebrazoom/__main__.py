@@ -94,7 +94,7 @@ if __name__ == '__main__':
     elif sys.argv[1] == "convertSeqToAviThenLaunchTracking":
 
       from zebrazoom.videoFormatConversion.seq_to_avi import sqb_convert_to_avi
-      from zebrazoom.mainZZ import mainZZ
+      from zebrazoom.mainZZ import MainZZ
       from pathlib import Path
       import time
       path       = sys.argv[2]
@@ -113,7 +113,7 @@ if __name__ == '__main__':
       time.sleep(2)
       print("Launching the tracking, the data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
       __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
-      mainZZ(path2, videoName, 'avi', configFile, argv2, useGUI=False)
+      MainZZ(path2, videoName, 'avi', configFile, argv2, useGUI=False).runTracking()
 
 
     elif sys.argv[1] == "DL_createMask":
@@ -279,7 +279,7 @@ if __name__ == '__main__':
       configFile  = sys.argv[4]
       argv        = sys.argv
 
-      from zebrazoom.mainZZ import mainZZ
+      from zebrazoom.mainZZ import MainZZ
 
       useGUI = '--use-gui' in sys.argv
       if useGUI:
@@ -291,4 +291,4 @@ if __name__ == '__main__':
           useGUI = False
           print("GUI not available")
       __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
-      mainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=useGUI)
+      MainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=useGUI).runTracking()

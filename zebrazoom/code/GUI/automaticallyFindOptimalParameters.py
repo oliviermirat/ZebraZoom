@@ -3,7 +3,6 @@ import json
 import math
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
-from zebrazoom.mainZZ import mainZZ
 import pickle
 import json
 import os

@@ -9,7 +9,7 @@ from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.getBackground import getBackground
 from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
 import pickle
-from zebrazoom.mainZZ import mainZZ
+from zebrazoom.mainZZ import MainZZ
 import json
 import os
 
@@ -156,7 +156,7 @@ def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
   app = QApplication.instance()
   with app.busyCursor():
     try:
-      mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+      MainZZ(pathToVideo, videoName, videoExt, configFile, argv).runTracking()
     except ValueError:
       newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
       for index in newhyperparameters:
