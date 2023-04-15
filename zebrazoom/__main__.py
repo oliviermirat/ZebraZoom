@@ -43,7 +43,7 @@ class _Subcommands:
   @staticmethod
   def convertSeqToAviThenLaunchTracking(args):
     from zebrazoom.videoFormatConversion.seq_to_avi import sqb_convert_to_avi
-    from zebrazoom.mainZZ import MainZZ
+    from zebrazoom.mainZZ import ZebraZoomVideoAnalysis
     from pathlib import Path
     import time
     path2      = Path(args.path).parent
@@ -53,7 +53,7 @@ class _Subcommands:
     time.sleep(2)
     print("Launching the tracking, the data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
-    MainZZ(path2, args.videoName, 'avi', args.configFile, args.hyperparameters, useGUI=False).runTracking()
+    ZebraZoomVideoAnalysis(path2, args.videoName, 'avi', args.configFile, args.hyperparameters, useGUI=False).run()
 
   @staticmethod
   def DL_createMask(args):
@@ -182,7 +182,7 @@ class _Subcommands:
   @staticmethod
   def runVideoAnalysis(args):
     print("The data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
-    from zebrazoom.mainZZ import MainZZ
+    from zebrazoom.mainZZ import ZebraZoomVideoAnalysis
 
     try:
       from zebrazoom.GUIAllPy import PlainApplication
@@ -192,7 +192,7 @@ class _Subcommands:
       useGUI = False
       print("GUI not available")
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
-    MainZZ(args.pathToVideo, args.videoName, args.videoExt, args.configFile, args.hyperparameters, useGUI=useGUI).runTracking()
+    ZebraZoomVideoAnalysis(args.pathToVideo, args.videoName, args.videoExt, args.configFile, args.hyperparameters, useGUI=useGUI).run()
 
 
 def _ensureFolderPermissions():

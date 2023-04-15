@@ -26,7 +26,7 @@ from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
 
-class MainZZ:
+class ZebraZoomVideoAnalysis:
   def __init__(self, pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
     self._pathToVideo = pathToVideo
     self._videoName = videoName
@@ -233,7 +233,7 @@ class MainZZ:
         if hasattr(app, "background"):
           app.background = self.background
 
-  def __runTracking(self, process_type):
+  def _runTracking(self, process_type):
     # Tracking and extraction of parameters
     if self._hyperparameters["fasterMultiprocessing"] == 1:
       processes = -1
@@ -406,7 +406,7 @@ class MainZZ:
       else:
         shutil.copytree(self._outputFolderVideo, self._hyperparameters["additionalOutputFolder"])
 
-  def runTracking(self):
+  def run(self):
     '''Run tracking'''
     # Checking that path and video exists
     if not(os.path.exists(os.path.join(self._pathToVideo, self._videoNameWithExt))):
@@ -451,7 +451,7 @@ class MainZZ:
 
     self._loadDLModel()
 
-    paramDataPerWell, trackingDataPerWell = self.__runTracking(Process)
+    paramDataPerWell, trackingDataPerWell = self._runTracking(Process)
 
     if (self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "saveTrackDataAndExtractParam") or (self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justSaveTrackData"):
       self._storeIntermediaryResults(trackingDataPerWell)
