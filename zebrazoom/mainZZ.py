@@ -350,11 +350,12 @@ class MainZZ:
     if (self._hyperparameters["freqAlgoPosFollow"] != 0):
       print("intermediary results saved")
 
-  def _storeResults(self, paramDataPerWell):
-    # Creating super structure
-    superStruct = createSuperStruct(paramDataPerWell, self.wellPositions, self._hyperparameters, os.path.join(self._pathToVideo, self._videoNameWithExt))
+  def _createSuperStruct(self, paramDataPerWell):
+    '''Create super structure'''
+    return createSuperStruct(paramDataPerWell, self.wellPositions, self._hyperparameters, os.path.join(self._pathToVideo, self._videoNameWithExt))
 
-    # Creating validation video
+  def _createValidationVideo(self, superStruct):
+    '''Create validation video'''
     if not(self._hyperparameters["savePathToOriginalVideoForValidationVideo"]):
       if self._hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
         shutil.copyfile(os.path.join(self._pathToVideo, self._videoNameWithExt), os.path.join(os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"]), 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'))
@@ -362,8 +363,14 @@ class MainZZ:
         if self._hyperparameters["createValidationVideo"]:
           infoFrame = createValidationVideo(os.path.join(self._pathToVideo, self._videoNameWithExt), superStruct, self._hyperparameters)
 
+  def _dataPostProcessing(self, superStruct):
+    return dataPostProcessing(self._outputFolderVideo, superStruct, self._hyperparameters, self._videoName, self._videoExt)
+
+  def _storeResults(self, paramDataPerWell):
+    superStruct = self._createSuperStruct(paramDataPerWell)
+    self._createValidationVideo(superStruct)
     # Various post-processing options depending on configuration file choices
-    superStruct = dataPostProcessing(self._outputFolderVideo, superStruct, self._hyperparameters, self._videoName, self._videoExt)
+    superStruct = self._dataPostProcessing(superStruct)
 
     path = os.path.join(os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"]), 'results_' + self._hyperparameters["videoName"] + '.txt')
     print("createSuperStruct:", path)
