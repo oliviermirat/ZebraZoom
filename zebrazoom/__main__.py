@@ -251,7 +251,7 @@ def _createParser():
     subparser.add_argument('configFile', help='Help for configFile')
     subparser.add_argument('hyperparameters', nargs=argparse.REMAINDER, help='Help for hyperparameters')
 
-  subparser = subparsers.add_parser('convertSeqToAvi', help='Help for convertSeqToAvi')
+  subparser = subparsers.add_parser('convertSeqToAvi', help='Help for convertSeqToAvi', description='Description for convertSeqToAvi')
   subparser.add_argument('path', help='Help for path')
   subparser.add_argument('videoName', help='Help for videoName')
   subparser.add_argument('codec', help='Help for codec', nargs='?', default='HFYU')
