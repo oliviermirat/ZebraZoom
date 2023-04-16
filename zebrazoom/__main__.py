@@ -281,12 +281,14 @@ if __name__ == '__main__':
 
       from zebrazoom.mainZZ import mainZZ
 
-      try:
-        from zebrazoom.GUIAllPy import PlainApplication
-        app = PlainApplication(sys.argv)
-        useGUI = True
-      except ImportError:
-        useGUI = False
-        print("GUI not available")
+      useGUI = '--use-gui' in sys.argv
+      if useGUI:
+        sys.argv.remove('--use-gui')
+        try:
+          from zebrazoom.GUIAllPy import PlainApplication
+          app = PlainApplication(sys.argv)
+        except ImportError:
+          useGUI = False
+          print("GUI not available")
       __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
       mainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=useGUI)
