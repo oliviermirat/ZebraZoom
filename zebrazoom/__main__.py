@@ -184,15 +184,15 @@ class _Subcommands:
     print("The data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
     from zebrazoom.mainZZ import ZebraZoomVideoAnalysis
 
-    try:
-      from zebrazoom.GUIAllPy import PlainApplication
-      app = PlainApplication(sys.argv)
-      useGUI = True
-    except ImportError:
-      useGUI = False
-      print("GUI not available")
+    if args.useGUI:
+      try:
+        from zebrazoom.GUIAllPy import PlainApplication
+        app = PlainApplication(sys.argv)
+      except ImportError:
+        args.useGUI = False
+        print("GUI not available")
     __spec__ = "ModuleSpec(name='builtins', loader=<class '_frozen_importlib.BuiltinImporter'>)"
-    ZebraZoomVideoAnalysis(args.pathToVideo, args.videoName, args.videoExt, args.configFile, args.hyperparameters, useGUI=useGUI).run()
+    ZebraZoomVideoAnalysis(args.pathToVideo, args.videoName, args.videoExt, args.configFile, args.hyperparameters, useGUI=args.useGUI).run()
 
 
 def _ensureFolderPermissions():
@@ -226,11 +226,12 @@ def _createLegacyVideoAnalysisParser():
   parser = argparse.ArgumentParser(prog=None if getattr(sys, 'frozen', False) else 'python -m zebrazoom',
                                    epilog='Text after help')
   parser.set_defaults(subcommand='runVideoAnalysis')
+  parser.add_argument('--use-gui', action='store_true', dest='useGUI', help='Whether to use GUI.')
   parser.add_argument('pathToVideo', help='Help for pathToVideo')
   parser.add_argument('videoName', help='Help for videoName')
   parser.add_argument('videoExt', help='Help for videoExt')
   parser.add_argument('configFile', help='Help for configFile')
-  parser.add_argument('hyperparameters', nargs=argparse.REMAINDER, help='Help for hyperparameters')
+  parser.add_argument('hyperparameters', nargs='*', help='Help for hyperparameters')
   return parser
 
 
