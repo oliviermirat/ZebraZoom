@@ -26,6 +26,9 @@ from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
 
+_TRACKING_METHODS_REGISTRY = {}
+
+
 class ZebraZoomVideoAnalysis:
   def __init__(self, pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
     self._pathToVideo = pathToVideo
@@ -471,3 +474,17 @@ class ZebraZoomVideoAnalysis:
       # popUpAlgoFollow.prepend("")
       # if self._hyperparameters["closePopUpWindowAtTheEnd"]:
         # popUpAlgoFollow.prepend("ZebraZoom Analysis all finished")
+
+
+class BaseTrackingMethod:
+  def __init__(self, videoPath, background, wellPositions, hyperparameters, videoName):
+    pass
+
+  def run(self) -> list:
+    '''Run tracking and return output in the designated format.''' # TODO: document the output format
+    raise NotImplementedError
+
+
+def register_tracking_method(name: str, factory: BaseTrackingMethod) -> None:
+  '''Register a new tracking method.'''
+  _TRACKING_METHODS_REGISTRY[name] = factory
