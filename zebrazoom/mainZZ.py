@@ -366,12 +366,7 @@ class ZebraZoomVideoAnalysis:
   def _dataPostProcessing(self, superStruct):
     return dataPostProcessing(self._outputFolderVideo, superStruct, self._hyperparameters, self._videoName, self._videoExt)
 
-  def _storeResults(self, paramDataPerWell):
-    superStruct = self._createSuperStruct(paramDataPerWell)
-    self._createValidationVideo(superStruct)
-    # Various post-processing options depending on configuration file choices
-    superStruct = self._dataPostProcessing(superStruct)
-
+  def _storeResults(self, superStruct):
     path = os.path.join(os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"]), 'results_' + self._hyperparameters["videoName"] + '.txt')
     print("createSuperStruct:", path)
     with open(path, 'w') as outfile:
@@ -457,7 +452,11 @@ class ZebraZoomVideoAnalysis:
       self._storeIntermediaryResults(trackingDataPerWell)
 
     if self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] != "justSaveTrackData":
-      self._storeResults(paramDataPerWell)
+      superStruct = self._createSuperStruct(paramDataPerWell)
+      self._createValidationVideo(superStruct)
+      # Various post-processing options depending on configuration file choices
+      superStruct = self._dataPostProcessing(superStruct)
+      self._storeResults(superStruct)
 
     self._storeVersionUsed()
 
