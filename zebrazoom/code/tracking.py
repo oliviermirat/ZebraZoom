@@ -614,7 +614,7 @@ class Tracking(BaseTrackingMethod, _TailTrackingDifficultBackgroundMixin, EyeTra
       if self._hyperparameters["unet"]:
         grey = frame
       else:
-        grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY
+        grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
       curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
 
