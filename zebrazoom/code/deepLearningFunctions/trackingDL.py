@@ -53,38 +53,116 @@ def trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName,
       print("frame:",i)
 
     ret, frame = cap.read()
+    if hyperparameters["unet"]:
+      frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+      quartileChose = 0.03
+      lowVal  = int(np.quantile(frame, quartileChose))
+      highVal = int(np.quantile(frame, 1 - quartileChose))
+      frame[frame < lowVal]  = lowVal
+      frame[frame > highVal] = highVal
+      frame = frame - lowVal
+      mult  = np.max(frame)
+      frame = frame * (255/mult)
+      frame = frame.astype('uint8')
+          
     if not(ret):
       currentFrameNum = int(cap.get(1))
       while not(ret):
         currentFrameNum = currentFrameNum - 1
         cap.set(1, currentFrameNum)
         ret, frame = cap.read()
-    grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        if hyperparameters["unet"]:
+          frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+          quartileChose = 0.01
+          lowVal  = int(np.quantile(frame, quartileChose))
+          highVal = int(np.quantile(frame, 1 - quartileChose))
+          frame[frame < lowVal]  = lowVal
+          frame[frame > highVal] = highVal
+          frame = frame - lowVal
+          mult  = np.max(frame)
+          frame = frame * (255/mult)
+          frame = frame.astype('uint8')
+    
+    if hyperparameters["unet"]:
+      grey = frame
+    else:
+      grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    
     curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX]
     
-    oneChannel  = curFrame.tolist()
-    oneChannel2 = [[a/255 for a in list] for list in oneChannel]
-    imgTorch    = torch.tensor([oneChannel2, oneChannel2, oneChannel2])
-
-    with torch.no_grad():
-      prediction = dlModel([imgTorch.to(device)])
     
-    if len(prediction) and len(prediction[0]['masks']):
-      thresh = prediction[0]['masks'][0, 0].mul(255).byte().cpu().numpy()
-      if debugPlus:
-        util.showFrame(255 - thresh, title="thresh")
+    if hyperparameters["unet"]:
+    
+      device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+      imgTorch = torch.from_numpy(curFrame/255)
+      imgTorch = imgTorch.unsqueeze(0).unsqueeze(0)
+      imgTorch = imgTorch.to(device=device, dtype=torch.float32)
       
-      if hyperparameters["applySimpleThresholdOnPredictedMask"]:
-        ret, thresh2 = cv2.threshold(thresh, hyperparameters["applySimpleThresholdOnPredictedMask"], 255, cv2.THRESH_BINARY)
-        if hyperparameters["simpleThresholdCheckMinForMaxCountour"]:
-          contours, hierarchy = cv2.findContours(thresh2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-          maxContourArea = 0
-          for contour in contours:
-            area = cv2.contourArea(contour)
-            if area > maxContourArea:
-              maxContourArea = area
-          if maxContourArea < hyperparameters["simpleThresholdCheckMinForMaxCountour"]:
-            print("maxContour found had a value that's too low (for wellNumber:", wellNumber, ", frame:", i,")")
+      output = dlModel(imgTorch).cpu()
+      
+      import torch.nn.functional as F
+      output = F.interpolate(output, (len(curFrame[1]), len(curFrame)), mode='bilinear')
+      if dlModel.n_classes > 1:
+          mask = output.argmax(dim=1)
+      else:
+          mask = torch.sigmoid(output) > out_threshold
+      thresh2 = mask[0].long().squeeze().numpy()
+      thresh2 = thresh2 * 255
+      thresh2 = thresh2.astype('uint8')
+      
+      thresh3 = thresh2.copy()
+      
+      if hyperparameters["debugTracking"]:
+        util.showFrame(thresh2, title='After Unet')
+      
+      [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, i, thresh2, thresh2, thresh2, thresh2, hyperparameters["erodeSize"], frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, 0, wellPositions[wellNumber]["lengthX"])
+      
+      if hyperparameters["trackTail"] == 1:
+        for animalId in range(0, hyperparameters["nbAnimalsPerWell"]):
+          [trackingHeadTailAllAnimals, trackingHeadingAllAnimals] = tailTracking(animalId, i, firstFrame, videoPath, thresh3, hyperparameters, thresh3, nbTailPoints, thresh3, 0, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, 0, 0, 0, thresh3, 0, wellNumber)
+      
+      # Debug functions
+      debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, curFrame, hyperparameters)
+      
+    else: # mask rcnn
+      
+      oneChannel  = curFrame.tolist()
+      oneChannel2 = [[a/255 for a in list] for list in oneChannel]
+      imgTorch    = torch.tensor([oneChannel2, oneChannel2, oneChannel2])
+      with torch.no_grad():
+        prediction = dlModel([imgTorch.to(device)])
+      
+      if len(prediction) and len(prediction[0]['masks']):
+        thresh = prediction[0]['masks'][0, 0].mul(255).byte().cpu().numpy()
+        
+        if hyperparameters["debugTracking"]:
+          util.showFrame(thresh, title='After Mask RCNN')
+        
+        if hyperparameters["applySimpleThresholdOnPredictedMask"]:
+          ret, thresh2 = cv2.threshold(thresh, hyperparameters["applySimpleThresholdOnPredictedMask"], 255, cv2.THRESH_BINARY)
+          if hyperparameters["simpleThresholdCheckMinForMaxCountour"]:
+            contours, hierarchy = cv2.findContours(thresh2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            maxContourArea = 0
+            for contour in contours:
+              area = cv2.contourArea(contour)
+              if area > maxContourArea:
+                maxContourArea = area
+            if maxContourArea < hyperparameters["simpleThresholdCheckMinForMaxCountour"]:
+              print("maxContour found had a value that's too low (for wellNumber:", wellNumber, ", frame:", i,")")
+              countNonZeroTarget = hyperparameters["trackingDLdicotomySearchOfOptimalBlobArea"]
+              countNonZero       = 0
+              low  = 0
+              high = 255
+              while abs(countNonZero - countNonZeroTarget) > 100 and (high - low) > 1:
+                thresValueToTry = int((low + high) / 2)
+                ret, thresh2 = cv2.threshold(thresh, thresValueToTry, 255, cv2.THRESH_BINARY)
+                countNonZero = cv2.countNonZero(thresh2)
+                if countNonZero > countNonZeroTarget:
+                  low = thresValueToTry
+                else:
+                  high = thresValueToTry
+        else:
+          if hyperparameters["trackingDLdicotomySearchOfOptimalBlobArea"]:
             countNonZeroTarget = hyperparameters["trackingDLdicotomySearchOfOptimalBlobArea"]
             countNonZero       = 0
             low  = 0
@@ -97,40 +175,26 @@ def trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName,
                 low = thresValueToTry
               else:
                 high = thresValueToTry
-      else:
-        if hyperparameters["trackingDLdicotomySearchOfOptimalBlobArea"]:
-          countNonZeroTarget = hyperparameters["trackingDLdicotomySearchOfOptimalBlobArea"]
-          countNonZero       = 0
-          low  = 0
-          high = 255
-          while abs(countNonZero - countNonZeroTarget) > 100 and (high - low) > 1:
-            thresValueToTry = int((low + high) / 2)
-            ret, thresh2 = cv2.threshold(thresh, thresValueToTry, 255, cv2.THRESH_BINARY)
-            countNonZero = cv2.countNonZero(thresh2)
-            if countNonZero > countNonZeroTarget:
-              low = thresValueToTry
-            else:
-              high = thresValueToTry
-        else:
-          thresh2 = thresh
+          else:
+            thresh2 = thresh
+          
+        thresh3 = thresh2.copy()
+      
+        if debugPlus:
+          util.showFrame(255 - thresh2, title="thresh2")
         
-      thresh3 = thresh2.copy()
-    
-      if debugPlus:
-        util.showFrame(255 - thresh2, title="thresh2")
+        [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, i, thresh2, thresh2, thresh2, thresh2, hyperparameters["erodeSize"], frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, 0, wellPositions[wellNumber]["lengthX"])
+        
+        if hyperparameters["trackTail"] == 1:
+          for animalId in range(0, hyperparameters["nbAnimalsPerWell"]):
+            [trackingHeadTailAllAnimals, trackingHeadingAllAnimals] = tailTracking(animalId, i, firstFrame, videoPath, thresh3, hyperparameters, thresh3, nbTailPoints, thresh3, 0, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, 0, 0, 0, thresh3, 0, wellNumber)
+        
+        # Debug functions
+        debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, curFrame, hyperparameters)
       
-      [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, i, thresh2, thresh2, thresh2, thresh2, hyperparameters["erodeSize"], frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, 0, wellPositions[wellNumber]["lengthX"])
-      
-      if hyperparameters["trackTail"] == 1:
-        for animalId in range(0, hyperparameters["nbAnimalsPerWell"]):
-          [trackingHeadTailAllAnimals, trackingHeadingAllAnimals] = tailTracking(animalId, i, firstFrame, videoPath, thresh3, hyperparameters, thresh3, nbTailPoints, thresh3, 0, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, 0, 0, 0, thresh3, 0, wellNumber)
-      
-      # Debug functions
-      debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, curFrame, hyperparameters)
-    
-    else:
-      
-      print("No predictions for frame", i, "and well number", wellNumber)
+      else:
+        
+        print("No predictions for frame", i, "and well number", wellNumber)
     
     print("done for frame", i)
     i = i + 1

@@ -410,6 +410,7 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["bodyMask_saveDataForAllFrames"] = getConfig(config, "bodyMask_saveDataForAllFrames", videoPath)
   
   hyperparameters["trackingDL"] = getConfig(config, "trackingDL", videoPath)
+  hyperparameters["unet"] = getConfig(config, "unet", videoPath)
   hyperparameters["trackingDLdicotomySearchOfOptimalBlobArea"] = getConfig(config, "trackingDLdicotomySearchOfOptimalBlobArea", videoPath)
   hyperparameters["applySimpleThresholdOnPredictedMask"] = getConfig(config, "applySimpleThresholdOnPredictedMask", videoPath)
   hyperparameters["simpleThresholdCheckMinForMaxCountour"] = getConfig(config, "simpleThresholdCheckMinForMaxCountour", videoPath)

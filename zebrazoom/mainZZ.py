@@ -250,7 +250,7 @@ def mainZZ(pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
   # Reloading DL model for tracking with DL
   if hyperparameters["trackingDL"]:
     from zebrazoom.code.deepLearningFunctions.loadDLmodel import loadDLmodel
-    dlModel = loadDLmodel(hyperparameters["trackingDL"])
+    dlModel = loadDLmodel(hyperparameters["trackingDL"], hyperparameters["unet"])
   else:
     dlModel = 0
   

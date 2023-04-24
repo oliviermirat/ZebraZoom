@@ -26,14 +26,24 @@ def get_instance_segmentation_model(num_classes):
   return model
 
 
-def loadDLmodel(pathToSavedModel):
-
-  num_classes = 2
-  device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
-  model = get_instance_segmentation_model(num_classes)
-  model.to(device)
-  model.load_state_dict(torch.load(pathToSavedModel, map_location=device))
-  model.eval()
+def loadDLmodel(pathToSavedModel, isUnet):
+  
+  if isUnet:
+    from zebrazoom.code.deepLearningFunctions.unetModel.unet_model import UNet
+    model = UNet(n_channels=1, n_classes=2, bilinear=1)
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    model.to(device=device)
+    state_dict = torch.load(pathToSavedModel, map_location=device)
+    mask_values = state_dict.pop('mask_values', [0, 1]) # Should probably delete this line
+    model.load_state_dict(state_dict)
+    model.eval()
+  else:
+    num_classes = 2
+    device = torch.device('cuda') if torch.cuda.is_available() else torch.device('cpu')
+    model = get_instance_segmentation_model(num_classes)
+    model.to(device)
+    model.load_state_dict(torch.load(pathToSavedModel, map_location=device))
+    model.eval()
   
   return model
 

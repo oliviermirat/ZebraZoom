@@ -80,3 +80,5 @@ zebrazoom/dataAnalysis/postProcessingClusteringResults
 
 scoresComparaison*.pkl
 scoresComparaison*.png
+
+zebrazoom/code/deepLearningFunctions/unetModel/__pycache__
