@@ -2,8 +2,6 @@ import numpy as np
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import math
-from zebrazoom.code.getImage.getImageSequential import getImageSequential
-from zebrazoom.code.getImage.getImage import getImage
 from zebrazoom.code.adjustHyperparameters import adjustDetectMouvRawVideosParams
 
 def putTabIntoBoundaries(img, tab):
@@ -18,6 +16,8 @@ def putTabIntoBoundaries(img, tab):
   return tab
 
 def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparision, wellNumber, wellPositions, hyperparameters, firstFrame, lenX, lenY, thresForDetectMovementWithRawVideo, headPosition, tailTip):
+  from zebrazoom.mainZZ import get_default_tracking_method
+
   headX = head[l-firstFrame][0]
   headY = head[l-firstFrame][1]
   xmin = headX - rayon
@@ -55,8 +55,9 @@ def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparisi
     else:
       imgFuture = cap1[len(cap1) - 1]
   else:
-    img = getImageSequential(cap1, videoPath, l, wellNumber, wellPositions, hyperparameters)
-    imgFuture = getImageSequential(cap2, videoPath, l+frameGapComparision, wellNumber, wellPositions, hyperparameters)
+    tracking = get_default_tracking_method()(videoPath, None, wellPositions, hyperparameters)
+    img = tracking.getImageSequential(cap1, l, wellNumber)
+    imgFuture = tracking.getImageSequential(cap2, l+frameGapComparision, wellNumber)
   
   img2 = img.copy()
   imgFuture2 = imgFuture.copy()
@@ -123,7 +124,8 @@ def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparisi
 
   
 def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumber, wellPositions, head, headPositionFirstFrame, tailTipFirstFrame):
-  
+  from zebrazoom.mainZZ import get_default_tracking_method
+
   if hyperparameters["adjustDetectMovWithRawVideo"]:
     widgets = None
   
@@ -152,7 +154,7 @@ def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumbe
     cap = zzVideoReading.VideoCapture(videoPath)
     cap.set(1, debut_l)
     for k in range(debut_l, max_l):
-      imgTemp = getImageSequential(cap, videoPath, k, wellNumber, wellPositions, hyperparameters)
+      imgTemp = get_default_tracking_method()(videoPath, None, wellPositions, hyperparameters).getImageSequential(cap, k, wellNumber)
       cap1.append(imgTemp)
   else:
     cap1 = zzVideoReading.VideoCapture(videoPath)

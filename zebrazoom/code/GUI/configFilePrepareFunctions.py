@@ -7,9 +7,8 @@ import math
 from zebrazoom.code.findWells import findWells
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.getBackground import getBackground
-from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
 import pickle
-from zebrazoom.mainZZ import ZebraZoomVideoAnalysis
+from zebrazoom.mainZZ import ZebraZoomVideoAnalysis, get_default_tracking_method
 import json
 import os
 
@@ -277,7 +276,7 @@ def chooseBeginningAndEndOfVideo(self, controller):
 
 def getImageForMultipleAnimalGUI(l, nx, ny, max_l, videoToCreateConfigFileFor, background, wellPositions, hyperparameters):
 
-  [frame, a1, a2] = getForegroundImage(videoToCreateConfigFileFor, background, l, 0, [], hyperparameters)
+  [frame, a1, a2] = get_default_tracking_method()(videoToCreateConfigFileFor, background, [], hyperparameters).getForegroundImage(l, 0)
 
   lengthX = nx * 2
   lengthY = ny

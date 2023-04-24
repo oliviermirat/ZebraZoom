@@ -7,6 +7,8 @@ from datetime import datetime
 
 import json
 
+import numpy as np
+
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import QWidget, QButtonGroup, QCheckBox, QDialog, QFileDialog, QHBoxLayout, QApplication, QLabel, QMainWindow, QRadioButton, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem, QPushButton
@@ -24,7 +26,10 @@ import zebrazoom.code.GUI.configFileZebrafishFunctions as configFileZebrafishFun
 import zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions as adjustParameterInsideAlgoFunctions
 import zebrazoom.code.GUI.dataAnalysisGUIFunctions as dataAnalysisGUIFunctions
 import zebrazoom.code.GUI.troubleshootingFunction as troubleshootingFunction
-from zebrazoom.mainZZ import ZebraZoomVideoAnalysis
+from zebrazoom.mainZZ import ZebraZoomVideoAnalysis, BaseTrackingMethod, register_tracking_method, get_default_tracking_method
+from zebrazoom.code.adjustHyperparameters import adjustFreelySwimTrackingParams, adjustFreelySwimTrackingAutoParams, adjustHeadEmbededTrackingParams, adjustHeadEmbeddedEyeTrackingParamsSegment, adjustHeadEmbeddedEyeTrackingParamsEllipse
+from zebrazoom.code.fasterMultiprocessing import FasterMultiprocessing, FasterMultiprocessing2
+from zebrazoom.code.tracking import Tracking
 from zebrazoom.code.GUI.GUI_InitialClasses import StartPage, VideoToAnalyze, ConfigFilePromp, Patience, ZZoutro, ZZoutroSbatch, SeveralVideos, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, EnhanceZZOutput, ViewParameters, Error
 from zebrazoom.code.GUI.configFilePrepare import ChooseVideoToCreateConfigFileFor, OptimizeConfigFile, ChooseGeneralExperiment, ChooseCenterOfMassTracking, WellOrganisation, FreelySwimmingExperiment, NbRegionsOfInterest, HomegeneousWellsLayout, CircularOrRectangularWells, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings
 from zebrazoom.code.GUI.configFileZebrafish import HeadEmbeded
@@ -276,7 +281,7 @@ class ZebraZoomApp(PlainApplication):
         if "firstFrame" in self.configFile:
           # del self.configFile["firstFrame"]
           self.configFile["firstFrameForBackExtract"] = self.configFile["firstFrame"]
-        
+
         with open(reference, 'w') as outfile:
           json.dump(self.configFile, outfile)
 
@@ -322,7 +327,7 @@ class ZebraZoomApp(PlainApplication):
 
     def goToAdvanceSettings(self, controller, yes, no):
       configFilePrepareFunctions.goToAdvanceSettings(self, controller, yes, no)
-      
+
     def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering='', removeOutliers=False, frameStepForDistanceCalculation='4', removeBoutsContainingNanValuesInParametersUsedForClustering=True, forcePandasRecreation=0):
       dataAnalysisGUIFunctions.boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect, nbVideosToSave, modelUsedForClustering, removeOutliers, frameStepForDistanceCalculation, removeBoutsContainingNanValuesInParametersUsedForClustering, forcePandasRecreation)
 
@@ -389,3 +394,198 @@ class ZebraZoomApp(PlainApplication):
       cb = util.chooseBeginningPage if not addToHistory else util.addToHistory(util.chooseBeginningPage)
       cb(self, videoPath, "We will test the tracking on the video you provided, with the configuration file you just created. We will do this test only on the selected number of frames (maximum) and the tracking will start at the frame you select below (so please choose a section of the video where the animal is moving).",
          "Ok, I want the tracking to start at this frame!", callback, additionalLayout=layout, titleStyle={'color': 'red', 'font': QFont('Helvetica', 14, QFont.Weight.Bold, True)})
+
+
+class BaseGUITrackingMethod(BaseTrackingMethod):
+  def _debugFrame(self, frame, title=None, buttons=()):
+    util.showFrame(frame, title=title, buttons=buttons)
+
+  def _debugTracking(self, frameNumber: int, output: list, outputHeading: list, frame2: np.array) -> None:
+    if not self._hyperparameters["debugTracking"]:
+      return
+
+    if type(frame2[0][0]) == int or type(frame2[0][0]) == np.uint8:
+      frame2 = cv2.cvtColor(frame2,cv2.COLOR_GRAY2RGB)
+
+    for k in range(0, self._hyperparameters["nbAnimalsPerWell"]):
+      for j in range(0, self._nbTailPoints):
+        x = int(output[k, frameNumber-firstFrame][j][0])
+        y = int(output[k, frameNumber-firstFrame][j][1])
+        cv2.circle(frame2, (x, y), 1, (0, 255, 0),   -1)
+      x = int(output[k, frameNumber-firstFrame][self._nbTailPoints-1][0]) # it used to be 10 instead of 9 here, not sure why
+      y = int(output[k, frameNumber-firstFrame][self._nbTailPoints-1][1]) # it used to be 10 instead of 9 here, not sure why
+      cv2.circle(frame2, (x, y), 2, (0, 0, 255),   -1)
+
+      x = output[k, frameNumber-firstFrame][0][0]
+      y = output[k, frameNumber-firstFrame][0][1]
+      # cv2.line(frame2, (int(x / getRealValueCoefX), int(y / getRealValueCoefY)), (int((x+20*math.cos(outputHeading[k, i-firstFrame])) / getRealValueCoefX), int((y+20*math.sin(outputHeading[k, i-firstFrame])) / getRealValueCoefY)), (255,0,0), 3)
+
+    if self._hyperparameters["debugTrackingPtExtremeLargeVerticals"]: # Put this to True for large resolution videos (to be able to see on your screen what's happening)
+      frame2 = frame2[int(y-200):len(frame2), :]
+
+    self._debugFrame(frame2, title='Tracked frame')
+
+  def _adjustHeadEmbeddedEyeTrackingParamsSegment(self, i, colorFrame, widgets):
+    return adjustHeadEmbeddedEyeTrackingParamsSegment(i, colorFrame, self._hyperparameters, widgets)
+
+  def _adjustHeadEmbeddedEyeTrackingParamsEllipse(self, i, colorFrame, widgets):
+    return adjustHeadEmbeddedEyeTrackingParamsEllipse(i, colorFrame, self._hyperparameters, widgets)
+
+
+class GUIFasterMultiprocessing(FasterMultiprocessing, BaseGUITrackingMethod):
+  def _adjustParameters(self, i, frame, widgets):
+    if self._hyperparameters["adjustFreelySwimTracking"]:
+      i, widgets = adjustFreelySwimTrackingParams(self._nbTailPoints, i, self._firstFrame, self._trackingHeadTailAllAnimalsList[self._firstWell], self._trackingHeadingAllAnimalsList[self._firstWell], frame, frame, self._hyperparameters, widgets)
+    else:
+      return None
+    return i, widgets
+
+register_tracking_method('fasterMultiprocessing', GUIFasterMultiprocessing)
+
+
+class GUIFasterMultiprocessing2(FasterMultiprocessing2, BaseGUITrackingMethod):
+  def _adjustParametersGUI(self, i, back, frame, initialCurFrame, widgets):
+    if self._hyperparameters["adjustFreelySwimTracking"]:
+      i, widgets = adjustFreelySwimTrackingParams(self._nbTailPoints, i, self._firstFrame, self._trackingHeadTailAllAnimalsList[self._firstWell], self._trackingHeadingAllAnimalsList[self._firstWell], frame, frame, self._hyperparameters, widgets)
+    elif self._hyperparameters["adjustFreelySwimTrackingAutomaticParameters"]:
+      # Preparing image to show
+      if self._hyperparameters["recalculateForegroundImageBasedOnBodyArea"] and "minPixelDiffForBackExtractBody" in self._hyperparameters:
+          minPixelDiffForBackExtract = self._hyperparameters["minPixelDiffForBackExtractBody"]
+      else:
+        if self._hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] and "minPixelDiffForBackExtractHead" in self._hyperparameters:
+          minPixelDiffForBackExtract = self._hyperparameters["minPixelDiffForBackExtractHead"]
+          del self._hyperparameters["minPixelDiffForBackExtractHead"] # Not sure why this is necessary: need to check the code to make sure there isn't a bug somewhere
+        else:
+          minPixelDiffForBackExtract = self._hyperparameters["minPixelDiffForBackExtract"]
+      curFrame = initialCurFrame.copy()
+      putToWhite = (curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
+      curFrame[putToWhite] = 255
+      ret, frame2 = cv2.threshold(curFrame, self._hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
+      # Showing current image and waiting for next parameter/frame change
+      i, widgets = adjustFreelySwimTrackingAutoParams(self._nbTailPoints, i, self._firstFrame, self._trackingHeadTailAllAnimalsList[self._firstWell], self._trackingHeadingAllAnimalsList[self._firstWell], frame, frame2, self._hyperparameters, widgets)
+      # Puts hyperparameters values to accepted values
+      self._hyperparameters["recalculateForegroundImageBasedOnBodyArea"] = 0 if self._hyperparameters["recalculateForegroundImageBasedOnBodyArea"] < 0.5 else 1
+      if self._hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] < 0:
+        self._hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] = 0
+      if self._hyperparameters["minPixelDiffForBackExtract"] < 0:
+        self._hyperparameters["minPixelDiffForBackExtract"] = 0
+      else:
+        if self._hyperparameters["minPixelDiffForBackExtract"] > 255:
+          self._hyperparameters["minPixelDiffForBackExtract"] = 255
+      self._hyperparameters["minPixelDiffForBackExtract"] = int(self._hyperparameters["minPixelDiffForBackExtract"])
+    else:
+      return None
+    return i, widgets
+
+
+register_tracking_method('fasterMultiprocessing2', GUIFasterMultiprocessing2)
+
+
+class GUITracking(Tracking, BaseGUITrackingMethod):
+  def _adjustParameters(self, i, initialCurFrame, frame, frame2, widgets):
+    if self._hyperparameters["adjustHeadEmbededTracking"] == 1:
+      i, widgets = adjustHeadEmbededTrackingParams(self._nbTailPoints, i, self._firstFrame, self._trackingHeadTailAllAnimals, self._trackingHeadingAllAnimals, frame, frame2, self._hyperparameters, widgets)
+      self._adjustHeadEmbededHyperparameters(frame)
+    elif self._hyperparameters["adjustFreelySwimTracking"] == 1:
+      i, widgets = adjustFreelySwimTrackingParams(self._nbTailPoints, i, self._firstFrame, self._trackingHeadTailAllAnimals, self._trackingHeadingAllAnimals, frame, frame2, self._hyperparameters, widgets)
+    elif self._hyperparameters["adjustFreelySwimTrackingAutomaticParameters"] == 1:
+      # Preparing image to show
+      if self._hyperparameters["recalculateForegroundImageBasedOnBodyArea"] == 1:
+        minPixelDiffForBackExtract = self._hyperparameters["minPixelDiffForBackExtractBody"]
+      else:
+        if self._hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"]:
+          minPixelDiffForBackExtract = self._hyperparameters["minPixelDiffForBackExtractHead"]
+          del self._hyperparameters["minPixelDiffForBackExtractHead"] # Not sure why this is necessary: need to check the code to make sure there isn't a bug somewhere
+        else:
+          minPixelDiffForBackExtract = self._hyperparameters["minPixelDiffForBackExtract"]
+      curFrame = initialCurFrame
+      putToWhite = (curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
+      curFrame[putToWhite] = 255
+      ret, frame2 = cv2.threshold(curFrame, self._hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
+      # Showing current image and waiting for next parameter/frame change
+      i, widgets = adjustFreelySwimTrackingAutoParams(self._nbTailPoints, i, self._firstFrame, self._trackingHeadTailAllAnimals, self._trackingHeadingAllAnimals, frame, frame2, self._hyperparameters, widgets)
+      # Puts self._hyperparameters values to accepted values
+      self._hyperparameters["recalculateForegroundImageBasedOnBodyArea"] = 0 if self._hyperparameters["recalculateForegroundImageBasedOnBodyArea"] < 0.5 else 1
+      if self._hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] < 0:
+        self._hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] = 0
+      if self._hyperparameters["minPixelDiffForBackExtract"] < 0:
+        self._hyperparameters["minPixelDiffForBackExtract"] = 0
+      else:
+        if self._hyperparameters["minPixelDiffForBackExtract"] > 255:
+          self._hyperparameters["minPixelDiffForBackExtract"] = 255
+      self._hyperparameters["minPixelDiffForBackExtract"] = int(self._hyperparameters["minPixelDiffForBackExtract"])
+    else:
+      return None
+    return i, widgets
+
+  def _getCoordinates(self, frame, title, zoomable, dialog):
+    return util.getPoint(frame, title, zoomable=zoomable, dialog=dialog)
+
+  def _addBlackLineToImgSetParameters(frame):
+    hyperparametersToSave = {"addBlackLineToImg_Width": 0}
+
+    frame2 = frame.copy()
+    # frame2 = 255 - frame2
+    quartileChose = self._hyperparameters["outputValidationVideoContrastImprovementQuartile"]
+    lowVal  = int(np.quantile(frame2, quartileChose))
+    highVal = int(np.quantile(frame2, 1 - quartileChose))
+    frame2[frame2 < lowVal]  = lowVal
+    frame2[frame2 > highVal] = highVal
+    frame2 = frame2 - lowVal
+    mult  = np.max(frame2)
+    frame2 = frame2 * (255/mult)
+    frame2 = frame2.astype('uint8')
+
+    addNewSegment  = True
+
+    while addNewSegment:
+
+      startPoint = self._getCoordinates(frame2, "Click on beginning of segment to set to black pixels", False, True)
+      endPoint = util.getLine(frame2, "Click on the end of the segment to set to black pixels", self._hyperparameters["addBlackLineToImg_Width"], startPoint)
+
+      if not("imagePreProcessMethod" in self._hyperparameters) or type(self._hyperparameters["imagePreProcessMethod"]) == int or len(self._hyperparameters["imagePreProcessMethod"]) == 0:
+        self._hyperparameters["imagePreProcessMethod"]     = ["setImageLineToBlack"]
+        self._hyperparameters["imagePreProcessParameters"] = [[startPoint[0], startPoint[1], endPoint[0], endPoint[1], self._hyperparameters["addBlackLineToImg_Width"]]]
+        hyperparametersToSave["imagePreProcessMethod"]     = ["setImageLineToBlack"]
+        hyperparametersToSave["imagePreProcessParameters"] = [[startPoint[0], startPoint[1], endPoint[0], endPoint[1], self._hyperparameters["addBlackLineToImg_Width"]]]
+      else:
+        self._hyperparameters["imagePreProcessMethod"] = self._hyperparameters["imagePreProcessMethod"] + ["setImageLineToBlack"]
+        self._hyperparameters["imagePreProcessParameters"] += [[startPoint[0], startPoint[1], endPoint[0], endPoint[1], self._hyperparameters["addBlackLineToImg_Width"]]]
+        hyperparametersToSave["imagePreProcessMethod"]     += ["setImageLineToBlack"]
+        hyperparametersToSave["imagePreProcessParameters"] += [[startPoint[0], startPoint[1], endPoint[0], endPoint[1], self._hyperparameters["addBlackLineToImg_Width"]]]
+
+      print('addBlackLineToImg_Width is at', self._hyperparameters["addBlackLineToImg_Width"],', so in the configuration file, "imagePreProcessMethod" has just been set to ["setImageLineToBlack"] and "imagePreProcessParameters" has just been set to', str(self._hyperparameters["imagePreProcessParameters"]))
+
+      frame2 = cv2.line(frame2, (startPoint[0], startPoint[1]), (endPoint[0], endPoint[1]), (255, 255, 255), self._hyperparameters["addBlackLineToImg_Width"])
+
+      def doneAddingSegments():
+        nonlocal addNewSegment
+        addNewSegment = False
+      buttons = (("I want to add another segment.", None), ("I've added enough segments.", doneAddingSegments))
+      self._debugFrame(frame2, title="Do you want to add another segment?", buttons=buttons)
+
+    with open(os.path.join(os.path.join(self._hyperparameters["outputFolder"], self._videoName), 'parametersToAddToConfigFileForBlackLine.json'), 'w') as outfile:
+      json.dump(hyperparametersToSave, outfile)
+
+  def findHeadPositionByUserInput(self, frame, frameNumber, wellNumber):
+    plus = 0
+
+    def tailNotStraight(frameWidget):
+      nonlocal plus
+      plus += 1
+      util.setPixmapFromCv(get_default_tracking_method()(self._videoPath, None, self._wellPositions, self._hyperparameters).headEmbededFrame(frameNumber + plus, wellNumber)[0], frameWidget, zoomable=True)
+    return list(util.getPoint(np.uint8(frame * 255), "Click on the base of the tail", zoomable=True, extraButtons=(("Tail is not straight", tailNotStraight, False),),
+                              dialog=not hasattr(QApplication.instance(), 'window')))
+
+  def findTailTipByUserInput(self, frame, frameNumber, wellNumber):
+    plus = 0
+
+    def tailNotStraight(frameWidget):
+      nonlocal plus
+      plus += 1
+      util.setPixmapFromCv(get_default_tracking_method()(self._videoPath, None, self._wellPositions, self._hyperparameters).headEmbededFrame(frameNumber + plus, wellNumber)[0], frameWidget, zoomable=True)
+    return list(util.getPoint(np.uint8(frame * 255), "Click on tail tip", zoomable=True, extraButtons=(("Tail is not straight", tailNotStraight, False),),
+                              dialog=not hasattr(QApplication.instance(), 'window')))
+
+
+register_tracking_method('tracking', GUITracking)

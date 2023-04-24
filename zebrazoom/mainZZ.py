@@ -26,10 +26,7 @@ from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
 
-_TRACKING_METHODS_REGISTRY = {}
-
-
-class ZebraZoomVideoAnalysis:
+class MainZZ:
   def __init__(self, pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
     self._pathToVideo = pathToVideo
     self._videoName = videoName
@@ -236,7 +233,7 @@ class ZebraZoomVideoAnalysis:
         if hasattr(app, "background"):
           app.background = self.background
 
-  def _runTracking(self, process_type):
+  def __runTracking(self, process_type):
     # Tracking and extraction of parameters
     if self._hyperparameters["fasterMultiprocessing"] == 1:
       processes = -1
@@ -353,12 +350,11 @@ class ZebraZoomVideoAnalysis:
     if (self._hyperparameters["freqAlgoPosFollow"] != 0):
       print("intermediary results saved")
 
-  def _createSuperStruct(self, paramDataPerWell):
-    '''Create super structure'''
-    return createSuperStruct(paramDataPerWell, self.wellPositions, self._hyperparameters, os.path.join(self._pathToVideo, self._videoNameWithExt))
+  def _storeResults(self, paramDataPerWell):
+    # Creating super structure
+    superStruct = createSuperStruct(paramDataPerWell, self.wellPositions, self._hyperparameters, os.path.join(self._pathToVideo, self._videoNameWithExt))
 
-  def _createValidationVideo(self, superStruct):
-    '''Create validation video'''
+    # Creating validation video
     if not(self._hyperparameters["savePathToOriginalVideoForValidationVideo"]):
       if self._hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
         shutil.copyfile(os.path.join(self._pathToVideo, self._videoNameWithExt), os.path.join(os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"]), 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'))
@@ -366,10 +362,9 @@ class ZebraZoomVideoAnalysis:
         if self._hyperparameters["createValidationVideo"]:
           infoFrame = createValidationVideo(os.path.join(self._pathToVideo, self._videoNameWithExt), superStruct, self._hyperparameters)
 
-  def _dataPostProcessing(self, superStruct):
-    return dataPostProcessing(self._outputFolderVideo, superStruct, self._hyperparameters, self._videoName, self._videoExt)
+    # Various post-processing options depending on configuration file choices
+    superStruct = dataPostProcessing(self._outputFolderVideo, superStruct, self._hyperparameters, self._videoName, self._videoExt)
 
-  def _storeResults(self, superStruct):
     path = os.path.join(os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"]), 'results_' + self._hyperparameters["videoName"] + '.txt')
     print("createSuperStruct:", path)
     with open(path, 'w') as outfile:
@@ -388,7 +383,7 @@ class ZebraZoomVideoAnalysis:
   def _storeInAdditionalFolder(self):
       if os.path.isdir(self._hyperparameters["additionalOutputFolder"]):
         if self._hyperparameters["additionalOutputFolderOverwriteIfAlreadyExist"]:
-          shutil.rmtree(self.hyperparameters["additionalOutputFolder"])
+          shutil.rmtree(self8.hyperparameters["additionalOutputFolder"])
           while True:
             try:
               shutil.copytree(self._outputFolderVideo, self._hyperparameters["additionalOutputFolder"])
@@ -404,7 +399,7 @@ class ZebraZoomVideoAnalysis:
       else:
         shutil.copytree(self._outputFolderVideo, self._hyperparameters["additionalOutputFolder"])
 
-  def run(self):
+  def runTracking(self):
     '''Run tracking'''
     # Checking that path and video exists
     if not(os.path.exists(os.path.join(self._pathToVideo, self._videoNameWithExt))):
@@ -449,17 +444,13 @@ class ZebraZoomVideoAnalysis:
 
     self._loadDLModel()
 
-    paramDataPerWell, trackingDataPerWell = self._runTracking(Process)
+    paramDataPerWell, trackingDataPerWell = self.__runTracking(Process)
 
     if (self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "saveTrackDataAndExtractParam") or (self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justSaveTrackData"):
       self._storeIntermediaryResults(trackingDataPerWell)
 
     if self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] != "justSaveTrackData":
-      superStruct = self._createSuperStruct(paramDataPerWell)
-      self._createValidationVideo(superStruct)
-      # Various post-processing options depending on configuration file choices
-      superStruct = self._dataPostProcessing(superStruct)
-      self._storeResults(superStruct)
+      self._storeResults(paramDataPerWell)
 
     self._storeVersionUsed()
 
@@ -474,17 +465,3 @@ class ZebraZoomVideoAnalysis:
       # popUpAlgoFollow.prepend("")
       # if self._hyperparameters["closePopUpWindowAtTheEnd"]:
         # popUpAlgoFollow.prepend("ZebraZoom Analysis all finished")
-
-
-class BaseTrackingMethod:
-  def __init__(self, videoPath, background, wellPositions, hyperparameters, videoName):
-    pass
-
-  def run(self) -> list:
-    '''Run tracking and return output in the designated format.''' # TODO: document the output format
-    raise NotImplementedError
-
-
-def register_tracking_method(name: str, factory: BaseTrackingMethod) -> None:
-  '''Register a new tracking method.'''
-  _TRACKING_METHODS_REGISTRY[name] = factory

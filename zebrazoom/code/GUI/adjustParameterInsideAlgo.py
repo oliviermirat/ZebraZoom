@@ -12,10 +12,8 @@ from PyQt5.QtWidgets import QApplication, QGridLayout, QLabel, QLineEdit, QCheck
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
-from zebrazoom.mainZZ import ZebraZoomVideoAnalysis
+from zebrazoom.mainZZ import ZebraZoomVideoAnalysis, get_default_tracking_method
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
-from zebrazoom.code.getImage.headEmbededFrame import headEmbededFrame
-from zebrazoom.code.getImage.headEmbededFrameBackExtract import headEmbededFrameBackExtract
 
 
 def _cleanup(app, page):
@@ -140,11 +138,11 @@ def _addBlackSegments(config, videoPath, frameNumber, wellNumber, cap):
   def getFrame():
     hyperparameters = getHyperparametersSimple(tmpConfig)
     if hyperparameters["headEmbededRemoveBack"] == 0 and hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0:
-      frame, thresh1 = headEmbededFrame(videoPath, frameNumber, wellNumber, wellPositions, hyperparameters)
+      frame, thresh1 = get_default_tracking_method()(videoPath, None, wellPositions, hyperparameters).headEmbededFrame(frameNumber, wellNumber)
     else:
       hyperparameters["headEmbededRemoveBack"] = 1
       hyperparameters["minPixelDiffForBackExtract"] = hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"]
-      frame, thresh1 = headEmbededFrameBackExtract(videoPath, QApplication.instance().background, hyperparameters, frameNumber, wellNumber, wellPositions)
+      frame, thresh1 = get_default_tracking_method()(videoPath, QApplication.instance().background, hyperparameters, wellPositions).headEmbededFrameBackExtract(frameNumber, wellNumber)
 
     quartileChose = hyperparameters["outputValidationVideoContrastImprovementQuartile"]
     lowVal  = int(np.quantile(frame, quartileChose))
