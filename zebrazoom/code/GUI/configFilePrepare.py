@@ -1178,7 +1178,7 @@ class NumberOfAnimals2(QWidget):
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
     def updateButtons():
-      enabled = bool(nbanimals.text())
+      enabled = not nbanimals.isVisible() or bool(nbanimals.text())
       nextBtn.setEnabled(enabled)
       nextBtn.setToolTip("Values must be entered in all fields." if not enabled else None)
     self._updateButtons = updateButtons
@@ -1305,7 +1305,7 @@ class NumberOfAnimalsCenterOfMass(QWidget):
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
     def updateButtons():
-      enabled = bool(nbanimals.text())
+      enabled = not nbanimals.isVisible() or bool(nbanimals.text())
       for btn in (method1Btn, method2Btn, manualBtn):
         btn.setEnabled(enabled)
         btn.setToolTip("Values must be entered in all fields." if not enabled else None)
