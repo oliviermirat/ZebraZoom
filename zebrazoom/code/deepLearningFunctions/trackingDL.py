@@ -39,6 +39,7 @@ def trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName,
   trackingProbabilityOfGoodDetection = 0
   
   # Performing the tracking on each frame
+  applyQuantile = True
   i = firstFrame
   cap.set(1, firstFrame)
   if int(hyperparameters["onlyDoTheTrackingForThisNumberOfFrames"]) != 0:
@@ -53,7 +54,7 @@ def trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName,
       print("frame:",i)
 
     ret, frame = cap.read()
-    if hyperparameters["unet"]:
+    if hyperparameters["unet"] or applyQuantile:
       frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
       quartileChose = 0.03
       lowVal  = int(np.quantile(frame, quartileChose))
@@ -71,7 +72,7 @@ def trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName,
         currentFrameNum = currentFrameNum - 1
         cap.set(1, currentFrameNum)
         ret, frame = cap.read()
-        if hyperparameters["unet"]:
+        if hyperparameters["unet"] or applyQuantile:
           frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
           quartileChose = 0.01
           lowVal  = int(np.quantile(frame, quartileChose))
@@ -83,7 +84,7 @@ def trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName,
           frame = frame * (255/mult)
           frame = frame.astype('uint8')
     
-    if hyperparameters["unet"]:
+    if hyperparameters["unet"] or applyQuantile:
       grey = frame
     else:
       grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
