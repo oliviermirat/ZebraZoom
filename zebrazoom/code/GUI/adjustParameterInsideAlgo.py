@@ -12,7 +12,8 @@ from PyQt5.QtWidgets import QApplication, QGridLayout, QLabel, QLineEdit, QCheck
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
-from zebrazoom.mainZZ import ZebraZoomVideoAnalysis, get_default_tracking_method
+from zebrazoom.mainZZ import ZebraZoomVideoAnalysis
+from zebrazoom.code.tracking import get_default_tracking_method
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 
 

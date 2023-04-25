@@ -8,7 +8,8 @@ from zebrazoom.code.findWells import findWells
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.getBackground import getBackground
 import pickle
-from zebrazoom.mainZZ import ZebraZoomVideoAnalysis, get_default_tracking_method
+from zebrazoom.mainZZ import ZebraZoomVideoAnalysis
+from zebrazoom.code.tracking import get_default_tracking_method
 import json
 import os
 

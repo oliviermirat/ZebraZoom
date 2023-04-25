@@ -18,7 +18,7 @@ import zebrazoom.code.util as util
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
 
-from zebrazoom.mainZZ import get_default_tracking_method
+from zebrazoom.code.tracking import get_default_tracking_method
 
 
 def _selectWell(app, cap, wellPositions):

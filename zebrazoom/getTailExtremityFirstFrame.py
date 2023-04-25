@@ -5,7 +5,7 @@ import csv
 
 import os
 
-from zebrazoom.mainZZ import get_default_tracking_method
+from zebrazoom.code.tracking import get_default_tracking_method
 
 
 def getTailExtremityFirstFrame(pathToVideo, videoName, videoExt, configFile, argv):

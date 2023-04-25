@@ -16,7 +16,7 @@ def putTabIntoBoundaries(img, tab):
   return tab
 
 def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparision, wellNumber, wellPositions, hyperparameters, firstFrame, lenX, lenY, thresForDetectMovementWithRawVideo, headPosition, tailTip):
-  from zebrazoom.mainZZ import get_default_tracking_method
+  from zebrazoom.code.tracking import get_default_tracking_method
 
   headX = head[l-firstFrame][0]
   headY = head[l-firstFrame][1]
@@ -124,7 +124,7 @@ def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparisi
 
   
 def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumber, wellPositions, head, headPositionFirstFrame, tailTipFirstFrame):
-  from zebrazoom.mainZZ import get_default_tracking_method
+  from zebrazoom.code.tracking import get_default_tracking_method
 
   if hyperparameters["adjustDetectMovWithRawVideo"]:
     widgets = None
