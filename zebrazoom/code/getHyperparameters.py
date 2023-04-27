@@ -473,6 +473,8 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   hyperparameters["removeLargeInstantaneousDistanceData"]  = getConfig(config, "removeLargeInstantaneousDistanceData", videoPath)
   
   hyperparameters["alternativeCurvatureCalculation"]  = getConfig(config, "alternativeCurvatureCalculation", videoPath)
+  
+  hyperparameters["applyQuantileInDLalgo"]  = getConfig(config, "applyQuantileInDLalgo", videoPath)
 
   
   if hyperparameters["tailAnglesHeatMap"]:

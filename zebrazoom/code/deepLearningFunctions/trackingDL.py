@@ -3,12 +3,15 @@ from PIL import Image # TO REMOVE !!!
 import numpy as np
 import torch
 import cv2
+import math
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.util as util
 
 from zebrazoom.code.trackingFolder.headTrackingHeadingCalculationFolder.headTrackingHeadingCalculation import headTrackingHeadingCalculation
 from zebrazoom.code.trackingFolder.tailTracking import tailTracking
 from zebrazoom.code.trackingFolder.debugTracking import debugTracking
+
+from zebrazoom.code.trackingFolder.tailTrackingFunctionsFolder.getTailTipManual import getHeadPositionByFileSaved, getTailTipByFileSaved
 
 def trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName, dlModel, device):
   
@@ -39,7 +42,7 @@ def trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName,
   trackingProbabilityOfGoodDetection = 0
   
   # Performing the tracking on each frame
-  applyQuantile = True
+  applyQuantile = hyperparameters["applyQuantileInDLalgo"]
   i = firstFrame
   cap.set(1, firstFrame)
   if int(hyperparameters["onlyDoTheTrackingForThisNumberOfFrames"]) != 0:
@@ -54,7 +57,7 @@ def trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName,
       print("frame:",i)
 
     ret, frame = cap.read()
-    if hyperparameters["unet"] or applyQuantile:
+    if applyQuantile:
       frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
       quartileChose = 0.03
       lowVal  = int(np.quantile(frame, quartileChose))
@@ -72,7 +75,7 @@ def trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName,
         currentFrameNum = currentFrameNum - 1
         cap.set(1, currentFrameNum)
         ret, frame = cap.read()
-        if hyperparameters["unet"] or applyQuantile:
+        if applyQuantile:
           frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
           quartileChose = 0.01
           lowVal  = int(np.quantile(frame, quartileChose))
@@ -84,7 +87,7 @@ def trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName,
           frame = frame * (255/mult)
           frame = frame.astype('uint8')
     
-    if hyperparameters["unet"] or applyQuantile:
+    if applyQuantile:
       grey = frame
     else:
       grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -184,11 +187,25 @@ def trackingDL(videoPath, wellNumber, wellPositions, hyperparameters, videoName,
         if debugPlus:
           util.showFrame(255 - thresh2, title="thresh2")
         
-        [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, i, thresh2, thresh2, thresh2, thresh2, hyperparameters["erodeSize"], frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, 0, wellPositions[wellNumber]["lengthX"])
+        if hyperparameters["headEmbeded"] and os.path.exists(videoPath+'HP.csv'):
+          headPositionFirstFrame = getHeadPositionByFileSaved(videoPath)
+        else:
+          headPositionFirstFrame = 0
+        if hyperparameters["headEmbeded"] and os.path.exists(videoPath+'.csv'):
+          tailTipFirstFrame = getTailTipByFileSaved(hyperparameters,videoPath)
+        else:
+          tailTipFirstFrame = 0
+        if hyperparameters["headEmbeded"]:
+          maxDepth = math.sqrt((headPositionFirstFrame[0] - tailTipFirstFrame[0])**2 + (headPositionFirstFrame[1] - tailTipFirstFrame[0])**2)
+          maxDepth = 270 # Hack: need to change this
+        else:
+          maxDepth = 0
+        
+        [trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, lastFirstTheta] = headTrackingHeadingCalculation(hyperparameters, firstFrame, i, thresh2, thresh2, thresh2, thresh2, hyperparameters["erodeSize"], frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, headPositionFirstFrame, wellPositions[wellNumber]["lengthX"])
         
         if hyperparameters["trackTail"] == 1:
           for animalId in range(0, hyperparameters["nbAnimalsPerWell"]):
-            [trackingHeadTailAllAnimals, trackingHeadingAllAnimals] = tailTracking(animalId, i, firstFrame, videoPath, thresh3, hyperparameters, thresh3, nbTailPoints, thresh3, 0, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, 0, 0, 0, thresh3, 0, wellNumber)
+            [trackingHeadTailAllAnimals, trackingHeadingAllAnimals] = tailTracking(animalId, i, firstFrame, videoPath, 255 - thresh3 if hyperparameters["headEmbeded"] else thresh3, hyperparameters, thresh3, nbTailPoints, thresh3, 0, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, 0, maxDepth, tailTipFirstFrame, thresh3, 0, wellNumber)
         
         # Debug functions
         debugTracking(nbTailPoints, i, firstFrame, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, curFrame, hyperparameters)
