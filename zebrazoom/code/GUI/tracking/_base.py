@@ -2,12 +2,12 @@ import numpy as np
 
 import zebrazoom.code.util as util
 from zebrazoom.code.adjustHyperparameters import adjustHeadEmbeddedEyeTrackingParamsEllipse, adjustHeadEmbeddedEyeTrackingParamsSegment
-from zebrazoom.code.tracking import BaseTrackingMethod
+from zebrazoom.code.tracking import BaseZebraZoomTrackingMethod
 
 
-class BaseGUITrackingMethod(BaseTrackingMethod):
-  def _debugFrame(self, frame, title=None, buttons=()):
-    util.showFrame(frame, title=title, buttons=buttons)
+class BaseGUITrackingMethod(BaseZebraZoomTrackingMethod):
+  def _debugFrame(self, frame, title=None, buttons=(), timeout=None):
+    util.showFrame(frame, title=title, buttons=buttons, timeout=timeout)
 
   def _debugTracking(self, frameNumber: int, output: list, outputHeading: list, frame2: np.array) -> None:
     if not self._hyperparameters["debugTracking"]:

@@ -17,7 +17,7 @@ def getTailExtremityFirstFrame(pathToVideo, videoName, videoExt, configFile, arg
   [hyperparameters, config] = getHyperparameters(configFile, videoName, videoPath, argv)
   
   frameNumber = hyperparameters["firstFrame"]
-  tracking = get_default_tracking_method()(videoPath, None, wellPositions, hyperparameters)
+  tracking = get_default_tracking_method()(videoPath, wellPositions, hyperparameters)
   wellNumber = 0
   if hyperparameters["oneWellManuallyChosenTopLeft"]:
     wellPositions = findWells(os.path.join(pathToVideo, videoName), hyperparameters)

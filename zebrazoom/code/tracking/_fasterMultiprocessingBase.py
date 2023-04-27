@@ -1,15 +1,17 @@
 import cv2
 import numpy as np
+import queue
 
-from ._base import BaseTrackingMethod
+from ._baseZebraZoom import BaseZebraZoomTrackingMethod
 
 
-class BaseFasterMultiprocessing(BaseTrackingMethod):
-  def __init__(self, videoPath, background, wellPositions, hyperparameters):
+class BaseFasterMultiprocessing(BaseZebraZoomTrackingMethod):
+  def __init__(self, videoPath, wellPositions, hyperparameters):
     self._videoPath = videoPath
-    self._background = background
-    self._wellPositions = wellPositions
+    self._videoName = os.path.splitext(os.path.basename(videoPath))[0]
+    self._background = None
     self._hyperparameters = hyperparameters
+    self._wellPositions = wellPositions
     self._firstWell = 0 if self._hyperparameters["onlyTrackThisOneWell"] == -1 else self._hyperparameters["onlyTrackThisOneWell"]
     self._lastWell = self._hyperparameters["nbWells"] - 1 if self._hyperparameters["onlyTrackThisOneWell"] == -1 else self._hyperparameters["onlyTrackThisOneWell"]
     self._auDessusPerAnimalIdList = None
@@ -23,13 +25,14 @@ class BaseFasterMultiprocessing(BaseTrackingMethod):
                                            for _ in range(self._hyperparameters["nbWells"])]
 
 
-  def _detectMovementWithRawVideoInsideTracking(self, i, grey):
-    previousFrames = queue.Queue(self._hyperparameters["frameGapComparision"])
-    # previousXYCoords = queue.Queue(self._hyperparameters["frameGapComparision"])
-    self._auDessusPerAnimalIdList = [[np.zeros((self._lastFrame-self._firstFrame+1, 1)) for nbAnimalsPerWell in range(0, self._hyperparameters["nbAnimalsPerWell"])]
-                                     for wellNumber in range(self._hyperparameters["nbWells"])]
+  def _detectMovementWithRawVideoInsideTracking(self, i, grey, previousFrames):
+    if previousFrames is None:
+      previousFrames = queue.Queue(self._hyperparameters["frameGapComparision"])
+      # previousXYCoords = queue.Queue(self._hyperparameters["frameGapComparision"])
+      self._auDessusPerAnimalIdList = [[np.zeros((self._lastFrame-self._firstFrame+1, 1)) for nbAnimalsPerWell in range(0, self._hyperparameters["nbAnimalsPerWell"])]
+                                       for wellNumber in range(self._hyperparameters["nbWells"])]
     halfDiameterRoiBoutDetect = self._hyperparameters["halfDiameterRoiBoutDetect"]
-    for numFish in range(self._hyperparameters["nbAnimalsPerWell"]):
+    for animal_Id in range(self._hyperparameters["nbAnimalsPerWell"]):
       if previousFrames.full():
         previousFrame   = previousFrames.get()
         curFrame        = grey.copy()
@@ -100,3 +103,4 @@ class BaseFasterMultiprocessing(BaseTrackingMethod):
             self._auDessusPerAnimalIdList[wellNumber][animalId][i-self._firstFrame] = 0
       previousFrames.put(grey)
       # previousXYCoords.put([xHead, yHead])
+    return previousFrames

@@ -1,4 +1,5 @@
 import zebrazoom
+<<<<<<< HEAD:zebrazoom/mainZZ.py
 from zebrazoom.code.findWells import findWells
 from zebrazoom.code.getBackground import getBackground
 from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
@@ -12,6 +13,15 @@ from zebrazoom.code.fasterMultiprocessing import fasterMultiprocessing
 from zebrazoom.code.fasterMultiprocessing2 import fasterMultiprocessing2
 
 import sys
+=======
+import zebrazoom.code.tracking
+import zebrazoom.code.tracking.customTrackingImplementations
+from zebrazoom.code.findWells import findWells
+from zebrazoom.code.createSuperStruct import createSuperStruct
+from zebrazoom.code.createValidationVideo import createValidationVideo
+from zebrazoom.code.getHyperparameters import getHyperparameters
+
+>>>>>>> dd7f37a (Various changes.):zebrazoom/zebraZoomVideoAnalysis.py
 import pickle
 import os
 import shutil
@@ -22,22 +32,21 @@ import json
 import subprocess
 import glob
 
+<<<<<<< HEAD:zebrazoom/mainZZ.py
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
+=======
+>>>>>>> dd7f37a (Various changes.):zebrazoom/zebraZoomVideoAnalysis.py
 
 class MainZZ:
   def __init__(self, pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
     self._pathToVideo = pathToVideo
     self._videoName = videoName
-    self._videoExt = videoExt
     self._configFile = configFile
     self._useGUI = useGUI
     self._videoNameWithExt = videoName + '.' + videoExt
-    self._previouslyAcquiredTrackingDataForDebug = []
     self.wellPositions = None
-    self.background = None
-    self._dlModel = 0
     # Getting hyperparameters
     self._hyperparameters, self._configFile = getHyperparameters(configFile, self._videoNameWithExt, os.path.join(pathToVideo, self._videoNameWithExt), argv)
 
@@ -70,11 +79,6 @@ class MainZZ:
       print("Warning: The parameter 'lastFrame' in your configuration file is too big so we adjusted it to the value:", nbFrames-2, "it was originally set to", self._hyperparameters["lastFrame"])
       self._hyperparameters["lastFrame"] = nbFrames - 2
       # raise NameError("Error: The parameter 'lastFrame' in your configuration file is too big")
-
-  def _reloadPreviousTrackingData(self):
-    # Reloading previously extracted tracking data if debugging option selected
-    with open(os.path.join(self._outputFolderVideo, 'intermediaryTracking.txt'),'rb') as outfile:
-        self._previouslyAcquiredTrackingDataForDebug = pickle.load(outfile)
 
   def _prepareOutputFolder(self):
     # Creating output folder
@@ -117,6 +121,7 @@ class MainZZ:
       for filename in filesToCopy:
         shutil.copy2(filename, self._outputFolderVideo)
 
+<<<<<<< HEAD:zebrazoom/mainZZ.py
   def _loadDLModel(self):
     # Reloading DL model for tracking with DL
     if self._hyperparameters["trackingDL"]:
@@ -152,6 +157,8 @@ class MainZZ:
       parameters = extractParameters(trackingData, wellNumber, self._hyperparameters, videoPath, self.wellPositions, self.background)
       self._output.put([wellNumber,parameters,[]])
 
+=======
+>>>>>>> dd7f37a (Various changes.):zebrazoom/zebraZoomVideoAnalysis.py
   def _storeConfigUsed(self):
     '''Saving the configuration file used'''
     with open(os.path.join(self._outputFolderVideo, 'configUsed.json'), 'w') as outfile:
@@ -210,6 +217,7 @@ class MainZZ:
           else:
             app.wellShape = 'circle'
 
+<<<<<<< HEAD:zebrazoom/mainZZ.py
   def getBackground(self):
     '''Get background'''
     if self._hyperparameters["backgroundSubtractorKNN"] or (self._hyperparameters["headEmbeded"] and self._hyperparameters["headEmbededRemoveBack"] == 0 and self._hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0 and self._hyperparameters["adjustHeadEmbededTracking"] == 0) or self._hyperparameters["trackingDL"] or self._hyperparameters["fishTailTrackingDifficultBackground"]:
@@ -349,6 +357,17 @@ class MainZZ:
       pickle.dump(trackingDataPerWell, outfile)
     if (self._hyperparameters["freqAlgoPosFollow"] != 0):
       print("intermediary results saved")
+=======
+  def _runTracking(self):
+    if 'trackingImplementation' in self._hyperparameters:
+      name = self._hyperparameters['trackingImplementation']
+    else:
+      name = "fasterMultiprocessing" if self._hyperparameters["fasterMultiprocessing"] == 1 else "fasterMultiprocessing2" if self._hyperparameters["fasterMultiprocessing"] == 2 else "tracking"
+    tracking = zebrazoom.code.tracking.get_tracking_method(name)(os.path.join(self._pathToVideo, self._videoNameWithExt), self.wellPositions, self._hyperparameters)
+    if hasattr(tracking, 'useGUI'):
+      tracking.useGUI = self._useGUI
+    return tracking.run(), getattr(tracking, 'dataPostProcessing', None)
+>>>>>>> dd7f37a (Various changes.):zebrazoom/zebraZoomVideoAnalysis.py
 
   def _storeResults(self, paramDataPerWell):
     # Creating super structure
@@ -362,9 +381,13 @@ class MainZZ:
         if self._hyperparameters["createValidationVideo"]:
           infoFrame = createValidationVideo(os.path.join(self._pathToVideo, self._videoNameWithExt), superStruct, self._hyperparameters)
 
+<<<<<<< HEAD:zebrazoom/mainZZ.py
     # Various post-processing options depending on configuration file choices
     superStruct = dataPostProcessing(self._outputFolderVideo, superStruct, self._hyperparameters, self._videoName, self._videoExt)
 
+=======
+  def _storeResults(self, superStruct):
+>>>>>>> dd7f37a (Various changes.):zebrazoom/zebraZoomVideoAnalysis.py
     path = os.path.join(os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"]), 'results_' + self._hyperparameters["videoName"] + '.txt')
     print("createSuperStruct:", path)
     with open(path, 'w') as outfile:
@@ -408,9 +431,7 @@ class MainZZ:
 
     self._checkFirstAndLastFrame()
 
-    if self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justExtractParamFromPreviousTrackData":
-      self._reloadPreviousTrackingData()
-    else:
+    if self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] != "justExtractParamFromPreviousTrackData":
       self._prepareOutputFolder()
 
     self._storeConfigUsed()
@@ -437,6 +458,7 @@ class MainZZ:
         popUpAlgoFollow.prepend("ZebraZoom Analysis finished for " + self._videoName)
       raise ValueError
 
+<<<<<<< HEAD:zebrazoom/mainZZ.py
     self.getBackground()
     if self._hyperparameters["exitAfterBackgroundExtraction"]:
       print("exitAfterBackgroundExtraction")
@@ -451,6 +473,16 @@ class MainZZ:
 
     if self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] != "justSaveTrackData":
       self._storeResults(paramDataPerWell)
+=======
+    paramDataPerWell, postProcessingCb = self._runTracking()
+
+    if self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] != "justSaveTrackData":
+      superStruct = self._createSuperStruct(paramDataPerWell)
+      self._createValidationVideo(superStruct)
+      if postProcessingCb is not None:
+        superStruct = postProcessingCb(self._outputFolderVideo, superStruct)
+      self._storeResults(superStruct)
+>>>>>>> dd7f37a (Various changes.):zebrazoom/zebraZoomVideoAnalysis.py
 
     self._storeVersionUsed()
 

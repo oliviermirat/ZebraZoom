@@ -8,7 +8,7 @@ import os
 import re
 
 import zebrazoom.code.util as util
-from zebrazoom.code.getBackground import getBackground
+from zebrazoom.code.tracking import getBackground
 from zebrazoom.code.findWells import findWells
 
 from zebrazoom.code.GUI.adjustParameterInsideAlgo import adjustBoutDetectionOnlyPage

@@ -4,12 +4,12 @@ import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import math
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
-from zebrazoom.mainZZ import ZebraZoomVideoAnalysis
+from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis
 import pickle
 import json
 import os
 import re
-from zebrazoom.code.getBackground import getBackground
+from zebrazoom.code.tracking import getBackground
 from zebrazoom.code.findWells import findWells
 from zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions import prepareConfigFileForParamsAdjustements
 import zebrazoom.code.paths as paths
@@ -272,7 +272,7 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
 
 
 def evaluateMinPixelDiffForBackExtractForCenterOfMassTracking(videoPath, background, image, wellPositions, hyperparameters, tailTipGroundTruth):
-  [foregroundImage, o1, o2] = get_default_tracking_method()(videoPath, background, wellPositions, hyperparameters).getForegroundImage(image["frameNumber"], image["wellNumber"])
+  [foregroundImage, o1, o2] = get_default_tracking_method()(videoPath, wellPositions, hyperparameters).getForegroundImage(background, image["frameNumber"], image["wellNumber"])
   ret, thresh = cv2.threshold(foregroundImage, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
   thresh[0,:] = 255
   thresh[len(thresh)-1,:] = 255
@@ -319,7 +319,7 @@ def findBestBackgroundSubstractionParameterForEachImage(data, videoPath, backgro
       hyperparameters["minPixelDiffForBackExtract"] = minPixelDiffForBackExtract
       tailTipGroundTruth = image["tailTipCoordinates"]
       if zebrafishToTrack:
-        trackingData = get_default_tracking_method()(videoPath, background, wellPositions, hyperparameters).runTracking(image["wellNumber"])
+        trackingData = get_default_tracking_method()(videoPath, wellPositions, hyperparameters).runTracking(image["wellNumber"])
         tailTipPredicted = trackingData[0][0][0][len(trackingData[0][0][0])-1]
         if (trackingData[0][0][0][0][0] == tailTipPredicted[0] and trackingData[0][0][0][0][1] == tailTipPredicted[1]) or (trackingData[0][0][0][1][0] == tailTipPredicted[0] and trackingData[0][0][0][1][1] == tailTipPredicted[1]):
           tailTipDistError = 1000000000
@@ -349,7 +349,7 @@ def findBestBackgroundSubstractionParameterForEachImage(data, videoPath, backgro
     
     if lowestTailTipDistError != 1000000000:
       hyperparameters["minPixelDiffForBackExtract"] = image["bestMinPixelDiffForBackExtract"]
-      [foregroundImage, o1, o2] = get_default_tracking_method()(videoPath, background, wellPositions, hyperparameters).getForegroundImage(image["frameNumber"], image["wellNumber"])
+      [foregroundImage, o1, o2] = get_default_tracking_method()(videoPath, wellPositions, hyperparameters).getForegroundImage(background, image["frameNumber"], image["wellNumber"])
       ret, thresh = cv2.threshold(foregroundImage, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
       thresh[0,:] = 255
       thresh[len(thresh)-1,:] = 255
@@ -382,7 +382,7 @@ def findInitialBlobArea(data, videoPath, background, wellPositions, hyperparamet
       
       bodyContourArea = image["bodyContourArea"]
       
-      [foregroundImage, o1, o2] = get_default_tracking_method()(videoPath, background, wellPositions, hyperparameters).getForegroundImage(image["frameNumber"], image["wellNumber"])
+      [foregroundImage, o1, o2] = get_default_tracking_method()(videoPath, wellPositions, hyperparameters).getForegroundImage(background, image["frameNumber"], image["wellNumber"])
       
       ret, thresh = cv2.threshold(foregroundImage, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
       thresh[0,:] = 255

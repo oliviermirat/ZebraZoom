@@ -26,13 +26,14 @@ import zebrazoom.code.GUI.configFileZebrafishFunctions as configFileZebrafishFun
 import zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions as adjustParameterInsideAlgoFunctions
 import zebrazoom.code.GUI.dataAnalysisGUIFunctions as dataAnalysisGUIFunctions
 import zebrazoom.code.GUI.troubleshootingFunction as troubleshootingFunction
-from zebrazoom.mainZZ import ZebraZoomVideoAnalysis
+from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis
 from zebrazoom.code.adjustHyperparameters import adjustFreelySwimTrackingParams, adjustFreelySwimTrackingAutoParams, adjustHeadEmbededTrackingParams, adjustHeadEmbeddedEyeTrackingParamsSegment, adjustHeadEmbeddedEyeTrackingParamsEllipse
 from zebrazoom.code.GUI.GUI_InitialClasses import StartPage, VideoToAnalyze, ConfigFilePromp, Patience, ZZoutro, ZZoutroSbatch, SeveralVideos, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, EnhanceZZOutput, ViewParameters, Error
 from zebrazoom.code.GUI.configFilePrepare import ChooseVideoToCreateConfigFileFor, OptimizeConfigFile, ChooseGeneralExperiment, ChooseCenterOfMassTracking, WellOrganisation, FreelySwimmingExperiment, NbRegionsOfInterest, HomegeneousWellsLayout, CircularOrRectangularWells, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings
 from zebrazoom.code.GUI.configFileZebrafish import HeadEmbeded
 from zebrazoom.code.GUI.dataAnalysisGUI import CreateExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderClustering
 from zebrazoom.code.GUI.troubleshooting import ChooseVideoToTroubleshootSplitVideo, VideoToTroubleshootSplitVideo
+import zebrazoom.code.GUI.tracking.customTrackingImplementations
 
 
 LARGE_FONT= ("Verdana", 12)
@@ -352,7 +353,7 @@ class ZebraZoomApp(PlainApplication):
         del self.configFileHistory[:]
         with self.busyCursor():
           try:
-            tabParams = ["mainZZ", pathToVideo, videoName, videoExt, self.configFile,
+            tabParams = ["zebraZoomVideoAnalysis", pathToVideo, videoName, videoExt, self.configFile,
                          "firstFrame", firstFrame, "lastFrame", lastFrame, "freqAlgoPosFollow", 100,
                          "popUpAlgoFollow", 1, "outputFolder", self.ZZoutputLocation,
                          "backgroundExtractionForceUseAllVideoFrames", int(backgroundExtractionForceUseAllVideoFramesCheckbox.isChecked())]

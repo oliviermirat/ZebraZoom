@@ -11,8 +11,8 @@ from ._getImages import GetImagesMixin
 
 
 class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImagesMixin):
-  def __init__(self, videoPath, background, wellPositions, hyperparameters):
-    super().__init__(videoPath, background, wellPositions, hyperparameters)
+  def __init__(self, videoPath, wellPositions, hyperparameters):
+    super().__init__(videoPath, wellPositions, hyperparameters)
     if self._hyperparameters["eyeTracking"]:
       self._trackingEyesAllAnimalsList = [np.zeros((self._hyperparameters["nbAnimalsPerWell"], self._lastFrame-self._firstFrame+1, 8))
                                           for _ in range(self._hyperparameters["nbWells"])]
@@ -26,17 +26,19 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
       self._trackingProbabilityOfGoodDetectionList = 0
 
   def _adjustParameters(self, i, frame, widgets):
-    pass
+    raise ValueError("GUI is required to adjust parameters")
 
   def _formatOutput(self):
     if self._hyperparameters["postProcessMultipleTrajectories"]:
       for wellNumber in range(self._firstWell, self._lastWell + 1):
         self._postProcessMultipleTrajectories(self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingProbabilityOfGoodDetectionList[wellNumber])
 
-    return [[wellNumber, extractParameters([self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], [], 0, 0] + ([self._auDessusPerAnimalIdList[wellNumber]] if self._auDessusPerAnimalIdList is not None else []), wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background), []]
-            for wellNumber in range(self._firstWell, self._lastWell + 1)]
+    return {wellNumber: extractParameters([self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], [], 0, 0] + ([self._auDessusPerAnimalIdList[wellNumber]] if self._auDessusPerAnimalIdList is not None else []), wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background)
+            for wellNumber in range(self._firstWell, self._lastWell + 1)}
 
   def run(self):
+    self._background = self._getBackground()
+
     cap = zzVideoReading.VideoCapture(self._videoPath)
     if (cap.isOpened()== False):
       print("Error opening video stream or file")
@@ -55,6 +57,7 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
     if self._firstFrame:
       cap.set(1, self._firstFrame)
 
+    previousFrames = None
     widgets = None
     while (i < self._lastFrame + 1):
 
@@ -131,7 +134,7 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
               print("Tracking at frame", i)
 
         if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
-          self._detectMovementWithRawVideoInsideTracking(i, grey)
+          previousFrames = self._detectMovementWithRawVideoInsideTracking(i, grey, previousFrames)
 
       paramsAdjusted = self._adjustParameters(i, frame, widgets)
       if paramsAdjusted is not None:

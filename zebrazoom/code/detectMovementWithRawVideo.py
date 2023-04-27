@@ -55,7 +55,7 @@ def getImagesAndTotDiff(head, rayon, cap1, cap2, videoPath, l, frameGapComparisi
     else:
       imgFuture = cap1[len(cap1) - 1]
   else:
-    tracking = get_default_tracking_method()(videoPath, None, wellPositions, hyperparameters)
+    tracking = get_default_tracking_method()(videoPath, wellPositions, hyperparameters)
     img = tracking.getImageSequential(cap1, l, wellNumber)
     imgFuture = tracking.getImageSequential(cap2, l+frameGapComparision, wellNumber)
   
@@ -154,7 +154,7 @@ def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumbe
     cap = zzVideoReading.VideoCapture(videoPath)
     cap.set(1, debut_l)
     for k in range(debut_l, max_l):
-      imgTemp = get_default_tracking_method()(videoPath, None, wellPositions, hyperparameters).getImageSequential(cap, k, wellNumber)
+      imgTemp = get_default_tracking_method()(videoPath, wellPositions, hyperparameters).getImageSequential(cap, k, wellNumber)
       cap1.append(imgTemp)
   else:
     cap1 = zzVideoReading.VideoCapture(videoPath)

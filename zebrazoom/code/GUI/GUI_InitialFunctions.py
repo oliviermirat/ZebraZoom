@@ -16,7 +16,7 @@ import pandas as pd
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
-from zebrazoom.mainZZ import ZebraZoomVideoAnalysis
+from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis
 from zebrazoom.getTailExtremityFirstFrame import getTailExtremityFirstFrame
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
@@ -546,7 +546,7 @@ def _runTracking(args, justExtractParams, noValidationVideo, ZZoutputLocation):
   name        = os.path.splitext(nameWithExt)[0]
   videoExt    = os.path.splitext(nameWithExt)[1][1:]
 
-  tabParams = ["mainZZ", path, name, videoExt, config, "freqAlgoPosFollow", 100, "outputFolder", ZZoutputLocation]
+  tabParams = ["zebraZoomVideoAnalysis", path, name, videoExt, config, "freqAlgoPosFollow", 100, "outputFolder", ZZoutputLocation]
   if justExtractParams:
     tabParams.extend(["reloadWellPositions", 1, "reloadBackground", 1, "debugPauseBetweenTrackAndParamExtract", "justExtractParamFromPreviousTrackData"])
   if noValidationVideo:
@@ -597,9 +597,9 @@ def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, justE
 
       if not headEmbedded:
         if len(videos) == 1:
-          tabParams = ["mainZZ", path, name, videoExt, config, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1, "outputFolder", app.ZZoutputLocation]
+          tabParams = ["zebraZoomVideoAnalysis", path, name, videoExt, config, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 1, "outputFolder", app.ZZoutputLocation]
         else:
-          tabParams = ["mainZZ", path, name, videoExt, config, "freqAlgoPosFollow", 100, "outputFolder", app.ZZoutputLocation]
+          tabParams = ["zebraZoomVideoAnalysis", path, name, videoExt, config, "freqAlgoPosFollow", 100, "outputFolder", app.ZZoutputLocation]
         if backgroundExtractionForceUseAllVideoFrames is not None:
           tabParams.extend(["backgroundExtractionForceUseAllVideoFrames", int(backgroundExtractionForceUseAllVideoFrames)])
         if firstFrame is not None:

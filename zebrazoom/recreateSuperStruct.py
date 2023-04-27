@@ -1,4 +1,3 @@
-from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
 from zebrazoom.code.createSuperStruct import createSuperStruct
 from zebrazoom.code.createValidationVideo import createValidationVideo
 from zebrazoom.code.getHyperparameters import getHyperparameters

@@ -190,7 +190,7 @@ class GetImagesMixin:
 
     return [curFrame, initialCurFrame, back, xmin, ymin]
 
-  def getForegroundImage(self, frameNumber, wellNumber):
+  def getForegroundImage(self, background, frameNumber, wellNumber):
     minPixelDiffForBackExtract = self._hyperparameters["minPixelDiffForBackExtract"]
     if "minPixelDiffForBackExtractHead" in self._hyperparameters:
       minPixelDiffForBackExtract = self._hyperparameters["minPixelDiffForBackExtractHead"]
@@ -204,10 +204,10 @@ class GetImagesMixin:
     else:
       xtop = 0
       ytop = 0
-      lenX = len(self._background[0])
-      lenY = len(self._background)
+      lenX = len(background[0])
+      lenY = len(background)
 
-    back = self._background[ytop:ytop+lenY, xtop:xtop+lenX]
+    back = background[ytop:ytop+lenY, xtop:xtop+lenX]
 
     cap = zzVideoReading.VideoCapture(self._videoPath)
     cap.set(1, frameNumber)
@@ -368,7 +368,7 @@ class GetImagesMixin:
 
     return [frame, thres1]
 
-  def headEmbededFrameBackExtract(self, frameNumber, wellNumber):
+  def headEmbededFrameBackExtract(self, background, frameNumber, wellNumber):
     minPixelDiffForBackExtract = self._hyperparameters["minPixelDiffForBackExtract"]
     debug = 0
 
@@ -388,7 +388,7 @@ class GetImagesMixin:
     lenX = self._wellPositions[wellNumber]['lengthX']
     lenY = self._wellPositions[wellNumber]['lengthY']
     frame = frame[ytop:ytop+lenY, xtop:xtop+lenX]
-    background = self._background[ytop:ytop+lenY, xtop:xtop+lenX]
+    background = background[ytop:ytop+lenY, xtop:xtop+lenX]
 
     if ("invertBlackWhiteOnImages" in self._hyperparameters) and self._hyperparameters["invertBlackWhiteOnImages"]:
       frame = 255 - frame
@@ -524,7 +524,7 @@ class GetImagesMixin:
         if self._hyperparameters["adjustHeadEmbededTracking"] == 0 and not self._hyperparameters["adjustHeadEmbeddedEyeTracking"]:
           [frame, thresh1] = self._headEmbededFrameSequentialBackExtract(cap, i, wellNumber)
         else:
-          [frame, thresh1] = self.headEmbededFrameBackExtract(i, wellNumber)
+          [frame, thresh1] = self.headEmbededFrameBackExtract(self._background, i, wellNumber)
         gray = frame.copy()
     else:
       if self._hyperparameters["adjustFreelySwimTracking"] == 0 and self._hyperparameters["adjustFreelySwimTrackingAutomaticParameters"] == 0:
@@ -534,7 +534,7 @@ class GetImagesMixin:
           frame = self.getImageSequential(cap, i, wellNumber)
       else:
         if len(self._background):
-          [frame, initialCurFrame, back] = self.getForegroundImage(i, wellNumber)
+          [frame, initialCurFrame, back] = self.getForegroundImage(self._background, i, wellNumber)
         else:
           frame = self._getImage(i, wellNumber)
 

@@ -1,5 +1,5 @@
 import numpy as np
-from zebrazoom.mainZZ import ZebraZoomVideoAnalysis
+from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis
 import os
 import pickle
 import cv2

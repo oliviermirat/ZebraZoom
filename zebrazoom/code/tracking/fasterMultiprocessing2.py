@@ -1,8 +1,10 @@
 import cv2
-import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import numpy as np
 import math
-import queue
+
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+from zebrazoom.code.extractParameters import extractParameters
+from zebrazoom.code.preprocessImage import preprocessImage
 
 from ._base import register_tracking_method
 from ._fasterMultiprocessingBase import BaseFasterMultiprocessing
@@ -10,8 +12,8 @@ from ._tailExtremityTracking import TailTrackingExtremityDetectMixin
 
 
 class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDetectMixin):
-  def __init__(self, videoPath, background, wellPositions, hyperparameters):
-    super().__init__(videoPath, background, wellPositions, hyperparameters)
+  def __init__(self, videoPath, wellPositions, hyperparameters):
+    super().__init__(videoPath, wellPositions, hyperparameters)
 
     # if self._hyperparameters["eyeTracking"]:
       # self._trackingEyesAllAnimalsList = []
@@ -29,7 +31,7 @@ class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDet
     # self._trackingProbabilityOfGoodDetectionList = []
 
   def _adjustParameters(self, i, back, frame, initialCurFrame, widgets):
-    pass
+    raise ValueError("GUI is required to adjust parameters")
 
   def _findTheTwoSides(self, headPosition, bodyContour, curFrame, bestAngle):
     # Finding the 'mouth' of the fish
@@ -314,10 +316,12 @@ class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDet
   def _formatOutput(self):
     # if self._hyperparameters["postProcessMultipleTrajectories"]:
       # self._postProcessMultipleTrajectories(self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingProbabilityOfGoodDetectionList[wellNumber])
-    return [[wellNumber, extractParameters([self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], [], 0, 0] + ([self._auDessusPerAnimalIdList[wellNumber]] if self._auDessusPerAnimalIdList is not None else []), wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background), []]
-            for wellNumber in range(self._firstWell, self._lastWell + 1)]
+    return {wellNumber: extractParameters([self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], [], 0, 0, self._auDessusPerAnimalIdList[wellNumber]], wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background)
+            for wellNumber in range(self._firstWell, self._lastWell + 1)}
 
   def run(self):
+    self._background = self._getBackground()
+
     cap = zzVideoReading.VideoCapture(self._videoPath)
     if (cap.isOpened()== False):
       print("Error opening video stream or file")
@@ -336,6 +340,7 @@ class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDet
     if self._firstFrame:
       cap.set(1, self._firstFrame)
 
+    previousFrames = None
     widgets = None
     while (i < self._lastFrame + 1):
 
@@ -457,7 +462,7 @@ class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDet
               print("Tracking at frame", i)
 
         if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
-          self._detectMovementWithRawVideoInsideTracking(i, grey)
+          previousFrames = self._detectMovementWithRawVideoInsideTracking(i, grey, previousFrames)
 
       paramsAdjusted = self._adjustParameters(i, back, frame, initialCurFrame, widgets)
       if paramsAdjusted is not None:

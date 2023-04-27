@@ -12,8 +12,8 @@ from PyQt5.QtWidgets import QApplication, QGridLayout, QLabel, QLineEdit, QCheck
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
-from zebrazoom.mainZZ import ZebraZoomVideoAnalysis
-from zebrazoom.code.tracking import get_default_tracking_method
+from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis
+from zebrazoom.code.tracking import get_default_tracking_method, getBackground
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 
 
@@ -23,8 +23,6 @@ def _cleanup(app, page):
     del app.wellPositions
   if hasattr(app, "wellShape"):
     del app.wellShape
-  if hasattr(app, "background"):
-    del app.background
 
 
 def _showPage(layout, labelInfo):
@@ -139,11 +137,11 @@ def _addBlackSegments(config, videoPath, frameNumber, wellNumber, cap):
   def getFrame():
     hyperparameters = getHyperparametersSimple(tmpConfig)
     if hyperparameters["headEmbededRemoveBack"] == 0 and hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0:
-      frame, thresh1 = get_default_tracking_method()(videoPath, None, wellPositions, hyperparameters).headEmbededFrame(frameNumber, wellNumber)
+      frame, thresh1 = get_default_tracking_method()(videoPath, wellPositions, hyperparameters).headEmbededFrame(frameNumber, wellNumber)
     else:
       hyperparameters["headEmbededRemoveBack"] = 1
       hyperparameters["minPixelDiffForBackExtract"] = hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"]
-      frame, thresh1 = get_default_tracking_method()(videoPath, QApplication.instance().background, hyperparameters, wellPositions).headEmbededFrameBackExtract(frameNumber, wellNumber)
+      frame, thresh1 = get_default_tracking_method()(videoPath, hyperparameters, wellPositions).headEmbededFrameBackExtract(getBackground(videoPath, hyperparameters), frameNumber, wellNumber)
 
     quartileChose = hyperparameters["outputValidationVideoContrastImprovementQuartile"]
     lowVal  = int(np.quantile(frame, quartileChose))

@@ -3,10 +3,12 @@ import os
 
 import numpy as np
 
+from PyQt5.QtWidgets import QApplication
+
 import zebrazoom.code.util as util
 from zebrazoom.code.adjustHyperparameters import adjustFreelySwimTrackingParams, adjustFreelySwimTrackingAutoParams, adjustHeadEmbededTrackingParams
 from zebrazoom.code.tracking.tracking import Tracking
-from zebrazoom.code.tracking import register_tracking_method, get_default_tracking_method
+from zebrazoom.code.tracking import register_tracking_method
 from ._base import BaseGUITrackingMethod
 
 
@@ -102,7 +104,7 @@ class GUITracking(Tracking, BaseGUITrackingMethod):
     def tailNotStraight(frameWidget):
       nonlocal plus
       plus += 1
-      util.setPixmapFromCv(get_default_tracking_method()(self._videoPath, None, self._wellPositions, self._hyperparameters).headEmbededFrame(frameNumber + plus, wellNumber)[0], frameWidget, zoomable=True)
+      util.setPixmapFromCv(self.headEmbededFrame(frameNumber + plus, wellNumber)[0], frameWidget, zoomable=True)
     return list(util.getPoint(np.uint8(frame * 255), "Click on the base of the tail", zoomable=True, extraButtons=(("Tail is not straight", tailNotStraight, False),),
                               dialog=not hasattr(QApplication.instance(), 'window')))
 
@@ -112,7 +114,7 @@ class GUITracking(Tracking, BaseGUITrackingMethod):
     def tailNotStraight(frameWidget):
       nonlocal plus
       plus += 1
-      util.setPixmapFromCv(get_default_tracking_method()(self._videoPath, None, self._wellPositions, self._hyperparameters).headEmbededFrame(frameNumber + plus, wellNumber)[0], frameWidget, zoomable=True)
+      util.setPixmapFromCv(self.headEmbededFrame(frameNumber + plus, wellNumber)[0], frameWidget, zoomable=True)
     return list(util.getPoint(np.uint8(frame * 255), "Click on tail tip", zoomable=True, extraButtons=(("Tail is not straight", tailNotStraight, False),),
                               dialog=not hasattr(QApplication.instance(), 'window')))
 
