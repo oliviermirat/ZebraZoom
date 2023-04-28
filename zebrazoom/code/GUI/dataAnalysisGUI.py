@@ -22,6 +22,7 @@ PYQT6 = False
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
+from zebrazoom.dataAnalysis.dataanalysis import sortGenotypes
 from zebrazoom.dataAnalysis.dataanalysis.populationComparaison import populationComparaison
 from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
 from zebrazoom.dataAnalysis.datasetcreation.generatePklDataFileForVideo import generatePklDataFileForVideo
@@ -1319,11 +1320,6 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
   _BOUT_OCCURRENCE_PARAMS = ['Bout Rate (bouts / s)', 'IBI (s)', 'Bout Counts']
   _SPEED_RELATED_PARAMS = ['Bout Distance (mm)', 'Bout Duration (s)', 'Bout Speed (mm/s)', 'Number of Oscillations', 'Max TBF (Hz)', 'Mean TBF (Hz)']
   _AMPLITUDE_RELATED_PARAMS = ['Max absolute TBA (deg.)', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)', 'TBA#1 Amplitude (deg)', 'TBA#1 timing (s)', 'Absolute Yaw (deg)', 'Signed Yaw (deg)']
-  _ALPHABET_REGEX = re.compile(r'[^a-zA-Z]+')
-  _SORT_PRIORITY = {'wt': 0, 'ctrl': 0, 'ctrls': 0, 'controls': 0, 'control': 0, 'wildtype': 0, 'wildtypes': 0,
-                    'het': 1, 'heterozygote': 1, 'heterozygotes': 1,
-                    'mut': 2, 'mutant': 2, 'mutants': 2}
-
 
   def __init__(self, data):
     super().__init__()
@@ -1335,7 +1331,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     self._allData = allData
     self._medianData = medianData if medianData is not None else []
     genotypes = medianData["Genotype"].unique().tolist() if medianData is not None else []
-    self._palette = dict(zip(sorted(genotypes, key=lambda genotype: (self._SORT_PRIORITY.get(re.sub(self._ALPHABET_REGEX, '', genotype).casefold(), float('inf')), genotype)), sns.color_palette(n_colors=len(genotypes))))
+    self._palette = dict(zip(sortGenotypes(genotypes), sns.color_palette(n_colors=len(genotypes))))
     self._chartScaleFactor = 1
     self._filters = []
     self._figures = {}
@@ -1940,7 +1936,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
     if set(genotypes) == set(self._palette):
       genotypes = self._palette.keys()
     else:
-      genotypes = sorted(genotypes, key=lambda genotype: (self._SORT_PRIORITY.get(re.sub(self._ALPHABET_REGEX, '', genotype).casefold(), float('inf')), genotype))
+      genotypes = sortGenotypes(genotypes)
     self._palette = dict(zip(genotypes, sns.color_palette(n_colors=len(genotypes))))
     self._medianParameters = [param for param in self._medianData.columns if param not in self._IGNORE_COLUMNS]
     self._outliersRemoved = not os.path.exists(os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', folder, 'allBoutsMixed', 'globalParametersInsideCategories_1.png'))  # if the charts with outliers don't exist, we can assume outliers were removed from the results

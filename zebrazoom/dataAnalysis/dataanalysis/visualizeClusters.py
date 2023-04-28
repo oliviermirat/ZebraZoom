@@ -4,6 +4,8 @@ import numpy as np
 import cv2
 import os
 
+from zebrazoom.dataAnalysis.dataanalysis import sortGenotypes
+
 def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClustering, nbConditions, nbCluster, nbFramesTakenIntoAccount, scaleGraphs, showFigures, outputFolderResult, videoSaveFirstTenBouts, globalParametersCalculations):
   
   instaTBF   = ['instaTBF'+str(i)  for i in range(1, nbFramesTakenIntoAccount + 1)]
@@ -55,10 +57,11 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
         for classed in range(0, len(proportions[0])):
           proportions[idxCond, classed] = np.median(df2.loc[df2['Condition'] == cond]['classifiedAs' + str(classed)])
       
+      conditions = list(sortGenotypes(dfParam["Condition"].unique().tolist()))
       fig, tabAx = plt.subplots(1, len(proportions[0]), figsize=(22.9, 8.8))
       for classed in range(0, len(proportions[0])):
-        b = sns.boxplot(ax=tabAx[int(classed)], data=df2, x='Condition', y='classifiedAs' + str(classed), showmeans=1, showfliers=1)
-        c = sns.stripplot(ax=tabAx[int(classed)], data=df2, x='Condition', y='classifiedAs' + str(classed), color='red', size=7)
+        b = sns.boxplot(ax=tabAx[int(classed)], data=df2, x='Condition', y='classifiedAs' + str(classed), showmeans=1, showfliers=1, order=conditions)
+        c = sns.stripplot(ax=tabAx[int(classed)], data=df2, x='Condition', y='classifiedAs' + str(classed), color='red', size=7, order=conditions)
         b.set_ylabel('', fontsize=0)
         b.set_xlabel('', fontsize=0)
         b.axes.set_title('Cluster ' + str(classed), fontsize=30)
@@ -95,7 +98,8 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
   
   fig, tabAx = plt.subplots(4, len(proportions[0]), figsize=(22.9, 8.8))
   
-  for idxCond, cond in enumerate(np.unique(dfParam['Condition'].values)):
+  conditions = list(sortGenotypes(dfParam["Condition"].unique().tolist()))
+  for idxCond, cond in enumerate(conditions):
     for classed in range(0, len(proportions[0])):
       dfTemp = dfParam.loc[(dfParam['Condition'] == cond) & (dfParam['classification'] == classed)]
       instaTBFtab   = dfTemp[instaTBF]
@@ -155,7 +159,7 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
     tabAx[3, 0].set_ylabel('Avg Angle')
   for i in range(0, nbCluster):
     labelX = "Cluster " + str(i+1) + "\n"
-    for j, condName in enumerate(np.unique(dfParam['Condition'].values)):
+    for j, condName in enumerate(conditions):
       labelX = labelX + str(condName) + ": " + str(round(proportions[j,i]*100*100)/100) + "% (in " + possibleColorsNames[j] + ")\n"
     if nbCluster == 1:
       tabAx[3].set_xlabel(labelX)
@@ -212,7 +216,7 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
     tabAx2[3, 0].set_ylabel('Avg Angle')
   for i in range(0, nbCluster):
     labelX = "Most representative bout of cluster "+ str(i+1) + ":\n"
-    for j, condName in enumerate(np.unique(dfParam['Condition'].values)):
+    for j, condName in enumerate(conditions):
       labelX = labelX + "for " + str(condName) + " (in " + possibleColorsNames[j] + ")\n"
     if nbCluster == 1:
       tabAx2[3].set_xlabel(labelX)
@@ -442,11 +446,13 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
       else:
         dfKinematicInsideCluster = dfParam
       
+      conditions = dfParam["Condition"].unique().tolist()
+      palette = dict(zip(sortGenotypes(conditions), sns.color_palette(n_colors=len(conditions))))
       for idxGlobParam, globParam in enumerate([globParam1, globParam2, globParam3, globParam4]):
         fig, tabAx = plt.subplots(2, 3, figsize=(22.9, 8.8))
         fig.tight_layout(pad=3.0)
         for idx, parameter in enumerate(globParam):
-          b = sns.boxplot(ax=tabAx[int(idx/3), idx%3], data=dfKinematicInsideCluster, x="classification", y=parameter, hue="Condition", showfliers = False)
+          b = sns.boxplot(ax=tabAx[int(idx/3), idx%3], data=dfKinematicInsideCluster, x="classification", y=parameter, hue="Condition", showfliers = False, hue_order=palette.keys(), palette=palette)
           b.set_ylabel('', fontsize=0)
           b.set_xlabel('', fontsize=0)
           b.axes.set_title(parameter,fontsize=30)

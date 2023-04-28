@@ -8,6 +8,8 @@ import pandas as pd
 import json
 import seaborn as sns
 
+from zebrazoom.dataAnalysis.dataanalysis import sortGenotypes
+
 def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotypes, outputFolder, medianPerWellFirstForEachKinematicParameter = 0, plotOutliersAndMean = True, saveDataPlottedInJson = 0, medianPerGenotypeFirstForEachKinematicParameter=0, numberOfBoutsPerSecond=0):
 
   outputFolderResult = os.path.join(outputFolder, nameOfFile)
@@ -85,7 +87,9 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
   if not os.path.exists(os.path.join(outputFolderResult, 'globalParametersInsideCategories.xlsx')):
     dfParam.to_excel(os.path.join(outputFolderResult, 'globalParametersInsideCategories.xlsx'))
     dfParam.to_csv(os.path.join(outputFolderResult, 'globalParametersInsideCategories.csv'), index=False)
-  
+
+  genotypes = dfParam["Genotype"].unique().tolist()
+  palette = dict(zip(sortGenotypes(genotypes), sns.color_palette(n_colors=len(genotypes))))
   nbGraphs = int(len(globParam)/6) if len(globParam) % 6 == 0 else int(len(globParam)/6) + 1
   color = ['b', 'r', 'c', 'm', 'y', 'k']
   for i in range(nbGraphs):
@@ -108,7 +112,7 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
         else:
           tabToPlot = tabAx[int(idx/nbColumns), idx%nbColumns]
         
-        b = sns.boxplot(ax=tabToPlot, data=dfParam, x="Condition", y=parameter, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean)
+        b = sns.boxplot(ax=tabToPlot, data=dfParam, x="Condition", y=parameter, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean, palette=palette, hue_order=palette.keys())
         # if plotOutliersAndMean and (medianPerWellFirstForEachKinematicParameter or medianPerGenotypeFirstForEachKinematicParameter): # or len(concatenatedValues[0]) < 100):
           # sns.stripplot(ax=tabToPlot, data=dfParam, x="Condition", y=parameter, hue="Genotype", color=".25")
         b.set_ylabel('', fontsize=0)
