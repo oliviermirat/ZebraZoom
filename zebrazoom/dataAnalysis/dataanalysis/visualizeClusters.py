@@ -128,7 +128,7 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
         # dist = 1 - dfTemp['classProba' + str(classed)]
         
       if len(dist):
-        idMinDist = dist.idxmin()
+        idMinDist = dist.infer_objects().idxmin()
       else:
         idMinDist = -1
       mostRepresentativeBout[idxCond, classed] = idMinDist
