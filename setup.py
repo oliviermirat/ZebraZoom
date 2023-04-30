@@ -26,7 +26,7 @@ setup(
     "numpy",
     "matplotlib>=3.5.2",
     "scipy",
-    "pandas>=1.5.3",
+    "pandas==1.5.3",
     "openpyxl>=3.1.2",
     "filterpy",
     "opencv-python-headless<4.5.1.48",
