@@ -21,7 +21,7 @@ setup(
   download_url = 'https://github.com/oliviermirat/ZebraZoom/releases/latest',
   keywords = ['Animal', 'Behavior', 'Tracking', 'Zebrafish'],
   install_requires=[
-    "scikit-learn",
+    "scikit-learn>=1.2.2",
     "h5py",
     "numpy",
     "matplotlib>=3.5.2",
@@ -34,6 +34,7 @@ setup(
     "seaborn",
     "PyQt5>=5.15.0",
     "xlwt",
+    "threadpoolctl>=3.1.0",
   ],
   packages=setuptools.find_packages(),
   data_files=[
