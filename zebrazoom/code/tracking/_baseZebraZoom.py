@@ -22,7 +22,7 @@ class BaseZebraZoomTrackingMethod(BaseTrackingMethod, GetBackgroundMixin):
     return dataPostProcessing(outputFolder, superStruct, self._hyperparameters, *os.path.splitext(os.path.basename(self._videoPath)))
 
   def _debugTracking(self, frameNumber: int, output: list, outputHeading: list, frame2: np.array) -> None:
-    raise ValueError("debug mode is not available without the GUI")
+    pass
 
   def _updateBackgroundAtInterval(self, i, wellNumber, initialCurFrame, trackingHeadTailAllAnimals, frame):
     if i % self._hyperparameters["updateBackgroundAtInterval"] == 0:

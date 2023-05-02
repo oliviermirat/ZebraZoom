@@ -31,7 +31,7 @@ class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDet
     # self._trackingProbabilityOfGoodDetectionList = []
 
   def _adjustParameters(self, i, back, frame, initialCurFrame, widgets):
-    raise ValueError("GUI is required to adjust parameters")
+    return None
 
   def _findTheTwoSides(self, headPosition, bodyContour, curFrame, bestAngle):
     # Finding the 'mouth' of the fish

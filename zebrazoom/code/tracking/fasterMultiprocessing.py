@@ -26,7 +26,7 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
       self._trackingProbabilityOfGoodDetectionList = 0
 
   def _adjustParameters(self, i, frame, widgets):
-    raise ValueError("GUI is required to adjust parameters")
+    return None
 
   def _formatOutput(self):
     if self._hyperparameters["postProcessMultipleTrajectories"]:
