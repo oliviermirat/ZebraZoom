@@ -299,6 +299,7 @@ CONFIG_DEFAULT = \
   "trackingDLdicotomySearchOfOptimalBlobArea": 0,
   "applySimpleThresholdOnPredictedMask": 0,
   "simpleThresholdCheckMinForMaxCountour": 0,
+  "applyQuantileInDLalgo": 0,
 
   "fishTailTrackingDifficultBackground": 0,
 

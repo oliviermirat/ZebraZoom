@@ -1,19 +1,4 @@
 import zebrazoom
-<<<<<<< HEAD:zebrazoom/mainZZ.py
-from zebrazoom.code.findWells import findWells
-from zebrazoom.code.getBackground import getBackground
-from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
-from zebrazoom.code.trackingFolder.tracking import tracking
-from zebrazoom.code.extractParameters import extractParameters
-from zebrazoom.code.createSuperStruct import createSuperStruct
-from zebrazoom.code.createValidationVideo import createValidationVideo
-from zebrazoom.code.getHyperparameters import getHyperparameters
-from zebrazoom.code.dataPostProcessing.dataPostProcessing import dataPostProcessing
-from zebrazoom.code.fasterMultiprocessing import fasterMultiprocessing
-from zebrazoom.code.fasterMultiprocessing2 import fasterMultiprocessing2
-
-import sys
-=======
 import zebrazoom.code.tracking
 import zebrazoom.code.tracking.customTrackingImplementations
 from zebrazoom.code.findWells import findWells
@@ -21,7 +6,6 @@ from zebrazoom.code.createSuperStruct import createSuperStruct
 from zebrazoom.code.createValidationVideo import createValidationVideo
 from zebrazoom.code.getHyperparameters import getHyperparameters
 
->>>>>>> dd7f37a (Various changes.):zebrazoom/zebraZoomVideoAnalysis.py
 import pickle
 import os
 import shutil
@@ -29,17 +13,10 @@ import time
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import json
-import subprocess
 import glob
 
-<<<<<<< HEAD:zebrazoom/mainZZ.py
-from zebrazoom.code.vars import getGlobalVariables
-globalVariables = getGlobalVariables()
 
-=======
->>>>>>> dd7f37a (Various changes.):zebrazoom/zebraZoomVideoAnalysis.py
-
-class MainZZ:
+class ZebraZoomVideoAnalysis:
   def __init__(self, pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
     self._pathToVideo = pathToVideo
     self._videoName = videoName
@@ -50,14 +27,6 @@ class MainZZ:
     # Getting hyperparameters
     self._hyperparameters, self._configFile = getHyperparameters(configFile, self._videoNameWithExt, os.path.join(pathToVideo, self._videoNameWithExt), argv)
 
-    if self._hyperparameters["trackingDL"]:
-      import torch.multiprocessing as mp
-    else:
-      import multiprocessing as mp
-    if globalVariables["mac"] or self._hyperparameters["trackingDL"]:
-      mp.set_start_method('spawn', force=True)
-
-    self._output = mp.Queue()
     # Setting output folder
     self._outputFolderVideo = os.path.join(self._hyperparameters["outputFolder"], videoName)
 
@@ -121,44 +90,6 @@ class MainZZ:
       for filename in filesToCopy:
         shutil.copy2(filename, self._outputFolderVideo)
 
-<<<<<<< HEAD:zebrazoom/mainZZ.py
-  def _loadDLModel(self):
-    # Reloading DL model for tracking with DL
-    if self._hyperparameters["trackingDL"]:
-      from zebrazoom.code.deepLearningFunctions.loadDLmodel import loadDLmodel
-      self._dlModel = loadDLmodel(self._hyperparameters["trackingDL"])
-
-  def _getParametersForWell(self, wellNumber):
-    '''Does the tracking and then the extraction6 of parameters'''
-    videoPath = os.path.join(self._pathToVideo, self._videoNameWithExt)
-    if self._useGUI:
-      from PyQt5.QtWidgets import QApplication
-
-      if QApplication.instance() is None:
-        from zebrazoom.GUIAllPy import PlainApplication
-        app = PlainApplication(sys.argv)
-    if self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "noDebug":
-      # Normal execution process
-      trackingData = tracking(videoPath,self.background,wellNumber,self.wellPositions,self._hyperparameters, self._videoName, self._dlModel)
-      parameters = extractParameters(trackingData, wellNumber, self._hyperparameters, videoPath, self.wellPositions, self.background)
-      self._output.put([wellNumber,parameters,[]])
-    elif self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justSaveTrackData":
-      # Extracing tracking data, saving it, and that's it
-      trackingData = tracking(videoPath,self.background,wellNumber,self.wellPositions,self._hyperparameters, self._videoName, self._dlModel)
-      self._output.put([wellNumber,[],trackingData])
-    elif self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "saveTrackDataAndExtractParam":
-      # Extracing tracking data, saving it, and continuing normal execution
-      trackingData = tracking(videoPath,self.background,wellNumber,self.wellPositions,self._hyperparameters, self._videoName, self._dlModel)
-      parameters = extractParameters(trackingData, wellNumber, self._hyperparameters, videoPath, self.wellPositions, self.background)
-      self._output.put([wellNumber,parameters,trackingData])
-    else: # self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justExtractParamFromPreviousTrackData"
-      # Reloading previously tracked data and using it to extract parameters
-      trackingData = self._previouslyAcquiredTrackingDataForDebug[wellNumber]
-      parameters = extractParameters(trackingData, wellNumber, self._hyperparameters, videoPath, self.wellPositions, self.background)
-      self._output.put([wellNumber,parameters,[]])
-
-=======
->>>>>>> dd7f37a (Various changes.):zebrazoom/zebraZoomVideoAnalysis.py
   def _storeConfigUsed(self):
     '''Saving the configuration file used'''
     with open(os.path.join(self._outputFolderVideo, 'configUsed.json'), 'w') as outfile:
@@ -217,147 +148,6 @@ class MainZZ:
           else:
             app.wellShape = 'circle'
 
-<<<<<<< HEAD:zebrazoom/mainZZ.py
-  def getBackground(self):
-    '''Get background'''
-    if self._hyperparameters["backgroundSubtractorKNN"] or (self._hyperparameters["headEmbeded"] and self._hyperparameters["headEmbededRemoveBack"] == 0 and self._hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0 and self._hyperparameters["adjustHeadEmbededTracking"] == 0) or self._hyperparameters["trackingDL"] or self._hyperparameters["fishTailTrackingDifficultBackground"]:
-      self.background = []
-    else:
-      print("start get background")
-      if self._hyperparameters["reloadBackground"]:
-        outfile = open(os.path.join(self._outputFolderVideo, 'intermediaryBackground.txt'),'rb')
-        self.background = pickle.load(outfile)
-        print("Background Reloaded")
-      else:
-        outfile = open(os.path.join(self._outputFolderVideo, 'intermediaryBackground.txt'),'wb')
-        self.background = getBackground(os.path.join(self._pathToVideo, self._videoNameWithExt), self._hyperparameters)
-        pickle.dump(self.background, outfile)
-        cv2.imwrite(os.path.join(self._outputFolderVideo, 'background.png'), self.background)
-      outfile.close()
-      if self._useGUI:
-        from PyQt5.QtWidgets import QApplication
-
-        app = QApplication.instance()
-        if hasattr(app, "background"):
-          app.background = self.background
-
-  def __runTracking(self, process_type):
-    # Tracking and extraction of parameters
-    if self._hyperparameters["fasterMultiprocessing"] == 1:
-      processes = -1
-      output2 = fasterMultiprocessing(os.path.join(self._pathToVideo, self._videoNameWithExt), self.background, self.wellPositions, [], self._hyperparameters, self._videoName)
-    elif self._hyperparameters["fasterMultiprocessing"] == 2:
-      processes = -1
-      output2 = fasterMultiprocessing2(os.path.join(self._pathToVideo, self._videoNameWithExt), self.background, self.wellPositions, [], self._hyperparameters, self._videoName)
-    else:
-      if globalVariables["noMultiprocessing"] == 0 and not self._hyperparameters['headEmbeded']:
-        if self._hyperparameters["onlyTrackThisOneWell"] == -1:
-          # for all wells, in parallel
-          processes = []
-          for wellNumber in range(0,self._hyperparameters["nbWells"]):
-            p = process_type(target=self._getParametersForWell, args=(wellNumber,))
-            p.start()
-            processes.append(p)
-        else:
-          app.wellShape = 'circle'
-
-  if int(hyperparameters["exitAfterWellsDetection"]):
-    print("exitAfterWellsDetection")
-    if hyperparameters["popUpAlgoFollow"]:
-      import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
-
-      popUpAlgoFollow.prepend("ZebraZoom Analysis finished for " + videoName)
-    raise ValueError
-
-  # Launching GUI algoFollower if necessary
-  if hyperparameters["popUpAlgoFollow"]:
-    import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
-
-    popUpAlgoFollow.createTraceFile("starting ZebraZoom analysis on " + videoName)
-    p = Process(target=popUpAlgoFollow.initialise)
-    p.start()
-
-  # Getting background
-  if hyperparameters["backgroundSubtractorKNN"] or (hyperparameters["headEmbeded"] and hyperparameters["headEmbededRemoveBack"] == 0 and hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0 and hyperparameters["adjustHeadEmbededTracking"] == 0) or hyperparameters["trackingDL"] or hyperparameters["fishTailTrackingDifficultBackground"]:
-    background = []
-  else:
-    print("start get background")
-    if hyperparameters["reloadBackground"]:
-      outfile = open(os.path.join(outputFolderVideo, 'intermediaryBackground.txt'),'rb')
-      background = pickle.load(outfile)
-      print("Background Reloaded")
-    else:
-      outfile = open(os.path.join(outputFolderVideo, 'intermediaryBackground.txt'),'wb')
-      background = getBackground(os.path.join(pathToVideo, videoNameWithExt), hyperparameters)
-      pickle.dump(background, outfile)
-      cv2.imwrite(os.path.join(outputFolderVideo, 'background.png'), background)
-    outfile.close()
-    if useGUI:
-      from PyQt5.QtWidgets import QApplication
-
-      app = QApplication.instance()
-      if hasattr(app, "background"):
-        app.background = background
-  if hyperparameters["exitAfterBackgroundExtraction"]:
-    print("exitAfterBackgroundExtraction")
-    raise ValueError
-  
-  # Reloading DL model for tracking with DL
-  if hyperparameters["trackingDL"]:
-    from zebrazoom.code.deepLearningFunctions.loadDLmodel import loadDLmodel
-    dlModel = loadDLmodel(hyperparameters["trackingDL"], hyperparameters["unet"])
-  else:
-    dlModel = 0
-  
-  # Tracking and extraction of parameters
-  if hyperparameters["fasterMultiprocessing"] == 1:
-    processes = -1
-    output2 = fasterMultiprocessing(os.path.join(pathToVideo, videoNameWithExt), background, wellPositions, [], hyperparameters, videoName)
-  elif hyperparameters["fasterMultiprocessing"] == 2:
-    processes = -1
-    output2 = fasterMultiprocessing2(os.path.join(pathToVideo, videoNameWithExt), background, wellPositions, [], hyperparameters, videoName)
-  else:
-    if globalVariables["noMultiprocessing"] == 0 and not hyperparameters['headEmbeded']:
-      if hyperparameters["onlyTrackThisOneWell"] == -1:
-        # for all wells, in parallel
-        processes = []
-        for wellNumber in range(0,hyperparameters["nbWells"]):
-          p = Process(target=getParametersForWell, args=(os.path.join(pathToVideo, videoNameWithExt), background, wellNumber, wellPositions, output, previouslyAcquiredTrackingDataForDebug, hyperparameters, videoName, dlModel, useGUI))
-          p.start()
-          processes.append(p)
-      else:
-        if self._hyperparameters["onlyTrackThisOneWell"] == -1:
-          processes = [1 for i in range(0, self._hyperparameters["nbWells"])]
-          for wellNumber in range(0,self._hyperparameters["nbWells"]):
-            self._getParametersForWell(wellNumber,)
-        else:
-          processes = [1]
-          self._getParametersForWell(self._hyperparameters["onlyTrackThisOneWell"],)
-
-    # Sorting wells after the end of the parallelized calls end
-    if processes != -1:
-      dataPerWellUnsorted = [self._output.get() for p in processes]
-    else:
-      dataPerWellUnsorted = output2
-    paramDataPerWell = [[]] * (self._hyperparameters["nbWells"])
-    trackingDataPerWell = [[]] * (self._hyperparameters["nbWells"])
-    for data in dataPerWellUnsorted:
-      paramDataPerWell[data[0]]    = data[1]
-      trackingDataPerWell[data[0]] = data[2]
-    if processes != -1 and self._hyperparameters["onlyTrackThisOneWell"] == -1 and (globalVariables["noMultiprocessing"] == 0 and not self._hyperparameters['headEmbeded']):
-      for p in processes:
-        p.join()
-    if (self._hyperparameters["freqAlgoPosFollow"] != 0):
-      print("processes joined")
-    return paramDataPerWell, trackingDataPerWell
-
-  def _storeIntermediaryResults(self, trackingDataPerWell):
-    # saving tracking results for future uses
-    with open(os.path.join(self._outputFolderVideo, 'intermediaryTracking.txt'),'wb') as outfile:
-      pickle.dump(trackingDataPerWell, outfile)
-    if (self._hyperparameters["freqAlgoPosFollow"] != 0):
-      print("intermediary results saved")
-=======
   def _runTracking(self):
     if 'trackingImplementation' in self._hyperparameters:
       name = self._hyperparameters['trackingImplementation']
@@ -367,13 +157,13 @@ class MainZZ:
     if hasattr(tracking, 'useGUI'):
       tracking.useGUI = self._useGUI
     return tracking.run(), getattr(tracking, 'dataPostProcessing', None)
->>>>>>> dd7f37a (Various changes.):zebrazoom/zebraZoomVideoAnalysis.py
 
-  def _storeResults(self, paramDataPerWell):
-    # Creating super structure
-    superStruct = createSuperStruct(paramDataPerWell, self.wellPositions, self._hyperparameters, os.path.join(self._pathToVideo, self._videoNameWithExt))
+  def _createSuperStruct(self, paramDataPerWell):
+    '''Create super structure'''
+    return createSuperStruct(paramDataPerWell, self.wellPositions, self._hyperparameters, os.path.join(self._pathToVideo, self._videoNameWithExt))
 
-    # Creating validation video
+  def _createValidationVideo(self, superStruct):
+    '''Create validation video'''
     if not(self._hyperparameters["savePathToOriginalVideoForValidationVideo"]):
       if self._hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
         shutil.copyfile(os.path.join(self._pathToVideo, self._videoNameWithExt), os.path.join(os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"]), 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'))
@@ -381,13 +171,7 @@ class MainZZ:
         if self._hyperparameters["createValidationVideo"]:
           infoFrame = createValidationVideo(os.path.join(self._pathToVideo, self._videoNameWithExt), superStruct, self._hyperparameters)
 
-<<<<<<< HEAD:zebrazoom/mainZZ.py
-    # Various post-processing options depending on configuration file choices
-    superStruct = dataPostProcessing(self._outputFolderVideo, superStruct, self._hyperparameters, self._videoName, self._videoExt)
-
-=======
   def _storeResults(self, superStruct):
->>>>>>> dd7f37a (Various changes.):zebrazoom/zebraZoomVideoAnalysis.py
     path = os.path.join(os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"]), 'results_' + self._hyperparameters["videoName"] + '.txt')
     print("createSuperStruct:", path)
     with open(path, 'w') as outfile:
@@ -406,7 +190,7 @@ class MainZZ:
   def _storeInAdditionalFolder(self):
       if os.path.isdir(self._hyperparameters["additionalOutputFolder"]):
         if self._hyperparameters["additionalOutputFolderOverwriteIfAlreadyExist"]:
-          shutil.rmtree(self8.hyperparameters["additionalOutputFolder"])
+          shutil.rmtree(self.hyperparameters["additionalOutputFolder"])
           while True:
             try:
               shutil.copytree(self._outputFolderVideo, self._hyperparameters["additionalOutputFolder"])
@@ -422,7 +206,7 @@ class MainZZ:
       else:
         shutil.copytree(self._outputFolderVideo, self._hyperparameters["additionalOutputFolder"])
 
-  def runTracking(self):
+  def run(self):
     '''Run tracking'''
     # Checking that path and video exists
     if not(os.path.exists(os.path.join(self._pathToVideo, self._videoNameWithExt))):
@@ -458,22 +242,6 @@ class MainZZ:
         popUpAlgoFollow.prepend("ZebraZoom Analysis finished for " + self._videoName)
       raise ValueError
 
-<<<<<<< HEAD:zebrazoom/mainZZ.py
-    self.getBackground()
-    if self._hyperparameters["exitAfterBackgroundExtraction"]:
-      print("exitAfterBackgroundExtraction")
-      raise ValueError
-
-    self._loadDLModel()
-
-    paramDataPerWell, trackingDataPerWell = self.__runTracking(Process)
-
-    if (self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "saveTrackDataAndExtractParam") or (self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justSaveTrackData"):
-      self._storeIntermediaryResults(trackingDataPerWell)
-
-    if self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] != "justSaveTrackData":
-      self._storeResults(paramDataPerWell)
-=======
     paramDataPerWell, postProcessingCb = self._runTracking()
 
     if self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] != "justSaveTrackData":
@@ -482,7 +250,6 @@ class MainZZ:
       if postProcessingCb is not None:
         superStruct = postProcessingCb(self._outputFolderVideo, superStruct)
       self._storeResults(superStruct)
->>>>>>> dd7f37a (Various changes.):zebrazoom/zebraZoomVideoAnalysis.py
 
     self._storeVersionUsed()
 

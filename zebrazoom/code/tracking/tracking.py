@@ -144,6 +144,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
       print("Error opening video stream or file")
 
     # Performing the tracking on each frame
+    applyQuantile = self._hyperparameters["applyQuantileInDLalgo"]
     i = self._firstFrame
     cap.set(1, self._firstFrame)
     if int(self._hyperparameters["onlyDoTheTrackingForThisNumberOfFrames"]) != 0:
@@ -159,7 +160,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
         print("frame:",i)
 
       ret, frame = cap.read()
-      if self._hyperparameters["unet"]:
+      if applyQuantile:
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         quartileChose = 0.03
         lowVal  = int(np.quantile(frame, quartileChose))
@@ -177,7 +178,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
           currentFrameNum = currentFrameNum - 1
           cap.set(1, currentFrameNum)
           ret, frame = cap.read()
-          if self._hyperparameters["unet"]:
+          if applyQuantile:
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             quartileChose = 0.01
             lowVal  = int(np.quantile(frame, quartileChose))
@@ -189,7 +190,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
             frame = frame * (255/mult)
             frame = frame.astype('uint8')
 
-      if self._hyperparameters["unet"]:
+      if applyQuantile:
         grey = frame
       else:
         grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -288,11 +289,25 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
           if debugPlus:
             self._debugFrame(255 - thresh2, title="thresh2")
 
-          lastFirstTheta = self._headTrackingHeadingCalculation(i, thresh2, thresh2, thresh2, thresh2, self._hyperparameters["erodeSize"], frame_width, frame_height, self._trackingHeadingAllAnimals, self._trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, 0, self._wellPositions[wellNumber]["lengthX"])
+          if self._hyperparameters["headEmbeded"] and os.path.exists(self._videoPath+'HP.csv'):
+            headPositionFirstFrame = self._getHeadPositionByFileSaved()
+          else:
+            headPositionFirstFrame = 0
+          if self._hyperparameters["headEmbeded"] and os.path.exists(self._videoPath+'.csv'):
+            tailTipFirstFrame = self._getTailTipByFileSaved()
+          else:
+            tailTipFirstFrame = 0
+          if self._hyperparameters["headEmbeded"]:
+            maxDepth = math.sqrt((headPositionFirstFrame[0] - tailTipFirstFrame[0])**2 + (headPositionFirstFrame[1] - tailTipFirstFrame[0])**2)
+            maxDepth = 270 # Hack: need to change this
+          else:
+            maxDepth = 0
+
+          lastFirstTheta = self._headTrackingHeadingCalculation(i, thresh2, thresh2, thresh2, thresh2, self._hyperparameters["erodeSize"], frame_width, frame_height, self._trackingHeadingAllAnimals, self._trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, headPositionFirstFrame, self._wellPositions[wellNumber]["lengthX"])
 
           if self._hyperparameters["trackTail"] == 1:
             for animalId in range(0, self._hyperparameters["nbAnimalsPerWell"]):
-              self._tailTracking(animalId, i, thresh3, thresh3, thresh3, 0, self._trackingHeadTailAllAnimals, self._trackingHeadingAllAnimals, 0, 0, 0, thresh3, 0, wellNumber)
+              self._tailTracking(animalId, i, 255 - thresh3 if self._hyperparameters["headEmbeded"] else thresh3, thresh3, thresh3, 0, self._trackingHeadTailAllAnimals, self._trackingHeadingAllAnimals, 0, maxDepth, tailTipFirstFrame, thresh3, 0, wellNumber)
 
           # Debug functions
           self._debugTracking(i, self._trackingHeadTailAllAnimals, self._trackingHeadingAllAnimals, curFrame)

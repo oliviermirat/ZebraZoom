@@ -1,3 +1,5 @@
+import cv2
+
 from zebrazoom.code.adjustHyperparameters import adjustFreelySwimTrackingParams, adjustFreelySwimTrackingAutoParams
 from zebrazoom.code.tracking.fasterMultiprocessing2 import FasterMultiprocessing2
 from zebrazoom.code.tracking import register_tracking_method
