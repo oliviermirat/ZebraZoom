@@ -22,6 +22,13 @@ zebrazoom/dataAnalysis/createCustomDataStructure/__pycache__/
 zebrazoom/code/trackingFolder/refactoredCode2022/__pycache__/
 zebrazoom/trackingConfigurations/__pycache__/
 
+zebrazoom/code/GUI/tracking/__pycache__/
+zebrazoom/code/GUI/tracking/customTrackingImplementations/__pycache__/
+zebrazoom/code/GUI/tracking/customTrackingImplementations/examples/__pycache__/
+zebrazoom/code/tracking/__pycache__/
+zebrazoom/code/tracking/customTrackingImplementations/__pycache__/
+zebrazoom/code/tracking/customTrackingImplementations/examples/__pycache__/
+
 zebrazoom/trackingConfigurations/*.csv
 
 zebrazoom/newhyperparameters
