@@ -24,11 +24,15 @@ class BaseTrackingMethod:
        - AnimalNumber: an integer
        - BoutStart: an integer, the frame in which the bout started
        - BoutEnd: an integer, the frame in which the bout ended
+       - HeadX: a list of numbers representing the X coordinates of the center of the head, one for each frame of the bout
+       - HeadY: a list of numbers representing the Y coordinates of the center of the head, one for each frame of the bout       
     - depending on the type of tracking performed, it can also contain:
-       - HeadX: a list of numbers representing the X coordinates, one for each frame of the bout
-       - HeadY: a list of numbers representing the Y coordinates, one for each frame of the bout
-       - Heading: a list of angles, one for each frame of the bout
-       - TailAngleRaw: a list of angles, one for each frame of the bout
+       - Heading: a list of main head axis angles, one for each frame of the bout
+       - TailAngleRaw: a list of tail angles (see figure 1c in the original 2013 ZebraZoom paper), one for each frame of the bout (if tail tracking is performed)
+       - TailX_VideoReferential: a list in which each element corresponds to a frame, with each of those element itself being a list containing all x axis coordinates of points along the tail (if tail tracking is performed)
+       - TailY_VideoReferential: a list in which each element corresponds to a frame, with each of those element itself being a list containing all y axis coordinates of points along the tail (if tail tracking is performed)
+    - if eyes tracking if performed:
+       - leftEyeX, leftEyeY, leftEyeAngle, leftEyeArea, rightEyeX, rightEyeY, rightEyeAngle, rightEyeArea: lists of integers corresponding to the x and y coordinates, main angle and eye area of the left and right eye for each frame of the bout
     '''
     raise NotImplementedError
 
