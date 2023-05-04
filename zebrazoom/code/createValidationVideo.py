@@ -118,7 +118,7 @@ def calculateInfoFrame(superStruct, hyperparameters, nbFrames):
               t2.append(dataToPlot)
               infoFrame[BoutStart + l] = t2
 
-            if hyperparameters["eyeTracking"]:
+            if hyperparameters["eyeTracking"] or "leftEyeX" in superStruct["wellPoissMouv"][i][j][k]:
               leftEyeX     = superStruct["wellPoissMouv"][i][j][k]["leftEyeX"][l]
               leftEyeY     = superStruct["wellPoissMouv"][i][j][k]["leftEyeY"][l]
               leftEyeAngle = superStruct["wellPoissMouv"][i][j][k]["leftEyeAngle"][l]
