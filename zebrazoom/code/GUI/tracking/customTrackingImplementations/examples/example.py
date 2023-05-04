@@ -1,5 +1,5 @@
 import zebrazoom.code.tracking
-from zebrazoom.code.tracking.customTrackingImplementations.examples.example import ExampleTrackingMethod
+from zebrazoom.code.tracking.customTrackingImplementations.examples.exampleTrackingMethod import ExampleTrackingMethod
 
 
 class ExampleGUITrackingMethod(ExampleTrackingMethod):
