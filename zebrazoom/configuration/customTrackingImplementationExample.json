@@ -1,5 +1,5 @@
 {
-  "trackingImplementation": "examplesSimpleTracking.exampleTrackingMethod",
+  "trackingImplementation": "examples.exampleTrackingMethod",
   
   "groupOfMultipleSameSizeAndShapeEquallySpacedWells": 1,
   "nbRowsOfWells": 1, 
