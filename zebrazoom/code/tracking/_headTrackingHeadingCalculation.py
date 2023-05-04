@@ -381,7 +381,7 @@ class HeadTrackingHeadingCalculationMixin:
         y = int(M['m01']/M['m00'])
     return [x, y]
 
-  def _multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, gray, i, thresh1, xmin=0, ymin=0):
+  def _multipleAnimalsHeadTracking(self, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, gray, i, thresh1, xmin=0, ymin=0):
 
     headCoordinatesOptions      = []
     headCoordinatesAreasOptions = []
