@@ -31,8 +31,7 @@ class TailTrackingDifficultBackgroundMixin:
 
     return testCenter
 
-  @staticmethod
-  def __reajustCenterOfMassIfNecessary(contour, x, y, lenX, lenY):
+  def __reajustCenterOfMassIfNecessary(self, contour, x, y, lenX, lenY):
     inside = cv2.pointPolygonTest(contour, (x, y), True)
     if inside < 0:
 

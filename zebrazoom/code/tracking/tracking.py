@@ -1,4 +1,5 @@
 import numpy as np
+import csv
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import math
@@ -83,7 +84,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
           iy = row[1]
     return [int(ix),int(iy)]
 
-  def _detectMovementWithRawVideoInsideTracking(self, xHead, yHead, initialCurFrame):
+  def _detectMovementWithRawVideoInsideTracking(self, i, xHead, yHead, initialCurFrame):
     previousFrames   = queue.Queue(self._hyperparameters["frameGapComparision"])
     previousXYCoords = queue.Queue(self._hyperparameters["frameGapComparision"])
     self._auDessusPerAnimalId = [np.zeros((self._lastFrame-self._firstFrame+1, 1)) for _ in range(self._hyperparameters["nbAnimalsPerWell"])]
@@ -393,7 +394,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
           frameForManualPointSelection = self.getAccentuateFrameForManualPointSelect(frame)
           self._headPositionFirstFrame = self.findHeadPositionByUserInput(frameForManualPointSelection, self._firstFrame, wellNumber)
         else:
-          [frame, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back, xHead, yHead] = self._getImages(cap, wellNumber)
+          [frame, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back, xHead, yHead] = self._getImages(cap, self._firstFrame, wellNumber)
           cap.set(1, self._firstFrame)
           lastFirstTheta = self._headTrackingHeadingCalculation(self._firstFrame, blur, thresh1, thresh2, gray, self._hyperparameters["erodeSize"], int(cap.get(3)), int(cap.get(4)), self._trackingHeadingAllAnimals, self._trackingHeadTailAllAnimals, self._trackingProbabilityOfGoodDetection, self._headPositionFirstFrame, self._wellPositions[wellNumber]["lengthX"])
       if os.path.exists(self._videoPath+'.csv'):
@@ -461,7 +462,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
         self._debugTracking(i, self._trackingHeadTailAllAnimals, self._trackingHeadingAllAnimals, frame)
       # DetectMovementWithRawVideoInsideTracking
       if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
-        self._detectMovementWithRawVideoInsideTracking(xHead, yHead, initialCurFrame)
+        self._detectMovementWithRawVideoInsideTracking(i, xHead, yHead, initialCurFrame)
 
       if self._hyperparameters["trackOnlyOnROI_halfDiameter"]:
         if not(xHead == 0 and yHead == 0):
@@ -479,7 +480,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
     if self._hyperparameters["postProcessMultipleTrajectories"]:
       self._postProcessMultipleTrajectories(self._trackingHeadTailAllAnimals, self._trackingProbabilityOfGoodDetection)
 
-    self._savingBlackFrames()
+    self._savingBlackFrames(self._trackingHeadTailAllAnimals)
 
     print("Tracking done for well", wellNumber)
     if self._hyperparameters["popUpAlgoFollow"]:
@@ -521,7 +522,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
     else:
       assert self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justExtractParamFromPreviousTrackData"
       # Reloading previously tracked data and using it to extract parameters
-      trackingData = self._reloadPreviousTrackingData[wellNumber]
+      trackingData = self._reloadPreviousTrackingData()[wellNumber]
       parameters = extractParameters(trackingData, wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background)
       return [wellNumber,parameters,[]]
 

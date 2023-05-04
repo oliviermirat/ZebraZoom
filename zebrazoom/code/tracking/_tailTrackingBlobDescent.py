@@ -3,6 +3,7 @@ import math
 import cv2
 import numpy as np
 from numpy import linspace
+from scipy.interpolate import UnivariateSpline
 
 from ._tailTrackingBase import TailTrackingBase
 
@@ -12,21 +13,18 @@ class TailTrackingBlobDescentMixin(TailTrackingBase):
   def __dist2(v, w):
     return (v["x"] - w["x"])**2 + (v["y"] - w["y"])**2
 
-  @staticmethod
-  def __distToSegmentSquared(p, v, w):
-    l2 = dist2(v, w)
+  def __distToSegmentSquared(self, p, v, w):
+    l2 = self.__dist2(v, w)
     if l2 == 0:
-      return dist2(p, v)
+      return self.__dist2(p, v)
     t = ((p["x"] - v["x"]) * (w["x"] - v["x"]) + (p["y"] - v["y"]) * (w["y"] - v["y"])) / l2
     t = max(0, min(1, t))
     return self.__dist2(p, {"x": v["x"] + t * (w["x"] - v["x"]), "y": v["y"] + t * (w["y"] - v["y"]) })
 
-  @staticmethod
-  def __distToSegment(p, v, w):
+  def __distToSegment(self, p, v, w):
     return math.sqrt(self.__distToSegmentSquared(p, v, w))
 
-  @staticmethod
-  def __checkNewPointNotRedundant(points, x, y):
+  def __checkNewPointNotRedundant(self, points, x, y):
     if len(points[0]) > 3:
       dist = (points[0] - x)**2 + (points[1] - y)**2
       min1 = np.argmin(dist)
@@ -47,8 +45,7 @@ class TailTrackingBlobDescentMixin(TailTrackingBase):
     else:
       return 1
 
-  @staticmethod
-  def __recenterPointAlongOrthogonalTailAxis(x,y,theta,frame,thresh1):
+  def __recenterPointAlongOrthogonalTailAxis(self, x, y, theta, frame, thresh1):
     l = [[x,y]]
 
     thresh1lenX = len(thresh1[0]) - 1

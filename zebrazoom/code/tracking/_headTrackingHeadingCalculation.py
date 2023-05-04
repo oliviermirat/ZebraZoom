@@ -307,8 +307,7 @@ class HeadTrackingHeadingCalculationMixin:
 
     return testCenter
 
-  @staticmethod
-  def __reajustCenterOfMassIfNecessary(contour, x, y, lenX, lenY):
+  def __reajustCenterOfMassIfNecessary(self, contour, x, y, lenX, lenY):
     inside = cv2.pointPolygonTest(contour, (x, y), True)
     if inside < 0:
 
@@ -333,7 +332,7 @@ class HeadTrackingHeadingCalculationMixin:
           factor = factor - 1
           testCenter = PtClosest + factor * unitVector
       else:
-        testCenter = simpleOptimalValueSearch(PtClosest, contour, unitVector, lenX, lenY)
+        testCenter = self.__simpleOptimalValueSearch(PtClosest, contour, unitVector, lenX, lenY)
 
       x = testCenter[0]
       y = testCenter[1]
@@ -607,8 +606,7 @@ class HeadTrackingHeadingCalculationMixin:
 
           trackingHeadingAllAnimals[animal_Id, i-self._firstFrame] = heading
 
-  @staticmethod
-  def __headTrackingTakeHeadClosestToWellCenter(thresh1, thresh2, blur, erodeSize, minArea, maxArea, frame_width, frame_height):
+  def __headTrackingTakeHeadClosestToWellCenter(self, thresh1, thresh2, blur, erodeSize, minArea, maxArea, frame_width, frame_height):
     x = 0
     y = 0
     xNew = 0

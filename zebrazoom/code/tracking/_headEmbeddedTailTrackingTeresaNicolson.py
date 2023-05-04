@@ -6,6 +6,8 @@ import numpy as np
 from numpy import linspace
 from scipy.interpolate import interp1d
 
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+
 from ._tailTrackingBase import TailTrackingBase
 
 
@@ -246,7 +248,7 @@ class HeadEmbeddedTailTrackingTeresaNicolsonMixin(TailTrackingBase):
       threshForBlackFrames = imagesMeans * 0.8 #0.75
     return threshForBlackFrames
 
-  def _savingBlackFrames(self):
+  def _savingBlackFrames(self, output):
     if self._hyperparameters["headEmbededTeresaNicolson"] == 1:
       if self._hyperparameters["noBoutsDetection"] == 1:
         f = open(os.path.join(self._hyperparameters["outputFolder"], os.path.join(self._videoName, 'blackFrames_' + self._videoName + '.csv')), "a")

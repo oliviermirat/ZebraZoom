@@ -89,7 +89,7 @@ class EyeTrackingMixin(ComputeHeadingMixin, HeadTrackingHeadingCalculationMixin)
       if self._hyperparameters["debugEyeTracking"]:
         self._debugFrame(colorFrame, title='Eye Tracking debugging')
       if self._hyperparameters["adjustHeadEmbeddedEyeTracking"]:
-        return self._adjustHeadEmbeddedEyeTrackingParamsSegment(i, colorFrame, self._hyperparameters, widgets)
+        return self._adjustHeadEmbeddedEyeTrackingParamsSegment(i, colorFrame, widgets)
 
     trackingEyesAllAnimals[animalId, i-self._firstFrame, 0] = leftEyeCoordinate[0]
     trackingEyesAllAnimals[animalId, i-self._firstFrame, 1] = leftEyeCoordinate[1]

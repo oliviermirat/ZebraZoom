@@ -105,7 +105,7 @@ def visualizeMovingAndSleepingTime(args):
   if args.movingOrSleeping == "movingTime":
     framesToShow = df[["moving_" + str(i) for i in range(0, nbWells)]].to_numpy()
   else:
-    assert arg.movingOrSleeping == "sleepingTime"
+    assert args.movingOrSleeping == "sleepingTime"
     framesToShow = df[["sleep_" + str(i) for i in range(0, nbWells)]].to_numpy()
   readValidationVideo("", args.videoName, "", -1, -1, 0, 1, framesToShow)
 

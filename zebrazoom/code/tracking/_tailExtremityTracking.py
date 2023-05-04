@@ -3,6 +3,8 @@ import math
 import cv2
 import numpy as np
 
+from zebrazoom.code.deepLearningFunctions.labellingFunctions import drawWhitePointsOnInitialImages, saveImagesAndData
+
 
 class _FindTailExtremityMixin:
   @staticmethod

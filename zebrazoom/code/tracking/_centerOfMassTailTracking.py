@@ -3,6 +3,7 @@ import math
 import cv2
 import numpy as np
 from numpy import linspace
+from scipy.interpolate import UnivariateSpline
 
 from ._tailTrackingBase import TailTrackingBase
 

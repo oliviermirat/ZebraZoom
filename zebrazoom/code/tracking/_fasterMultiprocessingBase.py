@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import queue
+import os
 
 from ._baseZebraZoom import BaseZebraZoomTrackingMethod
 

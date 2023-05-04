@@ -31,7 +31,7 @@ class GUITracking(Tracking, BaseGUITrackingMethod):
         else:
           minPixelDiffForBackExtract = self._hyperparameters["minPixelDiffForBackExtract"]
       curFrame = initialCurFrame
-      putToWhite = (curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
+      putToWhite = (curFrame.astype('int32') >= (self._background.astype('int32') - minPixelDiffForBackExtract) )
       curFrame[putToWhite] = 255
       ret, frame2 = cv2.threshold(curFrame, self._hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
       # Showing current image and waiting for next parameter/frame change
@@ -53,7 +53,7 @@ class GUITracking(Tracking, BaseGUITrackingMethod):
   def _getCoordinates(self, frame, title, zoomable, dialog):
     return util.getPoint(frame, title, zoomable=zoomable, dialog=dialog)
 
-  def _addBlackLineToImgSetParameters(frame):
+  def _addBlackLineToImgSetParameters(self, frame):
     hyperparametersToSave = {"addBlackLineToImg_Width": 0}
 
     frame2 = frame.copy()

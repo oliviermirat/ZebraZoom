@@ -33,8 +33,7 @@ class HeadEmbeddedTailTrackingMixin(TailTrackingBase):
   def __sin2Combination(x, a1, a2, a3, b1, b2, b3):
     return a1 * np.sin(a2 * (x - a3)) + b1 * np.sin(b2 * (x - b3))
 
-  @staticmethod
-  def __smoothBasedOnCurvature(points, polynomialDegree):
+  def __smoothBasedOnCurvature(self, points, polynomialDegree):
     from zebrazoom.code.extractParameters import calculateTailAngle
 
     tailX = points[0]
@@ -356,7 +355,7 @@ class HeadEmbeddedTailTrackingMixin(TailTrackingBase):
     # Anomalie detection here
     headEmbededRetrackIfWeirdInitialTracking = self._hyperparameters["headEmbededRetrackIfWeirdInitialTracking"]
     if headEmbededRetrackIfWeirdInitialTracking:
-      points = self.__retrackIfWeirdInitialTracking(points, headPosition, tailTip, self._hyperparameters, x, y, frame, angle, maxDepth, nbList, initialImage, i)
+      points = self.__retrackIfWeirdInitialTracking(points, headPosition, tailTip, x, y, frame, angle, maxDepth, nbList, initialImage, i)
 
     if len(points[0]) > 3:
       if self._hyperparameters["smoothTailHeadEmbeded"]:
