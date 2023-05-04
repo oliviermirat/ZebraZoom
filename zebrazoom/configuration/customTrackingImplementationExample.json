@@ -1,8 +1,7 @@
 {
-  "trackingImplementation": "zebrazoom.example",
+  "trackingImplementation": "examplesSimpleTracking.exampleTrackingMethod",
   
   "groupOfMultipleSameSizeAndShapeEquallySpacedWells": 1,
-  "nbWells": 4, 
   "nbRowsOfWells": 1, 
   "nbWellsPerRows": 4, 
   

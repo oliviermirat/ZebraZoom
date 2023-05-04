@@ -117,4 +117,4 @@ class ExampleTrackingMethod(zebrazoom.code.tracking.BaseTrackingMethod):
     return outputData
 
 
-zebrazoom.code.tracking.register_tracking_method('zebrazoom.example', ExampleTrackingMethod)
+zebrazoom.code.tracking.register_tracking_method('examplesSimpleTracking.exampleTrackingMethod', ExampleTrackingMethod)
