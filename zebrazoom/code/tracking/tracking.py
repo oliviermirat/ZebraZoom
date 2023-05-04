@@ -142,6 +142,8 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
     cap = zzVideoReading.VideoCapture(self._videoPath)
     if (cap.isOpened()== False):
       print("Error opening video stream or file")
+    frame_width  = int(cap.get(3))
+    frame_height = int(cap.get(4))
 
     # Performing the tracking on each frame
     applyQuantile = self._hyperparameters["applyQuantileInDLalgo"]
@@ -221,7 +223,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
         if self._hyperparameters["debugTracking"]:
           self._debugFrame(thresh2, title='After Unet')
 
-        lastFirstTheta = self._headTrackingHeadingCalculation(i, thresh2, thresh2, thresh2, thresh2, self._hyperparameters["erodeSize"], frame_width, frame_height, self._trackingHeadingAllAnimals, self._trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, 0, self._wellPositions[wellNumber]["lengthX"])
+        lastFirstTheta = self._headTrackingHeadingCalculation(i, thresh2, thresh2, thresh2, thresh2, self._hyperparameters["erodeSize"], frame_width, frame_height, self._trackingHeadingAllAnimals, self._trackingHeadTailAllAnimals, self._trackingProbabilityOfGoodDetection, 0, self._wellPositions[wellNumber]["lengthX"])
 
         if self._hyperparameters["trackTail"] == 1:
           for animalId in range(0, self._hyperparameters["nbAnimalsPerWell"]):
@@ -303,7 +305,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
           else:
             maxDepth = 0
 
-          lastFirstTheta = self._headTrackingHeadingCalculation(i, thresh2, thresh2, thresh2, thresh2, self._hyperparameters["erodeSize"], frame_width, frame_height, self._trackingHeadingAllAnimals, self._trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, headPositionFirstFrame, self._wellPositions[wellNumber]["lengthX"])
+          lastFirstTheta = self._headTrackingHeadingCalculation(i, thresh2, thresh2, thresh2, thresh2, self._hyperparameters["erodeSize"], frame_width, frame_height, self._trackingHeadingAllAnimals, self._trackingHeadTailAllAnimals, self._trackingProbabilityOfGoodDetection, headPositionFirstFrame, self._wellPositions[wellNumber]["lengthX"])
 
           if self._hyperparameters["trackTail"] == 1:
             for animalId in range(0, self._hyperparameters["nbAnimalsPerWell"]):
