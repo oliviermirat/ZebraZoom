@@ -445,7 +445,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
       # Eye tracking for frame i
       if self._hyperparameters["eyeTracking"]:
         if self._hyperparameters["headEmbeded"] == 1:
-          if self._hyperparameters["adjustHeadEmbeddedEyeTracking"]: # TODO: aaaaa
+          if self._hyperparameters["adjustHeadEmbeddedEyeTracking"]:
             i, widgets = self._eyeTrackingHeadEmbedded(animalId, i, frame, thresh1, self._trackingHeadingAllAnimals, self._trackingHeadTailAllAnimals, self._trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate, widgets=widgets)
             if not self._hyperparameters["eyeFilterKernelSize"] % 2:
               self._hyperparameters["eyeFilterKernelSize"] -= 1
@@ -494,7 +494,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
 
   def _reloadPreviousTrackingData(self):
     # Reloading previously extracted tracking data if debugging option selected
-    with open(os.path.join(self._outputFolderVideo, 'intermediaryTracking.txt'),'rb') as outfile:
+    with open(os.path.join(self._hyperparameters["outputFolder"], self._videoName, 'intermediaryTracking.txt'), 'rb') as outfile:
         return pickle.load(outfile)
 
   def _getParametersForWell(self, wellNumber):

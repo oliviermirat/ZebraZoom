@@ -342,7 +342,7 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
     hyperparameters["calculateAllTailAngles"] = 1
 
   if argv and argv[0] != "getTailExtremityFirstFrame":
-    overridenParameters = {param: argv[i+1] for i, param in enumerate(argv) if param in hyperparameters}
+    overridenParameters = {param: argv[i+1] for i, param in enumerate(argv) if str(param) in hyperparameters}
     for param, value in overridenParameters.items():
       print("command line hyperparameter change:", param, value)
 

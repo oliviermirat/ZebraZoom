@@ -17,12 +17,12 @@ def getTailExtremityFirstFrame(pathToVideo, videoName, videoExt, configFile, arg
   [hyperparameters, config] = getHyperparameters(configFile, videoName, videoPath, argv)
   
   frameNumber = hyperparameters["firstFrame"]
-  tracking = get_default_tracking_method()(videoPath, wellPositions, hyperparameters)
   wellNumber = 0
   if hyperparameters["oneWellManuallyChosenTopLeft"]:
     wellPositions = findWells(os.path.join(pathToVideo, videoName), hyperparameters)
   else:
     wellPositions = [{"topLeftX":0, "topLeftY":0, "lengthX": hyperparameters["videoWidth"], "lengthY": hyperparameters["videoHeight"]}]
+  tracking = get_default_tracking_method()(videoPath, wellPositions, hyperparameters)
   [frame, thresh1] = tracking.headEmbededFrame(frameNumber, wellNumber)
 
   frame = tracking.getAccentuateFrameForManualPointSelect(frame)
