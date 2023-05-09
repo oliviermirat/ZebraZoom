@@ -182,13 +182,11 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
     if hyperparameters["saveAllDataEvenIfNotInBouts"]:
       trackingFlatten = [trackingHeadTailAllAnimals[animalId][i].flatten().tolist() + [heading[i]] + angle[i].tolist() for i in range(0, len(heading))]
       trackingFlattenColumnsNames = ['HeadPosX', 'HeadPosY']
-      for i in range(0, int((len(trackingHeadTailAllAnimals[0][0].flatten().tolist()) - 2) / 2)):
+      for i in range(0, (len(trackingHeadTailAllAnimals[0][0].flatten().tolist()) - 2) // 2):
         trackingFlattenColumnsNames += ['TailPosX' + str(i + 1)]
         trackingFlattenColumnsNames += ['TailPosY' + str(i + 1)]
       trackingFlattenColumnsNames += ['Heading']
       trackingFlattenColumnsNames += ['tailAngle']
-      trackingFlattenPandas = pd.DataFrame(np.array(trackingFlatten), columns=trackingFlattenColumnsNames)
-      trackingFlattenPandas.to_csv(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), 'allData_' + hyperparameters["videoName"] + '_wellNumber' + str(wellNumber) + '_animal' + str(animalId) + '.cvs'))
 
     
     if hyperparameters["noBoutsDetection"] == 1:
@@ -355,7 +353,17 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
         item["TailX_VideoReferential"] = tailX[start:end+1].tolist()
         item["TailY_VideoReferential"] = tailY[start:end+1].tolist()
       data.append(item)
-  
+
+    if hyperparameters["saveAllDataEvenIfNotInBouts"]:
+      trackingFlattenPandas = pd.DataFrame(trackingFlatten, columns=trackingFlattenColumnsNames).convert_dtypes()
+      fname = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"], f'allData_{hyperparameters["videoName"]}_wellNumber{wellNumber}_animal{animalId}.csv')
+      with open(fname, 'w+', newline='') as f:
+        if hyperparameters["videoFPS"]:
+          f.write(f'videoFPS: {hyperparameters["videoFPS"]}\n')
+        if hyperparameters["videoPixelSize"]:
+          f.write(f'videoPixelSize: {hyperparameters["videoPixelSize"]}\n')
+        trackingFlattenPandas.to_csv(f)
+
   print("Parameters extracted for well",wellNumber)
   if hyperparameters["popUpAlgoFollow"]:
     import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
