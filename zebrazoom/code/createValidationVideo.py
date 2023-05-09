@@ -14,7 +14,7 @@ def calculateInfoFrame(superStruct, hyperparameters, nbFrames):
 
   infoFrame = [[]] * nbFrames
   infoWells = []
-
+  
   for i in range(0, len(superStruct["wellPositions"])):
     x = superStruct["wellPositions"][i]["topLeftX"]
     y = superStruct["wellPositions"][i]["topLeftY"]
@@ -29,7 +29,7 @@ def calculateInfoFrame(superStruct, hyperparameters, nbFrames):
         BoutStart = superStruct["wellPoissMouv"][i][j][k]["BoutStart"]
         BoutEnd = superStruct["wellPoissMouv"][i][j][k]["BoutEnd"]
         mouvLength = len(superStruct["wellPoissMouv"][i][j][k]["HeadX"])
-        if hyperparameters['extractAdvanceZebraParameters']:
+        if hyperparameters['extractAdvanceZebraParameters'] and ("Bend_TimingAbsolute" in superStruct["wellPoissMouv"][i][j][k]):
           Bend_TimingAbsolute = superStruct["wellPoissMouv"][i][j][k]["Bend_TimingAbsolute"]
         else:
           Bend_TimingAbsolute = []
@@ -42,7 +42,7 @@ def calculateInfoFrame(superStruct, hyperparameters, nbFrames):
           if BoutStart + l < nbFrames:
             x = superStruct["wellPoissMouv"][i][j][k]["HeadX"][l]
             y = superStruct["wellPoissMouv"][i][j][k]["HeadY"][l]
-            Heading = superStruct["wellPoissMouv"][i][j][k]["Heading"][l]
+            Heading = superStruct["wellPoissMouv"][i][j][k]["Heading"][l] if "Heading" in superStruct["wellPoissMouv"][i][j][k] else -10
 
             x = x + infoWells[i][0]
             y = y + infoWells[i][1]
@@ -55,9 +55,9 @@ def calculateInfoFrame(superStruct, hyperparameters, nbFrames):
             dataToPlot["numWell"] = i
             dataToPlot["numAnimal"] = j
             
-            dataToPlot["red"]     = 255
-            dataToPlot["green"]   = 0
-            dataToPlot["blue"]    = 0
+            dataToPlot["red"]     = 0
+            dataToPlot["green"]   = 100
+            dataToPlot["blue"]    = 255
 
             t = infoFrame[BoutStart + l]
             t2 = t.copy()
@@ -72,7 +72,7 @@ def calculateInfoFrame(superStruct, hyperparameters, nbFrames):
               nbPointsToPlot   = len(superStruct["wellPoissMouv"][i][j][k]["TailX_VideoReferential"][l])
             else:
               firstPointToPlot = 0
-              nbPointsToPlot = len(superStruct["wellPoissMouv"][i][j][k]["TailX_VideoReferential"][l])
+              nbPointsToPlot = len(superStruct["wellPoissMouv"][i][j][k]["TailX_VideoReferential"][l]) if "TailX_VideoReferential" in superStruct["wellPoissMouv"][i][j][k] else 0
 
             for m in range(firstPointToPlot, nbPointsToPlot):
               tailX = superStruct["wellPoissMouv"][i][j][k]["TailX_VideoReferential"][l][m]
@@ -118,7 +118,7 @@ def calculateInfoFrame(superStruct, hyperparameters, nbFrames):
               t2.append(dataToPlot)
               infoFrame[BoutStart + l] = t2
 
-            if hyperparameters["eyeTracking"]:
+            if hyperparameters["eyeTracking"] or "leftEyeX" in superStruct["wellPoissMouv"][i][j][k]:
               leftEyeX     = superStruct["wellPoissMouv"][i][j][k]["leftEyeX"][l]
               leftEyeY     = superStruct["wellPoissMouv"][i][j][k]["leftEyeY"][l]
               leftEyeAngle = superStruct["wellPoissMouv"][i][j][k]["leftEyeAngle"][l]

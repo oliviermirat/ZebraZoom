@@ -64,7 +64,6 @@ setup(
         "zebrazoom/ZZoutput/example3/intermediaryWellPosition.txt",
         "zebrazoom/ZZoutput/standardValueFreelySwimZebrafishLarvae/standardValueFreelySwimZebrafishLarvae.pkl",
         "zebrazoom/ZZoutput/standardValueFreelySwimZebrafishLarvae/parametersUsedForCalculation.json",
-        "zebrazoom/code/defaultConfigFile.json",
         "zebrazoom/code/GUI/blobCenter.png",
         "zebrazoom/code/GUI/blobExtremity.png",
         "zebrazoom/code/GUI/leftborder.png",

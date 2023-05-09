@@ -4,21 +4,21 @@ import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import math
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
-from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
-from zebrazoom.mainZZ import mainZZ
+from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis
 import pickle
 import json
 import os
 import re
-from zebrazoom.code.getBackground import getBackground
+from zebrazoom.code.tracking import getBackground
 from zebrazoom.code.findWells import findWells
-from zebrazoom.code.trackingFolder.tracking import tracking
 from zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions import prepareConfigFileForParamsAdjustements
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QHBoxLayout, QLabel, QPushButton, QVBoxLayout
+
+from zebrazoom.code.tracking import get_default_tracking_method
 
 
 def _selectWell(app, cap, wellPositions):
@@ -124,7 +124,7 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
   app.wellPositions = wellPositions = []
   try:
     with app.busyCursor():
-      mainZZ(pathToVideo, videoName, videoExt, initialConfigFile, [])
+      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, initialConfigFile, []).run()
   except ValueError:
     pass
   finally:
@@ -272,8 +272,7 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
 
 
 def evaluateMinPixelDiffForBackExtractForCenterOfMassTracking(videoPath, background, image, wellPositions, hyperparameters, tailTipGroundTruth):
-  
-  [foregroundImage, o1, o2] = getForegroundImage(videoPath, background, image["frameNumber"], image["wellNumber"], wellPositions, hyperparameters)
+  [foregroundImage, o1, o2] = get_default_tracking_method()(videoPath, wellPositions, hyperparameters).getForegroundImage(background, image["frameNumber"], image["wellNumber"])
   ret, thresh = cv2.threshold(foregroundImage, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
   thresh[0,:] = 255
   thresh[len(thresh)-1,:] = 255
@@ -320,7 +319,7 @@ def findBestBackgroundSubstractionParameterForEachImage(data, videoPath, backgro
       hyperparameters["minPixelDiffForBackExtract"] = minPixelDiffForBackExtract
       tailTipGroundTruth = image["tailTipCoordinates"]
       if zebrafishToTrack:
-        trackingData = tracking(videoPath, background, image["wellNumber"], wellPositions, hyperparameters, videoName)
+        trackingData = get_default_tracking_method()(videoPath, wellPositions, hyperparameters).runTracking(image["wellNumber"])
         tailTipPredicted = trackingData[0][0][0][len(trackingData[0][0][0])-1]
         if (trackingData[0][0][0][0][0] == tailTipPredicted[0] and trackingData[0][0][0][0][1] == tailTipPredicted[1]) or (trackingData[0][0][0][1][0] == tailTipPredicted[0] and trackingData[0][0][0][1][1] == tailTipPredicted[1]):
           tailTipDistError = 1000000000
@@ -350,7 +349,7 @@ def findBestBackgroundSubstractionParameterForEachImage(data, videoPath, backgro
     
     if lowestTailTipDistError != 1000000000:
       hyperparameters["minPixelDiffForBackExtract"] = image["bestMinPixelDiffForBackExtract"]
-      [foregroundImage, o1, o2] = getForegroundImage(videoPath, background, image["frameNumber"], image["wellNumber"], wellPositions, hyperparameters)
+      [foregroundImage, o1, o2] = get_default_tracking_method()(videoPath, wellPositions, hyperparameters).getForegroundImage(background, image["frameNumber"], image["wellNumber"])
       ret, thresh = cv2.threshold(foregroundImage, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
       thresh[0,:] = 255
       thresh[len(thresh)-1,:] = 255
@@ -383,7 +382,7 @@ def findInitialBlobArea(data, videoPath, background, wellPositions, hyperparamet
       
       bodyContourArea = image["bodyContourArea"]
       
-      [foregroundImage, o1, o2] = getForegroundImage(videoPath, background, image["frameNumber"], image["wellNumber"], wellPositions, hyperparameters)
+      [foregroundImage, o1, o2] = get_default_tracking_method()(videoPath, wellPositions, hyperparameters).getForegroundImage(background, image["frameNumber"], image["wellNumber"])
       
       ret, thresh = cv2.threshold(foregroundImage, hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
       thresh[0,:] = 255
@@ -417,7 +416,7 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
   app = QApplication.instance()
   with app.busyCursor():
     try:
-      mainZZ(pathToVideo, videoName, videoExt, configFile, [])
+      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, []).run()
     except ValueError:
       configFile["exitAfterBackgroundExtraction"] = 0
   
@@ -501,7 +500,7 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
   
   with app.busyCursor():
     try:
-      mainZZ(pathToVideo, videoName, videoExt, configFile, [])
+      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, []).run()
     except ValueError:
       newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
       for index in newhyperparameters:

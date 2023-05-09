@@ -1,0 +1,11 @@
+{
+  "trackingImplementation": "examples.exampleTrackingMethod",
+  
+  "groupOfMultipleSameSizeAndShapeEquallySpacedWells": 1,
+  "nbRowsOfWells": 1, 
+  "nbWellsPerRows": 4, 
+  
+  "detectBouts" : 1,
+  "minPixelDiffForBackExtract": 150,
+  "minimumInstantaneousDistanceForBoutDetect" : 2 
+}

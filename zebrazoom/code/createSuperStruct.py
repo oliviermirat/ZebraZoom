@@ -86,7 +86,7 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters, pathToOrigina
   videoDataResults  = {}
   wellPoissMouv     = []
   
-  for numWell in range(0,nbWells):
+  for numWell, j in dataPerWell.items():
     
     item = {}
     
@@ -97,15 +97,15 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters, pathToOrigina
     tab  = [[] for idAnimal in range(0, hyperparameters["nbAnimalsPerWell"])]
     
     for i in range(0, nbMouv):
-    
+      
       item = j[i]
       
-      if hyperparameters["trackTail"]:
+      if hyperparameters["trackTail"] and ("TailAngle_Raw" in item):
         
         angle_raw = item["TailAngle_Raw"]
         
         if len(angle_raw) > 10 and len(angle_raw) < 10000 and hyperparameters["noBoutsDetection"] == 0:
-        
+          
           rolling_window = hyperparameters["tailAngleMedianFilter"]
           if rolling_window > 0:
             shift = int(-rolling_window / 2)

@@ -1,5 +1,5 @@
 import numpy as np
-from zebrazoom.mainZZ import mainZZ
+from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis
 import os
 import pickle
 import cv2
@@ -88,7 +88,7 @@ def detectBouts(self, controller, wellNumber, firstFrame, adjustOnWholeVideo, re
     try:
       if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
         del configFile["lastFrame"]
-      mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
     except ValueError:
       newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
       for index in newhyperparameters:
@@ -133,7 +133,7 @@ def adjustHeadEmbededTracking(self, controller, wellNumber, firstFrame, adjustOn
   try:
     if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
       del configFile["lastFrame"]
-    mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+    ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
   except ValueError:
     newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
     for index in newhyperparameters:
@@ -169,7 +169,7 @@ def adjustFreelySwimTracking(self, controller, wellNumber, firstFrame, adjustOnW
   try:
     if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
       del configFile["lastFrame"]
-    mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+    ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
   except ValueError:
     newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
     for index in newhyperparameters:
@@ -214,7 +214,7 @@ def _adjustFastFreelySwimTracking(self, controller, oldFirstFrame, detectBouts):
   try:
     if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
       del configFile["lastFrame"]
-    mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+    ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
   except ValueError:
     newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
     for index in newhyperparameters:
@@ -268,7 +268,7 @@ def adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, fi
   try:
     if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
       del configFile["lastFrame"]
-    mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+    ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
   except ValueError:
     newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
     for index in newhyperparameters:
@@ -312,7 +312,7 @@ def calculateBackground(self, controller, nbImagesForBackgroundCalculation, useN
     try:
       if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
         del configFile["lastFrame"]
-      mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
     except ValueError:
       configFile["exitAfterBackgroundExtraction"] = 0
 
@@ -341,7 +341,7 @@ def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalcula
     try:
       if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
         del configFile["lastFrame"]
-      mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
     except ValueError:
       configFile["exitAfterBackgroundExtraction"] = 0
 

@@ -72,7 +72,7 @@ jobs:
           mv dist/updater.exe dist/ZebraZoom/updater
       - name: Run the created executable
         run: |
-          build/dist/ZebraZoom/ZebraZoom --exit
+          build/dist/ZebraZoom/ZebraZoom exit
       - name: Generate the list of installed files
         run: |
           cd build/dist/ZebraZoom
@@ -221,7 +221,7 @@ jobs:
           mv dist/updater dist/ZebraZoomApp/updater
       - name: Run the created executable
         run: |
-          build/dist/ZebraZoomApp/ZebraZoomApp --exit
+          build/dist/ZebraZoomApp/ZebraZoomApp exit
       - name: Generate the list of installed files
         run: |
           cd build/dist/ZebraZoomApp

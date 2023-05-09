@@ -7,6 +7,8 @@ from datetime import datetime
 
 import json
 
+import numpy as np
+
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import QWidget, QButtonGroup, QCheckBox, QDialog, QFileDialog, QHBoxLayout, QApplication, QLabel, QMainWindow, QRadioButton, QStackedLayout, QVBoxLayout, QMessageBox, QTextEdit, QSpacerItem, QPushButton
@@ -24,12 +26,14 @@ import zebrazoom.code.GUI.configFileZebrafishFunctions as configFileZebrafishFun
 import zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions as adjustParameterInsideAlgoFunctions
 import zebrazoom.code.GUI.dataAnalysisGUIFunctions as dataAnalysisGUIFunctions
 import zebrazoom.code.GUI.troubleshootingFunction as troubleshootingFunction
-from zebrazoom.mainZZ import mainZZ
+from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis
+from zebrazoom.code.adjustHyperparameters import adjustFreelySwimTrackingParams, adjustFreelySwimTrackingAutoParams, adjustHeadEmbededTrackingParams, adjustHeadEmbeddedEyeTrackingParamsSegment, adjustHeadEmbeddedEyeTrackingParamsEllipse
 from zebrazoom.code.GUI.GUI_InitialClasses import StartPage, VideoToAnalyze, ConfigFilePromp, Patience, ZZoutro, ZZoutroSbatch, SeveralVideos, FolderToAnalyze, TailExtremityHE, FolderMultipleROIInitialSelect, EnhanceZZOutput, ViewParameters, Error
 from zebrazoom.code.GUI.configFilePrepare import ChooseVideoToCreateConfigFileFor, OptimizeConfigFile, ChooseGeneralExperiment, ChooseCenterOfMassTracking, WellOrganisation, FreelySwimmingExperiment, NbRegionsOfInterest, HomegeneousWellsLayout, CircularOrRectangularWells, NumberOfAnimals, NumberOfAnimals2, NumberOfAnimalsCenterOfMass, IdentifyHeadCenter, IdentifyBodyExtremity, FinishConfig, ChooseCircularWellsLeft, ChooseCircularWellsRight, GoToAdvanceSettings
 from zebrazoom.code.GUI.configFileZebrafish import HeadEmbeded
 from zebrazoom.code.GUI.dataAnalysisGUI import CreateExperimentOrganizationExcel, ChooseDataAnalysisMethod, PopulationComparison, BoutClustering, AnalysisOutputFolderClustering
 from zebrazoom.code.GUI.troubleshooting import ChooseVideoToTroubleshootSplitVideo, VideoToTroubleshootSplitVideo
+import zebrazoom.code.GUI.tracking.customTrackingImplementations
 
 
 LARGE_FONT= ("Verdana", 12)
@@ -276,7 +280,7 @@ class ZebraZoomApp(PlainApplication):
         if "firstFrame" in self.configFile:
           # del self.configFile["firstFrame"]
           self.configFile["firstFrameForBackExtract"] = self.configFile["firstFrame"]
-        
+
         with open(reference, 'w') as outfile:
           json.dump(self.configFile, outfile)
 
@@ -322,7 +326,7 @@ class ZebraZoomApp(PlainApplication):
 
     def goToAdvanceSettings(self, controller, yes, no):
       configFilePrepareFunctions.goToAdvanceSettings(self, controller, yes, no)
-      
+
     def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering='', removeOutliers=False, frameStepForDistanceCalculation='4', removeBoutsContainingNanValuesInParametersUsedForClustering=True, forcePandasRecreation=0):
       dataAnalysisGUIFunctions.boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect, nbVideosToSave, modelUsedForClustering, removeOutliers, frameStepForDistanceCalculation, removeBoutsContainingNanValuesInParametersUsedForClustering, forcePandasRecreation)
 
@@ -349,11 +353,11 @@ class ZebraZoomApp(PlainApplication):
         del self.configFileHistory[:]
         with self.busyCursor():
           try:
-            tabParams = ["mainZZ", pathToVideo, videoName, videoExt, self.configFile,
+            tabParams = ["zebraZoomVideoAnalysis", pathToVideo, videoName, videoExt, self.configFile,
                          "firstFrame", firstFrame, "lastFrame", lastFrame, "freqAlgoPosFollow", 100,
                          "popUpAlgoFollow", 1, "outputFolder", self.ZZoutputLocation,
                          "backgroundExtractionForceUseAllVideoFrames", int(backgroundExtractionForceUseAllVideoFramesCheckbox.isChecked())]
-            mainZZ(pathToVideo, videoName, videoExt, self.configFile, tabParams)
+            ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, self.configFile, tabParams).run()
           except NameError:
             self.show_frame("Error")
             self.ZZoutputLocation = outputLocation

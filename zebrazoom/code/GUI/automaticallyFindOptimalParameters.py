@@ -2,17 +2,14 @@ import numpy as np
 import json
 import math
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
-from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
-from zebrazoom.mainZZ import mainZZ
 import pickle
 import json
 import os
 import re
 
 import zebrazoom.code.util as util
-from zebrazoom.code.getBackground import getBackground
+from zebrazoom.code.tracking import getBackground
 from zebrazoom.code.findWells import findWells
-from zebrazoom.code.trackingFolder.tracking import tracking
 
 from zebrazoom.code.GUI.adjustParameterInsideAlgo import adjustBoutDetectionOnlyPage
 from zebrazoom.code.GUI.automaticallyFindOptimalParametersFunctions import getGroundTruthFromUser, findBestBackgroundSubstractionParameterForEachImage, findInitialBlobArea, boutDetectionParameters

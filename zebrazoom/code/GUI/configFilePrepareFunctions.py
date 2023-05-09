@@ -6,10 +6,10 @@ from zebrazoom.code.GUI.automaticallyFindOptimalParameters import automaticallyF
 import math
 from zebrazoom.code.findWells import findWells
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
-from zebrazoom.code.getBackground import getBackground
-from zebrazoom.code.getImage.getForegroundImage import getForegroundImage
+from zebrazoom.code.tracking import getBackground
 import pickle
-from zebrazoom.mainZZ import mainZZ
+from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis
+from zebrazoom.code.tracking import get_default_tracking_method
 import json
 import os
 
@@ -156,7 +156,7 @@ def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
   app = QApplication.instance()
   with app.busyCursor():
     try:
-      mainZZ(pathToVideo, videoName, videoExt, configFile, argv)
+      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
     except ValueError:
       newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
       for index in newhyperparameters:
@@ -277,7 +277,7 @@ def chooseBeginningAndEndOfVideo(self, controller):
 
 def getImageForMultipleAnimalGUI(l, nx, ny, max_l, videoToCreateConfigFileFor, background, wellPositions, hyperparameters):
 
-  [frame, a1, a2] = getForegroundImage(videoToCreateConfigFileFor, background, l, 0, [], hyperparameters)
+  [frame, a1, a2] = get_default_tracking_method()(videoToCreateConfigFileFor, [], hyperparameters).getForegroundImage(background, l, 0)
 
   lengthX = nx * 2
   lengthY = ny
