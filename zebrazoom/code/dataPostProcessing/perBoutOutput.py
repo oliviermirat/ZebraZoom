@@ -121,6 +121,16 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
   # Curvature calculation: Going through each well, each fish and each bout
   for i in range(0, len(superStruct["wellPoissMouv"])):
     for j in range(0, len(superStruct["wellPoissMouv"][i])):
+      if hyperparameters["saveAllDataEvenIfNotInBouts"]:
+        curvatures = {}
+        fname = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"], f'allData_{hyperparameters["videoName"]}_wellNumber{i}_animal{j}.csv')
+        startLines = []
+        with open(fname) as f:
+          line = f.readline()
+          while ',' not in line:
+            startLines.append(line)
+            line = f.readline()
+        df = pd.read_csv(fname, skiprows=len(startLines))
       for k in range(0, len(superStruct["wellPoissMouv"][i][j])):
         
         # Creation of the curvature graph for bout k
@@ -159,7 +169,12 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         curvature = np.flip(np.transpose(curvature), 0)
         
         superStruct["wellPoissMouv"][i][j][k]["curvature"] = curvature.tolist()
-        
+
+        if hyperparameters["saveAllDataEvenIfNotInBouts"]:
+          bStart = superStruct["wellPoissMouv"][i][j][k]["BoutStart"]
+          bEnd = superStruct["wellPoissMouv"][i][j][k]["BoutEnd"]
+          curvatures[(bStart - firstFrame, bEnd + 1 - firstFrame)] = superStruct["wellPoissMouv"][i][j][k]["curvature"]
+
         if hyperparameters["saveCurvaturePlots"]:
           fig = plt.figure(1)
           if hyperparameters["maxCurvatureValues"] == 0:
@@ -278,5 +293,17 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
             out.write(frame)
             
           out.release()
+
+      if hyperparameters["saveAllDataEvenIfNotInBouts"]:
+        curvatureCount = max(map(len, curvatures.values())) if curvatures else 0
+        curvatureData = [[float('nan')] * nbFrames for _ in range(curvatureCount)]
+        for (start, end), values in curvatures.items():
+          for data, vals in zip(curvatureData, values):
+            data[start:end] = vals
+        for idx, data in enumerate(curvatureData):
+          df[f'curvature{idx + 1}'] = data
+        with open(fname, 'w+', newline='') as f:
+          f.write(''.join(startLines))
+          df.convert_dtypes().to_csv(f)
   
   return superStruct

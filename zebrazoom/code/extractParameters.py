@@ -81,6 +81,9 @@ def smoothAllTailAngles(allAngles, hyperparameters, start, end):
     tailangles_arr_smoothed = np.append(tailangles_arr_smoothed, tailSmoothed2, axis=0)
   return [tailangles_arr, tailangles_arr_smoothed]
 
+def _calculateTailLength(tailX, tailY):
+  return np.sum([math.sqrt((tailX[x] - tailX[x+1]) ** 2 + (tailY[x] - tailY[x+1]) ** 2) for x in range(len(tailX) - 1)])
+
 def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, wellPositions, background, tailAngle = 0):
 
   firstFrame = hyperparameters["firstFrame"]
@@ -180,11 +183,12 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       tailY[i]   = trackingTail[i,:,1]
     
     if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-      trackingFlatten = [trackingHeadTailAllAnimals[animalId][i].flatten().tolist() + [heading[i]] + angle[i].tolist() for i in range(0, len(heading))]
+      trackingFlatten = [trackingHeadTailAllAnimals[animalId][i].flatten().tolist() + [_calculateTailLength(tailX[i], tailY[i])] + [heading[i]] + angle[i].tolist() for i in range(0, len(heading))]
       trackingFlattenColumnsNames = ['HeadPosX', 'HeadPosY']
       for i in range(0, (len(trackingHeadTailAllAnimals[0][0].flatten().tolist()) - 2) // 2):
         trackingFlattenColumnsNames += ['TailPosX' + str(i + 1)]
         trackingFlattenColumnsNames += ['TailPosY' + str(i + 1)]
+      trackingFlattenColumnsNames.append('TailLength')
       trackingFlattenColumnsNames += ['Heading']
       trackingFlattenColumnsNames += ['tailAngle']
 
@@ -314,7 +318,12 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       if hyperparameters["addOneFrameAtTheEndForBoutDetection"]:
         if bouts[numBout][2] + 1 < nbFrames:
           bouts[numBout][2] = bouts[numBout][2] + 1
-    
+
+    if hyperparameters["saveAllDataEvenIfNotInBouts"] and not hyperparameters['noBoutsDetection']:
+      for frameData in trackingFlatten:
+        frameData.append(float('nan'))
+      trackingFlattenColumnsNames.append('BoutNumber')
+
     for i in range(0,len(bouts)):
     
       if (hyperparameters["freqAlgoPosFollow"] != 0) and (i % (hyperparameters["freqAlgoPosFollow"]*10) == 0):
@@ -327,7 +336,11 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       item["BoutStart"]     = start + firstFrame
       item["BoutEnd"]       = end + firstFrame
       item["TailAngle_Raw"] = angle[start:end+1,0].tolist()
-      
+
+      if hyperparameters["saveAllDataEvenIfNotInBouts"] and not hyperparameters['noBoutsDetection']:
+        for frameData in trackingFlatten[start:end+1]:
+          frameData[-1] = i
+
       if hyperparameters["eyeTracking"]:
         item["leftEyeX"]      = trackingEyesAllAnimals[animalId, start:end+1, 0].tolist()
         item["leftEyeY"]      = trackingEyesAllAnimals[animalId, start:end+1, 1].tolist()

@@ -41,6 +41,16 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoName):
   # Going through each well, each fish and each bout
   for i in range(0, len(superStruct["wellPoissMouv"])):
     for j in range(0, len(superStruct["wellPoissMouv"][i])):
+      if hyperparameters["saveAllDataEvenIfNotInBouts"]:
+        tailAngleHeatmaps = {}
+        fname = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"], f'allData_{hyperparameters["videoName"]}_wellNumber{i}_animal{j}.csv')
+        startLines = []
+        with open(fname) as f:
+          line = f.readline()
+          while ',' not in line:
+            startLines.append(line)
+            line = f.readline()
+        df = pd.read_csv(fname, skiprows=len(startLines))
       for k in range(0, len(superStruct["wellPoissMouv"][i][j])):
         
         # Creation of tail angles raw graph for bout k
@@ -74,6 +84,9 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoName):
         if plotTailAngleSmoothed:
           plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_anglesSmoothed_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.png'))
           plt.close(1)
+
+        if hyperparameters["saveAllDataEvenIfNotInBouts"]:
+          tailAngleHeatmaps[(bStart - firstFrame, bEnd + 1 - firstFrame)] = tailAngleHeatmap
         
         # Creation of tail angle heatmap
         if plotTailAngleHeatmap:
@@ -87,4 +100,15 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoName):
           plt.colorbar()
           plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_tailAngleHeatmap_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.png'))
           plt.close(1)
-        
+
+      if hyperparameters["saveAllDataEvenIfNotInBouts"]:
+        angleCount = max(map(len, tailAngleHeatmaps.values())) if tailAngleHeatmaps else 0
+        tailAngleHeatmapData = [[float('nan')] * nbFrames for _ in range(angleCount)]
+        for (start, end), values in tailAngleHeatmaps.items():
+          for data, vals in zip(tailAngleHeatmapData, values):
+            data[start:end] = vals
+        for idx, data in enumerate(tailAngleHeatmapData):
+          df[f'tailAngleHeatmap{idx + 1}'] = data
+        with open(fname, 'w+', newline='') as f:
+          f.write(''.join(startLines))
+          df.convert_dtypes().to_csv(f)
