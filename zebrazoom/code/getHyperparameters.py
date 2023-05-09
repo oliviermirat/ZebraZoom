@@ -271,6 +271,8 @@ CONFIG_DEFAULT = \
   "saveTailAngleGraph" : 0,
   "saveSubVideo"       : 0,
   "saveCurvatureData"  : 0,
+  "maxCurvatureValues"     : 0,
+  "curvatureXaxisNbFrames" : 0,
 
   "tailAnglesHeatMap" : 0,
   "tailAnglesHeatMapNbPointsToTakeIntoAccount" : 8,

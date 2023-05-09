@@ -87,15 +87,32 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
           
           if hyperparameters["saveCurvaturePlots"]:
             fig = plt.figure(1)
-            maxx = max([max(abs(np.array(t))) for t in alternativeCurvatureCalculation])
-            plt.pcolor(alternativeCurvatureCalculation, vmin=-maxx, vmax=maxx, cmap=hyperparameters["colorMapCurvature"])
+            if hyperparameters["maxCurvatureValues"] == 0:
+              maxx = max([max(abs(np.array(t))) for t in alternativeCurvatureCalculation])
+            else:
+              maxx = hyperparameters["maxCurvatureValues"]
+            if hyperparameters["curvatureXaxisNbFrames"] != 0:
+              if len(alternativeCurvatureCalculation[0]) < hyperparameters["curvatureXaxisNbFrames"]:
+                alternativeCurvatureCalculation2 = np.pad(alternativeCurvatureCalculation, ((0, 0), (0, hyperparameters["curvatureXaxisNbFrames"] - len(alternativeCurvatureCalculation[0]))), mode='constant')
+              elif len(alternativeCurvatureCalculation[0]) > hyperparameters["curvatureXaxisNbFrames"]:
+                alternativeCurvatureCalculation2 = alternativeCurvatureCalculation[:, 0:hyperparameters["curvatureXaxisNbFrames"]]
+              else:
+                alternativeCurvatureCalculation2 = alternativeCurvatureCalculation
+            plt.pcolor(alternativeCurvatureCalculation2, vmin=-maxx, vmax=maxx, cmap=hyperparameters["colorMapCurvature"])
             ax = fig.axes
             ax[0].set_ylabel('Rostral to Caudal')
             if hyperparameters["videoFPS"]:
               ax[0].set_xlabel('Second')
-              plt.xticks([i for i in range(0, len(alternativeCurvatureCalculation[0]), int(len(alternativeCurvatureCalculation[0])/10))], [int(100*(i/hyperparameters["videoFPS"]))/100 for i in range(0, len(alternativeCurvatureCalculation[0]), int(len(alternativeCurvatureCalculation[0])/10))])
+              plt.xticks([i for i in range(0, len(alternativeCurvatureCalculation2[0]), int(len(alternativeCurvatureCalculation2[0])/10))], [int(100*(i/hyperparameters["videoFPS"]))/100 for i in range(0, len(alternativeCurvatureCalculation2[0]), int(len(alternativeCurvatureCalculation2[0])/10))])
             else:
               ax[0].set_xlabel('Frame number')
+            
+            if hyperparameters["videoPixelSize"] and int(len(alternativeCurvatureCalculation2)/10):
+              ax[0].set_ylabel('Rostral to Caudal (in mm)')
+              plt.yticks([i for i in range(0, len(alternativeCurvatureCalculation2), int(len(alternativeCurvatureCalculation2)/10))], [int(100*( hyperparameters["videoPixelSize"] * tailLenghtInPixels * (i/len(alternativeCurvatureCalculation2)) ))/100 for i in range(0, len(alternativeCurvatureCalculation2), int(len(alternativeCurvatureCalculation2)/10))])
+            else:
+              ax[0].set_ylabel('Rostral to Caudal (arbitrary units)')
+            
             plt.colorbar()
             plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_alternativeCurvatureCalculation_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.png'))
             plt.close(1)
@@ -109,6 +126,9 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         # Creation of the curvature graph for bout k
         TailX_VideoReferential = superStruct["wellPoissMouv"][i][j][k]["TailX_VideoReferential"]
         TailY_VideoReferential = superStruct["wellPoissMouv"][i][j][k]["TailY_VideoReferential"]
+        
+        if hyperparameters["videoPixelSize"]:
+          tailLenghtInPixels = np.sum([math.sqrt((TailX_VideoReferential[0][l] - TailX_VideoReferential[0][l+1])**2 + (TailY_VideoReferential[0][l] - TailY_VideoReferential[0][l+1])**2) for l in range(0, len(TailX_VideoReferential[0]) - 1)])
         
         curvature = []
         for l in range(0, len(TailX_VideoReferential)):
@@ -142,15 +162,32 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         
         if hyperparameters["saveCurvaturePlots"]:
           fig = plt.figure(1)
-          maxx = max([max(abs(np.array(t))) for t in curvature])
-          plt.pcolor(curvature, vmin=-maxx, vmax=maxx, cmap=hyperparameters["colorMapCurvature"])
+          if hyperparameters["maxCurvatureValues"] == 0:
+            maxx = max([max(abs(np.array(t))) for t in curvature])
+          else:
+            maxx = hyperparameters["maxCurvatureValues"]          
+          if hyperparameters["curvatureXaxisNbFrames"] != 0:
+            if len(curvature[0]) < hyperparameters["curvatureXaxisNbFrames"]:
+              curvature2 = np.pad(curvature, ((0, 0), (0, hyperparameters["curvatureXaxisNbFrames"] - len(curvature[0]))), mode='constant')
+            elif len(curvature[0]) > hyperparameters["curvatureXaxisNbFrames"]:
+              curvature2 = curvature[:, 0:hyperparameters["curvatureXaxisNbFrames"]]
+            else:
+              curvature2 = curvature
+          plt.pcolor(curvature2, vmin=-maxx, vmax=maxx, cmap=hyperparameters["colorMapCurvature"])
           ax = fig.axes
-          ax[0].set_ylabel('Rostral to Caudal')
-          if hyperparameters["videoFPS"]:
+          
+          if hyperparameters["videoFPS"] and int(len(curvature2[0])/10):
             ax[0].set_xlabel('Second')
-            plt.xticks([i for i in range(0, len(curvature[0]), int(len(curvature[0])/10))], [int(100*(i/hyperparameters["videoFPS"]))/100 for i in range(0, len(curvature[0]), int(len(curvature[0])/10))])
+            plt.xticks([i for i in range(0, len(curvature2[0]), int(len(curvature2[0])/10))], [int(100*(i/hyperparameters["videoFPS"]))/100 for i in range(0, len(curvature2[0]), int(len(curvature2[0])/10))])
           else:
             ax[0].set_xlabel('Frame number')
+            
+          if hyperparameters["videoPixelSize"] and int(len(curvature2)/10):
+            ax[0].set_ylabel('Rostral to Caudal (in mm)')
+            plt.yticks([i for i in range(0, len(curvature2), int(len(curvature2)/10))], [int(100*( hyperparameters["videoPixelSize"] * tailLenghtInPixels * (i/len(curvature2)) ))/100 for i in range(0, len(curvature2), int(len(curvature2)/10))])
+          else:
+            ax[0].set_ylabel('Rostral to Caudal (arbitrary unit)')
+          
           plt.colorbar()
           plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_curvature_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.png'))
           plt.close(1)
