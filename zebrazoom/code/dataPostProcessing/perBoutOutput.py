@@ -98,6 +98,8 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
                 alternativeCurvatureCalculation2 = alternativeCurvatureCalculation[:, 0:hyperparameters["curvatureXaxisNbFrames"]]
               else:
                 alternativeCurvatureCalculation2 = alternativeCurvatureCalculation
+            else:
+              alternativeCurvatureCalculation2 = alternativeCurvatureCalculation
             plt.pcolor(alternativeCurvatureCalculation2, vmin=-maxx, vmax=maxx, cmap=hyperparameters["colorMapCurvature"])
             ax = fig.axes
             ax[0].set_ylabel('Rostral to Caudal')
@@ -188,6 +190,8 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
               curvature2 = curvature[:, 0:hyperparameters["curvatureXaxisNbFrames"]]
             else:
               curvature2 = curvature
+          else:
+            curvature2 = curvature
           plt.pcolor(curvature2, vmin=-maxx, vmax=maxx, cmap=hyperparameters["colorMapCurvature"])
           ax = fig.axes
           
