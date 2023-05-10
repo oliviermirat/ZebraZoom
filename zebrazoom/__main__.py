@@ -6,7 +6,7 @@ multiprocessing.freeze_support()  # documentation mistakenly states this is requ
 
 import zebrazoom.code.paths as paths
 
-from . import _subcommands as subcommands
+import zebrazoom._subcommands as subcommands
 
 
 def _ensureFolderPermissions():
