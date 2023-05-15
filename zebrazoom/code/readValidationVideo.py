@@ -80,7 +80,7 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   nx    = int(cap.get(3))
   ny    = int(cap.get(4))
   max_l = int(cap.get(7))
-  sliderRange = (supstruct["firstFrame"], supstruct["lastFrame"]) if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"] else (0, max_l -1)
+  sliderRange = (supstruct["firstFrame"], supstruct["lastFrame"] - 1) if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"] else (0, max_l -1)
 
   if not("firstFrame" in supstruct):
     supstruct["firstFrame"] = 1
