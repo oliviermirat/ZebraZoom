@@ -1576,7 +1576,7 @@ class FinishConfig(QWidget):
   def refreshPage(self, showFasterTracking=False):
     trackingMethod = self.controller.configFile.get("trackingMethod", None)
     freelySwimming = not trackingMethod and not self.controller.configFile.get("headEmbeded", False)
-    for widget in (self._fasterTrackingCheckbox, self._changingBackgroundCheckbox, self._alwaysSaveCheckbox):
+    for widget in (self._fasterTrackingCheckbox, self._changingBackgroundCheckbox):
       widget.setChecked(False)
       widget.setVisible(freelySwimming)
     if freelySwimming:
