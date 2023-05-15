@@ -1585,6 +1585,15 @@ class FinishConfig(QWidget):
     if (trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction" or trackingMethod == "fastCenterOfMassTracking_ClassicalBackgroundSubtraction") and \
         not self.controller.configFile.get("noBoutsDetection", False) and not self.controller.configFile.get("coordinatesOnlyBoutDetection", False):
       self.controller.configFile["detectMovementWithRawVideoInsideTracking"] = 1
+    if trackingMethod:
+      self._alwaysSaveCheckbox.setChecked(False)
+      self._alwaysSaveCheckbox.setVisible(False)
+    else:
+      self._alwaysSaveCheckbox.setVisible(True)
+      if self._alwaysSaveCheckbox.isChecked():
+        self.controller.configFile["saveAllDataEvenIfNotInBouts"] = 1
+      else:
+        self._alwaysSaveCheckbox.setChecked(True)
 
   def showEvent(self, evt):
     self.refreshPage()
