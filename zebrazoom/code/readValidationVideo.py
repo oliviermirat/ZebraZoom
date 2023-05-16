@@ -7,7 +7,7 @@ import json
 import numpy as np
 
 from PyQt5.QtCore import Qt, QSize, QTimer
-from PyQt5.QtWidgets import QApplication, QFileDialog, QMessageBox, QLabel, QSlider, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QCheckBox, QFileDialog, QMessageBox, QLabel, QSlider, QVBoxLayout
 
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
@@ -180,7 +180,7 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
     if hyperparameters["imagePreProcessMethod"]:
       img = preprocessImage(img, hyperparameters)
     
-    if infoFrame is not None:
+    if infoFrame is not None and plotTrackingPointsCheckbox.isChecked():
       drawInfoFrame(l, img, infoFrame, colorModifTab, hyperparameters)
 
     if numWell != -1 and zoom:
@@ -231,6 +231,11 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   shortcutsLabel = QLabel("Left Arrow, Right Arrow, Page Up, Page Down, Home and End keys can be used to navigate through the video.")
   shortcutsLabel.setWordWrap(True)
   layout.addWidget(shortcutsLabel)
+  if infoFrame is not None:
+    plotTrackingPointsCheckbox = QCheckBox("Display tracking points")
+    plotTrackingPointsCheckbox.setChecked(True)
+    plotTrackingPointsCheckbox.toggled.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(), video))
+    layout.addWidget(plotTrackingPointsCheckbox)
 
   stopTimer = True
   timer = QTimer()
