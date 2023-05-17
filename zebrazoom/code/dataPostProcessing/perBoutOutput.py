@@ -2,6 +2,7 @@ import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.extractParameters import calculateAngle
 from zebrazoom.code.extractParameters import calculateTailAngle
+import h5py
 import os
 import shutil
 import math
@@ -309,5 +310,12 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         with open(fname, 'w+', newline='') as f:
           f.write(''.join(startLines))
           df.convert_dtypes().to_csv(f)
-  
+        if curvatures and hyperparameters.get('storeH5', False):
+          with h5py.File(hyperparameters['H5filename'], 'a') as results:
+            arr = np.empty(nbFrames, dtype=[(f'Pos{idx}', float) for idx in range(1, curvatureCount + 1)])
+            for idx, data in enumerate(curvatureData):
+              arr[f'Pos{idx + 1}'] = data
+            dataset = results.create_dataset(f"dataForWell{i}/dataForAnimal{j}/dataPerFrame/curvature", data=arr)
+            dataset.attrs['columns'] = arr.dtype.names
+
   return superStruct
