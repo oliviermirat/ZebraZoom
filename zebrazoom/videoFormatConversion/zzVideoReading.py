@@ -68,25 +68,14 @@ class ZzVideoReading():
     
     if self.lastFrameRead + 1 < self.num_images:
       
-      if int(platform.system() == "Linux"):
-        try:
-          offset = struct.unpack('l', self.f.read(8))
-          timestamp = struct.unpack('d', self.f.read(8))
-          binfile = struct.unpack('i', self.f.read(4))
-          padding = self.f.read(4)
-        except:
-          print("Problem with Hiris video format", self.lastFrameRead + 1)
-          return [False, []]
-      else:
-        try:
-          offset = struct.unpack('l', self.f.read(4))
-          padding = self.f.read(4)
-          timestamp = struct.unpack('d', self.f.read(8))
-          binfile = struct.unpack('i', self.f.read(4))
-          padding = self.f.read(4)
-        except:
-          print("Problem with Hiris video format", self.lastFrameRead + 1)
-          return [False, []]          
+      try:
+        offset = struct.unpack('q', self.f.read(8))
+        timestamp = struct.unpack('d', self.f.read(8))
+        binfile = struct.unpack('i', self.f.read(4))
+        padding = self.f.read(4)
+      except:
+        print("Problem with Hiris video format", self.lastFrameRead + 1)
+        return [False, []]
       
       bin_path = os.path.join("%s" % (self.pathstr), "%s%0.5d.bin" % (self.bin_file, binfile[0]))
       

@@ -57,10 +57,6 @@ def _createParser():
   subparsers.default = 'launchZebraZoom'
 
   subparsers.add_parser('selectZZoutput', help='Help for selectZZoutput')
-  
-  subparsers.add_parser('openAsWindows', help='Help for selectZZoutput')
-  subparsers.add_parser('openAsMac', help='Help for selectZZoutput')
-  subparsers.add_parser('openAsLinux', help='Help for selectZZoutput')
 
   for subcommand in ('getTailExtremityFirstFrame', 'recreateSuperStruct'):
     subparser = subparsers.add_parser('getTailExtremityFirstFrame', help='Help for getTailExtremityFirstFrame')

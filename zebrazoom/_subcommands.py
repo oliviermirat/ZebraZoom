@@ -9,24 +9,6 @@ def launchZebraZoom(args):
   print("The data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
   app = ZebraZoomApp(sys.argv)
   sys.exit(app.exec())
-
-def openAs(args, systemName):
-  import platform
-  platform.system = lambda: systemName
-  print("opening as " + systemName)
-  from zebrazoom.GUIAllPy import ZebraZoomApp
-  print("The data produced by ZebraZoom can be found in the folder: " + paths.getDefaultZZoutputFolder())
-  app = ZebraZoomApp(sys.argv)
-  sys.exit(app.exec())
-
-def openAsWindows(args):
-  openAs(args, "Windows")
-
-def openAsMac(args):
-  openAs(args, "Darwin")
-
-def openAsLinux(args):
-  openAs(args, "Linux")
   
 def selectZZoutput(args):
   from zebrazoom.GUIAllPy import ZebraZoomApp
