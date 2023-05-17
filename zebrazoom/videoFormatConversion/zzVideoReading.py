@@ -69,7 +69,8 @@ class ZzVideoReading():
     if self.lastFrameRead + 1 < self.num_images:
       
       try:
-        offset = struct.unpack('q', self.f.read(8))
+        offset = struct.unpack('i', self.f.read(4))
+        padding = self.f.read(4)
         timestamp = struct.unpack('d', self.f.read(8))
         binfile = struct.unpack('i', self.f.read(4))
         padding = self.f.read(4)
