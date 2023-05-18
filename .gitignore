@@ -28,6 +28,7 @@ zebrazoom/code/GUI/tracking/customTrackingImplementations/examples/__pycache__/
 zebrazoom/code/tracking/__pycache__/
 zebrazoom/code/tracking/customTrackingImplementations/__pycache__/
 zebrazoom/code/tracking/customTrackingImplementations/examples/__pycache__/
+zebrazoom/dataAPI/__pycache__/
 
 zebrazoom/trackingConfigurations/*.csv
 
