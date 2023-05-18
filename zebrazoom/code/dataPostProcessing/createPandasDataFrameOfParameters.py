@@ -44,5 +44,5 @@ def createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension
   }
   
   # forcePandasDfRecreation (third parameter) is set to True here
-  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, excelFileDataFrame, 1, [], 0, supstructOverwrite)
+  [conditions, genotypes, nbFramesTakenIntoAccount, globParam] = createDataFrame(dataframeOptions, excelFileDataFrame, 1, [], 0, supstructOverwrite, H5filename=hyperparameters.get('H5filename', None))
   
