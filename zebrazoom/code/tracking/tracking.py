@@ -537,7 +537,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
       print("intermediary results saved")
 
   def run(self):
-    self._background = self._getBackground()
+    self._background = self.getBackground()
 
     if self._hyperparameters["trackingDL"]:
       from torch.multiprocessing import Process

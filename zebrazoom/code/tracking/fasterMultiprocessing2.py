@@ -320,7 +320,7 @@ class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDet
             for wellNumber in range(self._firstWell, self._lastWell + 1)}
 
   def run(self):
-    self._background = self._getBackground()
+    self._background = self.getBackground()
 
     cap = zzVideoReading.VideoCapture(self._videoPath)
     if (cap.isOpened()== False):
