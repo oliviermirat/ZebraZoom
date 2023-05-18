@@ -180,6 +180,7 @@ class ZebraZoomVideoAnalysis:
       results.attrs['version'] = 0
       results.attrs['firstFrame'] = superStruct["firstFrame"]
       results.attrs['lastFrame'] = superStruct['lastFrame']
+      results.attrs['ZebraZoomVersionUsed'] = zebrazoom.__version__
       if 'videoFPS' in superStruct:
         results.attrs['videoFPS'] = superStruct['videoFPS']
       if 'videoPixelSize' in superStruct:
