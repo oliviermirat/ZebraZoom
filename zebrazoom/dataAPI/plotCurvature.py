@@ -52,20 +52,13 @@ def plotCurvatureYaxisExact(curvatureValues, xTimeValues, yDistanceAlongTail):
   plt.show()
 
 
-
-def plotCurvatureYaxisApproximate(curvatureValues, xTimeValues, yDistanceAlongTail):
-  
-  # Input parameters should actually be:
-  # name, curvature, maxCurvatureValues, xAxisLengthInSeconds, yAxisLengthInPixels, videoFPS, videoPixelSize, tailLenghtInPixels, boutStart, boutEnd
-  
-  if maxCurvatureValues == 0:
-    maxx = max([max(abs(np.array(t))) for t in curvature])
-  else:
-    maxx = maxCurvatureValues
+def plotCurvatureYaxisApproximate(curvature: list[np.array], xAxisLengthInSeconds: int, yAxisLengthInPixels: int, videoFPS: float, videoPixelSize: float, tailLengthInPixels: float, boutStart: int, boutEnd: int, maxCurvatureValues: float = None) -> None:
+  if maxCurvatureValues is None:
+    maxCurvatureValues = max(max(t.min(), t.max(), key=abs) for t in curvature)
 
   fig = plt.figure()
   ax = fig.add_subplot(111)
-  cax = ax.pcolor(curvature, vmin=-maxx, vmax=maxx, cmap='BrBG')
+  cax = ax.pcolor(curvature, vmin=-maxCurvatureValues, vmax=maxCurvatureValues, cmap='BrBG')
 
   # Set color of the surrounding box
   for spine in ax.spines.values():
@@ -76,10 +69,10 @@ def plotCurvatureYaxisApproximate(curvatureValues, xTimeValues, yDistanceAlongTa
   ax.set_xlabel('Time (in seconds)')
   plt.xticks([i for i in range(0, len(curvature[0]), int(len(curvature[0])/nbTicks))], [int(100*((i+boutStart)/videoFPS))/100 for i in range(0, len(curvature[0]), int(len(curvature[0])/nbTicks))])
   ax.set_ylabel('Rostral to Caudal (in mm)')
-  plt.yticks([i for i in range(0, len(curvature), int(len(curvature)/nbTicks))], [int(100 * videoPixelSize * tailLenghtInPixels * ((len(curvature)-i)/len(curvature)) )/100 for i in range(0, len(curvature), int(len(curvature)/nbTicks))])
+  plt.yticks([i for i in range(0, len(curvature), int(len(curvature)/nbTicks))], [int(100 * videoPixelSize * tailLengthInPixels * ((len(curvature)-i)/len(curvature)) )/100 for i in range(0, len(curvature), int(len(curvature)/nbTicks))])
   
   ax.set_xlim([0, xAxisLengthInSeconds * videoFPS])
-  ax.set_ylim([0, (yAxisLengthInPixels * len(curvature)) / (videoPixelSize * tailLenghtInPixels)])
+  ax.set_ylim([0, (yAxisLengthInPixels * len(curvature)) / (videoPixelSize * tailLengthInPixels)])
   
   cbar = fig.colorbar(cax)
   plt.show()
