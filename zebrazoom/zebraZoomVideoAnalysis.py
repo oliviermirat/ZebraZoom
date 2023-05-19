@@ -187,17 +187,17 @@ class ZebraZoomVideoAnalysis:
         results.attrs['videoPixelSize'] = superStruct['videoPixelSize']
       if 'pathToOriginalVideo' in superStruct:
         results.attrs['pathToOriginalVideo'] = superStruct['pathToOriginalVideo']
-      results.create_group("configurationFileUsed").attrs.update(self._configFile)
+      results.require_group("configurationFileUsed").attrs.update(self._configFile)
       for idx, wellPositions in enumerate(self.wellPositions):
-        results.create_group(f"wellPositions/well{idx}").attrs.update(wellPositions)
+        results.require_group(f"wellPositions/well{idx}").attrs.update(wellPositions)
       for wellIdx, well in enumerate(superStruct['wellPoissMouv']):
         for animalIdx, animal in enumerate(well):
-          listOfBouts = results.create_group(f"dataForWell{wellIdx}/dataForAnimal{animalIdx}/listOfBouts")
+          listOfBouts = results.require_group(f"dataForWell{wellIdx}/dataForAnimal{animalIdx}/listOfBouts")
           listOfBouts.attrs['numberOfBouts'] = len(animal)
           for boutIdx, bout in enumerate(animal):
-            boutGroup = listOfBouts.create_group(f'bout{boutIdx}')
+            boutGroup = listOfBouts.require_group(f'bout{boutIdx}')
             for key, value in bout.items():
-              if key == 'AnimalNumber':
+              if key == 'AnimalNumber' or key == 'curvature':
                 continue
               if isinstance(value, list):
                 boutGroup.create_dataset(key, data=np.array(value))

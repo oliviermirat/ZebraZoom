@@ -13,6 +13,30 @@ import pandas as pd
 import pickle
 from scipy import ndimage
 
+
+def calculateCurvature(TailX_VideoReferential, TailY_VideoReferential, hyperparameters):
+  curvature = []
+  for l in range(0, len(TailX_VideoReferential)):
+    tailX = TailX_VideoReferential[l]
+    tailY = TailY_VideoReferential[l]
+
+    ydiff  = np.diff(tailY)
+    ydiff2 = np.diff(ydiff)
+    xdiff  = np.diff(tailX)
+    xdiff2 = np.diff(xdiff)
+    curv = xdiff2
+    l = len(curv)
+    av = 0
+    for ii in range(0, l):#-1):
+      num = xdiff[ii] * ydiff2[ii] - ydiff[ii] * xdiff2[ii]
+      den = (xdiff[ii]**2 + ydiff[ii]**2)**1.5
+      curv[ii] = num / den
+
+    curv = curv[hyperparameters["nbPointsToIgnoreAtCurvatureBeginning"]: l-hyperparameters["nbPointsToIgnoreAtCurvatureEnd"]]
+    curvature.append(curv)
+  return curvature
+
+
 def perBoutOutput(superStruct, hyperparameters, videoName):
   
   # Creation of the sub-folder "perBoutOutput"
@@ -139,44 +163,30 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         # Creation of the curvature graph for bout k
         TailX_VideoReferential = superStruct["wellPoissMouv"][i][j][k]["TailX_VideoReferential"]
         TailY_VideoReferential = superStruct["wellPoissMouv"][i][j][k]["TailY_VideoReferential"]
-        
+
         if hyperparameters["videoPixelSize"]:
           tailLenghtInPixels = np.sum([math.sqrt((TailX_VideoReferential[0][l] - TailX_VideoReferential[0][l+1])**2 + (TailY_VideoReferential[0][l] - TailY_VideoReferential[0][l+1])**2) for l in range(0, len(TailX_VideoReferential[0]) - 1)])
-        
-        curvature = []
-        for l in range(0, len(TailX_VideoReferential)):
-          tailX = TailX_VideoReferential[l]
-          tailY = TailY_VideoReferential[l]
 
-          ydiff  = np.diff(tailY)
-          ydiff2 = np.diff(ydiff)
-          xdiff  = np.diff(tailX)
-          xdiff2 = np.diff(xdiff)
-          curv = xdiff2
-          l = len(curv)
-          av = 0
-          for ii in range(0, l):#-1):
-            num = xdiff[ii] * ydiff2[ii] - ydiff[ii] * xdiff2[ii]
-            den = (xdiff[ii]**2 + ydiff[ii]**2)**1.5
-            curv[ii] = num / den
-          
-          curv = curv[hyperparameters["nbPointsToIgnoreAtCurvatureBeginning"]: l-hyperparameters["nbPointsToIgnoreAtCurvatureEnd"]]
-          curvature.append(curv)
-        
-        rolling_window = hyperparameters["curvatureMedianFilterSmoothingWindow"]
-        if rolling_window:
-          curvature = ndimage.median_filter(curvature, size=rolling_window) # 2d median filter
-        else:
-          curvature = np.array(curvature)
-        
-        curvature = np.flip(np.transpose(curvature), 0)
-        
-        superStruct["wellPoissMouv"][i][j][k]["curvature"] = curvature.tolist()
+        curvature = calculateCurvature(TailX_VideoReferential, TailY_VideoReferential, hyperparameters)
+        originalCurvature = np.flip(np.transpose(curvature), 0)
 
         if hyperparameters["saveAllDataEvenIfNotInBouts"]:
           bStart = superStruct["wellPoissMouv"][i][j][k]["BoutStart"]
           bEnd = superStruct["wellPoissMouv"][i][j][k]["BoutEnd"]
-          curvatures[(bStart - firstFrame, bEnd + 1 - firstFrame)] = superStruct["wellPoissMouv"][i][j][k]["curvature"]
+          curvatures[(bStart - firstFrame, bEnd + 1 - firstFrame)] = originalCurvature.tolist()
+
+        if hyperparameters.get('storeH5', False):
+          with h5py.File(hyperparameters['H5filename'], 'a') as results:
+            results.require_group(f"dataForWell{i}/dataForAnimal{j}/listOfBouts/bout{k}").create_dataset('curvature', data=originalCurvature)
+
+        rolling_window = hyperparameters["curvatureMedianFilterSmoothingWindow"]
+        if rolling_window:
+          curvature = ndimage.median_filter(curvature, size=rolling_window) # 2d median filter
+          curvature = np.flip(np.transpose(curvature), 0)
+        else:
+          curvature = originalCurvature
+        
+        superStruct["wellPoissMouv"][i][j][k]["curvature"] = curvature.tolist()
 
         if hyperparameters["saveCurvaturePlots"]:
           fig = plt.figure(1)
