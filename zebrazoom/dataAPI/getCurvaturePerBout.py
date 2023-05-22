@@ -3,9 +3,8 @@ import os
 import h5py
 import numpy as np
 
-from zebrazoom.code.dataPostProcessing.perBoutOutput import calculateCurvature
-from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.paths import getDefaultZZoutputFolder
+from ._storeCurvature import storeCurvature
 
 
 def getCurvaturePerBout(videoName: str, numWell: int, numAnimal: int, numBout: int) -> list[np.array]:
@@ -18,12 +17,11 @@ def getCurvaturePerBout(videoName: str, numWell: int, numAnimal: int, numBout: i
     if boutPath not in results:
       raise ValueError(f"bout {numBout} for animal {numAnimal} in well {numWell} doesn't exist")
     boutGroup = results[boutPath]
-    if 'curvature' in boutGroup:
-      return list(boutGroup['curvature'])
-    curvature = calculateCurvature(list(boutGroup['TailX_VideoReferential']), list(boutGroup['TailY_VideoReferential']), getHyperparametersSimple(dict(results['configurationFileUsed'].attrs)))
-    curvature = list(np.flip(np.transpose(curvature), 0))
-    data = np.empty(len(curvature[0]), dtype=[(f'Pos{idx}', float) for idx in range(1, len(curvature) + 1)])
-    for idx, curvatureData in enumerate(curvature):
-      data[f'Pos{idx + 1}'] = curvatureData
-    boutGroup.create_dataset('curvature', data=data)
-    return curvature
+    firstFrame = results.attrs['firstFrame']
+    start = boutGroup.attrs['BoutStart'] - firstFrame
+    end = boutGroup.attrs['BoutEnd'] - firstFrame + 1
+    dataGroup = results[f'dataForWell{numWell}/dataForAnimal{numAnimal}/dataPerFrame']
+    if 'curvature' in dataGroup:
+      return [dataGroup['curvature'][column][start:end] for column in dataGroup['curvature'].attrs['columns']]
+    boutGroup = results[boutPath]
+    return [data[start:end] for data in storeCurvature(results, dataGroup, results[f'dataForWell{numWell}/dataForAnimal{numAnimal}/listOfBouts'])]

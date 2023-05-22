@@ -175,10 +175,6 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
           bEnd = superStruct["wellPoissMouv"][i][j][k]["BoutEnd"]
           curvatures[(bStart - firstFrame, bEnd + 1 - firstFrame)] = originalCurvature.tolist()
 
-        if hyperparameters['storeH5']:
-          with h5py.File(hyperparameters['H5filename'], 'a') as results:
-            results.require_group(f"dataForWell{i}/dataForAnimal{j}/listOfBouts/bout{k}").create_dataset('curvature', data=originalCurvature)
-
         rolling_window = hyperparameters["curvatureMedianFilterSmoothingWindow"]
         if rolling_window:
           curvature = ndimage.median_filter(curvature, size=rolling_window) # 2d median filter

@@ -191,6 +191,7 @@ class ZebraZoomVideoAnalysis:
       results.require_group("configurationFileUsed").attrs.update(self._configFile)
       for idx, wellPositions in enumerate(self.wellPositions):
         results.require_group(f"wellPositions/well{idx}").attrs.update(wellPositions)
+      keysToSkip = {'AnimalNumber', 'curvature', 'HeadX', 'HeadY', 'Heading', 'TailAngle_Raw', 'TailX_VideoReferential', 'TailY_VideoReferential'}
       for wellIdx, well in enumerate(superStruct['wellPoissMouv']):
         for animalIdx, animal in enumerate(well):
           listOfBouts = results.require_group(f"dataForWell{wellIdx}/dataForAnimal{animalIdx}/listOfBouts")
@@ -198,7 +199,7 @@ class ZebraZoomVideoAnalysis:
           for boutIdx, bout in enumerate(animal):
             boutGroup = listOfBouts.require_group(f'bout{boutIdx}')
             for key, value in bout.items():
-              if key == 'AnimalNumber' or key == 'curvature':
+              if key in keysToSkip:
                 continue
               if isinstance(value, list):
                 boutGroup.create_dataset(key, data=np.array(value))

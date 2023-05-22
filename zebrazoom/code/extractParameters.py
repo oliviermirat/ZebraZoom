@@ -377,7 +377,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
         if hyperparameters["videoPixelSize"]:
           f.write(f'videoPixelSize: {hyperparameters["videoPixelSize"]}\n')
         trackingFlattenPandas.convert_dtypes().to_csv(f)
-      if hyperparameters.get('storeH5', False):
+      if hyperparameters['storeH5']:
         with h5py.File(hyperparameters['H5filename'], 'a') as results:
           group = results.create_group(f"dataForWell{wellNumber}/dataForAnimal{animalId}/dataPerFrame")
           datasets = {'HeadPos': (('HeadPosX', 'HeadPosY'), ('X', 'Y')),
@@ -386,8 +386,6 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
                       'TailPosX': (tuple(f'TailPosX{pos}' for pos in range(1, nbPoints)), tuple(f'Pos{pos}' for pos in range(1, nbPoints))),
                       'TailPosY': (tuple(f'TailPosY{pos}' for pos in range(1, nbPoints)), tuple(f'Pos{pos}' for pos in range(1, nbPoints))),
                       'TailLength': 'TailLength'}
-          if 'BoutNumber' in trackingFlattenPandas:
-            datasets['BoutNumber'] = 'BoutNumber'
           for name, columns in datasets.items():
             if isinstance(columns, str):  # 1d array
               group.create_dataset(name, data=trackingFlattenPandas[columns].values)
