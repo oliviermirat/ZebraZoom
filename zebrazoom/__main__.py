@@ -133,8 +133,11 @@ def _createParser():
   subparser.add_argument('videoName', help='Help for videoName')
 
   subparser = subparsers.add_parser('createDistanceBetweenFramesExcelFile', help='Help for createDistanceBetweenFramesExcelFile')
+  subparser.add_argument('videoFPS', help='Help for videoFPS', type=float, nargs='?', default=1)
+  subparser.add_argument('videoPixelSize', help='Help for videoPixelSize', type=float, nargs='?', default=1)
 
   subparser = subparsers.add_parser('removeLargeInstantaneousDistanceData', help='Help for removeLargeInstantaneousDistanceData')
+  subparser.add_argument('maxDistance', help='Help for maxDistance', type=float, nargs='?', default=1)
 
   subparser = subparsers.add_parser('filterLatencyAndMergeBoutsInSameTrials', help='Help for filterLatencyAndMergeBoutsInSameTrials')
   subparser.add_argument('nameOfExperiment', help='Help message for nameOfExperiment')

@@ -9,10 +9,7 @@ import os
 from PyQt5.QtWidgets import QFileDialog
 
 
-def createDistanceBetweenFramesExcelFile(ZZoutputFolder, paramList):
-  
-  fps       = float(paramList[2]) if len(paramList) > 2 else 1
-  pixelSize = float(paramList[3]) if len(paramList) > 3 else 1
+def createDistanceBetweenFramesExcelFile(ZZoutputFolder, fps, pixelSize):
   
   pathToResultFolder =  QFileDialog.getExistingDirectory(caption='Choose the result folder for which an excel file should be generated', directory=ZZoutputFolder)
   if not pathToResultFolder:

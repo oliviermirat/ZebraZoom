@@ -113,13 +113,13 @@ def createDistanceBetweenFramesExcelFile(args):
   from zebrazoom.dataAnalysis.createCustomDataStructure.createDistanceBetweenFramesExcelFile import createDistanceBetweenFramesExcelFile
   from zebrazoom.GUIAllPy import PlainApplication
   app = PlainApplication(sys.argv)
-  createDistanceBetweenFramesExcelFile(paths.getDefaultZZoutputFolder(), sys.argv) # fps, pixelSize
+  createDistanceBetweenFramesExcelFile(paths.getDefaultZZoutputFolder(), args.videoFPS, args.videoPixelSize) # fps, pixelSize
 
 def removeLargeInstantaneousDistanceData(args):
   from zebrazoom.dataAnalysis.createCustomDataStructure.removeLargeInstantaneousDistanceData import removeLargeInstantaneousDistanceData
   from zebrazoom.GUIAllPy import PlainApplication
   app = PlainApplication(sys.argv)
-  removeLargeInstantaneousDistanceData(paths.getDefaultZZoutputFolder(), sys.argv)
+  removeLargeInstantaneousDistanceData(paths.getDefaultZZoutputFolder(), args.maxDistance)
 
 def filterLatencyAndMergeBoutsInSameTrials(args):
   from zebrazoom.dataAnalysis.createCustomDataStructure.filterLatencyAndMergeBoutsInSameTrials import filterLatencyAndMergeBoutsInSameTrials

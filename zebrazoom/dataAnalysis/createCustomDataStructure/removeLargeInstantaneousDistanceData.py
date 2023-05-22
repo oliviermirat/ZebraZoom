@@ -9,9 +9,7 @@ import os
 from PyQt5.QtWidgets import QFileDialog
 
 
-def removeLargeInstantaneousDistanceData(ZZoutputFolder, paramList):
-  
-  maxDistance = float(paramList[2]) if len(paramList) > 2 else 1
+def removeLargeInstantaneousDistanceData(ZZoutputFolder, maxDistance):
 
   pathToResultFolder =  QFileDialog.getExistingDirectory(caption='Choose the result folder for which an excel file should be generated', directory=ZZoutputFolder)
   if not pathToResultFolder:
