@@ -309,6 +309,7 @@ CONFIG_DEFAULT = \
   "lastFrame": 0,
   "videoWidth": 0,
   "videoHeight": 0,
+  "storeH5": 0
 }
 
 

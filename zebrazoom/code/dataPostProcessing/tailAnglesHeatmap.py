@@ -113,7 +113,7 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoName):
         with open(fname, 'w+', newline='') as f:
           f.write(''.join(startLines))
           df.convert_dtypes().to_csv(f)
-        if angleCount and hyperparameters.get('storeH5', False):
+        if angleCount and hyperparameters['storeH5']:
           with h5py.File(hyperparameters['H5filename'], 'a') as results:
             arr = np.empty(nbFrames, dtype=[(f'Pos{idx}', float) for idx in range(1, angleCount + 1)])
             for idx, data in enumerate(tailAngleHeatmapData):

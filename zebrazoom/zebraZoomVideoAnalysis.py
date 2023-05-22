@@ -29,7 +29,7 @@ class ZebraZoomVideoAnalysis:
     self.wellPositions = None
     # Getting hyperparameters
     self._hyperparameters, self._configFile = getHyperparameters(configFile, self._videoNameWithExt, os.path.join(pathToVideo, self._videoNameWithExt), argv)
-    if self._hyperparameters.get('storeH5', False):
+    if self._hyperparameters['storeH5']:
       self._hyperparameters['H5filename'] = os.path.join(self._hyperparameters["outputFolder"], f'{self._hyperparameters["videoName"]}_{datetime.now().strftime("%Y_%m_%d-%H_%M_%S")}.h5')
 
     # Setting output folder
@@ -216,7 +216,7 @@ class ZebraZoomVideoAnalysis:
       videoDataResults2 = {}
       videoDataResults2['videoDataResults'] = superStruct
       savemat(matlabPath, videoDataResults2)
-    if self._hyperparameters.get("storeH5", False):
+    if self._hyperparameters["storeH5"]:
       self._storeH5(superStruct)
 
   def _storeVersionUsed(self):

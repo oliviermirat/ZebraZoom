@@ -175,7 +175,7 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
           bEnd = superStruct["wellPoissMouv"][i][j][k]["BoutEnd"]
           curvatures[(bStart - firstFrame, bEnd + 1 - firstFrame)] = originalCurvature.tolist()
 
-        if hyperparameters.get('storeH5', False):
+        if hyperparameters['storeH5']:
           with h5py.File(hyperparameters['H5filename'], 'a') as results:
             results.require_group(f"dataForWell{i}/dataForAnimal{j}/listOfBouts/bout{k}").create_dataset('curvature', data=originalCurvature)
 
@@ -320,7 +320,7 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         with open(fname, 'w+', newline='') as f:
           f.write(''.join(startLines))
           df.convert_dtypes().to_csv(f)
-        if curvatures and hyperparameters.get('storeH5', False):
+        if curvatures and hyperparameters['storeH5']:
           with h5py.File(hyperparameters['H5filename'], 'a') as results:
             arr = np.empty(nbFrames, dtype=[(f'Pos{idx}', float) for idx in range(1, curvatureCount + 1)])
             for idx, data in enumerate(curvatureData):
