@@ -4,7 +4,7 @@ from zebrazoom.code.dataPostProcessing.perBoutOutput import calculateCurvature
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 
 
-def storeCurvature(results, dataGroup, boutsGroup):
+def calculateAndStoreCurvature(results, dataGroup, boutsGroup):
   hyperparameters = getHyperparametersSimple(dict(results['configurationFileUsed'].attrs))
   firstFrame = results.attrs['firstFrame']
   lastFrame = results.attrs['lastFrame']
