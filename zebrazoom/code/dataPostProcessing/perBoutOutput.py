@@ -316,7 +316,7 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         with open(fname, 'w+', newline='') as f:
           f.write(''.join(startLines))
           df.convert_dtypes().to_csv(f)
-        if hyperparameters['storeH5']:
+        if hyperparameters['storeH5'] and superStruct["wellPoissMouv"][i][j]:
           with h5py.File(hyperparameters['H5filename'], 'a') as results:
             curvature = np.empty((lastFrame - firstFrame + 1, hyperparameters['nbTailPoints'] - 2), dtype=float)
             TailX_VideoReferential = np.column_stack([df['HeadPosX']] + [df[f'TailPosX{idx}'] for idx in range(1, hyperparameters['nbTailPoints'])])
