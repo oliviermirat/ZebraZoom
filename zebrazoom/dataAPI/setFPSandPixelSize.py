@@ -10,7 +10,7 @@ def setFPSandPixelSize(videoName: str, videoFPS: float, videoPixelSize: float):
   if not os.path.exists(resultsPath):
     raise ValueError(f'video {videoName} not found in the default ZZoutput folder ({ZZoutputPath})')
     
-  with h5py.File(resultsPath, 'w') as results:
+  with h5py.File(resultsPath, 'a') as results:
   
     results.attrs['videoFPS']       = videoFPS
     results.attrs['videoPixelSize'] = videoPixelSize
