@@ -1,6 +1,6 @@
 import zebrazoom.dataAPI as dataAPI
 
-videoName = "headEmbeddedZebrafishLarva_2023_05_23-16_01_25"
+videoName = "headEmbeddedZebrafishLarva"  # this will use the latest results file, to use a specific one, provide the full name, e.g. "headEmbeddedZebrafishLarva_2023_05_23-16_01_25"
 numWell   = 0
 numAnimal = 0
 

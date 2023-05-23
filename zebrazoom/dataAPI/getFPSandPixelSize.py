@@ -1,17 +1,9 @@
-import os
-import h5py
-import numpy as np
-from zebrazoom.code.paths import getDefaultZZoutputFolder
+from ._openResultsFile import openResultsFile
 
-def getFPSandPixelSize(videoName: str):
+
+def getFPSandPixelSize(videoName: str) -> [float, float]:
   
-  ZZoutputPath = getDefaultZZoutputFolder()
-  resultsPath = os.path.join(ZZoutputPath, f'{videoName}.h5')
-  
-  if not os.path.exists(resultsPath):
-    raise ValueError(f'video {videoName} not found in the default ZZoutput folder ({ZZoutputPath})')
-    
-  with h5py.File(resultsPath, 'r+') as results:  
+  with openResultsFile(videoName, 'r') as results:
     videoFPS = results.attrs['videoFPS']
     videoPixelSize = results.attrs['videoPixelSize']
   

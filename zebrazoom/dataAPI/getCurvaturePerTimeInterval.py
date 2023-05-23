@@ -1,19 +1,12 @@
-import os
-
-import h5py
 import numpy as np
 
-from zebrazoom.code.paths import getDefaultZZoutputFolder
 from ._calculateAndStoreCurvature import calculateAndStoreCurvature
+from ._openResultsFile import openResultsFile
 
 
 def getCurvaturePerTimeInterval(videoName: str, numWell: int, numAnimal: int, startTimeInSeconds: int, endTimeInSeconds: int) -> [np.array, np.array, np.array]:
   
-  ZZoutputPath = getDefaultZZoutputFolder()
-  resultsPath = os.path.join(ZZoutputPath, f'{videoName}.h5')
-  if not os.path.exists(resultsPath):
-    raise ValueError(f'video {videoName} not found in the default ZZoutput folder ({ZZoutputPath})')
-  with h5py.File(resultsPath, 'r+') as results:
+  with openResultsFile(videoName, 'r+') as results:
     if 'videoFPS' not in results.attrs:
       raise ValueError(f'videoFPS not found in the results, cannot convert seconds to frames')
     if 'videoPixelSize' not in results.attrs:

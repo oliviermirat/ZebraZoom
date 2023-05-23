@@ -1,21 +1,12 @@
-import os
-
-import h5py
 import numpy as np
 
-from zebrazoom.code.paths import getDefaultZZoutputFolder
 from ._calculateAndStoreCurvature import calculateAndStoreCurvature
+from ._openResultsFile import openResultsFile
 
 
 def getCurvaturePerBout(videoName: str, numWell: int, numAnimal: int, numBout: int) -> [np.array, np.array, np.array]:
-  
-  ZZoutputPath = getDefaultZZoutputFolder()
-  resultsPath = os.path.join(ZZoutputPath, f'{videoName}.h5')
-  
-  if not os.path.exists(resultsPath):
-    raise ValueError(f'video {videoName} not found in the default ZZoutput folder ({ZZoutputPath})')
-  
-  with h5py.File(resultsPath, 'r+') as results:
+
+  with openResultsFile(videoName, 'r+') as results:
     if not('videoFPS' in results.attrs) or not('videoPixelSize' in results.attrs):
       raise ValueError(f'You must set the videoFPS and videoPixelSize for the video {videoName}')
     videoFPS       = results.attrs['videoFPS']
