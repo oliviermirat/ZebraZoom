@@ -26,7 +26,7 @@ def getCurvaturePerTimeInterval(videoName: str, numWell: int, numAnimal: int, st
     if 'curvature' in dataGroup:
       curvature = np.array([dataGroup['curvature'][column][intervalStart:intervalEnd] for column in dataGroup['curvature'].attrs['columns']])
     else:
-      curvature = np.array([data[intervalStart:intervalEnd] for data in calculateAndStoreCurvature(results, dataGroup, results[f'dataForWell{numWell}/dataForAnimal{numAnimal}/listOfBouts'])])
+      curvature = np.array([data[intervalStart:intervalEnd] for data in calculateAndStoreCurvature(results, dataGroup)])
     
     # Getting x time values for each curvature point
     boutStart = int(startTimeInSeconds * results.attrs['videoFPS'])

@@ -34,7 +34,7 @@ def getCurvaturePerBout(videoName: str, numWell: int, numAnimal: int, numBout: i
     if 'curvature' in dataGroup:
       curvature = np.array([dataGroup['curvature'][column][start:end] for column in dataGroup['curvature'].attrs['columns']])
     else:
-      curvature = np.array([data[start:end] for data in calculateAndStoreCurvature(results, dataGroup, results[f'dataForWell{numWell}/dataForAnimal{numAnimal}/listOfBouts'])])
+      curvature = np.array([data[start:end] for data in calculateAndStoreCurvature(results, dataGroup)])
 
     # Getting x time values for each curvature point
     xTimeValues = curvature.copy()
