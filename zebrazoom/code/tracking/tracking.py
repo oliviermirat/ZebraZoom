@@ -48,7 +48,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
 
     self.useGUI = True
 
-  def _adjustParameters(self, i, initialCurFrame, frame, frame2, widgets):
+  def _adjustParameters(self, i, initialCurFrame, frame, frame2, back, widgets):
     return None
 
   def _addBlackLineToImgSetParameters(self, frame):
@@ -471,7 +471,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
               self._trackingHeadTailAllAnimals[animalId][i-self._firstFrame][j][0] = self._trackingHeadTailAllAnimals[animalId][i-self._firstFrame][j][0] + xHead
               self._trackingHeadTailAllAnimals[animalId][i-self._firstFrame][j][1] = self._trackingHeadTailAllAnimals[animalId][i-self._firstFrame][j][1] + yHead
 
-      paramsAdjusted = self._adjustParameters(i, initialCurFrame, frame, frame2, widgets)
+      paramsAdjusted = self._adjustParameters(i, initialCurFrame, frame, frame2, back, widgets)
       if paramsAdjusted is not None:
         i, widgets = paramsAdjusted
       else:

@@ -14,7 +14,7 @@ from ._base import BaseGUITrackingMethod
 
 
 class GUITracking(Tracking, BaseGUITrackingMethod):
-  def _adjustParameters(self, i, initialCurFrame, frame, frame2, widgets):
+  def _adjustParameters(self, i, initialCurFrame, frame, frame2, back, widgets):
     if self._hyperparameters["adjustHeadEmbededTracking"] == 1:
       i, widgets = adjustHeadEmbededTrackingParams(self._nbTailPoints, i, self._firstFrame, self._trackingHeadTailAllAnimals, self._trackingHeadingAllAnimals, frame, frame2, self._hyperparameters, widgets)
       self._adjustHeadEmbededHyperparameters(frame)
@@ -31,7 +31,7 @@ class GUITracking(Tracking, BaseGUITrackingMethod):
         else:
           minPixelDiffForBackExtract = self._hyperparameters["minPixelDiffForBackExtract"]
       curFrame = initialCurFrame
-      putToWhite = (curFrame.astype('int32') >= (self._background.astype('int32') - minPixelDiffForBackExtract) )
+      putToWhite = (curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
       curFrame[putToWhite] = 255
       ret, frame2 = cv2.threshold(curFrame, self._hyperparameters["thresholdForBlobImg"], 255, cv2.THRESH_BINARY)
       # Showing current image and waiting for next parameter/frame change
