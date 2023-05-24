@@ -5,7 +5,7 @@ import cv2
 
 from PyQt5.QtCore import Qt, QSize
 from PyQt5.QtGui import QCursor, QFont, QIcon, QDoubleValidator, QIntValidator, QPixmap
-from PyQt5.QtWidgets import QApplication, QFrame, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup, QSpacerItem
+from PyQt5.QtWidgets import QApplication, QFrame, QFormLayout, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup, QSpacerItem
 PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
@@ -1509,47 +1509,49 @@ class FinishConfig(QWidget):
     layout.addWidget(self._alwaysSaveCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def speedUpAnalysisToggled(checked):
-      analysisInfoWidget.setVisible(checked)
+      helpBtn.setVisible(checked)
       if not checked:
         if "createPandasDataFrameOfParameters" in controller.configFile:
           del controller.configFile["createPandasDataFrameOfParameters"]
-        if "videoFPS" in controller.configFile:
-          del controller.configFile["videoFPS"]
-        if "videoPixelSize" in controller.configFile:
-          del controller.configFile["videoPixelSize"]
       else:
         controller.configFile["createPandasDataFrameOfParameters"] = 1
-        if videoFPS.text():
-          controller.configFile["videoFPS"] = float(videoFPS.text())
-        if videoPixelSize.text():
-          controller.configFile["videoPixelSize"] = float(videoPixelSize.text())
     speedUpAnalysisCheckbox = QCheckBox("Pre-calculate kinematic parameters during tracking", self)
     speedUpAnalysisCheckbox.toggled.connect(speedUpAnalysisToggled)
     speedUpAnalysisCheckbox.toggled.connect(updateSaveBtn)
     layout.addWidget(speedUpAnalysisCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+    helpBtn = QPushButton("Help", self)
+    helpBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/behaviorAnalysis/optimizingSpeedOfFinalAnalysis"))
+    helpBtn.setVisible(False)
+    layout.addWidget(helpBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    analysisInfoLayout = QGridLayout()
-    analysisInfoLayout.addWidget(QLabel("videoFPS:"), 0, 0, Qt.AlignmentFlag.AlignLeft)
+    videoInfoLayout = QFormLayout()
+    videoInfoLayout.setFormAlignment(Qt.AlignmentFlag.AlignCenter)
+    videoInfoLayout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
     videoFPS = QLineEdit(self)
     videoFPS.setValidator(QDoubleValidator(videoFPS))
     videoFPS.validator().setBottom(0)
-    videoFPS.textChanged.connect(lambda text: text and controller.configFile.update({"videoFPS": float(text)}))
+
+    def videoFPSChanged(text):
+      if text:
+        controller.configFile["videoFPS"] = float(text)
+      elif "videoFPS" in controller.configFile:
+          del controller.configFile["videoFPS"]
+    videoFPS.textChanged.connect(videoFPSChanged)
     videoFPS.textChanged.connect(updateSaveBtn)
-    analysisInfoLayout.addWidget(videoFPS, 0, 1, Qt.AlignmentFlag.AlignLeft)
-    analysisInfoLayout.addWidget(QLabel("videoPixelSize:"), 1, 0, Qt.AlignmentFlag.AlignLeft)
+    videoInfoLayout.addRow(QLabel("videoFPS:"), videoFPS)
     videoPixelSize = QLineEdit(self)
     videoPixelSize.setValidator(QDoubleValidator(videoPixelSize))
     videoPixelSize.validator().setBottom(0)
-    videoPixelSize.textChanged.connect(lambda text: text and controller.configFile.update({"videoPixelSize": float(text)}))
+
+    def videoPixelSizeChanged(text):
+      if text:
+        controller.configFile["videoPixelSize"] = float(text)
+      elif "videoPixelSize" in controller.configFile:
+          del controller.configFile["videoPixelSize"]
+    videoPixelSize.textChanged.connect(videoPixelSizeChanged)
     videoPixelSize.textChanged.connect(updateSaveBtn)
-    analysisInfoLayout.addWidget(videoPixelSize, 1, 1, Qt.AlignmentFlag.AlignLeft)
-    helpBtn = QPushButton("Help", self)
-    helpBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/behaviorAnalysis/optimizingSpeedOfFinalAnalysis"))
-    analysisInfoLayout.addWidget(helpBtn, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    analysisInfoWidget = QWidget(self)
-    analysisInfoWidget.setLayout(analysisInfoLayout)
-    analysisInfoWidget.setVisible(False)
-    layout.addWidget(analysisInfoWidget, alignment=Qt.AlignmentFlag.AlignCenter)
+    videoInfoLayout.addRow(QLabel("videoPixelSize:"), videoPixelSize)
+    layout.addLayout(videoInfoLayout)
 
     layout.addStretch()
 
