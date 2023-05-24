@@ -51,7 +51,7 @@ def excepthook(excType, excValue, traceback_):
   formattedTraceback = traceback.format_exception(excType, excValue, traceback_)
   errorMessage.setText("An error has ocurred: %s" % formattedTraceback[-1])
   informativeText = 'Please report the issue on <a href="https://github.com/oliviermirat/ZebraZoom/issues">Github</a>.'
-  if app.configFile and app.savedConfigFile != {k: v for k, v in app.configFile.items() if k != "firstFrame" and k != "lastFrame"}:
+  if app.configFile and app.savedConfigFile != app.configFile:
     configDir = paths.getConfigurationFolder()
     videoName = os.path.splitext(os.path.basename(app.videoToCreateConfigFileFor))[0]
     configFilename = os.path.join(configDir, '%s_%s_unfinished.json' % (videoName, datetime.now().strftime("%Y_%m_%d-%H_%M_%S")))
@@ -156,7 +156,7 @@ class ZebraZoomApp(PlainApplication):
     def show_frame(self, page_name):
         '''Show a frame for the given page name'''
         if page_name == "StartPage":
-            if self.configFile and self.savedConfigFile != {k: v for k, v in self.configFile.items() if k != "firstFrame" and k != "lastFrame"}:
+            if self.configFile and self.savedConfigFile != self.configFile:
                 reply = QMessageBox.question(self.window, "Unsaved Changes",
                                              "Are you sure you want to go back to the start page? Changes made to the config will be lost.",
                                              QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No)
