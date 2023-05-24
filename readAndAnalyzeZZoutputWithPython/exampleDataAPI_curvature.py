@@ -1,6 +1,6 @@
 import zebrazoom.dataAPI as dataAPI
 
-videoName = "headEmbeddedZebrafishLarva"  # this will use the latest results file, to use a specific one, provide the full name, e.g. "headEmbeddedZebrafishLarva_2023_05_23-16_01_25"
+videoName = "headEmbeddedZebrafishLarva_2023_05_23-16_01_25"  # this will use the latest results file, to use a specific one, provide the full name, e.g. "headEmbeddedZebrafishLarva_2023_05_23-16_01_25"
 numWell   = 0
 numAnimal = 0
 
@@ -17,6 +17,8 @@ else:
 numBout = 0
 
 [curvatureValues, xTimeValues, yDistanceAlongTheTail] = dataAPI.getCurvaturePerBout(videoName, numWell, numAnimal, numBout)
+
+curvatureValues = dataAPI.applyMedianFilterOnCurvature(curvatureValues, 5)
 
 dataAPI.plotCurvatureYaxisApproximate(curvatureValues, xTimeValues, yDistanceAlongTheTail, videoFPS, videoPixelSize)
 
