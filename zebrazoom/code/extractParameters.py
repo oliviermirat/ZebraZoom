@@ -183,7 +183,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       tailX[i]   = trackingTail[i,:,0]
       tailY[i]   = trackingTail[i,:,1]
     
-    if hyperparameters["saveAllDataEvenIfNotInBouts"]:
+    if hyperparameters["saveAllDataEvenIfNotInBouts"] or hyperparameters["storeH5"]:
       trackingFlatten = [trackingHeadTailAllAnimals[animalId][i].flatten().tolist() + [_calculateTailLength(tailX[i], tailY[i])] + heading[i].tolist() + angle[i].tolist() for i in range(0, len(heading))]
       trackingFlattenColumnsNames = ['HeadPosX', 'HeadPosY']
       for i in range(0, (len(trackingHeadTailAllAnimals[0][0].flatten().tolist()) - 2) // 2):
@@ -368,8 +368,9 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
         item["TailY_VideoReferential"] = tailY[start:end+1].tolist()
       data.append(item)
 
-    if hyperparameters["saveAllDataEvenIfNotInBouts"]:
+    if hyperparameters["saveAllDataEvenIfNotInBouts"] or hyperparameters["storeH5"]:
       trackingFlattenPandas = pd.DataFrame(trackingFlatten, columns=trackingFlattenColumnsNames)
+    if hyperparameters["saveAllDataEvenIfNotInBouts"]:
       fname = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"], f'allData_{hyperparameters["videoName"]}_wellNumber{wellNumber}_animal{animalId}.csv')
       with open(fname, 'w+', newline='') as f:
         if hyperparameters["videoFPS"]:
@@ -377,26 +378,26 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
         if hyperparameters["videoPixelSize"]:
           f.write(f'videoPixelSize: {hyperparameters["videoPixelSize"]}\n')
         trackingFlattenPandas.convert_dtypes().to_csv(f)
-      if hyperparameters['storeH5']:
-        with h5py.File(hyperparameters['H5filename'], 'a') as results:
-          group = results.create_group(f"dataForWell{wellNumber}/dataForAnimal{animalId}/dataPerFrame")
-          datasets = {'HeadPos': (('HeadPosX', 'HeadPosY'), ('X', 'Y')),
-                      'Heading': 'Heading',
-                      'TailAngle': 'tailAngle',
-                      'TailPosX': (tuple(f'TailPosX{pos}' for pos in range(1, nbPoints)), tuple(f'Pos{pos}' for pos in range(1, nbPoints))),
-                      'TailPosY': (tuple(f'TailPosY{pos}' for pos in range(1, nbPoints)), tuple(f'Pos{pos}' for pos in range(1, nbPoints))),
-                      'TailLength': 'TailLength'}
-          for name, columns in datasets.items():
-            if isinstance(columns, str):  # 1d array
-              group.create_dataset(name, data=trackingFlattenPandas[columns].values)
-            else:
-              assert isinstance(columns, tuple)  # 2d array
-              pandasNames, h5Names = columns
-              headPosData = np.empty(len(trackingFlattenPandas.index), dtype=list(zip(h5Names, (trackingFlattenPandas[name].dtype for name in pandasNames))))
-              for h5Name, pandasName in zip(h5Names, pandasNames):
-                headPosData[h5Name] = trackingFlattenPandas[pandasName].values
-              headPos = group.create_dataset(name, data=headPosData)
-              headPos.attrs['columns'] = headPosData.dtype.names
+    if hyperparameters['storeH5']:
+      with h5py.File(hyperparameters['H5filename'], 'a') as results:
+        group = results.create_group(f"dataForWell{wellNumber}/dataForAnimal{animalId}/dataPerFrame")
+        datasets = {'HeadPos': (('HeadPosX', 'HeadPosY'), ('X', 'Y')),
+                    'Heading': 'Heading',
+                    'TailAngle': 'tailAngle',
+                    'TailPosX': (tuple(f'TailPosX{pos}' for pos in range(1, nbPoints)), tuple(f'Pos{pos}' for pos in range(1, nbPoints))),
+                    'TailPosY': (tuple(f'TailPosY{pos}' for pos in range(1, nbPoints)), tuple(f'Pos{pos}' for pos in range(1, nbPoints))),
+                    'TailLength': 'TailLength'}
+        for name, columns in datasets.items():
+          if isinstance(columns, str):  # 1d array
+            group.create_dataset(name, data=trackingFlattenPandas[columns].values)
+          else:
+            assert isinstance(columns, tuple)  # 2d array
+            pandasNames, h5Names = columns
+            headPosData = np.empty(len(trackingFlattenPandas.index), dtype=list(zip(h5Names, (trackingFlattenPandas[name].dtype for name in pandasNames))))
+            for h5Name, pandasName in zip(h5Names, pandasNames):
+              headPosData[h5Name] = trackingFlattenPandas[pandasName].values
+            headPos = group.create_dataset(name, data=headPosData)
+            headPos.attrs['columns'] = headPosData.dtype.names
 
   print("Parameters extracted for well",wellNumber)
   if hyperparameters["popUpAlgoFollow"]:

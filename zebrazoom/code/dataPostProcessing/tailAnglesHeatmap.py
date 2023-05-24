@@ -42,8 +42,8 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoName):
   # Going through each well, each fish and each bout
   for i in range(0, len(superStruct["wellPoissMouv"])):
     for j in range(0, len(superStruct["wellPoissMouv"][i])):
+      tailAngleHeatmaps = {}
       if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-        tailAngleHeatmaps = {}
         fname = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"], f'allData_{hyperparameters["videoName"]}_wellNumber{i}_animal{j}.csv')
         startLines = []
         with open(fname) as f:
@@ -86,7 +86,7 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoName):
           plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_anglesSmoothed_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.png'))
           plt.close(1)
 
-        if hyperparameters["saveAllDataEvenIfNotInBouts"]:
+        if hyperparameters["saveAllDataEvenIfNotInBouts"] or hyperparameters["storeH5"]:
           tailAngleHeatmaps[(bStart - firstFrame, bEnd + 1 - firstFrame)] = tailAngleHeatmap
         
         # Creation of tail angle heatmap
@@ -102,21 +102,22 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoName):
           plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_tailAngleHeatmap_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.png'))
           plt.close(1)
 
-      if hyperparameters["saveAllDataEvenIfNotInBouts"]:
+      if hyperparameters["saveAllDataEvenIfNotInBouts"] or hyperparameters["storeH5"]:
         angleCount = max(map(len, tailAngleHeatmaps.values())) if tailAngleHeatmaps else 0
         tailAngleHeatmapData = [[float('nan')] * nbFrames for _ in range(angleCount)]
         for (start, end), values in tailAngleHeatmaps.items():
           for data, vals in zip(tailAngleHeatmapData, values):
             data[start:end] = vals
+      if hyperparameters["saveAllDataEvenIfNotInBouts"]:
         for idx, data in enumerate(tailAngleHeatmapData):
           df[f'tailAngleHeatmap{idx + 1}'] = data
         with open(fname, 'w+', newline='') as f:
           f.write(''.join(startLines))
           df.convert_dtypes().to_csv(f)
-        if angleCount and hyperparameters['storeH5']:
-          with h5py.File(hyperparameters['H5filename'], 'a') as results:
-            arr = np.empty(nbFrames, dtype=[(f'Pos{idx}', float) for idx in range(1, angleCount + 1)])
-            for idx, data in enumerate(tailAngleHeatmapData):
-              arr[f'Pos{idx + 1}'] = data
-            dataset = results.create_dataset(f"dataForWell{i}/dataForAnimal{j}/dataPerFrame/tailAngleHeatmap", data=arr)
-            dataset.attrs['columns'] = arr.dtype.names
+      if angleCount and hyperparameters['storeH5']:
+        with h5py.File(hyperparameters['H5filename'], 'a') as results:
+          arr = np.empty(nbFrames, dtype=[(f'Pos{idx}', float) for idx in range(1, angleCount + 1)])
+          for idx, data in enumerate(tailAngleHeatmapData):
+            arr[f'Pos{idx + 1}'] = data
+          dataset = results.create_dataset(f"dataForWell{i}/dataForAnimal{j}/dataPerFrame/tailAngleHeatmap", data=arr)
+          dataset.attrs['columns'] = arr.dtype.names

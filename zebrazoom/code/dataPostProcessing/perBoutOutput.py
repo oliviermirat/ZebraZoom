@@ -148,8 +148,8 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
   # Curvature calculation: Going through each well, each fish and each bout
   for i in range(0, len(superStruct["wellPoissMouv"])):
     for j in range(0, len(superStruct["wellPoissMouv"][i])):
+      curvatures = {}
       if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-        curvatures = {}
         fname = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"], f'allData_{hyperparameters["videoName"]}_wellNumber{i}_animal{j}.csv')
         startLines = []
         with open(fname) as f:
@@ -316,16 +316,17 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         with open(fname, 'w+', newline='') as f:
           f.write(''.join(startLines))
           df.convert_dtypes().to_csv(f)
-        if hyperparameters['storeH5'] and superStruct["wellPoissMouv"][i][j]:
-          with h5py.File(hyperparameters['H5filename'], 'a') as results:
-            curvature = np.empty((lastFrame - firstFrame + 1, hyperparameters['nbTailPoints'] - 2), dtype=float)
-            TailX_VideoReferential = np.column_stack([df['HeadPosX']] + [df[f'TailPosX{idx}'] for idx in range(1, hyperparameters['nbTailPoints'])])
-            TailY_VideoReferential = np.column_stack([df['HeadPosY']] + [df[f'TailPosY{idx}'] for idx in range(1, hyperparameters['nbTailPoints'])])
-            curvature = list(np.flip(np.transpose(calculateCurvature(TailX_VideoReferential, TailY_VideoReferential, hyperparameters)), 0))
-            data = np.empty(len(curvature[0]), dtype=[(f'Pos{idx}', float) for idx in range(1, len(curvature) + 1)])
-            for idx, curvatureData in enumerate(curvature):
-              data[f'Pos{idx + 1}'] = curvatureData
-            dataset = results.require_group(f"dataForWell{i}/dataForAnimal{j}/dataPerFrame").create_dataset('curvature', data=data)
-            dataset.attrs['columns'] = data.dtype.names
+      if hyperparameters['storeH5'] and superStruct["wellPoissMouv"][i][j]:
+        with h5py.File(hyperparameters['H5filename'], 'a') as results:
+          dataGroup = results.require_group(f"dataForWell{i}/dataForAnimal{j}/dataPerFrame")
+          curvature = np.empty((lastFrame - firstFrame + 1, hyperparameters['nbTailPoints'] - 2), dtype=float)
+          TailX_VideoReferential = np.column_stack([dataGroup['HeadPos']['X']] + [dataGroup['TailPosX'][col] for col in dataGroup['TailPosX'].attrs['columns']])
+          TailY_VideoReferential = np.column_stack([dataGroup['HeadPos']['Y']] + [dataGroup['TailPosY'][col] for col in dataGroup['TailPosY'].attrs['columns']])
+          curvature = list(np.flip(np.transpose(calculateCurvature(TailX_VideoReferential, TailY_VideoReferential, hyperparameters)), 0))
+          data = np.empty(len(curvature[0]), dtype=[(f'Pos{idx}', float) for idx in range(1, len(curvature) + 1)])
+          for idx, curvatureData in enumerate(curvature):
+            data[f'Pos{idx + 1}'] = curvatureData
+          dataset = dataGroup.create_dataset('curvature', data=data)
+          dataset.attrs['columns'] = data.dtype.names
 
   return superStruct

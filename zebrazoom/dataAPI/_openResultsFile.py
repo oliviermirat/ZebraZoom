@@ -17,6 +17,7 @@ def _findResultsFile(videoName):
     raise ValueError(f'video {videoName} not found in the default ZZoutput folder ({ZZoutputPath})')
   return os.path.join(ZZoutputPath, path)
 
+
 @contextlib.contextmanager
 def openResultsFile(videoName, mode):
   with h5py.File(_findResultsFile(videoName), mode) as results:
