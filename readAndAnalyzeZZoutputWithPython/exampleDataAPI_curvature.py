@@ -1,6 +1,6 @@
 import zebrazoom.dataAPI as dataAPI
 
-videoName = "headEmbeddedZebrafishLarva_2023_05_23-16_01_25"  # this will use the latest results file, to use a specific one, provide the full name, e.g. "headEmbeddedZebrafishLarva_2023_05_23-16_01_25"
+videoName = "headEmbeddedZebrafishLarva"  # this will use the latest results file, to use a specific one, provide the full name, e.g. "headEmbeddedZebrafishLarva_2023_05_23-16_01_25"
 numWell   = 0
 numAnimal = 0
 
@@ -10,7 +10,9 @@ if fpsAndPixelSizeSavedInConfigurationFile:
   [videoFPS, videoPixelSize] = dataAPI.getFPSandPixelSize(videoName)
 else:
   # This would be necessary if videoFPS and videoPixelSize had not already been set in the configuration file before running the tracking
-  dataAPI.setFPSandPixelSize(videoName, 300, 0.01)
+  videoFPS = 300
+  videoPixelSize = 0.01
+  dataAPI.setFPSandPixelSize(videoName, videoFPS, videoPixelSize)
 
 # Retriving and plotting curvature "per bout"
 
