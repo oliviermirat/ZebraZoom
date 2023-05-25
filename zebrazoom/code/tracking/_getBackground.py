@@ -181,5 +181,6 @@ class GetBackgroundMixin:
 def getBackground(videoPath, hyperparameters):
   obj = GetBackgroundMixin()
   obj._videoPath = videoPath
+  obj._videoName, _ = os.path.splitext(os.path.basename(videoPath))
   obj._hyperparameters = hyperparameters
   return obj.getBackground()
