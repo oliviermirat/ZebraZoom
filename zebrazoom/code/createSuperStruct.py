@@ -86,7 +86,7 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters, pathToOrigina
   videoDataResults  = {}
   wellPoissMouv     = []
   
-  for numWell, j in dataPerWell.items():
+  for numWell, j in sorted(dataPerWell.items()):
     
     item = {}
     

@@ -1,4 +1,5 @@
 import math
+import pickle
 import os
 import cv2
 
@@ -179,3 +180,26 @@ class BaseZebraZoomTrackingMethod(BaseTrackingMethod, GetBackgroundMixin):
     if value > maxx:
       return maxx
     return value
+
+  def getBackground(self):
+    outputFolderVideo = os.path.join(self._hyperparameters["outputFolder"], self._videoName)
+    if self._hyperparameters["backgroundSubtractorKNN"] or (self._hyperparameters["headEmbeded"] and self._hyperparameters["headEmbededRemoveBack"] == 0 and self._hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"] == 0 and self._hyperparameters["adjustHeadEmbededTracking"] == 0) or self._hyperparameters["trackingDL"] or self._hyperparameters["fishTailTrackingDifficultBackground"]:
+      background = []
+    else:
+      print("start get background")
+      if self._hyperparameters["reloadBackground"]:
+        outfile = open(os.path.join(outputFolderVideo, 'intermediaryBackground.txt'),'rb')
+        background = pickle.load(outfile)
+        print("Background Reloaded")
+      else:
+        outfile = open(os.path.join(outputFolderVideo, 'intermediaryBackground.txt'),'wb')
+        background = self._getBackground()
+        pickle.dump(background, outfile)
+        cv2.imwrite(os.path.join(outputFolderVideo, 'background.png'), background)
+      outfile.close()
+
+    if self._hyperparameters["exitAfterBackgroundExtraction"]:
+      print("exitAfterBackgroundExtraction")
+      raise ValueError
+
+    return background

@@ -324,7 +324,9 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
 
     return [self._trackingHeadTailAllAnimals, self._trackingHeadingAllAnimals, 0, 0, 0]
 
-  def runTracking(self, wellNumber):
+  def runTracking(self, wellNumber, background=None):
+    if background is not None:
+      self._background = background
     if self._background is None:
       self._background = self.getBackground()
     if self._hyperparameters["trackingDL"]:

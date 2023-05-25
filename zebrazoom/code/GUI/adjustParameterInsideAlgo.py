@@ -141,7 +141,7 @@ def _addBlackSegments(config, videoPath, frameNumber, wellNumber, cap):
     else:
       hyperparameters["headEmbededRemoveBack"] = 1
       hyperparameters["minPixelDiffForBackExtract"] = hyperparameters["headEmbededAutoSet_BackgroundExtractionOption"]
-      frame, thresh1 = get_default_tracking_method()(videoPath, hyperparameters, wellPositions).headEmbededFrameBackExtract(getBackground(videoPath, hyperparameters), frameNumber, wellNumber)
+      frame, thresh1 = get_default_tracking_method()(videoPath, wellPositions, hyperparameters).headEmbededFrameBackExtract(getBackground(videoPath, hyperparameters), frameNumber, wellNumber)
 
     quartileChose = hyperparameters["outputValidationVideoContrastImprovementQuartile"]
     lowVal  = int(np.quantile(frame, quartileChose))

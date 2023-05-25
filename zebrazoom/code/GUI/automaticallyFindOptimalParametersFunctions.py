@@ -9,7 +9,6 @@ import pickle
 import json
 import os
 import re
-from zebrazoom.code.tracking import getBackground
 from zebrazoom.code.findWells import findWells
 from zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions import prepareConfigFileForParamsAdjustements
 import zebrazoom.code.paths as paths
@@ -319,7 +318,7 @@ def findBestBackgroundSubstractionParameterForEachImage(data, videoPath, backgro
       hyperparameters["minPixelDiffForBackExtract"] = minPixelDiffForBackExtract
       tailTipGroundTruth = image["tailTipCoordinates"]
       if zebrafishToTrack:
-        trackingData = get_default_tracking_method()(videoPath, wellPositions, hyperparameters).runTracking(image["wellNumber"])
+        trackingData = get_default_tracking_method()(videoPath, wellPositions, hyperparameters).runTracking(image["wellNumber"], background=background)
         tailTipPredicted = trackingData[0][0][0][len(trackingData[0][0][0])-1]
         if (trackingData[0][0][0][0][0] == tailTipPredicted[0] and trackingData[0][0][0][0][1] == tailTipPredicted[1]) or (trackingData[0][0][0][1][0] == tailTipPredicted[0] and trackingData[0][0][0][1][1] == tailTipPredicted[1]):
           tailTipDistError = 1000000000
