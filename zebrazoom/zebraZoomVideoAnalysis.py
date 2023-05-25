@@ -6,6 +6,7 @@ from zebrazoom.code.createSuperStruct import createSuperStruct
 from zebrazoom.code.createValidationVideo import createValidationVideo
 from zebrazoom.code.getHyperparameters import getHyperparameters
 
+import h5py
 import pickle
 import os
 import shutil
@@ -14,6 +15,8 @@ import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import json
 import glob
+import numpy as np
+from datetime import datetime
 
 
 class ZebraZoomVideoAnalysis:
@@ -26,6 +29,8 @@ class ZebraZoomVideoAnalysis:
     self.wellPositions = None
     # Getting hyperparameters
     self._hyperparameters, self._configFile = getHyperparameters(configFile, self._videoNameWithExt, os.path.join(pathToVideo, self._videoNameWithExt), argv)
+    if self._hyperparameters['storeH5']:
+      self._hyperparameters['H5filename'] = os.path.join(self._hyperparameters["outputFolder"], f'{self._hyperparameters["videoName"]}_{datetime.now().strftime("%Y_%m_%d-%H_%M_%S")}.h5')
 
     # Setting output folder
     self._outputFolderVideo = os.path.join(self._hyperparameters["outputFolder"], videoName)
@@ -171,8 +176,38 @@ class ZebraZoomVideoAnalysis:
         if self._hyperparameters["createValidationVideo"]:
           infoFrame = createValidationVideo(os.path.join(self._pathToVideo, self._videoNameWithExt), superStruct, self._hyperparameters)
 
+  def _storeH5(self, superStruct):
+    with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
+      results.attrs['version'] = 0
+      results.attrs['firstFrame'] = superStruct["firstFrame"]
+      results.attrs['lastFrame'] = superStruct['lastFrame']
+      results.attrs['ZebraZoomVersionUsed'] = zebrazoom.__version__
+      if 'videoFPS' in superStruct:
+        results.attrs['videoFPS'] = superStruct['videoFPS']
+      if 'videoPixelSize' in superStruct:
+        results.attrs['videoPixelSize'] = superStruct['videoPixelSize']
+      if 'pathToOriginalVideo' in superStruct:
+        results.attrs['pathToOriginalVideo'] = superStruct['pathToOriginalVideo']
+      results.require_group("configurationFileUsed").attrs.update(self._configFile)
+      for idx, wellPositions in enumerate(self.wellPositions):
+        results.require_group(f"wellPositions/well{idx}").attrs.update(wellPositions)
+      keysToSkip = {'AnimalNumber', 'curvature', 'HeadX', 'HeadY', 'Heading', 'TailAngle_Raw', 'TailX_VideoReferential', 'TailY_VideoReferential'}
+      for wellIdx, well in enumerate(superStruct['wellPoissMouv']):
+        for animalIdx, animal in enumerate(well):
+          listOfBouts = results.require_group(f"dataForWell{wellIdx}/dataForAnimal{animalIdx}/listOfBouts")
+          listOfBouts.attrs['numberOfBouts'] = len(animal)
+          for boutIdx, bout in enumerate(animal):
+            boutGroup = listOfBouts.require_group(f'bout{boutIdx}')
+            for key, value in bout.items():
+              if key in keysToSkip:
+                continue
+              if isinstance(value, list):
+                boutGroup.create_dataset(key, data=np.array(value))
+              else:
+                boutGroup.attrs[key] = value
+
   def _storeResults(self, superStruct):
-    path = os.path.join(os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"]), 'results_' + self._hyperparameters["videoName"] + '.txt')
+    path = os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"], f'results_{self._hyperparameters["videoName"]}.txt')
     print("createSuperStruct:", path)
     with open(path, 'w') as outfile:
       json.dump(superStruct, outfile)
@@ -182,6 +217,8 @@ class ZebraZoomVideoAnalysis:
       videoDataResults2 = {}
       videoDataResults2['videoDataResults'] = superStruct
       savemat(matlabPath, videoDataResults2)
+    if self._hyperparameters["storeH5"]:
+      self._storeH5(superStruct)
 
   def _storeVersionUsed(self):
     with open(os.path.join(os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"]), 'ZebraZoomVersionUsed.txt'), 'w') as fp:

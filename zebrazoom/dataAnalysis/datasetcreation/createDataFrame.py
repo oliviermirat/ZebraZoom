@@ -1,3 +1,4 @@
+import h5py
 import os
 import scipy
 import scipy.io
@@ -19,7 +20,7 @@ from zebrazoom.dataAnalysis.datasetcreation.getTailAngleRecalculated2 import get
 from zebrazoom.dataAnalysis.datasetcreation.gatherInitialRawData import gatherInitialRawData
 import pickle
 
-def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecreation=0, addToGlobalParameters=0, minimumFrameToFrameDistanceToBeConsideredAsMoving=0, supstructOverwrite={}):
+def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecreation=0, addToGlobalParameters=0, minimumFrameToFrameDistanceToBeConsideredAsMoving=0, supstructOverwrite={}, H5filename=None):
 
   # Gathering user-inputed information about how to create the dataframe of parameters for the whole set of videos
   
@@ -95,7 +96,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   
   # Creating labels of columns of dataframe
   # General basic information
-  basicInformation = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration']
+  basicInformation = ['Trial_ID', 'Well_ID', 'Animal_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration']
   # Global parameters
   if tailAngleKinematicParameterCalculation:
     globParam  = ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Angular Velocity (deg/s)', 'Max TBF (Hz)', 'Mean TBF (Hz)', 'medianOfInstantaneousTBF', 'Max absolute TBA (deg.)', 'maxBendAmplitudeSigned', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)', 'medianBendAmplitudeSigned', 'Number of Oscillations', 'meanTBF', 'maxTailAngleAmplitude', 'Absolute Yaw (deg)', 'Signed Yaw (deg)', 'TBA#1 timing (s)', 'TBA#1 Amplitude (deg)', 'firstBendAmplitudeSigned', 'IBI (s)', 'xmean', 'ymean', 'binaryClass25degMaxTailAngle', 'tailAngleIntegralSigned', 'BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral', 'maxInstantaneousSpeed']
@@ -236,7 +237,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
                 # Initial basic information
                 
                 toPutInDataFrameColumn = basicInformation
-                toPutInDataFrame       = [trial_id, Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], (lastFrame - firstFrame) / fq]
+                toPutInDataFrame       = [trial_id, Well_ID, fishId, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], (lastFrame - firstFrame) / fq]
                 
                 if not(genotype[Well_ID] in genotypes):
                   genotypes.append(genotype[Well_ID])
@@ -304,7 +305,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
                 # Initial basic information
                 
                 toPutInDataFrameColumn = basicInformation
-                toPutInDataFrame       = [trial_id, Well_ID, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], (lastFrame - firstFrame) / fq]
+                toPutInDataFrame       = [trial_id, Well_ID, fishId, NumBout, dataForBout['BoutStart'], dataForBout['BoutEnd'], condition[Well_ID], genotype[Well_ID], (lastFrame - firstFrame) / fq]
                 
                 if not(genotype[Well_ID] in genotypes):
                   genotypes.append(genotype[Well_ID])
@@ -347,5 +348,17 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   # Saving dataframe for the whole set of videos as a matlab file
   if saveAllBoutsSuperStructuresInMatlabFormat:
     scipy.io.savemat(os.path.join(resFolder, nameOfFile + '.mat'), {'struct1':dfParam.to_dict("list")})
-    
+
+  if H5filename is not None:
+    cols = globParam + ['BoutStart', 'BoutEnd']
+    dtype = [(name, dfParam[name].infer_objects().dtype) for name in cols]
+    dfParam = dfParam[['Trial_ID', 'Well_ID', 'Animal_ID'] + cols].groupby(['Trial_ID', 'Well_ID', 'Animal_ID'])
+    with h5py.File(H5filename, 'a') as results:
+      for (trial, well, animal), group in dfParam:
+        arr = np.empty(len(group.index), dtype=dtype)
+        for name in cols:
+          arr[name] = group[name].values
+        dataset = results.create_dataset(f"dataForWell{well}/dataForAnimal{animal}/kinematicParametersPerBout", data=arr)
+        dataset.attrs['columns'] = cols
+
   return [conditions, genotypes, nbFramesTakenIntoAccount, globParam]

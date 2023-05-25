@@ -2,6 +2,7 @@ import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.extractParameters import calculateAngle
 from zebrazoom.code.extractParameters import calculateTailAngle
+import h5py
 import os
 import shutil
 import math
@@ -11,6 +12,30 @@ import time
 import pandas as pd
 import pickle
 from scipy import ndimage
+
+
+def calculateCurvature(TailX_VideoReferential, TailY_VideoReferential, hyperparameters):
+  curvature = []
+  for l in range(0, len(TailX_VideoReferential)):
+    tailX = TailX_VideoReferential[l]
+    tailY = TailY_VideoReferential[l]
+
+    ydiff  = np.diff(tailY)
+    ydiff2 = np.diff(ydiff)
+    xdiff  = np.diff(tailX)
+    xdiff2 = np.diff(xdiff)
+    curv = xdiff2
+    l = len(curv)
+    av = 0
+    for ii in range(0, l):#-1):
+      num = xdiff[ii] * ydiff2[ii] - ydiff[ii] * xdiff2[ii]
+      den = (xdiff[ii]**2 + ydiff[ii]**2)**1.5
+      curv[ii] = num / den
+
+    curv = curv[hyperparameters["nbPointsToIgnoreAtCurvatureBeginning"]: l-hyperparameters["nbPointsToIgnoreAtCurvatureEnd"]]
+    curvature.append(curv)
+  return curvature
+
 
 def perBoutOutput(superStruct, hyperparameters, videoName):
   
@@ -123,8 +148,8 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
   # Curvature calculation: Going through each well, each fish and each bout
   for i in range(0, len(superStruct["wellPoissMouv"])):
     for j in range(0, len(superStruct["wellPoissMouv"][i])):
+      curvatures = {}
       if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-        curvatures = {}
         fname = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"], f'allData_{hyperparameters["videoName"]}_wellNumber{i}_animal{j}.csv')
         startLines = []
         with open(fname) as f:
@@ -138,44 +163,26 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         # Creation of the curvature graph for bout k
         TailX_VideoReferential = superStruct["wellPoissMouv"][i][j][k]["TailX_VideoReferential"]
         TailY_VideoReferential = superStruct["wellPoissMouv"][i][j][k]["TailY_VideoReferential"]
-        
+
         if hyperparameters["videoPixelSize"]:
           tailLenghtInPixels = np.sum([math.sqrt((TailX_VideoReferential[0][l] - TailX_VideoReferential[0][l+1])**2 + (TailY_VideoReferential[0][l] - TailY_VideoReferential[0][l+1])**2) for l in range(0, len(TailX_VideoReferential[0]) - 1)])
-        
-        curvature = []
-        for l in range(0, len(TailX_VideoReferential)):
-          tailX = TailX_VideoReferential[l]
-          tailY = TailY_VideoReferential[l]
 
-          ydiff  = np.diff(tailY)
-          ydiff2 = np.diff(ydiff)
-          xdiff  = np.diff(tailX)
-          xdiff2 = np.diff(xdiff)
-          curv = xdiff2
-          l = len(curv)
-          av = 0
-          for ii in range(0, l):#-1):
-            num = xdiff[ii] * ydiff2[ii] - ydiff[ii] * xdiff2[ii]
-            den = (xdiff[ii]**2 + ydiff[ii]**2)**1.5
-            curv[ii] = num / den
-          
-          curv = curv[hyperparameters["nbPointsToIgnoreAtCurvatureBeginning"]: l-hyperparameters["nbPointsToIgnoreAtCurvatureEnd"]]
-          curvature.append(curv)
-        
-        rolling_window = hyperparameters["curvatureMedianFilterSmoothingWindow"]
-        if rolling_window:
-          curvature = ndimage.median_filter(curvature, size=rolling_window) # 2d median filter
-        else:
-          curvature = np.array(curvature)
-        
-        curvature = np.flip(np.transpose(curvature), 0)
-        
-        superStruct["wellPoissMouv"][i][j][k]["curvature"] = curvature.tolist()
+        curvature = calculateCurvature(TailX_VideoReferential, TailY_VideoReferential, hyperparameters)
+        originalCurvature = np.flip(np.transpose(curvature), 0)
 
         if hyperparameters["saveAllDataEvenIfNotInBouts"]:
           bStart = superStruct["wellPoissMouv"][i][j][k]["BoutStart"]
           bEnd = superStruct["wellPoissMouv"][i][j][k]["BoutEnd"]
-          curvatures[(bStart - firstFrame, bEnd + 1 - firstFrame)] = superStruct["wellPoissMouv"][i][j][k]["curvature"]
+          curvatures[(bStart - firstFrame, bEnd + 1 - firstFrame)] = originalCurvature.tolist()
+
+        rolling_window = hyperparameters["curvatureMedianFilterSmoothingWindow"]
+        if rolling_window:
+          curvature = ndimage.median_filter(curvature, size=rolling_window) # 2d median filter
+          curvature = np.flip(np.transpose(curvature), 0)
+        else:
+          curvature = originalCurvature
+        
+        superStruct["wellPoissMouv"][i][j][k]["curvature"] = curvature.tolist()
 
         if hyperparameters["saveCurvaturePlots"]:
           fig = plt.figure(1)
@@ -309,5 +316,17 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
         with open(fname, 'w+', newline='') as f:
           f.write(''.join(startLines))
           df.convert_dtypes().to_csv(f)
-  
+      if hyperparameters['storeH5'] and superStruct["wellPoissMouv"][i][j]:
+        with h5py.File(hyperparameters['H5filename'], 'a') as results:
+          dataGroup = results.require_group(f"dataForWell{i}/dataForAnimal{j}/dataPerFrame")
+          curvature = np.empty((lastFrame - firstFrame + 1, hyperparameters['nbTailPoints'] - 2), dtype=float)
+          TailX_VideoReferential = np.column_stack([dataGroup['HeadPos']['X']] + [dataGroup['TailPosX'][col] for col in dataGroup['TailPosX'].attrs['columns']])
+          TailY_VideoReferential = np.column_stack([dataGroup['HeadPos']['Y']] + [dataGroup['TailPosY'][col] for col in dataGroup['TailPosY'].attrs['columns']])
+          curvature = list(np.flip(np.transpose(calculateCurvature(TailX_VideoReferential, TailY_VideoReferential, hyperparameters)), 0))
+          data = np.empty(len(curvature[0]), dtype=[(f'Pos{idx}', float) for idx in range(1, len(curvature) + 1)])
+          for idx, curvatureData in enumerate(curvature):
+            data[f'Pos{idx + 1}'] = curvatureData
+          dataset = dataGroup.create_dataset('curvature', data=data)
+          dataset.attrs['columns'] = data.dtype.names
+
   return superStruct
