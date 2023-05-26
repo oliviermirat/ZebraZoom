@@ -238,10 +238,52 @@ def _selectROI(config, getFrame):
   checkbox = QCheckBox('Improve contrast')
   improveContrast = bool(config.get("outputValidationVideoContrastImprovement", False))
   checkbox.setChecked(improveContrast)
-  coords = util.getRectangle(getFrame(), "Click on the top left and bottom right of the region of interest", buttons=buttons,
-                             initialRect=initialRect, allowEmpty=True, contrastCheckbox=checkbox, getFrame=getFrame)
+  coords = tuple(util.getRectangle(getFrame(), "Click on the top left and bottom right of the region of interest", buttons=buttons,
+                                   initialRect=initialRect, allowEmpty=True, contrastCheckbox=checkbox, getFrame=getFrame))
   if save:
     app = QApplication.instance()
+    tailFile = f'{app.videoToCreateConfigFileFor}.csv'
+    headFile = f'{app.videoToCreateConfigFileFor}HP.csv'
+    if (os.path.exists(tailFile) or os.path.exists(headFile)) and \
+        coords != (config.get("oneWellManuallyChosenTopLeft", [0, 0]), config.get("oneWellManuallyChosenBottomRight", [0, 0])):
+      xOffset, yOffset = config.get("oneWellManuallyChosenTopLeft", (0, 0))
+      fnames = {fname: None for fname in (tailFile, headFile) if os.path.exists(fname)}
+      (minX, minY), (maxX, maxY) = coords
+      noROI = minX == maxX == minY == maxY == 0
+      allValid = True
+      for fname in fnames.keys():
+        with open(fname, 'r') as f:
+          x, y = map(int, f.read().strip().split(','))
+        if noROI:
+          fnames[fname] = (x + xOffset, y + yOffset)
+        elif minX <= x + xOffset < maxX and minY <= y + yOffset < maxY:
+          fnames[fname] = (x + xOffset - minX, y + yOffset - minY)
+        else:
+          fnames[fname] = None
+      warning = QMessageBox(app.window)
+      if any(newCoords is None for newCoords in fnames.values()):
+        warning.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.Cancel)
+        warning.setText("Predefined tail coordinates will no longer be valid after modifying the region of interest and tracking will not work correctly. Old coordinates are outside the new region of interest and cannot be updated. Would you like to delete them or cancel region of interest selection?")
+      else:
+        warning.setStandardButtons(QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel)
+        warning.button(QMessageBox.StandardButton.No).setText("Update")
+        warning.setText("Predefined tail coordinates will no longer be valid after modifying the region of interest and tracking will not work correctly. Old coordinates are inside the new region of interest and can be updated. Would you like to delete them, update them or cancel region of interest selection?")
+      warning.setIcon(QMessageBox.Icon.Warning)
+      warning.setWindowTitle("Predefined tail coordinates found")
+      warning.button(QMessageBox.StandardButton.Yes).setText("Delete")
+      button = warning.exec()
+      if button == QMessageBox.StandardButton.Yes:
+        if tailFile:
+          os.remove(tailFile)
+        if headFile:
+          os.remove(headFile)
+      elif button == QMessageBox.StandardButton.No:
+          for fname, newCoords in fnames.items():
+            with open(fname, 'w') as f:
+              f.write(f"{','.join(map(str, newCoords))}\n")
+      else:
+        assert button == QMessageBox.StandardButton.Cancel
+        return
     if coords == ([0, 0], [0, 0]):
       if "oneWellManuallyChosenTopLeft" in config:
         del config["oneWellManuallyChosenTopLeft"]
