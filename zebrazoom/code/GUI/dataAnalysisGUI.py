@@ -285,7 +285,7 @@ class _ExperimentOrganizationModel(QAbstractTableModel):
   def updateNumericValue(self, rows, column, newValue):
     dataColIdx = self._data.columns.get_loc(self._COLUMN_NAMES[column])
     for row in rows:
-      self._data.iloc[row, dataColIdx] = float(newValue)
+      self._data.iloc[row, dataColIdx] = newValue
       index = self.index(row, column)
       self.dataChanged.emit(index, index)
 
@@ -389,8 +389,14 @@ class _ExperimentOrganizationModel(QAbstractTableModel):
         errors.append("Row %d: '%s' is not a valid results folder." % (row, path))
         continue
       errorParts = ["Row %d: " % row]
-      if not fileData.iloc[row, fpsCol]:
-        errorParts.append("fps is empty")
+      try:
+        float(fileData.iloc[row, fpsCol])
+      except ValueError:
+        errorParts.append("FPS must be a valid float")
+      try:
+        float(fileData.iloc[row, pixelSizeCol])
+      except ValueError:
+        errorParts.append("Pixel Size must be a valid float")
       wellPositions = getWellPositionsCb(path)
       if wellPositions is None:
         errorParts.append("wells file is corrupt")
@@ -751,7 +757,6 @@ class CreateExperimentOrganizationExcel(QWidget):
     self._previousSelection = newSelection
     videoToShow = self._table.model().videoPath(rows[0])
     exampleFrame = self._findExampleFrame(videoToShow)
-    self._wellsSelected()
     if len(rows) > 1:
       if (newWellLengths == oldWellLengths and self._shownVideo is not None and exampleFrame is None == self._findExampleFrame(self._shownVideo) is None) or \
           (len(newWellLengths) > 1 and len(oldWellLengths) > 1):
@@ -764,8 +769,10 @@ class CreateExperimentOrganizationExcel(QWidget):
         self._placeholderVideo.setText("Cannot edit the information because some of the selected videos don't have the same number of wells.")
         self._placeholderVideo.show()
         self._shownVideo = None
+        self._wellsSelected()
         return
     if self._shownVideo == videoToShow:
+      self._wellsSelected()
       return
     self._shownVideo = videoToShow
     wellPositions = self._previousSelection[videoToShow]
@@ -779,7 +786,6 @@ class CreateExperimentOrganizationExcel(QWidget):
     else:
       self._frame.setWellPositions([(position['topLeftX'], position['topLeftY'], position['lengthX'], position['lengthY'])
                                     for idx, position in enumerate(wellPositions)])
-      self._updateWellInfos()
       with open(os.path.join(videoToShow, 'configUsed.json')) as f:
         config = json.load(f)
       self._frame.wellShape = 'rectangle' if config.get("wellsAreRectangles", False) or len(config.get("oneWellManuallyChosenTopLeft", '')) or int(config.get("multipleROIsDefinedDuringExecution", 0)) or config.get("noWellDetection", False) or config.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
