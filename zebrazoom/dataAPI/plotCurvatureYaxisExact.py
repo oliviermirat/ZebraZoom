@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-def plotCurvatureYaxisExact(curvatureValues: np.array, xTimeValues: np.array, yDistanceAlongTail: np.array, videoFPS: float, videoPixelSize: float, maxCurvatureValues: float = 0.05, xAxisLengthInSeconds: int = 6, yAxisLengthInPixels: int = 6) -> None:
+def plotCurvatureYaxisExact(curvatureValues: np.array, xTimeValues: np.array, yDistanceAlongTail: np.array, videoFPS: float, videoPixelSize: float, maxCurvatureValues: float = 0.05, xAxisLengthInSeconds: int = 1, yAxisLengthInPixels: int = 6) -> None:
   
   x = xTimeValues.flatten()
   y = yDistanceAlongTail.flatten()
