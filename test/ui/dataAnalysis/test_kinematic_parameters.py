@@ -990,7 +990,7 @@ def test_command_line(monkeypatch): # here we simply run the same experiments th
   # pathToExcelFile frameStepForDistanceCalculation minimumNumberOfBendsPerBout keepSpeedDistDurWhenLowNbBends thresholdInDegreesBetweenSfsAndTurns tailAngleKinematicParameterCalculation
   # saveRawDataInAllBoutsSuperStructure saveAllBoutsSuperStructuresInMatlabFormat forcePandasDfRecreation
   test_kinematic_parameters_small_params = [experiment1, '4', '0', '0', '-1', '1', '0', '0']
-  test_basic_params = [experiment2, '4', '0', '0', '-1', '0', '0', '0']
+  test_basic_params = [experiment2, '4', '0', '0', '-1', '0', '0', '0', '1']
   test_force_recalculation_params = [experiment3, '4', '0', '0', '-1', '0', '0', '0', '1']
   test_kinematic_parameters_large_params = [experiment2, '4', '0', '0', '-1', '1', '0', '0']
   test_frames_for_distance_calculation_params = [experiment2, '1', '0', '0', '-1', '0', '0', '0']

@@ -119,14 +119,19 @@ def _createParser():
   subparser.add_argument('thresholdInDegrees', help='Help for thresholdInDegrees', type=int)
 
   subparser = postProcessingSubparsers.add_parser('kinematicParametersAnalysis', help='Help for kinematicParametersAnalysis')
+  subparser.add_argument('args', nargs='*')
 
   subparser = postProcessingSubparsers.add_parser('kinematicParametersAnalysisWithMedianPerGenotype', help='Help for kinematicParametersAnalysisWithMedianPerGenotype')
+  subparser.add_argument('args', nargs='*')
 
   subparser = postProcessingSubparsers.add_parser('clusteringAnalysis', help='Help for clusteringAnalysis')
+  subparser.add_argument('args', nargs='*')
 
   subparser = postProcessingSubparsers.add_parser('clusteringAnalysisPerFrame', help='Help for clusteringAnalysisPerFrame')
+  subparser.add_argument('args', nargs='*')
 
   subparser = postProcessingSubparsers.add_parser('kinematicParametersAnalysisCenterOfMassOnlyNoBoutsDetection', help='Help for kinematicParametersAnalysisCenterOfMassOnlyNoBoutsDetection')
+  subparser.add_argument('args', nargs='*')
 
   subparser = subparsers.add_parser('visualizeMovingAndSleepingTime', help='Help for visualizeMovingAndSleepingTime')
   subparser.add_argument('movingOrSleeping', help='Help message for movingOrSleeping', choices=('movingTime', 'sleepingTime'))
