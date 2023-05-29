@@ -80,5 +80,5 @@ def createDistanceBetweenFramesExcelFile(ZZoutputFolder, fps, pixelSize):
   
   # Converting to excel
   finalData = pd.DataFrame(data=finalDataArray, columns=['frame', 'second'] + [item for i in range(0, numberOfWells) for item in ['distanceWell' + str(i), 'xPosition' + str(i), 'yPosition' + str(i)]])
-  finalData.to_excel(os.path.join(pathToResultFolder, videoName + '_Distances.xls'))
+  finalData.to_excel(os.path.join(pathToResultFolder, videoName + '_Distances.xlsx'))
 

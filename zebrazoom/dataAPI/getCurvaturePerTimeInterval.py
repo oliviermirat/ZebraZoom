@@ -11,9 +11,9 @@ def getCurvaturePerTimeInterval(videoName: str, numWell: int, numAnimal: int, st
       raise ValueError(f'videoFPS not found in the results, cannot convert seconds to frames')
     if 'videoPixelSize' not in results.attrs:
       raise ValueError(f'videoPixelSize not found in the results, cannot convert seconds to frames')
-    intervalStart = int(startTimeInSeconds * results.attrs['videoFPS'])
-    intervalEnd   = int(endTimeInSeconds * results.attrs['videoFPS'])
     firstFrame    = results.attrs['firstFrame']
+    intervalStart = int(startTimeInSeconds * results.attrs['videoFPS']) - firstFrame
+    intervalEnd   = int(endTimeInSeconds * results.attrs['videoFPS']) - firstFrame
     dataGroup = results[f'dataForWell{numWell}/dataForAnimal{numAnimal}/dataPerFrame']
     
     if 'curvature' in dataGroup:
