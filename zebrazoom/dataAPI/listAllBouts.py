@@ -1,7 +1,7 @@
 from ._openResultsFile import openResultsFile
 
 
-def listAllBouts(videoName: str, numWell: int, numAnimal: int, seconds: bool=False) -> list[tuple, ...]:
+def listAllBouts(videoName: str, numWell: int, numAnimal: int, seconds: bool=False):
   with openResultsFile(videoName, 'r') as results:
     boutsPath = f'dataForWell{numWell}/dataForAnimal{numAnimal}/listOfBouts'
     if boutsPath not in results:
