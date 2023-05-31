@@ -346,6 +346,7 @@ class OptimizeConfigFile(QWidget):
     hframe.setFrameShape(QFrame.Shape.HLine)
     advancedOptionsLayout.addWidget(hframe, 10, 0, 1, 5)
     self._freelySwimmingWidgets.add(hframe)
+    self._headEmbeddedWidgets.add(hframe)
     videoRotationLabel = util.apply_style(QLabel("Video rotation"), font_size='16px')
     advancedOptionsLayout.addWidget(videoRotationLabel, 11, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(videoRotationLabel)
@@ -442,20 +443,55 @@ class OptimizeConfigFile(QWidget):
     advancedOptionsLayout.addWidget(self._noMultiprocessingCheckbox, 16, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(self._noMultiprocessingCheckbox)
 
+    additionalCalculationsLabel = util.apply_style(QLabel("Additional calculations"), font_size='16px')
+    advancedOptionsLayout.addWidget(additionalCalculationsLabel, 18, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(additionalCalculationsLabel)
+    self._headEmbeddedWidgets.add(additionalCalculationsLabel)
+
+    self._calculateCurvatureCheckbox = QCheckBox("Calculate curvature")
+    def calculateCurvatureToggled(checked):
+      if checked:
+        controller.configFile["perBoutOutput"] = 1
+      else:
+        if self._originalCalculateCurvature is None:
+          if "perBoutOutput" in controller.configFile:
+            del controller.configFile["perBoutOutput"]
+        else:
+          controller.configFile["perBoutOutput"] = 0
+    self._calculateCurvatureCheckbox.toggled.connect(calculateCurvatureToggled)
+    advancedOptionsLayout.addWidget(self._calculateCurvatureCheckbox, 19, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(self._calculateCurvatureCheckbox)
+    self._headEmbeddedWidgets.add(self._calculateCurvatureCheckbox)
+
+    self._calculateTailAngleHeatmapCheckbox = QCheckBox("Calculate tail angle heatmap")
+    def calculateTailAngleHeatmapToggled(checked):
+      if checked:
+        controller.configFile["tailAnglesHeatMap"] = 1
+      else:
+        if self._originalCalculateTailAngleHeatmap is None:
+          if "tailAnglesHeatMap" in controller.configFile:
+            del controller.configFile["tailAnglesHeatMap"]
+        else:
+          controller.configFile["tailAnglesHeatMap"] = 0
+    self._calculateTailAngleHeatmapCheckbox.toggled.connect(calculateTailAngleHeatmapToggled)
+    advancedOptionsLayout.addWidget(self._calculateTailAngleHeatmapCheckbox, 20, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    self._freelySwimmingWidgets.add(self._calculateTailAngleHeatmapCheckbox)
+    self._headEmbeddedWidgets.add(self._calculateTailAngleHeatmapCheckbox)
+
     hframe = QFrame(self)
     hframe.setFrameShape(QFrame.Shape.HLine)
     advancedOptionsLayout.addWidget(hframe, 17, 0, 1, 5)
     self._freelySwimmingWidgets.add(hframe)
     advancedOptionsLabel = util.apply_style(QLabel("Documentation links"), font_size='16px')
-    advancedOptionsLayout.addWidget(advancedOptionsLabel, 18, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(advancedOptionsLabel, 18, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(advancedOptionsLabel)
     speedUpTrackingBtn = QPushButton("Speed up tracking for 'Track heads and tails of freely swimming fish'", self)
     speedUpTrackingBtn.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingSpeedOptimization.md"))
-    advancedOptionsLayout.addWidget(speedUpTrackingBtn, 19, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(speedUpTrackingBtn, 19, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(speedUpTrackingBtn)
     documentationBtn = QPushButton("Help", self)
     documentationBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/configurationFile/throughGUI/trackingFreelySwimmingConfigOptimization"))
-    advancedOptionsLayout.addWidget(documentationBtn, 20, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    advancedOptionsLayout.addWidget(documentationBtn, 20, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(documentationBtn)
 
     for idx in range(advancedOptionsLayout.columnCount()):
@@ -584,7 +620,16 @@ class OptimizeConfigFile(QWidget):
       self._videoFPS.setText(str(app.configFile["videoFPS"]))
     if "videoPixelSize" in app.configFile:
       self._videoPixelSize.setText(str(app.configFile["videoPixelSize"]))
-
+    self._originalCalculateCurvature = app.configFile.get("perBoutOutput")
+    if self._originalCalculateCurvature is not None:
+      self._calculateCurvatureCheckbox.setChecked(bool(self._originalCalculateCurvature))
+    else:
+      self._calculateCurvatureCheckbox.setChecked(False)
+    self._originalCalculateTailAngleHeatmap = app.configFile.get("tailAnglesHeatMap")
+    if self._originalCalculateTailAngleHeatmap is not None:
+      self._calculateTailAngleHeatmapCheckbox.setChecked(bool(self._originalCalculateTailAngleHeatmap))
+    else:
+      self._calculateTailAngleHeatmapCheckbox.setChecked(False)
 
 class _ClickableImageLabel(QLabel):
   def __init__(self, parent, pixmap, clickedCallback):
@@ -1508,6 +1553,26 @@ class FinishConfig(QWidget):
     self._alwaysSaveCheckbox.toggled.connect(alwaysSaveToggled)
     layout.addWidget(self._alwaysSaveCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
+    self._calculateCurvatureCheckbox = QCheckBox("Calculate curvature")
+    def calculateCurvatureToggled(checked):
+      if checked:
+        controller.configFile["perBoutOutput"] = 1
+      else:
+        if "perBoutOutput" in controller.configFile:
+          del controller.configFile["perBoutOutput"]
+    self._calculateCurvatureCheckbox.toggled.connect(calculateCurvatureToggled)
+    layout.addWidget(self._calculateCurvatureCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self._calculateTailAngleHeatmapCheckbox = QCheckBox("Calculate tail angle heatmap")
+    def calculateTailAngleHeatmapToggled(checked):
+      if checked:
+        controller.configFile["tailAnglesHeatMap"] = 1
+      else:
+        if "tailAnglesHeatMap" in controller.configFile:
+          del controller.configFile["tailAnglesHeatMap"]
+    self._calculateTailAngleHeatmapCheckbox.toggled.connect(calculateTailAngleHeatmapToggled)
+    layout.addWidget(self._calculateTailAngleHeatmapCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
     def speedUpAnalysisToggled(checked):
       helpBtn.setVisible(checked)
       if not checked:
@@ -1588,14 +1653,16 @@ class FinishConfig(QWidget):
         not self.controller.configFile.get("noBoutsDetection", False) and not self.controller.configFile.get("coordinatesOnlyBoutDetection", False):
       self.controller.configFile["detectMovementWithRawVideoInsideTracking"] = 1
     if trackingMethod:
-      self._alwaysSaveCheckbox.setChecked(False)
-      self._alwaysSaveCheckbox.setVisible(False)
+      for checkbox in (self._alwaysSaveCheckbox, self._calculateCurvatureCheckbox, self._calculateTailAngleHeatmapCheckbox):
+        checkbox.setChecked(False)
+        checkbox.setVisible(False)
     else:
-      self._alwaysSaveCheckbox.setVisible(True)
-      if self._alwaysSaveCheckbox.isChecked():
-        self.controller.configFile["saveAllDataEvenIfNotInBouts"] = 1
-      else:
-        self._alwaysSaveCheckbox.setChecked(True)
+      for checkbox, param in zip((self._alwaysSaveCheckbox, self._calculateCurvatureCheckbox, self._calculateTailAngleHeatmapCheckbox), ('saveAllDataEvenIfNotInBouts', 'perBoutOutput', 'tailAnglesHeatMap')):
+        checkbox.setVisible(True)
+        if checkbox.isChecked():
+          self.controller.configFile[param] = 1
+        elif param == 'saveAllDataEvenIfNotInBouts':
+          checkbox.setChecked(True)
 
   def showEvent(self, evt):
     self.refreshPage()
