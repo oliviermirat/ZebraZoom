@@ -10,6 +10,7 @@ from .getTailAngleHeatmapPerTimeInterval import *
 from .listAllBouts import *
 from .plotCurvatureYaxisExact import *
 from .plotCurvatureYaxisApproximate import *
+from .plotTailAngleHeatmap import *
 from .setFPSandPixelSize import *
 from .getFPSandPixelSize import *
 from .applyMedianFilterOnCurvature import *
