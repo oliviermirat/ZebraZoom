@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 
-def plotCurvatureYaxisApproximate(curvature: np.array, xTimeValues: np.array, yDistanceAlongTheTail: np.array, videoFPS: float, videoPixelSize: float, cmapVal: str = 'BrBG', maxCurvatureValues: float = 0.05, xAxisLengthInSeconds: int = 1, yAxisLengthInMm: int = 6) -> None:
+def plotCurvatureYaxisApproximate(curvature: np.array, xTimeValues: np.array, yDistanceAlongTheTail: np.array, videoFPS: float, videoPixelSize: float, cmapVal: str = 'coolwarm', maxCurvatureValues: float = 0.05, xAxisLengthInSeconds: int = 1, yAxisLengthInMm: int = 6) -> None:
   
   boutStart          = xTimeValues[0,0] * videoFPS
   tailLengthInPixels = yDistanceAlongTheTail[0, len(yDistanceAlongTheTail[0]) - 1] / videoPixelSize
