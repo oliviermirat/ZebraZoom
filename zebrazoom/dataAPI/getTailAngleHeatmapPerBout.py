@@ -18,5 +18,6 @@ def getTailAngleHeatmapPerBout(videoName: str, numWell: int, numAnimal: int, num
     if 'tailAngleHeatmap' in dataGroup:
       tailAngleHeatmap = dataGroup['tailAngleHeatmap']
     else:
+      print(f'calculating and storing tail angle heatmap for all bouts for well {numWell}, animal {numAnimal}')
       tailAngleHeatmap = calculateAndStoreTailAngleHeatmap(results, dataGroup, boutsGroup)
     return [tailAngleHeatmap[col][start:end] for col in tailAngleHeatmap.dtype.names], boutGroup.attrs['BoutStart'], dataGroup['TailLength'][0]

@@ -25,5 +25,6 @@ def getTailAngleHeatmapPerTimeInterval(videoName: str, numWell: int, numAnimal: 
     if 'tailAngleHeatmap' in dataGroup:
       tailAngleHeatmap = dataGroup['tailAngleHeatmap']
     else:
+      print(f'calculating and storing tail angle heatmap for all bouts for well {numWell}, animal {numAnimal}')
       tailAngleHeatmap = calculateAndStoreTailAngleHeatmap(results, dataGroup, boutsGroup)
     return [tailAngleHeatmap[col][intervalStart:intervalEnd] for col in tailAngleHeatmap.dtype.names], int(startTimeInSeconds * results.attrs['videoFPS']), dataGroup['TailLength'][0]

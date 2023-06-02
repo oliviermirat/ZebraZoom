@@ -16,6 +16,7 @@ def getKinematicParametersPerBout(videoName: str, numWell: int, numAnimal: int, 
         raise ValueError(f'videoFPS not found in the results, cannot calculate kinematic parameters')
       if 'videoPixelSize' not in results.attrs:
         raise ValueError(f'videoPixelSize not found in the results, cannot calculate kinematic parameters')
+      print(f'calculating and storing kinematic parameters for well {numWell}, animal {numAnimal}, bout {numBout}')
       superStruct = createSuperStructFromH5(results)
       hyperparameters = getHyperparametersSimple(dict(results['configurationFileUsed'].attrs))
       hyperparameters['H5filename'] = results.filename
