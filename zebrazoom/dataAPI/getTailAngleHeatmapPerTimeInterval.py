@@ -4,7 +4,7 @@ from ._calculateAndStoreTailAngleHeatmap import calculateAndStoreTailAngleHeatma
 from ._openResultsFile import openResultsFile
 
 
-def getTailAngleHeatmapPerTimeInterval(videoName: str, numWell: int, numAnimal: int, startTimeInSeconds: int, endTimeInSeconds: int):
+def getTailAngleHeatmapPerTimeInterval(videoName: str, numWell: int, numAnimal: int, startTimeInSeconds: int, endTimeInSeconds: int) -> tuple:
   with openResultsFile(videoName, 'r+') as results:
     if 'videoFPS' not in results.attrs:
       raise ValueError(f'videoFPS not found in the results, cannot convert seconds to frames')
@@ -20,4 +20,4 @@ def getTailAngleHeatmapPerTimeInterval(videoName: str, numWell: int, numAnimal: 
       tailAngleHeatmap = dataGroup['tailAngleHeatmap']
     else:
       tailAngleHeatmap = calculateAndStoreTailAngleHeatmap(results, dataGroup, boutsGroup)
-    return [tailAngleHeatmap[col][intervalStart:intervalEnd] for col in tailAngleHeatmap.dtype.names]
+    return [tailAngleHeatmap[col][intervalStart:intervalEnd] for col in tailAngleHeatmap.dtype.names], int(startTimeInSeconds * results.attrs['videoFPS']), dataGroup['TailLength'][0]

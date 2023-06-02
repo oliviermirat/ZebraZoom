@@ -4,7 +4,7 @@ from ._calculateAndStoreTailAngleHeatmap import calculateAndStoreTailAngleHeatma
 from ._openResultsFile import openResultsFile
 
 
-def getTailAngleHeatmapPerBout(videoName: str, numWell: int, numAnimal: int, numBout: int):
+def getTailAngleHeatmapPerBout(videoName: str, numWell: int, numAnimal: int, numBout: int) -> tuple:
   with openResultsFile(videoName, 'r+') as results:
     boutsPath = f'dataForWell{numWell}/dataForAnimal{numAnimal}/listOfBouts'
     if boutsPath not in results:
@@ -19,4 +19,4 @@ def getTailAngleHeatmapPerBout(videoName: str, numWell: int, numAnimal: int, num
       tailAngleHeatmap = dataGroup['tailAngleHeatmap']
     else:
       tailAngleHeatmap = calculateAndStoreTailAngleHeatmap(results, dataGroup, boutsGroup)
-    return [tailAngleHeatmap[col][start:end] for col in tailAngleHeatmap.dtype.names]
+    return [tailAngleHeatmap[col][start:end] for col in tailAngleHeatmap.dtype.names], boutGroup.attrs['BoutStart'], dataGroup['TailLength'][0]
