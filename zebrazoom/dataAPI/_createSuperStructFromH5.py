@@ -12,7 +12,8 @@ def createSuperStructFromH5(results):
   if 'pathToOriginalVideo' in results.attrs:
     superStruct['pathToOriginalVideo'] = results.attrs['pathToOriginalVideo']
   superStruct['wellPoissMouv'] = []
-  for wellIdx in range(len(results['wellPositions'])):
+  superStruct['wellPositions'] = [dict(results['wellPositions'][well].attrs) for well in results['wellPositions']]
+  for wellIdx in range(len(superStruct['wellPositions'])):
     wellData = []
     superStruct['wellPoissMouv'].append(wellData)
     wellGroup = results[f'dataForWell{wellIdx}']
@@ -23,6 +24,8 @@ def createSuperStructFromH5(results):
       for bout in wellGroup[animal]['listOfBouts']:
         boutGroup = wellGroup[animal]['listOfBouts'][bout]
         boutData = {'AnimalNumber': animalIdx, 'BoutStart': boutGroup.attrs['BoutStart'], 'BoutEnd': boutGroup.attrs['BoutEnd']}
+        if boutGroup.attrs.get('flag'):
+          boutData['flag'] = 1
         animalData.append(boutData)
         for data in boutGroup:
           boutData[data] = boutGroup[data][:].tolist()

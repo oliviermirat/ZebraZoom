@@ -17,7 +17,7 @@ from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.preprocessImage import preprocessImage
 
 
-def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation=''):
+def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation='', supstruct=None, config=None):
   s1  = "ZZoutput"
   s2  = folderName
   s3b = "results_"
@@ -30,23 +30,27 @@ def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal,
   else:
     initialPath = paths.getDefaultZZoutputFolder()
 
-  with open(os.path.join(initialPath, os.path.join(s2, 'configUsed.json'))) as f:
-    configTemp = json.load(f)
-  hyperparameters = getHyperparametersSimple(configTemp)
-  
-  resultsPath = os.path.join(initialPath, os.path.join(s2, s3b + s4 + s5b))
+  if config is None:
+    with open(os.path.join(initialPath, os.path.join(s2, 'configUsed.json'))) as f:
+      config = json.load(f)
+  hyperparameters = getHyperparametersSimple(config)
 
-  if not(os.path.exists(resultsPath)):
-    mypath = os.path.join(initialPath, s2)
-    onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
-    resultFile = ''
-    for fileName in onlyfiles:
-      if 'results_' in fileName:
-        resultFile = fileName
-    resultsPath = os.path.join(initialPath, os.path.join(s2, resultFile))
+  if supstruct is None:
+    resultsPath = os.path.join(initialPath, os.path.join(s2, s3b + s4 + s5b))
 
-  with open(resultsPath) as f:
-    supstruct = json.load(f)
+    if not(os.path.exists(resultsPath)):
+      mypath = os.path.join(initialPath, s2)
+      onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
+      resultFile = ''
+      for fileName in onlyfiles:
+        if 'results_' in fileName:
+          resultFile = fileName
+      resultsPath = os.path.join(initialPath, os.path.join(s2, resultFile))
+
+    with open(resultsPath) as f:
+      supstruct = json.load(f)
+  else:
+    resultsPath = os.path.join(initialPath, folderName)
   
   if hyperparameters["savePathToOriginalVideoForValidationVideo"]:
     videoPath = supstruct["pathToOriginalVideo"]
@@ -57,8 +61,13 @@ def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal,
         return None
       videoName, _ = QFileDialog.getOpenFileName(app.window, 'Select video', os.path.expanduser("~"))
       videoPath = supstruct["pathToOriginalVideo"] = videoName
-      with open(resultsPath, 'w') as f:
-        json.dump(supstruct, f)
+      if os.path.splitext(resultsPath)[1] != '.h5':
+        with open(resultsPath, 'w') as f:
+          json.dump(supstruct, f)
+      else:
+        import h5py
+        with h5py.File(resultsPath, 'a') as results:
+          results.attrs['pathToOriginalVideo'] = videoName
   else:
     if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] and os.path.exists(os.path.join(initialPath, os.path.join(s1, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi')))):
       # The "exist" check above is only to insure compatibility with videos tracked prior to this update
@@ -222,8 +231,8 @@ def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal,
   return getFrame, frameRange, l, infoFrame is not None, supstruct['wellPositions'], wellShape
 
 
-def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation=''):
-  frameInfo = getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=framesToShow, ZZoutputLocation=ZZoutputLocation)
+def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation='', supstruct=None, config=None):
+  frameInfo = getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, framesToShow=framesToShow, ZZoutputLocation=ZZoutputLocation, supstruct=supstruct, config=config)
   if frameInfo is None:
     return
   getFrame, frameRange, frame, toggleTrackingPoints, _, _ = frameInfo

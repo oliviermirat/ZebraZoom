@@ -107,7 +107,7 @@ def visualizeMovingAndSleepingTime(args):
   else:
     assert args.movingOrSleeping == "sleepingTime"
     framesToShow = df[["sleep_" + str(i) for i in range(0, nbWells)]].to_numpy()
-  readValidationVideo("", args.videoName, "", -1, -1, 0, 1, framesToShow)
+  readValidationVideo("", args.videoName, -1, -1, 0, 1, framesToShow)
 
 def createDistanceBetweenFramesExcelFile(args):
   from zebrazoom.dataAnalysis.createCustomDataStructure.createDistanceBetweenFramesExcelFile import createDistanceBetweenFramesExcelFile
