@@ -823,7 +823,6 @@ class ViewParameters(util.CollapsibleSplitter):
         fullPath = os.path.join(self.controller.ZZoutputLocation, name)
         self.currentResultFolder = name
         if os.path.isdir(fullPath):
-
           try:
             with open(os.path.join(fullPath, 'configUsed.json')) as config:
               self._config = json.load(config)
