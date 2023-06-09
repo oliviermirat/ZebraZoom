@@ -205,6 +205,7 @@ class ZebraZoomVideoAnalysis:
                 boutGroup.create_dataset(key, data=np.array(value))
               else:
                 boutGroup.attrs[key] = value
+      results.create_dataset('exampleFrame', data=zzVideoReading.VideoCapture(os.path.join(self._pathToVideo, self._videoNameWithExt)).read()[1])
 
   def _storeResults(self, superStruct):
     path = os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"], f'results_{self._hyperparameters["videoName"]}.txt')

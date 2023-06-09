@@ -8,6 +8,7 @@ import pickle
 import webbrowser
 
 import cv2
+import h5py
 import json
 import pandas as pd
 import seaborn as sns
@@ -719,6 +720,9 @@ class CreateExperimentOrganizationExcel(QWidget):
     self._videoSelected(None)
 
   def _getWellPositions(self, resultsFolder):
+    if os.path.splitext(resultsFolder)[1] == '.h5':
+      with h5py.File(resultsFolder, 'r') as results:
+        return [dict(results[f'wellPositions/well{idx}'].attrs) for idx in range(len(results['wellPositions']))]
     wellsFile = next(filter(os.path.exists, (os.path.join(resultsFolder, fname) for fname in self._POTENTIAL_WELLS_FILENAMES)), None)
     if wellsFile is None:
       return []
@@ -731,6 +735,15 @@ class CreateExperimentOrganizationExcel(QWidget):
     return None
 
   def _findExampleFrame(self, folder):
+    if not os.path.exists(folder):
+      return None
+    if os.path.splitext(folder)[1] == '.h5':
+      with h5py.File(folder, 'r') as results:
+        if 'exampleFrame' in results:
+          return results['exampleFrame'][:]
+        if 'pathToOriginalVideo' in results.attrs and os.path.exists(results.attrs['pathToOriginalVideo']):
+          return zzVideoReading.VideoCapture(results.attrs['pathToOriginalVideo']).read()[1]
+        return None
     backgroundPath = os.path.join(folder, 'background.png')
     if os.path.exists(backgroundPath):
       return cv2.imread(backgroundPath)
@@ -758,7 +771,7 @@ class CreateExperimentOrganizationExcel(QWidget):
     videoToShow = self._table.model().videoPath(rows[0])
     exampleFrame = self._findExampleFrame(videoToShow)
     if len(rows) > 1:
-      if (newWellLengths == oldWellLengths and self._shownVideo is not None and exampleFrame is None == self._findExampleFrame(self._shownVideo) is None) or \
+      if (newWellLengths == oldWellLengths and self._shownVideo is not None and ((exampleFrame is None) == (self._findExampleFrame(self._shownVideo) is None))) or \
           (len(newWellLengths) > 1 and len(oldWellLengths) > 1):
         return
       if len(newWellLengths) > 1:
@@ -786,11 +799,15 @@ class CreateExperimentOrganizationExcel(QWidget):
     else:
       self._frame.setWellPositions([(position['topLeftX'], position['topLeftY'], position['lengthX'], position['lengthY'])
                                     for idx, position in enumerate(wellPositions)])
-      with open(os.path.join(videoToShow, 'configUsed.json')) as f:
-        config = json.load(f)
+      if os.path.splitext(videoToShow)[1] != '.h5':
+        with open(os.path.join(videoToShow, 'configUsed.json')) as f:
+          config = json.load(f)
+      else:
+          with h5py.File(videoToShow, 'r') as results:
+            config = dict(results['configurationFileUsed'].attrs)
       self._frame.wellShape = 'rectangle' if config.get("wellsAreRectangles", False) or len(config.get("oneWellManuallyChosenTopLeft", '')) or int(config.get("multipleROIsDefinedDuringExecution", 0)) or config.get("noWellDetection", False) or config.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
     if exampleFrame is None:
-      self._placeholderVideo.setText("Validation video not found. Data must be modified manually in the table.")
+      self._placeholderVideo.setText("Neither an example frame nor the validation video were found. Data must be modified manually in the table.")
       self._placeholderDetail.hide()
       self._placeholderVideo.show()
       self._detailsWidget.hide()
@@ -804,6 +821,8 @@ class CreateExperimentOrganizationExcel(QWidget):
   def _findResultsFile(self, path):
     if not os.path.exists(path):
       return None
+    if os.path.splitext(path)[1] == '.h5':
+      return path
     folder = os.path.basename(path)
     reference = os.path.join(path, 'results_' + folder + '.txt')
     if os.path.exists(reference):
@@ -815,11 +834,11 @@ class CreateExperimentOrganizationExcel(QWidget):
 
   def _getMultipleFolders(self):
     dialog = QFileDialog()
-    dialog.setWindowTitle('Select one or more results folders (use Ctrl or Shift key to select multiple folders)')
+    dialog.setWindowTitle('Select one or more results folders or files (use Ctrl or Shift key to select multiple folders)')
     dialog.setDirectory(self.controller.ZZoutputLocation)
     dialog.setFileMode(QFileDialog.FileMode.Directory)
     dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
-    dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
+    dialog.setNameFilter('HDF5 (*.h5)')
     listView = dialog.findChild(QListView, 'listView')
     if listView:
       listView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
@@ -954,9 +973,12 @@ class CreateExperimentOrganizationExcel(QWidget):
     path = self._tree.model().filePath(self._tree.selectionModel().currentIndex())
     self.controller.experimentOrganizationExcel = os.path.basename(path)
     self.controller.experimentOrganizationExcelFileAndFolder = os.path.dirname(path)
-    with open(os.path.join(self._table.model().videoPath(0), 'configUsed.json')) as f:
-      config = json.load(f)
-    self.controller.tailTrackingPerformed = config.get("trackTail", 1)
+    if os.path.splitext(self._table.model().videoPath(0)) != '.h5':
+      with open(os.path.join(self._table.model().videoPath(0), 'configUsed.json')) as f:
+        self.controller.tailTrackingPerformed = json.load(f).get("trackTail", 1)
+    else:
+      with h5py.File(self._table.model().videoPath(0), 'r') as results:
+        self.controller.tailTrackingPerformed = results['configurationFileUsed'].attrs.get("trackTail", 1)
     self.controller.show_frame("ChooseDataAnalysisMethod")
 
 
