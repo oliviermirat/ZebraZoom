@@ -763,6 +763,16 @@ class CreateExperimentOrganizationExcel(QWidget):
       self._previousSelection.clear()
       return
     paths = set(map(self._table.model().videoPath, rows))
+    if not all(os.path.exists(path) for path in paths):
+      self._detailsWidget.hide()
+      self._frame.setOriginalPixmap(None)
+      self._frame.hide()
+      self._placeholderDetail.hide()
+      self._placeholderVideo.setText("Some of the selected results files or folders no longer exist.")
+      self._placeholderVideo.show()
+      self._shownVideo = None
+      self._previousSelection.clear()
+      return
     newSelection = {videoPath: (self._previousSelection[videoPath] if videoPath in self._previousSelection else self._getWellPositions(videoPath))
                     for videoPath in paths}
     oldWellLengths = {len(wells) if wells is not None else None for wells in self._previousSelection.values()}
@@ -856,7 +866,8 @@ class CreateExperimentOrganizationExcel(QWidget):
       return
     invalidFolders = []
     for selectedFolder in selectedFolders:
-      if self._findResultsFile(selectedFolder) is None:
+      resultsFile = self._findResultsFile(selectedFolder)
+      if resultsFile is None:
         invalidFolders.append(selectedFolder)
         continue
       wellPositions = self._getWellPositions(selectedFolder)
@@ -867,7 +878,14 @@ class CreateExperimentOrganizationExcel(QWidget):
       emptyArray = ["[%s]" % ','.join(" " for _ in range(numWells))]
       includeArray = ["[%s]" % ', '.join("1" for _ in range(numWells))]
       model = self._table.model()
-      model.addVideo({"path": [os.path.dirname(selectedFolder)], "trial_id": [os.path.basename(selectedFolder)], "fq": [" "], "pixelsize": [" "], "condition": emptyArray, "genotype": emptyArray, "include": includeArray})
+      if os.path.splitext(resultsFile)[1] == '.h5':
+        with h5py.File(resultsFile, 'r') as results:
+          videoFPS = str(results.attrs.get('videoFPS', ' '))
+          videoPixelSize = str(results.attrs.get('videoPixelSize', ' '))
+      else:
+        videoFPS = ' '
+        videoPixelSize = ' '
+      model.addVideo({"path": [os.path.dirname(selectedFolder)], "trial_id": [os.path.basename(selectedFolder)], "fq": [videoFPS], "pixelsize": [videoPixelSize], "condition": emptyArray, "genotype": emptyArray, "include": includeArray})
       model.insertRow(model.rowCount())
       self._table.selectionModel().setCurrentIndex(model.index(model.rowCount() - 1, 1), QItemSelectionModel.SelectionFlag.ClearAndSelect)
     if invalidFolders:
