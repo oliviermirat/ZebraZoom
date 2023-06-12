@@ -846,15 +846,28 @@ class CreateExperimentOrganizationExcel(QWidget):
     dialog = QFileDialog()
     dialog.setWindowTitle('Select one or more results folders or files (use Ctrl or Shift key to select multiple folders)')
     dialog.setDirectory(self.controller.ZZoutputLocation)
-    dialog.setFileMode(QFileDialog.FileMode.Directory)
+    dialog.setFileMode(QFileDialog.FileMode.ExistingFiles)
     dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
     dialog.setNameFilter('HDF5 (*.h5)')
+    dialog.accept = lambda: QDialog.accept(dialog)
+
+    def updateText():
+        selected = []
+        for index in listView.selectionModel().selectedRows():
+            selected.append('"{}"'.format(index.data()))
+        lineEdit.setText(' '.join(selected))
+
     listView = dialog.findChild(QListView, 'listView')
     if listView:
       listView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+      listView.selectionModel().selectionChanged.connect(updateText)
     treeView = dialog.findChild(QTreeView)
     if treeView:
       treeView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+      treeView.selectionModel().selectionChanged.connect(updateText)
+
+    lineEdit = dialog.findChild(QLineEdit)
+    dialog.directoryEntered.connect(lambda: lineEdit.setText(''))
 
     if not dialog.exec():
       return None
