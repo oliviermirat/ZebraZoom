@@ -973,7 +973,7 @@ class CreateExperimentOrganizationExcel(QWidget):
     path = self._tree.model().filePath(self._tree.selectionModel().currentIndex())
     self.controller.experimentOrganizationExcel = os.path.basename(path)
     self.controller.experimentOrganizationExcelFileAndFolder = os.path.dirname(path)
-    if os.path.splitext(self._table.model().videoPath(0)) != '.h5':
+    if os.path.splitext(self._table.model().videoPath(0))[1] != '.h5':
       with open(os.path.join(self._table.model().videoPath(0), 'configUsed.json')) as f:
         self.controller.tailTrackingPerformed = json.load(f).get("trackTail", 1)
     else:
