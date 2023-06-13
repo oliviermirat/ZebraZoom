@@ -71,11 +71,17 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
   else:
     if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] and os.path.exists(os.path.join(initialPath, os.path.join(s1, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi')))):
       # The "exist" check above is only to insure compatibility with videos tracked prior to this update
-      videoPath = os.path.join(initialPath, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'))
+      if os.path.splitext(resultsPath)[1] != '.h5':
+        videoPath = os.path.join(initialPath, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'))
+      else:
+        videoPath = f'{os.path.splitext(resultsPath)[0]}_originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'
     else:
-      videoPath = os.path.join(initialPath, os.path.join(s2, s4 + s5))
+      if os.path.splitext(resultsPath)[1] != '.h5':
+        videoPath = os.path.join(initialPath, os.path.join(s2, s4 + s5))
+      else:
+        videoPath = f'{os.path.splitext(resultsPath)[0]}.avi'
 
-  if not(os.path.exists(videoPath)):
+  if not(os.path.exists(videoPath)) and os.path.splitext(resultsPath)[1] != '.h5':
     mypath = os.path.join(initialPath, s2)
     onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
     resultFile = ''

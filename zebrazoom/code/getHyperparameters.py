@@ -41,7 +41,7 @@ CONFIG_DEFAULT = \
   "debugEyeTracking" : 0,
   "debugEyeTrackingAdvanced" : 0,
   "onlyDoTheTrackingForThisNumberOfFrames": 0,
-  "createValidationVideo" : 1,
+  "createValidationVideo" : 0,
   "copyOriginalVideoToOutputFolderForValidation" : 0,
   "calculateAllTailAngles" : 0,
   "freqAlgoPosFollow" : 0,
@@ -63,7 +63,7 @@ CONFIG_DEFAULT = \
   "reduceImageResolutionPercentage" : 1,
   "trackingMethod" : "",
   "saveAllDataEvenIfNotInBouts" : 0,
-  "savePathToOriginalVideoForValidationVideo" : 0,
+  "savePathToOriginalVideoForValidationVideo" : 1,
 
   "setPixDiffBoutDetectParameters" : 0,
 

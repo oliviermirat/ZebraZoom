@@ -169,12 +169,14 @@ class ZebraZoomVideoAnalysis:
 
   def _createValidationVideo(self, superStruct):
     '''Create validation video'''
-    if not(self._hyperparameters["savePathToOriginalVideoForValidationVideo"]):
-      if self._hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
-        shutil.copyfile(os.path.join(self._pathToVideo, self._videoNameWithExt), os.path.join(os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"]), 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'))
-      else:
-        if self._hyperparameters["createValidationVideo"]:
-          infoFrame = createValidationVideo(os.path.join(self._pathToVideo, self._videoNameWithExt), superStruct, self._hyperparameters)
+    if self._hyperparameters["savePathToOriginalVideoForValidationVideo"]:
+      return
+    if self._hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
+      fname = f'{os.path.splitext(self._hyperparameters["H5filename"])[0]}_originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'
+      shutil.copyfile(os.path.join(self._pathToVideo, self._videoNameWithExt), fname)
+    elif self._hyperparameters["createValidationVideo"]:
+      fname = f'{os.path.splitext(self._hyperparameters["H5filename"])[0]}.avi'
+      infoFrame = createValidationVideo(os.path.join(self._pathToVideo, self._videoNameWithExt), superStruct, self._hyperparameters, outputName=fname)
 
   def _storeH5(self, superStruct):
     with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
