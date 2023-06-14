@@ -24,7 +24,7 @@ import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 from zebrazoom.code.readValidationVideo import readValidationVideo
 from zebrazoom.code.checkConsistencyOfParameters import checkConsistencyOfParameters
-from zebrazoom.code.GUI.GUI_InitialFunctions import chooseConfigFile, launchZebraZoom
+from zebrazoom.code.GUI.GUI_InitialFunctions import chooseConfigFile, launchZebraZoom, rolloverDetection
 
 LARGE_FONT= QFont("Verdana", 12)
 
@@ -354,6 +354,12 @@ class SeveralVideos(QWidget):
         sublayout3.addWidget(QLabel("you will be able to run the tracking on multiple videos without interruptions with the 'Run ZebraZoom on an entire folder' button above afterwards.", self), alignment=Qt.AlignmentFlag.AlignCenter)
         sublayout3.addWidget(util.apply_style(QLabel("", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
         advancedOptionsLayout.addLayout(sublayout3)
+
+        sublayout4 = QVBoxLayout()
+        button5 = util.apply_style(QPushButton("Rollover detection", self), background_color=util.LIGHT_YELLOW)
+        button5.clicked.connect(rolloverDetection)
+        sublayout4.addWidget(button5, alignment=Qt.AlignmentFlag.AlignCenter)
+        advancedOptionsLayout.addLayout(sublayout4)
 
         layout.addWidget(util.Expander(self, "Show advanced options", advancedOptionsLayout))
 

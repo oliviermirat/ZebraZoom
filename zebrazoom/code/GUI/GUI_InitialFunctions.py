@@ -450,7 +450,7 @@ class _VideoSelectionPage(QWidget):
     if errors:
       error = QMessageBox(app.window)
       error.setIcon(QMessageBox.Icon.Critical)
-      error.setWindowTitle("Specification contains some error")
+      error.setWindowTitle("Specification contains some errors")
       error.setText("Cannot run tracking becase the specified video and config combinations contain some errors:")
       error.setDetailedText("\n".join(errors))
       textEdit = error.findChild(QTextEdit)
@@ -499,10 +499,247 @@ class _VideoSelectionPage(QWidget):
     app.window.centralWidget().layout().currentWidget().setArgs((videos, configs), self._ZZkwargs)
 
 
-def _showVideoSelectionPage(ZZkwargs):
+class _ResultsSelectionPage(QWidget):
+  def __init__(self, _):
+    super().__init__()
+
+    app = QApplication.instance()
+
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("Select results and corresponding rollover config files"), font=app.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    folderPath = os.path.join(paths.getRootDataFolder(), 'rolloverConfigurations')
+    if not os.path.exists(folderPath):
+      os.makedirs(folderPath)
+    model = _VideoFilesModel()
+    model.setRootPath(folderPath)
+    self._tree = tree = _TrackingConfigurationsTreeView()
+    tree.setModel(model)
+    for idx in range(1, model.columnCount()):
+      tree.hideColumn(idx)
+    tree.setRootIndex(model.index(model.rootPath()))
+    self._table = QTableView()
+    selectionModel = _TrackingConfigurationsSelectionModel(app.window, self._table, model)
+    tree.setSelectionModel(selectionModel)
+    selectionModel.currentRowChanged.connect(lambda current, previous: current.row() == -1 or self._fileSelected(model.filePath(current)))
+
+    treeLayout = QVBoxLayout()
+    self._newConfigurationBtn = QPushButton("New configuration")
+    self._newConfigurationBtn.clicked.connect(self._newConfiguration)
+    treeLayout.addWidget(self._newConfigurationBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    treeLayout.addWidget(tree, stretch=1)
+    treeWidget = QWidget()
+    treeLayout.setContentsMargins(0, 0, 0, 0)
+    treeWidget.setLayout(treeLayout)
+    horizontalSplitter = util.CollapsibleSplitter()
+    horizontalSplitter.addWidget(treeWidget)
+
+    tableLayout = QVBoxLayout()
+    tableButtonsLayout = QHBoxLayout()
+    self._addMultipleFoldersBtn = QPushButton("Add results folders")
+    self._addMultipleFoldersBtn.clicked.connect(self._addMultipleFolders)
+    tableButtonsLayout.addWidget(self._addMultipleFoldersBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    chooseConfigsBtn = QPushButton("Choose config for selected results")
+    chooseConfigsBtn.clicked.connect(lambda: self._table.model().setConfigs(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))),
+                                                                           QFileDialog.getOpenFileName(app.window, 'Select config file', paths.getConfigurationFolder(), "JSON (*.json)")[0]))
+    tableButtonsLayout.addWidget(chooseConfigsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    removeVideosBtn = QPushButton("Remove selected results")
+    removeVideosBtn.clicked.connect(lambda: self._table.model().removeSelectedRows(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes())))))
+    tableButtonsLayout.addWidget(removeVideosBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    saveChangesBtn = QPushButton("Save changes")
+    saveChangesBtn.clicked.connect(lambda: self._table.model().saveFile(self._tree.model().filePath(selectionModel.currentIndex())) or QMessageBox.information(app.window, "Configuration saved", "Changes made to the configuration were saved."))
+    tableButtonsLayout.addWidget(saveChangesBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    deleteConfigurationBtn = QPushButton("Delete configuration")
+    deleteConfigurationBtn.clicked.connect(self._removeConfiguration)
+    tableButtonsLayout.addWidget(deleteConfigurationBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    openConfigurationsFolderBtn = QPushButton("Open configurations folder")
+    openConfigurationsFolderBtn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(folderPath)))
+    tableButtonsLayout.addWidget(openConfigurationsFolderBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._runTrackingBtn = util.apply_style(QPushButton("Run tracking"), background_color=util.DEFAULT_BUTTON_COLOR)
+    self._runTrackingBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: self._runTracking(), forceSave=True))
+    tableButtonsLayout.addWidget(self._runTrackingBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    tableButtonsLayout.addStretch()
+    tableLayout.addLayout(tableButtonsLayout)
+    tableLayout.addWidget(self._table, stretch=1)
+
+    self._mainWidget = QWidget()
+    tableLayout.setContentsMargins(0, 0, 0, 0)
+    self._mainWidget.setLayout(tableLayout)
+
+    scrollArea = QScrollArea()
+    scrollArea.setFrameShape(QFrame.Shape.NoFrame)
+    scrollArea.setWidgetResizable(True)
+    scrollArea.setWidget(self._mainWidget)
+    horizontalSplitter.addWidget(scrollArea)
+    horizontalSplitter.setStretchFactor(1, 1)
+    horizontalSplitter.setChildrenCollapsible(False)
+    layout.addWidget(horizontalSplitter, stretch=1)
+
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    startPageBtn = QPushButton("Go to the start page")
+    startPageBtn.clicked.connect(self._unsavedChangesWarning(lambda *_: app.show_frame("StartPage")))
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
+
+    self.setLayout(layout)
+    self._mainWidget.hide()
+
+  def _findResultsFile(self, path):
+    if not os.path.exists(path):
+      return None
+    folder = os.path.basename(path)
+    reference = os.path.join(path, 'results_' + folder + '.txt')
+    if os.path.exists(reference):
+      return reference
+    resultsFile = next((f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) if f.startswith('results_')), None)
+    if resultsFile is None:
+      return None
+    return os.path.join(path, resultsFile)
+
+  def _getMultipleFolders(self):
+    app = QApplication.instance()
+    dialog = QFileDialog()
+    dialog.setWindowTitle('Select one or more results folders (use Ctrl or Shift key to select multiple folders)')
+    dialog.setDirectory(app.ZZoutputLocation)
+    dialog.setFileMode(QFileDialog.FileMode.Directory)
+    dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
+    dialog.setOption(QFileDialog.Option.ShowDirsOnly, True)
+    listView = dialog.findChild(QListView, 'listView')
+    if listView:
+      listView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+    treeView = dialog.findChild(QTreeView)
+    if treeView:
+      treeView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+
+    if not dialog.exec():
+      return None
+    return dialog.selectedFiles()
+
+  @contextlib.contextmanager
+  def __selectAddedRows(self):
+    app = QApplication.instance()
+    model = self._table.model()
+    firstNewRow = model.rowCount()
+    yield
+    if firstNewRow == model.rowCount():
+      return  # no videos added
+    addedRows = QItemSelection()
+    addedRows.select(model.index(firstNewRow, 0), model.index(model.rowCount() - 1, 0))
+    self._table.selectionModel().setCurrentIndex(model.index(firstNewRow, 0), QItemSelectionModel.SelectionFlag.ClearAndSelect | QItemSelectionModel.SelectionFlag.Rows)
+    self._table.selectionModel().select(addedRows, QItemSelectionModel.SelectionFlag.ClearAndSelect | QItemSelectionModel.SelectionFlag.Rows)
+    self._table.setFocus()
+
+  def _addMultipleFolders(self):
+    selectedFolders = self._getMultipleFolders()
+    if selectedFolders is None:
+      return
+    invalidFolders = []
+    for selectedFolder in selectedFolders:
+      if self._findResultsFile(selectedFolder) is None:
+        invalidFolders.append(selectedFolder)
+        continue
+    with self.__selectAddedRows():
+      self._table.model().addVideos([os.path.normpath(path) for path in selectedFolders if path not in invalidFolders])
+    if invalidFolders:
+      app = QApplication.instance()
+      warning = QMessageBox(app.window)
+      warning.setIcon(QMessageBox.Icon.Warning)
+      warning.setWindowTitle("Invalid folders selected")
+      warning.setText("Some of the selected folders were ignored because they are not valid results folders.")
+      warning.setDetailedText("\n".join(invalidFolders))
+      warning.exec()
+
+  def _unsavedChangesWarning(self, fn, forceSave=False):
+    app = QApplication.instance()
+    def inner(*args, **kwargs):
+      if forceSave:
+        text = "Do you want to save the changes and proceed?"
+      else:
+        text = "Are you sure you want to proceed? Unsaved changes will be lost."
+      filename = self._tree.model().filePath(self._tree.selectionModel().currentIndex())
+      if self._table.model() is not None and self._table.model().hasUnsavedChanges(filename):
+        if QMessageBox.question(app.window, "Unsaved changes", text, defaultButton=QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+          return
+        elif forceSave:
+          self._table.model().saveFile(filename)
+      return fn(*args, **kwargs)
+    return inner
+
+  def _newConfiguration(self):
+    number = 1
+    while os.path.exists(os.path.join(self._tree.model().rootPath(), 'Configuration %d.csv' % number)):
+      number += 1
+    path = os.path.join(self._tree.model().rootPath(), 'Configuration %d.csv' % number)
+    pd.DataFrame(columns=_VideosModel._COLUMN_TITLES).to_csv(path, index=False)
+    index = self._tree.model().index(path)
+    self._tree.selectionModel().setCurrentIndex(index, QItemSelectionModel.SelectionFlag.ClearAndSelect)
+    self._tree.edit(index)
+
+  def _removeConfiguration(self):
+    app = QApplication.instance()
+    if QMessageBox.question(app.window, "Delete configuration", "Are you sure you want to delete the configuration? This action removes the file from disk and cannot be undone.",
+                            defaultButton=QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+      return
+    pathToRemove = self._tree.model().filePath(self._tree.selectionModel().currentIndex())
+    self._tree.model().remove(self._tree.selectionModel().currentIndex())
+    if pathToRemove == self._tree.model().filePath(self._tree.selectionModel().currentIndex()):  # last valid file removed
+      self._mainWidget.hide()
+
+  def _fileSelected(self, filename):
+    self._mainWidget.show()
+    self._table.setModel(_VideosModel(filename))
+    self._table.horizontalHeader().resizeSections(QHeaderView.ResizeMode.Stretch)
+
+  @util.showInProgressPage('Detecting rollover')
+  def __run(self, results, configs):
+    from zzdeeprollover.detectRolloverFrames import detectRolloverFrames
+    app = QApplication.instance()
+    for resultsFolder, config in zip(results, configs):
+      detectRolloverFrames(os.path.basename(resultsFolder), os.path.dirname(resultsFolder), config['medianRollingMean'], config['resizeCropDimension'], 1, 1, config['imagesToClassifyHalfDiameter'], config['modelPath'])
+    QMessageBox.information(app.window, "Rollover detection done", "Rollover detection was completed successfully.")
+
+  def _runTracking(self):
+    app = QApplication.instance()
+    results, configs = self._table.model().getData()
+    errors = []
+    loadedConfigs = []
+    for resultsFolder, config in zip(results, configs):
+      if not config:
+        errors.append('Config is not specified for video %s.' % video)
+      elif not os.path.exists(config):
+        errors.append('Config %s does not exist.' % config)
+      else:
+        with open(config) as f:
+          loadedConfig = json.load(f)
+          loadedConfigs.append(loadedConfig)
+        expectedKeys = {'medianRollingMean', 'resizeCropDimension', 'imagesToClassifyHalfDiameter', 'modelPath'}
+        if set(loadedConfig) != expectedKeys:
+          errors.append(f'Config {config} contains invalid keys. Expected keys are {", ".join(expectedKeys)}.')
+      if not os.path.exists(resultsFolder):
+        errors.append(f'Folder {resultsFolder} does not exist.')
+      if self._findResultsFile(resultsFolder) is None:
+        errors.append(f'Folder {resultsFolder} is not a valid results folder.')
+    if errors:
+      error = QMessageBox(app.window)
+      error.setIcon(QMessageBox.Icon.Critical)
+      error.setWindowTitle("Specification contains some errors")
+      error.setText("Cannot detect rollovers because the specified results and config combinations contain some errors:")
+      error.setDetailedText("\n".join(errors))
+      textEdit = error.findChild(QTextEdit)
+      textEdit.setLineWrapMode(QTextEdit.LineWrapMode.NoWrap)
+      layout = error.layout()
+      layout.addItem(QSpacerItem(600, 0), layout.rowCount(), 0, 1, layout.columnCount())
+      error.exec()
+      return
+    self.__run(results, loadedConfigs)
+
+
+def _showTemporaryPage(pageType, ZZkwargs):
   app = QApplication.instance()
   layout = app.window.centralWidget().layout()
-  page = _VideoSelectionPage(ZZkwargs)
+  page = pageType(ZZkwargs)
   layout.addWidget(page)
   layout.setCurrentWidget(page)
   def cleanup():
@@ -513,17 +750,17 @@ def _showVideoSelectionPage(ZZkwargs):
 
 def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode):
   ZZkwargs = {'justExtractParams': justExtractParams, 'noValidationVideo': noValidationVideo, 'sbatchMode': sbatchMode}
-  _showVideoSelectionPage(ZZkwargs)
+  _showTemporaryPage(_VideoSelectionPage, ZZkwargs)
 
 
 def chooseFolderForTailExtremityHE(self):
   ZZkwargs = {'headEmbedded': True}
-  _showVideoSelectionPage(ZZkwargs)
+  _showTemporaryPage(_VideoSelectionPage, ZZkwargs)
 
 
 def chooseFolderForMultipleROIs(self, askCoordinatesForAll):
   ZZkwargs = {'findMultipleROIs': True, 'askCoordinatesForAll': askCoordinatesForAll}
-  _showVideoSelectionPage(ZZkwargs)
+  _showTemporaryPage(_VideoSelectionPage, ZZkwargs)
 
 
 def chooseConfigFile(ZZargs, ZZkwargs):
@@ -537,6 +774,10 @@ def chooseConfigFile(ZZargs, ZZkwargs):
     app.window.centralWidget().layout().currentWidget().setArgs(ZZargs, ZZkwargs)
   else:
     launchZebraZoom(*ZZargs, **ZZkwargs)
+
+
+def rolloverDetection():
+  _showTemporaryPage(_ResultsSelectionPage, None)
 
 
 def _runTracking(args, justExtractParams, noValidationVideo, ZZoutputLocation):
