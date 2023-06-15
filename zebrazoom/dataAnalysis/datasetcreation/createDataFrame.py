@@ -60,7 +60,21 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     excelFile = excelFileDataFrame
   else:
     print("You must provide either an excel file or a video name to create a dataframe of parameters.")
-  
+
+  calculateRolloverParameters = True
+  for videoId in range(0, len(excelFile)):  # calculate rollover parameters only if rollover detection was performed on all videos
+    if excelFile.loc[videoId, 'path'] == "defaultZZoutputFolder":
+      path = os.path.join(defaultZZoutputFolderPath, excelFile.loc[videoId, 'trial_id'])
+    else:
+      path = os.path.join(excelFile.loc[videoId, 'path'], excelFile.loc[videoId, 'trial_id'])
+    if not os.path.exists(os.path.join(path, 'rolloverClassified.txt')) or not os.path.exists(os.path.join(path, 'rolloverPercentages.txt')):
+      calculateRolloverParameters = False
+      break
+
+  # If calculating rollover parameters is present, force recalculate since we cannot know whether rollover data was modified at some point. Additionally, we need to read the results anyway to obtain bout start and end times.
+  if calculateRolloverParameters:
+    forcePandasDfRecreation = True
+
   if nbFramesTakenIntoAccount <= -1:
     boutNbFrames = []
     boutTakenIntoAcccount = 0
@@ -218,7 +232,11 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
             dfReloadedVid = dfReloadedVid.reset_index()
 
         dfParam = pd.concat([dfParam, dfReloadedVid])
-    
+
+    if calculateRolloverParameters:
+      classifiedData = np.loadtxt(os.path.join(path, 'rolloverClassified.txt'), dtype=bool)
+      percentagesData = np.loadtxt(os.path.join(path, 'rolloverPercentages.txt'), dtype=float)
+
     # Going through each well of the video
     for Well_ID, Cond in enumerate(condition):
       # Not going through this loop if we've already reloaded parameters
@@ -232,6 +250,11 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
           for NumBout, dataForBout in enumerate(supstruct["wellPoissMouv"][Well_ID][fishId]):
             if not("flag" in dataForBout) or dataForBout["flag"] == 0:
               # Calculating specified parameters for that bout
+              if calculateRolloverParameters:
+                dfParamForWell.loc[curBoutId, ['Classified rollover', 'Rollover percentages']] = [data[Well_ID][dataForBout['BoutStart']:dataForBout['BoutEnd']+1].sum() for data in (classifiedData, percentagesData)]
+                frameCount = dataForBout['BoutEnd'] - dataForBout['BoutStart'] + 1
+                dfParamForWell.loc[curBoutId, 'Mean classified rollover'] = dfParamForWell.loc[curBoutId, 'Classified rollover'] / frameCount
+                dfParamForWell.loc[curBoutId, 'Mean rollover percentages'] = dfParamForWell.loc[curBoutId, 'Rollover percentages'] / frameCount
               if "Bend_Timing" in dataForBout and type(dataForBout["Bend_Timing"]) == list and len(dataForBout["Bend_Timing"]) >= minNbBendForBoutDetect:
                 
                 # Initial basic information
@@ -349,6 +372,9 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   # Saving dataframe for the whole set of videos as a matlab file
   if saveAllBoutsSuperStructuresInMatlabFormat:
     scipy.io.savemat(os.path.join(resFolder, nameOfFile + '.mat'), {'struct1':dfParam.to_dict("list")})
+
+  if calculateRolloverParameters:
+    globParam.extend(['Classified rollover', 'Rollover percentages', 'Mean classified rollover', 'Mean rollover percentages'])
 
   if H5filename is not None:
     cols = globParam + ['BoutStart', 'BoutEnd']
