@@ -251,10 +251,10 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
             if not("flag" in dataForBout) or dataForBout["flag"] == 0:
               # Calculating specified parameters for that bout
               if calculateRolloverParameters:
-                dfParamForWell.loc[curBoutId, ['Classified rollover', 'Rollover percentages']] = [data[Well_ID][dataForBout['BoutStart']:dataForBout['BoutEnd']+1].sum() for data in (classifiedData, percentagesData)]
+                dfParamForWell.loc[curBoutId, ['numberOfRolloverFrames', 'rolloverProbabilitiesSum']] = [data[Well_ID][dataForBout['BoutStart']:dataForBout['BoutEnd']+1].sum() for data in (classifiedData, percentagesData)]
                 frameCount = dataForBout['BoutEnd'] - dataForBout['BoutStart'] + 1
-                dfParamForWell.loc[curBoutId, 'Mean classified rollover'] = dfParamForWell.loc[curBoutId, 'Classified rollover'] / frameCount
-                dfParamForWell.loc[curBoutId, 'Mean rollover percentages'] = dfParamForWell.loc[curBoutId, 'Rollover percentages'] / frameCount
+                dfParamForWell.loc[curBoutId, 'numberOfRolloverFramesNormalized'] = dfParamForWell.loc[curBoutId, 'numberOfRolloverFrames'] / frameCount
+                dfParamForWell.loc[curBoutId, 'rolloverProbabilitiesSumNormalized'] = dfParamForWell.loc[curBoutId, 'rolloverProbabilitiesSum'] / frameCount
               if "Bend_Timing" in dataForBout and type(dataForBout["Bend_Timing"]) == list and len(dataForBout["Bend_Timing"]) >= minNbBendForBoutDetect:
                 
                 # Initial basic information
@@ -374,7 +374,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     scipy.io.savemat(os.path.join(resFolder, nameOfFile + '.mat'), {'struct1':dfParam.to_dict("list")})
 
   if calculateRolloverParameters:
-    globParam.extend(['Classified rollover', 'Rollover percentages', 'Mean classified rollover', 'Mean rollover percentages'])
+    globParam.extend(['numberOfRolloverFrames', 'rolloverProbabilitiesSum', 'numberOfRolloverFramesNormalized', 'rolloverProbabilitiesSumNormalized'])
 
   if H5filename is not None:
     cols = globParam + ['BoutStart', 'BoutEnd']
