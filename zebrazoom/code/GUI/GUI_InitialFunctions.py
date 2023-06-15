@@ -697,7 +697,8 @@ class _ResultsSelectionPage(QWidget):
     from zzdeeprollover.detectRolloverFrames import detectRolloverFrames
     app = QApplication.instance()
     for resultsFolder, config in zip(results, configs):
-      detectRolloverFrames(os.path.basename(resultsFolder), os.path.dirname(resultsFolder), config['medianRollingMean'], config['resizeCropDimension'], 1, 1, config['imagesToClassifyHalfDiameter'], config['modelPath'])
+      comparePredictedWithManual = os.path.exists(os.path.join(resultsFolder, 'rolloverManualClassification.json'))
+      detectRolloverFrames(os.path.basename(resultsFolder), os.path.dirname(resultsFolder), config['medianRollingMean'], config['resizeCropDimension'], comparePredictedWithManual, 1, config['imagesToClassifyHalfDiameter'], config['modelPath'])
     QMessageBox.information(app.window, "Rollover detection done", "Rollover detection was completed successfully.")
 
   def _runTracking(self):
