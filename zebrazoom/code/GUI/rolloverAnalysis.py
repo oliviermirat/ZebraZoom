@@ -691,6 +691,7 @@ class ManualRolloverClassification(util.CollapsibleSplitter):
         else:
           self._currentRange[1] = frame
         return
+      saveButton.setEnabled(self._originalRolloverClassification != self._rolloverClassification)
       rolloverButton.setEnabled(True)
       inBetweenButton.setEnabled(True)
       rolloverRange, currentRangeIdx = getRange(frame, slider.rolloverRanges)
@@ -714,9 +715,11 @@ class ManualRolloverClassification(util.CollapsibleSplitter):
       if currentRangeIdx is not None:
         del data[currentRangeIdx]
         slider.update()
-        saveButton.setEnabled(self._originalRolloverClassification != self._rolloverClassification)
       elif self._currentRange is None:
         btn.setText(btn.text().replace('Start', 'Stop'))
+        otherBtn = rolloverButton if btn is not rolloverButton else inBetweenButton
+        otherBtn.setEnabled(False)
+        saveButton.setEnabled(False)
         self._currentRange = [currentFrame, currentFrame]
         data.append(self._currentRange)
       else:
@@ -749,6 +752,7 @@ class ManualRolloverClassification(util.CollapsibleSplitter):
       with open(self._rolloverClassificationPath, 'w') as f:
         json.dump(self._rolloverClassification, f, indent=2)
       saveButton.setEnabled(False)
+      self._originalRolloverClassification = copy.deepcopy(self._rolloverClassification)
 
     self._saveButton = saveButton = QPushButton('Save changes')
     saveButton.setEnabled(False)
