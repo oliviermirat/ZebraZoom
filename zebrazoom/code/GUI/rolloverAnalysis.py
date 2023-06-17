@@ -722,6 +722,18 @@ class ManualRolloverClassification(util.CollapsibleSplitter):
       else:
         self._currentRange.sort()
         data.sort()
+        mergedRanges = []
+        for range_ in data:
+          if not mergedRanges:
+            mergedRanges.append(range_)
+          else:
+            if mergedRanges[-1][1] == range_[0] - 1:
+              mergedRanges[-1][1] = range_[1]
+            else:
+              mergedRanges.append(range_)
+        data[:] = mergedRanges
+        slider.update()
+
         self._currentRange = None
         saveButton.setEnabled(self._originalRolloverClassification != self._rolloverClassification)
       updateRollover(currentFrame)
