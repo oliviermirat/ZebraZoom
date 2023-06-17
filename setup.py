@@ -50,6 +50,7 @@ setup(
         "zebrazoom/configuration/toCreateConfigFileForBarelyMovingAnimals.json",
         "zebrazoom/configuration/noPreProcessingOfImageForBoutDetection.json",
         "zebrazoom/configuration/invertColorsForHeadEmbeddedEyeTracking.json",
+        "zebrazoom/configuration/invertBlackWhiteOnImages.json",
         "zebrazoom/ZZoutput/example1/results_example1.txt",
         "zebrazoom/ZZoutput/example2/results_example2.txt",
         "zebrazoom/ZZoutput/example3/results_example3.txt",

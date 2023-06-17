@@ -357,10 +357,13 @@ class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDet
       ret, frame = cap.read()
 
       if ret:
-
+        
+        if self._hyperparameters["invertBlackWhiteOnImages"]:
+          frame = 255 - frame
+        
         if self._hyperparameters["imagePreProcessMethod"]:
           frame = preprocessImage(frame, self._hyperparameters)
-
+        
         # if self._hyperparameters["backgroundSubtractorKNN"]:
           # frame = fgbg.apply(frame)
           # frame = 255 - frame

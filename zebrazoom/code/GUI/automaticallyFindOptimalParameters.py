@@ -44,7 +44,7 @@ def _automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, de
     configFile["trackingMethod"] = initialConfigFile["trackingMethod"]
   
   originalConfigFile = self.configFile
-  paramsToOverwriteFromOriginalConfigFile = ["setBackgroundToImageMedian"]
+  paramsToOverwriteFromOriginalConfigFile = ["setBackgroundToImageMedian", "invertBlackWhiteOnImages"]
   for param in paramsToOverwriteFromOriginalConfigFile:
     if param in originalConfigFile:
       configFile[param] = originalConfigFile[param]
