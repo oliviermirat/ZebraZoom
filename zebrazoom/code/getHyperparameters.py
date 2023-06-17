@@ -381,5 +381,6 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
 def getHyperparametersSimple(configTemp):
   hyperparameters = copy.deepcopy(CONFIG_DEFAULT)
   hyperparameters.update(copy.deepcopy(configTemp))
+  for key in ('firstFrame', 'lastFrame', 'videoWidth', 'videoHeight'):
+    del hyperparameters[key]
   return hyperparameters
-
