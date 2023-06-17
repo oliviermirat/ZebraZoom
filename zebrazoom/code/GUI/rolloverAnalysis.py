@@ -785,6 +785,13 @@ class ManualRolloverClassification(util.CollapsibleSplitter):
     wrapperWidget.hideChildren()
 
   def _wellSelected(self, idx):
+    if self._currentRange is not None:
+      try:
+        self._slider.rolloverRanges.remove(self._currentRange)
+        self._slider.inBetweenRanges.remove(self._currentRange)
+      except ValueError:
+        pass
+    self._currentRange = None
     self._slider.rolloverRanges = self._rolloverClassification[f'{idx + 1}']['rollover']
     self._slider.inBetweenRanges = self._rolloverClassification[f'{idx + 1}']['inBetween']
     self._slider.valueChanged.emit(self._slider.value())
