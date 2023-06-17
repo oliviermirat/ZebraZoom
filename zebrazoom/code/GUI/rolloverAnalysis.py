@@ -7,7 +7,7 @@ import pandas as pd
 
 from PyQt5.QtCore import pyqtSignal, Qt, QAbstractTableModel, QDir, QEvent, QItemSelection, QItemSelectionModel, QModelIndex, QObject, QPoint, QPointF, QRect, QRectF, QSize, QSizeF, QSortFilterProxyModel, QUrl
 from PyQt5.QtGui import QColor, QDesktopServices, QFont, QPainter, QPixmap, QPolygon, QPolygonF, QTransform
-from PyQt5.QtWidgets import QAbstractItemView, QApplication, QFileDialog, QFileSystemModel, QFrame, QHBoxLayout, QHeaderView, QLabel, QListView, QMessageBox, QPushButton, QScrollArea, QSlider, QSpacerItem, QStyleOptionSlider, QTableView, QTextEdit, QTreeView, QToolTip, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QFileDialog, QFileSystemModel, QFrame, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QHBoxLayout, QHeaderView, QLabel, QListView, QMessageBox, QPushButton, QScrollArea, QSlider, QSpacerItem, QStyleOptionSlider, QTableView, QTextEdit, QTreeView, QToolTip, QVBoxLayout, QWidget
 
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
@@ -427,7 +427,7 @@ class _TooltipHelper(QObject):
     return False
 
 
-class _WellSelectionLabel(QLabel):
+class _WellSelectionImage(QGraphicsView):
   wellChanged = pyqtSignal(int)
 
   def __init__(self):
@@ -435,97 +435,146 @@ class _WellSelectionLabel(QLabel):
     self._well = None
     self._hoveredWell = None
     self._wellPositions = None
-    self._size = None
-    self._originalPixmap = None
     self.wellShape = None
+
+    self._zoom = 0
+    self._scene = QGraphicsScene(self)
+    self._pixmap = QGraphicsPixmapItem()
+    self._scene.addItem(self._pixmap)
+    self.setScene(self._scene)
+    self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+    self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+    self.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+    self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
+    self.setFrameShape(QFrame.Shape.NoFrame)
+    self._dragging = False
+
+  def fitInView(self):
+    rect = QRectF(self._pixmap.pixmap().rect())
+    self.setSceneRect(rect)
+    unity = self.transform().mapRect(QRectF(0, 0, 1, 1))
+    self.scale(1 / unity.width(), 1 / unity.height())
+    viewrect = self.viewport().rect()
+    scenerect = self.transform().mapRect(rect)
+    factor = min(viewrect.width() / scenerect.width(),
+                 viewrect.height() / scenerect.height())
+    self.scale(factor, factor)
+    self._zoom = 0
+
+  def _update(self, scaleFactor):
+    if self._zoom > 0:
+      self.scale(scaleFactor, scaleFactor)
+    elif self._zoom == 0:
+      self.fitInView()
+    else:
+      self._zoom = 0
+
+  def wheelEvent(self, evt):
+    if evt.angleDelta().y() > 0:
+      self._zoom += 1
+      self._update(1.25)
+    else:
+      self._zoom -= 1
+      self._update(0.8)
+
+  def keyPressEvent(self, evt):
+    if evt.modifiers() & Qt.KeyboardModifier.ControlModifier:
+      if evt.key() == Qt.Key.Key_Plus:
+        self._zoom += 1
+        self._update(1.25)
+        return
+      if evt.key() == Qt.Key.Key_Minus:
+        self._zoom -= 1
+        self._update(0.8)
+        return
+    super().keyPressEvent(evt)
 
   def setWellPositions(self, wellPositions):
     self.setMouseTracking(wellPositions is not None)
     self._wellPositions = wellPositions
     self._well = 0
     self.wellChanged.emit(self._well)
-    self.update()
 
   def setOriginalPixmap(self, pixmap, update=True):
-    self._originalPixmap = pixmap
+    self._pixmap.setPixmap(pixmap)
     if update:
       self._well = 0
-      if pixmap is not None:
-        self.setMaximumSize(pixmap.size())
-        self.setMinimumSize(300, 300)
-        self.setPixmap(pixmap)
-        self.hide()
-        self.show()
-    self._updateImage()
+      self._zoom = 0
+      self.setDragMode(QGraphicsView.DragMode.ScrollHandDrag)
+      self.fitInView()
 
   def mouseMoveEvent(self, evt):
+    if evt.buttons() == Qt.MouseButton.LeftButton:
+      if not self._dragging:
+        self._dragging = True
+        QApplication.setOverrideCursor(Qt.CursorShape.ClosedHandCursor)
+      super().mouseMoveEvent(evt)
+      return
+
     app = QApplication.instance()
     if not self._wellPositions:
       return
     oldHovered = self._hoveredWell
     if self.wellShape == 'rectangle':
       def test_func(shape, x, y, width, height):
-        if isinstance(shape, QPoint):
-          return QRect(x, y, width, height).contains(shape)
-        else:
-          assert isinstance(shape, QRect)
-          return QRect(x, y, width, height).intersects(shape)
+        return QRectF(x, y, width, height).contains(shape)
     else:
       assert self.wellShape == 'circle'
       def test_func(shape, x, y, width, height):
-        if isinstance(shape, QPoint):
-          radius = width / 2
-          centerX = x + radius
-          centerY = y + radius
-          dx = abs(shape.x() - centerX)
-          if dx > radius:
-            return False
-          dy = abs(shape.y() - centerY)
-          if dy > radius:
-            return False
-          if dx + dy <= radius:
-            return True
-          return dx * dx + dy * dy <= radius * radius
-        else:
-          radius = width / 2
-          centerX = x + radius
-          centerY = y + radius
-          Dx = max(shape.x(), min(centerX, shape.x() + shape.width())) - centerX
-          Dy = max(shape.y(), min(centerY, shape.y() + shape.height())) - centerY
-          return (Dx ** 2 + Dy ** 2) <= radius ** 2
-
+        radius = width / 2
+        centerX = x + radius
+        centerY = y + radius
+        dx = abs(shape.x() - centerX)
+        if dx > radius:
+          return False
+        dy = abs(shape.y() - centerY)
+        if dy > radius:
+          return False
+        if dx + dy <= radius:
+          return True
+        return dx * dx + dy * dy <= radius * radius
     self._hoveredWell = None
     for idx, positions in enumerate(self._wellPositions):
-      point = self._transformToOriginal.map(evt.pos())
+      point = self.mapToScene(evt.pos())
       if test_func(point, *positions):
         self._hoveredWell = idx
         break
     if self._hoveredWell != oldHovered:
-      self.update()
+      self.viewport().update()
+    super().mouseMoveEvent(evt)
 
   def mousePressEvent(self, evt):
     if not self._wellPositions or self._hoveredWell is None:
+      super().mousePressEvent(evt)
       return
     if self._well != self._hoveredWell:
       self._well = self._hoveredWell
       self.wellChanged.emit(self._well)
-      self.update()
+      self.viewport().update()
+    super().mousePressEvent(evt)
+
+  def mouseReleaseEvent(self, evt):
+    if self._dragging:
+      self._dragging = False
+      QApplication.restoreOverrideCursor()
+    super().mouseReleaseEvent(evt)
 
   def enterEvent(self, evt):
     QApplication.setOverrideCursor(Qt.CursorShape.CrossCursor)
+    super().enterEvent(evt)
 
   def leaveEvent(self, evt):
     QApplication.restoreOverrideCursor()
     self._hoveredWell = None
-    self.update()
+    self.viewport().update()
+    super().leaveEvent(evt)
 
   def paintEvent(self, evt):
     super().paintEvent(evt)
     app = QApplication.instance()
     if not self._wellPositions:
       return
-    qp = QPainter()
-    qp.begin(self)
+    qp = QPainter(self.viewport())
     factory = qp.drawRect if self.wellShape == 'rectangle' else qp.drawEllipse
     for idx, positions in enumerate(self._wellPositions):
       if idx == self._well:
@@ -534,43 +583,15 @@ class _WellSelectionLabel(QLabel):
         qp.setPen(QColor(0, 255, 0))
       else:
         qp.setPen(QColor(0, 0, 255))
-      rect = self._transformFromOriginal.map(QPolygon(QRect(*positions))).boundingRect()
+      rect = self.mapFromScene(QRectF(*positions)).boundingRect()
       font = QFont()
       font.setPointSize(16)
       font.setWeight(QFont.Weight.Bold)
       qp.setFont(font)
-      qp.drawText(rect, Qt.AlignmentFlag.AlignCenter, str(idx))
+      if idx != self._well:
+        qp.drawText(rect, Qt.AlignmentFlag.AlignCenter, str(idx))
       factory(rect)
     qp.end()
-
-  def _updateImage(self):
-    self._size = self.size()
-    if self._originalPixmap is None:
-      self.clear()
-      return
-    originalRect = QRectF(QPointF(0, 0), QSizeF(self._originalPixmap.size()))
-    currentRect = QRectF(QPointF(0, 0), QSizeF(self._size))
-    self._transformToOriginal = QTransform()
-    QTransform.quadToQuad(QPolygonF((currentRect.topLeft(), currentRect.topRight(), currentRect.bottomLeft(), currentRect.bottomRight())),
-                          QPolygonF((originalRect.topLeft(), originalRect.topRight(), originalRect.bottomLeft(), originalRect.bottomRight())),
-                          self._transformToOriginal)
-    self._transformFromOriginal = QTransform()
-    QTransform.quadToQuad(QPolygonF((originalRect.topLeft(), originalRect.topRight(), originalRect.bottomLeft(), originalRect.bottomRight())),
-                          QPolygonF((currentRect.topLeft(), currentRect.topRight(), currentRect.bottomLeft(), currentRect.bottomRight())),
-                          self._transformFromOriginal)
-    scaling = self.devicePixelRatioF()
-    size = self._originalPixmap.size().scaled(self.size(), Qt.AspectRatioMode.KeepAspectRatio)
-    img = self._originalPixmap.scaled(int(size.width() * scaling), int(size.height() * scaling))
-    img.setDevicePixelRatio(scaling)
-    self.setPixmap(img)
-    blocked = self.blockSignals(True)
-    self.setMinimumSize(size)
-    self.setMaximumSize(size)
-    self.blockSignals(blocked)
-
-  def resizeEvent(self, evt):
-    super().resizeEvent(evt)
-    self._updateImage()
 
   def getWell(self):
     return self._well if self._wellPositions is not None else 0
@@ -637,7 +658,7 @@ class ManualRolloverClassification(util.CollapsibleSplitter):
     self._title_label = util.apply_style(QLabel('', self), font_size='16px')
     layout.addWidget(self._title_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    self._frame = frame = _WellSelectionLabel()
+    self._frame = frame = _WellSelectionImage()
     frame.wellChanged.connect(self._wellSelected)
     layout.addWidget(frame, stretch=1)
     self._slider = slider = RolloverSlider(Qt.Orientation.Horizontal)
@@ -791,7 +812,12 @@ class ManualRolloverClassification(util.CollapsibleSplitter):
       self._slider.setRange(*frameRange)
       self._slider.setValue(self._slider.minimum())
 
-      self._frame.setOriginalPixmap(QPixmap(util._cvToPixmap(self._getFrame(self._slider))))
+      pixmap = QPixmap(util._cvToPixmap(self._getFrame(self._slider)))
+      label = QLabel()
+      label.setPixmap(pixmap)
+      parentLayout = self._frame.parentWidget().layout()
+      parentLayout.replaceWidget(self._frame, label)
+
       if wellShape is None:
         self._frame.wellShape = None
         self._frame.setWellPositions(None)
@@ -801,3 +827,13 @@ class ManualRolloverClassification(util.CollapsibleSplitter):
                                       for idx, position in enumerate(wellPositions)])
 
       self._centralWidget.showChildren()
+
+      size = pixmap.size().scaled(label.size(), Qt.AspectRatioMode.KeepAspectRatio)
+      label.hide()
+      self._frame.sizeHint = lambda: size
+      self._frame.setMinimumSize(size)
+      self._frame.setMaximumSize(size)
+      self._frame.viewport().setFixedSize(size)
+      self._frame.setOriginalPixmap(pixmap)
+      parentLayout.replaceWidget(label, self._frame)
+      label.setParent(None)
