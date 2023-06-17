@@ -669,6 +669,10 @@ class ManualRolloverClassification(util.CollapsibleSplitter):
     slider.valueChanged.connect(lambda: frame.setOriginalPixmap(QPixmap(util._cvToPixmap(self._getFrame(slider))), update=False))
     layout.addWidget(slider)
 
+    self._messageLabel = QLabel('Video not found for the selected results.')
+    layout.addWidget(self._messageLabel, stretch=1)
+    self._messageLabel.setVisible(False)
+
     layout.addWidget(QLabel('<span style="color:red">Rollover ranges are marked with red,</span> <span style="color:blue">in between are marked with blue.</span>'), alignment=Qt.AlignmentFlag.AlignCenter)
 
     self._currentRange = None
@@ -773,7 +777,7 @@ class ManualRolloverClassification(util.CollapsibleSplitter):
     wrapperLayout = QHBoxLayout()
     wrapperLayout.addWidget(centralWidget, alignment=Qt.AlignmentFlag.AlignCenter)
     wrapperWidget.setLayout(wrapperLayout)
-    wrapperWidget.showChildren = lambda: [child.show() for child in centralWidget.findChildren(QWidget) if child is not startPageBtn]
+    wrapperWidget.showChildren = lambda: [child.show() for child in centralWidget.findChildren(QWidget) if child is not startPageBtn and child is not self._messageLabel]
     wrapperWidget.hideChildren = lambda: [child.hide() for child in centralWidget.findChildren(QWidget) if child is not startPageBtn]
     scrollArea = QScrollArea()
     scrollArea.setFrameShape(QFrame.Shape.NoFrame)
@@ -823,7 +827,12 @@ class ManualRolloverClassification(util.CollapsibleSplitter):
       self._tree.show()
       return
     else:
-      self._getFrame, frameRange, _, toggleTrackingPoints, wellPositions, wellShape = getFramesCallback('', name, '', -1, 0, False, 0, ZZoutputLocation=self.controller.ZZoutputLocation)
+      frameInfo = getFramesCallback('', name, '', -1, 0, False, 0, ZZoutputLocation=self.controller.ZZoutputLocation)
+      if frameInfo is None:
+        self._centralWidget.hideChildren()
+        self._messageLabel.show()
+        return
+      self._getFrame, frameRange, _, toggleTrackingPoints, wellPositions, wellShape = frameInfo
 
       self._rolloverClassificationPath = os.path.join(self.controller.ZZoutputLocation, name, 'rolloverManualClassification.json')
       if os.path.exists(self._rolloverClassificationPath):

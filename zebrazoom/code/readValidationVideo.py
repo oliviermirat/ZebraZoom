@@ -54,7 +54,7 @@ def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal,
       app = QApplication.instance()
       if QMessageBox.critical(app.window, "Video not found", "Cannot display the validation video because the video used to run the tracking can no longer be found. Would you like to update the video path stored in the results file?",
                               buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, defaultButton=QMessageBox.StandardButton.Yes) != QMessageBox.StandardButton.Yes:
-        return
+        return None
       videoName, _ = QFileDialog.getOpenFileName(app.window, 'Select video', os.path.expanduser("~"))
       videoPath = supstruct["pathToOriginalVideo"] = videoName
       with open(resultsPath, 'w') as f:
@@ -80,6 +80,8 @@ def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal,
   nx    = int(cap.get(3))
   ny    = int(cap.get(4))
   max_l = int(cap.get(7))
+  if max_l == 1:
+    return None
   frameRange = (supstruct["firstFrame"], supstruct["lastFrame"] - 1) if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"] else (0, max_l -1)
 
   if not("firstFrame" in supstruct):
@@ -221,7 +223,10 @@ def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal,
 
 
 def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation=''):
-  getFrame, frameRange, frame, toggleTrackingPoints, _, _ = getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation='')
+  frameInfo = getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation='')
+  if frameInfo is None:
+    return
+  getFrame, frameRange, frame, toggleTrackingPoints, _, _ = frameInfo
   layout = QVBoxLayout()
 
   video = QLabel()
