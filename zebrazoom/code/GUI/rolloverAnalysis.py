@@ -1,5 +1,6 @@
 import contextlib
 import copy
+import itertools
 import json
 import os
 
@@ -684,7 +685,11 @@ class ManualRolloverClassification(util.CollapsibleSplitter):
     def updateRollover(frame):
       nonlocal currentRangeIdx
       if self._currentRange is not None:
-        self._currentRange[1] = frame
+        start, end = sorted((self._currentRange[0], frame))
+        if any(start <= val <= end for range_ in itertools.chain(slider.rolloverRanges, slider.inBetweenRanges) for val in range_ if range_ is not self._currentRange):
+          slider.setValue(self._currentRange[1])
+        else:
+          self._currentRange[1] = frame
         return
       rolloverButton.setEnabled(True)
       inBetweenButton.setEnabled(True)
