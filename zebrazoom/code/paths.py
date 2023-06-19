@@ -20,5 +20,9 @@ def getConfigurationFolder():
   return os.path.join(getRootDataFolder(), 'configuration')
 
 
+def getRolloverDetectionConfigurationFolder():
+  return os.path.join(getRootDataFolder(), 'rolloverDetectionConfiguration')
+
+
 def getDataAnalysisFolder():
   return os.path.join(getRootDataFolder(), 'dataAnalysis')

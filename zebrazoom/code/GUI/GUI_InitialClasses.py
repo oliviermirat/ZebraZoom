@@ -201,6 +201,9 @@ class _AnalysisDetails(QFrame):
     outputFolderLabel = QLabel('Go one step further: access the raw data and do your own analysis!')
     outputFolderLabel.setWordWrap(True)
     layout.addWidget(outputFolderLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+    rolloverAnalysisBtn = util.apply_style(QPushButton("Zebrafish rollover analysis"), background_color=util.LIGHT_YELLOW)
+    rolloverAnalysisBtn.clicked.connect(lambda: app.show_frame("RolloverAnalysis"))
+    layout.addWidget(rolloverAnalysisBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     self.setLayout(layout)
 
 

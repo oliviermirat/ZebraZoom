@@ -7,7 +7,7 @@ import json
 import numpy as np
 
 from PyQt5.QtCore import Qt, QSize, QTimer
-from PyQt5.QtWidgets import QApplication, QCheckBox, QFileDialog, QMessageBox, QLabel, QSlider, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QCheckBox, QFileDialog, QMessageBox, QLabel, QSlider, QStyleOptionSlider, QVBoxLayout
 
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
@@ -17,7 +17,7 @@ from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.preprocessImage import preprocessImage
 
 
-def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation=''):
+def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation=''):
   s1  = "ZZoutput"
   s2  = folderName
   s3b = "results_"
@@ -54,7 +54,7 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
       app = QApplication.instance()
       if QMessageBox.critical(app.window, "Video not found", "Cannot display the validation video because the video used to run the tracking can no longer be found. Would you like to update the video path stored in the results file?",
                               buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, defaultButton=QMessageBox.StandardButton.Yes) != QMessageBox.StandardButton.Yes:
-        return
+        return None
       videoName, _ = QFileDialog.getOpenFileName(app.window, 'Select video', os.path.expanduser("~"))
       videoPath = supstruct["pathToOriginalVideo"] = videoName
       with open(resultsPath, 'w') as f:
@@ -80,7 +80,9 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   nx    = int(cap.get(3))
   ny    = int(cap.get(4))
   max_l = int(cap.get(7))
-  sliderRange = (supstruct["firstFrame"], supstruct["lastFrame"] - 1) if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"] else (0, max_l -1)
+  if max_l == 1:
+    return None
+  frameRange = (supstruct["firstFrame"], supstruct["lastFrame"] - 1) if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"] else (0, max_l -1)
 
   if not("firstFrame" in supstruct):
     supstruct["firstFrame"] = 1
@@ -164,14 +166,14 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   xOriginal = x
   yOriginal = y
 
-  def getFrame():
+  def getFrame(frameSlider, timer=None, plotTrackingPointsCheckbox=None, stopTimer=True):
     nonlocal x
     nonlocal y
     nonlocal lengthX
     nonlocal lengthY
 
     l = frameSlider.value()
-    if timer.isActive() and (l == frameSlider.maximum() or stopTimer):
+    if timer is not None and timer.isActive() and (l == frameSlider.maximum() or stopTimer):
       timer.stop()
 
     cap.set(1, l)
@@ -180,7 +182,7 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
     if hyperparameters["imagePreProcessMethod"]:
       img = preprocessImage(img, hyperparameters)
     
-    if infoFrame is not None and plotTrackingPointsCheckbox.isChecked():
+    if infoFrame is not None and plotTrackingPointsCheckbox is not None and plotTrackingPointsCheckbox.isChecked():
       drawInfoFrame(l, img, infoFrame, colorModifTab, hyperparameters)
 
     if numWell != -1 and zoom:
@@ -216,6 +218,15 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
 
     return img
 
+  wellShape = None if configTemp.get("noWellDetection", False) or (hyperparameters["headEmbeded"] and not hyperparameters["oneWellManuallyChosenTopLeft"]) else 'rectangle' if configTemp.get("wellsAreRectangles", False) or len(configTemp.get("oneWellManuallyChosenTopLeft", '')) or int(configTemp.get("multipleROIsDefinedDuringExecution", 0)) or configTemp.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
+  return getFrame, frameRange, l, infoFrame is not None, supstruct['wellPositions'], wellShape
+
+
+def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation=''):
+  frameInfo = getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation='')
+  if frameInfo is None:
+    return
+  getFrame, frameRange, frame, toggleTrackingPoints, _, _ = frameInfo
   layout = QVBoxLayout()
 
   video = QLabel()
@@ -224,17 +235,18 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   frameSlider = QSlider(Qt.Orientation.Horizontal)
   frameSlider.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
   frameSlider.setPageStep(50)
-  frameSlider.setRange(*sliderRange)
-  frameSlider.setValue(l)
-  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video))
+  frameSlider.setRange(*frameRange)
+  frameSlider.setValue(frame)
+  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(frameSlider, timer, plotTrackingPointsCheckbox, stopTimer), video))
   layout.addWidget(frameSlider)
   shortcutsLabel = QLabel("Left Arrow, Right Arrow, Page Up, Page Down, Home and End keys can be used to navigate through the video.")
   shortcutsLabel.setWordWrap(True)
   layout.addWidget(shortcutsLabel)
-  if infoFrame is not None:
+  plotTrackingPointsCheckbox = None
+  if toggleTrackingPoints:
     plotTrackingPointsCheckbox = QCheckBox("Display tracking points")
     plotTrackingPointsCheckbox.setChecked(True)
-    plotTrackingPointsCheckbox.toggled.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(), video))
+    plotTrackingPointsCheckbox.toggled.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(frameSlider, timer, plotTrackingPointsCheckbox, stopTimer), video))
     layout.addWidget(plotTrackingPointsCheckbox)
 
   stopTimer = True
@@ -248,8 +260,7 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
     stopTimer = True
   timer.timeout.connect(nextFrame)
 
-  startFrame = getFrame()
+  startFrame = getFrame(frameSlider, timer, plotTrackingPointsCheckbox, stopTimer)
   timer.start()
   util.showDialog(layout, title="Video", labelInfo=(startFrame, video))
   timer.stop()
-  cap.release()

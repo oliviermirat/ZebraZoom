@@ -1,0 +1,6 @@
+{
+  "resizeCropDimension": 34,
+  "imagesToClassifyHalfDiameter": 50,
+  "medianRollingMean": 5,
+  "modelPath": "D:\\Documents\\model2.pth"
+}

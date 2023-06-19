@@ -450,7 +450,7 @@ class _VideoSelectionPage(QWidget):
     if errors:
       error = QMessageBox(app.window)
       error.setIcon(QMessageBox.Icon.Critical)
-      error.setWindowTitle("Specification contains some error")
+      error.setWindowTitle("Specification contains some errors")
       error.setText("Cannot run tracking becase the specified video and config combinations contain some errors:")
       error.setDetailedText("\n".join(errors))
       textEdit = error.findChild(QTextEdit)
@@ -499,7 +499,7 @@ class _VideoSelectionPage(QWidget):
     app.window.centralWidget().layout().currentWidget().setArgs((videos, configs), self._ZZkwargs)
 
 
-def _showVideoSelectionPage(ZZkwargs):
+def _showTemporaryPage(ZZkwargs):
   app = QApplication.instance()
   layout = app.window.centralWidget().layout()
   page = _VideoSelectionPage(ZZkwargs)
@@ -513,17 +513,17 @@ def _showVideoSelectionPage(ZZkwargs):
 
 def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode):
   ZZkwargs = {'justExtractParams': justExtractParams, 'noValidationVideo': noValidationVideo, 'sbatchMode': sbatchMode}
-  _showVideoSelectionPage(ZZkwargs)
+  _showTemporaryPage(ZZkwargs)
 
 
 def chooseFolderForTailExtremityHE(self):
   ZZkwargs = {'headEmbedded': True}
-  _showVideoSelectionPage(ZZkwargs)
+  _showTemporaryPage(ZZkwargs)
 
 
 def chooseFolderForMultipleROIs(self, askCoordinatesForAll):
   ZZkwargs = {'findMultipleROIs': True, 'askCoordinatesForAll': askCoordinatesForAll}
-  _showVideoSelectionPage(ZZkwargs)
+  _showTemporaryPage(ZZkwargs)
 
 
 def chooseConfigFile(ZZargs, ZZkwargs):

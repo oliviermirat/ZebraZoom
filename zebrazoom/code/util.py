@@ -167,12 +167,14 @@ def showInProgressPage(text):
       stackedLayout = app.window.centralWidget().layout()
       oldWidget = stackedLayout.currentWidget()
       stackedLayout.addWidget(temporaryPage)
+      blocked = stackedLayout.blockSignals(True)
       stackedLayout.setCurrentWidget(temporaryPage)
       QAbstractEventDispatcher.instance().processEvents(QEventLoop.ProcessEventsFlag.AllEvents)  # XXX: this is ugly, but required to make sure the page is displayed before the function is executed, since the GUI will get blocked while the function is executing
       try:
         retval = fn(*args, **kwargs)  # XXX: GUI and non-GUI parts are still mixed so this function is expected to set the new page
       finally:
         stackedLayout.removeWidget(temporaryPage)
+        stackedLayout.blockSignals(blocked)
       return retval
     return inner
   return decorator

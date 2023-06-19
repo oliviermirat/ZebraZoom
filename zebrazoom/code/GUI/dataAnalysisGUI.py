@@ -731,12 +731,12 @@ class CreateExperimentOrganizationExcel(QWidget):
     return None
 
   def _findExampleFrame(self, folder):
+    backgroundPath = os.path.join(folder, 'background.png')
+    if os.path.exists(backgroundPath):
+      return cv2.imread(backgroundPath)
     expectedName = os.path.join(folder, '%s.avi' % os.path.basename(folder))
     validationVideo = expectedName if os.path.exists(expectedName) else next((os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) if f.endswith('.avi')), None)
-    if validationVideo is not None:
-      return zzVideoReading.VideoCapture(validationVideo).read()[1]
-    backgroundPath = os.path.join(folder, 'background.png')
-    return cv2.imread(backgroundPath) if os.path.exists(backgroundPath) else None
+    return zzVideoReading.VideoCapture(validationVideo).read()[1] if validationVideo is not None else None
 
   def _videoSelected(self, rows):
     if not rows:
