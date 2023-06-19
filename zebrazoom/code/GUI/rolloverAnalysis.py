@@ -28,6 +28,10 @@ class RolloverAnalysis(QWidget):
     detectionBtn.clicked.connect(_showTemporaryPage)
     layout.addWidget(detectionBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
+    openConfigurationsFolderBtn = util.apply_style(QPushButton("Open rollover detection configurations folder"), background_color=util.LIGHT_YELLOW)
+    openConfigurationsFolderBtn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(paths.getRolloverDetectionConfigurationFolder())))
+    layout.addWidget(openConfigurationsFolderBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
     classificationBtn = util.apply_style(QPushButton("Manual rollover classification", self), background_color=util.LIGHT_YELLOW)
     classificationBtn.clicked.connect(lambda: controller.showManualRolloverClassification())
     layout.addWidget(classificationBtn, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -199,7 +203,7 @@ class _ResultsSelectionPage(QWidget):
     tableButtonsLayout.addWidget(self._addMultipleFoldersBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     chooseConfigsBtn = QPushButton("Choose config for selected results")
     chooseConfigsBtn.clicked.connect(lambda: self._table.model().setConfigs(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))),
-                                                                           QFileDialog.getOpenFileName(app.window, 'Select config file', paths.getConfigurationFolder(), "JSON (*.json)")[0]))
+                                                                            QFileDialog.getOpenFileName(app.window, 'Select config file', paths.getRolloverDetectionConfigurationFolder(), "JSON (*.json)")[0]))
     tableButtonsLayout.addWidget(chooseConfigsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     removeVideosBtn = QPushButton("Remove selected results")
     removeVideosBtn.clicked.connect(lambda: self._table.model().removeSelectedRows(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes())))))

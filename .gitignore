@@ -31,6 +31,7 @@ zebrazoom/code/tracking/customTrackingImplementations/examples/__pycache__/
 zebrazoom/dataAPI/__pycache__/
 
 zebrazoom/trackingConfigurations/*.csv
+zebrazoom/rolloverConfigurations/
 
 zebrazoom/newhyperparameters
 zebrazoom/trace.txt
@@ -59,6 +60,8 @@ zebrazoom/configuration/
 !zebrazoom/configuration/noPreProcessingOfImageForBoutDetection.json
 !zebrazoom/configuration/invertColorsForHeadEmbeddedEyeTracking.json
 !zebrazoom/configuration/invertBlackWhiteOnImages.json
+
+zebrazoom/rolloverDetectionConfiguration/
 
 zebrazoom/dataAnalysis/classifiers/*
 zebrazoom/dataAnalysis/data/*
