@@ -24,17 +24,29 @@ class RolloverAnalysis(QWidget):
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Zebrafish rollover analysis", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    detectionBtn = util.apply_style(QPushButton("Rollover detection", self), background_color=util.LIGHT_YELLOW)
-    detectionBtn.clicked.connect(_showTemporaryPage)
-    layout.addWidget(detectionBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    classificationBtn = util.apply_style(QPushButton("Manually classify video frames into rollover vs no-rollover", self), background_color=util.LIGHT_YELLOW)
+    classificationBtn.clicked.connect(lambda: controller.showManualRolloverClassification())
+    layout.addWidget(classificationBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    openConfigurationsFolderBtn = util.apply_style(QPushButton("Open rollover detection configurations folder"), background_color=util.LIGHT_YELLOW)
+    openConfigurationsFolderBtn = util.apply_style(QPushButton("Open rollover detection configuration file folder"), background_color=util.LIGHT_YELLOW)
     openConfigurationsFolderBtn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl.fromLocalFile(paths.getRolloverDetectionConfigurationFolder())))
     layout.addWidget(openConfigurationsFolderBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    classificationBtn = util.apply_style(QPushButton("Manual rollover classification", self), background_color=util.LIGHT_YELLOW)
-    classificationBtn.clicked.connect(lambda: controller.showManualRolloverClassification())
-    layout.addWidget(classificationBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    oneVideoDetectionBtn = util.apply_style(QPushButton("Launch rollover detection on one video", self), background_color=util.LIGHT_YELLOW)
+    oneVideoDetectionBtn.clicked.connect(_ResultsSelectionPage.runSingle)
+    layout.addWidget(oneVideoDetectionBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    multipleVideosDetectionBtn = util.apply_style(QPushButton("Launch rollover detection on multiple videos", self), background_color=util.LIGHT_YELLOW)
+    multipleVideosDetectionBtn.clicked.connect(_showTemporaryPage)
+    layout.addWidget(multipleVideosDetectionBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    comparePopulationsBtn = util.apply_style(QPushButton("Compare zebrafish populations based on rollover detection", self), background_color=util.LIGHT_YELLOW)
+    comparePopulationsBtn.clicked.connect(lambda: controller.show_frame("CreateExperimentOrganizationExcel"))
+    layout.addWidget(comparePopulationsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    documentationBtn = util.apply_style(QPushButton("Read rollover detection documentation", self), background_color=util.LIGHT_GREEN)
+    documentationBtn.clicked.connect(lambda: QDesktopServices.openUrl(QUrl("https://zebrazoom.org/documentation/docs/behaviorAnalysis/zebrafishRolloverDetection")))
+    layout.addWidget(documentationBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     start_page_btn = QPushButton("Go to the start page", self)
     start_page_btn.clicked.connect(lambda: controller.show_frame("StartPage"))
@@ -248,7 +260,8 @@ class _ResultsSelectionPage(QWidget):
     self.setLayout(layout)
     self._mainWidget.hide()
 
-  def _findResultsFile(self, path):
+  @staticmethod
+  def _findResultsFile(path):
     if not os.path.exists(path):
       return None
     folder = os.path.basename(path)
@@ -354,13 +367,40 @@ class _ResultsSelectionPage(QWidget):
     self._table.setModel(_ResultsModel(filename))
     self._table.horizontalHeader().resizeSections(QHeaderView.ResizeMode.Stretch)
 
-  @util.showInProgressPage('Detecting rollover')
-  def __run(self, results, configs):
+  @staticmethod
+  def __run(resultsFolder, config):
     from zzdeeprollover.detectRolloverFrames import detectRolloverFrames
+    comparePredictedWithManual = os.path.exists(os.path.join(resultsFolder, 'rolloverManualClassification.json'))
+    detectRolloverFrames(os.path.basename(resultsFolder), os.path.dirname(resultsFolder), config['medianRollingMean'], config['resizeCropDimension'], comparePredictedWithManual, 1, config['imagesToClassifyHalfDiameter'], config['modelPath'])
+
+  @util.showInProgressPage('Rollover detection')
+  def __runMultiple(self, results, configs):
     app = QApplication.instance()
     for resultsFolder, config in zip(results, configs):
-      comparePredictedWithManual = os.path.exists(os.path.join(resultsFolder, 'rolloverManualClassification.json'))
-      detectRolloverFrames(os.path.basename(resultsFolder), os.path.dirname(resultsFolder), config['medianRollingMean'], config['resizeCropDimension'], comparePredictedWithManual, 1, config['imagesToClassifyHalfDiameter'], config['modelPath'])
+      self.__run(resultsFolder, config)
+    QMessageBox.information(app.window, "Rollover detection done", "Rollover detection was completed successfully.")
+
+  @classmethod
+  def runSingle(cls):
+    app = QApplication.instance()
+    resultsFolder = QFileDialog.getExistingDirectory(app.window, 'Select the results folder on which you want to perform rollover detection', app.ZZoutputLocation)
+    if not resultsFolder:
+      return
+    if cls._findResultsFile(resultsFolder) is None:
+      QMessageBox.critical(app.window, 'Invalid folder selected', f'Folder {resultsFolder} is not a valid results folder.')
+      return
+
+    configPath, _ = QFileDialog.getOpenFileName(app.window, 'Select the configuration file', paths.getRolloverDetectionConfigurationFolder(), 'JSON (*.json)')
+    if not configPath:
+      return
+    with open(configPath) as f:
+      config = json.load(f)
+    expectedKeys = {'medianRollingMean', 'resizeCropDimension', 'imagesToClassifyHalfDiameter', 'modelPath'}
+    if set(config) != expectedKeys:
+      QMessageBox.critical(app.window, 'Invalid configuration file selected', f'Configuration file contains invalid keys. Expected keys are {", ".join(expectedKeys)}.')
+      return
+
+    util.showInProgressPage('Rollover detection')(cls.__run)(resultsFolder, config)
     QMessageBox.information(app.window, "Rollover detection done", "Rollover detection was completed successfully.")
 
   def _runTracking(self):
@@ -396,7 +436,7 @@ class _ResultsSelectionPage(QWidget):
       layout.addItem(QSpacerItem(600, 0), layout.rowCount(), 0, 1, layout.columnCount())
       error.exec()
       return
-    self.__run(results, loadedConfigs)
+    self.__runMultiple(results, loadedConfigs)
 
 
 def _showTemporaryPage():
