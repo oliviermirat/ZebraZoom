@@ -129,7 +129,7 @@ class ZzVideoReading():
         justToMove = self.f.read(24 * (int(numImage) - int(self.lastFrameRead) - 1))
         self.lastFrameRead = numImage - 1  
         
-      elif numImage < self.lastFrameRead:
+      elif numImage <= self.lastFrameRead:
         
         self.f.close()
         self.f = open(self.sqb_path, 'rb')
