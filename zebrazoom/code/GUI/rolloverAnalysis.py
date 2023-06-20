@@ -399,6 +399,8 @@ class _ResultsSelectionPage(QWidget):
     if set(config) != expectedKeys:
       QMessageBox.critical(app.window, 'Invalid configuration file selected', f'Configuration file contains invalid keys. Expected keys are {", ".join(expectedKeys)}.')
       return
+    if not os.path.isabs(config['modelPath']):
+      config['modelPath'] = os.path.join(os.path.dirname(configPath), config['modelPath'])
 
     util.showInProgressPage('Rollover detection')(cls.__run)(resultsFolder, config)
     QMessageBox.information(app.window, "Rollover detection done", "Rollover detection was completed successfully.")
@@ -420,6 +422,8 @@ class _ResultsSelectionPage(QWidget):
         expectedKeys = {'medianRollingMean', 'resizeCropDimension', 'imagesToClassifyHalfDiameter', 'modelPath'}
         if set(loadedConfig) != expectedKeys:
           errors.append(f'Config {config} contains invalid keys. Expected keys are {", ".join(expectedKeys)}.')
+        if not os.path.isabs(loadedConfig['modelPath']):
+          loadedConfig['modelPath'] = os.path.join(os.path.dirname(config), loadedConfig['modelPath'])
       if not os.path.exists(resultsFolder):
         errors.append(f'Folder {resultsFolder} does not exist.')
       if self._findResultsFile(resultsFolder) is None:
