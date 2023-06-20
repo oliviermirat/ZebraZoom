@@ -403,6 +403,7 @@ class _ResultsSelectionPage(QWidget):
       config['modelPath'] = os.path.join(os.path.dirname(configPath), config['modelPath'])
 
     util.showInProgressPage('Rollover detection')(cls.__run)(resultsFolder, config)
+    app.show_frame('RolloverAnalysis')
     QMessageBox.information(app.window, "Rollover detection done", "Rollover detection was completed successfully.")
 
   def _runTracking(self):
@@ -440,7 +441,10 @@ class _ResultsSelectionPage(QWidget):
       layout.addItem(QSpacerItem(600, 0), layout.rowCount(), 0, 1, layout.columnCount())
       error.exec()
       return
+    stackedLayout =  app.window.centralWidget().layout()
+    blocked = stackedLayout.blockSignals(True)
     self.__runMultiple(results, loadedConfigs)
+    stackedLayout.blockSignals(blocked)
 
 
 def _showTemporaryPage():
