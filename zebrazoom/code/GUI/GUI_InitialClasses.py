@@ -1070,7 +1070,6 @@ class ViewParameters(util.CollapsibleSplitter):
             videoPath = videoPath[:len(videoPath)-1]
         else:
             videoPath = ""
-
         win = readValidationVideo(videoPath, self.currentResultFolder, '.txt', numWell, numAnimal, zoom, deb, ZZoutputLocation=self.controller.ZZoutputLocation)
 
     def showGraphForAllBoutsCombined(self, numWell, numPoiss, dataRef, visualization, graphScaling):

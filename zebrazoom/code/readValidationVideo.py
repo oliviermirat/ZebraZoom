@@ -223,7 +223,7 @@ def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal,
 
 
 def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation=''):
-  frameInfo = getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation='')
+  frameInfo = getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=framesToShow, ZZoutputLocation=ZZoutputLocation)
   if frameInfo is None:
     return
   getFrame, frameRange, frame, toggleTrackingPoints, _, _ = frameInfo
@@ -264,3 +264,4 @@ def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnima
   timer.start()
   util.showDialog(layout, title="Video", labelInfo=(startFrame, video))
   timer.stop()
+  del getFrame
