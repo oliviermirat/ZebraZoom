@@ -29,8 +29,8 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
     self._wellPositions = wellPositions
     self._videoName = os.path.splitext(os.path.basename(videoPath))[0]
     self._auDessusPerAnimalId = None
-    self._firstFrame = self._hyperparameters["firstFrame"] if self._hyperparameters["firstFrameForTracking"] == -1 else self._hyperparameters["firstFrameForTracking"]
-    self._lastFrame = self._hyperparameters["lastFrame"]
+    self._firstFrame = self._hyperparameters.get("firstFrame", 0) if self._hyperparameters["firstFrameForTracking"] == -1 else self._hyperparameters["firstFrameForTracking"]
+    self._lastFrame = self._hyperparameters.get("lastFrame", 0)
     self._nbTailPoints = self._hyperparameters["nbTailPoints"]
     self._headPositionFirstFrame = []
     self._tailTipFirstFrame = []
