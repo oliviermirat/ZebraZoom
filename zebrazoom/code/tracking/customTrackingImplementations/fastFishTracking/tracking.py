@@ -1,5 +1,6 @@
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.utilities import calculateAngle, distBetweenThetas
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.trackTail import trackTail
+import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.util as util
 import zebrazoom.code.tracking
 import numpy as np
@@ -19,7 +20,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     ### Step 1 (out of 2): Tracking:
     
     # Getting video reader
-    cap = cv2.VideoCapture(self._videoPath)
+    cap = zzVideoReading.VideoCapture(self._videoPath)
     if (cap.isOpened()== False):
       print("Error opening video stream or file")
     
@@ -80,7 +81,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
           wellYtop = self._wellPositions[wellNumber]['topLeftY']
           lenghtWell_X = self._wellPositions[wellNumber]['lengthX']
           lenghtWell_Y = self._wellPositions[wellNumber]['lengthY']
-          frameROI = frame[wellYtop:wellYtop+lenghtWell_Y, wellXtop:wellXtop+lenghtWell_X].copy()
+          frameROI = frame[wellYtop:wellYtop+lenghtWell_Y, wellXtop:wellXtop+lenghtWell_X]
 
           (minVal, maxVal, headPosition, maxLoc) = cv2.minMaxLoc(frameROI)
           if minVal >= 240:
@@ -103,6 +104,8 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     
     endTime = time.time()
     
+    cap.release()
+    
     print("")
     loadingImagesTime       = np.median(times[:,0])
     processingImagesTime    = np.median(times[:,1])
@@ -111,8 +114,8 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     print("Percentage of time spent loading images:", percentTimeSpentLoading*100)
     print("Total tracking Time:", endTime - startTime)
     print("Tracking Time (without loading image):", (endTime - startTime) * (1 - percentTimeSpentLoading))
-    print("Total tracking fps:", int(cap.get(cv2.CAP_PROP_FRAME_COUNT) + 1) / (endTime - startTime))
-    print("Tracking fps (without loading image):", int(cap.get(cv2.CAP_PROP_FRAME_COUNT) + 1) / ((endTime - startTime) * (1 - percentTimeSpentLoading)))
+    print("Total tracking fps:", k / (endTime - startTime))
+    print("Tracking fps (without loading image):", k / ((endTime - startTime) * (1 - percentTimeSpentLoading)))
     print("")
     
     ### Step 2 (out of 2): Extracting bout of movements:
