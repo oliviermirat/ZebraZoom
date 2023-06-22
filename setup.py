@@ -23,7 +23,7 @@ setup(
   install_requires=[
     "scikit-learn>=1.2.2",
     "h5py",
-    "numpy",
+    "numpy<=1.24.3",
     "matplotlib>=3.5.2",
     "scipy",
     "pandas==1.5.3",
