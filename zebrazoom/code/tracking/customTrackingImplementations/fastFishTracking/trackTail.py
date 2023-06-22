@@ -1,4 +1,7 @@
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.utilities import appendPoint, distBetweenThetas, assignValueIfBetweenRange, calculateAngle
+from scipy.interpolate import interp1d
+import zebrazoom.code.util as util
+from numpy import linspace
 import numpy as np
 import math
 import cv2
@@ -10,15 +13,20 @@ def __insideTrackTail(depth, headPosition, frame, points, angle, maxDepth, steps
   
   pixSurMax = hyperparameters["headEmbededParamTailDescentPixThreshStop"]
   
+  pixTotList = []
+  
   distSubsquentPoints = 0.000001
   pixSur = 0
   
   while (distSubsquentPoints > 0 and depth < maxDepth and ((pixSur < pixSurMax) or (depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth))):
   
-    if depth == 0:
+    if depth == 0 and angle == -99999: # First frame, first segment
       thetaDiffAccept = 3.6
     else:
-      thetaDiffAccept = 1
+      if (depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth):
+        thetaDiffAccept = hyperparameters["thetaDiffAccept"]
+      else:
+        thetaDiffAccept = hyperparameters["thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd"]
 
     pixTotMax = 1000000
     maxTheta  = angle
@@ -36,7 +44,9 @@ def __insideTrackTail(depth, headPosition, frame, points, angle, maxDepth, steps
             maxTheta = theta
             xTot = xNew
             yTot = yNew
-
+    
+    pixTotList.append(pixTotMax)
+    
     if False:
       w = 4
       ym = yTot - w
@@ -68,12 +78,14 @@ def __insideTrackTail(depth, headPosition, frame, points, angle, maxDepth, steps
       points = appendPoint(xTot, yTot, points)
     
     if debug:
-      cv2.circle(frame, (xTot, yTot), 3, (255,0,0),   -1)
+      cv2.circle(frame, (xTot, yTot), 1, (0,0,0),   -1)
       util.showFrame(frame, title="HeadEmbeddedTailTracking")
     
     newTheta = calculateAngle(x,y,xTot,yTot)
     
     angle = newTheta
+    if depth == 0:
+      lastFirstTheta = angle
     depth = depth + distSubsquentPoints
     x = xTot
     y = yTot
@@ -82,10 +94,15 @@ def __insideTrackTail(depth, headPosition, frame, points, angle, maxDepth, steps
   if points[0, lenPoints-1] == points[0, lenPoints] and points[1, lenPoints-1] == points[1, lenPoints]:
     points = points[:, :len(points[0])-1]
   
-  return (points, newTheta)
+  if debug:
+    print(np.median(pixTotList), np.mean(pixTotList), pixTotList)
+  
+  # print("pixTotList:", pixTotList)
+  
+  return (points, lastFirstTheta)
 
 
-def trackTail(frameROI, headPosition, hyperparameters):
+def trackTail(frameROI, headPosition, hyperparameters, wellNumber, frameNumber, lastFirstTheta):
   
   steps   = hyperparameters["steps"]
   nbList  = 10 if hyperparameters["nbList"] == -1 else hyperparameters["nbList"]
@@ -96,17 +113,41 @@ def trackTail(frameROI, headPosition, hyperparameters):
   points = np.zeros((2, 0))
   
   debug = hyperparameters["debugHeadEmbededFindNextPoints"]
+  
   lenX = len(frameROI[0]) - 1
   lenY = len(frameROI) - 1
   
-  (points, lastFirstTheta2) = __insideTrackTail(0, headPosition, frameROI, points, angle, maxDepth, steps, nbList,  hyperparameters, debug, lenX, lenY)
+  (points, lastFirstTheta) = __insideTrackTail(0, headPosition, frameROI, points, lastFirstTheta, maxDepth, steps, nbList,  hyperparameters, debug, lenX, lenY)
   
   points = np.insert(points, 0, headPosition, axis=1)
-
-  output = np.zeros((1, len(points[0]), 2))
-
+  
+  if False:
+    points = np.transpose(points)
+    num_samples = hyperparameters["nbTailPoints"]
+    x = points[:, 0]
+    y = points[:, 1]
+    path_length = np.sum(np.sqrt(np.diff(x)**2 + np.diff(y)**2))
+    desired_distance = path_length / (num_samples - 1)
+    cumulative_distances = np.cumsum(np.sqrt(np.diff(x)**2 + np.diff(y)**2))
+    cumulative_distances = np.insert(cumulative_distances, 0, 0)
+    interp_func = interp1d(cumulative_distances, points, axis=0)
+    new_distances = np.linspace(0, path_length, num=num_samples)
+    resampled_points = interp_func(new_distances)
+    points = np.transpose(resampled_points)
+  
+  output = np.zeros((1, hyperparameters["nbTailPoints"], 2))
   for idx, x in enumerate(points[0]):
-    output[0][idx][0] = x
-    output[0][idx][1] = points[1][idx]
-
-  return output
+    if idx < hyperparameters["nbTailPoints"]:
+      output[0][idx][0] = x
+      output[0][idx][1] = points[1][idx]
+  
+  if len(points) < hyperparameters["nbTailPoints"]:
+    for idx in range(len(points[0]), hyperparameters["nbTailPoints"]):
+      output[0][idx][0] = output[0][len(points[0])-1][0]
+      output[0][idx][1] = output[0][len(points[0])-1][1]
+  else:
+    if len(points) > hyperparameters["nbTailPoints"]:
+      output[0][hyperparameters["nbTailPoints"]-1][0] = points[0][len(points)-1]
+      output[0][hyperparameters["nbTailPoints"]-1][1] = points[1][len(points)-1]
+  
+  return output, lastFirstTheta

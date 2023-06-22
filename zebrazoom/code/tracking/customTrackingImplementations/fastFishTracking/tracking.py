@@ -1,12 +1,16 @@
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.utilities import calculateAngle, distBetweenThetas
+from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.detectMovementWithTrackedDataAfterTracking import detectMovementWithTrackedDataAfterTracking
+from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.detectMovementWithRawVideoInsideTracking import detectMovementWithRawVideoInsideTracking
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.trackTail import trackTail
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+from zebrazoom.code.extractParameters import extractParameters
 import zebrazoom.code.util as util
 import zebrazoom.code.tracking
 import numpy as np
+import queue
 import math
-import cv2
 import time
+import cv2
 
 class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
   
@@ -14,6 +18,12 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     self._videoPath = videoPath
     self._wellPositions = wellPositions
     self._hyperparameters = hyperparameters
+    self._auDessusPerAnimalIdList = None
+    self._firstFrame = self._hyperparameters["firstFrame"]
+    self._lastFrame = self._hyperparameters["lastFrame"]
+    self._nbTailPoints = self._hyperparameters["nbTailPoints"]
+    self._previousFrames = None
+
 
   def run(self):
     
@@ -36,9 +46,10 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     
     # Initializing variables
     ret = True
-    trackingDataPerWell = {}
-    for wellNumber in range(0, len(self._wellPositions)):
-      trackingDataPerWell[wellNumber] = []
+    trackingDataPerWell = [np.zeros((self._hyperparameters["nbAnimalsPerWell"], self._lastFrame-self._firstFrame+1, self._nbTailPoints, 2)) for _ in range(len(self._wellPositions))]
+    
+    lastFirstTheta = np.zeros(len(self._wellPositions))
+    lastFirstTheta[:] = -99999
     
     printInterTime = False
     
@@ -76,6 +87,8 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
         # Going through each well/arena/tank and applying tracking method on it
         for wellNumber in range(0, len(self._wellPositions)):
           
+          animalId = 0
+          
           # Retrieving well/tank/arena coordinates and selecting ROI
           wellXtop = self._wellPositions[wellNumber]['topLeftX']
           wellYtop = self._wellPositions[wellNumber]['topLeftY']
@@ -88,10 +101,12 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
             headPosition = [0, 0]
           
           if self._hyperparameters["trackTail"]:
-            a = trackTail(frameROI, headPosition, self._hyperparameters)
-            trackingDataPerWell[wellNumber].append(a[0])
+            a, lastFirstTheta[wellNumber] = trackTail(frameROI, headPosition, self._hyperparameters, wellNumber, k, lastFirstTheta[wellNumber])
+            trackingDataPerWell[wellNumber][animalId][k][:len(a[0])] = a
           else:
-            trackingDataPerWell[wellNumber].append(headPosition)
+            trackingDataPerWell[wellNumber][animalId][k] = np.array([[headPosition]])
+        
+        self._previousFrames = detectMovementWithRawVideoInsideTracking(self, k, frame, self._previousFrames, trackingDataPerWell)
         
         t2 = time.time()
         if printInterTime:
@@ -120,65 +135,17 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     
     ### Step 2 (out of 2): Extracting bout of movements:
     
-    outputData = {} # Each element of this object will correspond to the tracking data of a particular well/tank/arena
+    if self._hyperparameters["detectMovementWithRawVideoInsideTracking"] and self._hyperparameters["thresForDetectMovementWithRawVideo"]:
     
-    for wellNumber in range(0, len(self._wellPositions)):
+      trackingHeadingAllAnimalsList = [[[((calculateAngle(trackingDataPerWell[wellNumber][0][i][0][0], trackingDataPerWell[wellNumber][0][i][0][1], trackingDataPerWell[wellNumber][0][i][1][0], trackingDataPerWell[wellNumber][0][i][1][1]) + math.pi) % (2 * math.pi) if len(trackingDataPerWell[wellNumber][0][i]) > 1 else 0) for i in range(0, self._lastFrame)]] for wellNumber in range(0, len(self._wellPositions))]
       
-      outputDataForWell = []
-        
-      if self._hyperparameters["detectBouts"]: # See below ("else") for no bout detection scenario
-        
-        nbFramesStepToAvoidNoise = self._hyperparameters["nbFramesStepToAvoidNoise"]
-        minNbFramesForBoutDetect = self._hyperparameters["minNbFramesForBoutDetect"]
-        
-        # Finding frames with an instantaneous distance over a predifined threshold
-        boutOccuring = [math.sqrt((trackingDataPerWell[wellNumber][i+nbFramesStepToAvoidNoise][0][0] - trackingDataPerWell[wellNumber][i][0][0])**2 + (trackingDataPerWell[wellNumber][i+nbFramesStepToAvoidNoise][0][1] - trackingDataPerWell[wellNumber][i][0][1])**2) > self._hyperparameters["minimumInstantaneousDistanceForBoutDetect"] for i in range(0, len(trackingDataPerWell[wellNumber])-nbFramesStepToAvoidNoise)]
-        
-        # Detecting bouts by finding long enough sequence of frames with high enough instantaneous distance
-        boutCurrentlyOccuring = False
-        boutFrameNumberStart  = -1
-        for frameNumber, boutIsOccuring in enumerate(boutOccuring):
-          if boutIsOccuring:
-            if not(boutCurrentlyOccuring):
-              boutFrameNumberStart = frameNumber
-            boutCurrentlyOccuring = True
-          else:
-            if boutCurrentlyOccuring:
-              boutCurrentlyOccuring = False
-              if frameNumber - boutFrameNumberStart > minNbFramesForBoutDetect:
-                # Saving information for each bout of movement detected
-                boutOfMovement = {}
-                boutOfMovement["AnimalNumber"]  = 0
-                boutOfMovement["BoutStart"]     = boutFrameNumberStart
-                boutOfMovement["BoutEnd"]       = frameNumber
-                boutOfMovement["HeadX"]         = [trackingDataPerWell[wellNumber][i][0][0] for i in range(boutFrameNumberStart, frameNumber)]
-                boutOfMovement["HeadY"]         = [trackingDataPerWell[wellNumber][i][0][1] for i in range(boutFrameNumberStart, frameNumber)]
-                boutOfMovement["Heading"]                = [(calculateAngle(trackingDataPerWell[wellNumber][i][0][0], trackingDataPerWell[wellNumber][i][0][1], trackingDataPerWell[wellNumber][i][1][0], trackingDataPerWell[wellNumber][i][1][1]) + math.pi) % (2 * math.pi) for i in range(boutFrameNumberStart, frameNumber+1)]
-                boutOfMovement["TailAngle_Raw"]          = [distBetweenThetas(calculateAngle(trackingDataPerWell[wellNumber][i][0][0], trackingDataPerWell[wellNumber][i][0][1], trackingDataPerWell[wellNumber][i][1][0], trackingDataPerWell[wellNumber][i][1][1]), calculateAngle(trackingDataPerWell[wellNumber][i][0][0], trackingDataPerWell[wellNumber][i][0][1], trackingDataPerWell[wellNumber][i][len(trackingDataPerWell[wellNumber][i])-1][0], trackingDataPerWell[wellNumber][i][len(trackingDataPerWell[wellNumber][i])-1][1])) for i in range(boutFrameNumberStart, frameNumber+1)]
-                boutOfMovement["TailX_VideoReferential"] = [[trackingDataPerWell[wellNumber][i][j][0] for j in range(0, len(trackingDataPerWell[wellNumber][i]))] for i in range(boutFrameNumberStart, frameNumber+1)]
-                boutOfMovement["TailY_VideoReferential"] = [[trackingDataPerWell[wellNumber][i][j][1] for j in range(0, len(trackingDataPerWell[wellNumber][i]))] for i in range(boutFrameNumberStart, frameNumber+1)]
-                
-                outputDataForWell.append(boutOfMovement)
-      
-      else: # No bout detction in this case
-      
-        lastFrame = len(trackingDataPerWell[wellNumber])
-        boutOfMovement = {}
-        boutOfMovement["AnimalNumber"]  = 0
-        boutOfMovement["BoutStart"]     = 0
-        boutOfMovement["BoutEnd"]       = len(trackingDataPerWell[wellNumber])
-        boutOfMovement["HeadX"]         = [trackingDataPerWell[wellNumber][i][0][0] for i in range(0, lastFrame)]
-        boutOfMovement["HeadY"]         = [trackingDataPerWell[wellNumber][i][0][1] for i in range(0, lastFrame)]
-        boutOfMovement["Heading"]       = [(calculateAngle(trackingDataPerWell[wellNumber][i][0][0], trackingDataPerWell[wellNumber][i][0][1], trackingDataPerWell[wellNumber][i][1][0], trackingDataPerWell[wellNumber][i][1][1]) + math.pi) % (2 * math.pi) for i in range(0, lastFrame)]
-        boutOfMovement["TailAngle_Raw"]          = [distBetweenThetas(calculateAngle(trackingDataPerWell[wellNumber][i][0][0], trackingDataPerWell[wellNumber][i][0][1], trackingDataPerWell[wellNumber][i][1][0], trackingDataPerWell[wellNumber][i][1][1]), calculateAngle(trackingDataPerWell[wellNumber][i][0][0], trackingDataPerWell[wellNumber][i][0][1], trackingDataPerWell[wellNumber][i][len(trackingDataPerWell[wellNumber][i])-1][0], trackingDataPerWell[wellNumber][i][len(trackingDataPerWell[wellNumber][i])-1][1])) for i in range(0, lastFrame)]
-        boutOfMovement["TailX_VideoReferential"] = [[trackingDataPerWell[wellNumber][i][j][0] for j in range(0, len(trackingDataPerWell[wellNumber][i]))] for i in range(0, lastFrame)]
-        boutOfMovement["TailY_VideoReferential"] = [[trackingDataPerWell[wellNumber][i][j][1] for j in range(0, len(trackingDataPerWell[wellNumber][i]))] for i in range(0, lastFrame)]
-        outputDataForWell.append(boutOfMovement)        
-      
-      # Saving all tracked bouts of movements for current frame
-      outputData[wellNumber] = outputDataForWell
+      return {wellNumber: extractParameters([trackingDataPerWell[wellNumber], trackingHeadingAllAnimalsList[wellNumber], [], 0, 0, self._auDessusPerAnimalIdList[wellNumber]], wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background) for wellNumber in range(0, len(self._wellPositions))}
     
-    return outputData
+    else:
+      
+      outputData = detectMovementWithTrackedDataAfterTracking(self, trackingDataPerWell)
+      
+      return outputData
 
 
 zebrazoom.code.tracking.register_tracking_method('fastFishTracking.tracking', Tracking)
