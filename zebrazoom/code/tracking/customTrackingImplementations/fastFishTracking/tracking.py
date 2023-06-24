@@ -1,6 +1,7 @@
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.utilities import calculateAngle, distBetweenThetas
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.detectMovementWithTrackedDataAfterTracking import detectMovementWithTrackedDataAfterTracking
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.detectMovementWithRawVideoInsideTracking import detectMovementWithRawVideoInsideTracking
+from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.getListOfWellsOnWhichToRunTheTracking import getListOfWellsOnWhichToRunTheTracking
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.trackTail import trackTail
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.extractParameters import extractParameters
@@ -34,29 +35,34 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     if (cap.isOpened()== False):
       print("Error opening video stream or file")
     
-    # Simple background extraction with first and last frame of the video
+    # Simple background extraction with first and last frame of the video + Getting list of wells on which to run the tracking
+    if self._firstFrame != 1:
+      cap.set(cv2.CAP_PROP_POS_FRAMES, self._firstFrame - 1)
     ret, self._background = cap.read()
     cap.set(cv2.CAP_PROP_POS_FRAMES, int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) - 1)
     ret, frame = cap.read()
+    if self._hyperparameters["chooseWellsToRunTrackingOnWithFirstAndLastFrame"]:
+      listOfWellsOnWhichToRunTheTracking = getListOfWellsOnWhichToRunTheTracking(self, self._background[:,:,0], frame[:,:,0])
+    else:
+      listOfWellsOnWhichToRunTheTracking = [i for i in range(0, len(self._wellPositions))]
+    print("listOfWellsOnWhichToRunTheTracking:", listOfWellsOnWhichToRunTheTracking)
     self._background = cv2.max(frame, self._background)
     self._background = cv2.cvtColor(self._background, cv2.COLOR_BGR2GRAY)
-    cap.set(cv2.CAP_PROP_POS_FRAMES, 0)
-    
-    times = np.zeros((int(cap.get(cv2.CAP_PROP_FRAME_COUNT) + 1), 2))
+    cap.set(cv2.CAP_PROP_POS_FRAMES, self._firstFrame - 1)
     
     # Initializing variables
-    ret = True
     trackingDataPerWell = [np.zeros((self._hyperparameters["nbAnimalsPerWell"], self._lastFrame-self._firstFrame+1, self._nbTailPoints, 2)) for _ in range(len(self._wellPositions))]
-    
     lastFirstTheta = np.zeros(len(self._wellPositions))
     lastFirstTheta[:] = -99999
-    
+    times  = np.zeros((int(cap.get(cv2.CAP_PROP_FRAME_COUNT) + 1), 2))
+    times2 = np.zeros((int(cap.get(cv2.CAP_PROP_FRAME_COUNT) + 1), 5))
+    ret = True
     printInterTime = False
     
-    startTime = time.time()
     # Going through each frame of the video
-    k = 0
-    while (ret):
+    startTime = time.time()
+    k = self._firstFrame - 1
+    while (ret and k <= self._lastFrame):
       time1 = time.time()
       ret, frame = cap.read()
       time2 = time.time()
@@ -66,49 +72,66 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
         t1 = time.time()
         frame = frame[:,:,0]
         t2 = time.time()
+        times2[k, 0] = t2 - t1
         if printInterTime:
           print("Color to grey", t2 - t1)
+        
+        # Bout detection
+        if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
+          t1 = time.time()
+          self._previousFrames = detectMovementWithRawVideoInsideTracking(self, k, frame, self._previousFrames, trackingDataPerWell, listOfWellsOnWhichToRunTheTracking)
+          t2 = time.time()
+          times2[k, 1] = t2 - t1
+          if printInterTime:
+            print("Bout detection", t2 - t1)
         
         # Subtracting background of image
         t1 = time.time()
         frame = 255 - np.where(self._background >= frame, self._background - frame, 0).astype(np.uint8)
         t2 = time.time()
+        times2[k, 2] = t2 - t1
         if printInterTime:
           print("Background substraction", t2 - t1)
         
+        # Applying gaussian filter
         t1 = time.time()
         paramGaussianBlur = self._hyperparameters["paramGaussianBlur"]
         frame = cv2.GaussianBlur(frame, (paramGaussianBlur, paramGaussianBlur), 0)
         t2 = time.time()
+        times2[k, 3] = t2 - t1
         if printInterTime:
           print("Gaussian blur:", t2 - t1)
         
-        t1 = time.time()
         # Going through each well/arena/tank and applying tracking method on it
-        for wellNumber in range(0, len(self._wellPositions)):
+        t1 = time.time()
+        for wellNumber in listOfWellsOnWhichToRunTheTracking:
           
           animalId = 0
           
-          # Retrieving well/tank/arena coordinates and selecting ROI
-          wellXtop = self._wellPositions[wellNumber]['topLeftX']
-          wellYtop = self._wellPositions[wellNumber]['topLeftY']
-          lenghtWell_X = self._wellPositions[wellNumber]['lengthX']
-          lenghtWell_Y = self._wellPositions[wellNumber]['lengthY']
-          frameROI = frame[wellYtop:wellYtop+lenghtWell_Y, wellXtop:wellXtop+lenghtWell_X]
-
-          (minVal, maxVal, headPosition, maxLoc) = cv2.minMaxLoc(frameROI)
-          if minVal >= 240:
-            headPosition = [0, 0]
-          
-          if self._hyperparameters["trackTail"]:
-            a, lastFirstTheta[wellNumber] = trackTail(frameROI, headPosition, self._hyperparameters, wellNumber, k, lastFirstTheta[wellNumber])
-            trackingDataPerWell[wellNumber][animalId][k][:len(a[0])] = a
+          if self._hyperparameters["detectMovementWithRawVideoInsideTracking"] == 0 or self._auDessusPerAnimalIdList[wellNumber][animalId][k] or k <= 2:
+            # Retrieving well/tank/arena coordinates and selecting ROI
+            wellXtop = self._wellPositions[wellNumber]['topLeftX']
+            wellYtop = self._wellPositions[wellNumber]['topLeftY']
+            lenghtWell_X = self._wellPositions[wellNumber]['lengthX']
+            lenghtWell_Y = self._wellPositions[wellNumber]['lengthY']
+            frameROI = frame[wellYtop:wellYtop+lenghtWell_Y, wellXtop:wellXtop+lenghtWell_X]
+            # Head position tracking
+            (minVal, maxVal, headPosition, maxLoc) = cv2.minMaxLoc(frameROI)
+            if minVal >= self._hyperparameters["minimumHeadPixelValue"]:
+              trackingDataPerWell[wellNumber][animalId][k] = trackingDataPerWell[wellNumber][animalId][k-1]
+            else:
+              if self._hyperparameters["trackTail"]:
+                # Tail tracking
+                a, lastFirstTheta[wellNumber] = trackTail(frameROI, headPosition, self._hyperparameters, wellNumber, k, lastFirstTheta[wellNumber])
+                trackingDataPerWell[wellNumber][animalId][k][:len(a[0])] = a
+              else:
+                trackingDataPerWell[wellNumber][animalId][k] = np.array([[headPosition]])
           else:
-            trackingDataPerWell[wellNumber][animalId][k] = np.array([[headPosition]])
-        
-        self._previousFrames = detectMovementWithRawVideoInsideTracking(self, k, frame, self._previousFrames, trackingDataPerWell)
+            if k > 0:
+              trackingDataPerWell[wellNumber][animalId][k] = trackingDataPerWell[wellNumber][animalId][k-1]
         
         t2 = time.time()
+        times2[k, 4] = t2 - t1
         if printInterTime:
           print("Tracking on each well:", t2 - t1)
       
@@ -122,6 +145,12 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     cap.release()
     
     print("")
+    print("Color to grey:"           , np.median(times2[:,0]))
+    print("Bout detection:"          , np.median(times2[:,1]))
+    print("Background substraction:" , np.median(times2[:,2]))
+    print("Gaussian blur:"           , np.median(times2[:,3]))
+    print("Tracking on each well:"   , np.median(times2[:,4]))
+    
     loadingImagesTime       = np.median(times[:,0])
     processingImagesTime    = np.median(times[:,1])
     percentTimeSpentLoading = loadingImagesTime / (loadingImagesTime + processingImagesTime)

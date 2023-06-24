@@ -3,7 +3,7 @@ import queue
 import math
 import cv2
 
-def detectMovementWithRawVideoInsideTracking(self, i, grey, previousFrames, trackingDataPerWell):
+def detectMovementWithRawVideoInsideTracking(self, i, grey, previousFrames, trackingDataPerWell, listOfWellsOnWhichToRunTheTracking):
   if previousFrames is None:
     previousFrames = queue.Queue(self._hyperparameters["frameGapComparision"])
     self._auDessusPerAnimalIdList = [[np.zeros((self._lastFrame-self._firstFrame+1, 1)) for nbAnimalsPerWell in range(0, self._hyperparameters["nbAnimalsPerWell"])]
@@ -12,10 +12,10 @@ def detectMovementWithRawVideoInsideTracking(self, i, grey, previousFrames, trac
   for animal_Id in range(self._hyperparameters["nbAnimalsPerWell"]):
     if previousFrames.full():
       previousFrame   = previousFrames.get()
-      curFrame        = grey.copy()
-      for wellNumber in range(0 if self._hyperparameters["onlyTrackThisOneWell"] == -1 else self._hyperparameters["onlyTrackThisOneWell"], len(self._wellPositions) if self._hyperparameters["onlyTrackThisOneWell"] == -1 else self._hyperparameters["onlyTrackThisOneWell"] + 1):
-        headX = trackingDataPerWell[wellNumber][animal_Id][i-self._firstFrame][0][0]
-        headY = trackingDataPerWell[wellNumber][animal_Id][i-self._firstFrame][0][1]
+      curFrame        = grey
+      for wellNumber in listOfWellsOnWhichToRunTheTracking:
+        headX = trackingDataPerWell[wellNumber][animal_Id][i-1][0][0]
+        headY = trackingDataPerWell[wellNumber][animal_Id][i-1][0][1]
         xmin = headX - self._hyperparameters["halfDiameterRoiBoutDetect"]
         ymin = headY - self._hyperparameters["halfDiameterRoiBoutDetect"]
         xmax = xmin + 2 * self._hyperparameters["halfDiameterRoiBoutDetect"]
@@ -53,13 +53,13 @@ def detectMovementWithRawVideoInsideTracking(self, i, grey, previousFrames, trac
 
         for animalId in range(0, self._hyperparameters["nbAnimalsPerWell"]):
           if totDiff > self._hyperparameters["minNbPixelForDetectMovementWithRawVideo"]:
-            self._auDessusPerAnimalIdList[wellNumber][animalId][i-self._firstFrame] = 1
+            self._auDessusPerAnimalIdList[wellNumber][animalId][i] = 1
           else:
-            self._auDessusPerAnimalIdList[wellNumber][animalId][i-self._firstFrame] = 0
+            self._auDessusPerAnimalIdList[wellNumber][animalId][i] = 0
     else:
-      for wellNumber in range(0 if self._hyperparameters["onlyTrackThisOneWell"] == -1 else self._hyperparameters["onlyTrackThisOneWell"], self._hyperparameters["nbWells"] if self._hyperparameters["onlyTrackThisOneWell"] == -1 else self._hyperparameters["onlyTrackThisOneWell"] + 1):
+      for wellNumber in listOfWellsOnWhichToRunTheTracking:
         for animalId in range(0, self._hyperparameters["nbAnimalsPerWell"]):
-          self._auDessusPerAnimalIdList[wellNumber][animalId][i-self._firstFrame] = 0
+          self._auDessusPerAnimalIdList[wellNumber][animalId][i] = 0 # Need to improve this part
     previousFrames.put(grey)
   
   return previousFrames

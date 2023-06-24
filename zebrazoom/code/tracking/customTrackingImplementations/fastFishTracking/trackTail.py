@@ -6,7 +6,7 @@ import numpy as np
 import math
 import cv2
 
-def __insideTrackTail(depth, headPosition, frame, points, angle, maxDepth, steps, nbList, hyperparameters, debug, lenX, lenY):
+def __insideTrackTail(depth, headPosition, frame, points, angle, maxDepth, steps, nbList, hyperparameters, debug, lenX, lenY, secondTry=False):
   
   x = headPosition[0]
   y = headPosition[1]
@@ -97,9 +97,15 @@ def __insideTrackTail(depth, headPosition, frame, points, angle, maxDepth, steps
   if debug:
     print(np.median(pixTotList), np.mean(pixTotList), pixTotList)
   
-  # print("pixTotList:", pixTotList)
+  medianPixTotList = np.median(pixTotList)
   
-  return (points, lastFirstTheta)
+  if hyperparameters["maximumMedianValueOfAllPointsAlongTheTail"] and medianPixTotList > hyperparameters["maximumMedianValueOfAllPointsAlongTheTail"] and not(secondTry):
+    # print("second try")
+    (points2, lastFirstTheta2, medianPixTotList2) = __insideTrackTail(0, headPosition, frame, np.zeros((2, 0)), (lastFirstTheta + math.pi) % (2 * math.pi), maxDepth, steps, nbList, hyperparameters, debug, lenX, lenY, True)
+    if medianPixTotList2 < medianPixTotList:
+      return (points2, lastFirstTheta2, medianPixTotList2)
+  
+  return (points, lastFirstTheta, medianPixTotList)
 
 
 def trackTail(frameROI, headPosition, hyperparameters, wellNumber, frameNumber, lastFirstTheta):
@@ -117,7 +123,7 @@ def trackTail(frameROI, headPosition, hyperparameters, wellNumber, frameNumber, 
   lenX = len(frameROI[0]) - 1
   lenY = len(frameROI) - 1
   
-  (points, lastFirstTheta) = __insideTrackTail(0, headPosition, frameROI, points, lastFirstTheta, maxDepth, steps, nbList,  hyperparameters, debug, lenX, lenY)
+  (points, lastFirstTheta, medianPixTotList) = __insideTrackTail(0, headPosition, frameROI, points, lastFirstTheta, maxDepth, steps, nbList,  hyperparameters, debug, lenX, lenY)
   
   points = np.insert(points, 0, headPosition, axis=1)
   

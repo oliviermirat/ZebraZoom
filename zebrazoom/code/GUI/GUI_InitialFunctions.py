@@ -387,7 +387,7 @@ class _VideoSelectionPage(QWidget):
         break
       with open(config) as f:
         cfg = json.load(f)
-      if not (cfg.get('fasterMultiprocessing', False) or cfg.get('headEmbeded', False) or (cfg.get('trackingImplementation', False) and cfg['trackingImplementation'] == "fastFishTracking.tracking")):
+      if not (cfg.get('fasterMultiprocessing', False) or cfg.get('headEmbeded', False) or (cfg['trackingImplementation'] == "fastFishTracking.tracking")):
         enabled = False
         break
     self._parallelTrackingCheckbox.setVisible(enabled)
