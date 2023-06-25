@@ -3,19 +3,19 @@ import queue
 import math
 import cv2
 
-def detectMovementWithRawVideoInsideTracking(self, i, grey, previousFrames, trackingDataPerWell, listOfWellsOnWhichToRunTheTracking):
-  if previousFrames is None:
-    previousFrames = queue.Queue(self._hyperparameters["frameGapComparision"])
+def detectMovementWithRawVideoInsideTracking(self, i, grey):
+  if self._previousFrames is None:
+    self._previousFrames = queue.Queue(self._hyperparameters["frameGapComparision"])
     self._auDessusPerAnimalIdList = [[np.zeros((self._lastFrame-self._firstFrame+1, 1)) for nbAnimalsPerWell in range(0, self._hyperparameters["nbAnimalsPerWell"])]
                                      for wellNumber in range(len(self._wellPositions))]
   halfDiameterRoiBoutDetect = self._hyperparameters["halfDiameterRoiBoutDetect"]
-  for animal_Id in range(self._hyperparameters["nbAnimalsPerWell"]):
-    if previousFrames.full():
-      previousFrame   = previousFrames.get()
-      curFrame        = grey
-      for wellNumber in listOfWellsOnWhichToRunTheTracking:
-        headX = trackingDataPerWell[wellNumber][animal_Id][i-1][0][0]
-        headY = trackingDataPerWell[wellNumber][animal_Id][i-1][0][1]
+  if self._previousFrames.full():
+    previousFrame   = self._previousFrames.get()
+    curFrame        = grey
+    for wellNumber in self._listOfWellsOnWhichToRunTheTracking:
+      for animal_Id in range(self._hyperparameters["nbAnimalsPerWell"]):
+        headX = self._trackingDataPerWell[wellNumber][animal_Id][i-1][0][0]
+        headY = self._trackingDataPerWell[wellNumber][animal_Id][i-1][0][1]
         xmin = headX - self._hyperparameters["halfDiameterRoiBoutDetect"]
         ymin = headY - self._hyperparameters["halfDiameterRoiBoutDetect"]
         xmax = xmin + 2 * self._hyperparameters["halfDiameterRoiBoutDetect"]
@@ -48,18 +48,19 @@ def detectMovementWithRawVideoInsideTracking(self, i, grey, previousFrames, trac
         subCurFrame      = curFrame[ymin:ymax, xmin:xmax].copy()
 
         res = cv2.absdiff(subPreviousFrame, subCurFrame)
+        
         ret, res = cv2.threshold(res,self._hyperparameters["thresForDetectMovementWithRawVideo"],255,cv2.THRESH_BINARY)
         totDiff = cv2.countNonZero(res)
 
-        for animalId in range(0, self._hyperparameters["nbAnimalsPerWell"]):
-          if totDiff > self._hyperparameters["minNbPixelForDetectMovementWithRawVideo"]:
-            self._auDessusPerAnimalIdList[wellNumber][animalId][i] = 1
-          else:
-            self._auDessusPerAnimalIdList[wellNumber][animalId][i] = 0
-    else:
-      for wellNumber in listOfWellsOnWhichToRunTheTracking:
-        for animalId in range(0, self._hyperparameters["nbAnimalsPerWell"]):
-          self._auDessusPerAnimalIdList[wellNumber][animalId][i] = 0 # Need to improve this part
-    previousFrames.put(grey)
+        if totDiff > self._hyperparameters["minNbPixelForDetectMovementWithRawVideo"]:
+          self._auDessusPerAnimalIdList[wellNumber][animal_Id][i] = 1
+        else:
+          self._auDessusPerAnimalIdList[wellNumber][animal_Id][i] = 0
   
-  return previousFrames
+  else:
+    
+    for wellNumber in self._listOfWellsOnWhichToRunTheTracking:
+      for animalId in range(0, self._hyperparameters["nbAnimalsPerWell"]):
+        self._auDessusPerAnimalIdList[wellNumber][animalId][i] = 0 # Need to improve this part
+  
+  self._previousFrames.put(grey)

@@ -1,9 +1,13 @@
+from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.utilities import calculateAngle, distBetweenThetas
 import numpy as np
 import queue
 import math
 import cv2
 
-def detectMovementWithTrackedDataAfterTracking(self, trackingDataPerWell):
+def detectMovementWithTrackedDataAfterTracking(self):
+
+  trackingDataPerWell = self._trackingDataPerWell
+  
   outputData = {} # Each element of this object will correspond to the tracking data of a particular well/tank/arena
     
   for wellNumber in range(0, len(self._wellPositions)):
@@ -50,13 +54,13 @@ def detectMovementWithTrackedDataAfterTracking(self, trackingDataPerWell):
       boutOfMovement = {}
       boutOfMovement["AnimalNumber"]  = 0
       boutOfMovement["BoutStart"]     = 0
-      boutOfMovement["BoutEnd"]       = len(trackingDataPerWell[wellNumber])
-      boutOfMovement["HeadX"]         = [trackingDataPerWell[wellNumber][i][0][0] for i in range(0, lastFrame)]
-      boutOfMovement["HeadY"]         = [trackingDataPerWell[wellNumber][i][0][1] for i in range(0, lastFrame)]
-      boutOfMovement["Heading"]       = [(calculateAngle(trackingDataPerWell[wellNumber][i][0][0], trackingDataPerWell[wellNumber][i][0][1], trackingDataPerWell[wellNumber][i][1][0], trackingDataPerWell[wellNumber][i][1][1]) + math.pi) % (2 * math.pi) for i in range(0, lastFrame)]
-      boutOfMovement["TailAngle_Raw"]          = [distBetweenThetas(calculateAngle(trackingDataPerWell[wellNumber][i][0][0], trackingDataPerWell[wellNumber][i][0][1], trackingDataPerWell[wellNumber][i][1][0], trackingDataPerWell[wellNumber][i][1][1]), calculateAngle(trackingDataPerWell[wellNumber][i][0][0], trackingDataPerWell[wellNumber][i][0][1], trackingDataPerWell[wellNumber][i][len(trackingDataPerWell[wellNumber][i])-1][0], trackingDataPerWell[wellNumber][i][len(trackingDataPerWell[wellNumber][i])-1][1])) for i in range(0, lastFrame)]
-      boutOfMovement["TailX_VideoReferential"] = [[trackingDataPerWell[wellNumber][i][j][0] for j in range(0, len(trackingDataPerWell[wellNumber][i]))] for i in range(0, lastFrame)]
-      boutOfMovement["TailY_VideoReferential"] = [[trackingDataPerWell[wellNumber][i][j][1] for j in range(0, len(trackingDataPerWell[wellNumber][i]))] for i in range(0, lastFrame)]
+      boutOfMovement["BoutEnd"]       = len(trackingDataPerWell[wellNumber][0])
+      boutOfMovement["HeadX"]         = [trackingDataPerWell[wellNumber][0][i][0][0] for i in range(0, lastFrame)]
+      boutOfMovement["HeadY"]         = [trackingDataPerWell[wellNumber][0][i][0][1] for i in range(0, lastFrame)]
+      boutOfMovement["Heading"]       = [(calculateAngle(trackingDataPerWell[wellNumber][0][i][0][0], trackingDataPerWell[wellNumber][0][i][0][1], trackingDataPerWell[wellNumber][0][i][1][0], trackingDataPerWell[wellNumber][0][i][1][1]) + math.pi) % (2 * math.pi) for i in range(0, lastFrame)]
+      boutOfMovement["TailAngle_Raw"]          = [distBetweenThetas(calculateAngle(trackingDataPerWell[wellNumber][0][i][0][0], trackingDataPerWell[wellNumber][0][i][0][1], trackingDataPerWell[wellNumber][0][i][1][0], trackingDataPerWell[wellNumber][0][i][1][1]), calculateAngle(trackingDataPerWell[wellNumber][0][i][0][0], trackingDataPerWell[wellNumber][0][i][0][1], trackingDataPerWell[wellNumber][0][i][len(trackingDataPerWell[wellNumber][0][i])-1][0], trackingDataPerWell[wellNumber][0][i][len(trackingDataPerWell[wellNumber][0][i])-1][1])) for i in range(0, lastFrame)]
+      boutOfMovement["TailX_VideoReferential"] = [[trackingDataPerWell[wellNumber][0][i][j][0] for j in range(0, len(trackingDataPerWell[wellNumber][0][i]))] for i in range(0, lastFrame)]
+      boutOfMovement["TailY_VideoReferential"] = [[trackingDataPerWell[wellNumber][0][i][j][1] for j in range(0, len(trackingDataPerWell[wellNumber][0][i]))] for i in range(0, lastFrame)]
       outputDataForWell.append(boutOfMovement)
     
     # Saving all tracked bouts of movements for current frame
