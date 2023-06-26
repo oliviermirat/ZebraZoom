@@ -158,6 +158,34 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     
+    elif parameterToCalculate == 'Mean TBF (Hz) (based on first 4 bends)':
+      
+      if "Bend_Timing" in curbout and type(curbout["Bend_Timing"]) == list and len(curbout["Bend_Timing"]):
+        if len(curbout['Bend_Timing']) >= 4:
+          first4Bends = curbout['Bend_Timing'][:4]
+        else:
+          first4Bends = curbout['Bend_Timing']
+        meanOfInstantaneousTBFfirst4Bends = np.mean(fps / (2 * np.diff([0] + first4Bends)))
+      else:
+        meanOfInstantaneousTBFfirst4Bends = float('NaN')
+      listOfParametersCalculated.append(meanOfInstantaneousTBFfirst4Bends)
+    
+    
+    
+    elif parameterToCalculate == 'Mean TBF (Hz) (based on first 6 bends)':
+      
+      if "Bend_Timing" in curbout and type(curbout["Bend_Timing"]) == list and len(curbout["Bend_Timing"]):
+        if len(curbout['Bend_Timing']) >= 6:
+          first6Bends = curbout['Bend_Timing'][:6]
+        else:
+          first6Bends = curbout['Bend_Timing']
+        meanOfInstantaneousTBFfirst6Bends = np.mean(fps / (2 * np.diff([0] + first6Bends)))
+      else:
+        meanOfInstantaneousTBFfirst6Bends = float('NaN')
+      listOfParametersCalculated.append(meanOfInstantaneousTBFfirst6Bends)
+    
+    
+    
     elif parameterToCalculate == 'Max absolute TBA (deg.)':
       
       if "Bend_Amplitude" in curbout and type(curbout["Bend_Amplitude"]) == list and len(curbout["Bend_Amplitude"]):
