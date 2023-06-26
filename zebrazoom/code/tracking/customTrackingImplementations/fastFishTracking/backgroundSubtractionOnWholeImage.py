@@ -88,6 +88,9 @@ def backgroundSubtractionOnWholeImage(self, frame, k):
             temp = self._trackingDataPerWell[wellNumber][0][k].copy()
             self._trackingDataPerWell[wellNumber][0][k] = self._trackingDataPerWell[wellNumber][1][k]
             self._trackingDataPerWell[wellNumber][1][k] = temp
+    else:  
+      for animalId in range(0, self._hyperparameters["nbAnimalsPerWell"]):
+        self._trackingDataPerWell[wellNumber][animalId][k] = self._trackingDataPerWell[wellNumber][animalId][k-1]
   
   t2 = time.time()
   self._times2[k, 4] = t2 - t1
