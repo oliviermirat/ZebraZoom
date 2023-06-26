@@ -3,6 +3,7 @@ from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.dete
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.detectMovementWithRawVideoInsideTracking import detectMovementWithRawVideoInsideTracking
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.getListOfWellsOnWhichToRunTheTracking import getListOfWellsOnWhichToRunTheTracking
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.backgroundSubtractionOnWholeImage import backgroundSubtractionOnWholeImage
+from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.backgroundSubtractionOnlyOnROIs import backgroundSubtractionOnlyOnROIs
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.extractParameters import extractParameters
 import zebrazoom.code.util as util
@@ -66,9 +67,10 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
       ret, frame = cap.read()
       time2 = time.time()
       if ret:
-        
-        backgroundSubtractionOnWholeImage(self, frame, k)
-
+        if self._hyperparameters["backgroundSubtractionOnWholeImage"] or k == self._firstFrame - 1:
+          backgroundSubtractionOnWholeImage(self, frame, k)
+        else:
+          backgroundSubtractionOnlyOnROIs(self, frame, k)
       
       time3 = time.time()
       times[k, 0] = time2 - time1
