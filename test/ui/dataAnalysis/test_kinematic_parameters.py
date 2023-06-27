@@ -170,6 +170,8 @@ def _generateResults():
         _EXPECTED_RESULTS['Max TBF (Hz)'].append(max(instantaneousTBF))
         _EXPECTED_RESULTS['Mean TBF (Hz)'].append(np.mean(instantaneousTBF))
         _EXPECTED_RESULTS['medianOfInstantaneousTBF'].append(np.median(instantaneousTBF))
+        _EXPECTED_RESULTS['Mean TBF (Hz) (based on first 4 bends)'].append(np.mean(instantaneousTBF[:4]))
+        _EXPECTED_RESULTS['Mean TBF (Hz) (based on first 6 bends)'].append(np.mean(instantaneousTBF[:6]))
         _EXPECTED_RESULTS['Max absolute TBA (deg.)'].append(max(map(abs, degreeBendAmplitudes)))
         _EXPECTED_RESULTS['maxBendAmplitudeSigned'].append(max(degreeBendAmplitudes, key=abs))
         _EXPECTED_RESULTS['Mean absolute TBA (deg.)'].append(np.mean(list(map(abs, degreeBendAmplitudes))))
@@ -317,7 +319,7 @@ def _test_kinematic_parameters_small_check_results():
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    chartCount = 6 if folder == 'allBoutsMixed' else 7
+    chartCount = 7
     assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
@@ -631,7 +633,7 @@ def _test_kinematic_parameters_large_check_results():
     assert_series_equal(expectedResultsAll[col], dataframe[col])
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    chartCount = 6 if folder == 'allBoutsMixed' else 7
+    chartCount = 7
     assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
@@ -752,7 +754,7 @@ def _test_minimum_number_of_bends_check_results():
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):  # no charts with outliers
-    chartCount = 6 if folder == 'allBoutsMixed' else 7
+    chartCount = 7
     assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
@@ -809,7 +811,7 @@ def _test_keep_data_for_discarded_bouts_check_results():
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):  # no charts with outliers
-    chartCount = 6 if folder == 'allBoutsMixed' else 7
+    chartCount = 7
     assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
@@ -871,7 +873,7 @@ def _test_gaussian_outlier_removal():
     assert_series_equal(expectedResultsAll[col], dataframe[col])
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    chartCount = 6 if folder == 'allBoutsMixed' else 7
+    chartCount = 7
     assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
