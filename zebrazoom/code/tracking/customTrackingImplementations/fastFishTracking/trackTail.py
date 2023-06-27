@@ -26,7 +26,13 @@ def __insideTrackTail(depth, headPosition, frame, points, angle, maxDepth, steps
       if (depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth):
         thetaDiffAccept = hyperparameters["thetaDiffAccept"]
       else:
-        thetaDiffAccept = hyperparameters["thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd"]
+        if not("authorizedRelativeLengthTailEnd2" in hyperparameters) or (depth < hyperparameters["authorizedRelativeLengthTailEnd2"]*maxDepth):
+          thetaDiffAccept = hyperparameters["thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd"]
+          nbList = hyperparameters["nbListAfterAuthorizedRelativeLengthTailEnd"]
+        else:
+          thetaDiffAccept = hyperparameters["thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd2"]
+          nbList = hyperparameters["nbListAfterAuthorizedRelativeLengthTailEnd2"]
+          
 
     pixTotMax = 1000000
     maxTheta  = angle
