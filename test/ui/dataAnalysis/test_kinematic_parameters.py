@@ -5,6 +5,7 @@ import os
 import pickle
 import random
 
+import h5py
 import numpy as np
 import pandas as pd
 import scipy
@@ -72,6 +73,7 @@ _FIRST_BOUT_REMOVED_RESULTS = {key: [] for key in _MEDIAN_ONLY_KEYS}
 _ALL_ONLY_KEYS = {'NumBout', 'BoutStart', 'BoutEnd'}
 
 _VIDEO_NAMES = ['test%d' % idx for idx in range(1, 7)]
+_VIDEO_NAMES[0] = f'{_VIDEO_NAMES[0]}.h5'
 _WELLS_PER_VIDEO = []
 _CONDITIONS = []
 _CONDITIONS_LIST = []
@@ -208,13 +210,45 @@ def _generateResults():
 
 @pytest.fixture(scope="module", autouse=True)
 def _createResultsFolder():
-  for nbWells, name, results in zip(_WELLS_PER_VIDEO, _VIDEO_NAMES, _generateResults()):
+  with open(os.path.join(paths.getConfigurationFolder(), '4wellsZebrafishLarvaeEscapeResponses.json')) as configFile:
+    config = json.load(configFile)
+
+  generatedResults = _generateResults()
+  with h5py.File(os.path.join(paths.getDataAnalysisFolder(), _VIDEO_NAMES[0]), 'w') as results:
+    superStruct = generatedResults[0]
+    for idx, wellPositions in enumerate(superStruct['wellPositions']):
+      results.require_group(f"wellPositions/well{idx}").attrs.update(wellPositions)
+    config['nbWells'] = _WELLS_PER_VIDEO[0]
+    results.require_group("configurationFileUsed").attrs.update(config)
+    results.attrs['version'] = 0
+    results.attrs['firstFrame'] = superStruct["firstFrame"]
+    results.attrs['lastFrame'] = superStruct['lastFrame']
+    if 'videoFPS' in superStruct:
+      results.attrs['videoFPS'] = superStruct['videoFPS']
+    if 'videoPixelSize' in superStruct:
+      results.attrs['videoPixelSize'] = superStruct['videoPixelSize']
+    if 'pathToOriginalVideo' in superStruct:
+      results.attrs['pathToOriginalVideo'] = superStruct['pathToOriginalVideo']
+    keysToSkip = {'AnimalNumber', 'curvature', 'HeadX', 'HeadY', 'Heading', 'TailAngle_Raw', 'TailX_VideoReferential', 'TailY_VideoReferential'}
+    for wellIdx, well in enumerate(superStruct['wellPoissMouv']):
+      for animalIdx, animal in enumerate(well):
+        listOfBouts = results.require_group(f"dataForWell{wellIdx}/dataForAnimal{animalIdx}/listOfBouts")
+        listOfBouts.attrs['numberOfBouts'] = len(animal)
+        for boutIdx, bout in enumerate(animal):
+          boutGroup = listOfBouts.require_group(f'bout{boutIdx}')
+          for key, value in bout.items():
+            if key in keysToSkip:
+              continue
+            if isinstance(value, list):
+              boutGroup.create_dataset(key, data=np.array(value))
+            else:
+              boutGroup.attrs[key] = value
+
+  for nbWells, name, results in zip(_WELLS_PER_VIDEO[1:], _VIDEO_NAMES[1:], generatedResults[1:]):
     folder = os.path.join(paths.getDefaultZZoutputFolder(), name)
     os.mkdir(folder)
     with open(os.path.join(folder, 'intermediaryWellPosition.txt'), 'wb') as wellPositionsFile:
       pickle.dump(results['wellPositions'], wellPositionsFile)
-    with open(os.path.join(paths.getConfigurationFolder(), '4wellsZebrafishLarvaeEscapeResponses.json')) as configFile:
-      config = json.load(configFile)
     config['nbWells'] = nbWells
     with open(os.path.join(folder, 'configUsed.json'), 'w') as configFile:
       json.dump(config, configFile)

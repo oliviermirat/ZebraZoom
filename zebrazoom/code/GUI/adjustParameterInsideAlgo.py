@@ -271,7 +271,7 @@ def _adjustEyeTracking(firstFrame, totalFrames, ellipse=False):
 
   pathToVideo = os.path.dirname(app.videoToCreateConfigFileFor)
   videoName, videoExt = os.path.basename(app.videoToCreateConfigFileFor).split('.')
-  argv = []
+  argv = ["outputFolder", app.ZZoutputLocation]
 
   originalConfig = app.configFile.copy()
   app.configFile["adjustHeadEmbeddedEyeTracking"] = 1

@@ -238,7 +238,7 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
 
     return img
 
-  wellShape = None if configTemp.get("noWellDetection", False) or (hyperparameters["headEmbeded"] and not hyperparameters["oneWellManuallyChosenTopLeft"]) else 'rectangle' if configTemp.get("wellsAreRectangles", False) or len(configTemp.get("oneWellManuallyChosenTopLeft", '')) or int(configTemp.get("multipleROIsDefinedDuringExecution", 0)) or configTemp.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
+  wellShape = None if config.get("noWellDetection", False) or (hyperparameters["headEmbeded"] and not hyperparameters["oneWellManuallyChosenTopLeft"]) else 'rectangle' if config.get("wellsAreRectangles", False) or len(config.get("oneWellManuallyChosenTopLeft", '')) or int(config.get("multipleROIsDefinedDuringExecution", 0)) or config.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
   return getFrame, frameRange, l, infoFrame is not None, supstruct['wellPositions'], wellShape
 
 

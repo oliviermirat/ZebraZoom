@@ -570,7 +570,7 @@ class OptimizeConfigFile(QWidget):
       self._rotationAngleLineEdit.setText('')
     self._originalImagePreProcessMethod = app.configFile.get("imagePreProcessMethod")
     self._originalImagePreProcessParameters = app.configFile.get("imagePreProcessParameters")
-    if self._originalImagePreProcessParameters is not None and self._originalImagePreProcessMethod is not None and self._originalBackgroundPreProcessMethod[0] == 'rotate':
+    if self._originalImagePreProcessParameters is not None and self._originalBackgroundPreProcessMethod is not None and self._originalBackgroundPreProcessMethod[0] == 'rotate':
       self._rotationAngleLineEdit.setText(str(self._originalImagePreProcessParameters[0][0]))
     else:
       self._rotationAngleLineEdit.setText('')
@@ -1543,16 +1543,6 @@ class FinishConfig(QWidget):
     self._changingBackgroundCheckbox.toggled.connect(changingBackgroundToggled)
     layout.addWidget(self._changingBackgroundCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    self._alwaysSaveCheckbox = QCheckBox("Save coordinates and tail angle even when fish isn't moving")
-    def alwaysSaveToggled(checked):
-      if checked:
-        controller.configFile["saveAllDataEvenIfNotInBouts"] = 1
-      else:
-        if "saveAllDataEvenIfNotInBouts" in controller.configFile:
-          del controller.configFile["saveAllDataEvenIfNotInBouts"]
-    self._alwaysSaveCheckbox.toggled.connect(alwaysSaveToggled)
-    layout.addWidget(self._alwaysSaveCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
-
     self._calculateCurvatureCheckbox = QCheckBox("Calculate curvature")
     def calculateCurvatureToggled(checked):
       if checked:
@@ -1653,16 +1643,14 @@ class FinishConfig(QWidget):
         not self.controller.configFile.get("noBoutsDetection", False) and not self.controller.configFile.get("coordinatesOnlyBoutDetection", False):
       self.controller.configFile["detectMovementWithRawVideoInsideTracking"] = 1
     if trackingMethod:
-      for checkbox in (self._alwaysSaveCheckbox, self._calculateCurvatureCheckbox, self._calculateTailAngleHeatmapCheckbox):
+      for checkbox in (self._calculateCurvatureCheckbox, self._calculateTailAngleHeatmapCheckbox):
         checkbox.setChecked(False)
         checkbox.setVisible(False)
     else:
-      for checkbox, param in zip((self._alwaysSaveCheckbox, self._calculateCurvatureCheckbox, self._calculateTailAngleHeatmapCheckbox), ('saveAllDataEvenIfNotInBouts', 'perBoutOutput', 'tailAnglesHeatMap')):
+      for checkbox, param in zip((self._calculateCurvatureCheckbox, self._calculateTailAngleHeatmapCheckbox), ('perBoutOutput', 'tailAnglesHeatMap')):
         checkbox.setVisible(True)
         if checkbox.isChecked():
           self.controller.configFile[param] = 1
-        elif param == 'saveAllDataEvenIfNotInBouts':
-          checkbox.setChecked(True)
 
   def showEvent(self, evt):
     self.refreshPage()

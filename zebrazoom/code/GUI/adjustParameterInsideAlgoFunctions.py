@@ -21,7 +21,7 @@ def getMainArguments(self):
   videoExt     = nameWithExtL.pop()
   videoName    = '.'.join(nameWithExtL)
   configFile   = self.configFile
-  argv         = []
+  argv = ["outputFolder", self.ZZoutputLocation]
   return [pathToVideo, videoName, videoExt, configFile, argv]
 
 

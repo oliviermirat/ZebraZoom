@@ -37,23 +37,13 @@ def calculateCurvature(TailX_VideoReferential, TailY_VideoReferential, hyperpara
   return curvature
 
 
-def perBoutOutput(superStruct, hyperparameters, videoName):
+def perBoutOutput(superStruct, hyperparameters, videoNameWithTimestamp):
   
   # Creation of the sub-folder "perBoutOutput"
   if hyperparameters["saveCurvaturePlots"] or hyperparameters["saveTailAngleGraph"] or hyperparameters["saveSubVideo"] or hyperparameters["saveCurvatureData"]:
-    outputPath = os.path.join(os.path.join(hyperparameters["outputFolder"], videoName), "perBoutOutput")
-    if os.path.exists(outputPath):
-      shutil.rmtree(outputPath)
-    while True:
-      try:
-        os.mkdir(outputPath)
-        break
-      except OSError as e:
-        print("waiting inside except")
-        time.sleep(0.1)
-      else:
-        print("waiting")
-        time.sleep(0.1)
+    outputPath = os.path.join(hyperparameters["outputFolder"], videoNameWithTimestamp, "perBoutOutput")
+    if not os.path.exists(outputPath):
+      os.makedirs(outputPath)
       
   # opening the video previously created in createValidationVideo as an input video stream
   cap = zzVideoReading.VideoCapture(os.path.join(os.path.join(hyperparameters["outputFolder"], videoName), hyperparameters["videoName"] + '.avi'))
@@ -148,16 +138,6 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
   # Curvature calculation: Going through each well, each fish and each bout
   for i in range(0, len(superStruct["wellPoissMouv"])):
     for j in range(0, len(superStruct["wellPoissMouv"][i])):
-      curvatures = {}
-      if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-        fname = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"], f'allData_{hyperparameters["videoName"]}_wellNumber{i}_animal{j}.csv')
-        startLines = []
-        with open(fname) as f:
-          line = f.readline()
-          while ',' not in line:
-            startLines.append(line)
-            line = f.readline()
-        df = pd.read_csv(fname, skiprows=len(startLines))
       for k in range(0, len(superStruct["wellPoissMouv"][i][j])):
         
         # Creation of the curvature graph for bout k
@@ -169,11 +149,6 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
 
         curvature = calculateCurvature(TailX_VideoReferential, TailY_VideoReferential, hyperparameters)
         originalCurvature = np.flip(np.transpose(curvature), 0)
-
-        if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-          bStart = superStruct["wellPoissMouv"][i][j][k]["BoutStart"]
-          bEnd = superStruct["wellPoissMouv"][i][j][k]["BoutEnd"]
-          curvatures[(bStart - firstFrame, bEnd + 1 - firstFrame)] = originalCurvature.tolist()
 
         rolling_window = hyperparameters["curvatureMedianFilterSmoothingWindow"]
         if rolling_window:
@@ -305,18 +280,7 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
             
           out.release()
 
-      if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-        curvatureCount = max(map(len, curvatures.values())) if curvatures else 0
-        curvatureData = [[float('nan')] * nbFrames for _ in range(curvatureCount)]
-        for (start, end), values in curvatures.items():
-          for data, vals in zip(curvatureData, values):
-            data[start:end] = vals
-        for idx, data in enumerate(curvatureData):
-          df[f'curvature{idx + 1}'] = data
-        with open(fname, 'w+', newline='') as f:
-          f.write(''.join(startLines))
-          df.convert_dtypes().to_csv(f)
-      if hyperparameters['storeH5'] and superStruct["wellPoissMouv"][i][j]:
+      if superStruct["wellPoissMouv"][i][j]:
         with h5py.File(hyperparameters['H5filename'], 'a') as results:
           dataGroup = results.require_group(f"dataForWell{i}/dataForAnimal{j}/dataPerFrame")
           curvature = np.empty((lastFrame - firstFrame + 1, hyperparameters['nbTailPoints'] - 2), dtype=float)

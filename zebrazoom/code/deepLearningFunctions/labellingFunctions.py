@@ -77,15 +77,13 @@ def saveImagesAndData(hyperparameters, bodyContour, initialCurFrame, wellNumber,
         originalShape = originalShape.astype(np.uint8)
         cv2.fillPoly(originalShape, pts =[bodyContour], color=(1))
       
-      pathToImg = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"])
+      pathToImg = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoNameWithTimestamp"])
       imgName   = hyperparameters["videoName"] + '_well' + str(wellNumber) + '_frame' + str(frameNumber)
       
-      if not(os.path.exists(pathToImg)):
-        os.mkdir(pathToImg)
-      if not(os.path.exists(os.path.join(pathToImg, 'PNGMasks'))):
-        os.mkdir(os.path.join(pathToImg, 'PNGMasks'))
-      if not(os.path.exists(os.path.join(pathToImg, 'PNGImages'))):
-        os.mkdir(os.path.join(pathToImg, 'PNGImages'))
+      if not os.path.exists(os.path.join(pathToImg, 'PNGMasks')):
+        os.makedirs(os.path.join(pathToImg, 'PNGMasks'))
+      if not os.path.exists(os.path.join(pathToImg, 'PNGImages')):
+        os.makedirs(os.path.join(pathToImg, 'PNGImages'))
       
       cv2.imwrite(os.path.join(os.path.join(pathToImg, 'PNGImages'), imgName + '.png'), initialCurFrame)
       if hyperparameters["bodyMask_saveAsPngMask"]:

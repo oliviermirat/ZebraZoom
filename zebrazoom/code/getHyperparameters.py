@@ -33,7 +33,6 @@ CONFIG_DEFAULT = \
   "debugFindWells" : 0,
   "debugHeadingCalculation" : 0,
   "debugValidationVideoHeading" : 0,
-  "debugPauseBetweenTrackAndParamExtract" : "saveTrackDataAndExtractParam",
   "debugDetectMovWithRawVideo" : 0,
   "debugDetectMovWithRawVideoShowVid" : 1,
   "debugCoverHorizontalPortionBelow" : 0,
@@ -62,7 +61,6 @@ CONFIG_DEFAULT = \
   "searchPreviousFramesIfCurrentFrameIsCorrupted" : 1,
   "reduceImageResolutionPercentage" : 1,
   "trackingMethod" : "",
-  "saveAllDataEvenIfNotInBouts" : 0,
   "savePathToOriginalVideoForValidationVideo" : 1,
 
   "setPixDiffBoutDetectParameters" : 0,
@@ -309,7 +307,6 @@ CONFIG_DEFAULT = \
   "lastFrame": 0,
   "videoWidth": 0,
   "videoHeight": 0,
-  "storeH5": 0
 }
 
 
@@ -349,7 +346,7 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
     for param, value in overridenParameters.items():
       print("command line hyperparameter change:", param, value)
 
-      if param not in {"debugPauseBetweenTrackAndParamExtract", "outputFolder", "coverPortionForHeadDetect", "freeSwimmingTailTrackingMethod",
+      if param not in {"outputFolder", "coverPortionForHeadDetect", "freeSwimmingTailTrackingMethod",
                        "findContourPrecision", "headingCalculationMethod", "additionalOutputFolder"}:
         try:
           overridenParameters[param] = int(value)

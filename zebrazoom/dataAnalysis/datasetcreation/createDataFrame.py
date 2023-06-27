@@ -1,3 +1,4 @@
+import collections
 import h5py
 import os
 import scipy
@@ -144,14 +145,22 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   instaHorizDispl  = ['instaHorizDispl'  + str(i) for i in range(1,nbFramesTakenIntoAccount+1)]
   # Assembling columns
   dfCols = basicInformation + globParam
+  perFrameParams = []
   if computeTailAngleParamForCluster:
     dfCols = dfCols + tailAngles
+    perFrameParams.extend(tailAngles)
   if saveRawDataInAllBoutsSuperStructure:
     dfCols = dfCols + rawData
   if computeTailAngleParamForCluster:
     dfCols = dfCols + instaTBF + instaAmp + instaAsym
+    perFrameParams.extend(instaTBF)
+    perFrameParams.extend(instaAmp)
+    perFrameParams.extend(instaAsym)
   if computeMassCenterParamForCluster:
     dfCols = dfCols + instaSpeed + instaHeadingDiff + instaHorizDispl
+    perFrameParams.extend(instaSpeed)
+    perFrameParams.extend(instaHeadingDiff)
+    perFrameParams.extend(instaHorizDispl)
   if computetailAnglesRecalculatedParamsForCluster:
     dfCols = dfCols + ['tailLength', 'tailLengthFromRecalculatedAngles'] + tailAnglesRecalculated + tailAnglesRecalculated2
   if computeTailAngleParamForCluster or computeMassCenterParamForCluster or computetailAnglesRecalculatedParamsForCluster:
@@ -201,12 +210,26 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
               animalGroup = wellGroup[f'dataForAnimal{animalIdx}']
               if 'kinematicParametersPerBout' not in animalGroup:
                 continue
-              kinematicParametersPerBout = pd.DataFrame(animalGroup['kinematicParametersPerBout'][:])
-              kinematicParametersPerBout['Trial_ID'] = trial_id
-              kinematicParametersPerBout['Well_ID'] = wellIdx
-              kinematicParametersPerBout['Animal_ID'] = animalIdx
-              kinematicParametersPerBout['NumBout'] = kinematicParametersPerBout.reset_index().index
-              dataframes.append(kinematicParametersPerBout)
+              kinematicParametersPerBout = animalGroup['kinematicParametersPerBout'][:]
+              data = {col: kinematicParametersPerBout[col] for col in kinematicParametersPerBout.dtype.names}
+              data['Trial_ID'] = trial_id
+              data['Well_ID'] = wellIdx
+              data['Animal_ID'] = animalIdx
+              boutsGroup = animalGroup['listOfBouts']
+              numberOfBouts = boutsGroup.attrs['numberOfBouts']
+              data['NumBout'] = list(range(numberOfBouts))
+              additionalParams = collections.defaultdict(list)
+              for boutIdx in range(numberOfBouts):
+                boutGroup = boutsGroup[f'bout{boutIdx}']
+                if 'additionalKinematicParametersPerBout' not in boutGroup:
+                  break
+                additionalKinematicParametersPerBout = boutGroup['additionalKinematicParametersPerBout'][:]
+                frameCount = len(additionalKinematicParametersPerBout)
+                for col in additionalKinematicParametersPerBout.dtype.names:
+                  for idx in range(frameCount):
+                    additionalParams[f'{col}{idx + 1}'].append(additionalKinematicParametersPerBout[col][idx])
+              data.update(additionalParams)
+              dataframes.append(pd.DataFrame(data))
           dfReloadedVid = pd.concat(dataframes)
 
     elif (not(os.path.exists(os.path.join(path, trial_id + '.pkl'))) or forcePandasDfRecreation):
@@ -217,7 +240,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
           supstruct = json.load(f)
       firstFrame = supstruct["firstFrame"]
       lastFrame  = supstruct["lastFrame"]
-      if nameOfFile:
+      if not H5filename:
         with open(os.path.join(path, 'parametersUsedForCalculation.json'), 'w') as outfile:
           print('frameStepForDistanceCalculation', frameStepForDistanceCalculation)
           print('videoFPS', excelFile.loc[videoId, 'fq'])
@@ -235,7 +258,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
             supstruct = json.load(f)
         firstFrame = supstruct["firstFrame"]
         lastFrame  = supstruct["lastFrame"]
-        if nameOfFile:
+        if not H5filename:
           with open(os.path.join(path, 'parametersUsedForCalculation.json'), 'w') as outfile:
             print('frameStepForDistanceCalculation', frameStepForDistanceCalculation)
             print('videoFPS', excelFile.loc[videoId, 'fq'])
@@ -397,10 +420,9 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     dfParam.loc[(np.abs(scipy.stats.zscore(dfParam[columnsToCheck].astype(float), nan_policy='omit')) > 3).any(axis=1), ~dfParam.columns.isin(basicInformation)] = np.nan
 
   # Saving dataframe for the whole set of videos as a pickle file
-  if nameOfFile:
-    outfile = open(os.path.join(resFolder, nameOfFile + '.pkl'), 'wb')
-    pickle.dump(dfParam,outfile)
-    outfile.close()
+  if not H5filename:
+    with open(os.path.join(resFolder, nameOfFile + '.pkl'), 'wb') as outfile:
+      pickle.dump(dfParam, outfile)
   
   # Saving dataframe for the whole set of videos as a matlab file
   if saveAllBoutsSuperStructuresInMatlabFormat:
@@ -411,8 +433,10 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
 
   if H5filename is not None:
     cols = globParam + ['BoutStart', 'BoutEnd']
+    additionalCols = list({param.rstrip('0123456789') for param in perFrameParams})
     dtype = [(name, dfParam[name].infer_objects().dtype) for name in cols]
-    dfParam = dfParam[['Trial_ID', 'Well_ID', 'Animal_ID'] + cols].groupby(['Trial_ID', 'Well_ID', 'Animal_ID'])
+    additionalDtype = [(name, dfParam[f'{name}1'].infer_objects().dtype) for name in additionalCols]
+    dfParam = dfParam[['Trial_ID', 'Well_ID', 'Animal_ID'] + cols + perFrameParams].groupby(['Trial_ID', 'Well_ID', 'Animal_ID'])
     with h5py.File(H5filename, 'a') as results:
       for (trial, well, animal), group in dfParam:
         arr = np.empty(len(group.index), dtype=dtype)
@@ -420,6 +444,14 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
           arr[name] = group[name].values
         dataset = results.create_dataset(f"dataForWell{well}/dataForAnimal{animal}/kinematicParametersPerBout", data=arr)
         dataset.attrs['columns'] = cols
+        if additionalCols:
+          boutCount = results[f"dataForWell{well}/dataForAnimal{animal}/listOfBouts"].attrs['numberOfBouts']
+          for boutIdx in range(boutCount):
+            arr = np.empty(nbFramesTakenIntoAccount, dtype=additionalDtype)
+            for name in additionalCols:
+              arr[name] = [group[f'{name}{idx + 1}'].values[boutIdx] for idx in range(nbFramesTakenIntoAccount)]
+            dataset = results.create_dataset(f"dataForWell{well}/dataForAnimal{animal}/listOfBouts/bout{boutIdx}/additionalKinematicParametersPerBout", data=arr)
+            dataset.attrs['columns'] = additionalCols
       results.attrs['frameStepForDistanceCalculation'] = frameStepForDistanceCalculation
 
   return [conditions, genotypes, nbFramesTakenIntoAccount, globParam]

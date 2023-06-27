@@ -7,6 +7,10 @@ import datetime
 import math
 from difflib import SequenceMatcher
 
+from zebrazoom.dataAPI._createSuperStructFromH5 import createSuperStructFromH5
+from zebrazoom.dataAPI._openResultsFile import openResultsFile
+
+
 def calculateSleepVsMovingPeriods(pathToZZoutput, vidName, speedThresholdForMoving, notMovingNumberOfFramesThresholdForSleep, maxDistBetweenTwoPointsInsideSleepingPeriod=-1, specifiedStartTime=0, distanceTravelledRollingMedianFilter=0, videoPixelSize=-1, videoFPS=-1):
   
   videoNamelist    = []
@@ -20,12 +24,15 @@ def calculateSleepVsMovingPeriods(pathToZZoutput, vidName, speedThresholdForMovi
     videoNamelist = [vidName]
   
   for idx, videoName in enumerate(videoNamelist):
-  
-    pathToVideo = os.path.join(pathToZZoutput, videoName, "results_" + videoName + ".txt")
-    
-    with open(pathToVideo) as ff:
-      dataRef = json.load(ff)
-    
+
+    try:
+      with openResultsFile(os.path.join(pathToZZoutput, videoName), 'r') as results:
+        dataRef = createSuperStructFromH5(results)
+    except ValueError:  # h5 results not found, assume a results folder exists
+      pathToVideo = os.path.join(pathToZZoutput, videoName, "results_" + videoName + ".txt")
+      with open(pathToVideo) as ff:
+        dataRef = json.load(ff)
+
     if videoPixelSize == -1:
       if "videoPixelSize" in dataRef:
         videoPixelSize = dataRef["videoPixelSize"]
@@ -97,8 +104,11 @@ def calculateSleepVsMovingPeriods(pathToZZoutput, vidName, speedThresholdForMovi
       
       df = pd.DataFrame(data = np.transpose(np.append(np.append([speed], [moving], axis=0), [sleep], axis=0)), columns = ['speed_' + str(wellNumber), 'moving_' + str(wellNumber), 'sleep_' + str(wellNumber)])
       dfFinal = pd.concat([dfFinal, df], axis=1)
-    
-    dfFinal.to_excel(os.path.join(pathToZZoutput, videoName, "sleepVsMoving_" + videoName + ".xlsx"))
+
+    resultsFolder = os.path.join(pathToZZoutput, videoName)
+    if not os.path.exists(resultsFolder):
+      os.makedirs(resultsFolder)
+    dfFinal.to_excel(os.path.join(resultsFolder, "sleepVsMoving_" + videoName + ".xlsx"))
     dfFinalAllVideos = pd.concat([dfFinalAllVideos, dfFinal], axis=0)
     
   if len(videoNamelist) > 1:

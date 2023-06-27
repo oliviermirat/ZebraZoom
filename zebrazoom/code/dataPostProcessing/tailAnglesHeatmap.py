@@ -10,22 +10,12 @@ import pandas as pd
 import pickle
 import scipy as sp
 
-def tailAnglesHeatMap(superStruct, hyperparameters, videoName):
+def tailAnglesHeatMap(superStruct, hyperparameters, videoNameWithTimestamp):
   
   # Creation of the sub-folder "anglesHeatMap" 
-  outputPath = os.path.join(os.path.join(hyperparameters["outputFolder"], videoName), "anglesHeatMap")
-  if os.path.exists(outputPath):
-    shutil.rmtree(outputPath)
-  while True:
-    try:
-      os.mkdir(outputPath)
-      break
-    except OSError as e:
-      print("waiting inside except")
-      time.sleep(0.1)
-    else:
-      print("waiting")
-      time.sleep(0.1)
+  outputPath = os.path.join(hyperparameters["outputFolder"], videoNameWithTimestamp, "anglesHeatMap")
+  if not os.path.exists(outputPath):
+    os.makedirs(outputPath)
   
   # Video frame start and end
   firstFrame = hyperparameters["firstFrame"]
@@ -43,15 +33,6 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoName):
   for i in range(0, len(superStruct["wellPoissMouv"])):
     for j in range(0, len(superStruct["wellPoissMouv"][i])):
       tailAngleHeatmaps = {}
-      if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-        fname = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"], f'allData_{hyperparameters["videoName"]}_wellNumber{i}_animal{j}.csv')
-        startLines = []
-        with open(fname) as f:
-          line = f.readline()
-          while ',' not in line:
-            startLines.append(line)
-            line = f.readline()
-        df = pd.read_csv(fname, skiprows=len(startLines))
       for k in range(0, len(superStruct["wellPoissMouv"][i][j])):
         
         # Creation of tail angles raw graph for bout k
@@ -86,8 +67,7 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoName):
           plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_anglesSmoothed_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.png'))
           plt.close(1)
 
-        if hyperparameters["saveAllDataEvenIfNotInBouts"] or hyperparameters["storeH5"]:
-          tailAngleHeatmaps[(bStart - firstFrame, bEnd + 1 - firstFrame)] = tailAngleHeatmap
+        tailAngleHeatmaps[(bStart - firstFrame, bEnd + 1 - firstFrame)] = tailAngleHeatmap
         
         # Creation of tail angle heatmap
         if plotTailAngleHeatmap:
@@ -102,19 +82,12 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoName):
           plt.savefig(os.path.join(outputPath, hyperparameters["videoName"] + "_tailAngleHeatmap_bout" + str(i) + '_' + str(j) + '_' + str(k) + '.png'))
           plt.close(1)
 
-      if hyperparameters["saveAllDataEvenIfNotInBouts"] or hyperparameters["storeH5"]:
-        angleCount = max(map(len, tailAngleHeatmaps.values())) if tailAngleHeatmaps else 0
-        tailAngleHeatmapData = [[float('nan')] * nbFrames for _ in range(angleCount)]
-        for (start, end), values in tailAngleHeatmaps.items():
-          for data, vals in zip(tailAngleHeatmapData, values):
-            data[start:end] = vals
-      if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-        for idx, data in enumerate(tailAngleHeatmapData):
-          df[f'tailAngleHeatmap{idx + 1}'] = data
-        with open(fname, 'w+', newline='') as f:
-          f.write(''.join(startLines))
-          df.convert_dtypes().to_csv(f)
-      if angleCount and hyperparameters['storeH5']:
+      angleCount = max(map(len, tailAngleHeatmaps.values())) if tailAngleHeatmaps else 0
+      tailAngleHeatmapData = [[float('nan')] * nbFrames for _ in range(angleCount)]
+      for (start, end), values in tailAngleHeatmaps.items():
+        for data, vals in zip(tailAngleHeatmapData, values):
+          data[start:end] = vals
+      if angleCount:
         with h5py.File(hyperparameters['H5filename'], 'a') as results:
           arr = np.empty(nbFrames, dtype=[(f'Pos{idx}', float) for idx in range(1, angleCount + 1)])
           for idx, data in enumerate(tailAngleHeatmapData):

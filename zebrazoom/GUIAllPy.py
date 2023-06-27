@@ -1,5 +1,6 @@
 import contextlib
 import os
+import shutil
 import sys
 import traceback
 import tempfile
@@ -104,7 +105,8 @@ class ZebraZoomApp(PlainApplication):
 
         self.configFileHistory = []
 
-        self.ZZoutputLocation = paths.getDefaultZZoutputFolder()
+        self._ZZoutputLocation = paths.getDefaultZZoutputFolder()
+        self._temporaryZZoutputLocation = None
 
         self.title_font = QFont('Helvetica', 18, QFont.Weight.Bold, True)
 
@@ -133,7 +135,18 @@ class ZebraZoomApp(PlainApplication):
     def askForZZoutputLocation(self):
         selectedFolder = QFileDialog.getExistingDirectory(self.window, "Select ZZoutput folder", os.path.expanduser("~"))
         if selectedFolder:
-          self.ZZoutputLocation = selectedFolder
+          self._ZZoutputLocation = selectedFolder
+
+    @property
+    def ZZoutputLocation(self):
+        if not self.configFile:
+          return self._ZZoutputLocation
+        if self._temporaryZZoutputLocation is None:
+          self._temporaryZZoutputLocation = tempfile.TemporaryDirectory()
+          videoInputsFolder = os.path.join(self._ZZoutputLocation, '.ZebraZoomVideoInputs')
+          if os.path.exists(videoInputsFolder):
+            shutil.copytree(videoInputsFolder, os.path.join(self._temporaryZZoutputLocation.name, '.ZebraZoomVideoInputs'))
+        return self._temporaryZZoutputLocation.name
 
     def _wrapWidget(self, page):
         page.sizeHint = lambda *args, page=page: QSize(*page.preferredSize)
@@ -164,6 +177,7 @@ class ZebraZoomApp(PlainApplication):
                 if reply != QMessageBox.StandardButton.Yes:
                     return True
             self.configFile.clear()
+            self._temporaryZZoutputLocation = None
             self.savedConfigFile = None
             self.videoToCreateConfigFileFor = ''
             self.wellLeftBorderX = 0
@@ -216,11 +230,11 @@ class ZebraZoomApp(PlainApplication):
         if self._busyCursor:
             self.setOverrideCursor(Qt.CursorShape.BusyCursor)
 
-    def chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, chooseFrames):
-        GUI_InitialFunctions.chooseVideoToAnalyze(self, justExtractParams, noValidationVideo, chooseFrames)
+    def chooseVideoToAnalyze(self, noValidationVideo, chooseFrames):
+        GUI_InitialFunctions.chooseVideoToAnalyze(self, noValidationVideo, chooseFrames)
 
-    def chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode):
-        GUI_InitialFunctions.chooseFolderToAnalyze(self, justExtractParams, noValidationVideo, sbatchMode)
+    def chooseFolderToAnalyze(self, noValidationVideo, sbatchMode):
+        GUI_InitialFunctions.chooseFolderToAnalyze(self, noValidationVideo, sbatchMode)
 
     def chooseFolderForTailExtremityHE(self):
         GUI_InitialFunctions.chooseFolderForTailExtremityHE(self)
@@ -352,9 +366,6 @@ class ZebraZoomApp(PlainApplication):
         self.configFile.clear()
         self.configFile.update(configFile)
         lastFrame = min(firstFrame + maximumFramesButtonGroup.checkedId(), int(zzVideoReading.VideoCapture(videoPath).get(7)) - 1)
-        tempDir = tempfile.TemporaryDirectory()
-        outputLocation = self.ZZoutputLocation
-        self.ZZoutputLocation = tempDir.name
         del self.configFileHistory[:]
         with self.busyCursor():
           try:
@@ -365,19 +376,11 @@ class ZebraZoomApp(PlainApplication):
             ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, self.configFile, tabParams).run()
           except NameError:
             self.show_frame("Error")
-            self.ZZoutputLocation = outputLocation
-            tempDir.cleanup()
             return
           finally:
             self.configFile.clear()
             self.configFile.update(configFile)
         (self.showViewParameters if not addToHistory else util.addToHistory(self.showViewParameters))(videoName)
-        layout = self.window.centralWidget().layout()
-        def cleanup():
-          self.ZZoutputLocation = outputLocation
-          tempDir.cleanup()
-          layout.currentChanged.disconnect(cleanup)
-        layout.currentChanged.connect(cleanup)
       configFile = self.configFile.copy()
 
       layout = QVBoxLayout()

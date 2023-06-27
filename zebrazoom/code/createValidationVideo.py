@@ -223,8 +223,6 @@ def createValidationVideo(videoPath, superStruct, hyperparameters, outputName=No
   infoFrame, colorModifTab = calculateInfoFrame(superStruct, hyperparameters, nbFrames)
             
   # Going through the video and printing stuff on it.
-  if outputName is None:
-    outputName = os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), hyperparameters["videoName"] + '.avi')
   outputFps = inputFps
   if hyperparameters["outputValidationVideoFps"] > 0:
     outputFps = int(hyperparameters["outputValidationVideoFps"])

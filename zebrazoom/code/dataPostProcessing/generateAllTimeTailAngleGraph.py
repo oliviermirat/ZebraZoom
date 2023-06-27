@@ -2,7 +2,8 @@ import matplotlib.pyplot as plt
 import math
 
 def generateAllTimeTailAngleGraph(path, superStruct, generateAllTimeTailAngleGraphLineWidth):
-  
+  if not os.path.exists(path):
+    os.makedirs(path)
   for i in range(0, len(superStruct["wellPoissMouv"])):
     for j in range(0, len(superStruct["wellPoissMouv"][i])):
       for k in range(0, len(superStruct["wellPoissMouv"][i][j])):

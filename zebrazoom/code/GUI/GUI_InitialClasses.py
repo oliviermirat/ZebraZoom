@@ -378,7 +378,7 @@ class VideoToAnalyze(QWidget):
         layout.addWidget(util.apply_style(QLabel("Choose video.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("Look for the video you want to analyze.", self), alignment=Qt.AlignmentFlag.AlignCenter)
         button = util.apply_style(QPushButton("Choose file", self), background_color=util.DEFAULT_BUTTON_COLOR)
-        button.clicked.connect(lambda: controller.chooseVideoToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), chooseFramesCheckbox.isChecked()))
+        button.clicked.connect(lambda: controller.chooseVideoToAnalyze(no_validation_checkbox.isChecked(), chooseFramesCheckbox.isChecked()))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
         chooseFramesCheckbox = QCheckBox("Choose the first and the last frames on which the tracking should run (tracking results will be saved)", self)
         layout.addWidget(chooseFramesCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -389,10 +389,8 @@ class VideoToAnalyze(QWidget):
         button.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/tracking/launchingTracking#launching-the-tracking-through-the-command-line"))
         advancedOptionsLayout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        just_extract_checkbox = util.apply_style(QCheckBox("I ran the tracking already, I only want to redo the extraction of parameters.", self), color='purple')
-        advancedOptionsLayout.addWidget(just_extract_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
-        advancedOptionsLayout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
         no_validation_checkbox = util.apply_style(QCheckBox("Don't (re)generate a validation video (for speed efficiency).", self), color='purple')
+        no_validation_checkbox.setChecked(True)
         advancedOptionsLayout.addWidget(no_validation_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
         advancedOptionsLayout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -413,15 +411,12 @@ class FolderToAnalyze(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Run ZebraZoom on several videos", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
         button = util.apply_style(QPushButton("Choose videos", self), background_color=util.DEFAULT_BUTTON_COLOR)
-        button.clicked.connect(lambda: controller.chooseFolderToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), expert_checkbox.isChecked()))
+        button.clicked.connect(lambda: controller.chooseFolderToAnalyze(no_validation_checkbox.isChecked(), expert_checkbox.isChecked()))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
         advancedOptionsLayout = QVBoxLayout()
 
-        just_extract_checkbox = QCheckBox("I ran the tracking already, I only want to redo the extraction of parameters.", self)
-        advancedOptionsLayout.addWidget(just_extract_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
-        advancedOptionsLayout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
         no_validation_checkbox = QCheckBox("Don't (re)generate a validation video (for speed efficiency).", self)
         advancedOptionsLayout.addWidget(no_validation_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
         advancedOptionsLayout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -834,7 +829,8 @@ class ViewParameters(util.CollapsibleSplitter):
           from zebrazoom.dataAPI._createSuperStructFromH5 import createSuperStructFromH5
           with h5py.File(fullPath, 'r') as results:
             self.dataRef = createSuperStructFromH5(results)
-            self._config = dict(results['configurationFileUsed'].attrs)
+            import numpy as np
+            self._config = {key: value if not isinstance(value, np.ndarray) else value.tolist() for key, value in results['configurationFileUsed'].attrs.items()}
 
         self._headEmbedded = bool(self._config is not None and self._config.get("headEmbeded", False))
 

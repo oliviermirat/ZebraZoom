@@ -494,11 +494,6 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
     else:
       return [self._trackingHeadTailAllAnimals, self._trackingHeadingAllAnimals, self._trackingEyesAllAnimals, self._headPositionFirstFrame, self._tailTipFirstFrame]
 
-  def _reloadPreviousTrackingData(self):
-    # Reloading previously extracted tracking data if debugging option selected
-    with open(os.path.join(self._hyperparameters["outputFolder"], self._videoName, 'intermediaryTracking.txt'), 'rb') as outfile:
-        return pickle.load(outfile)
-
   def _getParametersForWell(self, wellNumber):
     '''Does the tracking and then the extraction of parameters'''
     if self.useGUI:
@@ -507,36 +502,12 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
       if QApplication.instance() is None:
         from zebrazoom.GUIAllPy import PlainApplication
         app = PlainApplication(sys.argv)
-    if self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "noDebug":
-      # Normal execution process
-      trackingData = self.runTracking(wellNumber)
-      parameters = extractParameters(trackingData, wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background)
-      return [wellNumber,parameters,[]]
-    elif self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justSaveTrackData":
-      # Extracing tracking data, saving it, and that's it
-      trackingData = self.runTracking(wellNumber)
-      return [wellNumber,[],trackingData]
-    elif self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "saveTrackDataAndExtractParam":
-      # Extracing tracking data, saving it, and continuing normal execution
-      trackingData = self.runTracking(wellNumber)
-      parameters = extractParameters(trackingData, wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background)
-      return [wellNumber,parameters,trackingData]
-    else:
-      assert self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justExtractParamFromPreviousTrackData"
-      # Reloading previously tracked data and using it to extract parameters
-      trackingData = self._reloadPreviousTrackingData()[wellNumber]
-      parameters = extractParameters(trackingData, wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background)
-      return [wellNumber,parameters,[]]
+    # Normal execution process
+    parameters = extractParameters(self.runTracking(wellNumber), wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background)
+    return wellNumber, parameters
 
   def _storeParametersInQueue(self, queue, wellNumber):
     queue.put(self._getParametersForWell(wellNumber))
-
-  def _storeIntermediaryResults(self, trackingDataPerWell):
-    # saving tracking results for future uses
-    with open(os.path.join(self._hyperparameters["outputFolder"], self._videoName, 'intermediaryTracking.txt'),'wb') as outfile:
-      pickle.dump(trackingDataPerWell, outfile)
-    if (self._hyperparameters["freqAlgoPosFollow"] != 0):
-      print("intermediary results saved")
 
   def run(self):
     self._background = self.getBackground()
@@ -571,10 +542,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
       else:
         parametersPerWell = [self._getParametersForWell(self._hyperparameters["onlyTrackThisOneWell"])]
 
-    if (self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "saveTrackDataAndExtractParam") or (self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] == "justSaveTrackData"):
-      self._storeIntermediaryResults({wellNumber: trackingData for wellNumber, _, trackingData in parametersPerWell})
-
     # Sorting wells after the end of the parallelized calls end
-    return {wellNumber: parameters for wellNumber, parameters, _ in parametersPerWell}
+    return {wellNumber: parameters for wellNumber, parameters in parametersPerWell}
 
 register_tracking_method('tracking', Tracking)

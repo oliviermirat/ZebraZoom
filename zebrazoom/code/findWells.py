@@ -189,7 +189,8 @@ def saveWellsRepartitionImage(wellPositions, frame, hyperparameters):
         cv2.circle(frame, (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), 170, (0,0,255), 2)
       cv2.putText(frame, str(i), (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2,cv2.LINE_AA)
   frame = cv2.resize(frame, (int(lengthX/2), int(lengthY/2))) # ???
-  cv2.imwrite(os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), "repartition.jpg"), frame )
+  with h5py.File(hyperparameters['H5filename'], 'a') as results:
+    results.create_dataset('repartition', data=frame)
   return frame
 
 
@@ -240,16 +241,17 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
                                  "backgroundPreProcessParameters": [[value]],
                                  "imagePreProcessParameters": [[value]]}
           hyperparameters.update(rotationAngleParams)
-          outputFolderVideo = os.path.join(hyperparameters["outputFolder"], os.path.splitext(os.path.basename(videoPath))[0])
+          outputFolderVideo = os.path.join(hyperparameters["outputFolder"], '.ZebraZoomVideoInputs', os.path.splitext(os.path.basename(videoPath))[0])
           import pickle
           with open(os.path.join(outputFolderVideo, 'rotationAngle.txt'), 'wb') as outfile:
             pickle.dump(rotationAngleParams, outfile)
-          with open(os.path.join(outputFolderVideo, 'configUsed.json'), 'r') as f:
-            config = json.load(f)
-          config.update(rotationAngleParams)
-          with open(os.path.join(outputFolderVideo, 'configUsed.json'), 'w') as f:
-            json.dump(config, f)
-          frame = cv2.warpAffine(nonRotatedFrame, cv2.getRotationMatrix2D(tuple(x / 2 for x in frame.shape[1::-1]), value, 1.0), frame.shape[1::-1], flags=cv2.INTER_LINEAR)
+          import h5py
+          with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
+            for idx, wellPositions in enumerate(self.wellPositions):
+              results.require_group(f"wellPositions/well{idx}").attrs.update(wellPositions)
+            if rotationAngleParams is not None:
+              results['configurationFileUsed'].attrs.update(rotationAngleParams)
+            frame = cv2.warpAffine(nonRotatedFrame, cv2.getRotationMatrix2D(tuple(x / 2 for x in frame.shape[1::-1]), value, 1.0), frame.shape[1::-1], flags=cv2.INTER_LINEAR)
           util.setPixmapFromCv(frame, video)
         extraBtns = (('Rotate video', rotateVideo, False),)
       else:

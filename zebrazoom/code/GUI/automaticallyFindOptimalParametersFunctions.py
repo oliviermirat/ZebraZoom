@@ -123,7 +123,7 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
   app.wellPositions = wellPositions = []
   try:
     with app.busyCursor():
-      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, initialConfigFile, []).run()
+      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, initialConfigFile, ["outputFolder", app.ZZoutputLocation]).run()
   except ValueError:
     pass
   finally:
@@ -415,7 +415,7 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
   app = QApplication.instance()
   with app.busyCursor():
     try:
-      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, []).run()
+      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, ["outputFolder", app.ZZoutputLocation]).run()
     except ValueError:
       configFile["exitAfterBackgroundExtraction"] = 0
   
@@ -499,7 +499,7 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
   
   with app.busyCursor():
     try:
-      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, []).run()
+      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, ["outputFolder", app.ZZoutputLocation]).run()
     except ValueError:
       newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
       for index in newhyperparameters:

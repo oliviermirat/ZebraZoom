@@ -9,21 +9,6 @@ def extractZZParametersFromTailAngle(videoName, tailAngle):
   
   [hyperparameters, config] = getHyperparameters({"noChecksForBoutSelectionInExtractParams": 1, "windowForLocalBendMinMaxFind": 3, "thresAngleBoutDetect": 0.1, "nbWells": 1}, videoName + '.avi', '', [])
 
-  outputFolderVideo = os.path.join(hyperparameters["outputFolder"], videoName)
-  
-  if os.path.exists(outputFolderVideo):
-    shutil.rmtree(outputFolderVideo)
-  while True:
-    try:
-      os.mkdir(outputFolderVideo)
-      break
-    except OSError as e:
-      print("waiting inside except")
-      time.sleep(0.1)
-    else:
-      print("waiting")
-      time.sleep(0.1)
-  
   n = len(tailAngle)
   nbTailPoints = 2
   
