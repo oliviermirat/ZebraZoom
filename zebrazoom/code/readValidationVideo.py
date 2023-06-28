@@ -52,7 +52,7 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
   else:
     resultsPath = os.path.join(initialPath, folderName)
   
-  if hyperparameters["savePathToOriginalVideoForValidationVideo"]:
+  if "pathToOriginalVideo" in supstruct:
     videoPath = supstruct["pathToOriginalVideo"]
     if not os.path.exists(videoPath):
       app = QApplication.instance()

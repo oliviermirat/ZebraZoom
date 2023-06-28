@@ -82,6 +82,7 @@ class _WellsSelectionLabel(QLabel):
     self.setMouseTracking(wellPositions is not None)
     self._wellPositions = wellPositions
     self._wellInfos = None
+    self.update()
 
   def setWellInfos(self, wellInfos):
     self._wellInfos = wellInfos
@@ -398,7 +399,7 @@ class _ExperimentOrganizationModel(QAbstractTableModel):
         float(fileData.iloc[row, pixelSizeCol])
       except ValueError:
         errorParts.append("Pixel Size must be a valid float")
-      wellPositions = getWellPositionsCb(path)
+      wellPositions, _wellShape = getWellPositionsCb(path)
       if wellPositions is None:
         errorParts.append("wells file is corrupt")
         errors.append("%s%s." % (errorParts[0], ', '.join(errorParts[1:])))
@@ -722,17 +723,23 @@ class CreateExperimentOrganizationExcel(QWidget):
   def _getWellPositions(self, resultsFolder):
     if os.path.splitext(resultsFolder)[1] == '.h5':
       with h5py.File(resultsFolder, 'r') as results:
-        return [dict(results[f'wellPositions/well{idx}'].attrs) for idx in range(len(results['wellPositions']))]
+        config = dict(results['configurationFileUsed'].attrs)
+        wellShape = None if config.get("noWellDetection", False) or (config.get("headEmbeded", False) and not config.get("oneWellManuallyChosenTopLeft", False)) else 'rectangle' if config.get("wellsAreRectangles", False) or len(config.get("oneWellManuallyChosenTopLeft", '')) or int(config.get("multipleROIsDefinedDuringExecution", 0)) or config.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
+        return [dict(results[f'wellPositions/well{idx}'].attrs) for idx in range(len(results['wellPositions']))] if wellShape is not None else [], wellShape
     wellsFile = next(filter(os.path.exists, (os.path.join(resultsFolder, fname) for fname in self._POTENTIAL_WELLS_FILENAMES)), None)
     if wellsFile is None:
-      return []
+      return [], None
     else:
       try:
         with open(wellsFile, 'rb') as f:
-          return pickle.load(f)
+          wells = pickle.load(f)
+        with open(os.path.join(resultsFolder, 'configUsed.json')) as f:
+          config = json.load(f)
+        wellShape = None if config.get("noWellDetection", False) or (config.get("headEmbeded", False) and not config.get("oneWellManuallyChosenTopLeft", False)) else 'rectangle' if config.get("wellsAreRectangles", False) or len(config.get("oneWellManuallyChosenTopLeft", '')) or int(config.get("multipleROIsDefinedDuringExecution", 0)) or config.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
+        return wells if wellShape is not None else [], wellShape
       except Exception:
         QMessageBox.critical(self.controller.window, "Could not read well positions", "Well positions file could not be read.")
-    return None
+    return None, None
 
   def _findExampleFrame(self, folder):
     if not os.path.exists(folder):
@@ -775,8 +782,8 @@ class CreateExperimentOrganizationExcel(QWidget):
       return
     newSelection = {videoPath: (self._previousSelection[videoPath] if videoPath in self._previousSelection else self._getWellPositions(videoPath))
                     for videoPath in paths}
-    oldWellLengths = {len(wells) if wells is not None else None for wells in self._previousSelection.values()}
-    newWellLengths = {len(wells) if wells is not None else None for wells in newSelection.values()}
+    oldWellLengths = {(len(wells), shape) if wells is not None else None for wells, shape in self._previousSelection.values()}
+    newWellLengths = {(len(wells), shape) if wells is not None else None for wells, shape in newSelection.values()}
     self._previousSelection = newSelection
     videoToShow = self._table.model().videoPath(rows[0])
     exampleFrame = self._findExampleFrame(videoToShow)
@@ -789,33 +796,24 @@ class CreateExperimentOrganizationExcel(QWidget):
         self._frame.setOriginalPixmap(None)
         self._frame.hide()
         self._placeholderDetail.hide()
-        self._placeholderVideo.setText("Cannot edit the information because some of the selected videos don't have the same number of wells.")
+        self._placeholderVideo.setText("Cannot edit the information because some of the selected videos don't have the same number of wells or the same well shape.")
         self._placeholderVideo.show()
         self._shownVideo = None
-        self._wellsSelected()
         return
     if self._shownVideo == videoToShow:
       self._wellsSelected()
       return
     self._shownVideo = videoToShow
-    wellPositions = self._previousSelection[videoToShow]
+    wellPositions, self._frame.wellShape = self._previousSelection[videoToShow]
     if wellPositions is None:
       return
     elif not wellPositions:
       self._frame.setWellPositions(None)
-      self._frame.wellShape = None
       self._placeholderDetail.hide()
       self._detailsWidget.show()
     else:
       self._frame.setWellPositions([(position['topLeftX'], position['topLeftY'], position['lengthX'], position['lengthY'])
                                     for idx, position in enumerate(wellPositions)])
-      if os.path.splitext(videoToShow)[1] != '.h5':
-        with open(os.path.join(videoToShow, 'configUsed.json')) as f:
-          config = json.load(f)
-      else:
-          with h5py.File(videoToShow, 'r') as results:
-            config = dict(results['configurationFileUsed'].attrs)
-      self._frame.wellShape = 'rectangle' if config.get("wellsAreRectangles", False) or len(config.get("oneWellManuallyChosenTopLeft", '')) or int(config.get("multipleROIsDefinedDuringExecution", 0)) or config.get("noWellDetection", False) or config.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
     if exampleFrame is None:
       self._placeholderVideo.setText("Neither an example frame nor the validation video were found. Data must be modified manually in the table.")
       self._placeholderDetail.hide()
@@ -883,7 +881,7 @@ class CreateExperimentOrganizationExcel(QWidget):
       if resultsFile is None:
         invalidFolders.append(selectedFolder)
         continue
-      wellPositions = self._getWellPositions(selectedFolder)
+      wellPositions, _wellShape = self._getWellPositions(selectedFolder)
       if wellPositions is None:
         invalidFolders.append(selectedFolder)
         continue

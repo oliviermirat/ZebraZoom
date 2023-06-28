@@ -338,9 +338,6 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
 
   hyperparameters.update(copy.deepcopy(config))
 
-  if hyperparameters["tailAnglesHeatMap"]:
-    hyperparameters["calculateAllTailAngles"] = 1
-
   if argv and argv[0] != "getTailExtremityFirstFrame":
     overridenParameters = {param: argv[i+1] for i, param in enumerate(argv) if str(param) in hyperparameters}
     for param, value in overridenParameters.items():
@@ -355,6 +352,9 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
 
     hyperparameters.update(overridenParameters)
     config.update(overridenParameters)
+
+  if hyperparameters["tailAnglesHeatMap"]:
+    hyperparameters["calculateAllTailAngles"] = 1
 
   if hyperparameters["setPixDiffBoutDetectParameters"] > 0:
     hyperparameters["debugPauseBetweenTrackAndParamExtract"] = "justExtractParamFromPreviousTrackData"

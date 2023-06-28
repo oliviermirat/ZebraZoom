@@ -46,7 +46,7 @@ def perBoutOutput(superStruct, hyperparameters, videoNameWithTimestamp):
       os.makedirs(outputPath)
       
   # opening the video previously created in createValidationVideo as an input video stream
-  cap = zzVideoReading.VideoCapture(os.path.join(os.path.join(hyperparameters["outputFolder"], videoName), hyperparameters["videoName"] + '.avi'))
+  cap = zzVideoReading.VideoCapture(os.path.join(hyperparameters["outputFolder"], f'{videoNameWithTimestamp}.avi'))
   
   if (cap.isOpened()== False): 
     print("Error opening video stream or file")

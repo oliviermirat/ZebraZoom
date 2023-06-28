@@ -135,10 +135,10 @@ class ZebraZoomVideoAnalysis:
     if self._hyperparameters["savePathToOriginalVideoForValidationVideo"]:
       return
     if self._hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
-      fname = f'{os.path.splitext(self._hyperparameters["H5filename"])[0]}_originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'
+      fname = f'{self._hyperparameters["videoNameWithTimestamp"]}_originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'
       shutil.copyfile(os.path.join(self._pathToVideo, self._videoNameWithExt), fname)
     elif self._hyperparameters["createValidationVideo"]:
-      fname = f'{self._hyperparameters["videoNameWithTimestamp"]}.avi'
+      fname = os.path.join(self._hyperparameters['outputFolder'], f'{self._hyperparameters["videoNameWithTimestamp"]}.avi')
       infoFrame = createValidationVideo(os.path.join(self._pathToVideo, self._videoNameWithExt), superStruct, self._hyperparameters, outputName=fname)
 
   def _storeResults(self, superStruct):
@@ -192,8 +192,9 @@ class ZebraZoomVideoAnalysis:
       else:
         os.makedirs(self._hyperparameters["additionalOutputFolder"])
       for fname in os.listdir(self._hyperparameters['outputFolder']):
-        if os.path.splitext(fname)[0] == self._hyperparameters['videoNameWithTimestamp']:
-          shutil.copy2(os.path.join(self._hyperparameters['outputFolder'], fname), self._hyperparameters['additionalOutputFolder'])
+        fullPath = os.path.join(self._hyperparameters['outputFolder'], fname)
+        if os.path.isfile(fullPath) and os.path.splitext(fname)[0] == self._hyperparameters['videoNameWithTimestamp']:
+          shutil.copy2(fullPath, self._hyperparameters['additionalOutputFolder'])
 
   def run(self):
     '''Run tracking'''

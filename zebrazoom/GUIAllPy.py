@@ -373,14 +373,16 @@ class ZebraZoomApp(PlainApplication):
                          "firstFrame", firstFrame, "lastFrame", lastFrame, "freqAlgoPosFollow", 100,
                          "popUpAlgoFollow", 1, "outputFolder", self.ZZoutputLocation,
                          "backgroundExtractionForceUseAllVideoFrames", int(backgroundExtractionForceUseAllVideoFramesCheckbox.isChecked())]
-            ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, self.configFile, tabParams).run()
+            ZZanalysis = ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, self.configFile, tabParams)
+            ZZanalysis.run()
+            resultsFilename = os.path.basename(ZZanalysis._hyperparameters['H5filename'])
           except NameError:
             self.show_frame("Error")
             return
           finally:
             self.configFile.clear()
             self.configFile.update(configFile)
-        (self.showViewParameters if not addToHistory else util.addToHistory(self.showViewParameters))(videoName)
+        (self.showViewParameters if not addToHistory else util.addToHistory(self.showViewParameters))(resultsFilename)
       configFile = self.configFile.copy()
 
       layout = QVBoxLayout()
