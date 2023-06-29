@@ -37,6 +37,8 @@ setup(
     "threadpoolctl>=3.1.0",
   ],
   packages=setuptools.find_packages(),
+  package_data={'zebrazoom.code.tracking.customTrackingImplementations': ['**/*.py'],
+                'zebrazoom.code.GUI.tracking.customTrackingImplementations': ['**/*.py']},
   data_files=[
     (
       "zebrazoom",
