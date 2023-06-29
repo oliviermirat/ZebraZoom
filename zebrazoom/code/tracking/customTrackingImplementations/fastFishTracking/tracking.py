@@ -51,8 +51,8 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     if self._hyperparameters["chooseWellsToRunTrackingOnWithFirstAndLastFrame"]:
       self._listOfWellsOnWhichToRunTheTracking = getListOfWellsOnWhichToRunTheTracking(self, self._background[:,:,0], frame[:,:,0])
     print("listOfWellsOnWhichToRunTheTracking:", self._listOfWellsOnWhichToRunTheTracking)
-    self._background = cv2.max(frame, self._background)
-    self._background = cv2.cvtColor(self._background, cv2.COLOR_BGR2GRAY)
+    self._background = cv2.max(frame, self._background) # INCONSISTENT!!! should be changed!
+    self._background = cv2.cvtColor(self._background, cv2.COLOR_BGR2GRAY) # INCONSISTENT!!! should be changed!
     cap.set(cv2.CAP_PROP_POS_FRAMES, self._firstFrame - 1)
     
     # Initializing variables

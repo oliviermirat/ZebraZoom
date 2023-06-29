@@ -33,11 +33,11 @@ class BaseFasterMultiprocessing(BaseZebraZoomTrackingMethod):
       self._auDessusPerAnimalIdList = [[np.zeros((self._lastFrame-self._firstFrame+1, 1)) for nbAnimalsPerWell in range(0, self._hyperparameters["nbAnimalsPerWell"])]
                                        for wellNumber in range(self._hyperparameters["nbWells"])]
     halfDiameterRoiBoutDetect = self._hyperparameters["halfDiameterRoiBoutDetect"]
-    for animal_Id in range(self._hyperparameters["nbAnimalsPerWell"]):
-      if previousFrames.full():
-        previousFrame   = previousFrames.get()
-        curFrame        = grey.copy()
-        for wellNumber in range(0 if self._hyperparameters["onlyTrackThisOneWell"] == -1 else self._hyperparameters["onlyTrackThisOneWell"], self._hyperparameters["nbWells"] if self._hyperparameters["onlyTrackThisOneWell"] == -1 else self._hyperparameters["onlyTrackThisOneWell"] + 1):
+    if previousFrames.full():
+      previousFrame   = previousFrames.get()
+      curFrame        = grey.copy()
+      for wellNumber in range(0 if self._hyperparameters["onlyTrackThisOneWell"] == -1 else self._hyperparameters["onlyTrackThisOneWell"], self._hyperparameters["nbWells"] if self._hyperparameters["onlyTrackThisOneWell"] == -1 else self._hyperparameters["onlyTrackThisOneWell"] + 1):
+        for animal_Id in range(self._hyperparameters["nbAnimalsPerWell"]):
           # previousXYCoord = previousXYCoords.get()
           headX = self._trackingHeadTailAllAnimalsList[wellNumber][animal_Id, i-self._firstFrame][0][0]
           headY = self._trackingHeadTailAllAnimalsList[wellNumber][animal_Id, i-self._firstFrame][0][1]
@@ -93,15 +93,16 @@ class BaseFasterMultiprocessing(BaseZebraZoomTrackingMethod):
           ret, res = cv2.threshold(res,self._hyperparameters["thresForDetectMovementWithRawVideo"],255,cv2.THRESH_BINARY)
           totDiff = cv2.countNonZero(res)
 
-          for animalId in range(0, self._hyperparameters["nbAnimalsPerWell"]):
-            if totDiff > self._hyperparameters["minNbPixelForDetectMovementWithRawVideo"]:
-              self._auDessusPerAnimalIdList[wellNumber][animalId][i-self._firstFrame] = 1
-            else:
-              self._auDessusPerAnimalIdList[wellNumber][animalId][i-self._firstFrame] = 0
-      else:
-        for wellNumber in range(0 if self._hyperparameters["onlyTrackThisOneWell"] == -1 else self._hyperparameters["onlyTrackThisOneWell"], self._hyperparameters["nbWells"] if self._hyperparameters["onlyTrackThisOneWell"] == -1 else self._hyperparameters["onlyTrackThisOneWell"] + 1):
-          for animalId in range(0, self._hyperparameters["nbAnimalsPerWell"]):
-            self._auDessusPerAnimalIdList[wellNumber][animalId][i-self._firstFrame] = 0
-      previousFrames.put(grey)
-      # previousXYCoords.put([xHead, yHead])
+          if totDiff > self._hyperparameters["minNbPixelForDetectMovementWithRawVideo"]:
+            self._auDessusPerAnimalIdList[wellNumber][animal_Id][i-self._firstFrame] = 1
+          else:
+            self._auDessusPerAnimalIdList[wellNumber][animal_Id][i-self._firstFrame] = 0
+    else:
+      for wellNumber in range(0 if self._hyperparameters["onlyTrackThisOneWell"] == -1 else self._hyperparameters["onlyTrackThisOneWell"], self._hyperparameters["nbWells"] if self._hyperparameters["onlyTrackThisOneWell"] == -1 else self._hyperparameters["onlyTrackThisOneWell"] + 1):
+        for animalId in range(0, self._hyperparameters["nbAnimalsPerWell"]):
+          self._auDessusPerAnimalIdList[wellNumber][animalId][i-self._firstFrame] = 0
+    
+    previousFrames.put(grey)
+    # previousXYCoords.put([xHead, yHead])
+  
     return previousFrames
