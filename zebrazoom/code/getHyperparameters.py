@@ -61,7 +61,6 @@ CONFIG_DEFAULT = \
   "searchPreviousFramesIfCurrentFrameIsCorrupted" : 1,
   "reduceImageResolutionPercentage" : 1,
   "trackingMethod" : "",
-  "savePathToOriginalVideoForValidationVideo" : 1,
 
   "setPixDiffBoutDetectParameters" : 0,
 

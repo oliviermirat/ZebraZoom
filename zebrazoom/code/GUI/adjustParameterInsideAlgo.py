@@ -242,8 +242,9 @@ def _selectROI(config, getFrame):
                                    initialRect=initialRect, allowEmpty=True, contrastCheckbox=checkbox, getFrame=getFrame))
   if save:
     app = QApplication.instance()
-    tailFile = f'{app.videoToCreateConfigFileFor}.csv'
-    headFile = f'{app.videoToCreateConfigFileFor}HP.csv'
+    videoName = os.path.splitext(os.path.basename(app.videoToCreateConfigFileFor))[0]
+    tailFile = os.path.join(app.ZZoutputLocation, '.ZebraZoomVideoInputs', videoName, f'{videoName}.csv')
+    headFile = os.path.join(app.ZZoutputLocation, '.ZebraZoomVideoInputs', videoName, f'{videoName}HP.csv')
     if (os.path.exists(tailFile) or os.path.exists(headFile)) and \
         coords != (config.get("oneWellManuallyChosenTopLeft", [0, 0]), config.get("oneWellManuallyChosenBottomRight", [0, 0])):
       if tailFile:

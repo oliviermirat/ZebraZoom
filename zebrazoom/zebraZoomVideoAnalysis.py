@@ -132,8 +132,6 @@ class ZebraZoomVideoAnalysis:
 
   def _createValidationVideo(self, superStruct):
     '''Create validation video'''
-    if self._hyperparameters["savePathToOriginalVideoForValidationVideo"]:
-      return
     if self._hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
       fname = f'{self._hyperparameters["videoNameWithTimestamp"]}_originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'
       shutil.copyfile(os.path.join(self._pathToVideo, self._videoNameWithExt), fname)

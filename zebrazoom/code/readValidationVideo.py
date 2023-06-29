@@ -102,7 +102,7 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
   max_l = int(cap.get(7))
   if max_l == 1:
     return None
-  frameRange = (supstruct["firstFrame"], supstruct["lastFrame"] - 1) if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"] else (0, max_l -1)
+  frameRange = (supstruct["firstFrame"], supstruct["lastFrame"] - 1) if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or "pathToOriginalVideo" in supstruct else (0, max_l -1)
 
   if not("firstFrame" in supstruct):
     supstruct["firstFrame"] = 1
@@ -163,7 +163,7 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
     infoWells.append([0, 0, nx, ny])
   
   infoFrame = None
-  if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"]:
+  if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or "pathToOriginalVideo" in supstruct:
     infoFrame, colorModifTab = calculateInfoFrame(supstruct, hyperparameters, max_l)
   
   x = 0
@@ -180,7 +180,7 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
     lengthY = ny
 
   l = start - supstruct["firstFrame"] + 1 if start > 0 else 0
-  if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"]:
+  if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or "pathToOriginalVideo" in supstruct:
     l += supstruct["firstFrame"]
 
   xOriginal = x
@@ -225,7 +225,7 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
     if (numWell != -1):
       img = img[y:y+lengthY, x:x+lengthX]
 
-    frameNumber = l if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"] else (l + supstruct["firstFrame"])
+    frameNumber = l if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or "pathToOriginalVideo" in supstruct else (l + supstruct["firstFrame"])
     if lengthX > 100 and lengthY > 100:
       font = cv2.FONT_HERSHEY_SIMPLEX
       cv2.putText(img,str(frameNumber),(int(lengthX-110), int(lengthY-30)),font,1,(0,255,0))

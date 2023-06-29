@@ -1519,14 +1519,11 @@ class FinishConfig(QWidget):
       if checked:
         controller.configFile["fasterMultiprocessing"] = 2
         controller.configFile["detectMovementWithRawVideoInsideTracking"] = 1
-        controller.configFile["savePathToOriginalVideoForValidationVideo"] = 1
       else:
         if "fasterMultiprocessing" in controller.configFile:
           del controller.configFile["fasterMultiprocessing"]
         if "detectMovementWithRawVideoInsideTracking" in controller.configFile:
           del controller.configFile["detectMovementWithRawVideoInsideTracking"]
-        if "savePathToOriginalVideoForValidationVideo" in controller.configFile:
-          del controller.configFile["savePathToOriginalVideoForValidationVideo"]
     self._fasterTrackingCheckbox.toggled.connect(fasterTrackingToggled)
     layout.addWidget(self._fasterTrackingCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 

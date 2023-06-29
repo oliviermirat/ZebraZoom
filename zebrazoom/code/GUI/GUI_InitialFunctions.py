@@ -51,12 +51,12 @@ _VIDEO_EXTENSIONS = {'.264', '.3g2', '.3gp', '.3gp2', '.3gpp', '.3gpp2', '.3mm',
                      '.wvx', '.xej', '.xel', '.xesc', '.xfl', '.xlmv', '.xmv', '.xvid', '.y4m', '.yog', '.yuv', '.zeg', '.zm1', '.zm2', '.zm3', '.zmv'}
 
 
-def chooseVideoToAnalyze(self, noValidationVideo, chooseFrames):
+def chooseVideoToAnalyze(self, chooseFrames):
     videoName, _ = QFileDialog.getOpenFileName(self.window, 'Select video', os.path.expanduser("~"), filter=f'Videos ({" ".join("*%s" % ext for ext in _VIDEO_EXTENSIONS)});; All files (*.*)')
     if not videoName:
       return
     ZZargs = ([videoName],)
-    ZZkwargs = {'noValidationVideo': noValidationVideo}
+    ZZkwargs = {}
 
     if chooseFrames:
       def beginningAndEndChosen():
@@ -387,7 +387,7 @@ class _VideoSelectionPage(QWidget):
         break
       with open(config) as f:
         cfg = json.load(f)
-      if not (cfg.get('fasterMultiprocessing', False) or cfg.get('headEmbeded', False) or (cfg['trackingImplementation'] == "fastFishTracking.tracking")):
+      if not (cfg.get('fasterMultiprocessing', False) or cfg.get('headEmbeded', False) or (cfg.get('trackingImplementation') == "fastFishTracking.tracking")):
         enabled = False
         break
     self._parallelTrackingCheckbox.setVisible(enabled)
@@ -470,10 +470,12 @@ class _VideoSelectionPage(QWidget):
         break
       with open(config) as f:
         cfg = json.load(f)
+      videoName = os.path.splitext(os.path.basename(video))[0]
+      inputsFolder = os.path.join(app.ZZoutputLocation, '.ZebraZoomVideoInputs', videoName)
       if (cfg.get("multipleROIsDefinedDuringExecution", False) or cfg.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False)) and \
-          not os.path.exists(os.path.join(app.ZZoutputLocation, '.ZebraZoomVideoInputs', os.path.splitext(os.path.basename(video))[0], 'intermediaryWellPositionReloadNoMatterWhat.txt')):
+          not os.path.exists(os.path.join(inputsFolder, 'intermediaryWellPositionReloadNoMatterWhat.txt')):
         defineWellsVideos.append((video, config))
-      if cfg.get("headEmbeded", False) and (not os.path.exists('%s.csv' % video) or not os.path.exists('%sHP.csv' % video)):
+      if cfg.get("headEmbeded", False) and (not os.path.exists(os.path.join(inputsFolder, f'{videoName}.csv')) or not os.path.exists(os.path.join(inputsFolder, f'{videoName}HP.csv'))):
         headEmbeddedVideos.append((video, config))
     if defineWellsVideos:
       text = 'Some of the videos do not have the regions defined. Would you like to define them before running tracking?'
@@ -511,8 +513,8 @@ def _showTemporaryPage(ZZkwargs):
   layout.currentChanged.connect(cleanup)
 
 
-def chooseFolderToAnalyze(self, noValidationVideo, sbatchMode):
-  ZZkwargs = {'noValidationVideo': noValidationVideo, 'sbatchMode': sbatchMode}
+def chooseFolderToAnalyze(self, sbatchMode):
+  ZZkwargs = {'sbatchMode': sbatchMode}
   _showTemporaryPage(ZZkwargs)
 
 
@@ -539,7 +541,7 @@ def chooseConfigFile(ZZargs, ZZkwargs):
     launchZebraZoom(*ZZargs, **ZZkwargs)
 
 
-def _runTracking(args, noValidationVideo, ZZoutputLocation):
+def _runTracking(args, ZZoutputLocation):
   videoPath, config = args
   path        = os.path.dirname(videoPath)
   nameWithExt = os.path.basename(videoPath)
@@ -547,8 +549,6 @@ def _runTracking(args, noValidationVideo, ZZoutputLocation):
   videoExt    = os.path.splitext(nameWithExt)[1][1:]
 
   tabParams = ["zebraZoomVideoAnalysis", path, name, videoExt, config, "freqAlgoPosFollow", 100, "outputFolder", ZZoutputLocation]
-  if not noValidationVideo:
-    tabParams.extend(["createValidationVideo", 1])
   try:
     ZebraZoomVideoAnalysis(path, name, videoExt, config, tabParams).run()
   except ValueError:
@@ -558,7 +558,7 @@ def _runTracking(args, noValidationVideo, ZZoutputLocation):
 
 
 @util.showInProgressPage('Tracking')
-def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, noValidationVideo=False, findMultipleROIs=False,
+def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, findMultipleROIs=False,
                     askCoordinatesForAll=True, firstFrame=None, lastFrame=None, backgroundExtractionForceUseAllVideoFrames=None, processes=1):
   app = QApplication.instance()
 
@@ -572,19 +572,21 @@ def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, noVal
       videos = [next(videosGenerator)]
   else:
     videoPath = videos[0]
-    if (os.path.exists(videoPath + 'HP.csv') or os.path.exists(videoPath + '.csv')) and \
+    videoName = os.path.splitext(os.path.basename(videoPath))[0]
+    inputsFolder = os.path.join(app.ZZoutputLocation, '.ZebraZoomVideoInputs', videoName)
+    if (os.path.exists(os.path.join(inputsFolder, f'{videoName}HP.csv')) or os.path.exists(os.path.join(inputsFolder, f'{videoName}.csv'))) and \
         QMessageBox.question(app.window, "Previously stored coordinates found", "Do you want to use the previously stored coordinates?",
                              defaultButton=QMessageBox.StandardButton.Yes) != QMessageBox.StandardButton.Yes:
-      if os.path.exists(videoPath + 'HP.csv'):
-        os.remove(videoPath + 'HP.csv')
-      if os.path.exists(videoPath + '.csv'):
-        os.remove(videoPath + '.csv')
+      if os.path.exists(os.path.join(inputsFolder, f'{videoName}HP.csv')):
+        os.remove(os.path.join(inputsFolder, f'{videoName}HP.csv'))
+      if os.path.exists(os.path.join(inputsFolder, f'{videoName}.csv')):
+        os.remove(os.path.join(inputsFolder, f'{videoName}.csv'))
 
   print("allVideos:", videos)
 
   if processes > 1 and len(videos) > 1 and not sbatchMode:
     with Pool(min(processes, len(videos))) as pool:
-      pool.map(partial(_runTracking, noValidationVideo=noValidationVideo, ZZoutputLocation=app.ZZoutputLocation), zip(videos, configs))
+      pool.map(partial(_runTracking, ZZoutputLocation=app.ZZoutputLocation), zip(videos, configs))
   else:
     for videoPath, config in zip(videos, configs):
 
@@ -604,8 +606,6 @@ def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, noVal
           tabParams.extend(["firstFrame", firstFrame])
         if lastFrame is not None:
           tabParams.extend(["lastFrame", lastFrame])
-        if not noValidationVideo:
-            tabParams = tabParams + ["createValidationVideo", 1]
         if findMultipleROIs:
           tabParams = tabParams + ["exitAfterWellsDetection", 1, "saveWellPositionsToBeReloadedNoMatterWhat", 1]
         try:
@@ -628,7 +628,7 @@ def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, noVal
         getTailExtremityFirstFrame(path, name, videoExt, config, tabParams)
 
   if findMultipleROIs and not askCoordinatesForAll:
-    videoInputsFolder = os.patj.join(app.ZZoutputLocation, '.ZebraZoomVideoInputs', os.path.splitext(os.path.basename(videos[0]))[0])
+    videoInputsFolder = os.path.join(app.ZZoutputLocation, '.ZebraZoomVideoInputs', os.path.splitext(os.path.basename(videos[0]))[0])
     coordinatesFile = os.path.join(videoInputsFolder, 'intermediaryWellPositionReloadNoMatterWhat.txt')
     rotationFile = os.path.join(videoInputsFolder, 'rotationAngle.txt')
     for video in videosGenerator:

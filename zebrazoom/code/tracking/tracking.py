@@ -63,7 +63,8 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
   def _getTailTipByFileSaved(self):
     ix = -1
     iy = -1
-    with open(self._videoPath+'.csv') as csv_file:
+    inputsFolder = os.path.join(self._hyperparameters['outputFolder'], '.ZebraZoomVideoInputs', self._videoName)
+    with open(os.path.join(inputsFolder, f'{self._videoName}.csv')) as csv_file:
       csv_reader = csv.reader(csv_file, delimiter=',')
       line_count = 0
       for row in csv_reader:
@@ -75,7 +76,8 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
   def _getHeadPositionByFileSaved(self):
     ix = -1
     iy = -1
-    with open(self._videoPath+'HP.csv') as csv_file:
+    inputsFolder = os.path.join(self._hyperparameters['outputFolder'], '.ZebraZoomVideoInputs', self._videoName)
+    with open(os.path.join(inputsFolder, f'{self._videoName}HP.csv')) as csv_file:
       csv_reader = csv.reader(csv_file, delimiter=',')
       line_count = 0
       for row in csv_reader:
@@ -292,11 +294,11 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
           if debugPlus:
             self._debugFrame(255 - thresh2, title="thresh2")
 
-          if self._hyperparameters["headEmbeded"] and os.path.exists(self._videoPath+'HP.csv'):
+          if self._hyperparameters["headEmbeded"] and os.path.exists(os.path.join(self._hyperparameters['outputFolder'], '.ZebraZoomVideoInputs', self._videoName, f'{self._videoName}HP.csv')):
             headPositionFirstFrame = self._getHeadPositionByFileSaved()
           else:
             headPositionFirstFrame = 0
-          if self._hyperparameters["headEmbeded"] and os.path.exists(self._videoPath+'.csv'):
+          if self._hyperparameters["headEmbeded"] and os.path.exists(os.path.join(self._hyperparameters['outputFolder'], '.ZebraZoomVideoInputs', self._videoName, f'{self._videoName}.csv')):
             tailTipFirstFrame = self._getTailTipByFileSaved()
           else:
             tailTipFirstFrame = 0
@@ -389,7 +391,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
       oppHeading = (heading + math.pi) % (2 * math.pi)
 
       # Getting headPositionFirstFrame and tailTipFirstFrame positions
-      if os.path.exists(self._videoPath+'HP.csv'):
+      if os.path.exists(os.path.join(self._hyperparameters['outputFolder'], '.ZebraZoomVideoInputs', self._videoName, f'{self._videoName}HP.csv')):
         self._headPositionFirstFrame = self._getHeadPositionByFileSaved()
       else:
         if self._hyperparameters["findHeadPositionByUserInput"]:
@@ -399,7 +401,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
           [frame, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back, xHead, yHead] = self._getImages(cap, self._firstFrame, wellNumber)
           cap.set(1, self._firstFrame)
           lastFirstTheta = self._headTrackingHeadingCalculation(self._firstFrame, blur, thresh1, thresh2, gray, self._hyperparameters["erodeSize"], int(cap.get(3)), int(cap.get(4)), self._trackingHeadingAllAnimals, self._trackingHeadTailAllAnimals, self._trackingProbabilityOfGoodDetection, self._headPositionFirstFrame, self._wellPositions[wellNumber]["lengthX"])
-      if os.path.exists(self._videoPath+'.csv'):
+      if os.path.exists(os.path.join(self._hyperparameters['outputFolder'], '.ZebraZoomVideoInputs', self._videoName, f'{self._videoName}.csv')):
         self._tailTipFirstFrame  = self._getTailTipByFileSaved()
       else:
         frameForManualPointSelection = self.getAccentuateFrameForManualPointSelect(frame)
