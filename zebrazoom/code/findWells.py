@@ -190,6 +190,8 @@ def saveWellsRepartitionImage(wellPositions, frame, hyperparameters):
       cv2.putText(frame, str(i), (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2,cv2.LINE_AA)
   frame = cv2.resize(frame, (int(lengthX/2), int(lengthY/2))) # ???
   with h5py.File(hyperparameters['H5filename'], 'a') as results:
+    if 'repartition' in results:
+      del results['repartition']
     results.create_dataset('repartition', data=frame)
   return frame
 
