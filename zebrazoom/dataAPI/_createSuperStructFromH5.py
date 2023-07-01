@@ -37,6 +37,8 @@ def createSuperStructFromH5(results):
           boutData['flag'] = 1
         animalData.append(boutData)
         for data in boutGroup:
+          if data == 'additionalKinematicParametersPerBout':
+            continue
           boutData[data] = boutGroup[data][:].tolist()
         start = boutGroup.attrs['BoutStart'] - superStruct["firstFrame"]
         end = boutGroup.attrs['BoutEnd'] - superStruct["firstFrame"] + 1

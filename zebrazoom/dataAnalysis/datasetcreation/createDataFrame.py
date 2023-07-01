@@ -215,14 +215,13 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
               data['Trial_ID'] = trial_id
               data['Well_ID'] = wellIdx
               data['Animal_ID'] = animalIdx
+              data['videoDuration'] = (results.attrs['lastFrame'] - results.attrs['firstFrame']) / results.attrs['videoFPS']
               boutsGroup = animalGroup['listOfBouts']
               numberOfBouts = boutsGroup.attrs['numberOfBouts']
               data['NumBout'] = list(range(numberOfBouts))
               additionalParams = collections.defaultdict(list)
               for boutIdx in range(numberOfBouts):
                 boutGroup = boutsGroup[f'bout{boutIdx}']
-                if 'additionalKinematicParametersPerBout' not in boutGroup:
-                  break
                 additionalKinematicParametersPerBout = boutGroup['additionalKinematicParametersPerBout'][:]
                 frameCount = len(additionalKinematicParametersPerBout)
                 for col in additionalKinematicParametersPerBout.dtype.names:
@@ -439,13 +438,13 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     dfParam = dfParam[['Trial_ID', 'Well_ID', 'Animal_ID'] + cols + perFrameParams].groupby(['Trial_ID', 'Well_ID', 'Animal_ID'])
     with h5py.File(H5filename, 'a') as results:
       for (trial, well, animal), group in dfParam:
-        arr = np.empty(len(group.index), dtype=dtype)
+        boutCount = len(group.index)
+        arr = np.empty(boutCount, dtype=dtype)
         for name in cols:
           arr[name] = group[name].values
         dataset = results.create_dataset(f"dataForWell{well}/dataForAnimal{animal}/kinematicParametersPerBout", data=arr)
         dataset.attrs['columns'] = cols
         if additionalCols:
-          boutCount = results[f"dataForWell{well}/dataForAnimal{animal}/listOfBouts"].attrs['numberOfBouts']
           for boutIdx in range(boutCount):
             arr = np.empty(nbFramesTakenIntoAccount, dtype=additionalDtype)
             for name in additionalCols:
