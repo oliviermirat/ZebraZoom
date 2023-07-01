@@ -782,8 +782,8 @@ class CreateExperimentOrganizationExcel(QWidget):
       return
     newSelection = {videoPath: (self._previousSelection[videoPath] if videoPath in self._previousSelection else self._getWellPositions(videoPath))
                     for videoPath in paths}
-    oldWellLengths = {(len(wells), shape) if wells is not None else None for wells, shape in self._previousSelection.values()}
-    newWellLengths = {(len(wells), shape) if wells is not None else None for wells, shape in newSelection.values()}
+    oldWellLengths = {len(wells) if wells is not None else None for wells, _ in self._previousSelection.values()}
+    newWellLengths = {len(wells) if wells is not None else None for wells, _ in newSelection.values()}
     self._previousSelection = newSelection
     videoToShow = self._table.model().videoPath(rows[0])
     exampleFrame = self._findExampleFrame(videoToShow)
@@ -796,7 +796,7 @@ class CreateExperimentOrganizationExcel(QWidget):
         self._frame.setOriginalPixmap(None)
         self._frame.hide()
         self._placeholderDetail.hide()
-        self._placeholderVideo.setText("Cannot edit the information because some of the selected videos don't have the same number of wells or the same well shape.")
+        self._placeholderVideo.setText("Cannot edit the information because some of the selected videos don't have the same number of wells.")
         self._placeholderVideo.show()
         self._shownVideo = None
         return
