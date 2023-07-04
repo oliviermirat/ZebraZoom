@@ -1605,6 +1605,16 @@ class FinishConfig(QWidget):
     videoInfoLayout.addRow(QLabel("videoPixelSize:"), videoPixelSize)
     layout.addLayout(videoInfoLayout)
 
+    self._saveCsvCheckbox = QCheckBox("Also save per frame data in csv format")
+    def saveCsvToggled(checked):
+      if checked:
+        controller.configFile["savePerFrameDataInCsv"] = 1
+      else:
+        if "savePerFrameDataInCsv" in controller.configFile:
+          del controller.configFile["savePerFrameDataInCsv"]
+    self._saveCsvCheckbox.toggled.connect(saveCsvToggled)
+    layout.addWidget(self._saveCsvCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
     layout.addStretch()
 
     testCheckbox = QCheckBox("Test tracking after saving config", self)
@@ -1640,11 +1650,11 @@ class FinishConfig(QWidget):
         not self.controller.configFile.get("noBoutsDetection", False) and not self.controller.configFile.get("coordinatesOnlyBoutDetection", False):
       self.controller.configFile["detectMovementWithRawVideoInsideTracking"] = 1
     if trackingMethod:
-      for checkbox in (self._calculateCurvatureCheckbox, self._calculateTailAngleHeatmapCheckbox):
+      for checkbox in (self._saveCsvCheckbox, self._calculateCurvatureCheckbox, self._calculateTailAngleHeatmapCheckbox):
         checkbox.setChecked(False)
         checkbox.setVisible(False)
     else:
-      for checkbox, param in zip((self._calculateCurvatureCheckbox, self._calculateTailAngleHeatmapCheckbox), ('perBoutOutput', 'tailAnglesHeatMap')):
+      for checkbox, param in zip((self._saveCsvCheckbox, self._calculateCurvatureCheckbox, self._calculateTailAngleHeatmapCheckbox), ('savePerFrameDataInCsv', 'perBoutOutput', 'tailAnglesHeatMap')):
         checkbox.setVisible(True)
         if checkbox.isChecked():
           self.controller.configFile[param] = 1

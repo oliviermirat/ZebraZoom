@@ -306,6 +306,8 @@ CONFIG_DEFAULT = \
   "lastFrame": 0,
   "videoWidth": 0,
   "videoHeight": 0,
+
+  "savePerFrameDataInCsv": 0,
 }
 
 

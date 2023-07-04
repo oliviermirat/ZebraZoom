@@ -167,6 +167,46 @@ class ZebraZoomVideoAnalysis:
                 boutGroup.attrs[key] = value
       results.create_dataset('exampleFrame', data=zzVideoReading.VideoCapture(os.path.join(self._pathToVideo, self._videoNameWithExt)).read()[1])
 
+      if self._hyperparameters["savePerFrameDataInCsv"]:
+        import pandas as pd
+
+        if not os.path.exists(self._outputFolderVideo):
+          os.makedirs(self._outputFolderVideo)
+        datasetsToInclude = ('HeadPos', ('TailPosX', 'TailPosY'), 'TailLength', 'Heading', 'TailAngle', 'BoutNumber', 'curvature', 'tailAngleHeatmap')
+        for wellIdx in range(len(self.wellPositions)):
+          wellGroup = results[f'dataForWell{wellIdx}']
+          for animalIdx in range(len(wellGroup)):
+            animalGroup = wellGroup[f'dataForAnimal{animalIdx}']
+            dataPerFrameGroup = animalGroup['dataPerFrame']
+            data = {}
+            for dataset in datasetsToInclude:
+              if dataset == 'BoutNumber':
+                data['BoutNumber'] = np.empty(results.attrs['lastFrame'] - results.attrs['firstFrame'] + 1, dtype=float)
+              elif isinstance(dataset, tuple):
+                dataset1, dataset2 = dataset
+                if dataset1 not in dataPerFrameGroup or dataset2 not in dataPerFrameGroup:
+                  continue
+                dataset1Data = dataPerFrameGroup[dataset1][:]
+                dataset2Data = dataPerFrameGroup[dataset2][:]
+                data.update({f'{name}{col.lstrip("Pos")}': dset[col] for cols in zip(dataset1Data.dtype.names, dataset2Data.dtype.names) for col, dset, name in zip(cols, (dataset1Data, dataset2Data), (dataset1, dataset2))})
+              else:
+                if dataset not in dataPerFrameGroup:
+                  continue
+                datasetData = dataPerFrameGroup[dataset][:]
+                if len(datasetData.dtype):
+                  data.update({f'{dataset}{col.lstrip("Pos")}': datasetData[col] for col in datasetData.dtype.names})
+                else:
+                  data[dataset] = datasetData
+            boutsGroup = animalGroup['listOfBouts']
+            numberOfBouts = boutsGroup.attrs['numberOfBouts']
+            data['BoutNumber'][:] = np.nan
+            for boutIdx in range(numberOfBouts):
+              boutGroup = boutsGroup[f'bout{boutIdx}']
+              boutStart = boutGroup.attrs['BoutStart'] - results.attrs['firstFrame']
+              boutEnd = boutGroup.attrs['BoutEnd'] - results.attrs['firstFrame'] + 1
+              data['BoutNumber'][boutStart:boutEnd] = boutIdx
+            pd.DataFrame(data).convert_dtypes().to_csv(os.path.join(self._outputFolderVideo, f'allData_{self._hyperparameters["videoName"]}_wellNumber{wellIdx}_animal{animalIdx}.csv'))
+
     if self._hyperparameters["saveSuperStructToMatlab"]:
       from scipy.io import savemat
       if not os.path.exists(self._outputFolderVideo):
