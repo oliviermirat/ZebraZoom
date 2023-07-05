@@ -193,8 +193,14 @@ class BaseZebraZoomTrackingMethod(BaseTrackingMethod, GetBackgroundMixin):
           background = results['background'][:]
       else:
         background = self._getBackground()
-      with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
-        results.create_dataset('background', data=background)
+      if self._hyperparameters['storeH5']:
+        with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
+          results.create_dataset('background', data=background)
+      else:
+        outputFolderVideo = os.path.join(self._hyperparameters['outputFolder'], self._hyperparameters['videoNameWithTimestamp'])
+        if not os.path.exists(outputFolderVideo):
+          os.makedirs(outputFolderVideo)
+        cv2.imwrite(os.path.join(outputFolderVideo, 'background.png'), background)
 
     if self._hyperparameters["exitAfterBackgroundExtraction"]:
       print("exitAfterBackgroundExtraction")

@@ -31,7 +31,8 @@ class ZebraZoomVideoAnalysis:
     self._hyperparameters, self._configFile = getHyperparameters(configFile, self._videoNameWithExt, os.path.join(pathToVideo, self._videoNameWithExt), argv)
     videoNameWithTimestamp = f'{self._hyperparameters["videoName"]}_{datetime.now().strftime("%Y_%m_%d-%H_%M_%S")}'
     self._hyperparameters['videoNameWithTimestamp'] = videoNameWithTimestamp
-    self._hyperparameters['H5filename'] = os.path.join(self._hyperparameters["outputFolder"], f'{videoNameWithTimestamp}.h5')
+    if self._hyperparameters['storeH5']:
+      self._hyperparameters['H5filename'] = os.path.join(self._hyperparameters["outputFolder"], f'{videoNameWithTimestamp}.h5')
     # Setting output folder
     self._outputFolderVideo = os.path.join(self._hyperparameters["outputFolder"], videoNameWithTimestamp)
 
@@ -56,8 +57,14 @@ class ZebraZoomVideoAnalysis:
 
   def _storeConfigUsed(self):
     '''Saving the configuration file used'''
-    with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
-      results.require_group("configurationFileUsed").attrs.update(self._configFile)
+    if self._hyperparameters['storeH5']:
+      with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
+        results.require_group("configurationFileUsed").attrs.update(self._configFile)
+    else:
+      if not os.path.exists(self._outputFolderVideo):
+        os.makedirs(self._outputFolderVideo)
+      with open(os.path.join(self._outputFolderVideo, 'configUsed.json'), 'w') as outfile:
+        json.dump(self._configFile, outfile)
 
   def getWellPositions(self):
     '''Get well positions'''
@@ -110,11 +117,21 @@ class ZebraZoomVideoAnalysis:
             app.wellShape = 'circle'
 
     if self.wellPositions is not None:
-      with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
-        for idx, wellPositions in enumerate(self.wellPositions):
-          results.require_group(f"wellPositions/well{idx}").attrs.update(wellPositions)
+      if self._hyperparameters['storeH5']:
+        with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
+          for idx, wellPositions in enumerate(self.wellPositions):
+            results.require_group(f"wellPositions/well{idx}").attrs.update(wellPositions)
+          if rotationAngleParams is not None:
+            results['configurationFileUsed'].attrs.update(rotationAngleParams)
+      else:
+        with open(os.path.join(self._outputFolderVideo, 'intermediaryWellPosition.txt'), 'wb') as outfile:
+          pickle.dump(self.wellPositions, outfile)
         if rotationAngleParams is not None:
-          results['configurationFileUsed'].attrs.update(rotationAngleParams)
+          with open(os.path.join(self._outputFolderVideo, 'configUsed.json'), 'r') as f:
+            config = json.load(f)
+          config.update(rotationAngleParams)
+          with open(os.path.join(self._outputFolderVideo, 'configUsed.json'), 'w') as f:
+            json.dump(config, f)
 
   def _runTracking(self):
     if 'trackingImplementation' in self._hyperparameters:
@@ -136,10 +153,13 @@ class ZebraZoomVideoAnalysis:
       fname = f'{self._hyperparameters["videoNameWithTimestamp"]}_originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'
       shutil.copyfile(os.path.join(self._pathToVideo, self._videoNameWithExt), fname)
     elif self._hyperparameters["createValidationVideo"]:
-      fname = os.path.join(self._hyperparameters['outputFolder'], f'{self._hyperparameters["videoNameWithTimestamp"]}.avi')
+      folder = self._hyperparameters['outputFolder'] if self._hyperparameters['storeH5'] else os.path.join(self._outputFolderVideo)
+      if not os.path.exists(folder):
+        os.makedirs(folder)
+      fname = os.path.join(folder, f'{self._hyperparameters["videoNameWithTimestamp"]}.avi')
       infoFrame = createValidationVideo(os.path.join(self._pathToVideo, self._videoNameWithExt), superStruct, self._hyperparameters, outputName=fname)
 
-  def _storeResults(self, superStruct):
+  def _storeH5Results(self, superStruct):
     print("Store results:", self._hyperparameters['H5filename'])
     with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
       results.attrs['version'] = 0
@@ -167,45 +187,17 @@ class ZebraZoomVideoAnalysis:
                 boutGroup.attrs[key] = value
       results.create_dataset('exampleFrame', data=zzVideoReading.VideoCapture(os.path.join(self._pathToVideo, self._videoNameWithExt)).read()[1])
 
-      if self._hyperparameters["savePerFrameDataInCsv"]:
-        import pandas as pd
-
-        if not os.path.exists(self._outputFolderVideo):
-          os.makedirs(self._outputFolderVideo)
-        datasetsToInclude = ('HeadPos', ('TailPosX', 'TailPosY'), 'TailLength', 'Heading', 'TailAngle', 'BoutNumber', 'curvature', 'tailAngleHeatmap')
-        for wellIdx in range(len(self.wellPositions)):
-          wellGroup = results[f'dataForWell{wellIdx}']
-          for animalIdx in range(len(wellGroup)):
-            animalGroup = wellGroup[f'dataForAnimal{animalIdx}']
-            dataPerFrameGroup = animalGroup['dataPerFrame']
-            data = {}
-            for dataset in datasetsToInclude:
-              if dataset == 'BoutNumber':
-                data['BoutNumber'] = np.empty(results.attrs['lastFrame'] - results.attrs['firstFrame'] + 1, dtype=float)
-              elif isinstance(dataset, tuple):
-                dataset1, dataset2 = dataset
-                if dataset1 not in dataPerFrameGroup or dataset2 not in dataPerFrameGroup:
-                  continue
-                dataset1Data = dataPerFrameGroup[dataset1][:]
-                dataset2Data = dataPerFrameGroup[dataset2][:]
-                data.update({f'{name}{col.lstrip("Pos")}': dset[col] for cols in zip(dataset1Data.dtype.names, dataset2Data.dtype.names) for col, dset, name in zip(cols, (dataset1Data, dataset2Data), (dataset1, dataset2))})
-              else:
-                if dataset not in dataPerFrameGroup:
-                  continue
-                datasetData = dataPerFrameGroup[dataset][:]
-                if len(datasetData.dtype):
-                  data.update({f'{dataset}{col.lstrip("Pos")}': datasetData[col] for col in datasetData.dtype.names})
-                else:
-                  data[dataset] = datasetData
-            boutsGroup = animalGroup['listOfBouts']
-            numberOfBouts = boutsGroup.attrs['numberOfBouts']
-            data['BoutNumber'][:] = np.nan
-            for boutIdx in range(numberOfBouts):
-              boutGroup = boutsGroup[f'bout{boutIdx}']
-              boutStart = boutGroup.attrs['BoutStart'] - results.attrs['firstFrame']
-              boutEnd = boutGroup.attrs['BoutEnd'] - results.attrs['firstFrame'] + 1
-              data['BoutNumber'][boutStart:boutEnd] = boutIdx
-            pd.DataFrame(data).convert_dtypes().to_csv(os.path.join(self._outputFolderVideo, f'allData_{self._hyperparameters["videoName"]}_wellNumber{wellIdx}_animal{animalIdx}.csv'))
+  def _storeResults(self, superStruct):
+    if self._hyperparameters['storeH5']:
+      self._storeH5Results(superStruct)
+    else:
+      if not os.path.exists(self._outputFolderVideo):
+        os.makedirs(self._outputFolderVideo)
+      cv2.imwrite(os.path.join(self._outputFolderVideo, "exampleFrame.png"), zzVideoReading.VideoCapture(os.path.join(self._pathToVideo, self._videoNameWithExt)).read()[1])
+      path = os.path.join(self._outputFolderVideo, f'results_{self._hyperparameters["videoNameWithTimestamp"]}.txt')
+      print("createSuperStruct:", path)
+      with open(path, 'w') as outfile:
+        json.dump(superStruct, outfile)
 
     if self._hyperparameters["saveSuperStructToMatlab"]:
       from scipy.io import savemat
@@ -215,8 +207,12 @@ class ZebraZoomVideoAnalysis:
       savemat(matlabPath, {'videoDataResults': superStruct})
 
   def _storeVersionUsed(self):
-    with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
-      results.attrs['ZebraZoomVersionUsed'] = zebrazoom.__version__
+    if self._hyperparameters['storeH5']:
+      with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
+        results.attrs['ZebraZoomVersionUsed'] = zebrazoom.__version__
+    else:
+      with open(os.path.join(self._outputFolderVideo, 'ZebraZoomVersionUsed.txt'), 'w') as fp:
+        fp.write(zebrazoom.__version__)
 
   def _storeInAdditionalFolder(self):
       if os.path.isdir(self._hyperparameters["additionalOutputFolder"]):
@@ -229,10 +225,11 @@ class ZebraZoomVideoAnalysis:
         shutil.copytree(self._outputFolderVideo, self._hyperparameters["additionalOutputFolder"])
       else:
         os.makedirs(self._hyperparameters["additionalOutputFolder"])
-      for fname in os.listdir(self._hyperparameters['outputFolder']):
-        fullPath = os.path.join(self._hyperparameters['outputFolder'], fname)
-        if os.path.isfile(fullPath) and os.path.splitext(fname)[0] == self._hyperparameters['videoNameWithTimestamp']:
-          shutil.copy2(fullPath, self._hyperparameters['additionalOutputFolder'])
+      if self._hyperparameters['storeH5']:
+        for fname in os.listdir(self._hyperparameters['outputFolder']):
+          fullPath = os.path.join(self._hyperparameters['outputFolder'], fname)
+          if os.path.isfile(fullPath) and os.path.splitext(fname)[0] == self._hyperparameters['videoNameWithTimestamp']:
+            shutil.copy2(fullPath, self._hyperparameters['additionalOutputFolder'])
 
   def run(self):
     '''Run tracking'''

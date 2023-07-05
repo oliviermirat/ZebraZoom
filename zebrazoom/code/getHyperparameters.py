@@ -61,6 +61,7 @@ CONFIG_DEFAULT = \
   "searchPreviousFramesIfCurrentFrameIsCorrupted" : 1,
   "reduceImageResolutionPercentage" : 1,
   "trackingMethod" : "",
+  "saveAllDataEvenIfNotInBouts" : 0,
 
   "setPixDiffBoutDetectParameters" : 0,
 
@@ -307,7 +308,7 @@ CONFIG_DEFAULT = \
   "videoWidth": 0,
   "videoHeight": 0,
 
-  "savePerFrameDataInCsv": 0,
+  "storeH5": 1,
 }
 
 

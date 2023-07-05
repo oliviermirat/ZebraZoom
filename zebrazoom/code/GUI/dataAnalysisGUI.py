@@ -751,6 +751,9 @@ class CreateExperimentOrganizationExcel(QWidget):
         if 'pathToOriginalVideo' in results.attrs and os.path.exists(results.attrs['pathToOriginalVideo']):
           return zzVideoReading.VideoCapture(results.attrs['pathToOriginalVideo']).read()[1]
         return None
+    exampleFramePath = os.path.join(folder, 'exampleFrame.png')
+    if os.path.exists(exampleFramePath):
+      return cv2.imread(exampleFramePath)
     backgroundPath = os.path.join(folder, 'background.png')
     if os.path.exists(backgroundPath):
       return cv2.imread(backgroundPath)
