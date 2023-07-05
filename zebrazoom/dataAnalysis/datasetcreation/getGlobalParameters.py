@@ -83,7 +83,10 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
       instantaneousSpeed = []
       for j in range(0, len(posX)-1):
         instantaneousSpeed.append(math.sqrt((posX[j+1] - posX[j])**2 + (posY[j+1] - posY[j])**2) * pixelSize * fps)
-      listOfParametersCalculated.append(np.max(instantaneousSpeed))
+      if len(instantaneousSpeed):
+        listOfParametersCalculated.append(np.max(instantaneousSpeed))
+      else:
+        listOfParametersCalculated.append(0)
     
     
     elif parameterToCalculate == 'percentOfMovingFramesBasedOnDistance':
