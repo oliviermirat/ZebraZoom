@@ -3,6 +3,8 @@ import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.GUI.getCoordinates import findWellLeft, findWellRight, findHeadCenter, findBodyExtremity
 from zebrazoom.code.GUI.automaticallyFindOptimalParameters import automaticallyFindOptimalParameters
+from zebrazoom.code.GUI.automaticallyFindOptimalParametersFunctions import boutDetectionParameters
+
 import math
 from zebrazoom.code.findWells import findWells
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
@@ -13,7 +15,7 @@ from zebrazoom.code.tracking import get_default_tracking_method
 import json
 import os
 
-from PyQt5.QtCore import Qt, QTimer
+from PyQt5.QtCore import Qt, QEventLoop, QTimer
 from PyQt5.QtWidgets import QApplication, QFileDialog, QGridLayout, QLabel, QMessageBox, QVBoxLayout
 
 import zebrazoom.code.paths as paths
@@ -453,8 +455,89 @@ def identifyMultipleHead(self, controller, nbanimals):
   self.configFile["headSize"]        = math.sqrt((int(hyperparameters["minArea"]) + int(hyperparameters["maxArea"])) / 2)
 
 
+def _calculateMaxDepthParams(app, frame):
+  back = False
+
+  def backClicked():
+    nonlocal back
+    back = True
+
+  while 1:
+    headCoordinates = util.getPoint(frame, "Click on center of the head (defined here by middle point between eyes and swim bladder)", zoomable=True, backBtnCb=backClicked)
+    if back:
+      app.window.centralWidget().layout().setCurrentIndex(0)
+      app.configFileHistory[-2]()
+      return None
+
+    tailCoordinates = util.getPoint(cv2.circle(frame.copy(), tuple(headCoordinates), 2, (0, 0, 255), -1), "Click on the tip of the tail", zoomable=True, backBtnCb=backClicked)
+    if not back:
+      return math.dist(headCoordinates, tailCoordinates)
+    back = False
+
+
+def _getMaxDepthParams(app):
+  frame = util.chooseFrame(app, app.videoToCreateConfigFileFor, "Choose a frame where the fish tail is straight (not swimming)", "Next")
+  if frame is None:
+    app.window.centralWidget().layout().setCurrentIndex(0)
+    app.configFileHistory[-2]()
+    return False
+  maxDepth = _calculateMaxDepthParams(app, frame)
+  if maxDepth is None:
+    return False
+  app.configFile["maxDepth"] = maxDepth
+  app.configFile["steps"] = [maxDepth / 3.6, maxDepth / 2.4, maxDepth / 1.8]
+  app.configFile["paramGaussianBlur"] = maxDepth / 2.4
+  return _getNoFishRegionParams(app, frame)
+
+
 @util.addToHistory
-def numberOfAnimals(nbanimals, animalsAlwaysVisible, forceBlobMethodForHeadTracking, detectBoutsMethod, recommendedMethod, calculateBends, adjustBackgroundExtractionBasedOnNumberOfBlackPixels):
+def _getNoFishRegionParams(app, frame):
+  back = False
+  def backClicked():
+    nonlocal back
+    back = True
+  (xStart, yStart), (xEnd, yEnd) = util.getRectangle(frame, "Select any region inside a well where no fish is present", backBtnCb=backClicked)
+  if back:
+    app.window.centralWidget().layout().setCurrentIndex(0)
+    app.configFileHistory[-2]()
+    return False
+  maximumMedianValueOfAllPointsAlongTheTail = np.median(frame[yStart:yEnd, xStart:xEnd, 0])
+  app.configFile["maximumMedianValueOfAllPointsAlongTheTail"] = maximumMedianValueOfAllPointsAlongTheTail
+  app.configFile["headEmbededParamTailDescentPixThreshStop"] = maximumMedianValueOfAllPointsAlongTheTail
+  app.configFile["minimumHeadPixelValue"] = max(maximumMedianValueOfAllPointsAlongTheTail - 10, 0)
+  if app.configFile["nbWells"] == 1:
+    app.configFile["backgroundSubtractionOnWholeImage"] = 0
+    app.configFile["backgroundSubtractionOnROIhalfDiameter"] = 90
+  return True
+
+
+@util.addToHistory
+def _handleBoutDetection(app, detectBoutsMethod):
+  if detectBoutsMethod == 1:
+    videoName, videoExt = os.path.splitext(os.path.basename(app.videoToCreateConfigFileFor))
+    videoExt = videoExt.lstrip('.')
+    pathToVideo = os.path.dirname(app.videoToCreateConfigFileFor)
+    app.configFile["exitAfterWellsDetection"] = 1
+    zzAnalysis = ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, app.configFile, [])
+    try:
+      with app.busyCursor():
+        zzAnalysis.run()
+    except ValueError:
+        wellPositions = zzAnalysis.wellPositions
+    finally:
+      del app.configFile["exitAfterWellsDetection"]
+    app.configFile = boutDetectionParameters([{'wellNumber': 0}], app.configFile, pathToVideo, videoName, videoExt, wellPositions, app.videoToCreateConfigFileFor)
+    util.addToHistory(app.show_frame)("FinishConfig")
+  if detectBoutsMethod == 2:
+    app.configFile["coordinatesOnlyBoutDetection"] = 1
+    app.configFile["noBoutsDetection"] = 0
+    app.calculateBackgroundFreelySwim(app, 0, boutDetectionsOnly=True, reloadWellPositions=True)
+  else:
+    util.addToHistory(app.show_frame)("FinishConfig")
+
+
+@util.addToHistory
+def numberOfAnimals(nbanimals, animalsAlwaysVisible, forceBlobMethodForHeadTracking, detectBoutsMethod, algorithm, calculateBends, adjustBackgroundExtractionBasedOnNumberOfBlackPixels):
   app = QApplication.instance()
 
   app.configFile["noBoutsDetection"] = 1
@@ -476,12 +559,17 @@ def numberOfAnimals(nbanimals, animalsAlwaysVisible, forceBlobMethodForHeadTrack
   if app.forceBlobMethodForHeadTracking:
     app.configFile["forceBlobMethodForHeadTracking"] = app.forceBlobMethodForHeadTracking
 
-  if app.organism == 'zebrafish':
+  if algorithm == 2:
+    app.configFile["trackingImplementation"] = "fastFishTracking.tracking",
+    if not _getMaxDepthParams(app):
+      return
+    _handleBoutDetection(app, detectBoutsMethod)
+  elif app.organism == 'zebrafish':
     app.show_frame("IdentifyHeadCenter")
   elif app.organism == 'zebrafishNew':
-    automaticallyFindOptimalParameters(app, app, True, detectBoutsMethod, not recommendedMethod, not animalsAlwaysVisible, adjustBackgroundExtractionBasedOnNumberOfBlackPixels)
+    automaticallyFindOptimalParameters(app, app, True, detectBoutsMethod, algorithm == 1, not animalsAlwaysVisible, adjustBackgroundExtractionBasedOnNumberOfBlackPixels)
     app.window.centralWidget().layout().currentWidget().refreshPage(showFasterTracking=not adjustBackgroundExtractionBasedOnNumberOfBlackPixels)
-  elif app.organism == 'drosoorrodent' and recommendedMethod:
+  elif app.organism == 'drosoorrodent' and not algorithm:
     automaticallyFindOptimalParameters(app, app, True, 0, False, not animalsAlwaysVisible, adjustBackgroundExtractionBasedOnNumberOfBlackPixels)
     app.window.centralWidget().layout().currentWidget().refreshPage(showFasterTracking=not adjustBackgroundExtractionBasedOnNumberOfBlackPixels)
   else:

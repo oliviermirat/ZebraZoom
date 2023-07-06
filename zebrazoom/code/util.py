@@ -623,6 +623,24 @@ def _chooseFrameLayout(cap, spinboxValues, title, titleStyle=None):
 
   return layout, video, frameSlider
 
+
+def chooseFrame(app, videoPath, title, chooseFrameBtnText):
+  cap = zzVideoReading.VideoCapture(videoPath)
+  cap.set(1, 1)
+  ret, frame = cap.read()
+  layout, label, valueWidget = _chooseFrameLayout(cap, (1, 0, cap.get(7) - 2), title)
+
+  frameIdx = None
+  def chooseFrameBtnClicked():
+    nonlocal frameIdx
+    frameIdx = valueWidget.value()
+  showBlockingPage(layout, buttons=(("Back", lambda: None, True), ("Next", chooseFrameBtnClicked, True)), labelInfo=(frame, label, False))
+  if frameIdx is None:
+    return None
+  cap.set(1, frameIdx)
+  return cap.read()[1]
+
+
 def chooseBeginningPage(app, videoPath, title, chooseFrameBtnText, chooseFrameBtnCb, extraButtonInfo=None, titleStyle=None, additionalLayout=None, leftButtonInfo=None):
   cap = zzVideoReading.VideoCapture(videoPath)
   cap.set(1, 1)
