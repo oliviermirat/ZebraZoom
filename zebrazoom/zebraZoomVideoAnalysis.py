@@ -73,6 +73,7 @@ class ZebraZoomVideoAnalysis:
       self.wellPositions = [{"topLeftX":0, "topLeftY":0, "lengthX": self._hyperparameters["videoWidth"], "lengthY": self._hyperparameters["videoHeight"]}]
     else:
       print("start find wells")
+      maybeReloadWells = self._hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"] or self._hyperparameters["multipleROIsDefinedDuringExecution"]
       inputFilesFolder = os.path.join(self._hyperparameters['outputFolder'], '.ZebraZoomVideoInputs', self._videoName)
       if self._hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"]:
         rotationAngleFile = os.path.join(inputFilesFolder, 'rotationAngle.txt')
@@ -81,14 +82,20 @@ class ZebraZoomVideoAnalysis:
             rotationAngleParams = pickle.load(f)
           self._hyperparameters.update(rotationAngleParams)
       if self._hyperparameters["saveWellPositionsToBeReloadedNoMatterWhat"]:
+        if not maybeReloadWells:
+          print('Well positions can only be stored for multiple ROIs defined during execution or grid system')
+          raise ValueError
         self.wellPositions = findWells(os.path.join(self._pathToVideo, self._videoNameWithExt), self._hyperparameters)
         if not os.path.exists(inputFilesFolder):
           os.makedirs(inputFilesFolder)
         with open(os.path.join(inputFilesFolder, 'intermediaryWellPositionReloadNoMatterWhat.txt'), 'wb') as outfile:
           pickle.dump(self.wellPositions, outfile)
-      elif os.path.exists(os.path.join(inputFilesFolder, 'intermediaryWellPositionReloadNoMatterWhat.txt')):
+      elif maybeReloadWells and os.path.exists(os.path.join(inputFilesFolder, 'intermediaryWellPositionReloadNoMatterWhat.txt')):
         with open(os.path.join(inputFilesFolder, 'intermediaryWellPositionReloadNoMatterWhat.txt'), 'rb') as outfile:
           self.wellPositions = pickle.load(outfile)
+        gridSystem = len(self.wellPositions) > 1 and len({(pos['lengthX'], pos['lengthY']) for pos in self.wellPositions}) == 1
+        if self._hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"] ^ gridSystem or len(self.wellPositions) != self._hyperparameters["nbWells"]:
+          self.wellPositions = findWells(os.path.join(self._pathToVideo, self._videoNameWithExt), self._hyperparameters)
       elif self._hyperparameters["reloadWellPositions"]:
         fname = next(reversed(sorted(name for name in os.listdir(self._hyperparameters['outputFolder']) if os.path.splitext(name)[0][:-20] == self._videoName and os.path.splitext(name)[0] != self._hyperparameters['videoNameWithTimestamp'])))
         with h5py.File(os.path.join(self._hyperparameters['outputFolder'], fname)) as results:
