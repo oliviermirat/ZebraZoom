@@ -1605,29 +1605,37 @@ class FinishConfig(QWidget):
     videoInfoLayout.addRow(QLabel("videoPixelSize:"), videoPixelSize)
     layout.addLayout(videoInfoLayout)
 
-    self._oldFormatCheckbox = QCheckBox("Save results in the legacy format")
+    self._oldFormatCheckbox = QCheckBox("Save results in the legacy (json) format")
     def oldFormatToggled(checked):
       if checked:
         controller.configFile["storeH5"] = 0
-        self._alwaysSaveCheckbox.setText("Save coordinates and tail angle even when fish isn't moving")
         self._alwaysSaveCheckbox.setChecked(True)
+        formatLabel.setText('Raw data will be saved in a json file')
       else:
-        self._alwaysSaveCheckbox.setText("Also save per frame data in csv format")
         self._alwaysSaveCheckbox.setChecked(False)
+        formatLabel.setText('Raw data will be saved in an hdf5 file')
         if "storeH5" in controller.configFile:
           del controller.configFile["storeH5"]
     self._oldFormatCheckbox.toggled.connect(oldFormatToggled)
     layout.addWidget(self._oldFormatCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    self._alwaysSaveCheckbox = QCheckBox("Also save per frame data in csv format")
+    formatLabel = QLabel('Raw data will be saved in an hdf5 file')
+    layout.addWidget(formatLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self._alwaysSaveCheckbox = QCheckBox("Save coordinates and tail angle even when fish isn't moving (in csv/excel format)")
     def alwaysSaveToggled(checked):
       if checked:
+        saveAllDataLabel.setText('One csv/excel file with one row of data for each frame will be created for each animal in each well.')
         controller.configFile["saveAllDataEvenIfNotInBouts"] = 1
       else:
+        saveAllDataLabel.setText('Csv/excel files will not be created.')
         if "saveAllDataEvenIfNotInBouts" in controller.configFile:
           del controller.configFile["saveAllDataEvenIfNotInBouts"]
     self._alwaysSaveCheckbox.toggled.connect(alwaysSaveToggled)
     layout.addWidget(self._alwaysSaveCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    saveAllDataLabel = QLabel('Csv/excel files will not be created.')
+    layout.addWidget(saveAllDataLabel, alignment=Qt.AlignmentFlag.AlignCenter)
 
     layout.addStretch()
 
