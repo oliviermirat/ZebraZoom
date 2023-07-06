@@ -250,12 +250,14 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
                                  "imagePreProcessParameters": [[value]]}
           hyperparameters.update(rotationAngleParams)
           outputFolderVideo = os.path.join(hyperparameters["outputFolder"], '.ZebraZoomVideoInputs', os.path.splitext(os.path.basename(videoPath))[0])
+          if not os.path.exists(outputFolderVideo):
+            os.makedirs(outputFolderVideo)
           import pickle
           with open(os.path.join(outputFolderVideo, 'rotationAngle.txt'), 'wb') as outfile:
             pickle.dump(rotationAngleParams, outfile)
-          if self._hyperparameters['storeH5']:
+          if hyperparameters['storeH5']:
             import h5py
-            with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
+            with h5py.File(hyperparameters['H5filename'], 'a') as results:
               results['configurationFileUsed'].attrs.update(rotationAngleParams)
           else:
             outputFolder = os.path.join(hyperparameters['outputFolder'], hyperparameters['videoNameWithTimestamp'])
