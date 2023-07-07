@@ -122,11 +122,14 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
   app = QApplication.instance()
   app.wellPositions = wellPositions = []
   try:
+    storeH5 = initialConfigFile.pop('storeH5', None)
     with app.busyCursor():
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, initialConfigFile, ["outputFolder", app.ZZoutputLocation]).run()
   except ValueError:
     pass
   finally:
+    if storeH5 is not None:
+      initialConfigFile['storeH5'] = storeH5
     del initialConfigFile["exitAfterWellsDetection"]
     del app.wellPositions
   if not wellPositions:
@@ -415,10 +418,14 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
   app = QApplication.instance()
   with app.busyCursor():
     try:
+      storeH5 = configFile.pop('storeH5', None)
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, ["outputFolder", app.ZZoutputLocation]).run()
     except ValueError:
       configFile["exitAfterBackgroundExtraction"] = 0
-  
+    finally:
+      if storeH5 is not None:
+        configFile['storeH5'] = storeH5
+
   del configFile["exitAfterBackgroundExtraction"]
   del configFile["debugExtractBack"]
   del configFile["debugFindWells"]
@@ -499,6 +506,7 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
   
   with app.busyCursor():
     try:
+      storeH5 = configFile.pop('storeH5', None)
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, ["outputFolder", app.ZZoutputLocation]).run()
     except ValueError:
       newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
@@ -506,7 +514,10 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
         configFile[index] = newhyperparameters[index]
     except NameError:
       print("Configuration file parameters changes discarded.")
-  
+    finally:
+      if storeH5 is not None:
+        configFile['storeH5'] = storeH5
+
   del configFile["onlyTrackThisOneWell"]
   del configFile["trackTail"]
   del configFile["adjustDetectMovWithRawVideo"]

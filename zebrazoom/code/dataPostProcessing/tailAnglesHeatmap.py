@@ -34,7 +34,7 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoNameWithTimestamp):
     for j in range(0, len(superStruct["wellPoissMouv"][i])):
       tailAngleHeatmaps = {}
       if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-        fname = os.path.join(outputPath, f'allData_{hyperparameters["videoName"]}_wellNumber{i}_animal{j}.csv')
+        fname = os.path.join(hyperparameters["outputFolder"], videoNameWithTimestamp, f'allData_{hyperparameters["videoName"]}_wellNumber{i}_animal{j}.csv')
         startLines = []
         with open(fname) as f:
           line = f.readline()
@@ -42,6 +42,7 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoNameWithTimestamp):
             startLines.append(line)
             line = f.readline()
         df = pd.read_csv(fname, skiprows=len(startLines))
+        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
       for k in range(0, len(superStruct["wellPoissMouv"][i][j])):
         
         # Creation of tail angles raw graph for bout k
@@ -104,7 +105,7 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoNameWithTimestamp):
         with open(fname, 'w+', newline='') as f:
           f.write(''.join(startLines))
           df.convert_dtypes().to_csv(f)
-      if angleCount and hyperparameters['storeH5']:
+      if hyperparameters['storeH5'] and angleCount:
         with h5py.File(hyperparameters['H5filename'], 'a') as results:
           arr = np.empty(nbFrames, dtype=[(f'Pos{idx}', float) for idx in range(1, angleCount + 1)])
           for idx, data in enumerate(tailAngleHeatmapData):

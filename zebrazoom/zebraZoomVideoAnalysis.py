@@ -264,6 +264,13 @@ class ZebraZoomVideoAnalysis:
 
     self.getWellPositions()
     if int(self._hyperparameters["exitAfterWellsDetection"]):
+      try:  # try to clean up temporary results
+        if self._hyperparameters['storeH5']:
+          os.remove(self._hyperparameters['H5filename'])
+        else:
+          shutil.rmtree(os.path.join(self._hyperparameters['outputFolder'], self._hyperparameters['videoNameWithTimestamp']))
+      except OSError:
+        pass
       print("exitAfterWellsDetection")
       if self._hyperparameters["popUpAlgoFollow"]:
         import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow

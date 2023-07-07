@@ -375,7 +375,7 @@ class ZebraZoomApp(PlainApplication):
                          "backgroundExtractionForceUseAllVideoFrames", int(backgroundExtractionForceUseAllVideoFramesCheckbox.isChecked())]
             ZZanalysis = ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, self.configFile, tabParams)
             ZZanalysis.run()
-            resultsFilename = os.path.basename(ZZanalysis._hyperparameters['H5filename'])
+            resultsFilename = ZZanalysis._hyperparameters['videoNameWithTimestamp'] if not ZZanalysis._hyperparameters['storeH5'] else f'{ZZanalysis._hyperparameters["videoNameWithTimestamp"]}.h5'
           except NameError:
             self.show_frame("Error")
             return

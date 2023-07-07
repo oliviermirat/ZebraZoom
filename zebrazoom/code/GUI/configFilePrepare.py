@@ -1609,10 +1609,12 @@ class FinishConfig(QWidget):
     def oldFormatToggled(checked):
       if checked:
         controller.configFile["storeH5"] = 0
-        self._alwaysSaveCheckbox.setChecked(True)
+        if self._alwaysSaveCheckbox.isVisible():
+          self._alwaysSaveCheckbox.setChecked(True)
         formatLabel.setText('Raw data will be saved in a json file')
       else:
-        self._alwaysSaveCheckbox.setChecked(False)
+        if self._alwaysSaveCheckbox.isVisible():
+          self._alwaysSaveCheckbox.setChecked(False)
         formatLabel.setText('Raw data will be saved in an hdf5 file')
         if "storeH5" in controller.configFile:
           del controller.configFile["storeH5"]
@@ -1625,17 +1627,17 @@ class FinishConfig(QWidget):
     self._alwaysSaveCheckbox = QCheckBox("Save coordinates and tail angle even when fish isn't moving (in csv/excel format)")
     def alwaysSaveToggled(checked):
       if checked:
-        saveAllDataLabel.setText('One csv/excel file with one row of data for each frame will be created for each animal in each well.')
+        self._saveAllDataLabel.setText('One csv/excel file with one row of data for each frame will be created for each animal in each well.')
         controller.configFile["saveAllDataEvenIfNotInBouts"] = 1
       else:
-        saveAllDataLabel.setText('Csv/excel files will not be created.')
+        self._saveAllDataLabel.setText('Csv/excel files will not be created.')
         if "saveAllDataEvenIfNotInBouts" in controller.configFile:
           del controller.configFile["saveAllDataEvenIfNotInBouts"]
     self._alwaysSaveCheckbox.toggled.connect(alwaysSaveToggled)
     layout.addWidget(self._alwaysSaveCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
-    saveAllDataLabel = QLabel('Csv/excel files will not be created.')
-    layout.addWidget(saveAllDataLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._saveAllDataLabel = QLabel('Csv/excel files will not be created.')
+    layout.addWidget(self._saveAllDataLabel, alignment=Qt.AlignmentFlag.AlignCenter)
 
     layout.addStretch()
 
@@ -1672,16 +1674,21 @@ class FinishConfig(QWidget):
         not self.controller.configFile.get("noBoutsDetection", False) and not self.controller.configFile.get("coordinatesOnlyBoutDetection", False):
       self.controller.configFile["detectMovementWithRawVideoInsideTracking"] = 1
     if trackingMethod:
+      self._saveAllDataLabel.setVisible(False)
       for checkbox in (self._alwaysSaveCheckbox, self._calculateCurvatureCheckbox, self._calculateTailAngleHeatmapCheckbox):
         checkbox.setChecked(False)
         checkbox.setVisible(False)
     else:
+      self._saveAllDataLabel.setVisible(True)
       for checkbox, param in zip((self._alwaysSaveCheckbox, self._calculateCurvatureCheckbox, self._calculateTailAngleHeatmapCheckbox), ('saveAllDataEvenIfNotInBouts', 'perBoutOutput', 'tailAnglesHeatMap')):
         checkbox.setVisible(True)
         if checkbox.isChecked():
           self.controller.configFile[param] = 1
-    self._oldFormatCheckbox.setChecked(False)
-    self._oldFormatCheckbox.setChecked(not bool(self.controller.configFile.get('storeH5', True)))
+    storeLegacy = not self.controller.configFile.get('storeH5', True)
+    if storeLegacy != self._oldFormatCheckbox.isChecked():
+      self._oldFormatCheckbox.setChecked(storeLegacy)
+    else:
+      self._oldFormatCheckbox.toggled.emit(storeLegacy)
 
   def showEvent(self, evt):
     self.refreshPage()

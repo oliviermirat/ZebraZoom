@@ -370,7 +370,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
     if hyperparameters["saveAllDataEvenIfNotInBouts"] or hyperparameters["storeH5"]:
       trackingFlattenPandas = pd.DataFrame(trackingFlatten, columns=trackingFlattenColumnsNames)
     if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-      outputFolder = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoNameWithExt"])
+      outputFolder = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoNameWithTimestamp"])
       if not os.path.exists(outputFolder):
         os.makedirs(outputFolder)
       fname = os.path.join(outputFolder, f'allData_{hyperparameters["videoName"]}_wellNumber{wellNumber}_animal{animalId}.csv')

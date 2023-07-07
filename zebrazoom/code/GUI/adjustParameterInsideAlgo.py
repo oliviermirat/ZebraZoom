@@ -292,6 +292,7 @@ def _adjustEyeTracking(firstFrame, totalFrames, ellipse=False):
 
   saved = False
   try:
+    storeH5 = app.configFile.pop('storeH5', None)
     if "lastFrame" in app.configFile and "firstFrame" in app.configFile and app.configFile["lastFrame"] < app.configFile["firstFrame"]:
       del app.configFile["lastFrame"]
     ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, app.configFile, argv).run()
@@ -299,6 +300,9 @@ def _adjustEyeTracking(firstFrame, totalFrames, ellipse=False):
     saved = True
   except NameError:
     print("Configuration file parameters changes discarded.")
+  finally:
+    if storeH5 is not None:
+      app.configFile['storeH5'] = storeH5
 
   app.configFile = originalConfig
   if saved:

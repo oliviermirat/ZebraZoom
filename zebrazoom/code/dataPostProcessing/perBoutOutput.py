@@ -74,16 +74,6 @@ def perBoutOutput(superStruct, hyperparameters, videoNameWithTimestamp):
   if hyperparameters["alternativeCurvatureCalculation"]:
     for i in range(0, len(superStruct["wellPoissMouv"])):
       for j in range(0, len(superStruct["wellPoissMouv"][i])):
-        curvatures = {}
-        if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-          fname = os.path.join(outputPath, f'allData_{hyperparameters["videoName"]}_wellNumber{i}_animal{j}.csv')
-          startLines = []
-          with open(fname) as f:
-            line = f.readline()
-            while ',' not in line:
-              startLines.append(line)
-              line = f.readline()
-          df = pd.read_csv(fname, skiprows=len(startLines))
         for k in range(0, len(superStruct["wellPoissMouv"][i][j])):
           
           # Creation of the curvature graph for bout k
@@ -152,6 +142,17 @@ def perBoutOutput(superStruct, hyperparameters, videoNameWithTimestamp):
   # Curvature calculation: Going through each well, each fish and each bout
   for i in range(0, len(superStruct["wellPoissMouv"])):
     for j in range(0, len(superStruct["wellPoissMouv"][i])):
+      curvatures = {}
+      if hyperparameters["saveAllDataEvenIfNotInBouts"]:
+        fname = os.path.join(hyperparameters["outputFolder"], videoNameWithTimestamp, f'allData_{hyperparameters["videoName"]}_wellNumber{i}_animal{j}.csv')
+        startLines = []
+        with open(fname) as f:
+          line = f.readline()
+          while ',' not in line:
+            startLines.append(line)
+            line = f.readline()
+        df = pd.read_csv(fname, skiprows=len(startLines))
+        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
       for k in range(0, len(superStruct["wellPoissMouv"][i][j])):
         
         # Creation of the curvature graph for bout k
