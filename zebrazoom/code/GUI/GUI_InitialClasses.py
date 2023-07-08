@@ -638,7 +638,12 @@ class ViewParameters(util.CollapsibleSplitter):
         optimizeLayout.addWidget(message)
         optimizeLayout.setStretch(0, 1)
         optimizeBtn = util.apply_style(QPushButton("Optimize configuration file", self), background_color=util.LIGHT_YELLOW)
-        optimizeBtn.clicked.connect(lambda: util.addToHistory(controller.optimizeConfigFile)())
+        def optimizeClicked():
+          if controller.configFile.get('trackingImplementation') is not None:
+            QMessageBox.information(controller.window, "Optimization not supported", "Optimization is not yet supported for this type of configuration file.")
+          else:
+            util.addToHistory(controller.optimizeConfigFile)()
+        optimizeBtn.clicked.connect(optimizeClicked)
         optimizeLayout.addWidget(optimizeBtn, alignment=Qt.AlignmentFlag.AlignLeft)
         layout.addLayout(optimizeLayout, 1, 1, 1, 7)
         line = QFrame()

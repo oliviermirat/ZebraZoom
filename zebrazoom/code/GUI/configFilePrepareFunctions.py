@@ -60,9 +60,7 @@ def getMainArguments(self):
 
 
 def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
-
   if int(reloadConfigFile):
-
     configFileName, _ =  QFileDialog.getOpenFileName(self.window, "Select configuration file", paths.getConfigurationFolder(), "JSON (*.json)")
     if not configFileName:
       return False
@@ -71,6 +69,10 @@ def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
         self.configFile = json.load(f)
     except (EnvironmentError, json.JSONDecodeError) as e:
       QMessageBox.critical(self.window, "Could not read config file", "Config file couldn't be read: %s\n" % str(e))
+      return False
+    if self.configFile.get('trackingImplementation') is not None:
+      QMessageBox.information(self.window, "Optimization not supported", "Optimization is not yet supported for this type of configuration file.")
+      self.configFile.clear()
       return False
     self.savedConfigFile = self.configFile.copy()
 
