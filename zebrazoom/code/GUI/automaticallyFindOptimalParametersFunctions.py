@@ -509,8 +509,6 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
   initialFirstFrameValue, initialLastFrameValue = prepareConfigFileForParamsAdjustements(configFile, wellNumber, configFile.get("firstFrame", 1), videoPath, False)
   configFile["firstFrame"] = lastFrameNum - 500 if lastFrameNum - 500 > 0 else 0
   configFile["lastFrame"]  = (configFile["firstFrame"] + 500) if (configFile["firstFrame"] + 500) < (max_l - 1) else (max_l - 1)
-  del configFile["firstFrame"] # TODO: remove this
-  del configFile["lastFrame"]
   
   configFile["noBoutsDetection"] = 0
   configFile["trackTail"]                   = 0
