@@ -21,7 +21,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     self._wellPositions = wellPositions
     self._hyperparameters = hyperparameters
     self._auDessusPerAnimalIdList = None
-    self._firstFrame = self._hyperparameters["firstFrame"]
+    self._firstFrame = 1 #self._hyperparameters["firstFrame"]
     self._lastFrame = self._hyperparameters["lastFrame"]
     self._nbTailPoints = self._hyperparameters["nbTailPoints"]
     self._previousFrames = None
@@ -43,8 +43,11 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
       print("Error opening video stream or file")
     
     # Simple background extraction with first and last frame of the video + Getting list of wells on which to run the tracking
-    if self._firstFrame != 1:
-      cap.set(cv2.CAP_PROP_POS_FRAMES, self._firstFrame - 1)
+    if self._firstFrame != 1 or self._hyperparameters["firstFrame"] != 1:
+      self._firstFrame = 1
+      self._hyperparameters["firstFrame"] = 1
+      print("First frame selection not suported yet for super fast tracking")
+      # cap.set(cv2.CAP_PROP_POS_FRAMES, self._firstFrame - 1)
     ret, self._background = cap.read()
     cap.set(cv2.CAP_PROP_POS_FRAMES, int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) - 1)
     ret, frame = cap.read()
@@ -58,6 +61,12 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     # Initializing variables
     times  = np.zeros((int(cap.get(cv2.CAP_PROP_FRAME_COUNT) + 1), 2))
     ret = True
+    if self._lastFrame != cap.get(cv2.CAP_PROP_FRAME_COUNT):
+      self._lastFrame = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+      self._hyperparameters["lastFrame"] = self._lastFrame
+      self._trackingDataPerWell = [np.zeros((self._hyperparameters["nbAnimalsPerWell"], self._lastFrame-self._firstFrame+1, self._nbTailPoints, 2)) for _ in range(len(self._wellPositions))]
+      self._times2 = np.zeros((self._lastFrame - self._firstFrame + 1, 5))
+      print("Last frame selection not suported yet for super fast tracking")
     
     # Going through each frame of the video
     startTime = time.time()
