@@ -634,7 +634,7 @@ def chooseFrame(app, videoPath, title, chooseFrameBtnText):
   def chooseFrameBtnClicked():
     nonlocal frameIdx
     frameIdx = valueWidget.value()
-  showBlockingPage(layout, buttons=(("Back", lambda: None, True), ("Next", chooseFrameBtnClicked, True)), labelInfo=(frame, label, False))
+  showBlockingPage(layout, buttons=(("Back", lambda: None, True), ("Next", chooseFrameBtnClicked, True, None, DEFAULT_BUTTON_COLOR)), labelInfo=(frame, label, False))
   if frameIdx is None:
     return None
   cap.set(1, frameIdx)

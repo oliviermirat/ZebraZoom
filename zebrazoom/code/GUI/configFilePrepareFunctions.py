@@ -4,7 +4,7 @@ import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.GUI.getCoordinates import findWellLeft, findWellRight, findHeadCenter, findBodyExtremity
 from zebrazoom.code.GUI.adjustParameterInsideAlgo import adjustBoutDetectionOnlyPage
 from zebrazoom.code.GUI.automaticallyFindOptimalParameters import automaticallyFindOptimalParameters
-from zebrazoom.code.GUI.automaticallyFindOptimalParametersFunctions import boutDetectionParameters
+from zebrazoom.code.GUI.automaticallyFindOptimalParametersFunctions import boutDetectionParameters, findWellWithMostMovement
 
 import math
 from zebrazoom.code.findWells import findWells
@@ -480,6 +480,7 @@ def _calculateMaxDepthParams(app, frame):
 
 def _setFastTrackingParams(app):
   app.configFile["trackingImplementation"] = "fastFishTracking.tracking"
+  app.configFile["detectMovementWithRawVideoInsideTracking"] = 0
   app.configFile["debugHeadEmbededFindNextPoints"] = 0
   app.configFile["backgroundExtractionWithOnlyTwoFrames"] = 1
   app.configFile["authorizedRelativeLengthTailEnd"] = 0.6
@@ -497,6 +498,9 @@ def _setFastTrackingParams(app):
   app.configFile["backgroundSubtractionOnWholeImage"] = 0
   app.configFile["backgroundSubtractionOnROIhalfDiameter"] = 90
   app.configFile["chooseWellsToRunTrackingOnWithFirstAndLastFrame"] = 0
+
+
+def _setMaxDepthParams(app):
   frame = util.chooseFrame(app, app.videoToCreateConfigFileFor, "Choose a frame where the fish tail is straight (not swimming)", "Next")
   if frame is None:
     app.window.centralWidget().layout().setCurrentIndex(0)
@@ -513,6 +517,7 @@ def _setFastTrackingParams(app):
 
 @util.addToHistory
 def _fastTrackingBoutDetection(app, detectBoutsMethod):
+  _setFastTrackingParams(app)
   if not detectBoutsMethod:
     app.configFile["detectBouts"] = 0
     app.configFile["thresForDetectMovementWithRawVideo"] = 0
@@ -522,9 +527,10 @@ def _fastTrackingBoutDetection(app, detectBoutsMethod):
   videoExt = videoExt.lstrip('.')
   pathToVideo = os.path.dirname(app.videoToCreateConfigFileFor)
   app.configFile["exitAfterWellsDetection"] = 1
+  app.configFile["exitAfterBackgroundExtraction"] = 1
   if detectBoutsMethod == 2:
     app.wellPositions = []
-  zzAnalysis = ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, app.configFile, [])
+  zzAnalysis = ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, app.configFile, ['outputFolder', app.ZZoutputLocation])
   try:
     with app.busyCursor():
       zzAnalysis.run()
@@ -532,8 +538,12 @@ def _fastTrackingBoutDetection(app, detectBoutsMethod):
       wellPositions = zzAnalysis.wellPositions
   finally:
     del app.configFile["exitAfterWellsDetection"]
+    del app.configFile["exitAfterBackgroundExtraction"]
   if detectBoutsMethod == 1:
-    app.configFile = boutDetectionParameters([{'wellNumber': 0}], app.configFile, pathToVideo, videoName, videoExt, wellPositions, app.videoToCreateConfigFileFor)
+    cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
+    wellNumber = findWellWithMostMovement(cap, wellPositions)
+    cap.release()
+    app.configFile = boutDetectionParameters([{'wellNumber': wellNumber}], app.configFile, pathToVideo, videoName, videoExt, wellPositions, app.videoToCreateConfigFileFor)
     app.configFile["detectMovementWithRawVideoInsideTracking"] = 1
     util.addToHistory(app.show_frame)("FinishConfig")
   if detectBoutsMethod == 2:
@@ -566,7 +576,7 @@ def numberOfAnimals(nbanimals, animalsAlwaysVisible, forceBlobMethodForHeadTrack
     app.configFile["forceBlobMethodForHeadTracking"] = app.forceBlobMethodForHeadTracking
 
   if algorithm == 2:
-    if not _setFastTrackingParams(app):
+    if not _setMaxDepthParams(app):
       return
     _fastTrackingBoutDetection(app, detectBoutsMethod)
     if app.configFile["nbWells"] > 1:
