@@ -41,4 +41,5 @@ def recreateSuperStruct(pathToVideo, videoName, videoExt, configFile, argv):
     
   if hyperparameters["createValidationVideo"]:
     # Creating validation video
-    infoFrame = createValidationVideo(pathToVideo + videoNameWithExt, superStruct, hyperparameters)
+    outputName = os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), hyperparameters["videoName"] + '.avi')
+    infoFrame = createValidationVideo(pathToVideo + videoNameWithExt, superStruct, hyperparameters, outputName=outputName)

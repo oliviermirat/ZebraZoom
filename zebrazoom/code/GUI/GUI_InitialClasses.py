@@ -8,6 +8,7 @@ import sys
 import webbrowser
 from packaging import version
 
+import h5py
 import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvas
@@ -16,7 +17,7 @@ from matplotlib.figure import Figure
 from PyQt5.QtCore import pyqtSignal, Qt, QDir, QEvent, QLine, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel, QTimer, QUrl
 from PyQt5.QtGui import QColor, QCursor, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
-from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QHeaderView, QPushButton, QSizePolicy, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
+from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QMessageBox, QHeaderView, QPushButton, QSizePolicy, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
 PYQT6 = False
 
 import zebrazoom
@@ -377,7 +378,7 @@ class VideoToAnalyze(QWidget):
         layout.addWidget(util.apply_style(QLabel("Choose video.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("Look for the video you want to analyze.", self), alignment=Qt.AlignmentFlag.AlignCenter)
         button = util.apply_style(QPushButton("Choose file", self), background_color=util.DEFAULT_BUTTON_COLOR)
-        button.clicked.connect(lambda: controller.chooseVideoToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), chooseFramesCheckbox.isChecked()))
+        button.clicked.connect(lambda: controller.chooseVideoToAnalyze(chooseFramesCheckbox.isChecked()))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
         chooseFramesCheckbox = QCheckBox("Choose the first and the last frames on which the tracking should run (tracking results will be saved)", self)
         layout.addWidget(chooseFramesCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -387,13 +388,6 @@ class VideoToAnalyze(QWidget):
         button = util.apply_style(QPushButton("Click here if you prefer to run the tracking from the command line", self), background_color='green')
         button.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/tracking/launchingTracking#launching-the-tracking-through-the-command-line"))
         advancedOptionsLayout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
-
-        just_extract_checkbox = util.apply_style(QCheckBox("I ran the tracking already, I only want to redo the extraction of parameters.", self), color='purple')
-        advancedOptionsLayout.addWidget(just_extract_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
-        advancedOptionsLayout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        no_validation_checkbox = util.apply_style(QCheckBox("Don't (re)generate a validation video (for speed efficiency).", self), color='purple')
-        advancedOptionsLayout.addWidget(no_validation_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
-        advancedOptionsLayout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
         layout.addWidget(util.Expander(self, "Show advanced options", advancedOptionsLayout))
 
@@ -412,18 +406,12 @@ class FolderToAnalyze(QWidget):
         layout = QVBoxLayout()
         layout.addWidget(util.apply_style(QLabel("Run ZebraZoom on several videos", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
         button = util.apply_style(QPushButton("Choose videos", self), background_color=util.DEFAULT_BUTTON_COLOR)
-        button.clicked.connect(lambda: controller.chooseFolderToAnalyze(just_extract_checkbox.isChecked(), no_validation_checkbox.isChecked(), expert_checkbox.isChecked()))
+        button.clicked.connect(lambda: controller.chooseFolderToAnalyze(expert_checkbox.isChecked()))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
 
         advancedOptionsLayout = QVBoxLayout()
 
-        just_extract_checkbox = QCheckBox("I ran the tracking already, I only want to redo the extraction of parameters.", self)
-        advancedOptionsLayout.addWidget(just_extract_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
-        advancedOptionsLayout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
-        no_validation_checkbox = QCheckBox("Don't (re)generate a validation video (for speed efficiency).", self)
-        advancedOptionsLayout.addWidget(no_validation_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
-        advancedOptionsLayout.addWidget(QLabel("", self), alignment=Qt.AlignmentFlag.AlignCenter)
         expert_checkbox = QCheckBox("Expert use (don't click here unless you know what you're doing): Only generate a script to launch all videos in parallel with sbatch.", self)
         advancedOptionsLayout.addWidget(expert_checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -617,7 +605,7 @@ class ViewParameters(util.CollapsibleSplitter):
         self.visualization = 0
 
         model = QFileSystemModel()
-        model.setFilter(QDir.Filter.NoDotAndDotDot | QDir.Filter.Dirs)
+        model.setFilter(QDir.Filter.NoDotAndDotDot | QDir.Filter.Dirs | QDir.Filter.Files)
         model.setRootPath(self.controller.ZZoutputLocation)
         model.setReadOnly(True)
         proxyModel = QSortFilterProxyModel()
@@ -788,7 +776,11 @@ class ViewParameters(util.CollapsibleSplitter):
         tree.hide()
 
     def _findResultsFile(self, folder):
-        reference = os.path.join(self.controller.ZZoutputLocation, os.path.join(folder, 'results_' + folder + '.txt'))
+        if not os.path.isdir(os.path.join(self.controller.ZZoutputLocation, folder)):
+          if os.path.splitext(folder)[1] == '.h5':
+            return os.path.join(self.controller.ZZoutputLocation, folder)
+          return None
+        reference = os.path.join(self.controller.ZZoutputLocation, folder, 'results_' + folder + '.txt')
         if os.path.exists(reference):
           return reference
         mypath = os.path.join(self.controller.ZZoutputLocation, folder)
@@ -797,7 +789,7 @@ class ViewParameters(util.CollapsibleSplitter):
         resultsFile = next((f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f)) and f.startswith('results_')), None)
         if resultsFile is None:
           return None
-        return os.path.join(self.controller.ZZoutputLocation, os.path.join(folder, resultsFile))
+        return os.path.join(self.controller.ZZoutputLocation, folder, resultsFile)
 
     def setFolder(self, name):
         self.title_label.setText(name)
@@ -814,15 +806,30 @@ class ViewParameters(util.CollapsibleSplitter):
           return
         else:
           self._centralWidget.showChildren()
-        self.currentResultFolder = name
 
-        try:
-          with open(os.path.join(self.controller.ZZoutputLocation, name, 'configUsed.json')) as config:
-            self._headEmbedded = bool(json.load(config).get("headEmbeded", False))
-        except (EnvironmentError, json.JSONDecodeError) as e:
-          self._headEmbedded = False
-        with open(self._findResultsFile(name)) as ff:
-          self.dataRef = json.load(ff)
+        fullPath = os.path.join(self.controller.ZZoutputLocation, name)
+        self.currentResultFolder = name
+        if os.path.isdir(fullPath):
+          try:
+            with open(os.path.join(fullPath, 'configUsed.json')) as config:
+              self._config = json.load(config)
+          except (EnvironmentError, json.JSONDecodeError) as e:
+            self._config = None
+          with open(self._findResultsFile(name)) as ff:
+            self.dataRef = json.load(ff)
+        else:
+          try:
+            from zebrazoom.dataAPI._createSuperStructFromH5 import createSuperStructFromH5
+            with h5py.File(fullPath, 'r') as results:
+              self.dataRef = createSuperStructFromH5(results)
+              import numpy as np
+              self._config = {key: value if not isinstance(value, np.ndarray) else value.tolist() for key, value in results['configurationFileUsed'].attrs.items()}
+          except:
+            self.setFolder(None)
+            QMessageBox.critical(self.controller.window, 'Cannot read the results', 'The selected results file is corrupt and could not be read.')
+            return
+
+        self._headEmbedded = bool(self._config is not None and self._config.get("headEmbeded", False))
 
         self.spinbox1.setValue(0)
         self.spinbox2.setValue(0)
@@ -830,6 +837,7 @@ class ViewParameters(util.CollapsibleSplitter):
         self.nbWells = len(self.dataRef["wellPoissMouv"])
         self.nbPoiss = len(self.dataRef["wellPoissMouv"][self.numWell()])
         self.nbMouv = len(self.dataRef["wellPoissMouv"][self.numWell()][self.numPoiss()])
+
         self.graphScaling = False
         self.spinbox1.setRange(0, self.nbWells - 1)
         self.spinbox2.setRange(0, self.nbPoiss - 1)
@@ -1062,7 +1070,7 @@ class ViewParameters(util.CollapsibleSplitter):
         self._updateConfigWidgets()
 
     def showValidationVideo(self, numWell, numAnimal, zoom, deb):
-        filepath = os.path.join(self.controller.ZZoutputLocation, self.currentResultFolder, 'pathToVideo.txt')
+        filepath = os.path.join(self.controller.ZZoutputLocation, self.currentResultFolder, 'pathToVideo.txt') if os.path.splitext(self.currentResultFolder) != '.h5' else ''
 
         if os.path.exists(filepath):
             with open(filepath) as fp:
@@ -1070,7 +1078,8 @@ class ViewParameters(util.CollapsibleSplitter):
             videoPath = videoPath[:len(videoPath)-1]
         else:
             videoPath = ""
-        win = readValidationVideo(videoPath, self.currentResultFolder, '.txt', numWell, numAnimal, zoom, deb, ZZoutputLocation=self.controller.ZZoutputLocation)
+
+        readValidationVideo(videoPath, self.currentResultFolder, numWell, numAnimal, zoom, deb, ZZoutputLocation=self.controller.ZZoutputLocation, supstruct=self.dataRef, config=self._config)
 
     def showGraphForAllBoutsCombined(self, numWell, numPoiss, dataRef, visualization, graphScaling):
 
@@ -1161,8 +1170,19 @@ class ViewParameters(util.CollapsibleSplitter):
         reference = os.path.join(self._findResultsFile(self.currentResultFolder))
         print("reference:", reference)
 
-        with open(reference,'w') as out:
-           json.dump(self.dataRef, out)
+        if os.path.splitext(reference)[1] != '.h5':
+          with open(reference,'w') as out:
+            json.dump(self.dataRef, out)
+        else:
+          with h5py.File(reference, 'a') as results:
+            for wellIdx, wellData in enumerate(self.dataRef["wellPoissMouv"]):
+              for animalIdx, animalData in enumerate(wellData):
+                for boutIdx, boutData in enumerate(animalData):
+                  boutGroup = results[f'dataForWell{wellIdx}/dataForAnimal{animalIdx}/listOfBouts/bout{boutIdx}']
+                  if boutData.get("flag", False):
+                    boutGroup.attrs["flag"] = 1
+                  elif "flag" in boutGroup.attrs:
+                    del boutGroup.attrs["flag"]
 
         self.superstruct_btn.hide()
 

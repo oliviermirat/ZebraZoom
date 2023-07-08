@@ -192,7 +192,6 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       trackingFlattenColumnsNames.append('TailLength')
       trackingFlattenColumnsNames += ['Heading']
       trackingFlattenColumnsNames += ['tailAngle']
-
     
     if hyperparameters["noBoutsDetection"] == 1:
       auDessus        = np.zeros((nbFrames, 1))
@@ -340,7 +339,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
 
       if hyperparameters["saveAllDataEvenIfNotInBouts"] and not hyperparameters['noBoutsDetection']:
         for frameData in trackingFlatten[start:end+1]:
-          frameData[-1] = i
+            frameData[-1] = i
 
       if hyperparameters["eyeTracking"]:
         item["leftEyeX"]      = trackingEyesAllAnimals[animalId, start:end+1, 0].tolist()
@@ -371,7 +370,10 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
     if hyperparameters["saveAllDataEvenIfNotInBouts"] or hyperparameters["storeH5"]:
       trackingFlattenPandas = pd.DataFrame(trackingFlatten, columns=trackingFlattenColumnsNames)
     if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-      fname = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"], f'allData_{hyperparameters["videoName"]}_wellNumber{wellNumber}_animal{animalId}.csv')
+      outputFolder = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoNameWithTimestamp"])
+      if not os.path.exists(outputFolder):
+        os.makedirs(outputFolder)
+      fname = os.path.join(outputFolder, f'allData_{hyperparameters["videoName"]}_wellNumber{wellNumber}_animal{animalId}.csv')
       with open(fname, 'w+', newline='') as f:
         if hyperparameters["videoFPS"]:
           f.write(f'videoFPS: {hyperparameters["videoFPS"]}\n')

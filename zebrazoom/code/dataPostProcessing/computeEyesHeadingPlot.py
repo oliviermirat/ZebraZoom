@@ -11,9 +11,11 @@ def distBetweenAngles(angle1, angle2):
     diffAngle = diffAngle - 2 * math.pi
   return diffAngle
 
-def computeEyesHeadingPlot(superStruct, hyperparameters, videoName):
+def computeEyesHeadingPlot(superStruct, hyperparameters, videoNameWithTimestamp):
   
-  outputPath = os.path.join(hyperparameters["outputFolder"], videoName)
+  outputPath = os.path.join(hyperparameters["outputFolder"], videoNameWithTimestamp)
+  if not os.path.exists(outputPath):
+    os.makedirs(outputPath)
   
   for wellId in range(0, len(superStruct["wellPoissMouv"])):
     for animalId in range(0, len(superStruct["wellPoissMouv"][wellId])):

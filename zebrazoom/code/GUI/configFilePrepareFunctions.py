@@ -53,7 +53,7 @@ def getMainArguments(self):
   videoExt     = nameWithExtL.pop()
   videoName    = '.'.join(nameWithExtL)
   configFile   = self.configFile
-  argv         = []
+  argv         = ["outputFolder", self.ZZoutputLocation]
   return [pathToVideo, videoName, videoExt, configFile, argv]
 
 
@@ -181,6 +181,7 @@ def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
   app = QApplication.instance()
   with app.busyCursor():
     try:
+      storeH5 = configFile.pop('storeH5', None)
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
     except ValueError:
       newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
@@ -188,6 +189,9 @@ def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
         configFile[index] = newhyperparameters[index]
     except NameError:
       print("Configuration file parameters changes discarded.")
+    finally:
+      if storeH5 is not None:
+        configFile['storeH5'] = storeH5
 
   configFile["adjustRectangularWellsDetect"] = 0
 

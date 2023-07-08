@@ -4,21 +4,21 @@ from zebrazoom.code.dataPostProcessing.computeEyesHeadingPlot import computeEyes
 from zebrazoom.code.dataPostProcessing.tailAnglesHeatmap import tailAnglesHeatMap
 from zebrazoom.code.dataPostProcessing.createPandasDataFrameOfParameters import createPandasDataFrameOfParameters
 
-def dataPostProcessing(outputFolderVideo, superStruct, hyperparameters, videoName, videoExtension):
+def dataPostProcessing(outputFolderVideo, superStruct, hyperparameters, videoNameWithTimestamp, videoExtension):
 
   if hyperparameters["generateAllTimeTailAngleGraph"]:
     generateAllTimeTailAngleGraph(outputFolderVideo, superStruct, hyperparameters["generateAllTimeTailAngleGraphLineWidth"])  
   
   if hyperparameters["perBoutOutput"]:
-    superStruct = perBoutOutput(superStruct, hyperparameters, videoName)
+    superStruct = perBoutOutput(superStruct, hyperparameters, videoNameWithTimestamp)
   
   if hyperparameters["computeEyesHeadingPlot"]:
-    computeEyesHeadingPlot(superStruct, hyperparameters, videoName)
+    computeEyesHeadingPlot(superStruct, hyperparameters, videoNameWithTimestamp)
 
   if hyperparameters["tailAnglesHeatMap"]:
-    tailAnglesHeatMap(superStruct, hyperparameters, videoName)
+    tailAnglesHeatMap(superStruct, hyperparameters, videoNameWithTimestamp)
   
   if hyperparameters["createPandasDataFrameOfParameters"] and hyperparameters["videoFPS"] and hyperparameters["videoPixelSize"]:
-    createPandasDataFrameOfParameters(hyperparameters, videoName, videoExtension, hyperparameters["outputFolder"], superStruct)
+    createPandasDataFrameOfParameters(hyperparameters, videoNameWithTimestamp, videoExtension, hyperparameters["outputFolder"], superStruct)
   
   return superStruct

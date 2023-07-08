@@ -1,3 +1,4 @@
+import collections
 import h5py
 import os
 import scipy
@@ -88,8 +89,13 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     if len(supstructOverwrite):
       supstruct = supstructOverwrite
     else:
-      with open(os.path.join(path, 'results_' + trial_id + '.txt')) as f:
-        supstruct = json.load(f)
+      if os.path.splitext(path)[1] == '.h5':
+        from zebrazoom.dataAPI._createSuperStructFromH5 import createSuperStructFromH5
+        with h5py.File(path, 'r') as results:
+          supstruct = createSuperStructFromH5(results)
+      else:
+        with open(os.path.join(path, 'results_' + trial_id + '.txt')) as f:
+          supstruct = json.load(f)
     for Well_ID, Cond in enumerate(include):
       if include[Well_ID]:
         for NumBout, dataForBout in enumerate(supstruct["wellPoissMouv"][Well_ID][0]):
@@ -139,14 +145,22 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   instaHorizDispl  = ['instaHorizDispl'  + str(i) for i in range(1,nbFramesTakenIntoAccount+1)]
   # Assembling columns
   dfCols = basicInformation + globParam
+  perFrameParams = []
   if computeTailAngleParamForCluster:
     dfCols = dfCols + tailAngles
+    perFrameParams.extend(tailAngles)
   if saveRawDataInAllBoutsSuperStructure:
     dfCols = dfCols + rawData
   if computeTailAngleParamForCluster:
     dfCols = dfCols + instaTBF + instaAmp + instaAsym
+    perFrameParams.extend(instaTBF)
+    perFrameParams.extend(instaAmp)
+    perFrameParams.extend(instaAsym)
   if computeMassCenterParamForCluster:
     dfCols = dfCols + instaSpeed + instaHeadingDiff + instaHorizDispl
+    perFrameParams.extend(instaSpeed)
+    perFrameParams.extend(instaHeadingDiff)
+    perFrameParams.extend(instaHorizDispl)
   if computetailAnglesRecalculatedParamsForCluster:
     dfCols = dfCols + ['tailLength', 'tailLengthFromRecalculatedAngles'] + tailAnglesRecalculated + tailAnglesRecalculated2
   if computeTailAngleParamForCluster or computeMassCenterParamForCluster or computetailAnglesRecalculatedParamsForCluster:
@@ -177,8 +191,47 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     condition = [val.strip('\'" ') for val in excelFile.loc[videoId, 'condition'][1:-1].split(',')]
     genotype  = [val.strip('\'" ') for val in excelFile.loc[videoId, 'genotype'][1:-1].split(',')]
     include   = [bool(int(val.strip())) for val in excelFile.loc[videoId, 'include'][1:-1].split(',')]
-    
-    if (not(os.path.exists(os.path.join(path, trial_id + '.pkl'))) or forcePandasDfRecreation):
+
+    dfReloadedVid = None
+    if os.path.splitext(path)[1] == '.h5':
+      from zebrazoom.dataAPI._createSuperStructFromH5 import createSuperStructFromH5
+      with h5py.File(path, 'r') as results:
+        if forcePandasDfRecreation or not all(attr in results.attrs for attr in ('videoFPS', 'videoPixelSize', 'frameStepForDistanceCalculation')) or float(results.attrs['videoFPS']) != float(excelFile.loc[videoId, 'fq']) or float(results.attrs['videoPixelSize']) != float(excelFile.loc[videoId, 'pixelsize']) or int(results.attrs['frameStepForDistanceCalculation']) != int(frameStepForDistanceCalculation):
+          supstruct = createSuperStructFromH5(results)
+          firstFrame = supstruct["firstFrame"]
+          lastFrame = supstruct["lastFrame"]
+        else:
+          print("reloading previously calculated parameters")
+          dataframes = []
+          for wellIdx in range(len(results['wellPositions'])):
+            wellData = []
+            wellGroup = results[f'dataForWell{wellIdx}']
+            for animalIdx in range(len(wellGroup)):
+              animalGroup = wellGroup[f'dataForAnimal{animalIdx}']
+              if 'kinematicParametersPerBout' not in animalGroup:
+                continue
+              kinematicParametersPerBout = animalGroup['kinematicParametersPerBout'][:]
+              data = {col: kinematicParametersPerBout[col] for col in kinematicParametersPerBout.dtype.names}
+              data['Trial_ID'] = trial_id
+              data['Well_ID'] = wellIdx
+              data['Animal_ID'] = animalIdx
+              data['videoDuration'] = (results.attrs['lastFrame'] - results.attrs['firstFrame']) / results.attrs['videoFPS']
+              boutsGroup = animalGroup['listOfBouts']
+              numberOfBouts = boutsGroup.attrs['numberOfBouts']
+              data['NumBout'] = list(range(numberOfBouts))
+              additionalParams = collections.defaultdict(list)
+              for boutIdx in range(numberOfBouts):
+                boutGroup = boutsGroup[f'bout{boutIdx}']
+                additionalKinematicParametersPerBout = boutGroup['additionalKinematicParametersPerBout'][:]
+                frameCount = len(additionalKinematicParametersPerBout)
+                for col in additionalKinematicParametersPerBout.dtype.names:
+                  for idx in range(frameCount):
+                    additionalParams[f'{col}{idx + 1}'].append(additionalKinematicParametersPerBout[col][idx])
+              data.update(additionalParams)
+              dataframes.append(pd.DataFrame(data))
+          dfReloadedVid = pd.concat(dataframes)
+
+    elif (not(os.path.exists(os.path.join(path, trial_id + '.pkl'))) or forcePandasDfRecreation):
       if len(supstructOverwrite):
         supstruct = supstructOverwrite
       else:
@@ -186,16 +239,17 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
           supstruct = json.load(f)
       firstFrame = supstruct["firstFrame"]
       lastFrame  = supstruct["lastFrame"]
-      with open(os.path.join(path, 'parametersUsedForCalculation.json'), 'w') as outfile:
-        print('frameStepForDistanceCalculation', frameStepForDistanceCalculation)
-        print('videoFPS', excelFile.loc[videoId, 'fq'])
-        print('videoPixelSize', excelFile.loc[videoId, 'pixelsize'])
-        json.dump({'frameStepForDistanceCalculation': int(frameStepForDistanceCalculation), 'videoFPS': float(excelFile.loc[videoId, 'fq']), 'videoPixelSize': float(excelFile.loc[videoId, 'pixelsize'])}, outfile)
+      if not H5filename:
+        with open(os.path.join(path, 'parametersUsedForCalculation.json'), 'w') as outfile:
+          print('frameStepForDistanceCalculation', frameStepForDistanceCalculation)
+          print('videoFPS', excelFile.loc[videoId, 'fq'])
+          print('videoPixelSize', excelFile.loc[videoId, 'pixelsize'])
+          json.dump({'frameStepForDistanceCalculation': int(frameStepForDistanceCalculation), 'videoFPS': float(excelFile.loc[videoId, 'fq']), 'videoPixelSize': float(excelFile.loc[videoId, 'pixelsize'])}, outfile)
     else:
       print("reloading previously calculated parameters")
       dfReloadedVid = pd.read_pickle(os.path.join(path, trial_id + '.pkl'))
       if 'BoutDuration' in dfReloadedVid:  # pickle file contains old parameter names, recreate it
-        forcePandasDfRecreation = True
+        dfReloadedVid = None
         if len(supstructOverwrite):
           supstruct = supstructOverwrite
         else:
@@ -203,35 +257,36 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
             supstruct = json.load(f)
         firstFrame = supstruct["firstFrame"]
         lastFrame  = supstruct["lastFrame"]
-        with open(os.path.join(path, 'parametersUsedForCalculation.json'), 'w') as outfile:
-          print('frameStepForDistanceCalculation', frameStepForDistanceCalculation)
-          print('videoFPS', excelFile.loc[videoId, 'fq'])
-          print('videoPixelSize', excelFile.loc[videoId, 'pixelsize'])
-          json.dump({'frameStepForDistanceCalculation': int(frameStepForDistanceCalculation), 'videoFPS': float(excelFile.loc[videoId, 'fq']), 'videoPixelSize': float(excelFile.loc[videoId, 'pixelsize'])}, outfile)
-      else:
-        nbFramesTakenIntoAccountReloaded = max([np.sum(['instaTBF' in param for param in dfReloadedVid.columns.tolist()]), np.sum(['tailAnglesRecalculated' in param for param in dfReloadedVid.columns.tolist()]), np.sum(['instaSpeed' in param for param in dfReloadedVid.columns.tolist()])])
-        if nbFramesTakenIntoAccountReloaded < nbFramesTakenIntoAccount:
-          raise ValueError("nbFramesTakenIntoAccount was too low when pre-generating the pkl file of a video:" + str(np.sum(['instaTBF' in param for param in dfReloadedVid.columns.tolist()])) + " , " + str(np.sum(['tailAnglesRecalculated' in param for param in dfReloadedVid.columns.tolist()])) + " , " + str(np.sum(['instaSpeed' in param for param in dfReloadedVid.columns.tolist()])) + " ; nbFramesTakenIntoAccount :" + str(nbFramesTakenIntoAccount))
-          
-        for idx, cond in enumerate(condition):
-          indForWellId = (dfReloadedVid['Well_ID'] == idx)
-          if include[idx]:
-            dfReloadedVid.loc[indForWellId, 'Condition'] = cond
-            dfReloadedVid.loc[indForWellId, 'Genotype']  = genotype[idx]
-            if minNbBendForBoutDetect > 0:
-              ind           = (dfReloadedVid['Number of Oscillations'] < minNbBendForBoutDetect/2)
-              dfReloadedVid.loc[ind, removeColumnsWhenAppropriate] = float('NaN')
-            if not(genotype[idx] in genotypes):
-              genotypes.append(genotype[idx])
-            if not(condition[idx] in conditions):
-              conditions.append(condition[idx])
-          else:
-            dfReloadedVid = dfReloadedVid.drop([idx2 for idx2, belongsToWell in enumerate(indForWellId) if belongsToWell])
-            if 'level_0' in dfReloadedVid.columns:
-              dfReloadedVid = dfReloadedVid.drop(['level_0'], axis=1)
-            dfReloadedVid = dfReloadedVid.reset_index()
+        if not H5filename:
+          with open(os.path.join(path, 'parametersUsedForCalculation.json'), 'w') as outfile:
+            print('frameStepForDistanceCalculation', frameStepForDistanceCalculation)
+            print('videoFPS', excelFile.loc[videoId, 'fq'])
+            print('videoPixelSize', excelFile.loc[videoId, 'pixelsize'])
+            json.dump({'frameStepForDistanceCalculation': int(frameStepForDistanceCalculation), 'videoFPS': float(excelFile.loc[videoId, 'fq']), 'videoPixelSize': float(excelFile.loc[videoId, 'pixelsize'])}, outfile)
 
-        dfParam = pd.concat([dfParam, dfReloadedVid])
+    if dfReloadedVid is not None:
+      nbFramesTakenIntoAccountReloaded = max([np.sum(['instaTBF' in param for param in dfReloadedVid.columns.tolist()]), np.sum(['tailAnglesRecalculated' in param for param in dfReloadedVid.columns.tolist()]), np.sum(['instaSpeed' in param for param in dfReloadedVid.columns.tolist()])])
+      if nbFramesTakenIntoAccountReloaded < nbFramesTakenIntoAccount:
+        raise ValueError("nbFramesTakenIntoAccount was too low when pre-generating the pkl file of a video:" + str(np.sum(['instaTBF' in param for param in dfReloadedVid.columns.tolist()])) + " , " + str(np.sum(['tailAnglesRecalculated' in param for param in dfReloadedVid.columns.tolist()])) + " , " + str(np.sum(['instaSpeed' in param for param in dfReloadedVid.columns.tolist()])) + " ; nbFramesTakenIntoAccount :" + str(nbFramesTakenIntoAccount))
+      for idx, cond in enumerate(condition):
+        indForWellId = (dfReloadedVid['Well_ID'] == idx)
+        if include[idx]:
+          dfReloadedVid.loc[indForWellId, 'Condition'] = cond
+          dfReloadedVid.loc[indForWellId, 'Genotype']  = genotype[idx]
+          if minNbBendForBoutDetect > 0:
+            ind           = (dfReloadedVid['Number of Oscillations'] < minNbBendForBoutDetect/2)
+            dfReloadedVid.loc[ind, removeColumnsWhenAppropriate] = float('NaN')
+          if not(genotype[idx] in genotypes):
+            genotypes.append(genotype[idx])
+          if not(condition[idx] in conditions):
+            conditions.append(condition[idx])
+        else:
+          dfReloadedVid = dfReloadedVid.drop([idx2 for idx2, belongsToWell in enumerate(indForWellId) if belongsToWell])
+          if 'level_0' in dfReloadedVid.columns:
+            dfReloadedVid = dfReloadedVid.drop(['level_0'], axis=1)
+          dfReloadedVid = dfReloadedVid.reset_index()
+
+      dfParam = pd.concat([dfParam, dfReloadedVid])
 
     if calculateRolloverParameters:
       classifiedData = np.loadtxt(os.path.join(path, 'rolloverClassified.txt'), dtype=bool)
@@ -240,7 +295,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     # Going through each well of the video
     for Well_ID, Cond in enumerate(condition):
       # Not going through this loop if we've already reloaded parameters
-      if include[Well_ID] and (not(os.path.exists(os.path.join(path, trial_id + '.pkl'))) or forcePandasDfRecreation):
+      if include[Well_ID] and dfReloadedVid is None:
         print("trial_id:", trial_id, " ; Well_ID:", Well_ID)
         dfParamForWell = pd.DataFrame(columns=dfCols)
         curBoutId = 0
@@ -364,10 +419,9 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
     dfParam.loc[(np.abs(scipy.stats.zscore(dfParam[columnsToCheck].astype(float), nan_policy='omit')) > 3).any(axis=1), ~dfParam.columns.isin(basicInformation)] = np.nan
 
   # Saving dataframe for the whole set of videos as a pickle file
-  if nameOfFile:
-    outfile = open(os.path.join(resFolder, nameOfFile + '.pkl'), 'wb')
-    pickle.dump(dfParam,outfile)
-    outfile.close()
+  if not H5filename:
+    with open(os.path.join(resFolder, nameOfFile + '.pkl'), 'wb') as outfile:
+      pickle.dump(dfParam, outfile)
   
   # Saving dataframe for the whole set of videos as a matlab file
   if saveAllBoutsSuperStructuresInMatlabFormat:
@@ -378,14 +432,25 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
 
   if H5filename is not None:
     cols = globParam + ['BoutStart', 'BoutEnd']
+    additionalCols = list({param.rstrip('0123456789') for param in perFrameParams})
     dtype = [(name, dfParam[name].infer_objects().dtype) for name in cols]
-    dfParam = dfParam[['Trial_ID', 'Well_ID', 'Animal_ID'] + cols].groupby(['Trial_ID', 'Well_ID', 'Animal_ID'])
+    additionalDtype = [(name, dfParam[f'{name}1'].infer_objects().dtype) for name in additionalCols]
+    dfParam = dfParam[['Trial_ID', 'Well_ID', 'Animal_ID'] + cols + perFrameParams].groupby(['Trial_ID', 'Well_ID', 'Animal_ID'])
     with h5py.File(H5filename, 'a') as results:
       for (trial, well, animal), group in dfParam:
-        arr = np.empty(len(group.index), dtype=dtype)
+        boutCount = len(group.index)
+        arr = np.empty(boutCount, dtype=dtype)
         for name in cols:
           arr[name] = group[name].values
         dataset = results.create_dataset(f"dataForWell{well}/dataForAnimal{animal}/kinematicParametersPerBout", data=arr)
         dataset.attrs['columns'] = cols
+        if additionalCols:
+          for boutIdx in range(boutCount):
+            arr = np.empty(nbFramesTakenIntoAccount, dtype=additionalDtype)
+            for name in additionalCols:
+              arr[name] = [group[f'{name}{idx + 1}'].values[boutIdx] for idx in range(nbFramesTakenIntoAccount)]
+            dataset = results.create_dataset(f"dataForWell{well}/dataForAnimal{animal}/listOfBouts/bout{boutIdx}/additionalKinematicParametersPerBout", data=arr)
+            dataset.attrs['columns'] = additionalCols
+      results.attrs['frameStepForDistanceCalculation'] = frameStepForDistanceCalculation
 
   return [conditions, genotypes, nbFramesTakenIntoAccount, globParam]

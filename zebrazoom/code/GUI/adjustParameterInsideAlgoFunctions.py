@@ -21,7 +21,7 @@ def getMainArguments(self):
   videoExt     = nameWithExtL.pop()
   videoName    = '.'.join(nameWithExtL)
   configFile   = self.configFile
-  argv         = []
+  argv = ["outputFolder", self.ZZoutputLocation]
   return [pathToVideo, videoName, videoExt, configFile, argv]
 
 
@@ -86,6 +86,7 @@ def detectBouts(self, controller, wellNumber, firstFrame, adjustOnWholeVideo, re
   app = QApplication.instance()
   with app.busyCursor():
     try:
+      storeH5 = configFile.pop('storeH5', None)
       if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
         del configFile["lastFrame"]
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
@@ -95,6 +96,9 @@ def detectBouts(self, controller, wellNumber, firstFrame, adjustOnWholeVideo, re
         configFile[index] = newhyperparameters[index]
     except NameError:
       print("Configuration file parameters changes discarded.")
+    finally:
+      if storeH5 is not None:
+        configFile['storeH5'] = storeH5
 
   configFile["onlyTrackThisOneWell"]        = -1
   configFile["trackTail"]                   = trackTailOriginalValue
@@ -131,6 +135,7 @@ def adjustHeadEmbededTracking(self, controller, wellNumber, firstFrame, adjustOn
   configFile["adjustHeadEmbededTracking"] = 1
 
   try:
+    storeH5 = configFile.pop('storeH5', None)
     if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
       del configFile["lastFrame"]
     ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
@@ -140,6 +145,9 @@ def adjustHeadEmbededTracking(self, controller, wellNumber, firstFrame, adjustOn
       configFile[index] = newhyperparameters[index]
   except NameError:
     print("Configuration file parameters changes discarded.")
+  finally:
+    if storeH5 is not None:
+      configFile['storeH5'] = storeH5
 
   configFile["onlyTrackThisOneWell"]      = -1
   configFile["adjustHeadEmbededTracking"] = 0
@@ -167,6 +175,7 @@ def adjustFreelySwimTracking(self, controller, wellNumber, firstFrame, adjustOnW
   configFile["adjustFreelySwimTracking"] = 1
 
   try:
+    storeH5 = configFile.pop('storeH5', None)
     if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
       del configFile["lastFrame"]
     ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
@@ -176,6 +185,9 @@ def adjustFreelySwimTracking(self, controller, wellNumber, firstFrame, adjustOnW
       configFile[index] = newhyperparameters[index]
   except NameError:
     print("Configuration file parameters changes discarded.")
+  finally:
+    if storeH5 is not None:
+      configFile['storeH5'] = storeH5
 
   configFile["onlyTrackThisOneWell"]      = -1
   configFile["adjustFreelySwimTracking"] = 0
@@ -212,6 +224,7 @@ def _adjustFastFreelySwimTracking(self, controller, oldFirstFrame, detectBouts):
   configFile["reloadBackground"] = 1
 
   try:
+    storeH5 = configFile.pop('storeH5', None)
     if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
       del configFile["lastFrame"]
     ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
@@ -221,6 +234,9 @@ def _adjustFastFreelySwimTracking(self, controller, oldFirstFrame, detectBouts):
       configFile[index] = newhyperparameters[index]
   except NameError:
     print("Configuration file parameters changes discarded.")
+  finally:
+    if storeH5 is not None:
+      app.configFile['storeH5'] = storeH5
 
   del configFile["reloadBackground"]
   del configFile["reloadWellPositions"]
@@ -266,6 +282,7 @@ def adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, fi
   configFile["adjustFreelySwimTrackingAutomaticParameters"] = 1
 
   try:
+    storeH5 = configFile.pop('storeH5', None)
     if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
       del configFile["lastFrame"]
     ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
@@ -275,6 +292,9 @@ def adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, fi
       configFile[index] = newhyperparameters[index]
   except NameError:
     print("Configuration file parameters changes discarded.")
+  finally:
+    if storeH5 is not None:
+      configFile['storeH5'] = storeH5
 
   del configFile["onlyTrackThisOneWell"]
   del configFile["adjustFreelySwimTrackingAutomaticParameters"]
@@ -310,11 +330,15 @@ def calculateBackground(self, controller, nbImagesForBackgroundCalculation, useN
   app.background = []
   with app.busyCursor():
     try:
+      storeH5 = configFile.pop('storeH5', None)
       if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
         del configFile["lastFrame"]
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
     except ValueError:
       configFile["exitAfterBackgroundExtraction"] = 0
+    finally:
+      if storeH5 is not None:
+        configFile['storeH5'] = storeH5
 
   configFile["exitAfterBackgroundExtraction"]   = 0
   configFile["headEmbededRemoveBack"]           = 0
@@ -339,11 +363,15 @@ def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalcula
   app.wellPositions = []
   with app.busyCursor():
     try:
+      storeH5 = configFile.pop('storeH5', None)
       if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
         del configFile["lastFrame"]
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
     except ValueError:
       configFile["exitAfterBackgroundExtraction"] = 0
+    finally:
+      if storeH5 is not None:
+        configFile['storeH5'] = storeH5
 
   del configFile["exitAfterBackgroundExtraction"] #  = 0
   del configFile["debugExtractBack"]              #  = 0

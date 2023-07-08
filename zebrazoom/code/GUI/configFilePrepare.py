@@ -570,7 +570,7 @@ class OptimizeConfigFile(QWidget):
       self._rotationAngleLineEdit.setText('')
     self._originalImagePreProcessMethod = app.configFile.get("imagePreProcessMethod")
     self._originalImagePreProcessParameters = app.configFile.get("imagePreProcessParameters")
-    if self._originalImagePreProcessParameters is not None and self._originalImagePreProcessMethod is not None and self._originalBackgroundPreProcessMethod[0] == 'rotate':
+    if self._originalImagePreProcessParameters is not None and self._originalBackgroundPreProcessMethod is not None and self._originalBackgroundPreProcessMethod[0] == 'rotate':
       self._rotationAngleLineEdit.setText(str(self._originalImagePreProcessParameters[0][0]))
     else:
       self._rotationAngleLineEdit.setText('')
@@ -1519,14 +1519,11 @@ class FinishConfig(QWidget):
       if checked:
         controller.configFile["fasterMultiprocessing"] = 2
         controller.configFile["detectMovementWithRawVideoInsideTracking"] = 1
-        controller.configFile["savePathToOriginalVideoForValidationVideo"] = 1
       else:
         if "fasterMultiprocessing" in controller.configFile:
           del controller.configFile["fasterMultiprocessing"]
         if "detectMovementWithRawVideoInsideTracking" in controller.configFile:
           del controller.configFile["detectMovementWithRawVideoInsideTracking"]
-        if "savePathToOriginalVideoForValidationVideo" in controller.configFile:
-          del controller.configFile["savePathToOriginalVideoForValidationVideo"]
     self._fasterTrackingCheckbox.toggled.connect(fasterTrackingToggled)
     layout.addWidget(self._fasterTrackingCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -1542,16 +1539,6 @@ class FinishConfig(QWidget):
           del controller.configFile["useFirstFrameAsBackground"]
     self._changingBackgroundCheckbox.toggled.connect(changingBackgroundToggled)
     layout.addWidget(self._changingBackgroundCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
-
-    self._alwaysSaveCheckbox = QCheckBox("Save coordinates and tail angle even when fish isn't moving")
-    def alwaysSaveToggled(checked):
-      if checked:
-        controller.configFile["saveAllDataEvenIfNotInBouts"] = 1
-      else:
-        if "saveAllDataEvenIfNotInBouts" in controller.configFile:
-          del controller.configFile["saveAllDataEvenIfNotInBouts"]
-    self._alwaysSaveCheckbox.toggled.connect(alwaysSaveToggled)
-    layout.addWidget(self._alwaysSaveCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
     self._calculateCurvatureCheckbox = QCheckBox("Calculate curvature")
     def calculateCurvatureToggled(checked):
@@ -1618,6 +1605,40 @@ class FinishConfig(QWidget):
     videoInfoLayout.addRow(QLabel("videoPixelSize:"), videoPixelSize)
     layout.addLayout(videoInfoLayout)
 
+    self._oldFormatCheckbox = QCheckBox("Save results in the legacy (json) format")
+    def oldFormatToggled(checked):
+      if checked:
+        controller.configFile["storeH5"] = 0
+        if self._alwaysSaveCheckbox.isVisible():
+          self._alwaysSaveCheckbox.setChecked(True)
+        formatLabel.setText('Raw data will be saved in a json file')
+      else:
+        if self._alwaysSaveCheckbox.isVisible():
+          self._alwaysSaveCheckbox.setChecked(False)
+        formatLabel.setText('Raw data will be saved in an hdf5 file')
+        if "storeH5" in controller.configFile:
+          del controller.configFile["storeH5"]
+    self._oldFormatCheckbox.toggled.connect(oldFormatToggled)
+    layout.addWidget(self._oldFormatCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    formatLabel = QLabel('Raw data will be saved in an hdf5 file')
+    layout.addWidget(formatLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self._alwaysSaveCheckbox = QCheckBox("Save coordinates and tail angle even when fish isn't moving (in csv/excel format)")
+    def alwaysSaveToggled(checked):
+      if checked:
+        self._saveAllDataLabel.setText('One csv/excel file with one row of data for each frame will be created for each animal in each well.')
+        controller.configFile["saveAllDataEvenIfNotInBouts"] = 1
+      else:
+        self._saveAllDataLabel.setText('Csv/excel files will not be created.')
+        if "saveAllDataEvenIfNotInBouts" in controller.configFile:
+          del controller.configFile["saveAllDataEvenIfNotInBouts"]
+    self._alwaysSaveCheckbox.toggled.connect(alwaysSaveToggled)
+    layout.addWidget(self._alwaysSaveCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self._saveAllDataLabel = QLabel('Csv/excel files will not be created.')
+    layout.addWidget(self._saveAllDataLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+
     layout.addStretch()
 
     testCheckbox = QCheckBox("Test tracking after saving config", self)
@@ -1653,16 +1674,21 @@ class FinishConfig(QWidget):
         not self.controller.configFile.get("noBoutsDetection", False) and not self.controller.configFile.get("coordinatesOnlyBoutDetection", False):
       self.controller.configFile["detectMovementWithRawVideoInsideTracking"] = 1
     if trackingMethod:
+      self._saveAllDataLabel.setVisible(False)
       for checkbox in (self._alwaysSaveCheckbox, self._calculateCurvatureCheckbox, self._calculateTailAngleHeatmapCheckbox):
         checkbox.setChecked(False)
         checkbox.setVisible(False)
     else:
+      self._saveAllDataLabel.setVisible(True)
       for checkbox, param in zip((self._alwaysSaveCheckbox, self._calculateCurvatureCheckbox, self._calculateTailAngleHeatmapCheckbox), ('saveAllDataEvenIfNotInBouts', 'perBoutOutput', 'tailAnglesHeatMap')):
         checkbox.setVisible(True)
         if checkbox.isChecked():
           self.controller.configFile[param] = 1
-        elif param == 'saveAllDataEvenIfNotInBouts':
-          checkbox.setChecked(True)
+    storeLegacy = not self.controller.configFile.get('storeH5', True)
+    if storeLegacy != self._oldFormatCheckbox.isChecked():
+      self._oldFormatCheckbox.setChecked(storeLegacy)
+    else:
+      self._oldFormatCheckbox.toggled.emit(storeLegacy)
 
   def showEvent(self, evt):
     self.refreshPage()

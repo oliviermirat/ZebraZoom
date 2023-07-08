@@ -29,11 +29,12 @@ class ZebraZoomVideoAnalysis:
     self.wellPositions = None
     # Getting hyperparameters
     self._hyperparameters, self._configFile = getHyperparameters(configFile, self._videoNameWithExt, os.path.join(pathToVideo, self._videoNameWithExt), argv)
+    videoNameWithTimestamp = f'{self._hyperparameters["videoName"]}_{datetime.now().strftime("%Y_%m_%d-%H_%M_%S")}'
+    self._hyperparameters['videoNameWithTimestamp'] = videoNameWithTimestamp
     if self._hyperparameters['storeH5']:
-      self._hyperparameters['H5filename'] = os.path.join(self._hyperparameters["outputFolder"], f'{self._hyperparameters["videoName"]}_{datetime.now().strftime("%Y_%m_%d-%H_%M_%S")}.h5')
-
+      self._hyperparameters['H5filename'] = os.path.join(self._hyperparameters["outputFolder"], f'{videoNameWithTimestamp}.h5')
     # Setting output folder
-    self._outputFolderVideo = os.path.join(self._hyperparameters["outputFolder"], videoName)
+    self._outputFolderVideo = os.path.join(self._hyperparameters["outputFolder"], videoNameWithTimestamp)
 
   def _checkFirstAndLastFrame(self):
     # Checking first frame and last frame value
@@ -54,91 +55,60 @@ class ZebraZoomVideoAnalysis:
       self._hyperparameters["lastFrame"] = nbFrames - 2
       # raise NameError("Error: The parameter 'lastFrame' in your configuration file is too big")
 
-  def _prepareOutputFolder(self):
-    # Creating output folder
-    if not self._hyperparameters["reloadWellPositions"] and not self._hyperparameters["reloadBackground"] and not self._hyperparameters["dontDeleteOutputFolderIfAlreadyExist"]:
-      filesToKeep = {'intermediaryWellPositionReloadNoMatterWhat.txt', 'rotationAngle.txt'}
-      filesToCopy = []
-      if os.path.exists(self._outputFolderVideo):
-        if glob.glob(os.path.join(self._outputFolderVideo, 'results_*.txt')):
-          pastNumbersTaken = 1
-          while os.path.exists(self._outputFolderVideo + '_PastTracking_' + str(pastNumbersTaken)) and pastNumbersTaken < 99:
-            pastNumbersTaken += 1
-          movedFolderName = self._outputFolderVideo + '_PastTracking_' + str(pastNumbersTaken)
-          shutil.move(self._outputFolderVideo, movedFolderName)
-          for filename in os.listdir(movedFolderName):
-            if filename in filesToKeep:
-              filesToCopy.append(os.path.join(movedFolderName, filename))
-        else:
-          for filename in os.listdir(self._outputFolderVideo):
-            if filename not in filesToKeep:
-              os.remove(os.path.join(self._outputFolderVideo, filename))
-      if not os.path.exists(self._outputFolderVideo):
-        if self._hyperparameters["tryCreatingFolderUntilSuccess"]:
-          while True:
-            try:
-              os.mkdir(self._outputFolderVideo)
-              break
-            except OSError as e:
-              print("waiting inside except")
-              time.sleep(0.1)
-            else:
-              print("waiting")
-              time.sleep(0.1)
-        else:
-          try:
-            os.mkdir(self._outputFolderVideo)
-          except OSError as e:
-            time.sleep(0.1)
-          else:
-            time.sleep(0.1)
-      for filename in filesToCopy:
-        shutil.copy2(filename, self._outputFolderVideo)
-
   def _storeConfigUsed(self):
     '''Saving the configuration file used'''
-    with open(os.path.join(self._outputFolderVideo, 'configUsed.json'), 'w') as outfile:
-      json.dump(self._configFile, outfile)
+    if self._hyperparameters['storeH5']:
+      with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
+        results.require_group("configurationFileUsed").attrs.update(self._configFile)
+    else:
+      if not os.path.exists(self._outputFolderVideo):
+        os.makedirs(self._outputFolderVideo)
+      with open(os.path.join(self._outputFolderVideo, 'configUsed.json'), 'w') as outfile:
+        json.dump(self._configFile, outfile)
 
   def getWellPositions(self):
     '''Get well positions'''
+    rotationAngleParams = None
     if self._hyperparameters["headEmbeded"] and not self._hyperparameters["oneWellManuallyChosenTopLeft"]:
       self.wellPositions = [{"topLeftX":0, "topLeftY":0, "lengthX": self._hyperparameters["videoWidth"], "lengthY": self._hyperparameters["videoHeight"]}]
     else:
       print("start find wells")
+      maybeReloadWells = self._hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"] or self._hyperparameters["multipleROIsDefinedDuringExecution"]
+      inputFilesFolder = os.path.join(self._hyperparameters['outputFolder'], '.ZebraZoomVideoInputs', self._videoName)
       if self._hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"]:
-        rotationAngleFile = os.path.join(self._outputFolderVideo, 'rotationAngle.txt')
+        rotationAngleFile = os.path.join(inputFilesFolder, 'rotationAngle.txt')
         if os.path.exists(rotationAngleFile):
           with open(rotationAngleFile, 'rb') as f:
             rotationAngleParams = pickle.load(f)
           self._hyperparameters.update(rotationAngleParams)
-          with open(os.path.join(self._outputFolderVideo, 'configUsed.json'), 'r') as f:
-            config = json.load(f)
-          config.update(rotationAngleParams)
-          with open(os.path.join(self._outputFolderVideo, 'configUsed.json'), 'w') as f:
-            json.dump(config, f)
       if self._hyperparameters["saveWellPositionsToBeReloadedNoMatterWhat"]:
-        outfile = open(os.path.join(self._outputFolderVideo, 'intermediaryWellPositionReloadNoMatterWhat.txt'),'wb')
+        if not maybeReloadWells:
+          print('Well positions can only be stored for multiple ROIs defined during execution or grid system')
+          raise ValueError
         self.wellPositions = findWells(os.path.join(self._pathToVideo, self._videoNameWithExt), self._hyperparameters)
-        pickle.dump(self.wellPositions,outfile)
-      elif os.path.exists(os.path.join(self._outputFolderVideo, 'intermediaryWellPositionReloadNoMatterWhat.txt')):
-        outfile = open(os.path.join(self._outputFolderVideo, 'intermediaryWellPositionReloadNoMatterWhat.txt'), 'rb')
-        self.wellPositions = pickle.load(outfile)
+        if not os.path.exists(inputFilesFolder):
+          os.makedirs(inputFilesFolder)
+        with open(os.path.join(inputFilesFolder, 'intermediaryWellPositionReloadNoMatterWhat.txt'), 'wb') as outfile:
+          pickle.dump(self.wellPositions, outfile)
+      elif maybeReloadWells and os.path.exists(os.path.join(inputFilesFolder, 'intermediaryWellPositionReloadNoMatterWhat.txt')):
+        with open(os.path.join(inputFilesFolder, 'intermediaryWellPositionReloadNoMatterWhat.txt'), 'rb') as outfile:
+          self.wellPositions = pickle.load(outfile)
+        gridSystem = len(self.wellPositions) > 1 and len({(pos['lengthX'], pos['lengthY']) for pos in self.wellPositions}) == 1
+        if self._hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"] ^ gridSystem or len(self.wellPositions) != self._hyperparameters["nbWells"]:
+          self.wellPositions = findWells(os.path.join(self._pathToVideo, self._videoNameWithExt), self._hyperparameters)
       elif self._hyperparameters["reloadWellPositions"]:
-        outfile = open(os.path.join(self._outputFolderVideo, 'intermediaryWellPosition.txt'), 'rb')
-        self.wellPositions = pickle.load(outfile)
+        fname = next(reversed(sorted(name for name in os.listdir(self._hyperparameters['outputFolder']) if os.path.splitext(name)[0][:-20] == self._videoName and os.path.splitext(name)[0] != self._hyperparameters['videoNameWithTimestamp'])))
+        with h5py.File(os.path.join(self._hyperparameters['outputFolder'], fname)) as results:
+          self.wellPositions = [dict(results[f'wellPositions/well{idx}'].attrs) for idx in range(len(results['wellPositions']))]
       elif self._hyperparameters["reloadWellPositionsFromFileInZZoutputIfItExistSaveInItOtherwise"] and os.path.exists(os.path.join(self._hyperparameters["outputFolder"], 'wellPosition.txt')):
-        outfile = open(os.path.join(self._hyperparameters["outputFolder"], 'wellPosition.txt'), 'rb')
-        self.wellPositions = pickle.load(outfile)
+        with open(os.path.join(self._hyperparameters["outputFolder"], 'wellPosition.txt'), 'rb') as outfile:
+          self.wellPositions = pickle.load(outfile)
       else:
-        outfile = open(os.path.join(self._outputFolderVideo, 'intermediaryWellPosition.txt'),'wb')
         self.wellPositions = findWells(os.path.join(self._pathToVideo, self._videoNameWithExt), self._hyperparameters)
-        pickle.dump(self.wellPositions,outfile)
         if self._hyperparameters["reloadWellPositionsFromFileInZZoutputIfItExistSaveInItOtherwise"]:
-          outfile2 = open(os.path.join(self._hyperparameters["outputFolder"], 'wellPosition.txt'), 'wb')
-          pickle.dump(self.wellPositions, outfile2)
-          outfile2.close()
-      outfile.close()
+          with open(os.path.join(self._hyperparameters["outputFolder"], 'wellPosition.txt'), 'wb') as outfile:
+            pickle.dump(self.wellPositions, outfile)
+
       if self._useGUI:
         from PyQt5.QtWidgets import QApplication
 
@@ -152,6 +122,23 @@ class ZebraZoomVideoAnalysis:
             app.wellShape = 'rectangle'
           else:
             app.wellShape = 'circle'
+
+    if self.wellPositions is not None:
+      if self._hyperparameters['storeH5']:
+        with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
+          for idx, wellPositions in enumerate(self.wellPositions):
+            results.require_group(f"wellPositions/well{idx}").attrs.update(wellPositions)
+          if rotationAngleParams is not None:
+            results['configurationFileUsed'].attrs.update(rotationAngleParams)
+      else:
+        with open(os.path.join(self._outputFolderVideo, 'intermediaryWellPosition.txt'), 'wb') as outfile:
+          pickle.dump(self.wellPositions, outfile)
+        if rotationAngleParams is not None:
+          with open(os.path.join(self._outputFolderVideo, 'configUsed.json'), 'r') as f:
+            config = json.load(f)
+          config.update(rotationAngleParams)
+          with open(os.path.join(self._outputFolderVideo, 'configUsed.json'), 'w') as f:
+            json.dump(config, f)
 
   def _runTracking(self):
     if 'trackingImplementation' in self._hyperparameters:
@@ -169,28 +156,28 @@ class ZebraZoomVideoAnalysis:
 
   def _createValidationVideo(self, superStruct):
     '''Create validation video'''
-    if not(self._hyperparameters["savePathToOriginalVideoForValidationVideo"]):
-      if self._hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
-        shutil.copyfile(os.path.join(self._pathToVideo, self._videoNameWithExt), os.path.join(os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"]), 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'))
-      else:
-        if self._hyperparameters["createValidationVideo"]:
-          infoFrame = createValidationVideo(os.path.join(self._pathToVideo, self._videoNameWithExt), superStruct, self._hyperparameters)
+    if self._hyperparameters["copyOriginalVideoToOutputFolderForValidation"]:
+      fname = f'{self._hyperparameters["videoNameWithTimestamp"]}_originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'
+      shutil.copyfile(os.path.join(self._pathToVideo, self._videoNameWithExt), fname)
+    elif self._hyperparameters["createValidationVideo"]:
+      folder = self._hyperparameters['outputFolder'] if self._hyperparameters['storeH5'] else os.path.join(self._outputFolderVideo)
+      if not os.path.exists(folder):
+        os.makedirs(folder)
+      fname = os.path.join(folder, f'{self._hyperparameters["videoNameWithTimestamp"]}.avi')
+      infoFrame = createValidationVideo(os.path.join(self._pathToVideo, self._videoNameWithExt), superStruct, self._hyperparameters, outputName=fname)
 
-  def _storeH5(self, superStruct):
+  def _storeH5Results(self, superStruct):
+    print("Store results:", self._hyperparameters['H5filename'])
     with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
       results.attrs['version'] = 0
       results.attrs['firstFrame'] = superStruct["firstFrame"]
       results.attrs['lastFrame'] = superStruct['lastFrame']
-      results.attrs['ZebraZoomVersionUsed'] = zebrazoom.__version__
       if 'videoFPS' in superStruct:
         results.attrs['videoFPS'] = superStruct['videoFPS']
       if 'videoPixelSize' in superStruct:
         results.attrs['videoPixelSize'] = superStruct['videoPixelSize']
       if 'pathToOriginalVideo' in superStruct:
         results.attrs['pathToOriginalVideo'] = superStruct['pathToOriginalVideo']
-      results.require_group("configurationFileUsed").attrs.update(self._configFile)
-      for idx, wellPositions in enumerate(self.wellPositions):
-        results.require_group(f"wellPositions/well{idx}").attrs.update(wellPositions)
       keysToSkip = {'AnimalNumber', 'curvature', 'HeadX', 'HeadY', 'Heading', 'TailAngle_Raw', 'TailX_VideoReferential', 'TailY_VideoReferential'}
       for wellIdx, well in enumerate(superStruct['wellPoissMouv']):
         for animalIdx, animal in enumerate(well):
@@ -205,43 +192,51 @@ class ZebraZoomVideoAnalysis:
                 boutGroup.create_dataset(key, data=np.array(value))
               else:
                 boutGroup.attrs[key] = value
+      results.create_dataset('exampleFrame', data=zzVideoReading.VideoCapture(os.path.join(self._pathToVideo, self._videoNameWithExt)).read()[1])
 
   def _storeResults(self, superStruct):
-    path = os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"], f'results_{self._hyperparameters["videoName"]}.txt')
-    print("createSuperStruct:", path)
-    with open(path, 'w') as outfile:
-      json.dump(superStruct, outfile)
+    if self._hyperparameters['storeH5']:
+      self._storeH5Results(superStruct)
+    else:
+      if not os.path.exists(self._outputFolderVideo):
+        os.makedirs(self._outputFolderVideo)
+      cv2.imwrite(os.path.join(self._outputFolderVideo, "exampleFrame.png"), zzVideoReading.VideoCapture(os.path.join(self._pathToVideo, self._videoNameWithExt)).read()[1])
+      path = os.path.join(self._outputFolderVideo, f'results_{self._hyperparameters["videoNameWithTimestamp"]}.txt')
+      print("createSuperStruct:", path)
+      with open(path, 'w') as outfile:
+        json.dump(superStruct, outfile)
+
     if self._hyperparameters["saveSuperStructToMatlab"]:
       from scipy.io import savemat
-      matlabPath = os.path.join(os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"]), 'results_' + self._hyperparameters["videoName"] + '.mat')
-      videoDataResults2 = {}
-      videoDataResults2['videoDataResults'] = superStruct
-      savemat(matlabPath, videoDataResults2)
-    if self._hyperparameters["storeH5"]:
-      self._storeH5(superStruct)
+      if not os.path.exists(self._outputFolderVideo):
+        os.makedirs(self._outputFolderVideo)
+      matlabPath = os.path.join(self._outputFolderVideo, f'results_{self._hyperparameters["videoName"]}.mat')
+      savemat(matlabPath, {'videoDataResults': superStruct})
 
   def _storeVersionUsed(self):
-    with open(os.path.join(os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters["videoName"]), 'ZebraZoomVersionUsed.txt'), 'w') as fp:
-      fp.write(zebrazoom.__version__)
+    if self._hyperparameters['storeH5']:
+      with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
+        results.attrs['ZebraZoomVersionUsed'] = zebrazoom.__version__
+    else:
+      with open(os.path.join(self._outputFolderVideo, 'ZebraZoomVersionUsed.txt'), 'w') as fp:
+        fp.write(zebrazoom.__version__)
 
   def _storeInAdditionalFolder(self):
       if os.path.isdir(self._hyperparameters["additionalOutputFolder"]):
         if self._hyperparameters["additionalOutputFolderOverwriteIfAlreadyExist"]:
           shutil.rmtree(self.hyperparameters["additionalOutputFolder"])
-          while True:
-            try:
-              shutil.copytree(self._outputFolderVideo, self._hyperparameters["additionalOutputFolder"])
-              break
-            except OSError as e:
-              print("waiting inside except")
-              time.sleep(0.1)
-            else:
-              print("waiting")
-              time.sleep(0.1)
         else:
           print("The path " + self._hyperparameters["additionalOutputFolder"] + " already exists. New folder not created. If you want the folder to be overwritten in such situation in future executions, set the parameter 'additionalOutputFolderOverwriteIfAlreadyExist' to 1 in your configuration file.")
-      else:
+          return
+      if os.path.exists(self._outputFolderVideo):
         shutil.copytree(self._outputFolderVideo, self._hyperparameters["additionalOutputFolder"])
+      else:
+        os.makedirs(self._hyperparameters["additionalOutputFolder"])
+      if self._hyperparameters['storeH5']:
+        for fname in os.listdir(self._hyperparameters['outputFolder']):
+          fullPath = os.path.join(self._hyperparameters['outputFolder'], fname)
+          if os.path.isfile(fullPath) and os.path.splitext(fname)[0] == self._hyperparameters['videoNameWithTimestamp']:
+            shutil.copy2(fullPath, self._hyperparameters['additionalOutputFolder'])
 
   def run(self):
     '''Run tracking'''
@@ -251,9 +246,6 @@ class ZebraZoomVideoAnalysis:
       return 0
 
     self._checkFirstAndLastFrame()
-
-    if self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] != "justExtractParamFromPreviousTrackData":
-      self._prepareOutputFolder()
 
     self._storeConfigUsed()
 
@@ -272,6 +264,13 @@ class ZebraZoomVideoAnalysis:
 
     self.getWellPositions()
     if int(self._hyperparameters["exitAfterWellsDetection"]):
+      try:  # try to clean up temporary results
+        if self._hyperparameters['storeH5']:
+          os.remove(self._hyperparameters['H5filename'])
+        else:
+          shutil.rmtree(os.path.join(self._hyperparameters['outputFolder'], self._hyperparameters['videoNameWithTimestamp']))
+      except OSError:
+        pass
       print("exitAfterWellsDetection")
       if self._hyperparameters["popUpAlgoFollow"]:
         import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
@@ -281,12 +280,11 @@ class ZebraZoomVideoAnalysis:
 
     paramDataPerWell, postProcessingCb = self._runTracking()
 
-    if self._hyperparameters["debugPauseBetweenTrackAndParamExtract"] != "justSaveTrackData":
-      superStruct = self._createSuperStruct(paramDataPerWell)
-      self._createValidationVideo(superStruct)
-      if postProcessingCb is not None:
-        superStruct = postProcessingCb(self._outputFolderVideo, superStruct)
-      self._storeResults(superStruct)
+    superStruct = self._createSuperStruct(paramDataPerWell)
+    self._createValidationVideo(superStruct)
+    if postProcessingCb is not None:
+      superStruct = postProcessingCb(self._outputFolderVideo, superStruct)
+    self._storeResults(superStruct)
 
     self._storeVersionUsed()
 

@@ -251,9 +251,11 @@ class HeadEmbeddedTailTrackingTeresaNicolsonMixin(TailTrackingBase):
   def _savingBlackFrames(self, output):
     if self._hyperparameters["headEmbededTeresaNicolson"] == 1:
       if self._hyperparameters["noBoutsDetection"] == 1:
-        f = open(os.path.join(self._hyperparameters["outputFolder"], os.path.join(self._videoName, 'blackFrames_' + self._videoName + '.csv')), "a")
-        for k in range(1,len(output[0])):
-          if np.sum(output[0, k]) == 0:
-            output[0, k] = output[0, k-1]
-            f.write(str(k)+'\n')
-        f.close()
+        outputPath = os.path.join(self._hyperparameters["outputFolder"], self._hyperparameters['videoNameWithTimestamp'])
+        if not os.path.exists(outputPath):
+          os.makedirs(outputPath)
+        with open(os.path.join(outputPath, f'blackFrames_{self._videoName}.csv'), "a") as f:
+          for k in range(1,len(output[0])):
+            if np.sum(output[0, k]) == 0:
+              output[0, k] = output[0, k-1]
+              f.write(str(k)+'\n')

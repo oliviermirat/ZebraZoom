@@ -96,9 +96,6 @@ class GUITracking(Tracking, BaseGUITrackingMethod):
       buttons = (("I want to add another segment.", None), ("I've added enough segments.", doneAddingSegments))
       self._debugFrame(frame2, title="Do you want to add another segment?", buttons=buttons)
 
-    with open(os.path.join(os.path.join(self._hyperparameters["outputFolder"], self._videoName), 'parametersToAddToConfigFileForBlackLine.json'), 'w') as outfile:
-      json.dump(hyperparametersToSave, outfile)
-
   def findHeadPositionByUserInput(self, frame, frameNumber, wellNumber):
     plus = 0
 

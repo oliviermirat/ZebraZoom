@@ -5,6 +5,7 @@ import os
 import pickle
 import random
 
+import h5py
 import numpy as np
 import pandas as pd
 import scipy
@@ -72,6 +73,7 @@ _FIRST_BOUT_REMOVED_RESULTS = {key: [] for key in _MEDIAN_ONLY_KEYS}
 _ALL_ONLY_KEYS = {'NumBout', 'BoutStart', 'BoutEnd'}
 
 _VIDEO_NAMES = ['test%d' % idx for idx in range(1, 7)]
+_VIDEO_NAMES[0] = f'{_VIDEO_NAMES[0]}.h5'
 _WELLS_PER_VIDEO = []
 _CONDITIONS = []
 _CONDITIONS_LIST = []
@@ -145,8 +147,8 @@ def _generateResults():
                 'BoutEnd': startFrame + duration - 1,
                 'TailAngle_Raw': angles,
                 'TailAngle_smoothed': angles,
-                'TailX_VideoReferential': [[0] * 3 for x in headX],
-                'TailY_VideoReferential': [[0] * 3 for y in headY],
+                'TailX_VideoReferential': [[x] + [x * 0 for a in range(8)] for x in headX],
+                'TailY_VideoReferential': [[y] + [y * 0 for a in range(8)] for y in headY],
                 'HeadX': headX,
                 'HeadY': headY,
                 'Bend_Amplitude': bendAmplitudes,
@@ -208,13 +210,77 @@ def _generateResults():
 
 @pytest.fixture(scope="module", autouse=True)
 def _createResultsFolder():
-  for nbWells, name, results in zip(_WELLS_PER_VIDEO, _VIDEO_NAMES, _generateResults()):
+  with open(os.path.join(paths.getConfigurationFolder(), '4wellsZebrafishLarvaeEscapeResponses.json')) as configFile:
+    config = json.load(configFile)
+
+  generatedResults = _generateResults()
+  with h5py.File(os.path.join(paths.getDefaultZZoutputFolder(), _VIDEO_NAMES[0]), 'w') as results:
+    superStruct = generatedResults[0]
+    for idx, wellPositions in enumerate(superStruct['wellPositions']):
+      results.require_group(f"wellPositions/well{idx}").attrs.update(wellPositions)
+    config['nbWells'] = _WELLS_PER_VIDEO[0]
+    results.require_group("configurationFileUsed").attrs.update(config)
+    results.attrs['version'] = 0
+    results.attrs['firstFrame'] = superStruct["firstFrame"]
+    results.attrs['lastFrame'] = superStruct['lastFrame']
+    results.attrs['videoFPS'] = _FPS[0]
+    results.attrs['videoPixelSize'] = _PIXEL_SIZES[0]
+    results.create_dataset('exampleFrame', data=np.zeros((1, 1, 1)))
+    if 'pathToOriginalVideo' in superStruct:
+      results.attrs['pathToOriginalVideo'] = superStruct['pathToOriginalVideo']
+    for wellIdx, well in enumerate(superStruct['wellPoissMouv']):
+      for animalIdx, animal in enumerate(well):
+        perFrameData = {}
+        listOfBouts = results.require_group(f"dataForWell{wellIdx}/dataForAnimal{animalIdx}/listOfBouts")
+        listOfBouts.attrs['numberOfBouts'] = len(animal)
+        for boutIdx, bout in enumerate(animal):
+          boutGroup = listOfBouts.require_group(f'bout{boutIdx}')
+          boutGroup.attrs['BoutStart'] = bout['BoutStart']
+          boutGroup.attrs['BoutEnd'] = bout['BoutEnd']
+          boutStart = bout['BoutStart'] - superStruct['firstFrame']
+          boutEnd = bout['BoutEnd'] - superStruct['firstFrame'] + 1
+          for key, value in bout.items():
+            if key == 'AnimalNumber':
+              continue
+            if key in ('HeadX', 'HeadY'):
+              if 'HeadPos' not in perFrameData:
+                headPosData = np.empty(superStruct['lastFrame'] - superStruct['firstFrame'] + 1, dtype=[('X', float), ('Y', float)])
+                headPosData[:] = np.nan
+                perFrameData['HeadPos'] = headPosData
+              perFrameData['HeadPos'][key[-1]][boutStart:boutEnd] = value
+            elif key in ('Heading', 'TailAngle_Raw'):
+              if key == 'TailAngle_Raw':
+                key = 'TailAngle'
+              if key not in perFrameData:
+                data = np.empty(superStruct['lastFrame'] - superStruct['firstFrame'] + 1, dtype=float)
+                data[:] = np.nan
+                perFrameData[key] = data
+              perFrameData[key][boutStart:boutEnd] = value
+            elif key in ('TailX_VideoReferential', 'TailY_VideoReferential'):
+              key = f'TailPos{key[4]}'
+              value = np.array(value).T
+              if key not in perFrameData:
+                headPosData = np.empty(superStruct['lastFrame'] - superStruct['firstFrame'] + 1, dtype=[(f'Pos{idx + 1}', float) for idx in range(value.shape[0] - 1)])
+                headPosData[:] = np.nan
+                perFrameData[key] = headPosData
+              for idx, val in enumerate(value[1:]):
+                perFrameData[key][f'Pos{idx + 1}'][boutStart:boutEnd] = val
+            elif isinstance(value, list):
+              boutGroup.create_dataset(key, data=np.array(value))
+            else:
+              boutGroup.attrs[key] = value
+        for key, data in perFrameData.items():
+          dataset = results.create_dataset(f"dataForWell{wellIdx}/dataForAnimal{animalIdx}/dataPerFrame/{key}", data=data)
+          if len(data.dtype):
+            dataset.attrs['columns'] = data.dtype.names
+    from zebrazoom.dataAPI._createSuperStructFromH5 import createSuperStructFromH5
+    assert createSuperStructFromH5(results)['wellPoissMouv'][0][0][0] == superStruct['wellPoissMouv'][0][0][0]
+
+  for nbWells, name, results in zip(_WELLS_PER_VIDEO[1:], _VIDEO_NAMES[1:], generatedResults[1:]):
     folder = os.path.join(paths.getDefaultZZoutputFolder(), name)
     os.mkdir(folder)
     with open(os.path.join(folder, 'intermediaryWellPosition.txt'), 'wb') as wellPositionsFile:
       pickle.dump(results['wellPositions'], wellPositionsFile)
-    with open(os.path.join(paths.getConfigurationFolder(), '4wellsZebrafishLarvaeEscapeResponses.json')) as configFile:
-      config = json.load(configFile)
     config['nbWells'] = nbWells
     with open(os.path.join(folder, 'configUsed.json'), 'w') as configFile:
       json.dump(config, configFile)
@@ -484,6 +550,9 @@ def _test_basic_check_results(expectedResults=_EXPECTED_RESULTS):
 
 @pytest.mark.long
 def test_basic(qapp, qtbot, monkeypatch):
+  import zebrazoom.dataAPI
+  zebrazoom.dataAPI.getKinematicParametersPerBout('test1', 0, 0, 0)  # force parameter calculation
+
   createExcelPage = _goToCreateExcelPage(qapp, qtbot)
   _createExperimentOrganizationExcel(createExcelPage, qapp, qtbot, monkeypatch)
   monkeypatch.setattr(QMessageBox, 'question', lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
@@ -512,7 +581,7 @@ def test_force_recalculation(qapp, qtbot, monkeypatch):
   assert os.path.exists(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'test4.pkl'))
   mtime = os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'parametersUsedForCalculation.json')).st_mtime
   createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-  _createExperimentOrganizationExcel(createExcelPage, qapp, qtbot, monkeypatch, indices={3}, conditions=[_CONDITIONS[3]], genotypes=[_GENOTYPES[3]])
+  _createExperimentOrganizationExcel(createExcelPage, qapp, qtbot, monkeypatch, indices={0, 3}, conditions=[_CONDITIONS[0], _CONDITIONS[3]], genotypes=[_GENOTYPES[0], _GENOTYPES[3]])
   monkeypatch.setattr(QMessageBox, 'question', lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
   qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod))
@@ -920,7 +989,7 @@ def test_flagged_bouts(qapp, qtbot, monkeypatch):
   viewParametersPage = _goToVisualizationPage(qapp, qtbot)
 
   # Select the first test result folder
-  resultsIndex = viewParametersPage._tree.model().mapFromSource(viewParametersPage._tree.model().sourceModel().index(os.path.join(viewParametersPage._tree.model().sourceModel().rootPath(), 'test1'))).siblingAtColumn(0)
+  resultsIndex = viewParametersPage._tree.model().mapFromSource(viewParametersPage._tree.model().sourceModel().index(os.path.join(viewParametersPage._tree.model().sourceModel().rootPath(), 'test1.h5'))).siblingAtColumn(0)
   qtbot.mouseClick(viewParametersPage._tree.viewport(), Qt.MouseButton.LeftButton, pos=viewParametersPage._tree.visualRect(resultsIndex).center())
   qapp.processEvents()
   qtbot.waitUntil(lambda: [index.row() for index in viewParametersPage._tree.selectedIndexes()] == [resultsIndex.row()])
@@ -965,7 +1034,7 @@ def test_flagged_bouts(qapp, qtbot, monkeypatch):
   viewParametersPage = _goToVisualizationPage(qapp, qtbot)
 
   # Select the first test result folder
-  resultsIndex = viewParametersPage._tree.model().mapFromSource(viewParametersPage._tree.model().sourceModel().index(os.path.join(viewParametersPage._tree.model().sourceModel().rootPath(), 'test1'))).siblingAtColumn(0)
+  resultsIndex = viewParametersPage._tree.model().mapFromSource(viewParametersPage._tree.model().sourceModel().index(os.path.join(viewParametersPage._tree.model().sourceModel().rootPath(), 'test1.h5'))).siblingAtColumn(0)
   qtbot.mouseClick(viewParametersPage._tree.viewport(), Qt.MouseButton.LeftButton, pos=viewParametersPage._tree.visualRect(resultsIndex).center())
   qapp.processEvents()
   qtbot.waitUntil(lambda: [index.row() for index in viewParametersPage._tree.selectedIndexes()] == [resultsIndex.row()])

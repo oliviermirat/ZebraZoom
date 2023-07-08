@@ -203,7 +203,7 @@ def drawInfoFrame(l, frame, infoFrame, colorModifTab, hyperparameters):
         cv2.putText(frame, str(numAnimal), (int(x + 10), int(y + 10)), cv2.FONT_HERSHEY_SIMPLEX, 1, (red, green, blue), 2)
 
 
-def createValidationVideo(videoPath, superStruct, hyperparameters):
+def createValidationVideo(videoPath, superStruct, hyperparameters, outputName=None):
 
   if (hyperparameters["freqAlgoPosFollow"] != 0):
     print("Starting the creation of the validation video")
@@ -223,7 +223,6 @@ def createValidationVideo(videoPath, superStruct, hyperparameters):
   infoFrame, colorModifTab = calculateInfoFrame(superStruct, hyperparameters, nbFrames)
             
   # Going through the video and printing stuff on it.
-  outputName = os.path.join(os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"]), hyperparameters["videoName"] + '.avi')
   outputFps = inputFps
   if hyperparameters["outputValidationVideoFps"] > 0:
     outputFps = int(hyperparameters["outputValidationVideoFps"])

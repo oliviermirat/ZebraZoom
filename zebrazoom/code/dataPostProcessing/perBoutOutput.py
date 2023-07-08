@@ -37,26 +37,20 @@ def calculateCurvature(TailX_VideoReferential, TailY_VideoReferential, hyperpara
   return curvature
 
 
-def perBoutOutput(superStruct, hyperparameters, videoName):
+def perBoutOutput(superStruct, hyperparameters, videoNameWithTimestamp):
   
   # Creation of the sub-folder "perBoutOutput"
-  if hyperparameters["saveCurvaturePlots"] or hyperparameters["saveTailAngleGraph"] or hyperparameters["saveSubVideo"] or hyperparameters["saveCurvatureData"]:
-    outputPath = os.path.join(os.path.join(hyperparameters["outputFolder"], videoName), "perBoutOutput")
-    if os.path.exists(outputPath):
-      shutil.rmtree(outputPath)
-    while True:
-      try:
-        os.mkdir(outputPath)
-        break
-      except OSError as e:
-        print("waiting inside except")
-        time.sleep(0.1)
-      else:
-        print("waiting")
-        time.sleep(0.1)
+  if hyperparameters["saveAllDataEvenIfNotInBouts"] or hyperparameters["saveCurvaturePlots"] or hyperparameters["saveTailAngleGraph"] or hyperparameters["saveSubVideo"] or hyperparameters["saveCurvatureData"]:
+    outputPath = os.path.join(hyperparameters["outputFolder"], videoNameWithTimestamp, "perBoutOutput")
+    if not os.path.exists(outputPath):
+      os.makedirs(outputPath)
       
   # opening the video previously created in createValidationVideo as an input video stream
-  cap = zzVideoReading.VideoCapture(os.path.join(os.path.join(hyperparameters["outputFolder"], videoName), hyperparameters["videoName"] + '.avi'))
+  if hyperparameters['storeH5']:
+    videoPath = os.path.join(hyperparameters["outputFolder"], f'{videoNameWithTimestamp}.avi')
+  else:
+    videoPath = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"], f'{videoNameWithTimestamp}.avi')
+  cap = zzVideoReading.VideoCapture(videoPath)
   
   if (cap.isOpened()== False): 
     print("Error opening video stream or file")
@@ -150,7 +144,7 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
     for j in range(0, len(superStruct["wellPoissMouv"][i])):
       curvatures = {}
       if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-        fname = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"], f'allData_{hyperparameters["videoName"]}_wellNumber{i}_animal{j}.csv')
+        fname = os.path.join(hyperparameters["outputFolder"], videoNameWithTimestamp, f'allData_{hyperparameters["videoName"]}_wellNumber{i}_animal{j}.csv')
         startLines = []
         with open(fname) as f:
           line = f.readline()
@@ -158,6 +152,7 @@ def perBoutOutput(superStruct, hyperparameters, videoName):
             startLines.append(line)
             line = f.readline()
         df = pd.read_csv(fname, skiprows=len(startLines))
+        df = df.loc[:, ~df.columns.str.contains('^Unnamed')]
       for k in range(0, len(superStruct["wellPoissMouv"][i][j])):
         
         # Creation of the curvature graph for bout k

@@ -17,7 +17,7 @@ from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.preprocessImage import preprocessImage
 
 
-def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation=''):
+def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation='', supstruct=None, config=None):
   s1  = "ZZoutput"
   s2  = folderName
   s3b = "results_"
@@ -30,25 +30,29 @@ def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal,
   else:
     initialPath = paths.getDefaultZZoutputFolder()
 
-  with open(os.path.join(initialPath, os.path.join(s2, 'configUsed.json'))) as f:
-    configTemp = json.load(f)
-  hyperparameters = getHyperparametersSimple(configTemp)
-  
-  resultsPath = os.path.join(initialPath, os.path.join(s2, s3b + s4 + s5b))
+  if config is None:
+    with open(os.path.join(initialPath, os.path.join(s2, 'configUsed.json'))) as f:
+      config = json.load(f)
+  hyperparameters = getHyperparametersSimple(config)
 
-  if not(os.path.exists(resultsPath)):
-    mypath = os.path.join(initialPath, s2)
-    onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
-    resultFile = ''
-    for fileName in onlyfiles:
-      if 'results_' in fileName:
-        resultFile = fileName
-    resultsPath = os.path.join(initialPath, os.path.join(s2, resultFile))
+  if supstruct is None:
+    resultsPath = os.path.join(initialPath, os.path.join(s2, s3b + s4 + s5b))
 
-  with open(resultsPath) as f:
-    supstruct = json.load(f)
+    if not(os.path.exists(resultsPath)):
+      mypath = os.path.join(initialPath, s2)
+      onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
+      resultFile = ''
+      for fileName in onlyfiles:
+        if 'results_' in fileName:
+          resultFile = fileName
+      resultsPath = os.path.join(initialPath, os.path.join(s2, resultFile))
+
+    with open(resultsPath) as f:
+      supstruct = json.load(f)
+  else:
+    resultsPath = os.path.join(initialPath, folderName)
   
-  if hyperparameters["savePathToOriginalVideoForValidationVideo"]:
+  if "pathToOriginalVideo" in supstruct:
     videoPath = supstruct["pathToOriginalVideo"]
     if not os.path.exists(videoPath):
       app = QApplication.instance()
@@ -57,16 +61,27 @@ def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal,
         return None
       videoName, _ = QFileDialog.getOpenFileName(app.window, 'Select video', os.path.expanduser("~"))
       videoPath = supstruct["pathToOriginalVideo"] = videoName
-      with open(resultsPath, 'w') as f:
-        json.dump(supstruct, f)
+      if os.path.splitext(resultsPath)[1] != '.h5':
+        with open(resultsPath, 'w') as f:
+          json.dump(supstruct, f)
+      else:
+        import h5py
+        with h5py.File(resultsPath, 'a') as results:
+          results.attrs['pathToOriginalVideo'] = videoName
   else:
     if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] and os.path.exists(os.path.join(initialPath, os.path.join(s1, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi')))):
       # The "exist" check above is only to insure compatibility with videos tracked prior to this update
-      videoPath = os.path.join(initialPath, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'))
+      if os.path.splitext(resultsPath)[1] != '.h5':
+        videoPath = os.path.join(initialPath, os.path.join(s2, 'originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'))
+      else:
+        videoPath = f'{os.path.splitext(resultsPath)[0]}_originalVideoWithoutAnyTrackingDisplayed_pleaseUseTheGUIToVisualizeTrackingPoints.avi'
     else:
-      videoPath = os.path.join(initialPath, os.path.join(s2, s4 + s5))
+      if os.path.splitext(resultsPath)[1] != '.h5':
+        videoPath = os.path.join(initialPath, os.path.join(s2, s4 + s5))
+      else:
+        videoPath = f'{os.path.splitext(resultsPath)[0]}.avi'
 
-  if not(os.path.exists(videoPath)):
+  if not(os.path.exists(videoPath)) and os.path.splitext(resultsPath)[1] != '.h5':
     mypath = os.path.join(initialPath, s2)
     onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
     resultFile = ''
@@ -75,6 +90,11 @@ def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal,
         resultFile = fileName
     videoPath = os.path.join(initialPath, os.path.join(s2, resultFile))
 
+  if not os.path.exists(videoPath):
+    app = QApplication.instance()
+    QMessageBox.critical(app.window, "Video not found", "Cannot display the validation video because it could not be found.")
+    return
+
   cap = zzVideoReading.VideoCapture(videoPath)
 
   nx    = int(cap.get(3))
@@ -82,7 +102,7 @@ def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal,
   max_l = int(cap.get(7))
   if max_l == 1:
     return None
-  frameRange = (supstruct["firstFrame"], supstruct["lastFrame"] - 1) if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"] else (0, max_l -1)
+  frameRange = (supstruct["firstFrame"], supstruct["lastFrame"] - 1) if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or "pathToOriginalVideo" in supstruct else (0, max_l -1)
 
   if not("firstFrame" in supstruct):
     supstruct["firstFrame"] = 1
@@ -143,7 +163,7 @@ def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal,
     infoWells.append([0, 0, nx, ny])
   
   infoFrame = None
-  if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"]:
+  if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or "pathToOriginalVideo" in supstruct:
     infoFrame, colorModifTab = calculateInfoFrame(supstruct, hyperparameters, max_l)
   
   x = 0
@@ -160,7 +180,7 @@ def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal,
     lengthY = ny
 
   l = start - supstruct["firstFrame"] + 1 if start > 0 else 0
-  if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"]:
+  if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or "pathToOriginalVideo" in supstruct:
     l += supstruct["firstFrame"]
 
   xOriginal = x
@@ -205,7 +225,7 @@ def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal,
     if (numWell != -1):
       img = img[y:y+lengthY, x:x+lengthX]
 
-    frameNumber = l if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or hyperparameters["savePathToOriginalVideoForValidationVideo"] else (l + supstruct["firstFrame"])
+    frameNumber = l if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or "pathToOriginalVideo" in supstruct else (l + supstruct["firstFrame"])
     if lengthX > 100 and lengthY > 100:
       font = cv2.FONT_HERSHEY_SIMPLEX
       cv2.putText(img,str(frameNumber),(int(lengthX-110), int(lengthY-30)),font,1,(0,255,0))
@@ -218,12 +238,12 @@ def getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal,
 
     return img
 
-  wellShape = None if configTemp.get("noWellDetection", False) or (hyperparameters["headEmbeded"] and not hyperparameters["oneWellManuallyChosenTopLeft"]) else 'rectangle' if configTemp.get("wellsAreRectangles", False) or len(configTemp.get("oneWellManuallyChosenTopLeft", '')) or int(configTemp.get("multipleROIsDefinedDuringExecution", 0)) or configTemp.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
+  wellShape = None if config.get("noWellDetection", False) or (hyperparameters["headEmbeded"] and not hyperparameters["oneWellManuallyChosenTopLeft"]) else 'rectangle' if config.get("wellsAreRectangles", False) or len(config.get("oneWellManuallyChosenTopLeft", '')) or int(config.get("multipleROIsDefinedDuringExecution", 0)) or config.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
   return getFrame, frameRange, l, infoFrame is not None, supstruct['wellPositions'], wellShape
 
 
-def readValidationVideo(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation=''):
-  frameInfo = getFramesCallback(videoPath, folderName, configFilePath, numWell, numAnimal, zoom, start, framesToShow=framesToShow, ZZoutputLocation=ZZoutputLocation)
+def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation='', supstruct=None, config=None):
+  frameInfo = getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, framesToShow=framesToShow, ZZoutputLocation=ZZoutputLocation, supstruct=supstruct, config=config)
   if frameInfo is None:
     return
   getFrame, frameRange, frame, toggleTrackingPoints, _, _ = frameInfo

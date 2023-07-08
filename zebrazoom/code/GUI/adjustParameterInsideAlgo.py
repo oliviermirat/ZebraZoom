@@ -242,8 +242,9 @@ def _selectROI(config, getFrame):
                                    initialRect=initialRect, allowEmpty=True, contrastCheckbox=checkbox, getFrame=getFrame))
   if save:
     app = QApplication.instance()
-    tailFile = f'{app.videoToCreateConfigFileFor}.csv'
-    headFile = f'{app.videoToCreateConfigFileFor}HP.csv'
+    videoName = os.path.splitext(os.path.basename(app.videoToCreateConfigFileFor))[0]
+    tailFile = os.path.join(app.ZZoutputLocation, '.ZebraZoomVideoInputs', videoName, f'{videoName}.csv')
+    headFile = os.path.join(app.ZZoutputLocation, '.ZebraZoomVideoInputs', videoName, f'{videoName}HP.csv')
     if (os.path.exists(tailFile) or os.path.exists(headFile)) and \
         coords != (config.get("oneWellManuallyChosenTopLeft", [0, 0]), config.get("oneWellManuallyChosenBottomRight", [0, 0])):
       if tailFile:
@@ -271,7 +272,7 @@ def _adjustEyeTracking(firstFrame, totalFrames, ellipse=False):
 
   pathToVideo = os.path.dirname(app.videoToCreateConfigFileFor)
   videoName, videoExt = os.path.basename(app.videoToCreateConfigFileFor).split('.')
-  argv = []
+  argv = ["outputFolder", app.ZZoutputLocation]
 
   originalConfig = app.configFile.copy()
   app.configFile["adjustHeadEmbeddedEyeTracking"] = 1
@@ -291,6 +292,7 @@ def _adjustEyeTracking(firstFrame, totalFrames, ellipse=False):
 
   saved = False
   try:
+    storeH5 = app.configFile.pop('storeH5', None)
     if "lastFrame" in app.configFile and "firstFrame" in app.configFile and app.configFile["lastFrame"] < app.configFile["firstFrame"]:
       del app.configFile["lastFrame"]
     ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, app.configFile, argv).run()
@@ -298,6 +300,9 @@ def _adjustEyeTracking(firstFrame, totalFrames, ellipse=False):
     saved = True
   except NameError:
     print("Configuration file parameters changes discarded.")
+  finally:
+    if storeH5 is not None:
+      app.configFile['storeH5'] = storeH5
 
   app.configFile = originalConfig
   if saved:

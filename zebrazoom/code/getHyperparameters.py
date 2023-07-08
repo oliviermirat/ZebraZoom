@@ -33,7 +33,6 @@ CONFIG_DEFAULT = \
   "debugFindWells" : 0,
   "debugHeadingCalculation" : 0,
   "debugValidationVideoHeading" : 0,
-  "debugPauseBetweenTrackAndParamExtract" : "saveTrackDataAndExtractParam",
   "debugDetectMovWithRawVideo" : 0,
   "debugDetectMovWithRawVideoShowVid" : 1,
   "debugCoverHorizontalPortionBelow" : 0,
@@ -41,7 +40,7 @@ CONFIG_DEFAULT = \
   "debugEyeTracking" : 0,
   "debugEyeTrackingAdvanced" : 0,
   "onlyDoTheTrackingForThisNumberOfFrames": 0,
-  "createValidationVideo" : 1,
+  "createValidationVideo" : 0,
   "copyOriginalVideoToOutputFolderForValidation" : 0,
   "calculateAllTailAngles" : 0,
   "freqAlgoPosFollow" : 0,
@@ -63,7 +62,6 @@ CONFIG_DEFAULT = \
   "reduceImageResolutionPercentage" : 1,
   "trackingMethod" : "",
   "saveAllDataEvenIfNotInBouts" : 0,
-  "savePathToOriginalVideoForValidationVideo" : 0,
 
   "setPixDiffBoutDetectParameters" : 0,
 
@@ -309,7 +307,8 @@ CONFIG_DEFAULT = \
   "lastFrame": 0,
   "videoWidth": 0,
   "videoHeight": 0,
-  "storeH5": 0
+
+  "storeH5": 1,
 }
 
 
@@ -341,15 +340,12 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
 
   hyperparameters.update(copy.deepcopy(config))
 
-  if hyperparameters["tailAnglesHeatMap"]:
-    hyperparameters["calculateAllTailAngles"] = 1
-
   if argv and argv[0] != "getTailExtremityFirstFrame":
     overridenParameters = {param: argv[i+1] for i, param in enumerate(argv) if str(param) in hyperparameters}
     for param, value in overridenParameters.items():
       print("command line hyperparameter change:", param, value)
 
-      if param not in {"debugPauseBetweenTrackAndParamExtract", "outputFolder", "coverPortionForHeadDetect", "freeSwimmingTailTrackingMethod",
+      if param not in {"outputFolder", "coverPortionForHeadDetect", "freeSwimmingTailTrackingMethod",
                        "findContourPrecision", "headingCalculationMethod", "additionalOutputFolder"}:
         try:
           overridenParameters[param] = int(value)
@@ -358,6 +354,9 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
 
     hyperparameters.update(overridenParameters)
     config.update(overridenParameters)
+
+  if hyperparameters["tailAnglesHeatMap"]:
+    hyperparameters["calculateAllTailAngles"] = 1
 
   if hyperparameters["setPixDiffBoutDetectParameters"] > 0:
     hyperparameters["debugPauseBetweenTrackAndParamExtract"] = "justExtractParamFromPreviousTrackData"
