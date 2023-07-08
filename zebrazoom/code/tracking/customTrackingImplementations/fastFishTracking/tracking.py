@@ -28,7 +28,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     self._trackingDataPerWell = [np.zeros((self._hyperparameters["nbAnimalsPerWell"], self._lastFrame-self._firstFrame+1, self._nbTailPoints, 2)) for _ in range(len(self._wellPositions))]
     self._lastFirstTheta = np.zeros(len(self._wellPositions))
     self._lastFirstTheta[:] = -99999
-    self._listOfWellsOnWhichToRunTheTracking = [i for i in range(0, len(self._wellPositions))]
+    self._listOfWellsOnWhichToRunTheTracking = [i for i in range(0, len(self._wellPositions))] if hyperparameters["onlyTrackThisOneWell"] == -1 else [hyperparameters["onlyTrackThisOneWell"]]
     self._times2 = np.zeros((self._lastFrame - self._firstFrame + 1, 5))
     self._printInterTime = False
 
@@ -120,7 +120,19 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
       trackingHeadingAllAnimalsList = [[[((calculateAngle(self._trackingDataPerWell[wellNumber][animalNumber][i][0][0], self._trackingDataPerWell[wellNumber][animalNumber][i][0][1], self._trackingDataPerWell[wellNumber][animalNumber][i][1][0], self._trackingDataPerWell[wellNumber][animalNumber][i][1][1]) + math.pi) % (2 * math.pi) if len(self._trackingDataPerWell[wellNumber][0][i]) > 1 else 0) for i in range(0, self._lastFrame)] for animalNumber in range(0, self._hyperparameters["nbAnimalsPerWell"])] for wellNumber in range(0, len(self._wellPositions))]
       
       return {wellNumber: extractParameters([self._trackingDataPerWell[wellNumber], trackingHeadingAllAnimalsList[wellNumber], [], 0, 0, self._auDessusPerAnimalIdList[wellNumber]], wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background) for wellNumber in range(0, len(self._wellPositions))}
-    
+
+    elif self._hyperparameters["adjustDetectMovWithRawVideo"]:
+
+      trackingHeadingAllAnimalsList = [[[((calculateAngle(self._trackingDataPerWell[wellNumber][animalNumber][i][0][0], self._trackingDataPerWell[wellNumber][animalNumber][i][0][1], self._trackingDataPerWell[wellNumber][animalNumber][i][1][0], self._trackingDataPerWell[wellNumber][animalNumber][i][1][1]) + math.pi) % (2 * math.pi) if len(self._trackingDataPerWell[wellNumber][0][i]) > 1 else 0) for i in range(0, self._lastFrame)] for animalNumber in range(0, self._hyperparameters["nbAnimalsPerWell"])] for wellNumber in range(0, len(self._wellPositions))]
+
+      return {wellNumber: extractParameters([self._trackingDataPerWell[wellNumber], trackingHeadingAllAnimalsList[wellNumber], [], 0, 0], wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background) for wellNumber in self._listOfWellsOnWhichToRunTheTracking}
+
+    elif  self._hyperparameters["coordinatesOnlyBoutDetection"]:
+
+      trackingHeadingAllAnimalsList = [[[((calculateAngle(self._trackingDataPerWell[wellNumber][animalNumber][i][0][0], self._trackingDataPerWell[wellNumber][animalNumber][i][0][1], self._trackingDataPerWell[wellNumber][animalNumber][i][1][0], self._trackingDataPerWell[wellNumber][animalNumber][i][1][1]) + math.pi) % (2 * math.pi) if len(self._trackingDataPerWell[wellNumber][0][i]) > 1 else 0) for i in range(0, self._lastFrame)] for animalNumber in range(0, self._hyperparameters["nbAnimalsPerWell"])] for wellNumber in range(0, len(self._wellPositions))]
+
+      return {wellNumber: extractParameters([self._trackingDataPerWell[wellNumber], trackingHeadingAllAnimalsList[wellNumber], [], 0, 0], wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background) for wellNumber in range(0, len(self._wellPositions))}
+
     else:
       
       outputData = detectMovementWithTrackedDataAfterTracking(self)

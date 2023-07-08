@@ -30,6 +30,9 @@ class ZebraZoomVideoAnalysis:
     # Getting hyperparameters
     self._hyperparameters, self._configFile = getHyperparameters(configFile, self._videoNameWithExt, os.path.join(pathToVideo, self._videoNameWithExt), argv)
     videoNameWithTimestamp = f'{self._hyperparameters["videoName"]}_{datetime.now().strftime("%Y_%m_%d-%H_%M_%S")}'
+    while os.path.exists(os.path.join(self._hyperparameters["outputFolder"], f'{videoNameWithTimestamp}.h5')) or os.path.exists(os.path.join(self._hyperparameters["outputFolder"], f'{videoNameWithTimestamp}')):
+      time.sleep(0.5)
+      videoNameWithTimestamp = f'{self._hyperparameters["videoName"]}_{datetime.now().strftime("%Y_%m_%d-%H_%M_%S")}'
     self._hyperparameters['videoNameWithTimestamp'] = videoNameWithTimestamp
     if self._hyperparameters['storeH5']:
       self._hyperparameters['H5filename'] = os.path.join(self._hyperparameters["outputFolder"], f'{videoNameWithTimestamp}.h5')
@@ -264,13 +267,14 @@ class ZebraZoomVideoAnalysis:
 
     self.getWellPositions()
     if int(self._hyperparameters["exitAfterWellsDetection"]):
-      try:  # try to clean up temporary results
-        if self._hyperparameters['storeH5']:
-          os.remove(self._hyperparameters['H5filename'])
-        else:
-          shutil.rmtree(os.path.join(self._hyperparameters['outputFolder'], self._hyperparameters['videoNameWithTimestamp']))
-      except OSError:
-        pass
+      if not self._hyperparameters["exitAfterBackgroundExtraction"]:
+        try:  # try to clean up temporary results
+          if self._hyperparameters['storeH5']:
+            os.remove(self._hyperparameters['H5filename'])
+          else:
+            shutil.rmtree(os.path.join(self._hyperparameters['outputFolder'], self._hyperparameters['videoNameWithTimestamp']))
+        except OSError:
+          pass
       print("exitAfterWellsDetection")
       if self._hyperparameters["popUpAlgoFollow"]:
         import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow

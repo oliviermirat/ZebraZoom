@@ -806,7 +806,7 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
   page = _showPage(layout, (img, video))
 
 
-def adjustBoutDetectionOnlyPage(useNext=True, nextCb=None):
+def adjustBoutDetectionOnlyPage(useNext=True, nextCb=None, useBackground=True):
   app = QApplication.instance()
 
   layout = QVBoxLayout()
@@ -879,20 +879,21 @@ def adjustBoutDetectionOnlyPage(useNext=True, nextCb=None):
   sublayout.addStretch(1)
   layout.addLayout(sublayout)
 
-  recalculateLayout = QHBoxLayout()
-  recalculateLayout.addStretch()
-  recalculateLayout.addWidget(util.apply_style(QLabel("Recalculate background using this number of images:"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-  nbImagesForBackgroundCalculation = QLineEdit()
-  nbImagesForBackgroundCalculation.setValidator(QIntValidator(nbImagesForBackgroundCalculation))
-  nbImagesForBackgroundCalculation.validator().setBottom(0)
-  nbImagesForBackgroundCalculation.setText("60")
-  nbImagesForBackgroundCalculation.setFixedWidth(50)
-  recalculateLayout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
-  recalculateBtn = QPushButton("Recalculate")
-  recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text(), False, True, useNext=useNext, nextCb=nextCb))
-  recalculateLayout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-  recalculateLayout.addStretch()
-  layout.addLayout(recalculateLayout)
+  if useBackground:
+    recalculateLayout = QHBoxLayout()
+    recalculateLayout.addStretch()
+    recalculateLayout.addWidget(util.apply_style(QLabel("Recalculate background using this number of images:"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    nbImagesForBackgroundCalculation = QLineEdit()
+    nbImagesForBackgroundCalculation.setValidator(QIntValidator(nbImagesForBackgroundCalculation))
+    nbImagesForBackgroundCalculation.validator().setBottom(0)
+    nbImagesForBackgroundCalculation.setText("60")
+    nbImagesForBackgroundCalculation.setFixedWidth(50)
+    recalculateLayout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
+    recalculateBtn = QPushButton("Recalculate")
+    recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text(), False, True, useNext=useNext, nextCb=nextCb))
+    recalculateLayout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    recalculateLayout.addStretch()
+    layout.addLayout(recalculateLayout)
 
   coordinatesOnlyBoutDetectCheckbox = QCheckBox("Use only the body coordinates to detect bouts (faster, but potentially less accurate)")
   originalCoordinatesOnlyBoutDetection = app.configFile.get("coordinatesOnlyBoutDetection", None)
@@ -968,7 +969,7 @@ def adjustBoutDetectionOnlyPage(useNext=True, nextCb=None):
   fillGapLabel.setToolTip("'fillGapFrameNb' parameter controls the distance (in number frames) under which two subsequent bouts are merged into one.")
   fillGapLayout.addWidget(fillGapLabel, alignment=Qt.AlignmentFlag.AlignCenter)
   fillGapFrameNb = QLineEdit()
-  fillGapFrameNb.setValidator(QIntValidator(nbImagesForBackgroundCalculation))
+  fillGapFrameNb.setValidator(QIntValidator(fillGapFrameNb))
   fillGapFrameNb.validator().setBottom(0)
   if "fillGapFrameNb" in app.configFile:
     fillGapFrameNb.setText(str(app.configFile["fillGapFrameNb"]))

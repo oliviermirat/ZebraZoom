@@ -98,6 +98,30 @@ def _selectWell(app, cap, wellPositions):
   return wellNumber
 
 
+def findWellWithMostMovement(cap, wellPositions):
+  max_l = int(cap.get(7))
+  cap.set(1, 0)
+  ret, firstFrame = cap.read()
+  firstFrame = cv2.cvtColor(firstFrame, cv2.COLOR_BGR2GRAY)
+  cap.set(1, max_l-1)
+  ret, lastFrame = cap.read()
+  while not(ret):
+    max_l = max_l - 1
+    cap.set(1, max_l-1)
+    ret, lastFrame = cap.read()
+  lastFrame = cv2.cvtColor(lastFrame, cv2.COLOR_BGR2GRAY)
+  pixelsChange = np.zeros((len(wellPositions)))
+  for wellNumberId in range(0, len(wellPositions)):
+    xtop  = wellPositions[wellNumberId]['topLeftX']
+    ytop  = wellPositions[wellNumberId]['topLeftY']
+    lenX  = wellPositions[wellNumberId]['lengthX']
+    lenY  = wellPositions[wellNumberId]['lengthY']
+    firstFrameROI = firstFrame[ytop:ytop+lenY, xtop:xtop+lenX]
+    lastFrameROI  = lastFrame[ytop:ytop+lenY, xtop:xtop+lenX]
+    pixelsChange[wellNumberId] = np.sum(abs(firstFrameROI-lastFrameROI)) / np.sum(abs(firstFrameROI)) if np.sum(abs(firstFrameROI)) else 0
+  return np.argmax(pixelsChange)
+
+
 def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveIntermediary, zebrafishToTrack, wellNumber=None):
   
   firstFrameIndex = self.configFile["firstFrame"] if "firstFrame" in self.configFile else -1
@@ -141,26 +165,7 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
 
   if wellNumber is None:
     # Finding the well with the most movement
-    cap.set(1, 0)
-    ret, firstFrame = cap.read()
-    firstFrame = cv2.cvtColor(firstFrame, cv2.COLOR_BGR2GRAY)
-    cap.set(1, max_l-1)
-    ret, lastFrame = cap.read()
-    while not(ret):
-      max_l = max_l - 1
-      cap.set(1, max_l-1)
-      ret, lastFrame = cap.read()
-    lastFrame = cv2.cvtColor(lastFrame, cv2.COLOR_BGR2GRAY)
-    pixelsChange = np.zeros((len(wellPositions)))
-    for wellNumberId in range(0, len(wellPositions)):
-      xtop  = wellPositions[wellNumberId]['topLeftX']
-      ytop  = wellPositions[wellNumberId]['topLeftY']
-      lenX  = wellPositions[wellNumberId]['lengthX']
-      lenY  = wellPositions[wellNumberId]['lengthY']
-      firstFrameROI = firstFrame[ytop:ytop+lenY, xtop:xtop+lenX]
-      lastFrameROI  = lastFrame[ytop:ytop+lenY, xtop:xtop+lenX]
-      pixelsChange[wellNumberId] = np.sum(abs(firstFrameROI-lastFrameROI)) / np.sum(abs(firstFrameROI)) if np.sum(abs(firstFrameROI)) else 0
-    wellNumber = np.argmax(pixelsChange)
+    wellNumber = findWellWithMostMovement(cap, wellPositions)
   
   backCalculationStep = int(max_l / nbOfImagesToManuallyClassify) if (firstFrameIndex == -1 or lastFrameIndex == -1) else int((lastFrameIndex - firstFrameIndex + 1) / nbOfImagesToManuallyClassify)
   data = [None] * ((max_l - 1) // backCalculationStep + 1)
@@ -409,11 +414,17 @@ def findInitialBlobArea(data, videoPath, background, wellPositions, hyperparamet
 def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, wellPositions, videoPath):
 
   # Extracting Background and finding Wells
-  
-  configFile["exitAfterBackgroundExtraction"] = 1
-  configFile["debugExtractBack"]              = 1
-  configFile["debugFindWells"]                = 1
-  configFile["reloadWellPositions"] = 1
+
+  if configFile.get('trackingImplementation') != 'fastFishTracking.tracking':
+    configFile["exitAfterBackgroundExtraction"] = 1
+    configFile["debugExtractBack"]              = 1
+    configFile["debugFindWells"]                = 1
+    configFile["reloadWellPositions"] = 1
+  else:
+    configFile["exitAfterBackgroundExtraction"] = 1
+    configFile["exitAfterWellsDetection"] = 1
+    configFile["debugFindWells"] = 1
+    configFile["reloadWellPositions"] = 1
   
   app = QApplication.instance()
   with app.busyCursor():
@@ -426,10 +437,16 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
       if storeH5 is not None:
         configFile['storeH5'] = storeH5
 
-  del configFile["exitAfterBackgroundExtraction"]
-  del configFile["debugExtractBack"]
-  del configFile["debugFindWells"]
-  del configFile["reloadWellPositions"]
+  if configFile.get('trackingImplementation') != 'fastFishTracking.tracking':
+    del configFile["exitAfterBackgroundExtraction"]
+    del configFile["debugExtractBack"]
+    del configFile["debugFindWells"]
+    del configFile["reloadWellPositions"]
+  else:
+    del configFile["exitAfterBackgroundExtraction"]
+    del configFile["exitAfterWellsDetection"]
+    del configFile["debugFindWells"]
+    del configFile["reloadWellPositions"]
 
   # Finding the frame with the most movement
   
