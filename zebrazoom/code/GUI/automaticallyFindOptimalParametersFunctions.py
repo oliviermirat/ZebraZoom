@@ -409,11 +409,17 @@ def findInitialBlobArea(data, videoPath, background, wellPositions, hyperparamet
 def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, wellPositions, videoPath):
 
   # Extracting Background and finding Wells
-  
-  configFile["exitAfterBackgroundExtraction"] = 1
-  configFile["debugExtractBack"]              = 1
-  configFile["debugFindWells"]                = 1
-  configFile["reloadWellPositions"] = 1
+
+  if configFile.get('trackingImplementation') != 'fastFishTracking.tracking':
+    configFile["exitAfterBackgroundExtraction"] = 1
+    configFile["debugExtractBack"]              = 1
+    configFile["debugFindWells"]                = 1
+    configFile["reloadWellPositions"] = 1
+  else:
+    configFile["exitAfterBackgroundExtraction"] = 1
+    configFile["exitAfterWellsDetection"] = 1
+    configFile["debugFindWells"] = 1
+    configFile["reloadWellPositions"] = 1
   
   app = QApplication.instance()
   with app.busyCursor():
@@ -426,10 +432,16 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
       if storeH5 is not None:
         configFile['storeH5'] = storeH5
 
-  del configFile["exitAfterBackgroundExtraction"]
-  del configFile["debugExtractBack"]
-  del configFile["debugFindWells"]
-  del configFile["reloadWellPositions"]
+  if configFile.get('trackingImplementation') != 'fastFishTracking.tracking':
+    del configFile["exitAfterBackgroundExtraction"]
+    del configFile["debugExtractBack"]
+    del configFile["debugFindWells"]
+    del configFile["reloadWellPositions"]
+  else:
+    del configFile["exitAfterBackgroundExtraction"]
+    del configFile["exitAfterWellsDetection"]
+    del configFile["debugFindWells"]
+    del configFile["reloadWellPositions"]
 
   # Finding the frame with the most movement
   
@@ -492,6 +504,8 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
   initialFirstFrameValue, initialLastFrameValue = prepareConfigFileForParamsAdjustements(configFile, wellNumber, configFile.get("firstFrame", 1), videoPath, False)
   configFile["firstFrame"] = lastFrameNum - 500 if lastFrameNum - 500 > 0 else 0
   configFile["lastFrame"]  = (configFile["firstFrame"] + 500) if (configFile["firstFrame"] + 500) < (max_l - 1) else (max_l - 1)
+  del configFile["firstFrame"] # TODO: remove this
+  del configFile["lastFrame"]
   
   configFile["noBoutsDetection"] = 0
   configFile["trackTail"]                   = 0

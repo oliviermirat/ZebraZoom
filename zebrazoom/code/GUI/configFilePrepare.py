@@ -1241,7 +1241,7 @@ class NumberOfAnimals2(QWidget):
     recommendedTrackingMethodRadioButton = QRadioButton("Original algorithm:\nSlow tracking, but thoroughly tested, might be more accurate in some cases.", self)
     btnGroup5.addButton(recommendedTrackingMethodRadioButton, id=0)
     layout.addWidget(recommendedTrackingMethodRadioButton, 4, 1, Qt.AlignmentFlag.AlignLeft)
-    defaultTrackingMethodRadioButton = QRadioButton("New algorithm:\nDefault option.", self)
+    defaultTrackingMethodRadioButton = QRadioButton("Default Algorithm", self)
     btnGroup5.addButton(defaultTrackingMethodRadioButton, id=1)
     defaultTrackingMethodRadioButton.setChecked(True)
     layout.addWidget(defaultTrackingMethodRadioButton, 5, 1, Qt.AlignmentFlag.AlignLeft)
