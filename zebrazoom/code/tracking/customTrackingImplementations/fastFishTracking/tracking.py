@@ -62,7 +62,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     times  = np.zeros((int(cap.get(cv2.CAP_PROP_FRAME_COUNT) + 1), 2))
     ret = True
     if self._lastFrame != cap.get(cv2.CAP_PROP_FRAME_COUNT):
-      self._lastFrame = cap.get(cv2.CAP_PROP_FRAME_COUNT)
+      self._lastFrame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
       self._hyperparameters["lastFrame"] = self._lastFrame
       self._trackingDataPerWell = [np.zeros((self._hyperparameters["nbAnimalsPerWell"], self._lastFrame-self._firstFrame+1, self._nbTailPoints, 2)) for _ in range(len(self._wellPositions))]
       self._times2 = np.zeros((self._lastFrame - self._firstFrame + 1, 5))
