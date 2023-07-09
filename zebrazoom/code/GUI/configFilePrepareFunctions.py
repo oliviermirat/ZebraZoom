@@ -512,6 +512,8 @@ def _setMaxDepthParams(app):
   app.configFile["maxDepth"] = maxDepth
   app.configFile["steps"] = [maxDepth / 3.6, maxDepth / 2.4, maxDepth / 1.8]
   app.configFile["paramGaussianBlur"] = int(maxDepth / 2.4)
+  if app.configFile["paramGaussianBlur"] % 2 == 0:
+    app.configFile["paramGaussianBlur"] += 1
   return True
 
 
