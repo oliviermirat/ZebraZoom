@@ -267,7 +267,7 @@ class ZebraZoomVideoAnalysis:
 
     self.getWellPositions()
     if int(self._hyperparameters["exitAfterWellsDetection"]):
-      if not self._hyperparameters["exitAfterBackgroundExtraction"]:
+      if self._hyperparameters["saveWellPositionsToBeReloadedNoMatterWhat"]:
         try:  # try to clean up temporary results
           if self._hyperparameters['storeH5']:
             os.remove(self._hyperparameters['H5filename'])

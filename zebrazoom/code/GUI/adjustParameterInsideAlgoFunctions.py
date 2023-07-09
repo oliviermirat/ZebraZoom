@@ -100,10 +100,10 @@ def detectBouts(self, controller, wellNumber, firstFrame, adjustOnWholeVideo, re
       if storeH5 is not None:
         configFile['storeH5'] = storeH5
 
-  configFile["onlyTrackThisOneWell"]        = -1
+  del configFile["onlyTrackThisOneWell"]
   configFile["trackTail"]                   = trackTailOriginalValue
-  configFile["adjustDetectMovWithRawVideo"] = 0
-  configFile["reloadWellPositions"]         = 0
+  del configFile["adjustDetectMovWithRawVideo"]
+  del configFile["reloadWellPositions"]
 
   if initialLastFrameValue == -1:
     if 'firstFrame' in configFile:

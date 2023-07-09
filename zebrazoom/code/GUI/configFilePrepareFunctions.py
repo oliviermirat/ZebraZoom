@@ -4,7 +4,6 @@ import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.GUI.getCoordinates import findWellLeft, findWellRight, findHeadCenter, findBodyExtremity
 from zebrazoom.code.GUI.adjustParameterInsideAlgo import adjustBoutDetectionOnlyPage
 from zebrazoom.code.GUI.automaticallyFindOptimalParameters import automaticallyFindOptimalParameters
-from zebrazoom.code.GUI.automaticallyFindOptimalParametersFunctions import boutDetectionParameters, findWellWithMostMovement
 
 import math
 from zebrazoom.code.findWells import findWells
@@ -529,29 +528,20 @@ def _fastTrackingBoutDetection(app, detectBoutsMethod):
   videoExt = videoExt.lstrip('.')
   pathToVideo = os.path.dirname(app.videoToCreateConfigFileFor)
   app.configFile["exitAfterWellsDetection"] = 1
-  app.configFile["exitAfterBackgroundExtraction"] = 1
-  if detectBoutsMethod == 2:
-    app.wellPositions = []
-  zzAnalysis = ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, app.configFile, ['outputFolder', app.ZZoutputLocation])
+  app.wellPositions = []
   try:
     with app.busyCursor():
-      zzAnalysis.run()
+      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, app.configFile, ['outputFolder', app.ZZoutputLocation]).run()
   except ValueError:
-      wellPositions = zzAnalysis.wellPositions
+      pass
   finally:
     del app.configFile["exitAfterWellsDetection"]
-    del app.configFile["exitAfterBackgroundExtraction"]
+  app.configFile["noBoutsDetection"] = 0
   if detectBoutsMethod == 1:
-    cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
-    wellNumber = findWellWithMostMovement(cap, wellPositions)
-    cap.release()
-    app.configFile = boutDetectionParameters([{'wellNumber': wellNumber}], app.configFile, pathToVideo, videoName, videoExt, wellPositions, app.videoToCreateConfigFileFor)
     app.configFile["detectMovementWithRawVideoInsideTracking"] = 1
-    util.addToHistory(app.show_frame)("FinishConfig")
   if detectBoutsMethod == 2:
     app.configFile["coordinatesOnlyBoutDetection"] = 1
-    app.configFile["noBoutsDetection"] = 0
-    adjustBoutDetectionOnlyPage(useBackground=False)
+  adjustBoutDetectionOnlyPage(useBackground=False)
 
 
 @util.addToHistory

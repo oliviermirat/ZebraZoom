@@ -415,16 +415,10 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
 
   # Extracting Background and finding Wells
 
-  if configFile.get('trackingImplementation') != 'fastFishTracking.tracking':
-    configFile["exitAfterBackgroundExtraction"] = 1
-    configFile["debugExtractBack"]              = 1
-    configFile["debugFindWells"]                = 1
-    configFile["reloadWellPositions"] = 1
-  else:
-    configFile["exitAfterBackgroundExtraction"] = 1
-    configFile["exitAfterWellsDetection"] = 1
-    configFile["debugFindWells"] = 1
-    configFile["reloadWellPositions"] = 1
+  configFile["exitAfterBackgroundExtraction"] = 1
+  configFile["debugExtractBack"]              = 1
+  configFile["debugFindWells"]                = 1
+  configFile["reloadWellPositions"] = 1
   
   app = QApplication.instance()
   with app.busyCursor():
@@ -437,16 +431,10 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
       if storeH5 is not None:
         configFile['storeH5'] = storeH5
 
-  if configFile.get('trackingImplementation') != 'fastFishTracking.tracking':
-    del configFile["exitAfterBackgroundExtraction"]
-    del configFile["debugExtractBack"]
-    del configFile["debugFindWells"]
-    del configFile["reloadWellPositions"]
-  else:
-    del configFile["exitAfterBackgroundExtraction"]
-    del configFile["exitAfterWellsDetection"]
-    del configFile["debugFindWells"]
-    del configFile["reloadWellPositions"]
+  del configFile["exitAfterBackgroundExtraction"]
+  del configFile["debugExtractBack"]
+  del configFile["debugFindWells"]
+  del configFile["reloadWellPositions"]
 
   # Finding the frame with the most movement
   
