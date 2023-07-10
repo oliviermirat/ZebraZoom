@@ -1692,8 +1692,6 @@ class FinishConfig(QWidget):
       self._oldFormatCheckbox.setChecked(storeLegacy)
     else:
       self._oldFormatCheckbox.toggled.emit(storeLegacy)
-    if 'outputFolder' in self.controller.configFile:
-      del self.controller.configFile['outputFolder']
 
   def showEvent(self, evt):
     self.refreshPage()

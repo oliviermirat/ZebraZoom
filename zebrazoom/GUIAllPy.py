@@ -292,6 +292,8 @@ class ZebraZoomApp(PlainApplication):
         reference, _ = QFileDialog.getSaveFileName(self.window, "Save config", os.path.join(configDir, suggestedName), "JSON (*.json)")
         if not reference:
           return
+        if 'outputFolder' in self.configFile:
+          del self.configFile['outputFolder']
         # Ideally would like to remove these four lines below, once the problem with wrong 'firstFrame' and 'lastFrame' being saved in the configuration file is solved
         if "lastFrame" in self.configFile:
           # del self.configFile["lastFrame"]

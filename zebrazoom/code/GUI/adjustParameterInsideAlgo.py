@@ -899,21 +899,20 @@ def adjustBoutDetectionOnlyPage(useNext=True, nextCb=None, useBackground=True):
   originalCoordinatesOnlyBoutDetection = app.configFile.get("coordinatesOnlyBoutDetection", None)
   trackingMethod = app.configFile.get("trackingMethod", None)
 
-  if useBackground:
-    def coordinatesOnlyBoutDetectCheckboxToggled(checked):
-      if checked:
-        app.configFile["coordinatesOnlyBoutDetection"] = 1
-      elif originalCoordinatesOnlyBoutDetection is not None:
-        app.configFile["coordinatesOnlyBoutDetection"] = 0
-      elif "coordinatesOnlyBoutDetection" in app.configFile:
-        del app.configFile["coordinatesOnlyBoutDetection"]
-      minDistLabel.setVisible(checked)
-      minDistLineEdit.setVisible(checked)
-      adjustBoutsBtn.setVisible(not checked)
-      frameGapSlider.setVisible(checked)
-    coordinatesOnlyBoutDetectCheckbox.toggled.connect(coordinatesOnlyBoutDetectCheckboxToggled)
-    coordinatesOnlyBoutDetectCheckbox.setVisible((not trackingMethod and not app.configFile.get("headEmbeded", False)) or trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction" or trackingMethod == "fastCenterOfMassTracking_ClassicalBackgroundSubtraction")
-    layout.addWidget(coordinatesOnlyBoutDetectCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+  def coordinatesOnlyBoutDetectCheckboxToggled(checked):
+    if checked:
+      app.configFile["coordinatesOnlyBoutDetection"] = 1
+    elif originalCoordinatesOnlyBoutDetection is not None:
+      app.configFile["coordinatesOnlyBoutDetection"] = 0
+    elif "coordinatesOnlyBoutDetection" in app.configFile:
+      del app.configFile["coordinatesOnlyBoutDetection"]
+    minDistLabel.setVisible(checked)
+    minDistLineEdit.setVisible(checked)
+    adjustBoutsBtn.setVisible(not checked)
+    frameGapSlider.setVisible(checked)
+  coordinatesOnlyBoutDetectCheckbox.toggled.connect(coordinatesOnlyBoutDetectCheckboxToggled)
+  coordinatesOnlyBoutDetectCheckbox.setVisible((not trackingMethod and not app.configFile.get("headEmbeded", False)) or trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction" or trackingMethod == "fastCenterOfMassTracking_ClassicalBackgroundSubtraction")
+  layout.addWidget(coordinatesOnlyBoutDetectCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
   minDistLayout = QHBoxLayout()
   minDistLayout.addStretch()
@@ -963,6 +962,8 @@ def adjustBoutDetectionOnlyPage(useNext=True, nextCb=None, useBackground=True):
   layout.addWidget(frameGapSlider, alignment=Qt.AlignmentFlag.AlignCenter)
 
   coordinatesOnlyBoutDetectCheckbox.setChecked(coordinatesOnlyBoutDetectCheckbox.isVisible() and app.configFile.get("coordinatesOnlyBoutDetection", False))
+  if not useBackground:
+    coordinatesOnlyBoutDetectCheckbox.setVisible(False)
 
   fillGapLayout = QHBoxLayout()
   fillGapLayout.addStretch()

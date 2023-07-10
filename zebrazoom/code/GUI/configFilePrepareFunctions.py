@@ -578,14 +578,14 @@ def numberOfAnimals(nbanimals, animalsAlwaysVisible, forceBlobMethodForHeadTrack
     app.show_frame("IdentifyHeadCenter")
   elif app.organism == 'zebrafishNew':
     automaticallyFindOptimalParameters(app, app, True, detectBoutsMethod, algorithm == 1, not animalsAlwaysVisible, adjustBackgroundExtractionBasedOnNumberOfBlackPixels)
-    app.window.centralWidget().layout().currentWidget().refreshPage(showFasterTracking=not adjustBackgroundExtractionBasedOnNumberOfBlackPixels)
+    app.window.centralWidget().layout().currentWidget().refreshPage(showFasterTracking=algorithm == 1)
   elif app.organism == 'drosoorrodent' and not algorithm:
     automaticallyFindOptimalParameters(app, app, True, 0, False, not animalsAlwaysVisible, adjustBackgroundExtractionBasedOnNumberOfBlackPixels)
-    app.window.centralWidget().layout().currentWidget().refreshPage(showFasterTracking=not adjustBackgroundExtractionBasedOnNumberOfBlackPixels)
+    app.window.centralWidget().layout().currentWidget().refreshPage(showFasterTracking=algorithm == 1)
   else:
     identifyMultipleHead(app, app, nbanimals)
     util.addToHistory(app.show_frame)("FinishConfig")
-    app.window.centralWidget().layout().currentWidget().refreshPage(showFasterTracking=not adjustBackgroundExtractionBasedOnNumberOfBlackPixels)
+    app.window.centralWidget().layout().currentWidget().refreshPage(showFasterTracking=algorithm == 1)
 
 
 @util.addToHistory

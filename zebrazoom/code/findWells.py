@@ -190,10 +190,11 @@ def saveWellsRepartitionImage(wellPositions, frame, hyperparameters):
       cv2.putText(frame, str(i), (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2,cv2.LINE_AA)
   frame = cv2.resize(frame, (int(lengthX/2), int(lengthY/2))) # ???
   if hyperparameters['storeH5']:
-    with h5py.File(hyperparameters['H5filename'], 'a') as results:
-      if 'repartition' in results:
-        del results['repartition']
-      results.create_dataset('repartition', data=frame)
+    if 'H5filename' in hyperparameters:
+      with h5py.File(hyperparameters['H5filename'], 'a') as results:
+        if 'repartition' in results:
+          del results['repartition']
+        results.create_dataset('repartition', data=frame)
   else:
     outputFolder = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoNameWithTimestamp"])
     if not os.path.exists(outputFolder):
@@ -266,7 +267,7 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
               config.update(rotationAngleParams)
             with open(os.path.join(outputFolder, 'configUsed.json'), 'w') as f:
               json.dump(config, f)
-            frame = cv2.warpAffine(nonRotatedFrame, cv2.getRotationMatrix2D(tuple(x / 2 for x in frame.shape[1::-1]), value, 1.0), frame.shape[1::-1], flags=cv2.INTER_LINEAR)
+          frame = cv2.warpAffine(nonRotatedFrame, cv2.getRotationMatrix2D(tuple(x / 2 for x in frame.shape[1::-1]), value, 1.0), frame.shape[1::-1], flags=cv2.INTER_LINEAR)
           util.setPixmapFromCv(frame, video)
         extraBtns = (('Rotate video', rotateVideo, False),)
       else:
