@@ -21,7 +21,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     self._wellPositions = wellPositions
     self._hyperparameters = hyperparameters
     self._auDessusPerAnimalIdList = None
-    self._firstFrame = 1 #self._hyperparameters["firstFrame"]
+    self._firstFrame = self._hyperparameters["firstFrame"]
     self._lastFrame = self._hyperparameters["lastFrame"]
     self._nbTailPoints = self._hyperparameters["nbTailPoints"]
     self._previousFrames = None
@@ -43,11 +43,6 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
       print("Error opening video stream or file")
     
     # Simple background extraction with first and last frame of the video + Getting list of wells on which to run the tracking
-    if self._firstFrame != 1 or self._hyperparameters["firstFrame"] != 1:
-      self._firstFrame = 1
-      self._hyperparameters["firstFrame"] = 1
-      print("First frame selection not suported yet for super fast tracking")
-      # cap.set(cv2.CAP_PROP_POS_FRAMES, self._firstFrame - 1)
     ret, self._background = cap.read()
     cap.set(cv2.CAP_PROP_POS_FRAMES, int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) - 1)
     ret, frame = cap.read()
@@ -56,40 +51,29 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     print("listOfWellsOnWhichToRunTheTracking:", self._listOfWellsOnWhichToRunTheTracking)
     self._background = cv2.max(frame, self._background) # INCONSISTENT!!! should be changed!
     self._background = cv2.cvtColor(self._background, cv2.COLOR_BGR2GRAY) # INCONSISTENT!!! should be changed!
-    cap.set(cv2.CAP_PROP_POS_FRAMES, self._firstFrame - 1)
+    cap.set(cv2.CAP_PROP_POS_FRAMES, self._firstFrame)
     
     # Initializing variables
     times  = np.zeros((int(cap.get(cv2.CAP_PROP_FRAME_COUNT) + 1), 2))
     ret = True
-    if self._lastFrame != cap.get(cv2.CAP_PROP_FRAME_COUNT):
-      self._lastFrame = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
-      self._hyperparameters["lastFrame"] = self._lastFrame
-      self._trackingDataPerWell = [np.zeros((self._hyperparameters["nbAnimalsPerWell"], self._lastFrame-self._firstFrame+1, self._nbTailPoints, 2)) for _ in range(len(self._wellPositions))]
-      self._times2 = np.zeros((self._lastFrame - self._firstFrame + 1, 5))
-      print("Last frame selection not suported yet for super fast tracking")
     
     # Going through each frame of the video
     startTime = time.time()
-    k = self._firstFrame - 1
+    k = self._firstFrame
     while (ret and k <= self._lastFrame):
       time1 = time.time()
       ret, frame = cap.read()
       time2 = time.time()
       if ret:
-        if self._hyperparameters["backgroundSubtractionOnWholeImage"] or k == self._firstFrame - 1:
-          backgroundSubtractionOnWholeImage(self, frame, k)
+        if self._hyperparameters["backgroundSubtractionOnWholeImage"] or k == self._firstFrame:
+          backgroundSubtractionOnWholeImage(self, frame, k-self._firstFrame)
         else:
-          backgroundSubtractionOnlyOnROIs(self, frame, k)
+          backgroundSubtractionOnlyOnROIs(self, frame, k-self._firstFrame)
       
       time3 = time.time()
-      times[k, 0] = time2 - time1
-      times[k, 1] = time3 - time2
+      times[k-self._firstFrame, 0] = time2 - time1
+      times[k-self._firstFrame, 1] = time3 - time2
       k += 1
-    
-    ### IS THIS BELLOW REALLY NECESSARY? AND IF SO WHY?
-    for wellNumber in range(len(self._wellPositions)):
-      for numAnimal in range(self._hyperparameters["nbAnimalsPerWell"]):
-        self._trackingDataPerWell[wellNumber][numAnimal][0:self._lastFrame-2] = self._trackingDataPerWell[wellNumber][numAnimal][1:self._lastFrame-1]
     
     endTime = time.time()
     
@@ -117,7 +101,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     
     if self._hyperparameters["detectMovementWithRawVideoInsideTracking"] and self._hyperparameters["thresForDetectMovementWithRawVideo"]:
     
-      trackingHeadingAllAnimalsList = [[[((calculateAngle(self._trackingDataPerWell[wellNumber][animalNumber][i][0][0], self._trackingDataPerWell[wellNumber][animalNumber][i][0][1], self._trackingDataPerWell[wellNumber][animalNumber][i][1][0], self._trackingDataPerWell[wellNumber][animalNumber][i][1][1]) + math.pi) % (2 * math.pi) if len(self._trackingDataPerWell[wellNumber][0][i]) > 1 else 0) for i in range(0, self._lastFrame)] for animalNumber in range(0, self._hyperparameters["nbAnimalsPerWell"])] for wellNumber in range(0, len(self._wellPositions))]
+      trackingHeadingAllAnimalsList = [[[((calculateAngle(self._trackingDataPerWell[wellNumber][animalNumber][i][0][0], self._trackingDataPerWell[wellNumber][animalNumber][i][0][1], self._trackingDataPerWell[wellNumber][animalNumber][i][1][0], self._trackingDataPerWell[wellNumber][animalNumber][i][1][1]) + math.pi) % (2 * math.pi) if len(self._trackingDataPerWell[wellNumber][0][i]) > 1 else 0) for i in range(0, self._lastFrame-self._firstFrame+1)] for animalNumber in range(0, self._hyperparameters["nbAnimalsPerWell"])] for wellNumber in range(0, len(self._wellPositions))]
       
       return {wellNumber: extractParameters([self._trackingDataPerWell[wellNumber], trackingHeadingAllAnimalsList[wellNumber], [], 0, 0, self._auDessusPerAnimalIdList[wellNumber]], wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background) for wellNumber in range(0, len(self._wellPositions))}
 
