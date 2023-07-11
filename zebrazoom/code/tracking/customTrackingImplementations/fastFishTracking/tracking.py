@@ -54,7 +54,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     cap.set(cv2.CAP_PROP_POS_FRAMES, self._firstFrame)
     
     # Initializing variables
-    times  = np.zeros((int(cap.get(cv2.CAP_PROP_FRAME_COUNT) + 1), 2))
+    times  = np.zeros((self._lastFrame - self._firstFrame + 1, 2))
     ret = True
     
     # Going through each frame of the video
@@ -118,8 +118,18 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
       return {wellNumber: extractParameters([self._trackingDataPerWell[wellNumber], trackingHeadingAllAnimalsList[wellNumber], [], 0, 0], wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background) for wellNumber in range(0, len(self._wellPositions))}
 
     else:
-      
-      outputData = detectMovementWithTrackedDataAfterTracking(self)
+    
+      if not(self._hyperparameters["detectBouts"]):
+        
+        trackingHeadingAllAnimalsList = [[[((calculateAngle(self._trackingDataPerWell[wellNumber][animalNumber][i][0][0], self._trackingDataPerWell[wellNumber][animalNumber][i][0][1], self._trackingDataPerWell[wellNumber][animalNumber][i][1][0], self._trackingDataPerWell[wellNumber][animalNumber][i][1][1]) + math.pi) % (2 * math.pi) if len(self._trackingDataPerWell[wellNumber][0][i]) > 1 else 0) for i in range(0, self._lastFrame-self._firstFrame+1)] for animalNumber in range(0, self._hyperparameters["nbAnimalsPerWell"])] for wellNumber in range(0, len(self._wellPositions))]
+        
+        self._auDessusPerAnimalIdList = [[np.ones((self._lastFrame-self._firstFrame+1, 1)) for nbAnimalsPerWell in range(0, self._hyperparameters["nbAnimalsPerWell"])] for wellNumber in range(len(self._wellPositions))]
+        
+        return {wellNumber: extractParameters([self._trackingDataPerWell[wellNumber], trackingHeadingAllAnimalsList[wellNumber], [], 0, 0, self._auDessusPerAnimalIdList[wellNumber]], wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background) for wellNumber in range(0, len(self._wellPositions))}
+        
+      else:
+        
+        outputData = detectMovementWithTrackedDataAfterTracking(self)
       
       return outputData
 
