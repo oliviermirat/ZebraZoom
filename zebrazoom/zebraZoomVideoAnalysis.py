@@ -97,7 +97,8 @@ class ZebraZoomVideoAnalysis:
         with open(os.path.join(inputFilesFolder, 'intermediaryWellPositionReloadNoMatterWhat.txt'), 'rb') as outfile:
           self.wellPositions = pickle.load(outfile)
         gridSystem = len(self.wellPositions) > 1 and len({(pos['lengthX'], pos['lengthY']) for pos in self.wellPositions}) == 1
-        if self._hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"] ^ gridSystem or len(self.wellPositions) != self._hyperparameters["nbWells"]:
+        nbWells = self._hyperparameters["nbWellsPerRows"] * self._hyperparameters["nbRowsOfWells"] if self._hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"] else self._hyperparameters["nbWells"]
+        if self._hyperparameters["groupOfMultipleSameSizeAndShapeEquallySpacedWells"] ^ gridSystem or len(self.wellPositions) != nbWells:
           self.wellPositions = findWells(os.path.join(self._pathToVideo, self._videoNameWithExt), self._hyperparameters)
       elif self._hyperparameters["reloadWellPositions"]:
         fname = next(reversed(sorted(name for name in os.listdir(self._hyperparameters['outputFolder']) if os.path.splitext(name)[0][:-20] == self._videoName and os.path.splitext(name)[0] != self._hyperparameters['videoNameWithTimestamp'])))
