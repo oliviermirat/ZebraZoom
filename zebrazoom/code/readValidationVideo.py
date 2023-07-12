@@ -90,7 +90,7 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
         resultFile = fileName
     videoPath = os.path.join(initialPath, os.path.join(s2, resultFile))
 
-  if not os.path.exists(videoPath):
+  if not os.path.isfile(videoPath):
     app = QApplication.instance()
     QMessageBox.critical(app.window, "Video not found", "Cannot display the validation video because it could not be found.")
     return
