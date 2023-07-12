@@ -146,7 +146,8 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
   app = QApplication.instance()
   app.wellPositions = wellPositions = []
   try:
-    storeH5 = initialConfigFile.pop('storeH5', None)
+    storeH5 = initialConfigFile.get('storeH5')
+    initialConfigFile['storeH5'] = 1
     with app.busyCursor():
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, initialConfigFile, ["outputFolder", app.ZZoutputLocation]).run()
   except ValueError:
@@ -154,6 +155,8 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
   finally:
     if storeH5 is not None:
       initialConfigFile['storeH5'] = storeH5
+    else:
+      del initialConfigFile['storeH5']
     del initialConfigFile["exitAfterWellsDetection"]
     del app.wellPositions
   if not wellPositions:
@@ -423,13 +426,16 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
   app = QApplication.instance()
   with app.busyCursor():
     try:
-      storeH5 = configFile.pop('storeH5', None)
+      storeH5 = configFile.get('storeH5')
+      configFile['storeH5'] = 1
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, ["outputFolder", app.ZZoutputLocation]).run()
     except ValueError:
       configFile["exitAfterBackgroundExtraction"] = 0
     finally:
       if storeH5 is not None:
         configFile['storeH5'] = storeH5
+      else:
+        del configFile['storeH5']
 
   del configFile["exitAfterBackgroundExtraction"]
   del configFile["debugExtractBack"]
@@ -511,7 +517,8 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
   
   with app.busyCursor():
     try:
-      storeH5 = configFile.pop('storeH5', None)
+      storeH5 = configFile.get('storeH5')
+      configFile['storeH5'] = 1
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, ["outputFolder", app.ZZoutputLocation]).run()
     except ValueError:
       newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
@@ -522,6 +529,8 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
     finally:
       if storeH5 is not None:
         configFile['storeH5'] = storeH5
+      else:
+        del configFile['storeH5']
 
   del configFile["onlyTrackThisOneWell"]
   del configFile["trackTail"]

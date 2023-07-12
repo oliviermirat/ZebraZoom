@@ -292,7 +292,8 @@ def _adjustEyeTracking(firstFrame, totalFrames, ellipse=False):
 
   saved = False
   try:
-    storeH5 = app.configFile.pop('storeH5', None)
+    storeH5 = app.configFile.get('storeH5')
+    app.configFile['storeH5'] = 1
     if "lastFrame" in app.configFile and "firstFrame" in app.configFile and app.configFile["lastFrame"] < app.configFile["firstFrame"]:
       del app.configFile["lastFrame"]
     ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, app.configFile, argv).run()
@@ -303,6 +304,8 @@ def _adjustEyeTracking(firstFrame, totalFrames, ellipse=False):
   finally:
     if storeH5 is not None:
       app.configFile['storeH5'] = storeH5
+    else:
+      del app.configFile['storeH5']
 
   app.configFile = originalConfig
   if saved:

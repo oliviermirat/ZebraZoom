@@ -40,7 +40,7 @@ CONFIG_DEFAULT = \
   "debugEyeTracking" : 0,
   "debugEyeTrackingAdvanced" : 0,
   "onlyDoTheTrackingForThisNumberOfFrames": 0,
-  "createValidationVideo" : 0,
+  "createValidationVideo" : 1,
   "copyOriginalVideoToOutputFolderForValidation" : 0,
   "calculateAllTailAngles" : 0,
   "freqAlgoPosFollow" : 0,
@@ -308,7 +308,7 @@ CONFIG_DEFAULT = \
   "videoWidth": 0,
   "videoHeight": 0,
 
-  "storeH5": 1,
+  "storeH5": 0,
 }
 
 

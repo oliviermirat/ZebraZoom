@@ -185,7 +185,8 @@ def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
   app = QApplication.instance()
   with app.busyCursor():
     try:
-      storeH5 = configFile.pop('storeH5', None)
+      storeH5 = configFile.get('storeH5')
+      configFile['storeH5'] = 1
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
     except ValueError:
       newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
@@ -196,6 +197,8 @@ def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
     finally:
       if storeH5 is not None:
         configFile['storeH5'] = storeH5
+      else:
+        del configFile['storeH5']
 
   configFile["adjustRectangularWellsDetect"] = 0
 

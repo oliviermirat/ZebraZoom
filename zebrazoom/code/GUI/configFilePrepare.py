@@ -1611,16 +1611,16 @@ class FinishConfig(QWidget):
     self._oldFormatCheckbox = QCheckBox("Save results in the legacy (json) format")
     def oldFormatToggled(checked):
       if checked:
-        controller.configFile["storeH5"] = 0
+        if "storeH5" in controller.configFile:
+          del controller.configFile["storeH5"]
         if self._alwaysSaveCheckbox.isVisible():
           self._alwaysSaveCheckbox.setChecked(True)
         formatLabel.setText('Raw data will be saved in a json file')
       else:
+        controller.configFile["storeH5"] = 1
         if self._alwaysSaveCheckbox.isVisible():
           self._alwaysSaveCheckbox.setChecked(False)
         formatLabel.setText('Raw data will be saved in an hdf5 file')
-        if "storeH5" in controller.configFile:
-          del controller.configFile["storeH5"]
     self._oldFormatCheckbox.toggled.connect(oldFormatToggled)
     layout.addWidget(self._oldFormatCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -1687,11 +1687,15 @@ class FinishConfig(QWidget):
         checkbox.setVisible(True)
         if checkbox.isChecked():
           self.controller.configFile[param] = 1
-    storeLegacy = not self.controller.configFile.get('storeH5', True)
+    if 'storeH5' not in self.controller.configFile:
+      self.controller.configFile['storeH5'] = 1
+    storeLegacy = not self.controller.configFile['storeH5']
     if storeLegacy != self._oldFormatCheckbox.isChecked():
       self._oldFormatCheckbox.setChecked(storeLegacy)
     else:
       self._oldFormatCheckbox.toggled.emit(storeLegacy)
+    if 'createValidationVideo' not in self.controller.configFile:
+      self.controller.configFile['createValidationVideo'] = 0
 
   def showEvent(self, evt):
     self.refreshPage()
