@@ -36,6 +36,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
   def run(self):
     
     ### Step 1 (out of 2): Tracking:
+    resizeFrameFactor = self._hyperparameters["resizeFrameFactor"] if "resizeFrameFactor" in self._hyperparameters else 0
     
     # Getting video reader
     cap = zzVideoReading.VideoCapture(self._videoPath)
@@ -44,14 +45,22 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     
     # Simple background extraction with first and last frame of the video + Getting list of wells on which to run the tracking
     ret, self._background = cap.read()
+    if resizeFrameFactor:
+      self._background = cv2.resize(self._background, (int(len(self._background[0])/resizeFrameFactor), int(len(self._background)/resizeFrameFactor)))
     cap.set(cv2.CAP_PROP_POS_FRAMES, int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) - 1)
     ret, frame = cap.read()
+    if resizeFrameFactor:
+      frame = cv2.resize(frame, (int(len(frame[0])/resizeFrameFactor), int(len(frame)/resizeFrameFactor)))
     if self._hyperparameters["chooseWellsToRunTrackingOnWithFirstAndLastFrame"]:
       self._listOfWellsOnWhichToRunTheTracking = getListOfWellsOnWhichToRunTheTracking(self, self._background[:,:,0], frame[:,:,0])
     print("listOfWellsOnWhichToRunTheTracking:", self._listOfWellsOnWhichToRunTheTracking)
     self._background = cv2.max(frame, self._background) # INCONSISTENT!!! should be changed!
     self._background = cv2.cvtColor(self._background, cv2.COLOR_BGR2GRAY) # INCONSISTENT!!! should be changed!
     cap.set(cv2.CAP_PROP_POS_FRAMES, self._firstFrame)
+    
+    if resizeFrameFactor:
+      initialWellPositions = self._wellPositions.copy()
+      self._wellPositions = [{'topLeftX': int(pos['topLeftX']/resizeFrameFactor), 'topLeftY': int(pos['topLeftY']/resizeFrameFactor), 'lengthX': int(pos['lengthX']/resizeFrameFactor), 'lengthY': int(pos['lengthY']/resizeFrameFactor)} for pos in self._wellPositions]
     
     # Initializing variables
     times  = np.zeros((self._lastFrame - self._firstFrame + 1, 2))
@@ -64,6 +73,8 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
       time1 = time.time()
       ret, frame = cap.read()
       time2 = time.time()
+      if resizeFrameFactor:
+        frame = cv2.resize(frame, (int(len(frame[0])/resizeFrameFactor), int(len(frame)/resizeFrameFactor)))
       if ret:
         if self._hyperparameters["backgroundSubtractionOnWholeImage"] or k == self._firstFrame:
           backgroundSubtractionOnWholeImage(self, frame, k-self._firstFrame)
@@ -74,6 +85,10 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
       times[k-self._firstFrame, 0] = time2 - time1
       times[k-self._firstFrame, 1] = time3 - time2
       k += 1
+    
+    if resizeFrameFactor:
+      self._trackingDataPerWell = [resizeFrameFactor * elem for elem in self._trackingDataPerWell]
+      self._wellPositions = initialWellPositions
     
     endTime = time.time()
     
