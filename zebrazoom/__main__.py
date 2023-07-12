@@ -164,6 +164,9 @@ def _createParser():
   subparser.add_argument('videoName', help='Help for videoName')
   subparser.add_argument('offset', help='Help for offset', type=int)
 
+  subparser = otherScriptsSubparsers.add_parser('alternativeKinematicParameterCalculation', help='Help for alternativeKinematicParameterCalculation')
+  subparser.add_argument('nameOfExperiment', help='Help message for nameOfExperiment')
+
   subparser = subparsers.add_parser('exit', help='Run ZebraZoom and immediately exit.')
 
   if len(sys.argv) > 1 and sys.argv[1] not in subparsers.choices and os.path.exists(sys.argv[1]):

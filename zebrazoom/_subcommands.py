@@ -142,6 +142,10 @@ def createSmallValidationVideosForFlagged(args):
   from zebrazoom.code.createValidationVideo import createSmallValidationVideosForFlagged
   createSmallValidationVideosForFlagged(args.videoName.rstrip(r'\/'), args.offset)
 
+def alternativeKinematicParameterCalculation(args):
+  from zebrazoom.otherScripts.alternativeKinematicParameterCalculation import alternativeKinematicParameterCalculation
+  alternativeKinematicParameterCalculation(args)
+
 def exit(args):
   from PyQt5.QtCore import QTimer
   from zebrazoom.GUIAllPy import ZebraZoomApp
