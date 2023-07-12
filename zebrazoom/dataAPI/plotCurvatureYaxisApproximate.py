@@ -29,9 +29,11 @@ def plotCurvatureYaxisApproximate(curvature: np.array, xTimeValues: np.array, yD
     nbTicksYaxis = 2
   
   ax.set_xlabel('Time (in seconds)')
-  plt.xticks([i for i in range(0, len(curvature[0]), int(len(curvature[0])/nbTicksXaxis))], [int(100*(xTimeValues[0, i]))/100 for i in range(0, len(curvature[0]), int(len(curvature[0])/nbTicksXaxis))])
+  nbXaxis = int(len(curvature[0])/nbTicksXaxis) if int(len(curvature[0])/nbTicksXaxis) >= 2 else 2
+  plt.xticks([i for i in range(0, len(curvature[0]), nbXaxis)], [int(100*(xTimeValues[0, i]))/100 for i in range(0, len(curvature[0]), nbXaxis)])
   ax.set_ylabel('Rostral to Caudal (in mm)')
-  plt.yticks([i for i in range(0, len(curvature), int(len(curvature)/nbTicksYaxis))], [int(100 * videoPixelSize * tailLengthInPixels * ((len(curvature)-i)/len(curvature)) )/100 for i in range(0, len(curvature), int(len(curvature)/nbTicksYaxis))])
+  nbYaxis = int(len(curvature)/nbTicksYaxis) if int(len(curvature)/nbTicksYaxis) >= 2 else 2
+  plt.yticks([i for i in range(0, len(curvature), nbYaxis)], [int(100 * videoPixelSize * tailLengthInPixels * ((len(curvature)-i)/len(curvature)) )/100 for i in range(0, len(curvature), nbYaxis)])
   
   ax.set_xlim([0, xAxisLengthInSeconds * videoFPS])
   ax.set_ylim([0, (yAxisLengthInMm * len(curvature)) / (videoPixelSize * tailLengthInPixels)])
