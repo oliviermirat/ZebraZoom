@@ -60,6 +60,8 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
                               buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, defaultButton=QMessageBox.StandardButton.Yes) != QMessageBox.StandardButton.Yes:
         return None
       videoName, _ = QFileDialog.getOpenFileName(app.window, 'Select video', os.path.expanduser("~"))
+      if not videoName:
+        return
       videoPath = supstruct["pathToOriginalVideo"] = videoName
       if os.path.splitext(resultsPath)[1] != '.h5':
         with open(resultsPath, 'w') as f:
