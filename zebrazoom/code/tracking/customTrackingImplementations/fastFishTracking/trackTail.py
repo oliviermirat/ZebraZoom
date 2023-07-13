@@ -84,8 +84,9 @@ def __insideTrackTail(depth, headPosition, frame, points, angle, maxDepth, steps
       points = appendPoint(xTot, yTot, points)
     
     if debug:
-      cv2.circle(frame, (xTot, yTot), 1, (0,0,0),   -1)
-      util.showFrame(frame, title="HeadEmbeddedTailTracking")
+      frameDisplay = frame.copy()
+      cv2.circle(frameDisplay, (xTot, yTot), 1, (0,0,0),   -1)
+      util.showFrame(frameDisplay, title="HeadEmbeddedTailTracking")
     
     newTheta = calculateAngle(x,y,xTot,yTot)
     
@@ -114,7 +115,7 @@ def __insideTrackTail(depth, headPosition, frame, points, angle, maxDepth, steps
   return (points, lastFirstTheta, medianPixTotList)
 
 
-def trackTail(frameROI, headPosition, hyperparameters, wellNumber, frameNumber, lastFirstTheta):
+def trackTail(self, frameROI, headPosition, hyperparameters, wellNumber, frameNumber, lastFirstTheta):
   
   steps   = hyperparameters["steps"]
   nbList  = 10 if hyperparameters["nbList"] == -1 else hyperparameters["nbList"]
@@ -125,6 +126,8 @@ def trackTail(frameROI, headPosition, hyperparameters, wellNumber, frameNumber, 
   points = np.zeros((2, 0))
   
   debug = hyperparameters["debugHeadEmbededFindNextPoints"]
+  if debug:
+    print("Frame number:", frameNumber + self._firstFrame)
   
   lenX = len(frameROI[0]) - 1
   lenY = len(frameROI) - 1
