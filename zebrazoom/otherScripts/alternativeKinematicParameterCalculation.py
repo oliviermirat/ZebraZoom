@@ -23,8 +23,8 @@ def alternativeKinematicParameterCalculation(args):
     trial_id  = excelOrganizationFile.loc[videoId]['trial_id']
     fq        = excelOrganizationFile.loc[videoId]['fq']
     pixelsize = excelOrganizationFile.loc[videoId]['pixelsize']
-    genotype  = [gen.replace("'", "") for gen in excelOrganizationFile.loc[videoId]['genotype'][1:-1].split(",")]
-    condition = [cond.replace("'", "") for cond in excelOrganizationFile.loc[videoId]['condition'][1:-1].split(",")]
+    genotype  = [gen.replace("'", "").replace('"', "").replace(' ', "") for gen in excelOrganizationFile.loc[videoId]['genotype'][1:-1].split(",")]
+    condition = [cond.replace("'", "").replace('"', "").replace(' ', "") for cond in excelOrganizationFile.loc[videoId]['condition'][1:-1].split(",")]
     include   = [int(incl) for incl in excelOrganizationFile.loc[videoId]['include'][1:-1].split(",")]
     allGenotypes.append(genotype)
     allConditions.append(condition)
@@ -49,8 +49,8 @@ def alternativeKinematicParameterCalculation(args):
     trial_id  = excelOrganizationFile.loc[videoId]['trial_id']
     fq        = excelOrganizationFile.loc[videoId]['fq']
     pixelsize = excelOrganizationFile.loc[videoId]['pixelsize']
-    genotype  = [gen.replace("'", "") for gen in excelOrganizationFile.loc[videoId]['genotype'][1:-1].split(",")]
-    condition = [cond.replace("'", "") for cond in excelOrganizationFile.loc[videoId]['condition'][1:-1].split(",")]
+    genotype  = [gen.replace("'", "").replace('"', "").replace(' ', "") for gen in excelOrganizationFile.loc[videoId]['genotype'][1:-1].split(",")]
+    condition = [cond.replace("'", "").replace('"', "").replace(' ', "") for cond in excelOrganizationFile.loc[videoId]['condition'][1:-1].split(",")]
     include   = [int(incl) for incl in excelOrganizationFile.loc[videoId]['include'][1:-1].split(",")]
     pathToResultFile = os.path.join(os.path.join('zebrazoom/ZZoutput', trial_id), 'results_' + trial_id + '.txt') if path == "defaultZZoutputFolder" else os.path.join(path, 'results_' + trial_id + '.txt')
     with open(pathToResultFile) as f:
