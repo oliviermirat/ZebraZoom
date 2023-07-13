@@ -189,12 +189,13 @@ def saveWellsRepartitionImage(wellPositions, frame, hyperparameters):
         cv2.circle(frame, (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), 170, (0,0,255), 2)
       cv2.putText(frame, str(i), (int(wellPositions[i]['topLeftX'] + wellPositions[i]['lengthX'] / 2), int(wellPositions[i]['topLeftY'] + wellPositions[i]['lengthY'] / 2)), cv2.FONT_HERSHEY_SIMPLEX, 1,(255,255,255),2,cv2.LINE_AA)
   frame = cv2.resize(frame, (int(lengthX/2), int(lengthY/2))) # ???
+  if 'videoNameWithTimestamp' not in hyperparameters:
+    return frame
   if hyperparameters['storeH5']:
-    if 'H5filename' in hyperparameters:
-      with h5py.File(hyperparameters['H5filename'], 'a') as results:
-        if 'repartition' in results:
-          del results['repartition']
-        results.create_dataset('repartition', data=frame)
+    with h5py.File(hyperparameters['H5filename'], 'a') as results:
+      if 'repartition' in results:
+        del results['repartition']
+      results.create_dataset('repartition', data=frame)
   else:
     outputFolder = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoNameWithTimestamp"])
     if not os.path.exists(outputFolder):

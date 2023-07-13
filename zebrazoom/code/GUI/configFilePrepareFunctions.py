@@ -533,12 +533,18 @@ def _fastTrackingBoutDetection(app, detectBoutsMethod):
   app.configFile["exitAfterWellsDetection"] = 1
   app.wellPositions = []
   try:
+    storeH5 = app.configFile.get('storeH5')
+    app.configFile['storeH5'] = 1
     with app.busyCursor():
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, app.configFile, ['outputFolder', app.ZZoutputLocation]).run()
   except ValueError:
       pass
   finally:
     del app.configFile["exitAfterWellsDetection"]
+    if storeH5 is not None:
+      app.configFile['storeH5'] = storeH5
+    else:
+      del app.configFile['storeH5']
   app.configFile["noBoutsDetection"] = 0
   if detectBoutsMethod == 1:
     app.configFile["detectMovementWithRawVideoInsideTracking"] = 1
