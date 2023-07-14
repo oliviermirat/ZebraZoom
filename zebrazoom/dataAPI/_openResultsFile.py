@@ -8,10 +8,8 @@ from zebrazoom.code.paths import getDefaultZZoutputFolder
 
 def _findResultsFile(videoName):
   videoName, _ = os.path.splitext(videoName)
-  if os.path.isabs(videoName):
-    ZZoutputPath = os.path.dirname(videoName)
-    videoName = os.path.basename(videoName)
-  else:
+  ZZoutputPath, videoName = os.path.split(os.path.normpath(videoName))
+  if not ZZoutputPath:
     ZZoutputPath = getDefaultZZoutputFolder()
   resultsPath = os.path.join(ZZoutputPath, f'{videoName}.h5')
   if os.path.exists(resultsPath):  # exact match
