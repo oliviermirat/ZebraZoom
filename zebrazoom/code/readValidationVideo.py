@@ -35,20 +35,15 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
       config = json.load(f)
   hyperparameters = getHyperparametersSimple(config)
 
-  if supstruct is None:
-    resultsPath = os.path.join(initialPath, os.path.join(s2, s3b + s4 + s5b))
-
-    if not(os.path.exists(resultsPath)):
-      mypath = os.path.join(initialPath, s2)
-      onlyfiles = [f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f))]
-      resultFile = ''
-      for fileName in onlyfiles:
-        if 'results_' in fileName:
-          resultFile = fileName
-      resultsPath = os.path.join(initialPath, os.path.join(s2, resultFile))
-
-    with open(resultsPath) as f:
-      supstruct = json.load(f)
+  if os.path.splitext(folderName)[1] != '.h5':
+    folderPath = os.path.join(initialPath, folderName)
+    resultFile = next((f for f in os.listdir(folderPath) if os.path.isfile(os.path.join(folderPath, f)) and os.path.splitext(f)[1] == '.txt' and f.startswith('results_')), None)
+    if resultFile is None:
+      return
+    resultsPath = os.path.join(initialPath, folderName, resultFile)
+    if supstruct is None:
+      with open(resultsPath) as f:
+        supstruct = json.load(f)
   else:
     resultsPath = os.path.join(initialPath, folderName)
   
