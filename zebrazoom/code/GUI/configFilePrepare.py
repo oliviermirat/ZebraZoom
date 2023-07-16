@@ -1547,11 +1547,32 @@ class FinishConfig(QWidget):
     def calculateCurvatureToggled(checked):
       if checked:
         controller.configFile["perBoutOutput"] = 1
+        nbTailPointsWidget.setVisible(True)
       else:
         if "perBoutOutput" in controller.configFile:
           del controller.configFile["perBoutOutput"]
+        nbTailPointsWidget.setVisible(False)
     self._calculateCurvatureCheckbox.toggled.connect(calculateCurvatureToggled)
     layout.addWidget(self._calculateCurvatureCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+    nbTailPointsLayout = QFormLayout()
+    nbTailPointsLayout.setFormAlignment(Qt.AlignmentFlag.AlignCenter)
+    nbTailPointsLayout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+    self._nbTailPoints = QLineEdit()
+    self._nbTailPoints.setValidator(QIntValidator(self._nbTailPoints))
+    self._nbTailPoints.validator().setBottom(1)
+    self._nbTailPoints.setPlaceholderText('10')
+    def nbTailPointsChanged(text):
+      if not text:
+        if 'nbTailPoints' in controller.configFile:
+          del controller.configFile['nbTailPoints']
+      else:
+        controller.configFile['nbTailPoints'] = int(text)
+    self._nbTailPoints.textChanged.connect(nbTailPointsChanged)
+    nbTailPointsLayout.addRow(QLabel('Number of tail points:'), self._nbTailPoints)
+    nbTailPointsWidget = QWidget()
+    nbTailPointsWidget.setLayout(nbTailPointsLayout)
+    nbTailPointsWidget.setVisible(False)
+    layout.addWidget(nbTailPointsWidget, alignment=Qt.AlignmentFlag.AlignCenter)
 
     self._calculateTailAngleHeatmapCheckbox = QCheckBox("Calculate tail angle heatmap")
     def calculateTailAngleHeatmapToggled(checked):
@@ -1696,6 +1717,7 @@ class FinishConfig(QWidget):
       self._oldFormatCheckbox.toggled.emit(storeLegacy)
     if 'createValidationVideo' not in self.controller.configFile:
       self.controller.configFile['createValidationVideo'] = 0
+    self._nbTailPoints.setText(str(self.controller.configFile.get('nbTailPoints', '')))
 
   def showEvent(self, evt):
     self.refreshPage()
