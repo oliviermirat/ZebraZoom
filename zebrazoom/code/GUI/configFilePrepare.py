@@ -13,6 +13,42 @@ import zebrazoom.code.util as util
 from zebrazoom.code.GUI.configFilePrepareFunctions import numberOfAnimals
 
 
+class StoreValidationVideoWidget(QWidget):
+  def __init__(self, showUseConfig=False):
+    super().__init__()
+    self._configFile = None
+    btnGroup = QButtonGroup()
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("The validation video (tracking points superimposed on the original video) should be:"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignCenter)
+    self._noValidationVideoRadioButton = QRadioButton("Visualizable from ZebraZoom's GUI\n(Recommended: faster tracking, less space taken on your hard drive)\n(only drawback: requires the original video to stay at the same location on the hard drive)")
+    btnGroup.addButton(self._noValidationVideoRadioButton)
+    layout.addWidget(self._noValidationVideoRadioButton, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._validationVideoRadioButton = QRadioButton("Saved on my hard drive\n(Not recommended: slower tracking, more space taken on your hard drive)")
+    btnGroup.addButton(self._validationVideoRadioButton)
+    layout.addWidget(self._validationVideoRadioButton, alignment=Qt.AlignmentFlag.AlignLeft)
+    if showUseConfig:
+      self._useConfigRadioButton = QRadioButton("Use the value from the configuration file")
+      btnGroup.addButton(self._useConfigRadioButton)
+      layout.addWidget(self._useConfigRadioButton, alignment=Qt.AlignmentFlag.AlignLeft)
+      self._useConfigRadioButton.setChecked(True)
+    else:
+      self._noValidationVideoRadioButton.toggled.connect(self.__toggled)
+    self.setLayout(layout)
+
+  def __toggled(self, checked):
+    if checked:
+      self._configFile['createValidationVideo'] = 0
+    elif 'createValidationVideo' in self._configFile:
+      del self._configFile['createValidationVideo']
+
+  def refresh(self, configFile):
+    self._configFile = configFile
+    self._noValidationVideoRadioButton.setChecked(not configFile.get('createValidationVideo', True))
+
+  def getOption(self):
+    return 0 if self._noValidationVideoRadioButton.isChecked() else 1 if self._validationVideoRadioButton.isChecked() else None
+
+
 class ChooseVideoToCreateConfigFileFor(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
@@ -1663,6 +1699,9 @@ class FinishConfig(QWidget):
     self._saveAllDataLabel = QLabel('Csv/excel files will not be created.')
     layout.addWidget(self._saveAllDataLabel, alignment=Qt.AlignmentFlag.AlignCenter)
 
+    self._validationVideoWidget = StoreValidationVideoWidget()
+    layout.addWidget(self._validationVideoWidget, alignment=Qt.AlignmentFlag.AlignCenter)
+
     layout.addStretch()
 
     testCheckbox = QCheckBox("Test tracking after saving config", self)
@@ -1717,6 +1756,7 @@ class FinishConfig(QWidget):
       self._oldFormatCheckbox.toggled.emit(storeLegacy)
     if 'createValidationVideo' not in self.controller.configFile:
       self.controller.configFile['createValidationVideo'] = 0
+    self._validationVideoWidget.refresh(self.controller.configFile)
     self._nbTailPoints.setText(str(self.controller.configFile.get('nbTailPoints', '')))
 
   def showEvent(self, evt):

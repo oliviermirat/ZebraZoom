@@ -51,12 +51,12 @@ _VIDEO_EXTENSIONS = {'.264', '.3g2', '.3gp', '.3gp2', '.3gpp', '.3gpp2', '.3mm',
                      '.wvx', '.xej', '.xel', '.xesc', '.xfl', '.xlmv', '.xmv', '.xvid', '.y4m', '.yog', '.yuv', '.zeg', '.zm1', '.zm2', '.zm3', '.zmv'}
 
 
-def chooseVideoToAnalyze(self, chooseFrames):
+def chooseVideoToAnalyze(self, createValidationVideo, chooseFrames):
     videoName, _ = QFileDialog.getOpenFileName(self.window, 'Select video', os.path.expanduser("~"), filter=f'Videos ({" ".join("*%s" % ext for ext in _VIDEO_EXTENSIONS)});; All files (*.*)')
     if not videoName:
       return
     ZZargs = ([videoName],)
-    ZZkwargs = {}
+    ZZkwargs = {'createValidationVideo': createValidationVideo}
 
     if chooseFrames:
       def beginningAndEndChosen():
@@ -498,7 +498,9 @@ class _VideoSelectionPage(QWidget):
         ZZkwargs.update({'headEmbedded': True, 'processes': 1})
         launchZebraZoom(*zip(*headEmbeddedVideos), **ZZkwargs)
     app.show_frame("Patience")
-    app.window.centralWidget().layout().currentWidget().setArgs((videos, configs), self._ZZkwargs)
+    kwargs = self._ZZkwargs.copy()
+    kwargs['showValidationVideoWidget'] = not (kwargs.get('sbatchMode', False) or kwargs.get('findMultipleROIs', False) or kwargs.get('headEmbedded', False))
+    app.window.centralWidget().layout().currentWidget().setArgs((videos, configs), kwargs)
 
 
 def _showTemporaryPage(ZZkwargs):
@@ -541,7 +543,7 @@ def chooseConfigFile(ZZargs, ZZkwargs):
     launchZebraZoom(*ZZargs, **ZZkwargs)
 
 
-def _runTracking(args, ZZoutputLocation):
+def _runTracking(args, createValidationVideo, ZZoutputLocation):
   videoPath, config = args
   path        = os.path.dirname(videoPath)
   nameWithExt = os.path.basename(videoPath)
@@ -549,6 +551,8 @@ def _runTracking(args, ZZoutputLocation):
   videoExt    = os.path.splitext(nameWithExt)[1][1:]
 
   tabParams = ["zebraZoomVideoAnalysis", path, name, videoExt, config, "freqAlgoPosFollow", 100, "outputFolder", ZZoutputLocation]
+  if createValidationVideo is not None:
+    tabParams.extend(['createValidationVideo', createValidationVideo])
   try:
     ZebraZoomVideoAnalysis(path, name, videoExt, config, tabParams).run()
   except ValueError:
@@ -558,7 +562,7 @@ def _runTracking(args, ZZoutputLocation):
 
 
 @util.showInProgressPage('Tracking')
-def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, findMultipleROIs=False,
+def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, createValidationVideo=None, findMultipleROIs=False,
                     askCoordinatesForAll=True, firstFrame=None, lastFrame=None, backgroundExtractionForceUseAllVideoFrames=None, processes=1):
   app = QApplication.instance()
 
@@ -586,7 +590,7 @@ def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, findM
 
   if processes > 1 and len(videos) > 1 and not sbatchMode:
     with Pool(min(processes, len(videos))) as pool:
-      pool.map(partial(_runTracking, ZZoutputLocation=app.ZZoutputLocation), zip(videos, configs))
+      pool.map(partial(_runTracking, createValidationVideo=createValidationVideo, ZZoutputLocation=app.ZZoutputLocation), zip(videos, configs))
   else:
     for videoPath, config in zip(videos, configs):
 
@@ -606,6 +610,8 @@ def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, findM
           tabParams.extend(["firstFrame", firstFrame])
         if lastFrame is not None:
           tabParams.extend(["lastFrame", lastFrame])
+        if createValidationVideo is not None:
+          tabParams.extend(['createValidationVideo', createValidationVideo])
         if findMultipleROIs:
           tabParams = tabParams + ["exitAfterWellsDetection", 1, "saveWellPositionsToBeReloadedNoMatterWhat", 1]
         try:

@@ -25,6 +25,7 @@ import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 from zebrazoom.code.readValidationVideo import readValidationVideo
 from zebrazoom.code.checkConsistencyOfParameters import checkConsistencyOfParameters
+from zebrazoom.code.GUI.configFilePrepare import StoreValidationVideoWidget
 from zebrazoom.code.GUI.GUI_InitialFunctions import chooseConfigFile, launchZebraZoom
 
 LARGE_FONT= QFont("Verdana", 12)
@@ -378,12 +379,15 @@ class VideoToAnalyze(QWidget):
         layout.addWidget(util.apply_style(QLabel("Choose video.", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("Look for the video you want to analyze.", self), alignment=Qt.AlignmentFlag.AlignCenter)
         button = util.apply_style(QPushButton("Choose file", self), background_color=util.DEFAULT_BUTTON_COLOR)
-        button.clicked.connect(lambda: controller.chooseVideoToAnalyze(chooseFramesCheckbox.isChecked()))
+        button.clicked.connect(lambda: controller.chooseVideoToAnalyze(storeValidationVideoWidget.getOption(), chooseFramesCheckbox.isChecked()))
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
         chooseFramesCheckbox = QCheckBox("Choose the first and the last frames on which the tracking should run (tracking results will be saved)", self)
         layout.addWidget(chooseFramesCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
 
         advancedOptionsLayout = QVBoxLayout()
+
+        storeValidationVideoWidget = StoreValidationVideoWidget(showUseConfig=True)
+        advancedOptionsLayout.addWidget(storeValidationVideoWidget, alignment=Qt.AlignmentFlag.AlignCenter)
 
         button = util.apply_style(QPushButton("Click here if you prefer to run the tracking from the command line", self), background_color='green')
         button.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/tracking/launchingTracking#launching-the-tracking-through-the-command-line"))
@@ -496,15 +500,30 @@ class Patience(QWidget):
 
         layout = QVBoxLayout()
         button = util.apply_style(QPushButton("Launch ZebraZoom on your video(s)", self), background_color=util.DEFAULT_BUTTON_COLOR)
-        button.clicked.connect(lambda: launchZebraZoom(*self._ZZargs, **self._ZZkwargs))
+        button.clicked.connect(self._launch)
         layout.addWidget(button, alignment=Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(QLabel("After clicking on the button above, please wait for ZebraZoom to run, you can look at the console outside of the GUI to check on the progress of ZebraZoom.", self), alignment=Qt.AlignmentFlag.AlignCenter)
+
+        advancedOptionsLayout = QVBoxLayout()
+        self._storeValidationVideoWidget = StoreValidationVideoWidget(showUseConfig=True)
+        advancedOptionsLayout.addWidget(self._storeValidationVideoWidget, alignment=Qt.AlignmentFlag.AlignCenter)
+        self._expander = util.Expander(self, "Show advanced options", advancedOptionsLayout)
+        layout.addWidget(self._expander)
 
         self.setLayout(layout)
 
     def setArgs(self, args, kwargs):
+        self._expander.setVisible(kwargs.pop('showValidationVideoWidget', False))
         self._ZZargs = args
         self._ZZkwargs = kwargs
+
+    def _launch(self):
+        kwargs = self._ZZkwargs.copy()
+        if self._expander.isVisible():
+            option = self._storeValidationVideoWidget.getOption()
+            if option is not None:
+                kwargs['createValidationVideo'] = option
+        launchZebraZoom(*self._ZZargs, **kwargs)
 
 
 class ZZoutro(QWidget):

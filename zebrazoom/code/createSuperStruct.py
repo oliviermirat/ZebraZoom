@@ -243,7 +243,7 @@ def createSuperStruct(dataPerWell, wellPositions, hyperparameters, pathToOrigina
   if hyperparameters["videoPixelSize"]:
     videoDataResults['videoPixelSize']    = hyperparameters["videoPixelSize"]
   
-  if not hyperparameters['createValidationVideo'] or hyperparameters['savePathToOriginalVideoForValidationVideo']:
+  if not hyperparameters['createValidationVideo'] or hyperparameters.get('savePathToOriginalVideoForValidationVideo', False):
     videoDataResults['pathToOriginalVideo'] = pathToOriginalVideo
   
   if hyperparameters["removeLargeInstantaneousDistanceData"]:
