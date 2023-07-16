@@ -1198,6 +1198,14 @@ class Expander(QWidget):
       toggleAnimation.start()
     toggleButton.clicked.connect(startAnimation)
 
+  def updateLayout(self, layout):
+    widget = self._contentArea.widget()
+    if widget is None:
+      return
+    widget = QWidget(self)
+    widget.setLayout(layout)
+    self._contentArea.setWidget(widget)
+
   def refresh(self, availableHeight):
     layout = self._contentArea.layout()
     height = layout.sizeHint().height() if layout is not None else self._contentArea.widget().sizeHint().height() + 5

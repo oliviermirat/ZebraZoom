@@ -41,9 +41,12 @@ class StoreValidationVideoWidget(QWidget):
     elif 'createValidationVideo' in self._configFile:
       del self._configFile['createValidationVideo']
 
-  def refresh(self, configFile):
+  def refresh(self, configFile, videoPath=None):
     self._configFile = configFile
-    self._noValidationVideoRadioButton.setChecked(not configFile.get('createValidationVideo', True))
+    if configFile.get('createValidationVideo', True):
+      self._validationVideoRadioButton.setChecked(True)
+    else:
+      self._noValidationVideoRadioButton.setChecked(True)
 
   def getOption(self):
     return 0 if self._noValidationVideoRadioButton.isChecked() else 1 if self._validationVideoRadioButton.isChecked() else None
@@ -79,23 +82,517 @@ class ChooseVideoToCreateConfigFileFor(QWidget):
     self.setLayout(layout)
 
 
+class _SolveIssuesNearBordersWidget(QWidget):
+  def __init__(self):
+    super().__init__()
+    self._configFile = None
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("Solve issues near the borders of the wells/tanks/arenas"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    solveIssuesInfoLabel = QLabel("backgroundPreProcessParameters should be an odd positive integer. Higher value filters more pixels on the borders of the wells/tanks/arenas.")
+    solveIssuesInfoLabel.setMinimumSize(1, 1)
+    solveIssuesInfoLabel.resizeEvent = lambda evt: solveIssuesInfoLabel.setMinimumWidth(evt.size().width()) or solveIssuesInfoLabel.setWordWrap(evt.size().width() <= solveIssuesInfoLabel.sizeHint().width())
+    layout.addWidget(solveIssuesInfoLabel, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    self._backgroundPreProcessParameters = backgroundPreProcessParameters = QLineEdit()
+    backgroundPreProcessParameters.setValidator(QIntValidator(backgroundPreProcessParameters))
+    backgroundPreProcessParameters.validator().setBottom(0)
+
+    def updateBackgroundPreProcessParameters(text):
+      if text:
+        self._configFile["backgroundPreProcessMethod"] = ["erodeThenMin"]
+        self._configFile["backgroundPreProcessParameters"] = [[int(text)]]
+      else:
+        if self._originalBackgroundPreProcessMethod is not None:
+          self._configFile["backgroundPreProcessMethod"] = self._originalBackgroundPreProcessMethod
+        elif "backgroundPreProcessMethod" in self._configFile:
+          del self._configFile["backgroundPreProcessMethod"]
+        if self._originalBackgroundPreProcessParameters is not None:
+          self._configFile["backgroundPreProcessParameters"] = self._originalBackgroundPreProcessParameters
+        elif "backgroundPreProcessParameters" in self._configFile:
+          del self._configFile["backgroundPreProcessParameters"]
+    backgroundPreProcessParameters.textChanged.connect(updateBackgroundPreProcessParameters)
+    backgroundPreProcessParametersLayout = QFormLayout()
+    backgroundPreProcessParametersLayout.setFormAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    backgroundPreProcessParametersLayout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+    backgroundPreProcessParametersLayout.addRow("backgroundPreProcessParameters:", backgroundPreProcessParameters)
+    layout.addLayout(backgroundPreProcessParametersLayout)
+    self.setLayout(layout)
+
+  def refresh(self, configFile, videoPath=None):
+    self._configFile = configFile
+    self._originalBackgroundPreProcessParameters = configFile.get("backgroundPreProcessParameters")
+    self._originalBackgroundPreProcessMethod = configFile.get("backgroundPreProcessMethod")
+    self._backgroundPreProcessParameters.setText('')
+    if self._originalBackgroundPreProcessParameters is not None and self._originalBackgroundPreProcessMethod is not None:
+      if self._originalBackgroundPreProcessMethod[0] == 'erodeThenMin':
+        self._backgroundPreProcessParameters.setText(str(self._originalBackgroundPreProcessParameters[0][0]))
+
+
+class _PostProcessTrajectoriesWidget(QWidget):
+  def __init__(self):
+    super().__init__()
+    self._configFile = None
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("Post-process animal center trajectories"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    postProcessTrajectoriesInfoLabel = QLabel("postProcessMaxDistanceAuthorized is the maximum distance in pixels above which it is considered that an animal was detected incorrectly (click on the button to adjust it visually). postProcessMaxDisapearanceFrames is the maximum number of frames for which the post-processing will consider that an animal can be incorrectly detected.")
+    postProcessTrajectoriesInfoLabel.setMinimumSize(1, 1)
+    postProcessTrajectoriesInfoLabel.resizeEvent = lambda evt: postProcessTrajectoriesInfoLabel.setMinimumWidth(evt.size().width()) or postProcessTrajectoriesInfoLabel.setWordWrap(evt.size().width() <= postProcessTrajectoriesInfoLabel.sizeHint().width())
+    layout.addWidget(postProcessTrajectoriesInfoLabel, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+
+    formLayout = QFormLayout()
+    formLayout.setFormAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    formLayout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+    layout.addLayout(formLayout)
+    self._postProcessMaxDistanceAuthorized = postProcessMaxDistanceAuthorized = QLineEdit()
+    postProcessMaxDistanceAuthorized.setValidator(QIntValidator(postProcessMaxDistanceAuthorized))
+    postProcessMaxDistanceAuthorized.validator().setBottom(0)
+
+    def updatePostProcessMaxDistanceAuthorized(text):
+      if text:
+        self._configFile["postProcessMaxDistanceAuthorized"] = int(text)
+        self._configFile["postProcessMultipleTrajectories"] = 1
+      else:
+        if not postProcessMaxDisapearanceFrames.text():
+          if self._originalPostProcessMultipleTrajectories is not None:
+            self._configFile["postProcessMultipleTrajectories"] = self._originalPostProcessMultipleTrajectories
+          elif "postProcessMultipleTrajectories" in self._configFile:
+            del self._configFile["postProcessMultipleTrajectories"]
+        if self._originalPostProcessMaxDistanceAuthorized is not None:
+          self._configFile["postProcessMaxDistanceAuthorized"] = self._originalPostProcessMaxDistanceAuthorized
+        elif "postProcessMaxDistanceAuthorized" in self._configFile:
+          del self._configFile["postProcessMaxDistanceAuthorized"]
+    postProcessMaxDistanceAuthorized.textChanged.connect(updatePostProcessMaxDistanceAuthorized)
+    postProcessMaxDistanceAuthorizedLabel = QPushButton("postProcessMaxDistanceAuthorized:")
+
+    def modifyPostProcessMaxDistanceAuthorized():
+      cap = zzVideoReading.VideoCapture(self._videoPath)
+      cap.set(1, self._configFile.get("firstFrame", 1))
+      ret, frame = cap.read()
+      cancelled = False
+      def cancel():
+        nonlocal cancelled
+        cancelled = True
+      center, radius = util.getCircle(frame, 'Click on the center of an animal and select the distance which it can realistically travel', cancel)
+      if not cancelled:
+        postProcessMaxDistanceAuthorized.setText(str(radius))
+    postProcessMaxDistanceAuthorizedLabel.clicked.connect(modifyPostProcessMaxDistanceAuthorized)
+    formLayout.addRow(postProcessMaxDistanceAuthorizedLabel, postProcessMaxDistanceAuthorized)
+
+    self._postProcessMaxDisapearanceFrames = postProcessMaxDisapearanceFrames = QLineEdit()
+    postProcessMaxDisapearanceFrames.setValidator(QIntValidator(postProcessMaxDisapearanceFrames))
+    postProcessMaxDisapearanceFrames.validator().setBottom(0)
+
+    def updatePostProcessMaxDisapearanceFrames(text):
+      if text:
+        self._configFile["postProcessMaxDisapearanceFrames"] = int(text)
+        self._configFile["postProcessMultipleTrajectories"] = 1
+      else:
+        if not postProcessMaxDistanceAuthorized.text():
+          if self._originalPostProcessMultipleTrajectories is not None:
+            self._configFile["postProcessMultipleTrajectories"] = self._originalPostProcessMultipleTrajectories
+          elif "postProcessMultipleTrajectories" in self._configFile:
+            del self._configFile["postProcessMultipleTrajectories"]
+        if self._originalPostProcessMaxDisapearanceFrames is not None:
+          self._configFile["postProcessMaxDisapearanceFrames"] = self._originalPostProcessMaxDisapearanceFrames
+        elif "postProcessMaxDisapearanceFrames" in self._configFile:
+          del self._configFile["postProcessMaxDisapearanceFrames"]
+    postProcessMaxDisapearanceFrames.textChanged.connect(updatePostProcessMaxDisapearanceFrames)
+    formLayout.addRow("postProcessMaxDisapearanceFrames:", postProcessMaxDisapearanceFrames)
+
+    self.setLayout(layout)
+
+  def refresh(self, configFile, videoPath=None):
+    self._configFile = configFile
+    self._videoPath = videoPath
+    self._originalPostProcessMultipleTrajectories = configFile.get("postProcessMultipleTrajectories")
+    self._originalPostProcessMaxDistanceAuthorized = configFile.get("postProcessMaxDistanceAuthorized")
+    if self._originalPostProcessMaxDistanceAuthorized is not None:
+      self._postProcessMaxDistanceAuthorized.setText(str(self._originalPostProcessMaxDistanceAuthorized))
+    else:
+      self._postProcessMaxDistanceAuthorized.setText('')
+    self._originalPostProcessMaxDisapearanceFrames = configFile.get("postProcessMaxDisapearanceFrames")
+    if self._originalPostProcessMaxDisapearanceFrames is not None:
+      self._postProcessMaxDisapearanceFrames.setText(str(self._originalPostProcessMaxDisapearanceFrames))
+    else:
+      self._postProcessMaxDisapearanceFrames.setText('')
+
+
+class _OptimizeDataAnalysisWidget(QWidget):
+  def __init__(self):
+    super().__init__()
+    self._configFile = None
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("Optimize data analysis"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+
+    def speedUpAnalysisToggled(checked):
+      analysisInfoWidget.setVisible(checked)
+      if not checked:
+        if "createPandasDataFrameOfParameters" in self._configFile:
+          del self._configFile["createPandasDataFrameOfParameters"]
+        if "videoFPS" in self._configFile:
+          del self._configFile["videoFPS"]
+        if "videoPixelSize" in self._configFile:
+          del self._configFile["videoPixelSize"]
+      else:
+        self._configFile["createPandasDataFrameOfParameters"] = 1
+        if videoFPS.text():
+          self._configFile["videoFPS"] = float(videoFPS.text())
+        if videoPixelSize.text():
+          self._configFile["videoPixelSize"] = float(videoPixelSize.text())
+    self._speedUpAnalysisCheckbox = speedUpAnalysisCheckbox = QCheckBox("Speed up final ZebraZoom behavior analysis")
+    speedUpAnalysisCheckbox.toggled.connect(speedUpAnalysisToggled)
+    layout.addWidget(speedUpAnalysisCheckbox, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+
+    analysisInfoLayout = QFormLayout()
+    analysisInfoLayout.setFormAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    analysisInfoLayout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+    self._videoFPS = videoFPS = QLineEdit()
+    videoFPS.setValidator(QDoubleValidator(videoFPS))
+    videoFPS.validator().setBottom(0)
+
+    def videoFPSChanged(text):
+      if text:
+        self._configFile["videoFPS"] = float(text)
+      elif "videoFPS" in self._configFile:
+        del self._configFile["videoFPS"]
+    videoFPS.textChanged.connect(videoFPSChanged)
+    analysisInfoLayout.addRow('videoFPS:', videoFPS)
+    self._videoPixelSize = videoPixelSize = QLineEdit()
+    videoPixelSize.setValidator(QDoubleValidator(videoPixelSize))
+    videoPixelSize.validator().setBottom(0)
+
+    def videoPixelSizeChanged(text):
+      if text:
+        self._configFile["videoPixelSize"] = float(text)
+      elif "videoPixelSize" in self._configFile:
+        del self._configFile["videoPixelSize"]
+    videoPixelSize.textChanged.connect(videoPixelSizeChanged)
+    analysisInfoLayout.addRow('videoPixelSize', videoPixelSize)
+    outerLayout = QVBoxLayout()
+    outerLayout.addLayout(analysisInfoLayout)
+    helpBtn = QPushButton("Help")
+    helpBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/behaviorAnalysis/optimizingSpeedOfFinalAnalysis"))
+    outerLayout.addWidget(helpBtn, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    self._analysisInfoWidget = analysisInfoWidget = QWidget()
+    analysisInfoWidget.setLayout(outerLayout)
+    layout.addWidget(analysisInfoWidget, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    self.setLayout(layout)
+
+  def refresh(self, configFile, videoPath=None):
+    self._configFile = configFile
+    if "createPandasDataFrameOfParameters" in configFile:
+      self._speedUpAnalysisCheckbox.setChecked(configFile["createPandasDataFrameOfParameters"])
+    else:
+      self._speedUpAnalysisCheckbox.setChecked(False)
+    self._analysisInfoWidget.setVisible(self._speedUpAnalysisCheckbox.isChecked())
+    if "videoFPS" in configFile:
+      self._videoFPS.setText(str(configFile["videoFPS"]))
+    if "videoPixelSize" in configFile:
+      self._videoPixelSize.setText(str(configFile["videoPixelSize"]))
+
+
+class _ValidationVideoOptionsWidget(QWidget):
+  def __init__(self):
+    super().__init__()
+    self._configFile = None
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("Validation video options"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    def updatePlotOnlyOneTailPointForVisu(checked):
+      if checked:
+        self._configFile["plotOnlyOneTailPointForVisu"] = 1
+      elif self._originalPlotOnlyOneTailPointForVisu is None:
+        if "plotOnlyOneTailPointForVisu" in self._configFile:
+          del self._configFile["plotOnlyOneTailPointForVisu"]
+      else:
+        self._configFile["plotOnlyOneTailPointForVisu"] = 0
+    self._plotOnlyOneTailPointForVisu = QCheckBox("Display tracking point only on the tail tip in validation videos")
+    self._plotOnlyOneTailPointForVisu.toggled.connect(updatePlotOnlyOneTailPointForVisu)
+    layout.addWidget(self._plotOnlyOneTailPointForVisu, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    self.setLayout(layout)
+
+  def refresh(self, configFile, videoPath=None):
+    self._configFile = configFile
+    self._originalPlotOnlyOneTailPointForVisu = configFile.get("plotOnlyOneTailPointForVisu")
+    if self._originalPlotOnlyOneTailPointForVisu is not None:
+      self._plotOnlyOneTailPointForVisu.setChecked(bool(self._originalPlotOnlyOneTailPointForVisu))
+    else:
+      self._plotOnlyOneTailPointForVisu.setChecked(False)
+
+
+class _TailTrackingQualityWidget(QWidget):
+  def __init__(self):
+    super().__init__()
+    self._configFile = None
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("Tail tracking quality"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    layout.addWidget(QLabel("Checking this increases quality, but makes tracking slower."), alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    self._recalculateForegroundImageBasedOnBodyArea = QCheckBox("recalculateForegroundImageBasedOnBodyArea")
+
+    def updateRecalculateForegroundImageBasedOnBodyArea(checked):
+      if checked:
+        self._configFile["recalculateForegroundImageBasedOnBodyArea"] = 1
+      elif self._originalRecalculateForegroundImageBasedOnBodyArea is None:
+        if "recalculateForegroundImageBasedOnBodyArea" in self._configFile:
+          del self._configFile["recalculateForegroundImageBasedOnBodyArea"]
+      else:
+        self._configFile["recalculateForegroundImageBasedOnBodyArea"] = 0
+    self._recalculateForegroundImageBasedOnBodyArea.toggled.connect(updateRecalculateForegroundImageBasedOnBodyArea)
+    layout.addWidget(self._recalculateForegroundImageBasedOnBodyArea, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    self.setLayout(layout)
+
+  def refresh(self, configFile, videoPath=None):
+    self._configFile = configFile
+    self._originalRecalculateForegroundImageBasedOnBodyArea = configFile.get("recalculateForegroundImageBasedOnBodyArea")
+    if self._originalRecalculateForegroundImageBasedOnBodyArea is not None:
+      self._recalculateForegroundImageBasedOnBodyArea.setChecked(bool(self._originalRecalculateForegroundImageBasedOnBodyArea))
+    else:
+      self._recalculateForegroundImageBasedOnBodyArea.setChecked(False)
+
+
+class _VideoRotationWidget(QWidget):
+  def __init__(self):
+    super().__init__()
+    self._configFile = None
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("Video rotation"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    formLayout = QFormLayout()
+    formLayout.setFormAlignment(Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    formLayout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+    layout.addLayout(formLayout)
+    rotationAngleLabel = QPushButton("Rotation angle (degrees):")
+    def modifyRotationAngle():
+      cap = zzVideoReading.VideoCapture(self._videoPath)
+      cap.set(1, self._configFile.get("firstFrame", 1))
+      ret, frame = cap.read()
+
+      try:
+        angle = float(self._rotationAngleLineEdit.text())
+      except ValueError:
+        angle = 0.
+
+      angle = util.getRotationAngle(frame, angle)
+      if angle is not None:
+        self._rotationAngleLineEdit.setText("{:.2f}".format(angle))
+    rotationAngleLabel.clicked.connect(modifyRotationAngle)
+    self._rotationAngleLineEdit = QLineEdit()
+    def updateRotationAngle(text):
+      if text:
+        try:
+          value = float(text)
+        except ValueError:
+          return
+        self._configFile["backgroundPreProcessMethod"] = ["rotate"]
+        self._configFile["imagePreProcessMethod"] = ["rotate"]
+        self._configFile["backgroundPreProcessParameters"] = [[value]]
+        self._configFile["imagePreProcessParameters"] = [[value]]
+      else:
+        if self._originalBackgroundPreProcessMethod is not None:
+          self._configFile["backgroundPreProcessMethod"] = self._originalBackgroundPreProcessMethod
+        elif "backgroundPreProcessMethod" in self._configFile:
+          del self._configFile["backgroundPreProcessMethod"]
+        if self._originalBackgroundPreProcessParameters is not None:
+          self._configFile["backgroundPreProcessParameters"] = self._originalBackgroundPreProcessParameters
+        elif "backgroundPreProcessParameters" in self._configFile:
+          del self._configFile["backgroundPreProcessParameters"]
+        if self._originalImagePreProcessMethod is not None:
+          self._configFile["imagePreProcessMethod"] = self._originalImagePreProcessMethod
+        elif "imagePreProcessMethod" in self._configFile:
+          del self._configFile["imagePreProcessMethod"]
+        if self._originalImagePreProcessParameters is not None:
+          self._configFile["imagePreProcessParameters"] = self._originalImagePreProcessParameters
+        elif "imagePreProcessParameters" in self._configFile:
+          del self._configFile["imagePreProcessParameters"]
+    self._rotationAngleLineEdit.textChanged.connect(updateRotationAngle)
+    formLayout.addRow(rotationAngleLabel, self._rotationAngleLineEdit)
+    self.setLayout(layout)
+
+  def refresh(self, configFile, videoPath=None):
+    self._configFile = configFile
+    self._videoPath = videoPath
+    self._originalBackgroundPreProcessMethod = configFile.get("backgroundPreProcessMethod")
+    self._originalBackgroundPreProcessParameters = configFile.get("backgroundPreProcessParameters")
+    if self._originalBackgroundPreProcessParameters is not None and self._originalBackgroundPreProcessMethod is not None:
+      if self._originalBackgroundPreProcessMethod[0] == 'rotate':
+        self._rotationAngleLineEdit.setText(str(self._originalBackgroundPreProcessParameters[0][0]))
+      else:
+        self._rotationAngleLineEdit.setText('')
+    else:
+      self._rotationAngleLineEdit.setText('')
+    self._originalImagePreProcessMethod = configFile.get("imagePreProcessMethod")
+    self._originalImagePreProcessParameters = configFile.get("imagePreProcessParameters")
+    if self._originalImagePreProcessParameters is not None and self._originalBackgroundPreProcessMethod is not None and self._originalBackgroundPreProcessMethod[0] == 'rotate':
+      self._rotationAngleLineEdit.setText(str(self._originalImagePreProcessParameters[0][0]))
+    else:
+      self._rotationAngleLineEdit.setText('')
+
+
+class _NonStationaryBackgroundWidget(QWidget):
+  def __init__(self):
+    super().__init__()
+    self._configFile = None
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("Non stationary background"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    self._updateBackgroundOnEveryFrameCheckbox = QCheckBox("Update background on every frame")
+    def updateBackroundOnEveryFrame(checked):
+      if checked:
+        self._configFile["updateBackgroundAtInterval"] = 1
+        self._configFile["useFirstFrameAsBackground"] = 1
+      else:
+        if self._originalUpdateBackgroundAtInterval is None:
+          if "updateBackgroundAtInterval" in self._configFile:
+            del self._configFile["updateBackgroundAtInterval"]
+        else:
+          self._configFile["updateBackgroundAtInterval"] = 0
+        if self._originalUseFirstFrameAsBackground is None:
+          if "useFirstFrameAsBackground" in self._configFile:
+            del self._configFile["useFirstFrameAsBackground"]
+        else:
+          self._configFile["useFirstFrameAsBackground"] = 0
+    self._updateBackgroundOnEveryFrameCheckbox.toggled.connect(updateBackroundOnEveryFrame)
+    layout.addWidget(self._updateBackgroundOnEveryFrameCheckbox, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    self.setLayout(layout)
+
+  def refresh(self, configFile, videoPath=None):
+    self._configFile = configFile
+    self._originalUpdateBackgroundAtInterval = configFile.get("updateBackgroundAtInterval")
+    self._originalUseFirstFrameAsBackground = configFile.get("useFirstFrameAsBackground")
+    if self._originalUpdateBackgroundAtInterval is not None and self._originalUseFirstFrameAsBackground is not None:
+      self._updateBackgroundOnEveryFrameCheckbox.setChecked(self._originalUpdateBackgroundAtInterval and self._originalUseFirstFrameAsBackground)
+    else:
+      self._updateBackgroundOnEveryFrameCheckbox.setChecked(False)
+
+
+class _NoMultiprocessingWidget(QWidget):
+  def __init__(self):
+    super().__init__()
+    self._configFile = None
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("No multiprocessing over wells"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    self._noMultiprocessingCheckbox = QCheckBox("No multiprocessing over wells")
+    def noMultiprocessingToggled(checked):
+      if checked:
+        self._configFile["fasterMultiprocessing"] = 2
+      else:
+        if self._originalNoMultiprocessing is None:
+          if "fasterMultiprocessing" in self._configFile:
+            del self._configFile["fasterMultiprocessing"]
+        else:
+          self._configFile["fasterMultiprocessing"] = 0
+    self._noMultiprocessingCheckbox.toggled.connect(noMultiprocessingToggled)
+    layout.addWidget(self._noMultiprocessingCheckbox, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    self.setLayout(layout)
+
+  def refresh(self, configFile, videoPath=None):
+    self._configFile = configFile
+    self._originalNoMultiprocessing = configFile.get("fasterMultiprocessing")
+    if self._originalNoMultiprocessing is not None:
+      self._noMultiprocessingCheckbox.setChecked(self._originalNoMultiprocessing == 2)
+    else:
+      self._noMultiprocessingCheckbox.setChecked(False)
+
+
+class _AdditionalCalculationsWidget(QWidget):
+  def __init__(self):
+    super().__init__()
+    self._configFile = None
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("Additional calculations"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+
+    self._calculateCurvatureCheckbox = QCheckBox("Calculate curvature")
+    def calculateCurvatureToggled(checked):
+      if checked:
+        self._configFile["perBoutOutput"] = 1
+        nbTailPointsWidget.setVisible(True)
+      else:
+        if self._originalCalculateCurvature is None:
+          if "perBoutOutput" in self._configFile:
+            del self._configFile["perBoutOutput"]
+        else:
+          self._configFile["perBoutOutput"] = 0
+        nbTailPointsWidget.setVisible(False)
+    self._calculateCurvatureCheckbox.toggled.connect(calculateCurvatureToggled)
+    layout.addWidget(self._calculateCurvatureCheckbox, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    nbTailPointsLayout = QFormLayout()
+    nbTailPointsLayout.setFormAlignment(Qt.AlignmentFlag.AlignCenter)
+    nbTailPointsLayout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+    self._nbTailPoints = QLineEdit()
+    self._nbTailPoints.setValidator(QIntValidator(self._nbTailPoints))
+    self._nbTailPoints.validator().setBottom(1)
+    self._nbTailPoints.setPlaceholderText('10')
+    def nbTailPointsChanged(text):
+      if not text:
+        if 'nbTailPoints' in self._configFile:
+          del self._configFile['nbTailPoints']
+      else:
+        self._configFile['nbTailPoints'] = int(text)
+    self._nbTailPoints.textChanged.connect(nbTailPointsChanged)
+    nbTailPointsLayout.addRow('Number of tail points:', self._nbTailPoints)
+    nbTailPointsWidget = QWidget()
+    nbTailPointsWidget.setLayout(nbTailPointsLayout)
+    nbTailPointsWidget.setVisible(False)
+    layout.addWidget(nbTailPointsWidget, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self._calculateTailAngleHeatmapCheckbox = QCheckBox("Calculate tail angle heatmap")
+    def calculateTailAngleHeatmapToggled(checked):
+      if checked:
+        self._configFile["tailAnglesHeatMap"] = 1
+      else:
+        if self._originalCalculateTailAngleHeatmap is None:
+          if "tailAnglesHeatMap" in self._configFile:
+            del self._configFile["tailAnglesHeatMap"]
+        else:
+          self._configFile["tailAnglesHeatMap"] = 0
+    self._calculateTailAngleHeatmapCheckbox.toggled.connect(calculateTailAngleHeatmapToggled)
+    layout.addWidget(self._calculateTailAngleHeatmapCheckbox, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    self.setLayout(layout)
+
+  def refresh(self, configFile, videoPath=None):
+    self._configFile = configFile
+    self._originalCalculateCurvature = configFile.get("perBoutOutput")
+    if self._originalCalculateCurvature is not None:
+      self._calculateCurvatureCheckbox.setChecked(bool(self._originalCalculateCurvature))
+    else:
+      self._calculateCurvatureCheckbox.setChecked(False)
+    self._originalCalculateTailAngleHeatmap = configFile.get("tailAnglesHeatMap")
+    if self._originalCalculateTailAngleHeatmap is not None:
+      self._calculateTailAngleHeatmapCheckbox.setChecked(bool(self._originalCalculateTailAngleHeatmap))
+    else:
+      self._calculateTailAngleHeatmapCheckbox.setChecked(False)
+    self._nbTailPoints.setText(str(configFile.get("nbTailPoints", '')))
+
+
+class _DocumentationLinksWidget(QWidget):
+  def __init__(self):
+    super().__init__()
+    self._configFile = None
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("Documentation links"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    speedUpTrackingBtn = QPushButton("Speed up tracking for 'Track heads and tails of freely swimming fish'")
+    speedUpTrackingBtn.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingSpeedOptimization.md"))
+    layout.addWidget(speedUpTrackingBtn, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    documentationBtn = QPushButton("Help")
+    documentationBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/configurationFile/throughGUI/trackingFreelySwimmingConfigOptimization"))
+    layout.addWidget(documentationBtn, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    self.setLayout(layout)
+
+  def refresh(self, configFile, videoPath=None):
+    pass
+
+
 class OptimizeConfigFile(QWidget):
   def __init__(self, controller):
     super().__init__(controller.window)
     self.controller = controller
-    self._originalBackgroundPreProcessMethod = None
-    self._originalBackgroundPreProcessParameters = None
-    self._originalPostProcessMultipleTrajectories = None
-    self._originalPostProcessMaxDistanceAuthorized = None
-    self._originalPostProcessMaxDisapearanceFrames = None
-    self._originalOutputValidationVideoContrastImprovement = None
-    self._originalRecalculateForegroundImageBasedOnBodyArea = None
-    self._originalPlotOnlyOneTailPointForVisu = None
+    self._originalConfig = {}
 
     self._headEmbeddedWidgets = set()
     self._freelySwimmingWidgets = set()
     self._fastCenterOfMassWidgets = set()
     self._centerOfMassWidgets = set()
+    self._advancedHeadEmbeddedWidgets = [StoreValidationVideoWidget, _OptimizeDataAnalysisWidget, _ValidationVideoOptionsWidget, _AdditionalCalculationsWidget]
+    self._advancedFreelySwimmingWidgets = [StoreValidationVideoWidget, _SolveIssuesNearBordersWidget, _PostProcessTrajectoriesWidget, _OptimizeDataAnalysisWidget, _ValidationVideoOptionsWidget, _TailTrackingQualityWidget,
+                                           _VideoRotationWidget, _NonStationaryBackgroundWidget, _NoMultiprocessingWidget, _AdditionalCalculationsWidget, _DocumentationLinksWidget]
+    self._advancedFastCenterOfMassWidgets = [StoreValidationVideoWidget, _SolveIssuesNearBordersWidget, _PostProcessTrajectoriesWidget, _OptimizeDataAnalysisWidget]
+    self._advancedCenterOfMassWidgets = [StoreValidationVideoWidget, _SolveIssuesNearBordersWidget, _PostProcessTrajectoriesWidget, _OptimizeDataAnalysisWidget]
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Optimize previously created configuration file", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -136,403 +633,7 @@ class OptimizeConfigFile(QWidget):
     layout.addWidget(headEmbeddedDocumentationBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     self._headEmbeddedWidgets.add(headEmbeddedDocumentationBtn)
 
-    advancedOptionsLayout = QGridLayout()
-    vframe = QFrame(self)
-    vframe.setFrameShape(QFrame.Shape.VLine)
-    advancedOptionsLayout.addWidget(vframe, 0, 2, 22, 1)
-    self._freelySwimmingWidgets.add(vframe)
-    self._fastCenterOfMassWidgets.add(vframe)
-    self._centerOfMassWidgets.add(vframe)
-    self._headEmbeddedWidgets.add(vframe)
-    hframe = QFrame(self)
-    hframe.setFrameShape(QFrame.Shape.HLine)
-    advancedOptionsLayout.addWidget(hframe, 4, 0, 1, 5)
-    self._freelySwimmingWidgets.add(hframe)
-    self._fastCenterOfMassWidgets.add(hframe)
-    self._centerOfMassWidgets.add(hframe)
-
-    solveIssuesLabel = util.apply_style(QLabel("Solve issues near the borders of the wells/tanks/arenas"), font_size='16px')
-    advancedOptionsLayout.addWidget(solveIssuesLabel, 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(solveIssuesLabel)
-    self._fastCenterOfMassWidgets.add(solveIssuesLabel)
-    self._centerOfMassWidgets.add(solveIssuesLabel)
-    solveIssuesInfoLabel = QLabel("backgroundPreProcessParameters should be an odd positive integer. Higher value filters more pixels on the borders of the wells/tanks/arenas.")
-    solveIssuesInfoLabel.setMinimumSize(1, 1)
-    solveIssuesInfoLabel.resizeEvent = lambda evt: solveIssuesInfoLabel.setMinimumWidth(evt.size().width()) or solveIssuesInfoLabel.setWordWrap(evt.size().width() <= solveIssuesInfoLabel.sizeHint().width())
-    advancedOptionsLayout.addWidget(solveIssuesInfoLabel, 1, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(solveIssuesInfoLabel)
-    self._fastCenterOfMassWidgets.add(solveIssuesInfoLabel)
-    self._centerOfMassWidgets.add(solveIssuesInfoLabel)
-    self._backgroundPreProcessParameters = backgroundPreProcessParameters = QLineEdit(controller.window)
-    backgroundPreProcessParameters.setValidator(QIntValidator(backgroundPreProcessParameters))
-    backgroundPreProcessParameters.validator().setBottom(0)
-
-    def updateBackgroundPreProcessParameters(text):
-      if text:
-        controller.configFile["backgroundPreProcessMethod"] = ["erodeThenMin"]
-        controller.configFile["backgroundPreProcessParameters"] = [[int(text)]]
-      else:
-        if self._originalBackgroundPreProcessMethod is not None:
-          controller.configFile["backgroundPreProcessMethod"] = self._originalBackgroundPreProcessMethod
-        elif "backgroundPreProcessMethod" in controller.configFile:
-          del controller.configFile["backgroundPreProcessMethod"]
-        if self._originalBackgroundPreProcessParameters is not None:
-          controller.configFile["backgroundPreProcessParameters"] = self._originalBackgroundPreProcessParameters
-        elif "backgroundPreProcessParameters" in controller.configFile:
-          del controller.configFile["backgroundPreProcessParameters"]
-    backgroundPreProcessParameters.textChanged.connect(updateBackgroundPreProcessParameters)
-    backgroundPreProcessParametersLabel = QLabel("backgroundPreProcessParameters:")
-    advancedOptionsLayout.addWidget(backgroundPreProcessParametersLabel, 2, 0, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(backgroundPreProcessParametersLabel)
-    self._fastCenterOfMassWidgets.add(backgroundPreProcessParametersLabel)
-    self._centerOfMassWidgets.add(backgroundPreProcessParametersLabel)
-    advancedOptionsLayout.addWidget(backgroundPreProcessParameters, 2, 1, Qt.AlignmentFlag.AlignLeft)
-    self._freelySwimmingWidgets.add(backgroundPreProcessParameters)
-    self._fastCenterOfMassWidgets.add(backgroundPreProcessParameters)
-    self._centerOfMassWidgets.add(backgroundPreProcessParameters)
-
-    postProcessTrajectoriesLabel = util.apply_style(QLabel("Post-process animal center trajectories"), font_size='16px')
-    advancedOptionsLayout.addWidget(postProcessTrajectoriesLabel, 0, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(postProcessTrajectoriesLabel)
-    self._fastCenterOfMassWidgets.add(postProcessTrajectoriesLabel)
-    self._centerOfMassWidgets.add(postProcessTrajectoriesLabel)
-    postProcessTrajectoriesInfoLabel = QLabel("postProcessMaxDistanceAuthorized is the maximum distance in pixels above which it is considered that an animal was detected incorrectly (click on the button to adjust it visually). postProcessMaxDisapearanceFrames is the maximum number of frames for which the post-processing will consider that an animal can be incorrectly detected.")
-    postProcessTrajectoriesInfoLabel.setMinimumSize(1, 1)
-    postProcessTrajectoriesInfoLabel.resizeEvent = lambda evt: postProcessTrajectoriesInfoLabel.setMinimumWidth(evt.size().width()) or postProcessTrajectoriesInfoLabel.setWordWrap(evt.size().width() <= postProcessTrajectoriesInfoLabel.sizeHint().width())
-    advancedOptionsLayout.addWidget(postProcessTrajectoriesInfoLabel, 1, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(postProcessTrajectoriesInfoLabel)
-    self._fastCenterOfMassWidgets.add(postProcessTrajectoriesInfoLabel)
-    self._centerOfMassWidgets.add(postProcessTrajectoriesInfoLabel)
-    self._postProcessMaxDistanceAuthorized = postProcessMaxDistanceAuthorized = QLineEdit(controller.window)
-    postProcessMaxDistanceAuthorized.setValidator(QIntValidator(postProcessMaxDistanceAuthorized))
-    postProcessMaxDistanceAuthorized.validator().setBottom(0)
-
-    def updatePostProcessMaxDistanceAuthorized(text):
-      if text:
-        controller.configFile["postProcessMaxDistanceAuthorized"] = int(text)
-        controller.configFile["postProcessMultipleTrajectories"] = 1
-      else:
-        if not postProcessMaxDisapearanceFrames.text():
-          if self._originalPostProcessMultipleTrajectories is not None:
-            controller.configFile["postProcessMultipleTrajectories"] = self._originalPostProcessMultipleTrajectories
-          elif "postProcessMultipleTrajectories" in controller.configFile:
-            del controller.configFile["postProcessMultipleTrajectories"]
-        if self._originalPostProcessMaxDistanceAuthorized is not None:
-          controller.configFile["postProcessMaxDistanceAuthorized"] = self._originalPostProcessMaxDistanceAuthorized
-        elif "postProcessMaxDistanceAuthorized" in controller.configFile:
-          del controller.configFile["postProcessMaxDistanceAuthorized"]
-    postProcessMaxDistanceAuthorized.textChanged.connect(updatePostProcessMaxDistanceAuthorized)
-    postProcessMaxDistanceAuthorizedLabel = QPushButton("postProcessMaxDistanceAuthorized:")
-
-    def modifyPostProcessMaxDistanceAuthorized():
-      cap = zzVideoReading.VideoCapture(controller.videoToCreateConfigFileFor)
-      cap.set(1, controller.configFile.get("firstFrame", 1))
-      ret, frame = cap.read()
-      cancelled = False
-      def cancel():
-        nonlocal cancelled
-        cancelled = True
-      center, radius = util.getCircle(frame, 'Click on the center of an animal and select the distance which it can realistically travel', cancel)
-      if not cancelled:
-        postProcessMaxDistanceAuthorized.setText(str(radius))
-    postProcessMaxDistanceAuthorizedLabel.clicked.connect(modifyPostProcessMaxDistanceAuthorized)
-    advancedOptionsLayout.addWidget(postProcessMaxDistanceAuthorizedLabel, 2, 3, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(postProcessMaxDistanceAuthorizedLabel)
-    self._fastCenterOfMassWidgets.add(postProcessMaxDistanceAuthorizedLabel)
-    self._centerOfMassWidgets.add(postProcessMaxDistanceAuthorizedLabel)
-    advancedOptionsLayout.addWidget(postProcessMaxDistanceAuthorized, 2, 4, Qt.AlignmentFlag.AlignLeft)
-    self._freelySwimmingWidgets.add(postProcessMaxDistanceAuthorized)
-    self._fastCenterOfMassWidgets.add(postProcessMaxDistanceAuthorized)
-    self._centerOfMassWidgets.add(postProcessMaxDistanceAuthorized)
-
-    self._postProcessMaxDisapearanceFrames = postProcessMaxDisapearanceFrames = QLineEdit(controller.window)
-    postProcessMaxDisapearanceFrames.setValidator(QIntValidator(postProcessMaxDisapearanceFrames))
-    postProcessMaxDisapearanceFrames.validator().setBottom(0)
-
-    def updatePostProcessMaxDisapearanceFrames(text):
-      if text:
-        controller.configFile["postProcessMaxDisapearanceFrames"] = int(text)
-        controller.configFile["postProcessMultipleTrajectories"] = 1
-      else:
-        if not postProcessMaxDistanceAuthorized.text():
-          if self._originalPostProcessMultipleTrajectories is not None:
-            controller.configFile["postProcessMultipleTrajectories"] = self._originalPostProcessMultipleTrajectories
-          elif "postProcessMultipleTrajectories" in controller.configFile:
-            del controller.configFile["postProcessMultipleTrajectories"]
-        if self._originalPostProcessMaxDisapearanceFrames is not None:
-          controller.configFile["postProcessMaxDisapearanceFrames"] = self._originalPostProcessMaxDisapearanceFrames
-        elif "postProcessMaxDisapearanceFrames" in controller.configFile:
-          del controller.configFile["postProcessMaxDisapearanceFrames"]
-    postProcessMaxDisapearanceFrames.textChanged.connect(updatePostProcessMaxDisapearanceFrames)
-    postProcessMaxDisapearanceFramesLabel = QLabel("postProcessMaxDisapearanceFrames:")
-    advancedOptionsLayout.addWidget(postProcessMaxDisapearanceFramesLabel, 3, 3, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(postProcessMaxDisapearanceFramesLabel)
-    self._fastCenterOfMassWidgets.add(postProcessMaxDisapearanceFramesLabel)
-    self._centerOfMassWidgets.add(postProcessMaxDisapearanceFramesLabel)
-    advancedOptionsLayout.addWidget(postProcessMaxDisapearanceFrames, 3, 4, Qt.AlignmentFlag.AlignLeft)
-    self._freelySwimmingWidgets.add(postProcessMaxDisapearanceFrames)
-    self._fastCenterOfMassWidgets.add(postProcessMaxDisapearanceFrames)
-    self._centerOfMassWidgets.add(postProcessMaxDisapearanceFrames)
-
-    optimizeDataAnalysisLabel = util.apply_style(QLabel("Optimize data analysis"), font_size='16px')
-    advancedOptionsLayout.addWidget(optimizeDataAnalysisLabel, 5, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._headEmbeddedWidgets.add(optimizeDataAnalysisLabel)
-    self._freelySwimmingWidgets.add(optimizeDataAnalysisLabel)
-    self._fastCenterOfMassWidgets.add(optimizeDataAnalysisLabel)
-    self._centerOfMassWidgets.add(optimizeDataAnalysisLabel)
-
-    plotOnlyOneTailPointForVisuLabel = util.apply_style(QLabel("Validation video options"), font_size='16px')
-    advancedOptionsLayout.addWidget(plotOnlyOneTailPointForVisuLabel, 5, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(plotOnlyOneTailPointForVisuLabel)
-    self._headEmbeddedWidgets.add(plotOnlyOneTailPointForVisuLabel)
-    def updatePlotOnlyOneTailPointForVisu(checked):
-      if checked:
-        controller.configFile["plotOnlyOneTailPointForVisu"] = 1
-      elif self._originalPlotOnlyOneTailPointForVisu is None:
-        if "plotOnlyOneTailPointForVisu" in controller.configFile:
-          del controller.configFile["plotOnlyOneTailPointForVisu"]
-      else:
-        controller.configFile["plotOnlyOneTailPointForVisu"] = 0
-    self._plotOnlyOneTailPointForVisu = QCheckBox("Display tracking point only on the tail tip in validation videos", self)
-    self._plotOnlyOneTailPointForVisu.toggled.connect(updatePlotOnlyOneTailPointForVisu)
-    advancedOptionsLayout.addWidget(self._plotOnlyOneTailPointForVisu, 6, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(self._plotOnlyOneTailPointForVisu)
-    self._headEmbeddedWidgets.add(self._plotOnlyOneTailPointForVisu)
-
-    def speedUpAnalysisToggled(checked):
-      analysisInfoWidget.setVisible(checked)
-      if not checked:
-        if "createPandasDataFrameOfParameters" in controller.configFile:
-          del controller.configFile["createPandasDataFrameOfParameters"]
-        if "videoFPS" in controller.configFile:
-          del controller.configFile["videoFPS"]
-        if "videoPixelSize" in controller.configFile:
-          del controller.configFile["videoPixelSize"]
-      else:
-        controller.configFile["createPandasDataFrameOfParameters"] = 1
-        if videoFPS.text():
-          controller.configFile["videoFPS"] = float(videoFPS.text())
-        if videoPixelSize.text():
-          controller.configFile["videoPixelSize"] = float(videoPixelSize.text())
-    self._speedUpAnalysisCheckbox = speedUpAnalysisCheckbox = QCheckBox("Speed up final ZebraZoom behavior analysis", self)
-    speedUpAnalysisCheckbox.toggled.connect(speedUpAnalysisToggled)
-    advancedOptionsLayout.addWidget(speedUpAnalysisCheckbox, 6, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._headEmbeddedWidgets.add(speedUpAnalysisCheckbox)
-    self._freelySwimmingWidgets.add(speedUpAnalysisCheckbox)
-    self._fastCenterOfMassWidgets.add(speedUpAnalysisCheckbox)
-    self._centerOfMassWidgets.add(speedUpAnalysisCheckbox)
-
-    analysisInfoLayout = QGridLayout()
-    analysisInfoLayout.addWidget(QLabel("videoFPS:"), 0, 0, Qt.AlignmentFlag.AlignLeft)
-    self._videoFPS = videoFPS = QLineEdit(self)
-    videoFPS.setValidator(QDoubleValidator(videoFPS))
-    videoFPS.validator().setBottom(0)
-
-    def videoFPSChanged(text):
-      if text:
-        controller.configFile["videoFPS"] = float(text)
-      elif "videoFPS" in controller.configFile:
-          del controller.configFile["videoFPS"]
-    videoFPS.textChanged.connect(videoFPSChanged)
-    analysisInfoLayout.addWidget(videoFPS, 0, 1, Qt.AlignmentFlag.AlignLeft)
-    analysisInfoLayout.addWidget(QLabel("videoPixelSize:"), 1, 0, Qt.AlignmentFlag.AlignLeft)
-    self._videoPixelSize = videoPixelSize = QLineEdit(self)
-    videoPixelSize.setValidator(QDoubleValidator(videoPixelSize))
-    videoPixelSize.validator().setBottom(0)
-
-    def videoPixelSizeChanged(text):
-      if text:
-        controller.configFile["videoPixelSize"] = float(text)
-      elif "videoPixelSize" in controller.configFile:
-          del controller.configFile["videoPixelSize"]
-    videoPixelSize.textChanged.connect(videoPixelSizeChanged)
-    analysisInfoLayout.addWidget(videoPixelSize, 1, 1, Qt.AlignmentFlag.AlignLeft)
-    helpBtn = QPushButton("Help", self)
-    helpBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/behaviorAnalysis/optimizingSpeedOfFinalAnalysis"))
-    analysisInfoLayout.addWidget(helpBtn, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._analysisInfoWidget = analysisInfoWidget = QWidget(self)
-    analysisInfoWidget.setLayout(analysisInfoLayout)
-    advancedOptionsLayout.addWidget(analysisInfoWidget, 7, 0, 3, 2, Qt.AlignmentFlag.AlignCenter)
-    self._headEmbeddedWidgets.add(analysisInfoWidget)
-    self._freelySwimmingWidgets.add(analysisInfoWidget)
-    self._fastCenterOfMassWidgets.add(analysisInfoWidget)
-    self._centerOfMassWidgets.add(analysisInfoWidget)
-
-    tailTrackingLabel = util.apply_style(QLabel("Tail tracking quality"), font_size='16px')
-    advancedOptionsLayout.addWidget(tailTrackingLabel, 11, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(tailTrackingLabel)
-    tailTrackingInfoLabel = QLabel("Checking this increases quality, but makes tracking slower.")
-    advancedOptionsLayout.addWidget(tailTrackingInfoLabel, 12, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(tailTrackingInfoLabel)
-    self._recalculateForegroundImageBasedOnBodyArea = QCheckBox("recalculateForegroundImageBasedOnBodyArea")
-
-    def updateRecalculateForegroundImageBasedOnBodyArea(checked):
-      if checked:
-        controller.configFile["recalculateForegroundImageBasedOnBodyArea"] = 1
-      elif self._originalRecalculateForegroundImageBasedOnBodyArea is None:
-        if "recalculateForegroundImageBasedOnBodyArea" in controller.configFile:
-          del controller.configFile["recalculateForegroundImageBasedOnBodyArea"]
-      else:
-        controller.configFile["recalculateForegroundImageBasedOnBodyArea"] = 0
-    self._recalculateForegroundImageBasedOnBodyArea.toggled.connect(updateRecalculateForegroundImageBasedOnBodyArea)
-    advancedOptionsLayout.addWidget(self._recalculateForegroundImageBasedOnBodyArea, 13, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(self._recalculateForegroundImageBasedOnBodyArea)
-
-    hframe = QFrame(self)
-    hframe.setFrameShape(QFrame.Shape.HLine)
-    advancedOptionsLayout.addWidget(hframe, 10, 0, 1, 5)
-    self._freelySwimmingWidgets.add(hframe)
-    self._headEmbeddedWidgets.add(hframe)
-    videoRotationLabel = util.apply_style(QLabel("Video rotation"), font_size='16px')
-    advancedOptionsLayout.addWidget(videoRotationLabel, 11, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(videoRotationLabel)
-    rotationAngleLabel = QPushButton("Rotation angle (degrees):")
-    def modifyRotationAngle():
-      cap = zzVideoReading.VideoCapture(controller.videoToCreateConfigFileFor)
-      cap.set(1, controller.configFile.get("firstFrame", 1))
-      ret, frame = cap.read()
-
-      try:
-        angle = float(self._rotationAngleLineEdit.text())
-      except ValueError:
-        angle = 0.
-
-      angle = util.getRotationAngle(frame, angle)
-      if angle is not None:
-        self._rotationAngleLineEdit.setText("{:.2f}".format(angle))
-    rotationAngleLabel.clicked.connect(modifyRotationAngle)
-    advancedOptionsLayout.addWidget(rotationAngleLabel, 12, 3, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(rotationAngleLabel)
-    self._rotationAngleLineEdit = QLineEdit()
-    def updateRotationAngle(text):
-      if text:
-        try:
-          value = float(text)
-        except ValueError:
-          return
-        controller.configFile["backgroundPreProcessMethod"] = ["rotate"]
-        controller.configFile["imagePreProcessMethod"] = ["rotate"]
-        controller.configFile["backgroundPreProcessParameters"] = [[value]]
-        controller.configFile["imagePreProcessParameters"] = [[value]]
-      else:
-        if self._originalBackgroundPreProcessMethod is not None:
-          controller.configFile["backgroundPreProcessMethod"] = self._originalBackgroundPreProcessMethod
-        elif "backgroundPreProcessMethod" in controller.configFile:
-          del controller.configFile["backgroundPreProcessMethod"]
-        if self._originalBackgroundPreProcessParameters is not None:
-          controller.configFile["backgroundPreProcessParameters"] = self._originalBackgroundPreProcessParameters
-        elif "backgroundPreProcessParameters" in controller.configFile:
-          del controller.configFile["backgroundPreProcessParameters"]
-        if self._originalImagePreProcessMethod is not None:
-          controller.configFile["imagePreProcessMethod"] = self._originalImagePreProcessMethod
-        elif "imagePreProcessMethod" in controller.configFile:
-          del controller.configFile["imagePreProcessMethod"]
-        if self._originalImagePreProcessParameters is not None:
-          controller.configFile["imagePreProcessParameters"] = self._originalImagePreProcessParameters
-        elif "imagePreProcessParameters" in controller.configFile:
-          del controller.configFile["imagePreProcessParameters"]
-    self._rotationAngleLineEdit.textChanged.connect(updateRotationAngle)
-    advancedOptionsLayout.addWidget(self._rotationAngleLineEdit, 12, 4, Qt.AlignmentFlag.AlignLeft)
-    self._freelySwimmingWidgets.add(self._rotationAngleLineEdit)
-
-    hframe = QFrame(self)
-    hframe.setFrameShape(QFrame.Shape.HLine)
-    advancedOptionsLayout.addWidget(hframe, 14, 0, 1, 5)
-    self._freelySwimmingWidgets.add(hframe)
-    nonStationaryBackgroundLabel = util.apply_style(QLabel("Non stationary background"), font_size='16px')
-    advancedOptionsLayout.addWidget(nonStationaryBackgroundLabel, 15, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(nonStationaryBackgroundLabel)
-    self._updateBackgroundOnEveryFrameCheckbox = QCheckBox("Update background on every frame")
-    def updateBackroundOnEveryFrame(checked):
-      if checked:
-        controller.configFile["updateBackgroundAtInterval"] = 1
-        controller.configFile["useFirstFrameAsBackground"] = 1
-      else:
-        if self._originalUpdateBackgroundAtInterval is None:
-          if "updateBackgroundAtInterval" in controller.configFile:
-            del controller.configFile["updateBackgroundAtInterval"]
-        else:
-          controller.configFile["updateBackgroundAtInterval"] = 0
-        if self._originalUseFirstFrameAsBackground is None:
-          if "useFirstFrameAsBackground" in controller.configFile:
-            del controller.configFile["useFirstFrameAsBackground"]
-        else:
-          controller.configFile["useFirstFrameAsBackground"] = 0
-    self._updateBackgroundOnEveryFrameCheckbox.toggled.connect(updateBackroundOnEveryFrame)
-    advancedOptionsLayout.addWidget(self._updateBackgroundOnEveryFrameCheckbox, 16, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(self._updateBackgroundOnEveryFrameCheckbox)
-
-    noMultiprocessingOverWellsLabel = util.apply_style(QLabel("No multiprocessing over wells"), font_size='16px')
-    advancedOptionsLayout.addWidget(noMultiprocessingOverWellsLabel, 15, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(noMultiprocessingOverWellsLabel)
-    self._noMultiprocessingCheckbox = QCheckBox("No multiprocessing over wells")
-    def noMultiprocessingToggled(checked):
-      if checked:
-        controller.configFile["fasterMultiprocessing"] = 2
-      else:
-        if self._originalNoMultiprocessing is None:
-          if "fasterMultiprocessing" in controller.configFile:
-            del controller.configFile["fasterMultiprocessing"]
-        else:
-          controller.configFile["fasterMultiprocessing"] = 0
-    self._noMultiprocessingCheckbox.toggled.connect(noMultiprocessingToggled)
-    advancedOptionsLayout.addWidget(self._noMultiprocessingCheckbox, 16, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(self._noMultiprocessingCheckbox)
-
-    additionalCalculationsLabel = util.apply_style(QLabel("Additional calculations"), font_size='16px')
-    advancedOptionsLayout.addWidget(additionalCalculationsLabel, 18, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(additionalCalculationsLabel)
-    self._headEmbeddedWidgets.add(additionalCalculationsLabel)
-
-    self._calculateCurvatureCheckbox = QCheckBox("Calculate curvature")
-    def calculateCurvatureToggled(checked):
-      if checked:
-        controller.configFile["perBoutOutput"] = 1
-      else:
-        if self._originalCalculateCurvature is None:
-          if "perBoutOutput" in controller.configFile:
-            del controller.configFile["perBoutOutput"]
-        else:
-          controller.configFile["perBoutOutput"] = 0
-    self._calculateCurvatureCheckbox.toggled.connect(calculateCurvatureToggled)
-    advancedOptionsLayout.addWidget(self._calculateCurvatureCheckbox, 19, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(self._calculateCurvatureCheckbox)
-    self._headEmbeddedWidgets.add(self._calculateCurvatureCheckbox)
-
-    self._calculateTailAngleHeatmapCheckbox = QCheckBox("Calculate tail angle heatmap")
-    def calculateTailAngleHeatmapToggled(checked):
-      if checked:
-        controller.configFile["tailAnglesHeatMap"] = 1
-      else:
-        if self._originalCalculateTailAngleHeatmap is None:
-          if "tailAnglesHeatMap" in controller.configFile:
-            del controller.configFile["tailAnglesHeatMap"]
-        else:
-          controller.configFile["tailAnglesHeatMap"] = 0
-    self._calculateTailAngleHeatmapCheckbox.toggled.connect(calculateTailAngleHeatmapToggled)
-    advancedOptionsLayout.addWidget(self._calculateTailAngleHeatmapCheckbox, 20, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(self._calculateTailAngleHeatmapCheckbox)
-    self._headEmbeddedWidgets.add(self._calculateTailAngleHeatmapCheckbox)
-
-    hframe = QFrame(self)
-    hframe.setFrameShape(QFrame.Shape.HLine)
-    advancedOptionsLayout.addWidget(hframe, 17, 0, 1, 5)
-    self._freelySwimmingWidgets.add(hframe)
-    advancedOptionsLabel = util.apply_style(QLabel("Documentation links"), font_size='16px')
-    advancedOptionsLayout.addWidget(advancedOptionsLabel, 18, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(advancedOptionsLabel)
-    speedUpTrackingBtn = QPushButton("Speed up tracking for 'Track heads and tails of freely swimming fish'", self)
-    speedUpTrackingBtn.clicked.connect(lambda: webbrowser.open_new("https://github.com/oliviermirat/ZebraZoom/blob/master/TrackingSpeedOptimization.md"))
-    advancedOptionsLayout.addWidget(speedUpTrackingBtn, 19, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(speedUpTrackingBtn)
-    documentationBtn = QPushButton("Help", self)
-    documentationBtn.clicked.connect(lambda: webbrowser.open_new("https://zebrazoom.org/documentation/docs/configurationFile/throughGUI/trackingFreelySwimmingConfigOptimization"))
-    advancedOptionsLayout.addWidget(documentationBtn, 20, 3, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    self._freelySwimmingWidgets.add(documentationBtn)
-
-    for idx in range(advancedOptionsLayout.columnCount()):
-      advancedOptionsLayout.setColumnStretch(idx, 1)
-    self._expander = util.Expander(self, 'Show advanced options', advancedOptionsLayout, showFrame=True, addScrollbars=True)
+    self._expander = util.Expander(self, 'Show advanced options', QVBoxLayout(), showFrame=True, addScrollbars=True)
     layout.addWidget(self._expander)
 
     frame = QFrame()
@@ -561,26 +662,58 @@ class OptimizeConfigFile(QWidget):
     wrapperLayout.addWidget(centralWidget, alignment=Qt.AlignmentFlag.AlignCenter)
     self.setLayout(wrapperLayout)
 
-  def refresh(self):
+  def _calculateAdvancedOptionsLayout(self, visibleWidgets):
+    rows = len(visibleWidgets) // 2 + len(visibleWidgets) % 2
+    advancedOptionsLayout = QGridLayout()
+    for idx in range(1, rows * 2 - 1, 2):
+      hframe = QFrame()
+      hframe.setFrameShape(QFrame.Shape.HLine)
+      advancedOptionsLayout.addWidget(hframe, idx, 0, 1, 3)
+    vframe = QFrame()
+    vframe.setFrameShape(QFrame.Shape.VLine)
+    advancedOptionsLayout.addWidget(vframe, 0, 1, rows * 2, 1)
+
+    widgets = iter(visibleWidgets)
+    for row in range(0, rows * 2, 2):
+      for col in (0, 2):
+        widget = next(widgets, None)
+        if widget is None:
+          continue
+        advancedOptionsLayout.addWidget(widget, row, col, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+
+    for idx in range(advancedOptionsLayout.columnCount()):
+      advancedOptionsLayout.setColumnStretch(idx, 1)
+
+    return advancedOptionsLayout
+
+  def _rebuildAdvancedOptions(self):
     app = QApplication.instance()
     trackingMethod = app.configFile.get("trackingMethod", None)
     if not trackingMethod:
       if app.configFile.get("headEmbeded", False):
         visibleWidgets = self._headEmbeddedWidgets
+        advancedWidgets = self._advancedHeadEmbeddedWidgets
       else:
         visibleWidgets = self._freelySwimmingWidgets
+        advancedWidgets = self._advancedFreelySwimmingWidgets
     elif trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction" or \
         trackingMethod == "fastCenterOfMassTracking_ClassicalBackgroundSubtraction":
       visibleWidgets = self._fastCenterOfMassWidgets
+      advancedWidgets = self._advancedFastCenterOfMassWidgets
     else:
       assert trackingMethod == "classicCenterOfMassTracking"
       visibleWidgets = self._centerOfMassWidgets
+      advancedWidgets = self._advancedCenterOfMassWidgets
     for widget in self._freelySwimmingWidgets | self._headEmbeddedWidgets | self._fastCenterOfMassWidgets | self._centerOfMassWidgets:
       if widget in visibleWidgets:
         widget.show()
       else:
         widget.hide()
+    visibleWidgets = [type_() for type_ in advancedWidgets]
+    for widget in visibleWidgets:
+      widget.refresh(app.configFile, app.videoToCreateConfigFileFor)
     self._expander.hide()
+    self._expander.updateLayout(self._calculateAdvancedOptionsLayout(visibleWidgets))
     maximumHeight = self._expander.maximumHeight()
     self._expander.setMaximumHeight(self.height())
     layout = self.layout().itemAt(0).widget().layout()
@@ -591,81 +724,15 @@ class OptimizeConfigFile(QWidget):
     self._expander.setMaximumHeight(maximumHeight)
     self._expander.refresh(availableHeight=availableHeight)
 
-    self._originalBackgroundPreProcessMethod = app.configFile.get("backgroundPreProcessMethod")
-    self._originalBackgroundPreProcessParameters = app.configFile.get("backgroundPreProcessParameters")
-    if self._originalBackgroundPreProcessParameters is not None and self._originalBackgroundPreProcessMethod is not None:
-      if self._originalBackgroundPreProcessMethod[0] == 'erodeThenMin':
-        self._backgroundPreProcessParameters.setText(str(self._originalBackgroundPreProcessParameters[0][0]))
-      elif self._originalBackgroundPreProcessMethod[0] == 'rotate':
-        self._rotationAngleLineEdit.setText(str(self._originalBackgroundPreProcessParameters[0][0]))
-      else:
-        self._backgroundPreProcessParameters.setText('')
-        self._rotationAngleLineEdit.setText('')
-    else:
-      self._backgroundPreProcessParameters.setText('')
-      self._rotationAngleLineEdit.setText('')
-    self._originalImagePreProcessMethod = app.configFile.get("imagePreProcessMethod")
-    self._originalImagePreProcessParameters = app.configFile.get("imagePreProcessParameters")
-    if self._originalImagePreProcessParameters is not None and self._originalBackgroundPreProcessMethod is not None and self._originalBackgroundPreProcessMethod[0] == 'rotate':
-      self._rotationAngleLineEdit.setText(str(self._originalImagePreProcessParameters[0][0]))
-    else:
-      self._rotationAngleLineEdit.setText('')
-    self._originalPostProcessMultipleTrajectories = app.configFile.get("postProcessMultipleTrajectories")
-    self._originalPostProcessMaxDistanceAuthorized = app.configFile.get("postProcessMaxDistanceAuthorized")
-    if self._originalPostProcessMaxDistanceAuthorized is not None:
-      self._postProcessMaxDistanceAuthorized.setText(str(self._originalPostProcessMaxDistanceAuthorized))
-    else:
-      self._postProcessMaxDistanceAuthorized.setText('')
-    self._originalPostProcessMaxDisapearanceFrames = app.configFile.get("postProcessMaxDisapearanceFrames")
-    if self._originalPostProcessMaxDisapearanceFrames is not None:
-      self._postProcessMaxDisapearanceFrames.setText(str(self._originalPostProcessMaxDisapearanceFrames))
-    else:
-      self._postProcessMaxDisapearanceFrames.setText('')
+  def refresh(self):
+    app = QApplication.instance()
+    self._rebuildAdvancedOptions()
     self._originalOutputValidationVideoContrastImprovement = app.configFile.get("outputValidationVideoContrastImprovement")
     if self._originalOutputValidationVideoContrastImprovement is not None:
       self._improveContrastCheckbox.setChecked(bool(self._originalOutputValidationVideoContrastImprovement))
     else:
       self._improveContrastCheckbox.setChecked(False)
-    self._originalRecalculateForegroundImageBasedOnBodyArea = app.configFile.get("recalculateForegroundImageBasedOnBodyArea")
-    if self._originalRecalculateForegroundImageBasedOnBodyArea is not None:
-      self._recalculateForegroundImageBasedOnBodyArea.setChecked(bool(self._originalRecalculateForegroundImageBasedOnBodyArea))
-    else:
-      self._recalculateForegroundImageBasedOnBodyArea.setChecked(False)
-    self._originalUpdateBackgroundAtInterval = app.configFile.get("updateBackgroundAtInterval")
-    self._originalUseFirstFrameAsBackground = app.configFile.get("useFirstFrameAsBackground")
-    if self._originalUpdateBackgroundAtInterval is not None and self._originalUseFirstFrameAsBackground is not None:
-      self._updateBackgroundOnEveryFrameCheckbox.setChecked(self._originalUpdateBackgroundAtInterval and self._originalUseFirstFrameAsBackground)
-    else:
-      self._updateBackgroundOnEveryFrameCheckbox.setChecked(False)
-    self._originalPlotOnlyOneTailPointForVisu = app.configFile.get("plotOnlyOneTailPointForVisu")
-    if self._originalPlotOnlyOneTailPointForVisu is not None:
-      self._plotOnlyOneTailPointForVisu.setChecked(bool(self._originalPlotOnlyOneTailPointForVisu))
-    else:
-      self._plotOnlyOneTailPointForVisu.setChecked(False)
-    self._originalNoMultiprocessing = app.configFile.get("fasterMultiprocessing")
-    if self._originalNoMultiprocessing is not None:
-      self._noMultiprocessingCheckbox.setChecked(self._originalNoMultiprocessing == 2)
-    else:
-      self._noMultiprocessingCheckbox.setChecked(False)
-    if "createPandasDataFrameOfParameters" in app.configFile:
-      self._speedUpAnalysisCheckbox.setChecked(app.configFile["createPandasDataFrameOfParameters"])
-    else:
-      self._speedUpAnalysisCheckbox.setChecked(False)
-    self._analysisInfoWidget.setVisible(self._speedUpAnalysisCheckbox.isChecked())
-    if "videoFPS" in app.configFile:
-      self._videoFPS.setText(str(app.configFile["videoFPS"]))
-    if "videoPixelSize" in app.configFile:
-      self._videoPixelSize.setText(str(app.configFile["videoPixelSize"]))
-    self._originalCalculateCurvature = app.configFile.get("perBoutOutput")
-    if self._originalCalculateCurvature is not None:
-      self._calculateCurvatureCheckbox.setChecked(bool(self._originalCalculateCurvature))
-    else:
-      self._calculateCurvatureCheckbox.setChecked(False)
-    self._originalCalculateTailAngleHeatmap = app.configFile.get("tailAnglesHeatMap")
-    if self._originalCalculateTailAngleHeatmap is not None:
-      self._calculateTailAngleHeatmapCheckbox.setChecked(bool(self._originalCalculateTailAngleHeatmap))
-    else:
-      self._calculateTailAngleHeatmapCheckbox.setChecked(False)
+
 
 class _ClickableImageLabel(QLabel):
   def __init__(self, parent, pixmap, clickedCallback):
@@ -1604,7 +1671,7 @@ class FinishConfig(QWidget):
       else:
         controller.configFile['nbTailPoints'] = int(text)
     self._nbTailPoints.textChanged.connect(nbTailPointsChanged)
-    nbTailPointsLayout.addRow(QLabel('Number of tail points:'), self._nbTailPoints)
+    nbTailPointsLayout.addRow('Number of tail points:', self._nbTailPoints)
     nbTailPointsWidget = QWidget()
     nbTailPointsWidget.setLayout(nbTailPointsLayout)
     nbTailPointsWidget.setVisible(False)
@@ -1650,7 +1717,7 @@ class FinishConfig(QWidget):
           del controller.configFile["videoFPS"]
     videoFPS.textChanged.connect(videoFPSChanged)
     videoFPS.textChanged.connect(updateSaveBtn)
-    videoInfoLayout.addRow(QLabel("videoFPS:"), videoFPS)
+    videoInfoLayout.addRow("videoFPS:", videoFPS)
     videoPixelSize = QLineEdit(self)
     videoPixelSize.setValidator(QDoubleValidator(videoPixelSize))
     videoPixelSize.validator().setBottom(0)
@@ -1662,7 +1729,7 @@ class FinishConfig(QWidget):
           del controller.configFile["videoPixelSize"]
     videoPixelSize.textChanged.connect(videoPixelSizeChanged)
     videoPixelSize.textChanged.connect(updateSaveBtn)
-    videoInfoLayout.addRow(QLabel("videoPixelSize:"), videoPixelSize)
+    videoInfoLayout.addRow("videoPixelSize:", videoPixelSize)
     layout.addLayout(videoInfoLayout)
 
     self._oldFormatCheckbox = QCheckBox("Save results in the legacy (json) format")
