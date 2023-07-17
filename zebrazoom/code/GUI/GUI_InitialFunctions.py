@@ -633,7 +633,7 @@ def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, creat
           tabParams.extend(["lastFrame", lastFrame])
         getTailExtremityFirstFrame(path, name, videoExt, config, tabParams)
 
-  if findMultipleROIs and not askCoordinatesForAll:
+  if len(videos) > 1 and findMultipleROIs and not askCoordinatesForAll:
     videoInputsFolder = os.path.join(app.ZZoutputLocation, '.ZebraZoomVideoInputs', os.path.splitext(os.path.basename(videos[0]))[0])
     coordinatesFile = os.path.join(videoInputsFolder, 'intermediaryWellPositionReloadNoMatterWhat.txt')
     rotationFile = os.path.join(videoInputsFolder, 'rotationAngle.txt')
