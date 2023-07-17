@@ -757,6 +757,11 @@ class CreateExperimentOrganizationExcel(QWidget):
     backgroundPath = os.path.join(folder, 'background.png')
     if os.path.exists(backgroundPath):
       return cv2.imread(backgroundPath)
+    repartitionPath = os.path.join(folder, 'repartition.jpg')
+    if os.path.exists(repartitionPath):
+      repartitionFrame = cv2.imread(repartitionPath)
+      repartitionFrame = cv2.resize(repartitionFrame, (int(len(repartitionFrame[0])*2), int(len(repartitionFrame)*2))) # This is necessary as the image size was reduced in findWell.py for some reason
+      return repartitionFrame
     expectedName = os.path.join(folder, '%s.avi' % os.path.basename(folder))
     validationVideo = expectedName if os.path.exists(expectedName) else next((os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(os.path.join(folder, f)) if f.endswith('.avi')), None)
     return zzVideoReading.VideoCapture(validationVideo).read()[1] if validationVideo is not None else None
