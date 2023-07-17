@@ -345,6 +345,11 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
     for param, value in overridenParameters.items():
       print("command line hyperparameter change:", param, value)
 
+      if param == 'createValidationVideo':
+        if 'savePathToOriginalVideoForValidationVideo' in config:
+          del config['savePathToOriginalVideoForValidationVideo']
+          del hyperparameters['savePathToOriginalVideoForValidationVideo']
+
       if param not in {"outputFolder", "coverPortionForHeadDetect", "freeSwimmingTailTrackingMethod",
                        "findContourPrecision", "headingCalculationMethod", "additionalOutputFolder"}:
         try:

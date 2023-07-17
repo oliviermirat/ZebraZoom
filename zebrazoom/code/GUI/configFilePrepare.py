@@ -36,6 +36,8 @@ class StoreValidationVideoWidget(QWidget):
     self.setLayout(layout)
 
   def __toggled(self, checked):
+    if 'savePathToOriginalVideoForValidationVideo' in self._configFile:
+      del self._configFile['savePathToOriginalVideoForValidationVideo']
     if checked:
       self._configFile['createValidationVideo'] = 0
     elif 'createValidationVideo' in self._configFile:
@@ -43,10 +45,12 @@ class StoreValidationVideoWidget(QWidget):
 
   def refresh(self, configFile, videoPath=None):
     self._configFile = configFile
-    if configFile.get('createValidationVideo', True):
+    blocked = self._noValidationVideoRadioButton.blockSignals(True)
+    if not configFile.get('savePathToOriginalVideoForValidationVideo', False) and configFile.get('createValidationVideo', True):
       self._validationVideoRadioButton.setChecked(True)
     else:
       self._noValidationVideoRadioButton.setChecked(True)
+    self._noValidationVideoRadioButton.blockSignals(blocked)
 
   def getOption(self):
     return 0 if self._noValidationVideoRadioButton.isChecked() else 1 if self._validationVideoRadioButton.isChecked() else None
