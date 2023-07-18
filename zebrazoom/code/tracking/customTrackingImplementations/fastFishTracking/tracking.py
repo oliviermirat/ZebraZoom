@@ -70,6 +70,8 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     startTime = time.time()
     k = self._firstFrame
     while (ret and k <= self._lastFrame):
+      if self._hyperparameters["freqAlgoPosFollow"] and k % self._hyperparameters["freqAlgoPosFollow"] == 0:
+        print("Tracking at frame", k)
       time1 = time.time()
       ret, frame = cap.read()
       time2 = time.time()
