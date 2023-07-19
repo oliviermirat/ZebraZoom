@@ -65,6 +65,7 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
     dfParam = pd.concat([dfCondGeno, dfKinematicValues], axis=1)
     dfParam = pd.concat([dfParam, dfCount], axis=1)
     globParam = globParam + ['percentTimeSpentSwimming', 'Bout Counts', 'Bout Rate (bouts / s)']
+    dfParamForExcelExport = dfParam.copy()
   elif medianPerGenotypeFirstForEachKinematicParameter:
     dfKinematicValues = dfParam[columnsForRawDataExport]
     dfKinematicValues = dfKinematicValues.astype({param: float for param in globParam})
@@ -81,12 +82,16 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
     dfParam = pd.concat([dfCond, dfKinematicValues], axis=1)
     dfParam = pd.concat([dfParam, dfCount], axis=1)
     globParam = globParam + ['percentTimeSpentSwimming', 'Bout Counts', 'Bout Rate (bouts / s)']
+    dfParamForExcelExport = dfParam.copy()
   else:
+    columnsForRawDataExport2 = columnsForRawDataExport.copy()
+    columnsForRawDataExport2.insert(2, "Animal_ID")
+    dfParamForExcelExport = dfParam[columnsForRawDataExport2].copy()
     dfParam  = dfParam[columnsForRawDataExport]
   
   if not os.path.exists(os.path.join(outputFolderResult, 'globalParametersInsideCategories.xlsx')):
-    dfParam.to_excel(os.path.join(outputFolderResult, 'globalParametersInsideCategories.xlsx'))
-    dfParam.to_csv(os.path.join(outputFolderResult, 'globalParametersInsideCategories.csv'), index=False)
+    dfParamForExcelExport.to_excel(os.path.join(outputFolderResult, 'globalParametersInsideCategories.xlsx'))
+    dfParamForExcelExport.to_csv(os.path.join(outputFolderResult, 'globalParametersInsideCategories.csv'), index=False)
 
   genotypes = dfParam["Genotype"].unique().tolist()
   palette = dict(zip(sortGenotypes(genotypes), sns.color_palette(n_colors=len(genotypes))))
