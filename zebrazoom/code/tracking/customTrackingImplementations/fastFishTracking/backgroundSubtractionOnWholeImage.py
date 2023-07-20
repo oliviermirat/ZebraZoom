@@ -76,7 +76,7 @@ def backgroundSubtractionOnWholeImage(self, frame, k):
         
         # 'Removing' animal just tracked
         if self._hyperparameters["nbAnimalsPerWell"] > 1:
-          if self._hyperparameters["largerPixelRemoval"]:
+          if "largerPixelRemoval" in self._hyperparameters and self._hyperparameters["largerPixelRemoval"]:
             cv2.circle(frameROI, (int(self._trackingDataPerWell[wellNumber][animalId][k][0][0]), int(self._trackingDataPerWell[wellNumber][animalId][k][0][1])), int(self._hyperparameters["maxDepth"]/3), (255, 255, 255), -1)
             for pointOnTail in range(1, len(self._trackingDataPerWell[wellNumber][animalId][k])):
               start_point = (int(self._trackingDataPerWell[wellNumber][animalId][k][pointOnTail-1][0]), int(self._trackingDataPerWell[wellNumber][animalId][k][pointOnTail-1][1]))
