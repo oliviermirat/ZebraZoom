@@ -27,6 +27,7 @@ _DEFAULT_KEYS = ['Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Cond
 
 _EXPECTED_RESULTS = {'Trial_ID': [],
                      'Well_ID': [],
+                     'Animal_ID': [],
                      'NumBout': [],
                      'BoutStart': [],
                      'BoutEnd': [],
@@ -70,7 +71,7 @@ _EXPECTED_RESULTS = {'Trial_ID': [],
                      'Bout Rate (bouts / s)': [],}
 _MEDIAN_ONLY_KEYS = {'percentTimeSpentSwimming', 'Bout Counts', 'Bout Rate (bouts / s)'}
 _FIRST_BOUT_REMOVED_RESULTS = {key: [] for key in _MEDIAN_ONLY_KEYS}
-_ALL_ONLY_KEYS = {'NumBout', 'BoutStart', 'BoutEnd'}
+_ALL_ONLY_KEYS = {'Animal_ID', 'NumBout', 'BoutStart', 'BoutEnd'}
 
 _VIDEO_NAMES = ['test%d' % idx for idx in range(1, 7)]
 _VIDEO_NAMES[0] = f'{_VIDEO_NAMES[0]}.h5'
@@ -158,6 +159,7 @@ def _generateResults():
         degreeBendAmplitudes = list(map(math.degrees, bendAmplitudes))
         _EXPECTED_RESULTS['Trial_ID'].append(video)
         _EXPECTED_RESULTS['Well_ID'].append(wellIdx)
+        _EXPECTED_RESULTS['Animal_ID'].append(0)
         _EXPECTED_RESULTS['Condition'].append(conditions[wellIdx])
         _EXPECTED_RESULTS['Genotype'].append(genotypes[wellIdx])
         _EXPECTED_RESULTS['videoDuration'].append((lastFrame - firstFrame) / fps)
@@ -274,7 +276,7 @@ def _createResultsFolder():
           if len(data.dtype):
             dataset.attrs['columns'] = data.dtype.names
     from zebrazoom.dataAPI._createSuperStructFromH5 import createSuperStructFromH5
-    assert createSuperStructFromH5(results)['wellPoissMouv'][0][0][0] == superStruct['wellPoissMouv'][0][0][0]
+    assert createSuperStructFromH5(results)['wellPoissMouv'] == superStruct['wellPoissMouv']
 
   for nbWells, name, results in zip(_WELLS_PER_VIDEO[1:], _VIDEO_NAMES[1:], generatedResults[1:]):
     folder = os.path.join(paths.getDefaultZZoutputFolder(), name)
