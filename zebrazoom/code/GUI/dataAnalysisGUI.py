@@ -1860,16 +1860,17 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
         widget = self._tabs.widget(idx)
         if widget.layout() is None:
           continue
-        plotOutliersAndMeanCheckbox = next(child for child in widget.findChildren(QCheckBox) if child.text() == 'Plot outliers and mean')
-        blocked = plotOutliersAndMeanCheckbox.blockSignals(True)
-        if not self._outliersRemoved:
-          if plotOutliersAndMeanCheckbox.isHidden():
-            plotOutliersAndMeanCheckbox.setChecked(True)
-            plotOutliersAndMeanCheckbox.setVisible(True)
-        else:
-          plotOutliersAndMeanCheckbox.setVisible(False)
-          plotOutliersAndMeanCheckbox.setChecked(False)
-        plotOutliersAndMeanCheckbox.blockSignals(blocked)
+        plotOutliersAndMeanCheckbox = next((child for child in widget.findChildren(QCheckBox) if child.text() == 'Plot outliers and mean'), None)
+        if plotOutliersAndMeanCheckbox is not None:
+          blocked = plotOutliersAndMeanCheckbox.blockSignals(True)
+          if not self._outliersRemoved:
+            if plotOutliersAndMeanCheckbox.isHidden():
+              plotOutliersAndMeanCheckbox.setChecked(True)
+              plotOutliersAndMeanCheckbox.setVisible(True)
+          else:
+            plotOutliersAndMeanCheckbox.setVisible(False)
+            plotOutliersAndMeanCheckbox.setChecked(False)
+          plotOutliersAndMeanCheckbox.blockSignals(blocked)
         updateFn()
       return
 
@@ -2027,6 +2028,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       plotOutliersAndMean = self._plotOutliersAndMeanCheckbox.isChecked()
     if plotPoints is None:
       plotPoints = self._plotPointsCheckbox.isChecked()
+    updatingAllBoutsTab = scrollArea is getattr(self, '_chartsScrollArea', None) is not None
     if not figures:
       if updatingAllBoutsTab:
         self._exportDataBtn.setEnabled(False)
@@ -2034,7 +2036,6 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       scrollArea.setAlignment(Qt.AlignmentFlag.AlignCenter)
       scrollArea.setWidget(QLabel("Select one or more parameters to visualize."))
       return
-    updatingAllBoutsTab = scrollArea is getattr(self, '_chartsScrollArea', None) is not None
     applyFilters = data is None
     shownParams = [param for param, _ in figures]
     data = (data if data is not None else self._medianData if self._medianPerWellRadioBtn.isChecked() else self._allData)[['Genotype', 'Condition'] + shownParams + [fltr.name() for fltr in self._filters if fltr.name() not in shownParams and fltr.name() in self._paramCheckboxes]]
