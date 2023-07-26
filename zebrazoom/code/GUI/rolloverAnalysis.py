@@ -884,7 +884,7 @@ class ManualRolloverClassification(util.CollapsibleSplitter):
         self._centralWidget.hideChildren()
         self._messageLabel.show()
         return
-      self._getFrame, frameRange, _, toggleTrackingPoints, wellPositions, wellShape = frameInfo
+      self._getFrame, frameRange, _, toggleTrackingPoints, wellPositions, wellShape, _ = frameInfo
 
       self._rolloverClassificationPath = os.path.join(self.controller.ZZoutputLocation, name, 'rolloverManualClassification.json')
       if os.path.exists(self._rolloverClassificationPath):

@@ -1,5 +1,7 @@
+import collections
 import math
 import os
+import random
 import sys
 
 import cv2
@@ -7,12 +9,12 @@ import json
 import numpy as np
 
 from PyQt5.QtCore import Qt, QSize, QTimer
-from PyQt5.QtWidgets import QApplication, QCheckBox, QFileDialog, QMessageBox, QLabel, QSlider, QStyleOptionSlider, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QButtonGroup, QFileDialog, QHBoxLayout, QMessageBox, QLabel, QRadioButton, QSlider, QSpinBox, QStyleOptionSlider, QVBoxLayout
 
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
-from zebrazoom.code.createValidationVideo import calculateInfoFrame, drawInfoFrame
+from zebrazoom.code.createValidationVideo import calculateInfoFrameForFrame, drawInfoFrame
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.preprocessImage import preprocessImage
 
@@ -159,10 +161,17 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
   else:
     infoWells.append([0, 0, nx, ny])
   
-  infoFrame = None
+  boutMap = None
   if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or "pathToOriginalVideo" in supstruct:
-    infoFrame, colorModifTab = calculateInfoFrame(supstruct, hyperparameters, max_l)
-  
+    boutMap = collections.defaultdict(list)
+    for wellIdx, well in enumerate(supstruct["wellPoissMouv"]):
+      for animalIdx, animal in enumerate(well):
+        for boutIdx, bout in enumerate(animal):
+          for frame in range(bout['BoutStart'], bout['BoutEnd'] + 1):
+            boutMap[frame].append((wellIdx, animalIdx, boutIdx))
+    colorModifTab = [{"red": random.randrange(255), "green": random.randrange(255), "blue": random.randrange(255)} for i in range(1, hyperparameters["nbAnimalsPerWell"])]
+    colorModifTab.insert(0, {"red": 0, "green": 0, "blue": 0})
+
   x = 0
   y = 0
   lengthX = 0
@@ -183,7 +192,7 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
   xOriginal = x
   yOriginal = y
 
-  def getFrame(frameSlider, timer=None, plotTrackingPointsCheckbox=None, stopTimer=True):
+  def getFrame(frameSlider, timer=None, trackingPointsGroup=None, stopTimer=True):
     nonlocal x
     nonlocal y
     nonlocal lengthX
@@ -195,12 +204,14 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
 
     cap.set(1, l)
     ret, img = cap.read()
-    
+
     if hyperparameters["imagePreProcessMethod"]:
       img = preprocessImage(img, hyperparameters)
-    
-    if infoFrame is not None and plotTrackingPointsCheckbox is not None and plotTrackingPointsCheckbox.isChecked():
-      drawInfoFrame(l, img, infoFrame, colorModifTab, hyperparameters)
+
+    if boutMap is not None and l in boutMap and trackingPointsGroup is not None and trackingPointsGroup.checkedId():
+      hyperparameters["plotOnlyOneTailPointForVisu"] = trackingPointsGroup.checkedId() == 1
+      infoFrame = [info for args in boutMap[l] for info in calculateInfoFrameForFrame(supstruct, hyperparameters, *args, l, colorModifTab)]
+      drawInfoFrame(img, infoFrame, colorModifTab, hyperparameters)
 
     if numWell != -1 and zoom:
       length = 250
@@ -236,14 +247,14 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
     return img
 
   wellShape = None if config.get("noWellDetection", False) or (hyperparameters["headEmbeded"] and not hyperparameters["oneWellManuallyChosenTopLeft"]) else 'rectangle' if config.get("wellsAreRectangles", False) or len(config.get("oneWellManuallyChosenTopLeft", '')) or int(config.get("multipleROIsDefinedDuringExecution", 0)) or config.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
-  return getFrame, frameRange, l, infoFrame is not None, supstruct['wellPositions'], wellShape
+  return getFrame, frameRange, l, boutMap is not None, supstruct['wellPositions'], wellShape, hyperparameters
 
 
 def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation='', supstruct=None, config=None):
   frameInfo = getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, framesToShow=framesToShow, ZZoutputLocation=ZZoutputLocation, supstruct=supstruct, config=config)
   if frameInfo is None:
     return
-  getFrame, frameRange, frame, toggleTrackingPoints, _, _ = frameInfo
+  getFrame, frameRange, frame, toggleTrackingPoints, _, _, hyperparameters = frameInfo
   layout = QVBoxLayout()
 
   video = QLabel()
@@ -254,17 +265,37 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
   frameSlider.setPageStep(50)
   frameSlider.setRange(*frameRange)
   frameSlider.setValue(frame)
-  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(frameSlider, timer, plotTrackingPointsCheckbox, stopTimer), video))
+  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer), video))
   layout.addWidget(frameSlider)
   shortcutsLabel = QLabel("Left Arrow, Right Arrow, Page Up, Page Down, Home and End keys can be used to navigate through the video.")
   shortcutsLabel.setWordWrap(True)
   layout.addWidget(shortcutsLabel)
-  plotTrackingPointsCheckbox = None
+  btnGroup = None
   if toggleTrackingPoints:
-    plotTrackingPointsCheckbox = QCheckBox("Display tracking points")
-    plotTrackingPointsCheckbox.setChecked(True)
-    plotTrackingPointsCheckbox.toggled.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(frameSlider, timer, plotTrackingPointsCheckbox, stopTimer), video))
-    layout.addWidget(plotTrackingPointsCheckbox)
+    trackingPointsLayout = QHBoxLayout()
+    plotTrackingPointsLabel = QLabel("Tracking points:")
+    trackingPointsLayout.addWidget(plotTrackingPointsLabel)
+    btnGroup = QButtonGroup()
+    btnGroup.idToggled.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer), video))
+    allPointsRadioButton = QRadioButton('All')
+    allPointsRadioButton.setChecked(True)
+    trackingPointsLayout.addWidget(allPointsRadioButton)
+    btnGroup.addButton(allPointsRadioButton, id=2)
+    minimalPointsRadioButton = QRadioButton('Minimal')
+    trackingPointsLayout.addWidget(minimalPointsRadioButton)
+    btnGroup.addButton(minimalPointsRadioButton, id=1)
+    noPointsRadioButton = QRadioButton('None')
+    trackingPointsLayout.addWidget(noPointsRadioButton)
+    btnGroup.addButton(noPointsRadioButton, id=0)
+    trackingPointsLayout.addWidget(QLabel('Size:'))
+    sizeSpinbox = QSpinBox()
+    sizeSpinbox.setMinimum(1)
+    sizeSpinbox.setValue(hyperparameters["trackingPointSizeDisplay"])
+    sizeSpinbox.valueChanged.connect(lambda value: hyperparameters.update({"trackingPointSizeDisplay": value}))
+    sizeSpinbox.valueChanged.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer), video))
+    trackingPointsLayout.addWidget(sizeSpinbox)
+    trackingPointsLayout.addStretch(1)
+    layout.addLayout(trackingPointsLayout)
 
   stopTimer = True
   timer = QTimer()
@@ -277,7 +308,7 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     stopTimer = True
   timer.timeout.connect(nextFrame)
 
-  startFrame = getFrame(frameSlider, timer, plotTrackingPointsCheckbox, stopTimer)
+  startFrame = getFrame(frameSlider, timer, btnGroup, stopTimer)
   timer.start()
   util.showDialog(layout, title="Video", labelInfo=(startFrame, video))
   timer.stop()
