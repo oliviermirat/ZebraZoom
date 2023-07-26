@@ -369,17 +369,6 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
 
     if hyperparameters["saveAllDataEvenIfNotInBouts"] or hyperparameters["storeH5"]:
       trackingFlattenPandas = pd.DataFrame(trackingFlatten, columns=trackingFlattenColumnsNames)
-    if hyperparameters["saveAllDataEvenIfNotInBouts"]:
-      outputFolder = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoNameWithTimestamp"])
-      if not os.path.exists(outputFolder):
-        os.makedirs(outputFolder)
-      fname = os.path.join(outputFolder, f'allData_{hyperparameters["videoName"]}_wellNumber{wellNumber}_animal{animalId}.csv')
-      with open(fname, 'w+', newline='') as f:
-        if hyperparameters["videoFPS"]:
-          f.write(f'videoFPS: {hyperparameters["videoFPS"]}\n')
-        if hyperparameters["videoPixelSize"]:
-          f.write(f'videoPixelSize: {hyperparameters["videoPixelSize"]}\n')
-        trackingFlattenPandas.convert_dtypes().to_csv(f)
     if hyperparameters['storeH5']:
       with h5py.File(hyperparameters['H5filename'], 'a') as results:
         group = results.create_group(f"dataForWell{wellNumber}/dataForAnimal{animalId}/dataPerFrame")
@@ -400,6 +389,18 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
               headPosData[h5Name] = trackingFlattenPandas[pandasName].values
             headPos = group.create_dataset(name, data=headPosData)
             headPos.attrs['columns'] = headPosData.dtype.names
+    if hyperparameters["saveAllDataEvenIfNotInBouts"]:
+      trackingFlattenPandas['tailAngle'] = np.rad2deg(trackingFlattenPandas['tailAngle'])
+      outputFolder = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoNameWithTimestamp"])
+      if not os.path.exists(outputFolder):
+        os.makedirs(outputFolder)
+      fname = os.path.join(outputFolder, f'allData_{hyperparameters["videoName"]}_wellNumber{wellNumber}_animal{animalId}.csv')
+      with open(fname, 'w+', newline='') as f:
+        if hyperparameters["videoFPS"]:
+          f.write(f'videoFPS: {hyperparameters["videoFPS"]}\n')
+        if hyperparameters["videoPixelSize"]:
+          f.write(f'videoPixelSize: {hyperparameters["videoPixelSize"]}\n')
+        trackingFlattenPandas.convert_dtypes().to_csv(f)
 
   print("Parameters extracted for well",wellNumber)
   if hyperparameters["popUpAlgoFollow"]:
