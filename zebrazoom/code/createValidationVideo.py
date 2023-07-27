@@ -54,15 +54,14 @@ def calculateInfoFrameForFrame(superStruct, hyperparameters, wellIdx, animalIdx,
 
   # Points along the Tail
   nbPointsToPlot   = 0
-  firstPointToPlot = 0
   if plotOnlyOneTailPointForVisu:
-    firstPointToPlot = len(superStruct["wellPoissMouv"][wellIdx][animalIdx][boutIdx]["TailX_VideoReferential"][relativeFrameIdx]) - 1
-    nbPointsToPlot   = len(superStruct["wellPoissMouv"][wellIdx][animalIdx][boutIdx]["TailX_VideoReferential"][relativeFrameIdx])
+    nbPointsToPlot = len(superStruct["wellPoissMouv"][wellIdx][animalIdx][boutIdx]["TailX_VideoReferential"][relativeFrameIdx])
+    pointsToPlot = (0, *range(nbPointsToPlot - 1, nbPointsToPlot))
   else:
-    firstPointToPlot = 0
     nbPointsToPlot = len(superStruct["wellPoissMouv"][wellIdx][animalIdx][boutIdx]["TailX_VideoReferential"][relativeFrameIdx]) if "TailX_VideoReferential" in superStruct["wellPoissMouv"][wellIdx][animalIdx][boutIdx] else 0
+    pointsToPlot = range(nbPointsToPlot)
 
-  for m in range(firstPointToPlot, nbPointsToPlot):
+  for m in pointsToPlot:
     tailX = superStruct["wellPoissMouv"][wellIdx][animalIdx][boutIdx]["TailX_VideoReferential"][relativeFrameIdx][m]
     tailY = superStruct["wellPoissMouv"][wellIdx][animalIdx][boutIdx]["TailY_VideoReferential"][relativeFrameIdx][m]
     tailX = tailX + infoWells[wellIdx][0]
@@ -71,7 +70,7 @@ def calculateInfoFrameForFrame(superStruct, hyperparameters, wellIdx, animalIdx,
     dataToPlot      = {}
     dataToPlot["x"] = tailX
     dataToPlot["y"] = tailY
-    if plotOnlyOneTailPointForVisu:
+    if (m == (nbPointsToPlot-1)):
       if (Bend_TimingAbsolute.count(frameIdx+1) != 0):
         dataToPlot["size"] = trackingPointSizeDisplay + 5
         dataToPlot["red"]   = 0
@@ -83,22 +82,10 @@ def calculateInfoFrameForFrame(superStruct, hyperparameters, wellIdx, animalIdx,
         dataToPlot["green"] = 255
         dataToPlot["blue"]  = 0
     else:
-      if (m == (nbPointsToPlot-1)):
-        if (Bend_TimingAbsolute.count(frameIdx+1) != 0):
-          dataToPlot["size"] = trackingPointSizeDisplay + 5
-          dataToPlot["red"]   = 0
-          dataToPlot["green"] = 0
-          dataToPlot["blue"]  = 255
-        else:
-          dataToPlot["size"] = trackingPointSizeDisplay + 2
-          dataToPlot["red"]   = 0
-          dataToPlot["green"] = 255
-          dataToPlot["blue"]  = 0
-      else:
-        dataToPlot["size"] = trackingPointSizeDisplay
-        dataToPlot["red"]   = 0   + colorModifTab[animalIdx]["red"]
-        dataToPlot["green"] = 255 - colorModifTab[animalIdx]["green"]
-        dataToPlot["blue"]  = 0   + colorModifTab[animalIdx]["blue"]
+      dataToPlot["size"] = trackingPointSizeDisplay
+      dataToPlot["red"]   = 0   + colorModifTab[animalIdx]["red"]
+      dataToPlot["green"] = 255 - colorModifTab[animalIdx]["green"]
+      dataToPlot["blue"]  = 0   + colorModifTab[animalIdx]["blue"]
     dataToPlot["Heading"] = -10
 
     infoFrame.append(dataToPlot)
