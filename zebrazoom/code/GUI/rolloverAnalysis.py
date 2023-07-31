@@ -879,7 +879,7 @@ class ManualRolloverClassification(util.CollapsibleSplitter):
       self._tree.show()
       return
     else:
-      frameInfo = getFramesCallback('', name, '', -1, 0, False, 0, ZZoutputLocation=self.controller.ZZoutputLocation)
+      frameInfo = getFramesCallback('', name, -1, 0, False, 0, ZZoutputLocation=self.controller.ZZoutputLocation)
       if frameInfo is None:
         self._centralWidget.hideChildren()
         self._messageLabel.show()
