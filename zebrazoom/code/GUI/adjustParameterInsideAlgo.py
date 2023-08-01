@@ -1,3 +1,4 @@
+import copy
 import os
 import pickle
 
@@ -809,7 +810,7 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
   page = _showPage(layout, (img, video))
 
 
-def adjustBoutDetectionOnlyPage(useNext=True, nextCb=None, useBackground=True):
+def adjustBoutDetectionOnlyPage(useNext=True, nextCb=None):
   app = QApplication.instance()
 
   layout = QVBoxLayout()
@@ -882,21 +883,20 @@ def adjustBoutDetectionOnlyPage(useNext=True, nextCb=None, useBackground=True):
   sublayout.addStretch(1)
   layout.addLayout(sublayout)
 
-  if useBackground:
-    recalculateLayout = QHBoxLayout()
-    recalculateLayout.addStretch()
-    recalculateLayout.addWidget(util.apply_style(QLabel("Recalculate background using this number of images:"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    nbImagesForBackgroundCalculation = QLineEdit()
-    nbImagesForBackgroundCalculation.setValidator(QIntValidator(nbImagesForBackgroundCalculation))
-    nbImagesForBackgroundCalculation.validator().setBottom(0)
-    nbImagesForBackgroundCalculation.setText("60")
-    nbImagesForBackgroundCalculation.setFixedWidth(50)
-    recalculateLayout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
-    recalculateBtn = QPushButton("Recalculate")
-    recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text(), False, True, useNext=useNext, nextCb=nextCb))
-    recalculateLayout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    recalculateLayout.addStretch()
-    layout.addLayout(recalculateLayout)
+  recalculateLayout = QHBoxLayout()
+  recalculateLayout.addStretch()
+  recalculateLayout.addWidget(util.apply_style(QLabel("Recalculate background using this number of images:"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+  nbImagesForBackgroundCalculation = QLineEdit()
+  nbImagesForBackgroundCalculation.setValidator(QIntValidator(nbImagesForBackgroundCalculation))
+  nbImagesForBackgroundCalculation.validator().setBottom(0)
+  nbImagesForBackgroundCalculation.setText("60")
+  nbImagesForBackgroundCalculation.setFixedWidth(50)
+  recalculateLayout.addWidget(nbImagesForBackgroundCalculation, alignment=Qt.AlignmentFlag.AlignCenter)
+  recalculateBtn = QPushButton("Recalculate")
+  recalculateBtn.clicked.connect(lambda: app.calculateBackgroundFreelySwim(app, nbImagesForBackgroundCalculation.text(), False, True, useNext=useNext, nextCb=nextCb))
+  recalculateLayout.addWidget(recalculateBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  recalculateLayout.addStretch()
+  layout.addLayout(recalculateLayout)
 
   coordinatesOnlyBoutDetectCheckbox = QCheckBox("Use only the body coordinates to detect bouts (faster, but potentially less accurate)")
   originalCoordinatesOnlyBoutDetection = app.configFile.get("coordinatesOnlyBoutDetection", None)
@@ -965,8 +965,7 @@ def adjustBoutDetectionOnlyPage(useNext=True, nextCb=None, useBackground=True):
   layout.addWidget(frameGapSlider, alignment=Qt.AlignmentFlag.AlignCenter)
 
   coordinatesOnlyBoutDetectCheckbox.setChecked(coordinatesOnlyBoutDetectCheckbox.isVisible() and app.configFile.get("coordinatesOnlyBoutDetection", False))
-  if not useBackground:
-    coordinatesOnlyBoutDetectCheckbox.setVisible(False)
+  coordinatesOnlyBoutDetectCheckbox.setVisible(False)
 
   fillGapLayout = QHBoxLayout()
   fillGapLayout.addStretch()
@@ -990,6 +989,236 @@ def adjustBoutDetectionOnlyPage(useNext=True, nextCb=None, useBackground=True):
   fillGapLayout.addWidget(fillGapFrameNb, alignment=Qt.AlignmentFlag.AlignCenter)
   fillGapLayout.addStretch()
   layout.addLayout(fillGapLayout)
+
+  buttonsLayout = QHBoxLayout()
+  buttonsLayout.addStretch()
+  startPageBtn = QPushButton("Go to the start page")
+  startPageBtn.clicked.connect(lambda: app.show_frame("StartPage") or _cleanup(app, page))
+  buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  backBtn = QPushButton("Back") if useNext else util.apply_style(QPushButton("Done! Save changes!"), background_color=util.DEFAULT_BUTTON_COLOR)
+  backBtn.clicked.connect(lambda: _cleanup(app, page))
+  backBtn.clicked.connect(lambda: app.configFileHistory[-2](restoreConfig=useNext))
+  buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  if useNext:
+    nextBtn = util.apply_style(QPushButton("Next"), background_color=util.DEFAULT_BUTTON_COLOR)
+    nextBtn.clicked.connect(lambda: (nextCb() if nextCb is not None else util.addToHistory(app.show_frame)("FinishConfig")) or _cleanup(app, page))
+    buttonsLayout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  buttonsLayout.addStretch()
+  layout.addLayout(buttonsLayout)
+
+  page = _showPage(layout, (img, video))
+
+
+def adjustFastFishTrackingPage(useNext=True, nextCb=None, detectBoutsMethod=None):
+  from zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions import getMainArguments, prepareConfigFileForParamsAdjustements
+
+  app = QApplication.instance()
+
+  pathToVideo, videoName, videoExt, configFile, argv = getMainArguments(app)
+  tempConfig = copy.deepcopy(configFile)
+  tempConfig["debugFindWells"] = 1
+  tempConfig["exitAfterWellsDetection"] = 1
+  tempConfig["storeH5"] = 1
+  app.wellPositions = []
+  try:
+    with app.busyCursor():
+      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, tempConfig, ['outputFolder', app.ZZoutputLocation]).run()
+  except ValueError:
+      pass
+
+  layout = QVBoxLayout()
+  title = "Select %sframe range for parameters adjustments" % ("well and " if app.wellPositions else "")
+  layout.addWidget(util.apply_style(QLabel(title), font=util.TITLE_FONT), alignment=Qt.AlignmentFlag.AlignCenter)
+
+  cap = zzVideoReading.VideoCapture(app.videoToCreateConfigFileFor)
+
+  firstFrame = app.configFile.get("firstFrame", 1)
+  maxFrame = cap.get(7) - 1
+  frameSlider = util.SliderWithSpinbox(firstFrame, 0, maxFrame, name="First frame")
+
+  def getFrame():
+    cap.set(1, frameSlider.value())
+    ret, img = cap.read()
+    return img
+  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video) or lastFrameLabel.setText(str(min(frameSlider.value() + 500, int(maxFrame)))))
+
+  img = getFrame()
+  height, width = img.shape[:2]
+  video = util.WellSelectionLabel(width, height)
+  layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
+
+  sublayout = QHBoxLayout()
+  sublayout.addStretch(1)
+  sublayout.addWidget(_AlignedLabel("Select frame range:"), alignment=Qt.AlignmentFlag.AlignRight)
+  sublayout.addWidget(frameSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+  if maxFrame > 1000:
+    adjustLayout = QVBoxLayout()
+    adjustLayout.setSpacing(0)
+    adjustLayout.addStretch()
+    zoomInSliderBtn = QPushButton("Zoom in slider")
+
+    def updatePreciseFrameSlider(value):
+      if frameSlider.minimum() == value and frameSlider.minimum():
+        frameSlider.setMinimum(frameSlider.minimum() - 1)
+        frameSlider.setMaximum(frameSlider.maximum() - 1)
+      elif value == frameSlider.maximum() and frameSlider.maximum() != maxFrame:
+        frameSlider.setMinimum(frameSlider.minimum() + 1)
+        frameSlider.setMaximum(frameSlider.maximum() + 1)
+
+    def zoomInButtonClicked():
+      if "in" in zoomInSliderBtn.text():
+        zoomInSliderBtn.setText("Zoom out slider")
+        value = frameSlider.value()
+        minimum = value - 250
+        maximum = value + 250
+        if minimum < 0:
+          maximum = 500
+          minimum = 0
+        if maximum > frameSlider.maximum():
+          maximum = frameSlider.maximum()
+          minimum = maximum - 500
+        frameSlider.setMinimum(max(0, minimum))
+        frameSlider.setMaximum(min(frameSlider.maximum(), maximum))
+        frameSlider.setValue(value)
+        frameSlider.valueChanged.connect(updatePreciseFrameSlider)
+      else:
+        zoomInSliderBtn.setText("Zoom in slider")
+        frameSlider.setMinimum(0)
+        frameSlider.setMaximum(maxFrame)
+        frameSlider.valueChanged.disconnect(updatePreciseFrameSlider)
+    zoomInSliderBtn.clicked.connect(zoomInButtonClicked)
+    adjustLayout.addWidget(QLabel())
+    adjustLayout.addWidget(zoomInSliderBtn, alignment=Qt.AlignmentFlag.AlignLeft, stretch=1)
+    adjustLayout.addStretch()
+    sublayout.addLayout(adjustLayout)
+  lastFrameLabel = QLabel(str(min(frameSlider.value() + 500, int(maxFrame))))
+  sublayout.addWidget(_AlignedLabel("Last frame:", lastFrameLabel), alignment=Qt.AlignmentFlag.AlignLeft)
+  sublayout.addStretch(1)
+  layout.addLayout(sublayout)
+
+  if detectBoutsMethod is None:
+    coordinatesOnlyBoutDetectCheckbox = QCheckBox("Use only the body coordinates to detect bouts (faster, but potentially less accurate)")
+    originalCoordinatesOnlyBoutDetection = app.configFile.get("coordinatesOnlyBoutDetection", None)
+    trackingMethod = app.configFile.get("trackingMethod", None)
+
+    def coordinatesOnlyBoutDetectCheckboxToggled(checked):
+      if checked:
+        app.configFile["coordinatesOnlyBoutDetection"] = 1
+      elif originalCoordinatesOnlyBoutDetection is not None:
+        app.configFile["coordinatesOnlyBoutDetection"] = 0
+      elif "coordinatesOnlyBoutDetection" in app.configFile:
+        del app.configFile["coordinatesOnlyBoutDetection"]
+      minDistLabel.setVisible(checked)
+      minDistLineEdit.setVisible(checked)
+      adjustBoutsBtn.setVisible(not checked)
+      frameGapSlider.setVisible(checked)
+    coordinatesOnlyBoutDetectCheckbox.toggled.connect(coordinatesOnlyBoutDetectCheckboxToggled)
+    layout.addWidget(coordinatesOnlyBoutDetectCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
+  minDistLayout = QHBoxLayout()
+  minDistLayout.addStretch()
+  originalMinDist = app.configFile.get("coordinatesOnlyBoutDetectionMinDist", None)
+  minDistLineEdit = QLineEdit()
+  minDistLineEdit.setValidator(QIntValidator())
+  minDistLineEdit.validator().setBottom(0)
+  minDistLineEdit.setText(str(originalMinDist) if originalMinDist is not None else '0')
+
+  def updateMinDist(text):
+    if text:
+      app.configFile["coordinatesOnlyBoutDetectionMinDist"] = int(text)
+    elif originalMinDist is not None:
+      app.configFile["coordinatesOnlyBoutDetectionMinDist"] = 0
+    elif "coordinatesOnlyBoutDetectionMinDist" in app.configFile:
+      del app.configFile["coordinatesOnlyBoutDetectionMinDist"]
+  minDistLineEdit.textChanged.connect(updateMinDist)
+  minDistLabel = QPushButton("coordinatesOnlyBoutDetectionMinDist:")
+
+  def adjustMinDistForBoutDetect():
+    cancelled = False
+    def cancel():
+      nonlocal cancelled
+      cancelled = True
+    center, radius = util.getCircle(getFrame(), 'Click on the center of an animal and select the minimum distance it should travel to consider it has moved', backBtnCb=cancel, zoomable=True)
+    if not cancelled:
+      minDistLineEdit.setText(str(radius))
+  minDistLabel.clicked.connect(adjustMinDistForBoutDetect)
+  minDistLayout.addWidget(minDistLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+  minDistLayout.addWidget(minDistLineEdit, alignment=Qt.AlignmentFlag.AlignCenter)
+  minDistLayout.addStretch()
+  layout.addLayout(minDistLayout)
+
+  def adjustFastFishTracking(wellNumber, firstFrame):
+    tempConfig = copy.deepcopy(configFile)
+    prepareConfigFileForParamsAdjustements(tempConfig, wellNumber, firstFrame, app.videoToCreateConfigFileFor, False)
+    tempConfig["backgroundSubtractionOnWholeImage"] = 1
+    tempConfig["detectMovementWithRawVideoInsideTracking"] = 0
+    tempConfig["storeH5"] = 1
+    tempConfig["reloadWellPositions"] = 1
+    tempConfig["adjustFreelySwimTracking"] = 1
+
+    try:
+      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, tempConfig, argv).run()
+    except ValueError:
+      newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
+      configFile.update(newhyperparameters)
+    except NameError:
+      print("Configuration file parameters changes discarded.")
+
+  frameGapSlider = util.SliderWithSpinbox(app.configFile.get("frameGapComparision", 1), 1, 15, name="frameGapComparision")
+
+  def frameGapComparisonChanged(value):
+    app.configFile["frameGapComparision"] = value
+  frameGapSlider.valueChanged.connect(frameGapComparisonChanged)
+  layout.addWidget(frameGapSlider, alignment=Qt.AlignmentFlag.AlignCenter)
+
+  adjustButtonsLayout = QHBoxLayout()
+  adjustButtonsLayout.addStretch()
+  if detectBoutsMethod != 0:
+    adjustBoutsBtn = QPushButton("Adjust Bouts Detection")
+    adjustBoutsBtn.setToolTip("The aim here is to adjust parameters in order for the red dot on the top left of the image to appear when and only when movement is occurring.")
+    adjustBoutsBtn.clicked.connect(lambda: app.detectBouts(app, video.getWell(), frameSlider.value(), False))
+    adjustButtonsLayout.addWidget(adjustBoutsBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  adjustTrackingBtn = QPushButton("Adjust Tracking")
+  adjustTrackingBtn.clicked.connect(lambda: adjustFastFishTracking(video.getWell(), frameSlider.value()))
+  adjustButtonsLayout.addWidget(adjustTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+  adjustButtonsLayout.addStretch()
+  layout.addLayout(adjustButtonsLayout)
+
+  coordinatesOnly = detectBoutsMethod == 2 or detectBoutsMethod is None and bool(app.configFile.get("coordinatesOnlyBoutDetection", False))
+  if detectBoutsMethod is None:
+    blocked = coordinatesOnlyBoutDetectCheckbox.blockSignals(True)
+    coordinatesOnlyBoutDetectCheckbox.setChecked(coordinatesOnly)
+    coordinatesOnlyBoutDetectCheckbox.blockSignals(blocked)
+  if coordinatesOnly:
+    adjustBoutsBtn.setVisible(False)
+  else:
+    minDistLabel.setVisible(False)
+    minDistLineEdit.setVisible(False)
+    frameGapSlider.setVisible(False)
+
+  if detectBoutsMethod != 0:
+    fillGapLayout = QHBoxLayout()
+    fillGapLayout.addStretch()
+    fillGapLabel = util.apply_style(QLabel("Important: Bouts Merging: fillGapFrameNb:"), font=QFont("Helvetica", 0))
+    fillGapLabel.setToolTip("'fillGapFrameNb' parameter controls the distance (in number frames) under which two subsequent bouts are merged into one.")
+    fillGapLayout.addWidget(fillGapLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+    fillGapFrameNb = QLineEdit()
+    fillGapFrameNb.setValidator(QIntValidator(fillGapFrameNb))
+    fillGapFrameNb.validator().setBottom(0)
+    if "fillGapFrameNb" in app.configFile:
+      fillGapFrameNb.setText(str(app.configFile["fillGapFrameNb"]))
+    fillGapFrameNb.setFixedWidth(50)
+
+    def updateFillGapFrameNb(text):
+      if not text:
+        del app.configFile["fillGapFrameNb"]
+      else:
+        app.configFile["fillGapFrameNb"] = int(text)
+    fillGapFrameNb.textChanged.connect(updateFillGapFrameNb)
+    fillGapFrameNb.setToolTip("'fillGapFrameNb' parameter controls the distance (in number frames) under which two subsequent bouts are merged into one.")
+    fillGapLayout.addWidget(fillGapFrameNb, alignment=Qt.AlignmentFlag.AlignCenter)
+    fillGapLayout.addStretch()
+    layout.addLayout(fillGapLayout)
 
   buttonsLayout = QHBoxLayout()
   buttonsLayout.addStretch()

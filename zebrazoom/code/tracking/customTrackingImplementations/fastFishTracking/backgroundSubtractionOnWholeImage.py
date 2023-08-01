@@ -111,3 +111,5 @@ def backgroundSubtractionOnWholeImage(self, frame, k):
   self._times2[k, 4] = t2 - t1
   if self._printInterTime:
     print("Tracking on each well:", t2 - t1)
+  if self._hyperparameters['adjustFreelySwimTracking']:
+    return frameROI
