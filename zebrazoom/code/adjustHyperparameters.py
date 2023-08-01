@@ -165,6 +165,11 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
   for timer in timers:
     timer.stop()
 
+  if 'maxDepth' in hyperparametersListNames:
+    maxDepth = hyperparameters['maxDepth']
+    hyperparameters['steps'] = [maxDepth / 3.6, maxDepth / 2.4, maxDepth / 1.8]
+    hyperparametersListNames.append('steps')
+
   if widgets['saved']:
     pickle.dump({name: hyperparameters[name] for name in hyperparametersListNames}, open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'wb'))
     temporaryPage = stackedLayout.currentWidget()
