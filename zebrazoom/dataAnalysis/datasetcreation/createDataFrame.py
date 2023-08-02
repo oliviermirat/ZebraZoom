@@ -274,7 +274,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
           dfReloadedVid.loc[indForWellId, 'Condition'] = cond
           dfReloadedVid.loc[indForWellId, 'Genotype']  = genotype[idx]
           if minNbBendForBoutDetect > 0:
-            ind           = (dfReloadedVid['Number of Oscillations'] < minNbBendForBoutDetect/2)
+            ind           = ~(dfReloadedVid['Number of Oscillations'] >= minNbBendForBoutDetect/2)
             dfReloadedVid.loc[ind, removeColumnsWhenAppropriate] = float('NaN')
           if not(genotype[idx] in genotypes):
             genotypes.append(genotype[idx])
