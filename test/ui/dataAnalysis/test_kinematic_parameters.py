@@ -1109,3 +1109,119 @@ def test_command_line(monkeypatch): # here we simply run the same experiments th
   monkeypatch.setattr(sys, 'argv', [sys.executable, 'dataPostProcessing', 'kinematicParametersAnalysis', *test_keep_data_for_discarded_bouts_params])
   kinematicParametersAnalysis(sys)
   _test_keep_data_for_discarded_bouts_check_results()
+
+
+@pytest.mark.long
+@pytest.mark.parametrize('recalculate', (True, False))
+class TestExampleExperiment:
+  def _selectExample(self, qapp, qtbot):
+    createExcelPage = _goToCreateExcelPage(qapp, qtbot)
+    _selectExperiment(createExcelPage, qapp, qtbot, 'example.xls')
+    qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod))
+    qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison))
+
+  def _checkResults(self, resultsFolder):
+    import filecmp
+    outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'example')
+    expectedResultsFolder = os.path.join(os.path.dirname(__file__), 'expected_results', resultsFolder)
+    assert filecmp.cmp(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.csv'), os.path.join(expectedResultsFolder, 'allBoutsMixed', 'globalParametersInsideCategories.csv'))
+    assert filecmp.cmp(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.csv'), os.path.join(expectedResultsFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.csv'))
+
+  def test_kinematic_parameters(self, qapp, qtbot, monkeypatch, recalculate):
+    self._selectExample(qapp, qtbot)
+
+    populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
+    monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
+    _resetPopulationComparisonPageState(populationComparisonPage, qapp)
+    qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked)
+    if recalculate:
+      qtbot.mouseClick(populationComparisonPage._forcePandasRecreation, Qt.MouseButton.LeftButton)
+      qtbot.waitUntil(populationComparisonPage._forcePandasRecreation.isChecked)
+    qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
+
+    self._checkResults('test_kinematic_parameters')
+
+    qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage))
+
+  def test_basic(self, qapp, qtbot, monkeypatch, recalculate):
+    self._selectExample(qapp, qtbot)
+
+    populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
+    monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: recalculate)
+    _resetPopulationComparisonPageState(populationComparisonPage, qapp)
+    qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: not populationComparisonPage._tailTrackingParametersCheckbox.isChecked())
+    qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
+
+    self._checkResults('test_basic')
+
+    qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage))
+
+  def test_minimum_number_of_bends(self, qapp, qtbot, monkeypatch, recalculate):
+    self._selectExample(qapp, qtbot)
+
+    populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
+    monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: recalculate)
+    _resetPopulationComparisonPageState(populationComparisonPage, qapp)
+    qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked)
+    qtbot.mouseClick(populationComparisonPage._bendsOutlierRemovalButton, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(populationComparisonPage._bendsOutlierRemovalButton.isChecked)
+    qtbot.mouseClick(populationComparisonPage._minNbBendForBoutDetect, Qt.MouseButton.LeftButton)
+    qtbot.keyClicks(populationComparisonPage._minNbBendForBoutDetect, '3')
+    qtbot.waitUntil(lambda: populationComparisonPage._minNbBendForBoutDetect.text() == '3')
+    qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
+
+    self._checkResults('test_minimum_number_of_bends')
+
+    qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage))
+
+  def test_keep_data_for_discarded_bouts_and_frames_for_distance_calculation(self, qapp, qtbot, monkeypatch, recalculate):
+    self._selectExample(qapp, qtbot)
+
+    populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
+    monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: recalculate)
+    _resetPopulationComparisonPageState(populationComparisonPage, qapp)
+    qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked)
+    qtbot.mouseClick(populationComparisonPage._bendsOutlierRemovalButton, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(populationComparisonPage._bendsOutlierRemovalButton.isChecked)
+    qtbot.mouseClick(populationComparisonPage._keepDiscardedBoutsCheckbox, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(populationComparisonPage._keepDiscardedBoutsCheckbox.isChecked)
+    qtbot.mouseClick(populationComparisonPage._minNbBendForBoutDetect, Qt.MouseButton.LeftButton)
+    qtbot.keyClicks(populationComparisonPage._minNbBendForBoutDetect, '3')
+    qtbot.waitUntil(lambda: populationComparisonPage._minNbBendForBoutDetect.text() == '3')
+    qtbot.keyClicks(populationComparisonPage._frameStepForDistanceCalculation, '10')
+    qtbot.waitUntil(lambda: populationComparisonPage._frameStepForDistanceCalculation.text() == '10')
+    qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
+
+    self._checkResults('test_keep_data_for_discarded_bouts_and_frames_for_distance_calculation')
+
+    qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage))
+
+  def test_gaussian_outlier_removal(self, qapp, qtbot, monkeypatch, recalculate):
+    self._selectExample(qapp, qtbot)
+
+    populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
+    monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: recalculate)
+    _resetPopulationComparisonPageState(populationComparisonPage, qapp)
+    qtbot.mouseClick(populationComparisonPage._gaussianOutlierRemovalButton, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(populationComparisonPage._gaussianOutlierRemovalButton.isChecked)
+    qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
+
+    self._checkResults('test_gaussian_outlier_removal')
+
+    qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage))
