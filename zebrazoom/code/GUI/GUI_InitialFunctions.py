@@ -656,8 +656,8 @@ def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, creat
     if nbWells is None:
       if jsonFile.get('groupOfMultipleSameSizeAndShapeEquallySpacedWells', False):
         nbWells = jsonFile["nbWellsPerRows"] * jsonFile["nbRowsOfWells"]
-    else:
-      nbWells = 0 if jsonFile.get('noWellDetection', False) else 1
+      else:
+        nbWells = 0 if jsonFile.get('noWellDetection', False) else 1
     if nbWells > 24:
       nbWells = 24
 
