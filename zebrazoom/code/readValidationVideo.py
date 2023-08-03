@@ -9,12 +9,12 @@ import json
 import numpy as np
 
 from PyQt5.QtCore import Qt, QSize, QTimer
-from PyQt5.QtWidgets import QApplication, QButtonGroup, QFileDialog, QHBoxLayout, QMessageBox, QLabel, QRadioButton, QSlider, QSpinBox, QStyleOptionSlider, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QButtonGroup, QCheckBox, QFileDialog, QHBoxLayout, QMessageBox, QLabel, QRadioButton, QSlider, QSpinBox, QStyleOptionSlider, QVBoxLayout
 
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
-from zebrazoom.code.createValidationVideo import calculateInfoFrameForFrame, drawInfoFrame
+from zebrazoom.code.createValidationVideo import calculateInfoFrameForFrame, drawInfoFrame, improveContrast
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.preprocessImage import preprocessImage
 
@@ -207,6 +207,8 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
 
     if hyperparameters["imagePreProcessMethod"]:
       img = preprocessImage(img, hyperparameters)
+    if hyperparameters["outputValidationVideoContrastImprovement"]:
+      img = improveContrast(img, hyperparameters)
 
     if boutMap is not None and l in boutMap and trackingPointsGroup is not None and trackingPointsGroup.checkedId():
       hyperparameters["plotOnlyOneTailPointForVisu"] = trackingPointsGroup.checkedId() == 1
@@ -281,7 +283,7 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     trackingPointsLayout.addWidget(allPointsRadioButton)
     btnGroup.addButton(allPointsRadioButton, id=2)
     minimalPointsRadioButton = QRadioButton('Minimal')
-    minimalPointsRadioButton.setChecked(hyperparameters['plotOnlyOneTailPointForVisu'])
+    minimalPointsRadioButton.setChecked(bool(hyperparameters['plotOnlyOneTailPointForVisu']))
     trackingPointsLayout.addWidget(minimalPointsRadioButton)
     btnGroup.addButton(minimalPointsRadioButton, id=1)
     noPointsRadioButton = QRadioButton('None')
@@ -295,6 +297,11 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     sizeSpinbox.valueChanged.connect(lambda value: hyperparameters.update({"trackingPointSizeDisplay": value}))
     sizeSpinbox.valueChanged.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer), video))
     trackingPointsLayout.addWidget(sizeSpinbox)
+    contrastCheckbox = QCheckBox('Contrast')
+    contrastCheckbox.setChecked(bool(hyperparameters['outputValidationVideoContrastImprovement']))
+    contrastCheckbox.toggled.connect(lambda checked: hyperparameters.update({"outputValidationVideoContrastImprovement": int(checked)}))
+    contrastCheckbox.toggled.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer), video))
+    trackingPointsLayout.addWidget(contrastCheckbox)
     trackingPointsLayout.addStretch(1)
     layout.addLayout(trackingPointsLayout)
 

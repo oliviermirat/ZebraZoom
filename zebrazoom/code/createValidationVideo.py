@@ -8,6 +8,24 @@ import random
 import os
 
 
+def improveContrast(frame, hyperparameters):
+  frame = 255 - frame
+  frameIsBGR = len(frame.shape) == 3
+  if frameIsBGR:
+    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+  lowVal = int(np.quantile(frame, hyperparameters["outputValidationVideoContrastImprovementQuartile"]))
+  highVal = int(np.quantile(frame, 1 - hyperparameters["outputValidationVideoContrastImprovementQuartile"]))
+  frame[frame < lowVal] = lowVal
+  frame[frame > highVal] = highVal
+  frame = frame - lowVal
+  mult = np.max(frame)
+  frame = frame * (255 / mult)
+  frame = frame.astype('uint8')
+  if frameIsBGR:
+    frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+  return frame
+
+
 def calculateInfoFrameForFrame(superStruct, hyperparameters, wellIdx, animalIdx, boutIdx, frameIdx, colorModifTab):
   plotOnlyOneTailPointForVisu = hyperparameters["plotOnlyOneTailPointForVisu"]
   trackingPointSizeDisplay    = hyperparameters["trackingPointSizeDisplay"]
@@ -231,20 +249,7 @@ def createValidationVideo(videoPath, superStruct, hyperparameters, outputName=No
         if hyperparameters["reduceImageResolutionPercentage"]:
           frame = cv2.resize(frame, (int(frame_width * hyperparameters["reduceImageResolutionPercentage"]), int(frame_height * hyperparameters["reduceImageResolutionPercentage"])), interpolation = cv2.INTER_AREA)
         if hyperparameters["outputValidationVideoContrastImprovement"]:
-          frame = 255 - frame
-          frameIsBGR = len(frame.shape) == 3
-          if frameIsBGR:
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-          lowVal = int(np.quantile(frame, hyperparameters["outputValidationVideoContrastImprovementQuartile"]))
-          highVal = int(np.quantile(frame, 1 - hyperparameters["outputValidationVideoContrastImprovementQuartile"]))
-          frame[frame < lowVal] = lowVal
-          frame[frame > highVal] = highVal
-          frame = frame - lowVal
-          mult = np.max(frame)
-          frame = frame * (255 / mult)
-          frame = frame.astype('uint8')
-          if frameIsBGR:
-            frame = cv2.cvtColor(frame, cv2.COLOR_GRAY2BGR)
+          frame = improveContrast(frame, hyperparameters)
         
         drawInfoFrame(frame, infoFrame[l], colorModifTab, hyperparameters)
           
