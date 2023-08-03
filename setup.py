@@ -35,6 +35,7 @@ setup(
     "PyQt5>=5.15.0",
     "xlwt",
     "threadpoolctl>=3.1.0",
+    "tifffile",
   ],
   packages=setuptools.find_packages(),
   package_data={'zebrazoom.code.tracking.customTrackingImplementations': ['**/*.py'],
