@@ -58,7 +58,7 @@ def calculateInfoFrameForFrame(superStruct, hyperparameters, wellIdx, animalIdx,
   dataToPlot = {}
   dataToPlot["x"]       = x
   dataToPlot["y"]       = y
-  dataToPlot["size"]    = trackingPointSizeDisplay + 2
+  dataToPlot["size"]    = trackingPointSizeDisplay + (0 if plotOnlyOneTailPointForVisu else 2)
   dataToPlot["Heading"] = Heading
   dataToPlot["numMouv"] = boutIdx+1
   dataToPlot["numWell"] = wellIdx
@@ -90,12 +90,12 @@ def calculateInfoFrameForFrame(superStruct, hyperparameters, wellIdx, animalIdx,
     dataToPlot["y"] = tailY
     if (m == (nbPointsToPlot-1)):
       if (Bend_TimingAbsolute.count(frameIdx+1) != 0):
-        dataToPlot["size"] = trackingPointSizeDisplay + 5
+        dataToPlot["size"] = trackingPointSizeDisplay + (0 if plotOnlyOneTailPointForVisu else 5)
         dataToPlot["red"]   = 0
         dataToPlot["green"] = 0
         dataToPlot["blue"]  = 255
       else:
-        dataToPlot["size"] = trackingPointSizeDisplay + 2
+        dataToPlot["size"] = trackingPointSizeDisplay + (0 if plotOnlyOneTailPointForVisu else 2)
         dataToPlot["red"]   = 0
         dataToPlot["green"] = 255
         dataToPlot["blue"]  = 0
