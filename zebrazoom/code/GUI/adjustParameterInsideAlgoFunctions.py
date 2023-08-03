@@ -61,9 +61,6 @@ def detectBouts(self, controller, wellNumber, firstFrame, adjustOnWholeVideo, re
 
   initialFirstFrameValue, initialLastFrameValue = prepareConfigFileForParamsAdjustements(configFile, wellNumber, firstFrame, self.videoToCreateConfigFileFor, adjustOnWholeVideo)
 
-  if configFile.get('trackingImplementation') == 'fastFishTracking.tracking':
-    configFile['detectMovementWithRawVideoInsideTracking'] = 1
-
   temporarilyRemovedParams = {param: configFile.pop(param, None) for param in ("fasterMultiprocessing", "useFirstFrameAsBackground", "updateBackgroundAtInterval", "detectMovementWithRawVideoInsideTracking")}
 
   configFile["noBoutsDetection"] = 0

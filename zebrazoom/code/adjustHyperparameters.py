@@ -14,9 +14,9 @@ def _createWidget(layout, status, values, info, name, widgets, hasCheckbox):
   import zebrazoom.code.util as util
 
   minn, maxx, hint = info
-  double = name in ("authorizedRelativeLengthTailEnd", "maxDepth")
+  double = name == "authorizedRelativeLengthTailEnd"
   slider = util.SliderWithSpinbox(values[name], minn, maxx, name=name, double=double)
-  if name == "eyeFilterKernelSize" or name == "paramGaussianBlur":
+  if name == "eyeFilterKernelSize":
     slider.setSingleStep(2)
 
   def showHint(fn):
@@ -34,9 +34,6 @@ def _createWidget(layout, status, values, info, name, widgets, hasCheckbox):
   slider.leaveEvent = hideHint(slider.leaveEvent)
 
   def valueChanged():
-    if name == 'paramGaussianBlur' and not slider.value() % 2:
-      slider.setValue(slider.value() + 1)
-      return
     values[name] = slider.value()
     widgets['loop'].exit()
   slider.valueChanged.connect(valueChanged)

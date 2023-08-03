@@ -2,7 +2,7 @@ import numpy as np
 import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.GUI.getCoordinates import findWellLeft, findWellRight, findHeadCenter, findBodyExtremity
-from zebrazoom.code.GUI.adjustParameterInsideAlgo import adjustBoutDetectionOnlyPage, adjustFastFishTrackingPage
+from zebrazoom.code.GUI.adjustParameterInsideAlgo import adjustBoutDetectionOnlyPage
 from zebrazoom.code.GUI.automaticallyFindOptimalParameters import automaticallyFindOptimalParameters
 
 import math
@@ -70,8 +70,7 @@ def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
     except (EnvironmentError, json.JSONDecodeError) as e:
       QMessageBox.critical(self.window, "Could not read config file", "Config file couldn't be read: %s\n" % str(e))
       return False
-    trackingImplementation = self.configFile.get('trackingImplementation')
-    if trackingImplementation is not None and trackingImplementation != 'fastFishTracking.tracking':
+    if self.configFile.get('trackingImplementation') is not None:
       QMessageBox.information(self.window, "Optimization not supported", "Optimization is not yet supported for this type of configuration file.")
       self.configFile.clear()
       return False
@@ -526,13 +525,32 @@ def _fastTrackingBoutDetection(app, detectBoutsMethod):
   if not detectBoutsMethod:
     app.configFile["detectBouts"] = 0
     app.configFile["thresForDetectMovementWithRawVideo"] = 0
-  else:
-    app.configFile["noBoutsDetection"] = 0
-    if detectBoutsMethod == 1:
-      app.configFile["detectMovementWithRawVideoInsideTracking"] = 1
-    if detectBoutsMethod == 2:
-      app.configFile["coordinatesOnlyBoutDetection"] = 1
-  adjustFastFishTrackingPage(detectBoutsMethod=detectBoutsMethod)
+    app.show_frame("FinishConfig")
+    return
+  videoName, videoExt = os.path.splitext(os.path.basename(app.videoToCreateConfigFileFor))
+  videoExt = videoExt.lstrip('.')
+  pathToVideo = os.path.dirname(app.videoToCreateConfigFileFor)
+  app.configFile["exitAfterWellsDetection"] = 1
+  app.wellPositions = []
+  try:
+    storeH5 = app.configFile.get('storeH5')
+    app.configFile['storeH5'] = 1
+    with app.busyCursor():
+      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, app.configFile, ['outputFolder', app.ZZoutputLocation]).run()
+  except ValueError:
+      pass
+  finally:
+    del app.configFile["exitAfterWellsDetection"]
+    if storeH5 is not None:
+      app.configFile['storeH5'] = storeH5
+    else:
+      del app.configFile['storeH5']
+  app.configFile["noBoutsDetection"] = 0
+  if detectBoutsMethod == 1:
+    app.configFile["detectMovementWithRawVideoInsideTracking"] = 1
+  if detectBoutsMethod == 2:
+    app.configFile["coordinatesOnlyBoutDetection"] = 1
+  adjustBoutDetectionOnlyPage(useBackground=False)
 
 
 @util.addToHistory

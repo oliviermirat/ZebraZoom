@@ -32,8 +32,6 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     self._times2 = np.zeros((self._lastFrame - self._firstFrame + 1, 5))
     self._printInterTime = False
 
-  def _adjustParameters(self, i, initialCurFrame, frame, frame2, back, widgets):
-    return None
 
   def run(self):
     
@@ -53,7 +51,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     ret, frame = cap.read()
     if resizeFrameFactor:
       frame = cv2.resize(frame, (int(len(frame[0])/resizeFrameFactor), int(len(frame)/resizeFrameFactor)))
-    if self._hyperparameters["chooseWellsToRunTrackingOnWithFirstAndLastFrame"] and self._hyperparameters["onlyTrackThisOneWell"] == -1:
+    if self._hyperparameters["chooseWellsToRunTrackingOnWithFirstAndLastFrame"]:
       self._listOfWellsOnWhichToRunTheTracking = getListOfWellsOnWhichToRunTheTracking(self, self._background[:,:,0], frame[:,:,0])
     print("listOfWellsOnWhichToRunTheTracking:", self._listOfWellsOnWhichToRunTheTracking)
     self._background = cv2.max(frame, self._background) # INCONSISTENT!!! should be changed!
@@ -69,33 +67,26 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     ret = True
     
     # Going through each frame of the video
-    widgets = None
     startTime = time.time()
     k = self._firstFrame
     while (ret and k <= self._lastFrame):
       if self._hyperparameters["freqAlgoPosFollow"] and k % self._hyperparameters["freqAlgoPosFollow"] == 0:
         print("Tracking at frame", k)
       time1 = time.time()
-      if self._hyperparameters['adjustFreelySwimTracking']:
-        cap.set(1, k)
       ret, frame = cap.read()
       time2 = time.time()
       if resizeFrameFactor:
         frame = cv2.resize(frame, (int(len(frame[0])/resizeFrameFactor), int(len(frame)/resizeFrameFactor)))
       if ret:
         if self._hyperparameters["backgroundSubtractionOnWholeImage"] or k == self._firstFrame:
-          frameROI = backgroundSubtractionOnWholeImage(self, frame, k-self._firstFrame)
+          backgroundSubtractionOnWholeImage(self, frame, k-self._firstFrame)
         else:
           backgroundSubtractionOnlyOnROIs(self, frame, k-self._firstFrame)
       
       time3 = time.time()
       times[k-self._firstFrame, 0] = time2 - time1
       times[k-self._firstFrame, 1] = time3 - time2
-      adjustParamsInfo = self._adjustParameters(k, frameROI, widgets)
-      if adjustParamsInfo is not None:
-        k, widgets = adjustParamsInfo
-      else:
-        k += 1
+      k += 1
     
     if resizeFrameFactor:
       self._trackingDataPerWell = [resizeFrameFactor * elem for elem in self._trackingDataPerWell]

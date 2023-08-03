@@ -658,8 +658,7 @@ class ViewParameters(util.CollapsibleSplitter):
         optimizeLayout.setStretch(0, 1)
         optimizeBtn = util.apply_style(QPushButton("Optimize configuration file", self), background_color=util.LIGHT_YELLOW)
         def optimizeClicked():
-          trackingImplementation = controller.configFile.get('trackingImplementation')
-          if trackingImplementation is not None and trackingImplementation != 'fastFishTracking.tracking':
+          if controller.configFile.get('trackingImplementation') is not None:
             QMessageBox.information(controller.window, "Optimization not supported", "Optimization is not yet supported for this type of configuration file.")
           else:
             util.addToHistory(controller.optimizeConfigFile)()

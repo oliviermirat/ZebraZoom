@@ -360,9 +360,6 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
     hyperparameters.update(overridenParameters)
     config.update(overridenParameters)
 
-  if hyperparameters['coordinatesOnlyBoutDetection']:
-    hyperparameters['detectMovementWithRawVideoInsideTracking'] = 0
-
   if hyperparameters["tailAnglesHeatMap"]:
     hyperparameters["calculateAllTailAngles"] = 1
 
