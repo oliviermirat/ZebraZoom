@@ -13,6 +13,7 @@ import numpy as np
 import cv2
 from pathlib import Path
 import platform
+import tifffile as tiff
 
 class ZzVideoReading():
 
@@ -138,6 +139,56 @@ class ZzVideoReading():
         self.lastFrameRead = numImage - 1
 
 
+class tifReading():
+
+  def __init__(self, videoPath):
+    self.tif = tiff.TiffFile(videoPath)
+    self.curPage    = 0
+    self.num_images = len(self.tif.pages)
+    firsPage = self.tif.pages[self.curPage]
+    firsPage = firsPage.asarray()
+    self.width  = firsPage.shape[0]
+    self.height = firsPage.shape[1]
+  
+  def get(self, idOfInfoRequested):
+    if idOfInfoRequested == 1:
+      return self.curPage
+    elif idOfInfoRequested == 3:
+      return self.width
+    elif idOfInfoRequested == 4:
+      return self.height
+    elif idOfInfoRequested == 7:
+      return self.num_images
+    elif idOfInfoRequested == 5:
+      return 24 # fake input video fps
+  
+  def isOpened(self):
+    if len(self.tif.pages):
+      return True
+    else:
+      return False
+    
+  def release(self):
+    self.tif.pages = []
+    
+  def read(self):
+    if self.curPage < len(self.tif.pages):
+      page = self.tif.pages[self.curPage]
+      frame_data = page.asarray()
+      if frame_data.dtype != 'uint8':
+        frame_data = (frame_data / frame_data.max() * 255).astype('uint8')
+      if not(len(frame_data.shape) == 3 and frame_data.shape[2] == 3):
+        frame_data = cv2.cvtColor(frame_data, cv2.COLOR_GRAY2BGR)
+      self.curPage += 1
+      return [True, frame_data]
+    else:
+      return [False, []]
+  
+  def set(self, propToChange, numImage):
+    if propToChange == 1:
+      self.curPage = numImage
+    
+
 def VideoCapture(videoPath):
   
   if '.seq' in videoPath:
@@ -149,6 +200,12 @@ def VideoCapture(videoPath):
   elif '.sqb' in videoPath:
     
     zzVidCapture = ZzVideoReading(videoPath.replace('.sqb', '.seq'))
+    
+    return zzVidCapture
+  
+  elif ('.tif' in videoPath) or ('.tiff' in videoPath):
+  
+    zzVidCapture = tifReading(videoPath)
     
     return zzVidCapture
   
