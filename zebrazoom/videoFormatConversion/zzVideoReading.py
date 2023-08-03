@@ -147,13 +147,12 @@ class tifReading():
     self.num_images = len(self.tif.pages)
     firsPage = self.tif.pages[self.curPage]
     firsPage = firsPage.asarray()
-    print("shape:", firsPage.shape)
     self.width  = firsPage.shape[0]
     self.height = firsPage.shape[1]
   
   def get(self, idOfInfoRequested):
     if idOfInfoRequested == 1:
-      return self.curPage + 1
+      return self.curPage
     elif idOfInfoRequested == 3:
       return self.width
     elif idOfInfoRequested == 4:
@@ -173,14 +172,17 @@ class tifReading():
     self.tif.pages = []
     
   def read(self):
-    page = self.tif.pages[self.curPage]
-    frame_data = page.asarray()
-    if frame_data.dtype != 'uint8':
-      frame_data = (frame_data / frame_data.max() * 255).astype('uint8')
-    if not(len(frame_data.shape) == 3 and frame_data.shape[2] == 3):
-      frame_data = cv2.cvtColor(frame_data, cv2.COLOR_GRAY2BGR)
-    self.curPage += 1
-    return [True, frame_data]
+    if self.curPage < len(self.tif.pages):
+      page = self.tif.pages[self.curPage]
+      frame_data = page.asarray()
+      if frame_data.dtype != 'uint8':
+        frame_data = (frame_data / frame_data.max() * 255).astype('uint8')
+      if not(len(frame_data.shape) == 3 and frame_data.shape[2] == 3):
+        frame_data = cv2.cvtColor(frame_data, cv2.COLOR_GRAY2BGR)
+      self.curPage += 1
+      return [True, frame_data]
+    else:
+      return [False, []]
   
   def set(self, propToChange, numImage):
     if propToChange == 1:
