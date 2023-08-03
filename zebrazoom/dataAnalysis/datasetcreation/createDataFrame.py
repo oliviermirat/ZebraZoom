@@ -310,7 +310,13 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
                 frameCount = dataForBout['BoutEnd'] - dataForBout['BoutStart'] + 1
                 dfParamForWell.loc[curBoutId, 'numberOfRolloverFramesNormalized'] = dfParamForWell.loc[curBoutId, 'numberOfRolloverFrames'] / frameCount
                 dfParamForWell.loc[curBoutId, 'rolloverProbabilitiesSumNormalized'] = dfParamForWell.loc[curBoutId, 'rolloverProbabilitiesSum'] / frameCount
-              if "Bend_Timing" in dataForBout and type(dataForBout["Bend_Timing"]) == list and len(dataForBout["Bend_Timing"]) >= minNbBendForBoutDetect:
+              
+              if "Bend_Timing" in dataForBout and ((type(dataForBout["Bend_Timing"]) == list and len(dataForBout["Bend_Timing"]) >= minNbBendForBoutDetect) or (type(dataForBout["Bend_Timing"]) == int and 1 >= minNbBendForBoutDetect)):
+                
+                if type(dataForBout["Bend_Timing"]) == int:
+                  dataForBout["Bend_Timing"]    = [dataForBout["Bend_Timing"]]
+                  dataForBout["Bend_TimingAbsolute"]    = [dataForBout["Bend_TimingAbsolute"]]
+                  dataForBout["Bend_Amplitude"] = [dataForBout["Bend_Amplitude"]]
                 
                 # Initial basic information
                 
@@ -373,8 +379,6 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
                   toPutInDataFrame       = toPutInDataFrame       + [tailLength, tailLengthFromRecalculatedAngles] + tailAnglesRecalculatedData + tailAnglesRecalculatedData2.tolist()
                 
                 # Adding bout parameters to the dataframe created for the current well
-                print("toPutInDataFrameColumn:", len(toPutInDataFrameColumn))
-                print("toPutInDataFrame:", len(toPutInDataFrame))
                 dfParamForWell.loc[curBoutId, toPutInDataFrameColumn] = toPutInDataFrame
                 curBoutId = curBoutId + 1
               
