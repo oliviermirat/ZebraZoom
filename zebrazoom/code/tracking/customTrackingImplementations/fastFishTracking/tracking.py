@@ -38,6 +38,9 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
   def _debugFrame(self, frame, title=None, buttons=(), timeout=None):
     util.showFrame(frame, title=title, buttons=buttons, timeout=timeout)
 
+  def _adjustParameters(self, i, frame, widgets):
+    return None
+
   def run(self):
     
     ### Step 1 (out of 2): Tracking:
@@ -62,7 +65,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
     ret, frame = cap.read()
     if resizeFrameFactor:
       frame = cv2.resize(frame, (int(len(frame[0])/resizeFrameFactor), int(len(frame)/resizeFrameFactor)))
-    if self._hyperparameters["chooseWellsToRunTrackingOnWithFirstAndLastFrame"]:
+    if self._hyperparameters["chooseWellsToRunTrackingOnWithFirstAndLastFrame"] and self._hyperparameters["onlyTrackThisOneWell"] == -1:
       self._listOfWellsOnWhichToRunTheTracking = getListOfWellsOnWhichToRunTheTracking(self, self._background[:,:,0], frame[:,:,0])
     print("listOfWellsOnWhichToRunTheTracking:", self._listOfWellsOnWhichToRunTheTracking)
     if not(self._hyperparameters["useFirstFrameAsBackground"]):
@@ -79,19 +82,22 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
     ret = True
     
     # Going through each frame of the video
+    widgets = None
     startTime = time.time()
     k = self._firstFrame
     while (ret and k <= self._lastFrame):
       if self._hyperparameters["freqAlgoPosFollow"] and k % self._hyperparameters["freqAlgoPosFollow"] == 0:
         print("Tracking at frame", k)
       time1 = time.time()
+      if self._hyperparameters['adjustFreelySwimTracking']:
+        cap.set(1, k)
       ret, frame = cap.read()
       time2 = time.time()
       if resizeFrameFactor:
         frame = cv2.resize(frame, (int(len(frame[0])/resizeFrameFactor), int(len(frame)/resizeFrameFactor)))
       if ret:
         if self._hyperparameters["backgroundSubtractionOnWholeImage"] or k == self._firstFrame:
-          backgroundSubtractionOnWholeImage(self, frame, k-self._firstFrame)
+          frameROI = backgroundSubtractionOnWholeImage(self, frame, k-self._firstFrame)
         else:
           backgroundSubtractionOnlyOnROIs(self, frame, k-self._firstFrame)
         if self._hyperparameters["updateBackgroundAtInterval"]:
@@ -101,7 +107,11 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
       time3 = time.time()
       times[k-self._firstFrame, 0] = time2 - time1
       times[k-self._firstFrame, 1] = time3 - time2
-      k += 1
+      adjustParamsInfo = self._adjustParameters(k, frameROI, widgets)
+      if adjustParamsInfo is not None:
+        k, widgets = adjustParamsInfo
+      else:
+        k += 1
     
     
     if resizeFrameFactor:

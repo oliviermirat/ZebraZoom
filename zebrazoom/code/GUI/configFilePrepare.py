@@ -10,6 +10,7 @@ PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.util as util
+from zebrazoom.code.GUI.adjustParameterInsideAlgo import adjustFastFishTrackingPage
 from zebrazoom.code.GUI.configFilePrepareFunctions import numberOfAnimals
 
 
@@ -592,11 +593,13 @@ class OptimizeConfigFile(QWidget):
     self._freelySwimmingWidgets = set()
     self._fastCenterOfMassWidgets = set()
     self._centerOfMassWidgets = set()
+    self._fastFishTrackingWidgets = set()
     self._advancedHeadEmbeddedWidgets = [StoreValidationVideoWidget, _OptimizeDataAnalysisWidget, _ValidationVideoOptionsWidget, _AdditionalCalculationsWidget]
     self._advancedFreelySwimmingWidgets = [StoreValidationVideoWidget, _SolveIssuesNearBordersWidget, _PostProcessTrajectoriesWidget, _OptimizeDataAnalysisWidget, _ValidationVideoOptionsWidget, _TailTrackingQualityWidget,
                                            _VideoRotationWidget, _NonStationaryBackgroundWidget, _NoMultiprocessingWidget, _AdditionalCalculationsWidget, _DocumentationLinksWidget]
     self._advancedFastCenterOfMassWidgets = [StoreValidationVideoWidget, _SolveIssuesNearBordersWidget, _PostProcessTrajectoriesWidget, _OptimizeDataAnalysisWidget]
     self._advancedCenterOfMassWidgets = [StoreValidationVideoWidget, _SolveIssuesNearBordersWidget, _PostProcessTrajectoriesWidget, _OptimizeDataAnalysisWidget]
+    self._advancedFastFishTrackingWidgets = [StoreValidationVideoWidget, _OptimizeDataAnalysisWidget, _AdditionalCalculationsWidget]
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Optimize previously created configuration file", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -607,6 +610,10 @@ class OptimizeConfigFile(QWidget):
     optimizeFreelySwimmingBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackgroundFreelySwim)(controller, 0, automaticParameters=True, useNext=False))
     optimizeButtonsLayout.addWidget(optimizeFreelySwimmingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     self._freelySwimmingWidgets.add(optimizeFreelySwimmingBtn)
+    optimizeFastFishTrackingBtn = util.apply_style(QPushButton("Optimize fast fish tracking and bout detection configuration file parameters", self), background_color=util.LIGHT_YELLOW)
+    optimizeFastFishTrackingBtn.clicked.connect(lambda: util.addToHistory(adjustFastFishTrackingPage)(useNext=False))
+    optimizeButtonsLayout.addWidget(optimizeFastFishTrackingBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._fastFishTrackingWidgets.add(optimizeFastFishTrackingBtn)
     optimizeHeadEmbeddedBtn = util.apply_style(QPushButton("Optimize head embedded tracking configuration file parameters", self), background_color=util.LIGHT_YELLOW)
     optimizeHeadEmbeddedBtn.clicked.connect(lambda: util.addToHistory(controller.calculateBackground)(controller, 0, useNext=False))
     optimizeButtonsLayout.addWidget(optimizeHeadEmbeddedBtn, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -692,23 +699,27 @@ class OptimizeConfigFile(QWidget):
 
   def _rebuildAdvancedOptions(self):
     app = QApplication.instance()
-    trackingMethod = app.configFile.get("trackingMethod", None)
-    if not trackingMethod:
-      if app.configFile.get("headEmbeded", False):
-        visibleWidgets = self._headEmbeddedWidgets
-        advancedWidgets = self._advancedHeadEmbeddedWidgets
-      else:
-        visibleWidgets = self._freelySwimmingWidgets
-        advancedWidgets = self._advancedFreelySwimmingWidgets
-    elif trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction" or \
-        trackingMethod == "fastCenterOfMassTracking_ClassicalBackgroundSubtraction":
-      visibleWidgets = self._fastCenterOfMassWidgets
-      advancedWidgets = self._advancedFastCenterOfMassWidgets
+    if app.configFile.get("trackingImplementation") == "fastFishTracking.tracking":
+      visibleWidgets = self._fastFishTrackingWidgets
+      advancedWidgets = self._advancedFastFishTrackingWidgets
     else:
-      assert trackingMethod == "classicCenterOfMassTracking"
-      visibleWidgets = self._centerOfMassWidgets
-      advancedWidgets = self._advancedCenterOfMassWidgets
-    for widget in self._freelySwimmingWidgets | self._headEmbeddedWidgets | self._fastCenterOfMassWidgets | self._centerOfMassWidgets:
+      trackingMethod = app.configFile.get("trackingMethod")
+      if not trackingMethod:
+        if app.configFile.get("headEmbeded", False):
+          visibleWidgets = self._headEmbeddedWidgets
+          advancedWidgets = self._advancedHeadEmbeddedWidgets
+        else:
+          visibleWidgets = self._freelySwimmingWidgets
+          advancedWidgets = self._advancedFreelySwimmingWidgets
+      elif trackingMethod == "fastCenterOfMassTracking_KNNbackgroundSubtraction" or \
+          trackingMethod == "fastCenterOfMassTracking_ClassicalBackgroundSubtraction":
+        visibleWidgets = self._fastCenterOfMassWidgets
+        advancedWidgets = self._advancedFastCenterOfMassWidgets
+      else:
+        assert trackingMethod == "classicCenterOfMassTracking"
+        visibleWidgets = self._centerOfMassWidgets
+        advancedWidgets = self._advancedCenterOfMassWidgets
+    for widget in self._freelySwimmingWidgets | self._headEmbeddedWidgets | self._fastCenterOfMassWidgets | self._centerOfMassWidgets | self._fastFishTrackingWidgets:
       if widget in visibleWidgets:
         widget.show()
       else:
