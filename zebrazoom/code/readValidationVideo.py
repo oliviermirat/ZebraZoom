@@ -101,37 +101,42 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
   max_l = int(cap.get(7))
   if max_l == 1:
     return None
-  frameRange = (supstruct["firstFrame"], supstruct["lastFrame"] - 1) if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or "pathToOriginalVideo" in supstruct else (0, max_l -1)
 
   if not("firstFrame" in supstruct):
     supstruct["firstFrame"] = 1
     print("supstruct['firstFrame'] not found")
 
+  if "lastFrame" not in supstruct:
+    supstruct["lastFrame"] = max_l - 1
+    print("supstruct['lastFrame'] not found")
+
+  frameRange = (supstruct["firstFrame"], supstruct["lastFrame"] - 1)
+
   infoWells = []
 
-  HeadX = np.zeros(max_l + supstruct["firstFrame"])
-  HeadY = np.zeros(max_l + supstruct["firstFrame"])
+  HeadX = np.zeros(max_l)
+  HeadY = np.zeros(max_l)
 
   if ((numWell != -1) and (zoom)):
     lastEnd = 0
     lastXpos = supstruct["wellPoissMouv"][numWell][numAnimal][0]["HeadX"][0]
     lastYpos = supstruct["wellPoissMouv"][numWell][numAnimal][0]["HeadY"][0]
-    for k in range(0,len(supstruct["wellPoissMouv"][numWell][numAnimal])):
-      beg = supstruct["wellPoissMouv"][numWell][numAnimal][k]["BoutStart"]
-      end = supstruct["wellPoissMouv"][numWell][numAnimal][k]["BoutEnd"]
-      for l in range(lastEnd, beg):
-        HeadX[l] = lastXpos
-        HeadY[l] = lastYpos
-      for l in range(beg, end):
-        HeadX[l]  = supstruct["wellPoissMouv"][numWell][numAnimal][k]["HeadX"][l-beg]
-        HeadY[l]  = supstruct["wellPoissMouv"][numWell][numAnimal][k]["HeadY"][l-beg]
-      lastEnd = end
-      lastXpos = supstruct["wellPoissMouv"][numWell][numAnimal][k]["HeadX"][end-1-beg]
-      lastYpos = supstruct["wellPoissMouv"][numWell][numAnimal][k]["HeadY"][end-1-beg]
+    for bout in supstruct["wellPoissMouv"][numWell][numAnimal]:
+      beg = bout["BoutStart"]
+      end = bout["BoutEnd"]
+      if not (hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or "pathToOriginalVideo" in supstruct):
+        beg -= supstruct["firstFrame"]
+        end -= supstruct["firstFrame"]
+      HeadX[lastEnd:beg] = lastXpos
+      HeadX[beg:end+1] = bout['HeadX'][:None if end + 1 <= max_l else max_l - beg]
+      HeadY[lastEnd:beg] = lastYpos
+      HeadY[beg:end+1] = bout['HeadY'][:None if end + 1 <= max_l else max_l - beg]
+      lastEnd = end + 1
+      lastXpos = bout["HeadX"][end-1-beg]
+      lastYpos = bout["HeadY"][end-1-beg]
 
-    for l in range(lastEnd, max_l + supstruct["firstFrame"]):
-      HeadX[l] = lastXpos
-      HeadY[l] = lastYpos
+    HeadX[lastEnd:] = lastXpos
+    HeadY[lastEnd:] = lastYpos
 
   # /* Getting the info about well positions */
   analyzeAllWellsAtTheSameTime = 0
@@ -185,10 +190,6 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
     lengthX = nx
     lengthY = ny
 
-  l = start - supstruct["firstFrame"] + 1 if start > 0 else 0
-  if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or "pathToOriginalVideo" in supstruct:
-    l += supstruct["firstFrame"]
-
   xOriginal = x
   yOriginal = y
 
@@ -201,6 +202,9 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
     l = frameSlider.value()
     if timer is not None and timer.isActive() and (l == frameSlider.maximum() or stopTimer):
       timer.stop()
+
+    if not (hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or "pathToOriginalVideo" in supstruct):
+      l -= supstruct['firstFrame']
 
     cap.set(1, l)
     ret, img = cap.read()
@@ -217,10 +221,10 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
 
     if numWell != -1 and zoom:
       length = 250
-      xmin = int(HeadX[l + supstruct["firstFrame"] - 1] - length/2)
-      xmax = int(HeadX[l + supstruct["firstFrame"] - 1] + length/2)
-      ymin = int(HeadY[l + supstruct["firstFrame"] - 1] - length/2)
-      ymax = int(HeadY[l + supstruct["firstFrame"] - 1] + length/2)
+      xmin = int(HeadX[l] - length/2)
+      xmax = int(HeadX[l] + length/2)
+      ymin = int(HeadY[l] - length/2)
+      ymax = int(HeadY[l] + length/2)
 
       x = max(xmin + xOriginal, 0)
       y = max(ymin + yOriginal, 0)
@@ -249,7 +253,7 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
     return img
 
   wellShape = None if config.get("noWellDetection", False) or (hyperparameters["headEmbeded"] and not hyperparameters["oneWellManuallyChosenTopLeft"]) else 'rectangle' if config.get("wellsAreRectangles", False) or len(config.get("oneWellManuallyChosenTopLeft", '')) or int(config.get("multipleROIsDefinedDuringExecution", 0)) or config.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
-  return getFrame, frameRange, l, boutMap is not None, supstruct['wellPositions'], wellShape, hyperparameters
+  return getFrame, frameRange, start if start > 0 else 0, boutMap is not None, supstruct['wellPositions'], wellShape, hyperparameters
 
 
 def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation='', supstruct=None, config=None):
