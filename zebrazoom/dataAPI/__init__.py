@@ -14,3 +14,4 @@ from .plotTailAngleHeatmap import *
 from .setFPSandPixelSize import *
 from .getFPSandPixelSize import *
 from .applyMedianFilterOnCurvature import *
+from .getConfigurationFileUsed import *
