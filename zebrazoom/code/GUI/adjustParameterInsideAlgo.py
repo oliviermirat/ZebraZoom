@@ -447,7 +447,7 @@ def adjustParamInsideAlgoPage(useNext=True):
     if improveContrast:
       frame = util.improveContrast(frame, hyperparameters["outputValidationVideoContrastImprovementQuartile"])
     return frame
-  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video))
+  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video) or lastFrameLabel.setText(str(min(frameSlider.value() + 500, int(maxFrame)))))
 
   img = getFrame()
   height, width = img.shape[:2]
@@ -594,7 +594,7 @@ def adjustParamInsideAlgoFreelySwimPage(useNext=True):
     cap.set(1, frameSlider.value())
     ret, img = cap.read()
     return img
-  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video))
+  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video) or lastFrameLabel.setText(str(min(frameSlider.value() + 500, int(maxFrame)))))
 
   img = getFrame()
   height, width = img.shape[:2]
@@ -715,7 +715,7 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
     cap.set(1, frameSlider.value())
     ret, img = cap.read()
     return img
-  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video))
+  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(), video) or lastFrameLabel.setText(str(min(frameSlider.value() + 500, int(maxFrame)))))
 
   img = getFrame()
   height, width = img.shape[:2]
