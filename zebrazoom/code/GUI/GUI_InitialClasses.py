@@ -19,7 +19,7 @@ from matplotlib.figure import Figure
 from PyQt5.QtCore import pyqtSignal, Qt, QAbstractItemModel, QDir, QEvent, QLine, QModelIndex, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel, QTimer, QUrl
 from PyQt5.QtGui import QColor, QCursor, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
-from PyQt5.QtWidgets import QAbstractItemView, QApplication, QDialog, QLabel, QWidget, QFileDialog, QFileIconProvider, QFrame, QGridLayout, QHeaderView, QLineEdit, QListView, QListWidget, QMessageBox, QHeaderView, QPushButton, QSizePolicy, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QStackedLayout, QComboBox, QTreeView, QToolTip
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QDialog, QLabel, QWidget, QFileDialog, QFileIconProvider, QFormLayout, QFrame, QGridLayout, QHeaderView, QLineEdit, QListView, QListWidget, QListWidgetItem, QMessageBox, QHeaderView, QPushButton, QSizePolicy, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QStackedLayout, QComboBox, QTreeView, QToolTip
 PYQT6 = False
 
 import zebrazoom
@@ -839,15 +839,6 @@ class _VisualizationTreeModel(QAbstractItemModel):
     self.endInsertRows()
     self._saveGroups()
 
-  def removeResults(self, indices, parentIndex):
-    parentItem = self.getItem(parentIndex)
-    subgroupSize = len(parentItem.subgroups)
-    for idx in indices:
-      self.beginRemoveRows(parentIndex, subgroupSize + idx, subgroupSize + idx)
-      parentItem.removeResults(idx)
-      self.endRemoveRows()
-    self._saveGroups()
-
   def addGroup(self, parentIndex):
     if parentIndex is None:
         parentItem = QModelIndex()
@@ -857,10 +848,16 @@ class _VisualizationTreeModel(QAbstractItemModel):
     self.endInsertRows()
     self._saveGroups()
 
-  def removeGroups(self, indices, parentIndex):
+  def removeChildren(self, indices, parentIndex):
     parentItem = self.getItem(parentIndex)
-    subgroupSize = len(parentItem.subgroups)
-    for idx in indices:
+    subgroupsSize = len(parentItem.subgroups)
+    resultsIdxs = [idx - subgroupsSize  for idx in indices if idx >= subgroupsSize]
+    groupsIdxs = indices[len(resultsIdxs):]
+    for idx in resultsIdxs:
+      self.beginRemoveRows(parentIndex, subgroupsSize + idx, subgroupsSize + idx)
+      parentItem.removeResults(idx)
+      self.endRemoveRows()
+    for idx in groupsIdxs:
       self.beginRemoveRows(parentIndex, idx, idx)
       parentItem.removeSubgroup(idx)
       self.endRemoveRows()
@@ -897,62 +894,54 @@ class _VisualizationGroupDetails(QWidget):
     self._model = model
     self._getCurrentIndex = getCurrentIndex
 
-    layout = QGridLayout()
+    layout = QVBoxLayout()
 
-    groupsButtonsLayout = QHBoxLayout()
-    self._addResultsBtn = QPushButton("Add group")
-    self._addResultsBtn.clicked.connect(self._addGroup)
-    groupsButtonsLayout.addWidget(self._addResultsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
-    removeResultsBtn = QPushButton("Remove selected groups")
-    removeResultsBtn.clicked.connect(self._removeGroups)
-    groupsButtonsLayout.addWidget(removeResultsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
-    groupsButtonsLayout.addStretch()
-    layout.addLayout(groupsButtonsLayout, 0, 0)
+    groupNameLayout = QFormLayout()
+    groupNameLayout.setContentsMargins(0, 0, 0, 0)
+    groupNameLayout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+    self._groupNameLineEdit = QLineEdit()
+    self._groupNameLineEdit.editingFinished.connect(lambda: self._model.setData(getCurrentIndex(), self._groupNameLineEdit.text()))
+    groupNameLayout.addRow('Group name:', self._groupNameLineEdit)
+    self._groupNameWidget = QWidget()
+    self._groupNameWidget.setLayout(groupNameLayout)
+    layout.addWidget(self._groupNameWidget)
 
-    self._subgroupsListWidget = QListWidget()
-    self._subgroupsListWidget.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
-    layout.addWidget(self._subgroupsListWidget, 1, 0)
-
-    resultsButtonsLayout = QHBoxLayout()
-    resultsButtonsLayout.setContentsMargins(0, 0, 0, 0)
+    buttonsLayout = QHBoxLayout()
+    self._addGroupBtn = QPushButton("Add group")
+    self._addGroupBtn.clicked.connect(self._addGroup)
+    buttonsLayout.addWidget(self._addGroupBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     self._addResultsBtn = QPushButton("Add results set(s)")
     self._addResultsBtn.clicked.connect(self._addResults)
-    resultsButtonsLayout.addWidget(self._addResultsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
-    removeResultsBtn = QPushButton("Remove selected results sets")
-    removeResultsBtn.clicked.connect(self._removeResults)
-    resultsButtonsLayout.addWidget(removeResultsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
-    resultsButtonsLayout.addStretch()
-    self._resultsButtonsWidget = QWidget()
-    self._resultsButtonsWidget.setLayout(resultsButtonsLayout)
-    layout.addWidget(self._resultsButtonsWidget, 0, 1)
+    buttonsLayout.addWidget(self._addResultsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    removeResultsBtn = QPushButton("Remove")
+    removeResultsBtn.clicked.connect(self._removeSelected)
+    removeResultsBtn.setEnabled(False)
+    buttonsLayout.addWidget(removeResultsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
 
-    self._resultsListWidget = QListWidget()
-    self._resultsListWidget.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
-    layout.addWidget(self._resultsListWidget, 1, 1)
+    self._listWidget = QListWidget()
+    self._listWidget.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
+    self._listWidget.selectionModel().selectionChanged.connect(lambda *args: removeResultsBtn.setEnabled(self._listWidget.selectionModel().hasSelection()))
+    layout.addWidget(self._listWidget)
 
     self._startPageBtn = QPushButton("Go to the start page", self)
     self._startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
-    layout.addWidget(self._startPageBtn, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
 
     self.setLayout(layout)
 
   def refresh(self):
     item = self._model.getItem(self._getCurrentIndex())
     showResults = not isinstance(item, _GroupsVisualizationGroupItem)
-    self._resultsButtonsWidget.setVisible(showResults)
-    self._resultsListWidget.setVisible(showResults)
-    self._refreshResults()
-    self._refreshSubgroups()
-
-  def _refreshResults(self):
-    item = self._model.getItem(self._getCurrentIndex())
-    self._resultsListWidget.clear()
-    self._resultsListWidget.addItems(results.filename for results in item.paths)
-
-  def _refreshSubgroups(self):
-    item = self._model.getItem(self._getCurrentIndex())
-    self._subgroupsListWidget.clear()
-    self._subgroupsListWidget.addItems(results.data(0) for results in item.subgroups)
+    self._addResultsBtn.setVisible(showResults)
+    self._groupNameWidget.setVisible(showResults)
+    self._groupNameLineEdit.setText(item.data(0))
+    self._listWidget.clear()
+    self._listWidget.addItems(results.data(0) for results in item.subgroups)
+    for results in item.paths:
+      index = self._model.createIndex(results.childNumber(), 0, results)
+      self._listWidget.addItem(QListWidgetItem(self._model.data(index, Qt.DecorationRole), results.filename))
 
   def _getMultipleFolders(self):
     app = QApplication.instance()
@@ -999,7 +988,7 @@ class _VisualizationGroupDetails(QWidget):
         continue
       resultsItems.append(os.path.basename(selectedFolder))
     self._model.appendResults(resultsItems, self._getCurrentIndex())
-    self._refreshResults()
+    self.refresh()
     if invalidFolders:
       app = QApplication.instance()
       warning = QMessageBox(app.window)
@@ -1009,19 +998,14 @@ class _VisualizationGroupDetails(QWidget):
       warning.setDetailedText("\n".join(invalidFolders))
       warning.exec()
 
-  def _removeResults(self):
-    selectedIdxs = sorted(set(map(lambda idx: idx.row(), self._resultsListWidget.selectionModel().selectedIndexes())), reverse=True)
-    self._model.removeResults(selectedIdxs, self._getCurrentIndex())
-    self._refreshResults()
-
   def _addGroup(self):
     self._model.addGroup(self._getCurrentIndex())
-    self._refreshSubgroups()
+    self.refresh()
 
-  def _removeGroups(self):
-    selectedIdxs = sorted(set(map(lambda idx: idx.row(), self._subgroupsListWidget.selectionModel().selectedIndexes())), reverse=True)
-    self._model.removeGroups(selectedIdxs, self._getCurrentIndex())
-    self._refreshSubgroups()
+  def _removeSelected(self):
+    selectedIdxs = sorted(set(map(lambda idx: idx.row(), self._listWidget.selectionModel().selectedIndexes())), reverse=True)
+    self._model.removeChildren(selectedIdxs, self._getCurrentIndex())
+    self.refresh()
 
 
 class _SortedVisualizationTreeModel(QSortFilterProxyModel):
@@ -1040,6 +1024,7 @@ class ViewParameters(util.CollapsibleSplitter):
         self.visualization = 0
 
         self._tree = tree = QTreeView()
+        self._tree.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.SelectedClicked)
         tree.viewport().installEventFilter(_TooltipHelper(tree))
         tree.sizeHint = lambda: QSize(150, 1)
         model = _VisualizationTreeModel()
