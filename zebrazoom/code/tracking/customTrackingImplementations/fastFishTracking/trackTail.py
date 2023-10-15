@@ -1,154 +1,11 @@
-from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.utilities import appendPoint, distBetweenThetas, assignValueIfBetweenRange, calculateAngle
+from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.tailTrackTry4InitialPerpendicularDirections import tailTrackTry4InitialPerpendicularDirections
+from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.tailTrackFindNextPoint import tailTrackFindNextPoint
+from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.utilities import calculateAngle
 from zebrazoom.code.extractParameters import calculateTailAngle
 from scipy.interpolate import interp1d
-import zebrazoom.code.util as util
 from numpy import linspace
 import numpy as np
 import math
-import cv2
-
-def __insideTrackTail(depth, headPosition, frame, points, angle, maxDepth, steps, nbList, hyperparameters, debug, lenX, lenY, secondTry=False):
-  
-  x = headPosition[0]
-  y = headPosition[1]
-  
-  pixSurMax = hyperparameters["headEmbededParamTailDescentPixThreshStop"]
-  
-  pixTotList = []
-  
-  distSubsquentPoints = 0.000001
-  pixSur = 0
-  
-  while (distSubsquentPoints > 0 and depth < maxDepth and ((pixSur < pixSurMax) or (depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth))):
-  
-    if depth == 0 and angle == -99999: # First frame, first segment
-      thetaDiffAccept = 3.6
-    else:
-      if (depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth):
-        thetaDiffAccept = hyperparameters["thetaDiffAccept"]
-      else:
-        if not("authorizedRelativeLengthTailEnd2" in hyperparameters) or (depth < hyperparameters["authorizedRelativeLengthTailEnd2"]*maxDepth):
-          thetaDiffAccept = hyperparameters["thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd"]
-          nbList = hyperparameters["nbListAfterAuthorizedRelativeLengthTailEnd"]
-        else:
-          thetaDiffAccept = hyperparameters["thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd2"]
-          nbList = hyperparameters["nbListAfterAuthorizedRelativeLengthTailEnd2"]
-          
-
-    pixTotMax = 1000000
-    maxTheta  = angle
-
-    l = [i*(math.pi/nbList) for i in range(0,2*nbList) if distBetweenThetas(i*(math.pi/nbList), angle) < thetaDiffAccept]
-
-    for step in steps:
-      if (step < maxDepth - depth) or (step == steps[0]):
-        for theta in l:
-          xNew = assignValueIfBetweenRange(int(x + step * (math.cos(theta))), 0, lenX)
-          yNew = assignValueIfBetweenRange(int(y + step * (math.sin(theta))), 0, lenY)
-          pixTot = frame[yNew][xNew]
-          if (pixTot < pixTotMax):
-            pixTotMax = pixTot
-            maxTheta = theta
-            xTot = xNew
-            yTot = yNew
-    
-    pixTotList.append(pixTotMax)
-    
-    if False:
-      w = 4
-      ym = yTot - w
-      yM = yTot + w
-      xm = xTot - w
-      xM = xTot + w
-      if ym < 0:
-        ym = 0
-      if xm < 0:
-        xm = 0
-      if yM > lenY + 1:
-        yM = lenY + 1
-      if xM > lenX + 1:
-        xM = lenX + 1
-      pixSur = np.min(frame[ym:yM, xm:xM])
-    else:
-      pixSur = frame[yTot, xTot]
-
-    # Calculates distance between new and old point
-    distSubsquentPoints = math.sqrt((xTot - x)**2 + (yTot - y)**2)
-    
-    if depth + distSubsquentPoints < maxDepth and ((pixSur < pixSurMax) or (depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth)):
-      points = appendPoint(xTot, yTot, points)
-    else:
-      vectX = xTot - x
-      vectY = yTot - y
-      xTot  = int(x + (maxDepth / (depth + distSubsquentPoints)) * vectX)
-      yTot  = int(y + (maxDepth / (depth + distSubsquentPoints)) * vectY)
-      points = appendPoint(xTot, yTot, points)
-    
-    if debug:
-      frameDisplay = frame.copy()
-      cv2.circle(frameDisplay, (xTot, yTot), 1, (0,0,0),   -1)
-      util.showFrame(frameDisplay, title="HeadEmbeddedTailTracking")
-    
-    newTheta = calculateAngle(x,y,xTot,yTot)
-    
-    angle = newTheta
-    if depth == 0:
-      lastFirstTheta = angle
-    depth = depth + distSubsquentPoints
-    x = xTot
-    y = yTot
-  
-  lenPoints = len(points[0]) - 1
-  if points[0, lenPoints-1] == points[0, lenPoints] and points[1, lenPoints-1] == points[1, lenPoints]:
-    points = points[:, :len(points[0])-1]
-  
-  if debug:
-    print(np.median(pixTotList), np.mean(pixTotList), pixTotList)
-  
-  medianPixTotList = np.median(pixTotList)
-  if "tries4rotationsCombination" in hyperparameters and hyperparameters["tries4rotationsCombination"] and len(pixTotList) <= 2:
-    medianPixTotList += 25
-  
-  if hyperparameters["maximumMedianValueOfAllPointsAlongTheTail"] and medianPixTotList > hyperparameters["maximumMedianValueOfAllPointsAlongTheTail"] and not(secondTry):
-    # print("second try")
-    (points2, lastFirstTheta2, medianPixTotList2) = __insideTrackTail(0, headPosition, frame, np.zeros((2, 0)), (lastFirstTheta + math.pi) % (2 * math.pi), maxDepth, steps, nbList, hyperparameters, debug, lenX, lenY, True)
-    if medianPixTotList2 < medianPixTotList:
-      return (points2, lastFirstTheta2, medianPixTotList2)
-  
-  return (points, lastFirstTheta, medianPixTotList)
-
-def _calculateAngle(xStart, yStart, xEnd, yEnd):
-  vx = xEnd - xStart
-  vy = yEnd - yStart
-  if vx == 0:
-    if vy > 0:
-      lastFirstTheta = math.pi/2
-    else:
-      lastFirstTheta = (3*math.pi)/2
-  else:
-    lastFirstTheta = np.arctan(abs(vy/vx))
-    if (vx < 0) and (vy >= 0):
-      lastFirstTheta = math.pi - lastFirstTheta
-    elif (vx < 0) and (vy <= 0):
-      lastFirstTheta = lastFirstTheta + math.pi
-    elif (vx > 0) and (vy <= 0):
-      lastFirstTheta = 2*math.pi - lastFirstTheta
-  return lastFirstTheta
-
-def _getCurvature(points):
-  tailX = points[0]
-  tailY = points[1]
-  l = len(tailX)
-  if l > 2:
-    curvature = np.zeros(l-2)
-    for ii in range(1, l-1):
-      angleBef = _calculateAngle(tailX[ii-1], tailY[ii-1], tailX[ii], tailY[ii])
-      angleAft = _calculateAngle(tailX[ii],   tailY[ii],   tailX[ii+1], tailY[ii+1])
-      curvature[ii-1] = calculateTailAngle(angleBef, angleAft)
-    return curvature
-  else:
-    return []
-
 
 def trackTail(self, frameROI, headPosition, hyperparameters, wellNumber, frameNumber, lastFirstTheta):
   
@@ -168,49 +25,9 @@ def trackTail(self, frameROI, headPosition, hyperparameters, wellNumber, frameNu
   lenY = len(frameROI) - 1
   
   if "tries4rotationsCombination" in hyperparameters and hyperparameters["tries4rotationsCombination"]:
-    (points1, lastFirstTheta1, medianPixTotList1) = __insideTrackTail(0, headPosition, frameROI, points, lastFirstTheta, maxDepth, steps, nbList,  hyperparameters, debug, lenX, lenY)
-    (points2, lastFirstTheta2, medianPixTotList2) = __insideTrackTail(0, headPosition, frameROI, points, (lastFirstTheta + (math.pi/2)) % (2 * math.pi), maxDepth, steps, nbList,  hyperparameters, debug, lenX, lenY)
-    (points3, lastFirstTheta3, medianPixTotList3) = __insideTrackTail(0, headPosition, frameROI, points, (lastFirstTheta + math.pi) % (2 * math.pi), maxDepth, steps, nbList,  hyperparameters, debug, lenX, lenY)
-    (points4, lastFirstTheta4, medianPixTotList4) = __insideTrackTail(0, headPosition, frameROI, points, (lastFirstTheta + (3/2)*math.pi) % (2 * math.pi), maxDepth, steps, nbList,  hyperparameters, debug, lenX, lenY)
-    #
-    listOfPoints           = [points1, points2, points3, points4]
-    listOfLastFirstTheta   = [lastFirstTheta1, lastFirstTheta2, lastFirstTheta3, lastFirstTheta4]
-    listOfMedianPixTotList = [medianPixTotList1, medianPixTotList2, medianPixTotList3, medianPixTotList4]
-    listOfCurvatures       = [_getCurvature(point) for point in listOfPoints]
-    listOfCurvaturesMeans  = [np.mean(curvature) if len(curvature) else 10000000000 for curvature in listOfCurvatures]
-    #
-    if False:
-      selectedOptionPix  = np.argmin(listOfMedianPixTotList)
-      selectedOptionCurv = np.argmin(listOfCurvaturesMeans)
-      selectedOption     = selectedOptionCurv
-    else:
-      argsortOptionPix  = np.argsort(listOfMedianPixTotList)
-      argsortOptionCurv = np.argsort(listOfCurvaturesMeans)
-      scores = np.ones(len(listOfMedianPixTotList))
-      for i in range(len(scores)):
-        scores[argsortOptionPix[i]]  += i
-        scores[argsortOptionCurv[i]] += i
-      selectedOptionTemp = np.argmin(scores)
-      possibleInd = (scores < scores[selectedOptionTemp] * 1.5)
-      possibleInds = []
-      selectedOption = 0
-      curMin = 1000000000000000000000000000000000
-      for i in range(len(scores)):
-        if possibleInd[i] and listOfMedianPixTotList[i] < curMin:
-          selectedOption = i
-          curMin = listOfMedianPixTotList[i]
-      # print("listOfMedianPixTotList:", listOfMedianPixTotList)
-      # print("listOfCurvaturesMeans:", listOfCurvaturesMeans)
-      # print("scores:", scores)
-      # print("possibleInd:", possibleInd)
-      # print("selectedOption:", selectedOption)
-    #
-    points           = listOfPoints[selectedOption]
-    lastFirstTheta   = listOfLastFirstTheta[selectedOption]
-    medianPixTotList = listOfMedianPixTotList[selectedOption]
-    # print("frameNumber:", frameNumber, ";selectedOption:", selectedOption, "; lastFirstTheta:", lastFirstTheta)
+    (points, lastFirstTheta, medianPixTotList) = tailTrackTry4InitialPerpendicularDirections(headPosition, frameROI, points, lastFirstTheta, maxDepth, steps, nbList, hyperparameters, debug, lenX, lenY)
   else:
-    (points, lastFirstTheta, medianPixTotList) = __insideTrackTail(0, headPosition, frameROI, points, lastFirstTheta, maxDepth, steps, nbList,  hyperparameters, debug, lenX, lenY)
+    (points, lastFirstTheta, medianPixTotList) = tailTrackFindNextPoint(0, headPosition, frameROI, points, lastFirstTheta, maxDepth, steps, nbList,  hyperparameters, debug, lenX, lenY)
   
   points = np.insert(points, 0, headPosition, axis=1)
   
