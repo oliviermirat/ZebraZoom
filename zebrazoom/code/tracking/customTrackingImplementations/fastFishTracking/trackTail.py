@@ -1,4 +1,5 @@
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.tailTrackTry4InitialPerpendicularDirections import tailTrackTry4InitialPerpendicularDirections
+from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.dualDirectionTailDetection import dualDirectionTailDetection
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.tailTrackFindNextPoint import tailTrackFindNextPoint
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.utilities import calculateAngle
 from zebrazoom.code.extractParameters import calculateTailAngle
@@ -26,6 +27,8 @@ def trackTail(self, frameROI, headPosition, hyperparameters, wellNumber, frameNu
   
   if "tries4rotationsCombination" in hyperparameters and hyperparameters["tries4rotationsCombination"]:
     (points, lastFirstTheta, medianPixTotList) = tailTrackTry4InitialPerpendicularDirections(headPosition, frameROI, points, lastFirstTheta, maxDepth, steps, nbList, hyperparameters, debug, lenX, lenY)
+  elif "dualDirectionTailDetection" in hyperparameters and hyperparameters["dualDirectionTailDetection"]:
+    (points, lastFirstTheta, medianPixTotList) = dualDirectionTailDetection(headPosition, frameROI, points, lastFirstTheta, maxDepth, steps, nbList, hyperparameters, debug, lenX, lenY)
   else:
     (points, lastFirstTheta, medianPixTotList) = tailTrackFindNextPoint(0, headPosition, frameROI, points, lastFirstTheta, maxDepth, steps, nbList,  hyperparameters, debug, lenX, lenY)
   
