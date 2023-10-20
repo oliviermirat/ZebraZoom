@@ -1,8 +1,10 @@
 import atexit
 import contextlib
+import datetime
 import json
 import math
 import os
+import pickle
 import subprocess
 import sys
 import webbrowser
@@ -14,10 +16,10 @@ import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qtagg import FigureCanvas
 from matplotlib.figure import Figure
 
-from PyQt5.QtCore import pyqtSignal, Qt, QDir, QEvent, QLine, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel, QTimer, QUrl
+from PyQt5.QtCore import pyqtSignal, Qt, QAbstractItemModel, QDir, QEvent, QLine, QModelIndex, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel, QTimer, QUrl
 from PyQt5.QtGui import QColor, QCursor, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
-from PyQt5.QtWidgets import QApplication, QLabel, QWidget, QFileSystemModel, QFrame, QGridLayout, QMessageBox, QHeaderView, QPushButton, QSizePolicy, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QComboBox, QTreeView, QToolTip
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QDialog, QLabel, QWidget, QFileDialog, QFileIconProvider, QFormLayout, QFrame, QGridLayout, QHeaderView, QLineEdit, QListView, QListWidget, QListWidgetItem, QMessageBox, QHeaderView, QPushButton, QSizePolicy, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QStackedLayout, QComboBox, QTreeView, QToolTip
 PYQT6 = False
 
 import zebrazoom
@@ -608,12 +610,410 @@ class _TooltipHelper(QObject):
       return False
     rect = view.visualRect(index)
     if view.sizeHintForColumn(index.column()) > rect.width():
-      QToolTip.showText(evt.globalPos(), view.model().data(index), view, rect)
+      QToolTip.showText(evt.globalPos(), index.data(), view, rect)
       return True
     else:
       QToolTip.hideText()
       return True
     return False
+
+
+def _findResultsFile(path):
+  if not os.path.isabs(path):
+    app = QApplication.instance()
+    path = os.path.join(app.ZZoutputLocation, path)
+  if not os.path.exists(path):
+    return None
+  if os.path.splitext(path)[1] == '.h5':
+    return path
+  elif os.path.isfile(path):
+    return None
+  folder = os.path.basename(path)
+  reference = os.path.join(path, f'results_{folder}.txt')
+  if os.path.exists(reference):
+    return reference
+  resultsFile = next((f for f in os.listdir(path) if os.path.isfile(os.path.join(path, f)) if f.startswith('results_')), None)
+  if resultsFile is None:
+    return None
+  return os.path.join(path, resultsFile)
+
+
+class _VisualizationTreeItem:
+  def childCount(self):
+    return 0
+
+  def columnCount(self):
+    return len(self._data)
+
+  def parent(self):
+    return self.parentItem
+
+  def childNumber(self):
+    if self.parentItem is not None:
+      return self.parentItem.childItems.index(self)
+    return 0
+
+  def data(self, column):
+    return self._data[column]
+
+
+class _ResultsItem(_VisualizationTreeItem):
+  def __init__(self, path, parent):
+    self.parentItem = parent
+    self.filename = path
+    if path.endswith('.h5'):
+      path = path[:-3]
+      self.iconType = QFileIconProvider.IconType.File
+    else:
+      self.iconType = QFileIconProvider.IconType.Folder
+    try:
+      datetime.datetime.fromisoformat(path[-19:].replace('-', ' ').replace('_', '-', 2).replace('_', ':'))
+      date = path[-19:]
+      path = path[:-20]
+    except ValueError:
+      date = None
+    self._data = [path, date]
+
+
+class _VisualizationGroupItem(_VisualizationTreeItem):
+  def __init__(self, name, parent=None):
+    self.parentItem = parent
+    self._data = [name, None]
+    self.subgroups = []
+    self.paths = []
+    self.iconType = None
+
+  def _pruneResults(self):
+    toplevel = self.parent()
+    while not isinstance(toplevel, _RootVisualizationGroupItem):
+      toplevel = toplevel.parent()
+    validPaths = {res.filename for res in toplevel.subgroups[1].paths}
+    self.paths[:] = [res for res in self.paths if res.filename in validPaths]
+
+  @property
+  def childItems(self):
+    if type(self) is _VisualizationGroupItem:
+      self._pruneResults()
+    return self.subgroups + self.paths
+
+  def child(self, row):
+    return self.childItems[row]
+
+  def childCount(self):
+    return len(self.childItems)
+
+  def appendResults(self, data):
+    for fname in data:
+      self.paths.append(_ResultsItem(fname, self))
+
+  def removeResults(self, idx):
+    del self.paths[idx]
+
+  def appendSubgroup(self):
+    idx = 1
+    name = f'Group {idx}'
+    existingNames = {group.data(0) for group in self.subgroups}
+    while name in existingNames:
+      idx += 1
+      name = f'Group {idx}'
+    self.subgroups.append(_VisualizationGroupItem(name, parent=self))
+
+  def removeSubgroup(self, idx):
+    del self.subgroups[idx]
+
+  def setData(self, column, value):
+    if column < 0 or column >= len(self._data):
+        return False
+    self._data[column] = value
+    return True
+
+
+class _GroupsVisualizationGroupItem(_VisualizationGroupItem):
+  def __init__(self, parent):
+    self.parentItem = parent
+    self._data = ['Groups', None]
+    self.subgroups = []
+    self.paths = []
+    self.iconType = None
+
+
+class _AllResultsVisualizationGroupItem(_VisualizationGroupItem):
+  def __init__(self, parent):
+    self.parentItem = parent
+    self.iconType = None
+    self._data = ['All results', None]
+    self.subgroups = []
+    app = QApplication.instance()
+    self.paths = [_ResultsItem(basename, self) for basename in os.listdir(app.ZZoutputLocation)
+                  if _findResultsFile(os.path.join(app.ZZoutputLocation, basename)) is not None]
+
+
+class _RootVisualizationGroupItem(_VisualizationGroupItem):
+  def __init__(self):
+    self.parentItem = None
+    self.iconType = None
+    self._data = ['Name', 'Timestamp']
+    self.subgroups = [_GroupsVisualizationGroupItem(self), _AllResultsVisualizationGroupItem(self)]
+    self.paths = []
+
+  def refresh(self):
+    app = QApplication.instance()
+    allResultsGroup = self.subgroups[1]
+    allResultsGroup.paths[:] = [_ResultsItem(basename, allResultsGroup) for basename in os.listdir(app.ZZoutputLocation)
+                                if _findResultsFile(os.path.join(app.ZZoutputLocation, basename)) is not None]
+
+
+class _VisualizationTreeModel(QAbstractItemModel):
+  def __init__(self):
+    super().__init__()
+    self.rootItem = _RootVisualizationGroupItem()
+    self._iconProvider = QFileIconProvider()
+    app = QApplication.instance()
+    try:
+      with open(os.path.join(app.ZZoutputLocation, '_groupsInternal.pkl'), 'rb') as f:
+        group = pickle.load(f)
+      group.parentItem = self.rootItem
+      self.rootItem.subgroups[0] = group
+    except (OSError, pickle.PickleError):
+      self._saveGroups()
+
+  def refresh(self):
+    self.beginResetModel()
+    self.rootItem.refresh()
+    self.endResetModel()
+
+  def _saveGroups(self):
+    app = QApplication.instance()
+    with open(os.path.join(app.ZZoutputLocation, '_groupsInternal.pkl'), 'wb') as f:
+      pickle.dump(self.rootItem.subgroups[0], f)
+
+  def columnCount(self, parent=QModelIndex()):
+    return self.rootItem.columnCount()
+
+  def data(self, index, role):
+    if not index.isValid():
+      return None
+    if role != Qt.DisplayRole and role != Qt.EditRole and role != Qt.DecorationRole:
+      return None
+    item = self.getItem(index)
+    if role == Qt.DecorationRole:
+      if not index.column():
+        return self._iconProvider.icon(item.iconType) if item.iconType is not None else None
+      return None
+    return item.data(index.column())
+
+  def flags(self, index):
+    if not index.isValid():
+      return 0
+    if type(self.getItem(index)) is _VisualizationGroupItem and not index.column():
+      return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
+    return Qt.ItemIsEnabled | Qt.ItemIsSelectable
+
+  def getItem(self, index):
+    if index.isValid():
+      item = index.internalPointer()
+      if item:
+        return item
+    return self.rootItem
+
+  def headerData(self, section, orientation, role=Qt.DisplayRole):
+    if orientation == Qt.Horizontal and role == Qt.DisplayRole:
+      return self.rootItem.data(section)
+    return None
+
+  def index(self, row, column, parent=QModelIndex()):
+    if parent.isValid() and parent.column() != 0:
+      return QModelIndex()
+    parentItem = self.getItem(parent)
+    childItem = parentItem.child(row)
+    if childItem:
+      return self.createIndex(row, column, childItem)
+    else:
+      return QModelIndex()
+
+  def appendResults(self, data, parentIndex):
+    parentItem = self.getItem(parentIndex)
+    data = [fname for fname in data if fname not in {res.filename for res in parentItem.paths}]
+    self.beginInsertRows(parentIndex, parentItem.childCount(), parentItem.childCount() + len(data) - 1)
+    parentItem.appendResults(data)
+    self.endInsertRows()
+    self._saveGroups()
+
+  def addGroup(self, parentIndex):
+    if parentIndex is None:
+        parentItem = QModelIndex()
+    parentItem = self.getItem(parentIndex)
+    self.beginInsertRows(parentIndex, len(parentItem.subgroups), len(parentItem.subgroups))
+    parentItem.appendSubgroup()
+    self.endInsertRows()
+    self._saveGroups()
+
+  def removeChildren(self, indices, parentIndex):
+    parentItem = self.getItem(parentIndex)
+    subgroupsSize = len(parentItem.subgroups)
+    resultsIdxs = [idx - subgroupsSize  for idx in indices if idx >= subgroupsSize]
+    groupsIdxs = indices[len(resultsIdxs):]
+    for idx in resultsIdxs:
+      self.beginRemoveRows(parentIndex, subgroupsSize + idx, subgroupsSize + idx)
+      parentItem.removeResults(idx)
+      self.endRemoveRows()
+    for idx in groupsIdxs:
+      self.beginRemoveRows(parentIndex, idx, idx)
+      parentItem.removeSubgroup(idx)
+      self.endRemoveRows()
+    self._saveGroups()
+
+  def parent(self, index):
+    if not index.isValid():
+      return QModelIndex()
+    childItem = self.getItem(index)
+    parentItem = childItem.parent()
+    if parentItem == self.rootItem:
+      return QModelIndex()
+    return self.createIndex(parentItem.childNumber(), 0, parentItem)
+
+  def rowCount(self, parent=QModelIndex()):
+    parentItem = self.getItem(parent)
+    return parentItem.childCount()
+
+  def setData(self, index, value, role=Qt.EditRole):
+    if role != Qt.EditRole:
+      return False
+    item = self.getItem(index)
+    result = item.setData(index.column(), value)
+    if result:
+      self.dataChanged.emit(index, index)
+      self._saveGroups()
+    return result
+
+
+class _VisualizationGroupDetails(QWidget):
+  def __init__(self, model, getCurrentIndex):
+    app = QApplication.instance()
+    super().__init__(app.window)
+    self._model = model
+    self._getCurrentIndex = getCurrentIndex
+
+    layout = QVBoxLayout()
+
+    groupNameLayout = QFormLayout()
+    groupNameLayout.setContentsMargins(0, 0, 0, 0)
+    groupNameLayout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+    self._groupNameLineEdit = QLineEdit()
+    self._groupNameLineEdit.editingFinished.connect(lambda: self._model.setData(getCurrentIndex(), self._groupNameLineEdit.text()))
+    groupNameLayout.addRow('Group name:', self._groupNameLineEdit)
+    self._groupNameWidget = QWidget()
+    self._groupNameWidget.setLayout(groupNameLayout)
+    layout.addWidget(self._groupNameWidget)
+
+    buttonsLayout = QHBoxLayout()
+    self._addGroupBtn = QPushButton("Add group")
+    self._addGroupBtn.clicked.connect(self._addGroup)
+    buttonsLayout.addWidget(self._addGroupBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._addResultsBtn = QPushButton("Add results set(s)")
+    self._addResultsBtn.clicked.connect(self._addResults)
+    buttonsLayout.addWidget(self._addResultsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    removeResultsBtn = QPushButton("Remove")
+    removeResultsBtn.clicked.connect(self._removeSelected)
+    removeResultsBtn.setEnabled(False)
+    buttonsLayout.addWidget(removeResultsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
+
+    self._listWidget = QListWidget()
+    self._listWidget.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
+    self._listWidget.selectionModel().selectionChanged.connect(lambda *args: removeResultsBtn.setEnabled(self._listWidget.selectionModel().hasSelection()))
+    layout.addWidget(self._listWidget)
+
+    self._startPageBtn = QPushButton("Go to the start page", self)
+    self._startPageBtn.clicked.connect(lambda: app.show_frame("StartPage"))
+    layout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    self.setLayout(layout)
+
+  def refresh(self):
+    item = self._model.getItem(self._getCurrentIndex())
+    showResults = not isinstance(item, _GroupsVisualizationGroupItem)
+    self._addResultsBtn.setVisible(showResults)
+    self._groupNameWidget.setVisible(showResults)
+    self._groupNameLineEdit.setText(item.data(0))
+    self._listWidget.clear()
+    self._listWidget.addItems(results.data(0) for results in item.subgroups)
+    for results in item.paths:
+      index = self._model.createIndex(results.childNumber(), 0, results)
+      self._listWidget.addItem(QListWidgetItem(self._model.data(index, Qt.DecorationRole), results.filename))
+
+  def _getMultipleFolders(self):
+    app = QApplication.instance()
+    dialog = QFileDialog()
+    dialog.setWindowTitle('Select one or more results folders or files (use Ctrl or Shift key to select multiple folders)')
+    dialog.setDirectory(app.ZZoutputLocation)
+    dialog.setFileMode(QFileDialog.FileMode.ExistingFiles)
+    dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
+    dialog.setNameFilter('HDF5 (*.h5)')
+    dialog.accept = lambda: QDialog.accept(dialog)
+
+    def updateText():
+      selected = []
+      for index in listView.selectionModel().selectedRows():
+        selected.append('"{}"'.format(index.data()))
+      lineEdit.setText(' '.join(selected))
+
+    listView = dialog.findChild(QListView, 'listView')
+    if listView:
+      listView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+      listView.selectionModel().selectionChanged.connect(updateText)
+    treeView = dialog.findChild(QTreeView)
+    if treeView:
+      treeView.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+      treeView.selectionModel().selectionChanged.connect(updateText)
+
+    lineEdit = dialog.findChild(QLineEdit)
+    dialog.directoryEntered.connect(lambda: lineEdit.setText(''))
+
+    if not dialog.exec():
+      return None
+    return dialog.selectedFiles()
+
+  def _addResults(self):
+    selectedFolders = self._getMultipleFolders()
+    if selectedFolders is None:
+      return
+    invalidFolders = []
+    resultsItems = []
+    for selectedFolder in selectedFolders:
+      resultsFile = _findResultsFile(selectedFolder)
+      if resultsFile is None:
+        invalidFolders.append(selectedFolder)
+        continue
+      resultsItems.append(os.path.basename(selectedFolder))
+    self._model.appendResults(resultsItems, self._getCurrentIndex())
+    self.refresh()
+    if invalidFolders:
+      app = QApplication.instance()
+      warning = QMessageBox(app.window)
+      warning.setIcon(QMessageBox.Icon.Warning)
+      warning.setWindowTitle("Invalid folders selected")
+      warning.setText("Some of the selected folders were ignored because they are not valid results folders.")
+      warning.setDetailedText("\n".join(invalidFolders))
+      warning.exec()
+
+  def _addGroup(self):
+    self._model.addGroup(self._getCurrentIndex())
+    self.refresh()
+
+  def _removeSelected(self):
+    selectedIdxs = sorted(set(map(lambda idx: idx.row(), self._listWidget.selectionModel().selectedIndexes())), reverse=True)
+    self._model.removeChildren(selectedIdxs, self._getCurrentIndex())
+    self.refresh()
+
+
+class _SortedVisualizationTreeModel(QSortFilterProxyModel):
+  def lessThan(self, left, right):
+    model = self.sourceModel()
+    if type(model.getItem(left)) is not type(model.getItem(right)):
+      return False
+    return super().lessThan(left, right)
 
 
 class ViewParameters(util.CollapsibleSplitter):
@@ -623,30 +1023,22 @@ class ViewParameters(util.CollapsibleSplitter):
         self._headEmbedded = False
         self.visualization = 0
 
-        model = QFileSystemModel()
-        model.setFilter(QDir.Filter.NoDotAndDotDot | QDir.Filter.Dirs | QDir.Filter.Files)
-        model.setRootPath(self.controller.ZZoutputLocation)
-        model.setReadOnly(True)
-        proxyModel = QSortFilterProxyModel()
-
-        def filterModel(row, parent):
-          index = model.index(row, 0, parent)
-          if os.path.normpath(model.filePath(index)) == os.path.normpath(self.controller.ZZoutputLocation):
-            return True
-          return bool(self._findResultsFile(model.fileName(index)))
-        proxyModel.filterAcceptsRow = filterModel
-        proxyModel.setSourceModel(model)
         self._tree = tree = QTreeView()
+        self._tree.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.SelectedClicked)
         tree.viewport().installEventFilter(_TooltipHelper(tree))
         tree.sizeHint = lambda: QSize(150, 1)
+        model = _VisualizationTreeModel()
+        proxyModel = _SortedVisualizationTreeModel()
+        proxyModel.setSourceModel(model)
         tree.setModel(proxyModel)
-        tree.setRootIsDecorated(False)
-        tree.header().setSectionResizeMode(QHeaderView.ResizeMode.Fixed)
-        for idx in range(1, model.columnCount()):
-          tree.hideColumn(idx)
-        tree.resizeEvent = lambda evt: tree.setColumnWidth(0, evt.size().width())
+        tree.sortByColumn(0, Qt.AscendingOrder)
+        tree.setSortingEnabled(True)
+        tree.setExpanded(proxyModel.index(1, 0, parent=tree.rootIndex()), True)
+        header = tree.header()
+        tree.setColumnWidth(0, 300)
+        tree.resizeColumnToContents(1)
         selectionModel = tree.selectionModel()
-        selectionModel.currentRowChanged.connect(lambda current, previous: current.row() == -1 or self.setFolder(model.fileName(current)))
+        selectionModel.currentRowChanged.connect(lambda current, previous: current.row() == -1 or self.setFolder(model.getItem(proxyModel.mapToSource(current))))
 
         layout = QGridLayout()
 
@@ -746,12 +1138,12 @@ class ViewParameters(util.CollapsibleSplitter):
             message.show()
             line.show()
             optimizeBtn.show()
-            tree.hide()
+            self._tree.hide()
           else:
             message.hide()
             line.hide()
             optimizeBtn.hide()
-            tree.show()
+            self._tree.show()
         self._updateConfigWidgets = _updateConfigWidgets
 
         self.well_video_btn = QPushButton("", self)
@@ -783,54 +1175,46 @@ class ViewParameters(util.CollapsibleSplitter):
         centralWidget = QWidget()
         centralWidget.sizeHint = lambda *args: QSize(sizeHint + 200, 768)
         centralWidget.setLayout(layout)
-        self.addWidget(tree)
+        self.addWidget(self._tree)
         self._centralWidget = wrapperWidget = QWidget()
-        wrapperWidget.showChildren = lambda: [child.show() for child in centralWidget.findChildren(QWidget) if child is not self._startPageBtn]
-        wrapperWidget.hideChildren = lambda: [child.hide() for child in centralWidget.findChildren(QWidget) if child is not self._startPageBtn]
+        wrapperWidget.showChildren = lambda: ([child.show() for child in centralWidget.findChildren(QWidget) if child is not self._startPageBtn], [child.show() for child in self._visualizationGroupDetails.findChildren(QWidget) if child is not self._visualizationGroupDetails._startPageBtn])
+        wrapperWidget.hideChildren = lambda: ([child.hide() for child in centralWidget.findChildren(QWidget) if child is not self._startPageBtn], [child.hide() for child in self._visualizationGroupDetails.findChildren(QWidget) if child is not self._visualizationGroupDetails._startPageBtn])
         wrapperLayout = QHBoxLayout()
         wrapperLayout.addWidget(centralWidget, alignment=Qt.AlignmentFlag.AlignCenter)
-        wrapperWidget.setLayout(wrapperLayout)
+        stackedLayout = QStackedLayout()
+        wrapperWidget.setLayout(stackedLayout)
+        dummyWidget = QWidget()
+        stackedLayout.addWidget(dummyWidget)
+        dummyWidget.setLayout(wrapperLayout)
+        self._visualizationGroupDetails = _VisualizationGroupDetails(model, lambda: proxyModel.mapToSource(selectionModel.currentIndex()))
+        stackedLayout.addWidget(self._visualizationGroupDetails)
         scrollArea = QScrollArea()
         scrollArea.setFrameShape(QFrame.Shape.NoFrame)
         scrollArea.setWidgetResizable(True)
         scrollArea.setWidget(wrapperWidget)
         self.addWidget(scrollArea)
-        self.setStretchFactor(1, 1)
         self.setChildrenCollapsible(False)
-        tree.hide()
+        self._tree.hide()
 
-    def _findResultsFile(self, folder):
-        if not os.path.isdir(os.path.join(self.controller.ZZoutputLocation, folder)):
-          if os.path.splitext(folder)[1] == '.h5':
-            return os.path.join(self.controller.ZZoutputLocation, folder)
-          return None
-        reference = os.path.join(self.controller.ZZoutputLocation, folder, 'results_' + folder + '.txt')
-        if os.path.exists(reference):
-          return reference
-        mypath = os.path.join(self.controller.ZZoutputLocation, folder)
-        if not os.path.exists(mypath):
-          return None
-        resultsFile = next((f for f in os.listdir(mypath) if os.path.isfile(os.path.join(mypath, f)) and f.startswith('results_')), None)
-        if resultsFile is None:
-          return None
-        return os.path.join(self.controller.ZZoutputLocation, folder, resultsFile)
-
-    def setFolder(self, name):
-        self.title_label.setText(name)
-        if name is None:
+    def setFolder(self, item):
+        if item is None or isinstance(item, (_RootVisualizationGroupItem, _AllResultsVisualizationGroupItem)):
           self._tree.hide()
-          filesystemModel = self._tree.model().sourceModel()
-          filesystemModel.setRootPath(None)
-          filesystemModel.setRootPath(self.controller.ZZoutputLocation)  # force refresh of the model
-          self._tree.setRootIndex(self._tree.model().mapFromSource(filesystemModel.index(filesystemModel.rootPath())))
+          self._tree.model().sourceModel().rootItem.refresh()
           self._centralWidget.hideChildren()
           self._tree.selectionModel().reset()
           self._tree.show()
           self._updateConfigWidgets()
           return
         else:
+          resultsSelected = isinstance(item, (str, _ResultsItem))
+          self._centralWidget.layout().setCurrentIndex(int(not resultsSelected))
           self._centralWidget.showChildren()
+          if not resultsSelected:
+            self._visualizationGroupDetails.refresh()
+            return
 
+        name = item if isinstance(item, str) else item.filename
+        self.title_label.setText(name)
         fullPath = os.path.join(self.controller.ZZoutputLocation, name)
         self.currentResultFolder = name
         if os.path.isdir(fullPath):
@@ -839,7 +1223,7 @@ class ViewParameters(util.CollapsibleSplitter):
               self._config = json.load(config)
           except (EnvironmentError, json.JSONDecodeError) as e:
             self._config = None
-          with open(self._findResultsFile(name)) as ff:
+          with open(_findResultsFile(name)) as ff:
             self.dataRef = json.load(ff)
         else:
           try:
@@ -1191,7 +1575,7 @@ class ViewParameters(util.CollapsibleSplitter):
             self.spinbox3.setValue(self.nbMouv - 1)
 
     def saveSuperStruct(self):
-        reference = os.path.join(self._findResultsFile(self.currentResultFolder))
+        reference = os.path.join(_findResultsFile(self.currentResultFolder))
         print("reference:", reference)
 
         if os.path.splitext(reference)[1] != '.h5':
