@@ -7,7 +7,8 @@ from zebrazoom.code.paths import getDefaultZZoutputFolder
 
 
 def _findResultsFile(videoName):
-  videoName, _ = os.path.splitext(videoName)
+  if videoName.endswith('.h5'):
+    videoName, _ = os.path.splitext(videoName)
   ZZoutputPath, videoName = os.path.split(os.path.normpath(videoName))
   if not ZZoutputPath:
     ZZoutputPath = getDefaultZZoutputFolder()
