@@ -684,22 +684,18 @@ class _VisualizationGroupItem(_VisualizationTreeItem):
     self.paths = []
     self.iconType = None
 
-  def _pruneResults(self):
-    toplevel = self.parent()
-    while not isinstance(toplevel, _RootVisualizationGroupItem):
-      toplevel = toplevel.parent()
-    validPaths = {res.filename for res in toplevel.subgroups[1].paths}
-    self.paths[:] = [res for res in self.paths if res.filename in validPaths]
-
   def iter_paths(self):
     yield from self.paths
     for subgroup in self.subgroups:
       yield from subgroup.iter_paths()
 
+  def iter_groups(self):
+    yield from self.subgroups
+    for subgroup in self.subgroups:
+      yield from subgroup.iter_groups()
+
   @property
   def childItems(self):
-    if type(self) is _VisualizationGroupItem:
-      self._pruneResults()
     return self.subgroups + self.paths
 
   def child(self, row):
@@ -781,12 +777,6 @@ class _RootVisualizationGroupItem(_VisualizationGroupItem):
     self.subgroups = []
     self.paths = []
 
-  def refresh(self):
-    app = QApplication.instance()
-    allResultsGroup = self.subgroups[1]
-    allResultsGroup.paths[:] = [_ResultsItem(basename, allResultsGroup) for basename in os.listdir(app.ZZoutputLocation)
-                                if _findResultsFile(os.path.join(app.ZZoutputLocation, basename)) is not None]
-
 
 class _VisualizationTreeModel(QAbstractItemModel):
   def __init__(self):
@@ -803,7 +793,26 @@ class _VisualizationTreeModel(QAbstractItemModel):
       self.rootItem.subgroups.append(_GroupsVisualizationGroupItem(self.rootItem))
       self._saveGroups()
     self.rootItem.subgroups.append(_AllResultsVisualizationGroupItem(self.rootItem))
-    self.rootItem.refresh()
+    self.refresh()
+
+  def refresh(self):
+    groupsGroup, allResultsGroup = self.rootItem.subgroups
+    app = QApplication.instance()
+    allResultsIndex = self.createIndex(allResultsGroup.childNumber(), 0, allResultsGroup)
+    fnames = [basename for basename in os.listdir(app.ZZoutputLocation)
+              if _findResultsFile(os.path.join(app.ZZoutputLocation, basename)) is not None]
+    oldSize = len(allResultsGroup.paths)
+    self.beginInsertRows(allResultsIndex, oldSize, oldSize + len(fnames) - 1)
+    allResultsGroup.paths.extend(_ResultsItem(fname, allResultsGroup) for fname in fnames)
+    self.endInsertRows()
+    self.beginRemoveRows(allResultsIndex, 0, oldSize - 1)
+    del allResultsGroup.paths[:oldSize]
+    self.endRemoveRows()
+    validPaths = set(fnames)
+    for group in groupsGroup.iter_groups():
+      subgroupsCount = len(group.subgroups)
+      toRemove = [idx + subgroupsCount for idx, res in enumerate(group.paths) if res.filename not in validPaths][::-1]
+      self.removeChildren(toRemove, self.createIndex(group.childNumber(), 0, group))
 
   def _saveGroups(self):
     app = QApplication.instance()
@@ -1231,7 +1240,8 @@ class ViewParameters(util.CollapsibleSplitter):
     def setFolder(self, item):
         if item is None or isinstance(item, (_RootVisualizationGroupItem, _AllResultsVisualizationGroupItem)):
           self._tree.hide()
-          self._tree.model().sourceModel().rootItem.refresh()
+          self._tree.model().sourceModel().refresh()
+          self._tree.model().invalidateFilter()
           self._centralWidget.hideChildren()
           self._tree.selectionModel().reset()
           self._tree.show()
@@ -1249,6 +1259,10 @@ class ViewParameters(util.CollapsibleSplitter):
         self.title_label.setText(name)
         fullPath = os.path.join(self.controller.ZZoutputLocation, name)
         self.currentResultFolder = name
+        if not os.path.exists(fullPath):
+            self.setFolder(None)
+            QMessageBox.critical(self.controller.window, 'Cannot read the results', 'The selected results file no longer exists.')
+            return
         if os.path.isdir(fullPath):
           try:
             with open(os.path.join(fullPath, 'configUsed.json')) as config:
