@@ -691,6 +691,11 @@ class _VisualizationGroupItem(_VisualizationTreeItem):
     validPaths = {res.filename for res in toplevel.subgroups[1].paths}
     self.paths[:] = [res for res in self.paths if res.filename in validPaths]
 
+  def iter_paths(self):
+    yield from self.paths
+    for subgroup in self.subgroups:
+      yield from subgroup.iter_paths()
+
   @property
   def childItems(self):
     if type(self) is _VisualizationGroupItem:
@@ -731,6 +736,14 @@ class _VisualizationGroupItem(_VisualizationTreeItem):
     self.subgroups.append(_VisualizationGroupItem(name, parent=self))
 
   def removeSubgroup(self, idx):
+    groupsItem = self
+    while not isinstance(groupsItem, _GroupsVisualizationGroupItem):
+      groupsItem = groupsItem.parentItem
+    for res in self.subgroups[idx].iter_paths():
+      fname = res.filename
+      groupsItem.allPaths[fname] -= 1
+      if not groupsItem.allPaths[fname]:
+        del groupsItem.allPaths[fname]
     del self.subgroups[idx]
 
   def setData(self, column, value):
