@@ -28,6 +28,7 @@ def trackTail(self, frameROI, headPosition, hyperparameters, wellNumber, frameNu
   if "tries4rotationsCombination" in hyperparameters and hyperparameters["tries4rotationsCombination"]:
     (points, lastFirstTheta, medianPixTotList) = tailTrackTry4InitialPerpendicularDirections(headPosition, frameROI, points, lastFirstTheta, maxDepth, steps, nbList, hyperparameters, debug, lenX, lenY)
   elif "dualDirectionTailDetection" in hyperparameters and hyperparameters["dualDirectionTailDetection"]:
+    points = np.insert(points, 0, headPosition, 1)
     (points, lastFirstTheta, medianPixTotList) = dualDirectionTailDetection(headPosition, frameROI, points, lastFirstTheta, maxDepth, steps, nbList, hyperparameters, debug, lenX, lenY)
   else:
     (points, lastFirstTheta, medianPixTotList) = tailTrackFindNextPoint(0, headPosition, frameROI, points, lastFirstTheta, maxDepth, steps, nbList,  hyperparameters, debug, lenX, lenY)
