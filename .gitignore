@@ -95,3 +95,5 @@ scoresComparaison*.pkl
 scoresComparaison*.png
 
 zebrazoom/code/deepLearningFunctions/unetModel/__pycache__
+
+readAndAnalyzeZZoutputWithPython/framesKept*.xlsx

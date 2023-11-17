@@ -32,7 +32,7 @@ def getMinMaxDiffWithinSegment(nparray, startSegment, segmentLength):
 if usingHdf5format:
   videoPixelSize = 0.01
   dataAPI.setFPSandPixelSize(videoName, videoFPS, videoPixelSize)
-  startTimeInSeconds = 0.00625
+  startTimeInSeconds = 0 #0.00625
   endTimeInSeconds   = 600
 
 numWell = 0
