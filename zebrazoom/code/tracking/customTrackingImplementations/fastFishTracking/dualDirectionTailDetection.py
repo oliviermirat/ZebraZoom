@@ -1,16 +1,18 @@
-from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.utilities import appendPoint, distBetweenThetas, assignValueIfBetweenRange, calculateAngle
+from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.utilities import appendPoint, distBetweenThetas, assignValueIfBetweenRangeForDualDirection, calculateAngle
 import zebrazoom.code.util as util
 import numpy as np
 import math
 import cv2
- 
+
 def dualDirectionTailDetection(headPosition, frame, points, angle, maxDepth, steps, nbList, hyperparameters, debug, lenX, lenY):
   
   x = headPosition[0]
   y = headPosition[1]
   
   depth = 0
-  angleOpp = angle
+  angleOpp = (angle + math.pi) % (2 * math.pi)
+  
+  lastFirstTheta = angle
   
   pixSurMax = hyperparameters["headEmbededParamTailDescentPixThreshStop"]
   
@@ -23,6 +25,9 @@ def dualDirectionTailDetection(headPosition, frame, points, angle, maxDepth, ste
     frameDisplay = frame.copy()
     cv2.circle(frameDisplay, (x, y), 3, (0,0,0),   -1)
     util.showFrame(frameDisplay, title="HeadEmbeddedTailTracking")
+  
+  if np.sum(np.sum(255 - frame)) < hyperparameters["minimumPixelIntensitySumForAnimalDetection"]:
+    return ([], angle, 255)
   
   while (distSubsquentPoints > 0 and depth < maxDepth and ((pixSur < pixSurMax) or (depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth))):
   
@@ -39,8 +44,8 @@ def dualDirectionTailDetection(headPosition, frame, points, angle, maxDepth, ste
           thetaDiffAccept = hyperparameters["thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd2"]
           nbList = hyperparameters["nbListAfterAuthorizedRelativeLengthTailEnd2"]
     
-    if debug:
-      print("thetaDiffAccept:", thetaDiffAccept)
+    # if debug:
+      # print("thetaDiffAccept:", thetaDiffAccept)
     
     # Initial direction
     if len(points[0]) == 0:
@@ -55,21 +60,26 @@ def dualDirectionTailDetection(headPosition, frame, points, angle, maxDepth, ste
     l = [i*(math.pi/nbList) for i in range(0,2*nbList) if distBetweenThetas(i*(math.pi/nbList), angle) < thetaDiffAccept]
     if debug:
       print("l normal:", l)
+    
+    xTot = -1
+    yTot = -1
+    pixSur = -1
     for step in steps:
       if (step < maxDepth - depth) or (step == steps[0]):
         for theta in l:
-          xNew = assignValueIfBetweenRange(int(xOld + step * (math.cos(theta))), 0, lenX)
-          yNew = assignValueIfBetweenRange(int(yOld + step * (math.sin(theta))), 0, lenY)
+          xNew = assignValueIfBetweenRangeForDualDirection(int(xOld + step * (math.cos(theta))), 0, lenX)
+          yNew = assignValueIfBetweenRangeForDualDirection(int(yOld + step * (math.sin(theta))), 0, lenY)
           pixTot = frame[yNew][xNew]
-          if (pixTot < pixTotMax):
+          if xNew != -1 and yNew != -1 and (pixTot < pixTotMax):
             pixTotMax = pixTot
             maxTheta = theta
             xTot = xNew
             yTot = yNew
             if debug:
               print("regular dir: Choosing (x, y):", xTot, yTot, "; step:", step, "; theta:", theta, "; pixTot:", pixTot)
-    pixTotList.append(pixTotMax)
-    pixSur = frame[yTot, xTot]
+    if xTot != -1 and yTot != -1:
+      pixTotList.append(pixTotMax)
+      pixSur = frame[yTot, xTot]
 
     # Opposite direction
     if len(points[0]) == 0:
@@ -81,101 +91,127 @@ def dualDirectionTailDetection(headPosition, frame, points, angle, maxDepth, ste
     pixTotMax = 1000000 # remove this line?
     maxTheta  = angleOpp
     l = [i*(math.pi/nbList) for i in range(0,2*nbList) if distBetweenThetas(i*(math.pi/nbList), angleOpp) < thetaDiffAccept]
+    xTotOpp = -1
+    yTotOpp = -1
+    pixSurOpp = -1
     if debug:
       print("l opposite:", l)
     for step in steps:
       if (step < maxDepth - depth) or (step == steps[0]):
         for theta in l:
-          xNew = assignValueIfBetweenRange(int(xOld + step * (math.cos(theta))), 0, lenX)
-          yNew = assignValueIfBetweenRange(int(yOld + step * (math.sin(theta))), 0, lenY)
+          xNew = assignValueIfBetweenRangeForDualDirection(int(xOld + step * (math.cos(theta))), 0, lenX)
+          yNew = assignValueIfBetweenRangeForDualDirection(int(yOld + step * (math.sin(theta))), 0, lenY)
           pixTot = frame[yNew][xNew]
-          if (pixTot < pixTotMax):
+          if xNew != -1 and yNew != -1 and (pixTot < pixTotMax):
             pixTotMax = pixTot
             maxTheta = theta
             xTotOpp = xNew
             yTotOpp = yNew
             if debug:
               print("opposite dir: Choosing (x, y):", xTotOpp, yTotOpp, "; step:", step, "; theta:", theta, "; pixTot:", pixTot)
-    pixTotList.append(pixTotMax)
-    pixSurOpp = frame[yTotOpp, xTotOpp]
+    if xTotOpp != -1 and yTotOpp != -1:
+      pixTotList.append(pixTotMax)
+      pixSurOpp = frame[yTotOpp, xTotOpp]
     
     # Choosing between initial and opposite direction
-    if pixSurOpp < pixSur:
+    if pixSur != -1 and pixSurOpp != -1:
+      if pixSurOpp < pixSur:
+        xTot   = xTotOpp
+        yTot   = yTotOpp
+        pixSur = pixSurOpp
+        oppChosen = True
+      else:
+        oppChosen = False
+    elif pixSur != -1:
+      oppChosen = False
+    elif pixSurOpp != -1:
       xTot   = xTotOpp
       yTot   = yTotOpp
       pixSur = pixSurOpp
       oppChosen = True
     else:
+      xTot = -1
+      yTot = -1
       oppChosen = False
       
-    if debug:
-      print("oppChosen:", oppChosen)
-      print("xTot, yTot:", xTot, yTot)
+    # if debug:
+      # print("oppChosen:", oppChosen)
+      # print("xTot, yTot:", xTot, yTot)
     
-    # Calculates distance between new and old point
-    if len(points[0]) == 0:
-      xOld = x
-      yOld = y
-    else:
-      if oppChosen:
-        xOld = points[0][0]
-        yOld = points[1][0]
+    if xTot != -1 and yTot != -1:
+      # Calculates distance between new and old point
+      if len(points[0]) == 0:
+        xOld = x
+        yOld = y
       else:
-        nbCols = len(points[0])
-        xOld = points[0][nbCols - 1]
-        yOld = points[1][nbCols - 1]
-    
-    distSubsquentPoints = math.sqrt((xTot - xOld)**2 + (yTot - yOld)**2)
-    if debug:
-      print("distSubsquentPoints:", distSubsquentPoints)
-    
-    if depth + distSubsquentPoints < maxDepth and ((pixSur < pixSurMax) or (depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth)):
-      if oppChosen:
-        points = np.insert(points, 0, [xTot, yTot], 1)
+        if oppChosen:
+          xOld = points[0][0]
+          yOld = points[1][0]
+        else:
+          nbCols = len(points[0])
+          xOld = points[0][nbCols - 1]
+          yOld = points[1][nbCols - 1]
+      
+      distSubsquentPoints = math.sqrt((xTot - xOld)**2 + (yTot - yOld)**2)
+      # if debug:
+        # print("distSubsquentPoints:", distSubsquentPoints)
+      
+      if depth + distSubsquentPoints < maxDepth and ((pixSur < pixSurMax) or (depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth)):
+        if oppChosen:
+          points = np.insert(points, 0, [xTot, yTot], 1)
+        else:
+          points = appendPoint(xTot, yTot, points)
       else:
-        points = appendPoint(xTot, yTot, points)
-    else:
+        # if debug:
+          # print("diff")
+        vectX = xTot - xOld
+        vectY = yTot - yOld
+        xTot  = int(xOld + (maxDepth / (depth + distSubsquentPoints)) * vectX)
+        yTot  = int(yOld + (maxDepth / (depth + distSubsquentPoints)) * vectY)
+        if oppChosen:
+          points = np.insert(points, 0, [xTot, yTot], 1)
+        else:
+          points = appendPoint(xTot, yTot, points)
+      
       if debug:
-        print("diff")
-      vectX = xTot - xOld
-      vectY = yTot - yOld
-      xTot  = int(xOld + (maxDepth / (depth + distSubsquentPoints)) * vectX)
-      yTot  = int(yOld + (maxDepth / (depth + distSubsquentPoints)) * vectY)
-      if oppChosen:
-        points = np.insert(points, 0, [xTot, yTot], 1)
+        print("points:", points)
+        cv2.circle(frameDisplay, (xTot, yTot), 1, (0,0,0),   -1)
+        util.showFrame(frameDisplay, title="HeadEmbeddedTailTracking")
+      
+      newTheta = calculateAngle(xOld,yOld,xTot,yTot)
+      
+      if depth == 0:
+        if oppChosen:
+          angleOpp = newTheta
+          angle    = (newTheta + math.pi) % (2 * math.pi)
+        else:
+          angle    = newTheta 
+          angleOpp = (newTheta + math.pi) % (2 * math.pi)
       else:
-        points = appendPoint(xTot, yTot, points)
+        if oppChosen:
+          angleOpp = newTheta
+        else:
+          angle = newTheta
+      
+      if depth == 0:
+        lastFirstTheta = angle
+      depth = depth + distSubsquentPoints
+      
+      if xTot == -1 or yTot == -1:
+        distSubsquentPoints = 0
+      
+      if debug:
+        print("distSubsquentPoints:", distSubsquentPoints, "; depth < maxDepth:", depth < maxDepth, "; pixSur < pixSurMax:", pixSur < pixSurMax, '; depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth):', depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth)
     
-    if debug:
-      print("points:", points)
-      cv2.circle(frameDisplay, (xTot, yTot), 1, (0,0,0),   -1)
-      util.showFrame(frameDisplay, title="HeadEmbeddedTailTracking")
-    
-    newTheta = calculateAngle(xOld,yOld,xTot,yTot)
-    
-    if depth == 0:
-      if oppChosen:
-        angleOpp = newTheta
-        angle    = (newTheta + math.pi) % (2 * math.pi)
-      else:
-        angle    = newTheta 
-        angleOpp = (newTheta + math.pi) % (2 * math.pi)
     else:
-      if oppChosen:
-        angleOpp = newTheta
-      else:
-        angle = newTheta
+      distSubsquentPoints = 0
     
-    if depth == 0:
-      lastFirstTheta = angle
-    depth = depth + distSubsquentPoints
-  
   lenPoints = len(points[0]) - 1
   if points[0, lenPoints-1] == points[0, lenPoints] and points[1, lenPoints-1] == points[1, lenPoints]:
     points = points[:, :len(points[0])-1]
   
-  if debug:
-    print(np.median(pixTotList), np.mean(pixTotList), pixTotList)
+  # if debug:
+    # print(np.median(pixTotList), np.mean(pixTotList), pixTotList)
   
   medianPixTotList = np.median(pixTotList)
   

@@ -25,6 +25,13 @@ def assignValueIfBetweenRange(value, minn, maxx):
     return maxx
   return value
   
+def assignValueIfBetweenRangeForDualDirection(value, minn, maxx):
+  if value < minn:
+    return -1
+  if value > maxx:
+    return -1
+  return value
+  
 def calculateAngle(xStart, yStart, xEnd, yEnd):
   vx = xEnd - xStart
   vy = yEnd - yStart

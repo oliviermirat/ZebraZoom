@@ -30,6 +30,8 @@ def trackTail(self, frameROI, headPosition, hyperparameters, wellNumber, frameNu
   elif "dualDirectionTailDetection" in hyperparameters and hyperparameters["dualDirectionTailDetection"]:
     points = np.insert(points, 0, headPosition, 1)
     (points, lastFirstTheta, medianPixTotList) = dualDirectionTailDetection(headPosition, frameROI, points, lastFirstTheta, maxDepth, steps, nbList, hyperparameters, debug, lenX, lenY)
+    if len(points) == 0: # or medianPixTotList > hyperparameters["maximumMedianValueOfAllPointsAlongTheTail"]:
+      return [], lastFirstTheta
   else:
     (points, lastFirstTheta, medianPixTotList) = tailTrackFindNextPoint(0, headPosition, frameROI, points, lastFirstTheta, maxDepth, steps, nbList,  hyperparameters, debug, lenX, lenY)
   
@@ -55,12 +57,12 @@ def trackTail(self, frameROI, headPosition, hyperparameters, wellNumber, frameNu
       output[0][idx][0] = x
       output[0][idx][1] = points[1][idx]
   
-  if len(points) < hyperparameters["nbTailPoints"]:
+  if len(points[0]) < hyperparameters["nbTailPoints"]:
     for idx in range(len(points[0]), hyperparameters["nbTailPoints"]):
       output[0][idx][0] = output[0][len(points[0])-1][0]
       output[0][idx][1] = output[0][len(points[0])-1][1]
   else:
-    if len(points) > hyperparameters["nbTailPoints"]:
+    if len(points[0]) > hyperparameters["nbTailPoints"]:
       output[0][hyperparameters["nbTailPoints"]-1][0] = points[0][len(points)-1]
       output[0][hyperparameters["nbTailPoints"]-1][1] = points[1][len(points)-1]
   
