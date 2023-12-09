@@ -1,6 +1,7 @@
 import zebrazoom.dataAPI as dataAPI
 from scipy.fft import fft, fftfreq
 import matplotlib.pyplot as plt
+import seaborn as sns
 import pandas as pd
 import numpy as np
 
@@ -38,6 +39,9 @@ if usingHdf5format:
 numWell = 0
 
 for numAnimal in [0, 1]:
+
+  print("")
+  print("Animal Number:", numAnimal)
 
   if usingHdf5format:
     TailAngle0  = dataAPI.getDataPerTimeInterval(videoName, numWell, numAnimal, startTimeInSeconds, endTimeInSeconds, "TailAngle")
@@ -84,15 +88,22 @@ for numAnimal in [0, 1]:
   TailLength0 = TailLength0 - min(TailLength0)
   TailLength0 = TailLength0 / max(TailLength0)
   if removeSuspiciousFrames:
+    originalNb = len(TailAngle0)
+    TailAngle0BeforeRemoval = TailAngle0.copy()
+    TailAngle0savedBeforeRemoval = TailAngle0saved.copy()
+    FrameNumberNoInterBout = np.array([i for i in range(originalNb)])
     toRemove0 = np.logical_or(np.logical_or(np.convolve(TailLength0 > tailLenghtMaxThresh, np.ones(10), mode='same') != 0, np.convolve(tailAngleDiffAbs0 < tailAngleDiffLowerThresh, np.ones(10), mode='same') != 0), np.convolve(tailAngleDiffAbs0 > tailAngleDiffUpperThresh, np.ones(10), mode='same') != 0)
     TailAngle0 = TailAngle0[toRemove0 == False]
     TailAngle0saved = TailAngle0saved[toRemove0 == False]
     tailAngleDiffAbs0 = tailAngleDiffAbs0[toRemove0 == False]
     TailLength0 = TailLength0[toRemove0 == False]
     FrameNumber0 = FrameNumber0[toRemove0 == False]
+    FrameNumberNoInterBout = FrameNumberNoInterBout[toRemove0 == False]
+    newNb = len(TailAngle0)
+    print("Original number of frames:", originalNb, "; New number of frames:", newNb, "; Percentage of frames kept:", (newNb/originalNb)*100)
   plt.plot(TailAngle0)
-  plt.plot(tailAngleDiffAbs0)
-  plt.plot(TailLength0)
+  plt.plot(tailAngleDiffAbs0) #, color='orange')
+  plt.plot(TailLength0) #, color='green')
   plt.show()
 
   # Fourrier transform
@@ -108,3 +119,43 @@ for numAnimal in [0, 1]:
   df = pd.DataFrame({'FrameNumber': FrameNumber0})
   df = df.sort_values(by='FrameNumber')
   df.to_excel("framesKept" + str(numAnimal) + ".xlsx", index=False)
+
+  ###
+  if True:
+    
+    nbFramesSinceRemoval = 0
+    nbRemovals = 0
+    nbFramesSinceRemovalList = []
+    
+    previousFrameNumber = FrameNumberNoInterBout[0] - 1
+    for frameNumber in FrameNumberNoInterBout:
+      if (frameNumber - 1) == previousFrameNumber:
+        nbFramesSinceRemoval += 1
+      else:
+        nbFramesSinceRemovalList.append(nbFramesSinceRemoval)
+        nbRemovals += 1
+        nbFramesSinceRemoval = 0
+      previousFrameNumber = frameNumber
+    
+    print("Number of cuts:", nbRemovals)
+    print("Mean uncut period:", np.mean(nbFramesSinceRemovalList), "; Median uncut period:", np.median(nbFramesSinceRemovalList))
+    
+    data_df = pd.DataFrame(np.array([nbFramesSinceRemovalList]).transpose(), columns=['A'])
+    sns.boxplot(data=data_df, orient="v", color=".8")
+    sns.stripplot(data=data_df, orient="v", color=".3")
+    plt.show()
+    
+    #
+    plt.plot(TailAngle0savedBeforeRemoval)
+    plt.plot(FrameNumberNoInterBout, TailAngle0savedBeforeRemoval[FrameNumberNoInterBout])
+    plt.show()
+    
+    #
+    N = len(TailAngle0savedBeforeRemoval[FrameNumberNoInterBout])
+    T = 1/160
+    xf = fftfreq(N, T)[:N//2]
+    yf0 = fft(TailAngle0savedBeforeRemoval[FrameNumberNoInterBout])
+    plt.plot(xf, 2.0/N * np.abs(yf0[0:N//2]))
+    plt.grid()
+    plt.show()
+
