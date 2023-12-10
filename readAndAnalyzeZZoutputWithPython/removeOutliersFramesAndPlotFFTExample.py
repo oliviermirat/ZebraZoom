@@ -74,7 +74,8 @@ for numAnimal in [0, 1]:
       TailAngle0   = pandasData[pandasData["BoutNumber"].isna() == False]["tailAngle"].to_numpy()
       TailLength0  = pandasData[pandasData["BoutNumber"].isna() == False]["TailLength"].to_numpy()
       FrameNumber0 = pandasData[pandasData["BoutNumber"].isna() == False].index.to_numpy()
-
+    print("Total number of frames:", (10 * 60 * videoFPS), "; Frames spent swimming:", len(TailAngle0), "; Percentage of time spent swimming:", len(TailAngle0) / (10 * 60 * videoFPS))
+    
   TailAngle0saved = TailAngle0.copy()
     
   tailAngleDiffAbs0 = np.append(np.array([getMinMaxDiffWithinSegment(TailAngle0, i, 10) for i in range(0, len(TailAngle0) - 10)]), np.array([getMinMaxDiffWithinSegment(TailAngle0, len(TailAngle0) - 10, 10) for i in range(0, 10)]))
@@ -102,8 +103,8 @@ for numAnimal in [0, 1]:
     newNb = len(TailAngle0)
     print("Original number of frames:", originalNb, "; New number of frames:", newNb, "; Percentage of frames kept:", (newNb/originalNb)*100)
   plt.plot(TailAngle0)
-  plt.plot(tailAngleDiffAbs0) #, color='orange')
-  plt.plot(TailLength0) #, color='green')
+  plt.plot(tailAngleDiffAbs0, color='#F6A11A') # Orange
+  plt.plot(TailLength0, color='#5BBB32')       # Green
   plt.show()
 
   # Fourrier transform
