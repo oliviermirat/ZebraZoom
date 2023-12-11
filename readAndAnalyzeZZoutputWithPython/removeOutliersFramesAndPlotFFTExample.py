@@ -17,6 +17,7 @@ if usingHdf5format:
   tailLenghtMaxThresh = 0.1
   tailAngleDiffLowerThresh = 0.1
   tailAngleDiffUpperThresh = 0.3
+  useOnlyTailAngleVariationForFrameRemoval = True
 else:
   excelData = ["../zebrazoom/ZZoutput/23.05.19.ao-07-f-1-2-long1_2023_10_01-08_55_57/allData_23.05.19.ao-07-f-1-2-long1_wellNumber0_animal0.csv", "../zebrazoom/ZZoutput/23.05.19.ao-07-f-1-2-long1_2023_10_01-08_55_57/allData_23.05.19.ao-07-f-1-2-long1_wellNumber0_animal1.csv"]
   keepOnlyBouts = True
@@ -24,6 +25,7 @@ else:
   tailLenghtMaxThresh = 0.1
   tailAngleDiffLowerThresh = 0
   tailAngleDiffUpperThresh = 0.4
+  useOnlyTailAngleVariationForFrameRemoval = True
 
 ####
 
@@ -93,7 +95,10 @@ for numAnimal in [0, 1]:
     TailAngle0BeforeRemoval = TailAngle0.copy()
     TailAngle0savedBeforeRemoval = TailAngle0saved.copy()
     FrameNumberNoInterBout = np.array([i for i in range(originalNb)])
-    toRemove0 = np.logical_or(np.logical_or(np.convolve(TailLength0 > tailLenghtMaxThresh, np.ones(10), mode='same') != 0, np.convolve(tailAngleDiffAbs0 < tailAngleDiffLowerThresh, np.ones(10), mode='same') != 0), np.convolve(tailAngleDiffAbs0 > tailAngleDiffUpperThresh, np.ones(10), mode='same') != 0)
+    if useOnlyTailAngleVariationForFrameRemoval:
+      toRemove0 = (np.convolve(tailAngleDiffAbs0 > tailAngleDiffUpperThresh, np.ones(10), mode='same') != 0)
+    else:
+      toRemove0 = np.logical_or(np.logical_or(np.convolve(TailLength0 > tailLenghtMaxThresh, np.ones(10), mode='same') != 0, np.convolve(tailAngleDiffAbs0 < tailAngleDiffLowerThresh, np.ones(10), mode='same') != 0), np.convolve(tailAngleDiffAbs0 > tailAngleDiffUpperThresh, np.ones(10), mode='same') != 0)
     TailAngle0 = TailAngle0[toRemove0 == False]
     TailAngle0saved = TailAngle0saved[toRemove0 == False]
     tailAngleDiffAbs0 = tailAngleDiffAbs0[toRemove0 == False]
@@ -104,7 +109,8 @@ for numAnimal in [0, 1]:
     print("Original number of frames:", originalNb, "; New number of frames:", newNb, "; Percentage of frames kept:", (newNb/originalNb)*100)
   plt.plot(TailAngle0)
   plt.plot(tailAngleDiffAbs0, color='#F6A11A') # Orange
-  plt.plot(TailLength0, color='#5BBB32')       # Green
+  if not(useOnlyTailAngleVariationForFrameRemoval):
+    plt.plot(TailLength0, color='#5BBB32')     # Green
   plt.show()
 
   # Fourrier transform
@@ -137,8 +143,11 @@ for numAnimal in [0, 1]:
         nbRemovals += 1
         nbFramesSinceRemoval = 0
       previousFrameNumber = frameNumber
+    if nbFramesSinceRemoval != 0:
+      nbFramesSinceRemovalList.append(nbFramesSinceRemoval)
+      nbRemovals += 1
     
-    print("Number of cuts:", nbRemovals)
+    print("Number of cuts:", nbRemovals-1)
     print("Mean uncut period:", np.mean(nbFramesSinceRemovalList), "; Median uncut period:", np.median(nbFramesSinceRemovalList))
     
     data_df = pd.DataFrame(np.array([nbFramesSinceRemovalList]).transpose(), columns=['A'])
