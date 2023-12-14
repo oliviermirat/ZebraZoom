@@ -328,13 +328,13 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     contrastCheckbox.toggled.connect(lambda checked: hyperparameters.update({"outputValidationVideoContrastImprovement": int(checked)}))
     contrastCheckbox.toggled.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer), video))
     trackingPointsLayout.addWidget(contrastCheckbox)
-    saveButton = QPushButton('Start saving video')
+    saveButton = QPushButton('Start save')
 
     def saveVideo():
       if frameSlider.firstSaveFrame is None:
         frameSlider.firstSaveFrame = frameSlider.value()
         timer.stop()
-        saveButton.setText('Save')
+        saveButton.setText('End save')
         return
 
       app = QApplication.instance()
@@ -360,7 +360,7 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
         progressDialog.setLabelText('Saving video...')
         cap.release()
         progressDialog.close()
-      saveButton.setText('Start saving video')
+      saveButton.setText('Start save')
       frameSlider.firstSaveFrame = None
 
     saveButton.clicked.connect(saveVideo)
