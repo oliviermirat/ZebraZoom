@@ -302,14 +302,16 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
   layout = QVBoxLayout()
 
   video = QLabel()
-  video.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+  sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+  sizePolicy.setRetainSizeWhenHidden(True)
+  video.setSizePolicy(sizePolicy)
   if zoom and folderName.endswith('.h5'):
     videoLayout = QHBoxLayout()
     videoLayout.addWidget(video, stretch=1)
     layout.addLayout(videoLayout, stretch=1)
     validationLayout = QGridLayout()
     validationLayout.setColumnStretch(3, 1)
-    validationLayout.setRowStretch(6, 1)
+    validationLayout.setRowStretch(5, 1)
     validationLayout.addWidget(QLabel('Frame:'), 0, 0)
     frameSpinbox = QSpinBox()
     frameSpinbox.setRange(*frameRange)
@@ -317,15 +319,9 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     frameSpinbox.setMinimumWidth(70)
     frameSpinbox.valueChanged.connect(lambda value: timer.stop() or frameSlider.setValue(value))
     validationLayout.addWidget(frameSpinbox, 0, 1, 1, 2)
-    validationLayout.addWidget(QLabel('Bend:'), 1, 0)
-    bendGroup = QButtonGroup()
-    bendGroup.idToggled.connect(lambda id_, checked: saveButton.setEnabled(True) or clearButton.setEnabled(True))
-    bendYesButton = QRadioButton('Yes')
-    validationLayout.addWidget(bendYesButton, 1, 1)
-    bendGroup.addButton(bendYesButton, id=1)
-    bendNoButton = QRadioButton('No')
-    validationLayout.addWidget(bendNoButton, 1, 2)
-    bendGroup.addButton(bendNoButton, id=0)
+    bendCheckbox = QCheckBox('Bend')
+    bendCheckbox.toggled.connect(lambda checked: saveChanges() or clearButton.setEnabled(True))
+    validationLayout.addWidget(bendCheckbox, 1, 0, 1, 2)
     headingButton = QPushButton('Heading:')
 
     def updateHeading():
@@ -333,11 +329,11 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
       exitSignals = [frameSlider.valueChanged, manualValidationWidget.expanded, headingButton.clicked, tailExtremityButton.clicked]
       if toggleTrackingPoints:
         exitSignals.extend([btnGroup.idToggled, sizeSpinbox.valueChanged, contrastCheckbox.toggled])
-      points = util.getPointOnFrame(video, basePoint=getFrame(frameSlider, returnHeadPos=True), exitSignals=exitSignals)
+      points = util.getPointOnFrame(getFrame(frameSlider, timer, btnGroup, stopTimer), video, basePoint=getFrame(frameSlider, returnHeadPos=True), exitSignals=exitSignals)
       if points is None:
         return
       headingLabel.setValue(calculateAngle(*points), str)
-      saveButton.setEnabled(True)
+      saveChanges()
       clearButton.setEnabled(True)
 
     headingButton.clicked.connect(lambda: QTimer.singleShot(0, updateHeading))
@@ -350,11 +346,11 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
       exitSignals = [frameSlider.valueChanged, manualValidationWidget.expanded, headingButton.clicked, tailExtremityButton.clicked]
       if toggleTrackingPoints:
         exitSignals.extend([btnGroup.idToggled, sizeSpinbox.valueChanged, contrastCheckbox.toggled])
-      point = util.getPointOnFrame(video, exitSignals=exitSignals)
+      point = util.getPointOnFrame(getFrame(frameSlider, timer, btnGroup, stopTimer), video, exitSignals=exitSignals)
       if point is None:
         return
       tailExtremityLabel.setValue(point, lambda point: ', '.join(map(str, point)))
-      saveButton.setEnabled(True)
+      saveChanges()
       clearButton.setEnabled(True)
 
     tailExtremityButton.clicked.connect(lambda: QTimer.singleShot(0, updateTailExtremity))
@@ -363,10 +359,8 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     validationLayout.addWidget(tailExtremityLabel, 3, 1, 1, 2)
     clearButton = QPushButton('Clear values')
     clearButton.setEnabled(False)
-    clearButton.clicked.connect(lambda: updateWidgets(-1, np.nan, (np.nan, np.nan)) or saveButton.setEnabled(True) or clearButton.setEnabled(False))
+    clearButton.clicked.connect(lambda: updateWidgets(False, np.nan, (-1, -1)) or saveChanges() or clearButton.setEnabled(False))
     validationLayout.addWidget(clearButton, 4, 0, 1, 3, alignment=Qt.AlignmentFlag.AlignCenter)
-    saveButton = QPushButton('Save changes')
-    saveButton.setEnabled(False)
 
     def saveChanges():
       import h5py
@@ -376,38 +370,28 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
         arraySize = results.attrs['lastFrame'] - firstFrame + 1
         perFrameGroup = results[f'dataForWell{numWell}'][f'dataForAnimal{numAnimal}']['dataPerFrame']
         if 'manualBend' not in perFrameGroup:
-          perFrameGroup.create_dataset('manualBend', data=np.full(arraySize, np.nan))  # float array is required in order to support nan
+          perFrameGroup.create_dataset('manualBend', data=np.full(arraySize, False, dtype=bool))
         if 'manualHeading' not in perFrameGroup:
           perFrameGroup.create_dataset('manualHeading', data=np.full(arraySize, np.nan))
         if 'manualTailExtremity' not in perFrameGroup:
-          perFrameGroup.create_dataset('manualTailExtremity', data=np.full(arraySize, np.nan, dtype=[('X', float), ('Y', float)]))  # float array is required in order to support nan
+          perFrameGroup.create_dataset('manualTailExtremity', data=np.full(arraySize, -1, dtype=[('X', int), ('Y', int)]))  # float array is required in order to support nan
           perFrameGroup['manualTailExtremity'].attrs['columns'] = ('X', 'Y')
         idx = frameSlider.value() - firstFrame
-        bend = bendGroup.checkedId()
+        bend = bendCheckbox.isChecked()
         perFrameGroup['manualBend'][idx] = bend if bend != -1 else np.nan
         heading = headingLabel.getValue()
         perFrameGroup['manualHeading'][idx] = heading if heading is not None else np.nan
         tailExtremity = tailExtremityLabel.getValue()
-        perFrameGroup['manualTailExtremity'][idx] = tailExtremity if tailExtremity is not None else (np.nan, np.nan)
-      saveButton.setEnabled(False)
+        perFrameGroup['manualTailExtremity'][idx] = tailExtremity if tailExtremity is not None else (-1, -1)
 
-    saveButton.clicked.connect(saveChanges)
-    validationLayout.addWidget(saveButton, 5, 0, 1, 3, alignment=Qt.AlignmentFlag.AlignCenter)
     manualValidationWidget = util.Expander(None, 'Manual validation', validationLayout, retainWidth=True)
 
     def updateWidgets(bend, heading, tailExtremity):
-      blocked = bendGroup.blockSignals(True)
-      bendGroup.setExclusive(False)
-      for btn in (bendYesButton, bendNoButton):
-        btn.setChecked(False)
-      bendGroup.setExclusive(True)
-      if bend == 0:
-        bendNoButton.setChecked(True)
-      if bend == 1:
-        bendYesButton.setChecked(True)
-      bendGroup.blockSignals(blocked)
+      blocked = bendCheckbox.blockSignals(True)
+      bendCheckbox.setChecked(bend)
+      bendCheckbox.blockSignals(blocked)
       headingLabel.setValue(heading if not np.isnan(heading) else None, str)
-      tailExtremityLabel.setValue(tailExtremity if not np.isnan(tailExtremity).any() else None, lambda tailExtremity: ', '.join(map(str, tailExtremity)))
+      tailExtremityLabel.setValue(tailExtremity if tailExtremity != (-1, -1) else None, lambda tailExtremity: ', '.join(map(str, tailExtremity)))
 
     def manualValidationExpanded(expanded):
       timer.stop()
@@ -415,18 +399,17 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
         return
       import h5py
       filePath = os.path.join(ZZoutputLocation if ZZoutputLocation else paths.getDefaultZZoutputFolder(), folderName)
-      with h5py.File(filePath, 'r') as results:
+      with h5py.File(filePath, 'r+') as results:
         idx = frameSlider.value() - results.attrs['firstFrame']
         perFrameGroup = results[f'dataForWell{numWell}'][f'dataForAnimal{numAnimal}']['dataPerFrame']
-        bend = perFrameGroup['manualBend'][idx] if 'manualBend' in perFrameGroup else np.nan
+        bend = perFrameGroup['manualBend'][idx] if 'manualBend' in perFrameGroup else False
         heading = perFrameGroup['manualHeading'][idx] if 'manualHeading' in perFrameGroup else np.nan
-        tailExtremity = tuple(perFrameGroup['manualTailExtremity'][idx]) if 'manualTailExtremity' in perFrameGroup else (np.nan, np.nan)
+        tailExtremity = tuple(perFrameGroup['manualTailExtremity'][idx]) if 'manualTailExtremity' in perFrameGroup else (-1, -1)
       blocked = frameSpinbox.blockSignals(True)
       frameSpinbox.setValue(frameSlider.value())
       frameSpinbox.blockSignals(blocked)
-      saveButton.setEnabled(False)
       updateWidgets(bend, heading, tailExtremity)
-      clearButton.setEnabled(bool(tailExtremityLabel.text() or headingLabel.text() or bendGroup.checkedId() != -1))
+      clearButton.setEnabled(bool(tailExtremityLabel.text() or headingLabel.text() or bendCheckbox.isChecked()))
 
     manualValidationWidget.expanded.connect(manualValidationExpanded)
     videoLayout.addWidget(manualValidationWidget, alignment=Qt.AlignmentFlag.AlignTop)

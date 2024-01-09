@@ -510,19 +510,17 @@ class _TemporaryZoomableImagePoint(_ZoomableImage):
       return
     qp = QPainter(self.viewport())
     qp.setPen(QColor(255, 0, 0))
-    qp.drawLine(self.mapFromScene(self.mapToScene(self._basePoint)), self.mapFromScene(QPointF(self._currentPosition)))
+    qp.drawLine(self.mapFromScene(self._basePoint), self.mapFromScene(QPointF(self._currentPosition)))
     qp.end()
 
   def getCoordinates(self):
     return None if self._point is None else (self._point.x(), self._point.y()) if self._basePoint is None else ((self._basePoint.x(), self._basePoint.y()), (self._point.x(), self._point.y()))
 
 
-def getPointOnFrame(label, basePoint=None, exitSignals=()):
+def getPointOnFrame(frame, label, basePoint=None, exitSignals=()):
   label.hide()
   image = _TemporaryZoomableImagePoint(basePoint=basePoint)
-  image.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
-  pixmap = label.pixmap().copy()
-  pixmap.setDevicePixelRatio(1.0)
+  pixmap = _cvToPixmap(frame)
   size = pixmap.size().scaled(label.size(), Qt.AspectRatioMode.KeepAspectRatio)
   image.sizeHint = lambda: size
   image.setMaximumSize(size)
