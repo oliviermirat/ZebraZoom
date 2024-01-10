@@ -4,22 +4,23 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import numpy as np
+import math
 
 ### Parameters to change
 
-usingHdf5format = False
+usingHdf5format = True
 videoFPS = 160
 
 if usingHdf5format:
-  videoName = "C:/Users/mirat/Desktop/openZZ/ZebraZoom/zebrazoom/ZZoutput/23.05.19.ao-07-f-1-2-long1_2023_10_02-11_47_42.h5"
+  videoName = "C:/Users/mirat/Desktop/openZZ/ZebraZoom/zebrazoom/ZZoutput/23.05.19.ao-07-f-1-2-long1_2024_01_09-17_37_45.h5"
   keepOnlyBouts = True
   removeSuspiciousFrames = True
   tailLenghtMaxThresh = 0.1
-  tailAngleDiffLowerThresh = 0.1
-  tailAngleDiffUpperThresh = 0.3
+  tailAngleDiffLowerThresh = 0
+  tailAngleDiffUpperThresh = 0.4
   useOnlyTailAngleVariationForFrameRemoval = True
 else:
-  excelData = ["../zebrazoom/ZZoutput/23.05.19.ao-07-f-1-2-long1_2023_10_01-08_55_57/allData_23.05.19.ao-07-f-1-2-long1_wellNumber0_animal0.csv", "../zebrazoom/ZZoutput/23.05.19.ao-07-f-1-2-long1_2023_10_01-08_55_57/allData_23.05.19.ao-07-f-1-2-long1_wellNumber0_animal1.csv"]
+  excelData = ["zebrazoom/ZZoutput/23.05.19.ao-07-f-1-2-long1_2023_10_01-08_55_57/allData_23.05.19.ao-07-f-1-2-long1_wellNumber0_animal0.csv", "zebrazoom/ZZoutput/23.05.19.ao-07-f-1-2-long1_2023_10_01-08_55_57/allData_23.05.19.ao-07-f-1-2-long1_wellNumber0_animal1.csv"]
   keepOnlyBouts = True
   removeSuspiciousFrames = True
   tailLenghtMaxThresh = 0.1
@@ -35,7 +36,7 @@ def getMinMaxDiffWithinSegment(nparray, startSegment, segmentLength):
 if usingHdf5format:
   videoPixelSize = 0.01
   dataAPI.setFPSandPixelSize(videoName, videoFPS, videoPixelSize)
-  startTimeInSeconds = 0 #0.00625
+  startTimeInSeconds = 0.00625
   endTimeInSeconds   = 600
 
 numWell = 0
@@ -47,13 +48,14 @@ for numAnimal in [0, 1]:
 
   if usingHdf5format:
     TailAngle0  = dataAPI.getDataPerTimeInterval(videoName, numWell, numAnimal, startTimeInSeconds, endTimeInSeconds, "TailAngle")
+    TailAngle0 = TailAngle0 * (180 / math.pi)
     TailLength0 = dataAPI.getDataPerTimeInterval(videoName, numWell, numAnimal, startTimeInSeconds, endTimeInSeconds, "TailLength")
     boutTimings = dataAPI.listAllBouts(videoName, numWell, numAnimal)
   else:
     pandasData = pd.read_csv(excelData[numAnimal])
     TailAngle0  = pandasData["tailAngle"].to_numpy()
     TailLength0 = pandasData["TailLength"].to_numpy()
-
+  
   FrameNumber0 = np.array([i for i in range(len(TailAngle0))])
   totalLength0 = 0
   if usingHdf5format:
@@ -77,7 +79,7 @@ for numAnimal in [0, 1]:
       TailLength0  = pandasData[pandasData["BoutNumber"].isna() == False]["TailLength"].to_numpy()
       FrameNumber0 = pandasData[pandasData["BoutNumber"].isna() == False].index.to_numpy()
     print("Total number of frames:", (10 * 60 * videoFPS), "; Frames spent swimming:", len(TailAngle0), "; Percentage of time spent swimming:", len(TailAngle0) / (10 * 60 * videoFPS))
-    
+  
   TailAngle0saved = TailAngle0.copy()
     
   tailAngleDiffAbs0 = np.append(np.array([getMinMaxDiffWithinSegment(TailAngle0, i, 10) for i in range(0, len(TailAngle0) - 10)]), np.array([getMinMaxDiffWithinSegment(TailAngle0, len(TailAngle0) - 10, 10) for i in range(0, 10)]))

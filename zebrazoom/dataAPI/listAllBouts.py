@@ -7,7 +7,7 @@ def listAllBouts(videoName: str, numWell: int, numAnimal: int, seconds: bool=Fal
     if boutsPath not in results:
       raise ValueError(f"bouts not found for animal {numAnimal} in well {numWell}")
     boutsGroup = results[boutsPath]
-    boutTimings = ((boutsGroup[bout].attrs['BoutStart'], boutsGroup[bout].attrs['BoutEnd']) for bout in boutsGroup)
+    boutTimings = sorted(((boutsGroup[bout].attrs['BoutStart']-1, boutsGroup[bout].attrs['BoutEnd']) for bout in boutsGroup), key=lambda x: x[0])
     if not seconds:
       return list(boutTimings)
     if 'videoFPS' not in results.attrs:
