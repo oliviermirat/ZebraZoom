@@ -9,7 +9,8 @@ import json
 import numpy as np
 
 from PyQt5.QtCore import Qt, QSize, QTimer
-from PyQt5.QtWidgets import QApplication, QButtonGroup, QCheckBox, QFileDialog, QHBoxLayout, QMessageBox, QLabel, QRadioButton, QSlider, QSpinBox, QStyleOptionSlider, QVBoxLayout
+from PyQt5.QtGui import QColor, QPainter
+from PyQt5.QtWidgets import QApplication, QButtonGroup, QCheckBox, QFileDialog, QHBoxLayout, QMessageBox, QLabel, QProgressDialog, QPushButton, QRadioButton, QSlider, QSpinBox, QStyleOptionSlider, QVBoxLayout
 
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
@@ -17,6 +18,27 @@ import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.createValidationVideo import calculateInfoFrameForFrame, drawInfoFrame, improveContrast
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.preprocessImage import preprocessImage
+
+
+class FrameSlider(QSlider):
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self.firstSaveFrame = None
+
+  def paintEvent(self, event):
+    if self.firstSaveFrame is not None:
+      style = self.style()
+      opt = QStyleOptionSlider()
+      self.initStyleOption(opt)
+      available = style.pixelMetric(style.PM_SliderSpaceAvailable, opt, self)
+      minimum = self.minimum()
+      maximum = self.maximum()
+      qp = QPainter(self)
+      qp.translate(opt.rect.x(), opt.rect.y())
+      start = style.sliderPositionFromValue(minimum, maximum, self.firstSaveFrame, available, opt.upsideDown)
+      end = style.sliderPositionFromValue(minimum, maximum, self.value(), available, opt.upsideDown)
+      qp.fillRect(start, 0, end - start + 1, event.rect().height(), QColor('red'))
+    super().paintEvent(event)
 
 
 def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation='', supstruct=None, config=None):
@@ -193,13 +215,13 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
   xOriginal = x
   yOriginal = y
 
-  def getFrame(frameSlider, timer=None, trackingPointsGroup=None, stopTimer=True):
+  def getFrame(frameSlider, timer=None, trackingPointsGroup=None, stopTimer=True, frameIdx=None, returnFPS=False):
     nonlocal x
     nonlocal y
     nonlocal lengthX
     nonlocal lengthY
 
-    l = frameSlider.value()
+    l = frameSlider.value() if frameIdx is None else frameIdx
     if timer is not None and timer.isActive() and (l == frameSlider.maximum() or stopTimer):
       timer.stop()
 
@@ -250,7 +272,7 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
       font = cv2.FONT_HERSHEY_SIMPLEX
       cv2.putText(img, str(frameNumber), (int(0), int(lengthY+25)), font, 1, (0,255,0))
 
-    return img
+    return (img, int(cap.get(5) if not hyperparameters['outputValidationVideoFps'] > 0 else hyperparameters['outputValidationVideoFps'])) if returnFPS else img
 
   wellShape = None if config.get("noWellDetection", False) or (hyperparameters["headEmbeded"] and not hyperparameters["oneWellManuallyChosenTopLeft"]) else 'rectangle' if config.get("wellsAreRectangles", False) or len(config.get("oneWellManuallyChosenTopLeft", '')) or int(config.get("multipleROIsDefinedDuringExecution", 0)) or config.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
   return getFrame, frameRange, start if start > 0 else 0, boutMap is not None, supstruct['wellPositions'], wellShape, hyperparameters
@@ -266,7 +288,7 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
   video = QLabel()
   layout.addWidget(video, stretch=1)
 
-  frameSlider = QSlider(Qt.Orientation.Horizontal)
+  frameSlider = FrameSlider(Qt.Orientation.Horizontal)
   frameSlider.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
   frameSlider.setPageStep(50)
   frameSlider.setRange(*frameRange)
@@ -306,6 +328,43 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     contrastCheckbox.toggled.connect(lambda checked: hyperparameters.update({"outputValidationVideoContrastImprovement": int(checked)}))
     contrastCheckbox.toggled.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer), video))
     trackingPointsLayout.addWidget(contrastCheckbox)
+    saveButton = QPushButton('Start save')
+
+    def saveVideo():
+      if frameSlider.firstSaveFrame is None:
+        frameSlider.firstSaveFrame = frameSlider.value()
+        timer.stop()
+        saveButton.setText('End save')
+        return
+
+      app = QApplication.instance()
+      filename, _ = QFileDialog.getSaveFileName(app.window, 'Select file', os.path.expanduser('~'), "AVI (*.avi)")
+      if filename:
+        lastSaveFrame = frameSlider.value()
+        if lastSaveFrame < frameSlider.firstSaveFrame:
+          frameSlider.firstSaveFrame, lastSaveFrame = lastSaveFrame, frameSlider.firstSaveFrame
+        progressDialog = QProgressDialog("Saving video...", "Cancel", frameSlider.firstSaveFrame, lastSaveFrame, app.window, Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
+        progressDialog.setWindowTitle('Saving Video')
+        progressDialog.setAutoClose(False)
+        progressDialog.setAutoReset(False)
+        progressDialog.setWindowModality(Qt.WindowModality.ApplicationModal)
+        frame, videoFPS = getFrame(frameSlider, trackingPointsGroup=btnGroup, frameIdx=frameSlider.firstSaveFrame, returnFPS=True)
+        height, width = frame.shape[:2]
+        cap = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'MJPG'), videoFPS, (width, height))
+        for frameIdx in range(frameSlider.firstSaveFrame, lastSaveFrame + 1):
+          progressDialog.setValue(frameIdx)
+          progressDialog.setLabelText(f'Saving frame {frameIdx}...')
+          cap.write(getFrame(frameSlider, trackingPointsGroup=btnGroup, frameIdx=frameIdx))
+          if progressDialog.wasCanceled():
+            break
+        progressDialog.setLabelText('Saving video...')
+        cap.release()
+        progressDialog.close()
+      saveButton.setText('Start save')
+      frameSlider.firstSaveFrame = None
+
+    saveButton.clicked.connect(saveVideo)
+    trackingPointsLayout.addWidget(saveButton)
     trackingPointsLayout.addStretch(1)
     layout.addLayout(trackingPointsLayout)
 
