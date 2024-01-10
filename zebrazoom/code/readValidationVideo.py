@@ -215,7 +215,7 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
   xOriginal = x
   yOriginal = y
 
-  def getFrame(frameSlider, timer=None, trackingPointsGroup=None, stopTimer=True, returnHeadPos=False, frameIdx=None, returnFPS=False):
+  def getFrame(frameSlider, timer=None, trackingPointsGroup=None, stopTimer=True, returnHeadPos=False, returnOffsets=False, frameIdx=None, returnFPS=False):
     nonlocal x
     nonlocal y
     nonlocal lengthX
@@ -251,7 +251,9 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
       x = max(xmin + xOriginal, 0)
       y = max(ymin + yOriginal, 0)
       if returnHeadPos:
-        return HeadX[l] - x, HeadY[l] - y
+        return HeadX[l] - x + xOriginal, HeadY[l] - y + yOriginal
+      if returnOffsets:
+        return x - xOriginal, y - yOriginal
       lengthX = xmax - xmin
       lengthY = ymax - ymin
 
@@ -302,6 +304,9 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
   layout = QVBoxLayout()
 
   video = QLabel()
+  if zoom:
+    video.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    video.minimumSizeHint = lambda: QSize(250, 250)
   sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
   sizePolicy.setRetainSizeWhenHidden(True)
   video.setSizePolicy(sizePolicy)
@@ -349,7 +354,7 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
       point = util.getPointOnFrame(getFrame(frameSlider, timer, btnGroup, stopTimer), video, exitSignals=exitSignals)
       if point is None:
         return
-      tailExtremityLabel.setValue(point, lambda point: ', '.join(map(str, point)))
+      tailExtremityLabel.setValue(tuple(map(sum, zip(point, getFrame(frameSlider, returnOffsets=True)))), lambda point: ', '.join(map(str, point)))
       saveChanges()
       clearButton.setEnabled(True)
 

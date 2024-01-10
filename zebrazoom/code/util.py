@@ -431,7 +431,7 @@ def setPixmapFromCv(img, label, preferredSize=None, zoomable=False):
     label.setPixmap(originalPixmap)
     label.show()
   if preferredSize is None:
-    preferredSize = label.pixmap().size()
+    preferredSize = originalPixmap.size()
   size = preferredSize.scaled(label.size(), Qt.AspectRatioMode.KeepAspectRatio)
   if not zoomable:
     img = cv2.resize(img, (int(size.width() * scaling), int(size.height() * scaling)))
@@ -520,10 +520,16 @@ class _TemporaryZoomableImagePoint(_ZoomableImage):
 def getPointOnFrame(frame, label, basePoint=None, exitSignals=()):
   label.hide()
   image = _TemporaryZoomableImagePoint(basePoint=basePoint)
+  labelSize = label.size()
   pixmap = _cvToPixmap(frame)
-  size = pixmap.size().scaled(label.size(), Qt.AspectRatioMode.KeepAspectRatio)
-  image.sizeHint = lambda: size
-  image.setMaximumSize(size)
+  size = pixmap.size().scaled(labelSize, Qt.AspectRatioMode.KeepAspectRatio)
+  widthDiff = labelSize.width() - size.width()
+  heightDiff = labelSize.height() - size.height()
+  horizontalMargin = widthDiff // 2
+  verticalMargin = heightDiff // 2
+  image.setViewportMargins(horizontalMargin + widthDiff % 2, verticalMargin + heightDiff % 2, horizontalMargin, verticalMargin)
+  image.sizeHint = lambda: labelSize
+  image.setMaximumSize(labelSize)
   image.viewport().setFixedSize(size)
   image.setPixmap(pixmap)
   label.parentWidget().layout().replaceWidget(label, image)
