@@ -4,11 +4,14 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import pandas as pd
 import numpy as np
+import random
 import math
 
 ### Parameters to change
 
 usingHdf5format = True
+suggestNRandomBoutsForHdf5 = True
+numberOfSamplesToGenerate = 5
 videoFPS = 160
 
 if usingHdf5format:
@@ -170,4 +173,22 @@ for numAnimal in [0, 1]:
     plt.plot(xf, 2.0/N * np.abs(yf0[0:N//2]))
     plt.grid()
     plt.show()
-
+  
+  listOfAcceptableBouts = []
+  if usingHdf5format and suggestNRandomBoutsForHdf5:
+    nbBouts   = 0
+    nbBoutsOk = 0
+    for timing in boutTimings:
+      nbBouts += 1
+      if len(np.where(FrameNumber0 == timing[0])[0]) and len(np.where(FrameNumber0 == timing[1]-1)[0]):
+        idx1 = np.where(FrameNumber0 == timing[0])[0][0]
+        idx2 = np.where(FrameNumber0 == timing[1]-1)[0][0]
+        if (timing[1] - 1 - timing[0]) == (idx2 - idx1):
+          nbBoutsOk += 1
+          listOfAcceptableBouts.append(timing)
+    print("Total number of bouts:", nbBouts, "; Number of bouts with no removed frames:", nbBoutsOk)
+    print("Length of listOfAcceptableBouts:", len(listOfAcceptableBouts))
+    chosenIndexes = random.sample(range(len(listOfAcceptableBouts) + 1), numberOfSamplesToGenerate)
+    for index in chosenIndexes:
+      print(listOfAcceptableBouts[index])
+    
