@@ -176,6 +176,10 @@ for numAnimal in [0, 1]:
     plt.show()
   
   listOfAcceptableBouts = []
+  listOfBoutsLenght = []
+  listOfAcceptableBouts_below_80 = []
+  listOfAcceptableBouts_80_to_120 = []
+  listOfAcceptableBouts_above_120 = []
   if usingHdf5format and suggestNRandomBoutsForHdf5:
     nbBouts   = 0
     nbBoutsOk = 0
@@ -187,9 +191,18 @@ for numAnimal in [0, 1]:
         if (timing[1] - timing[0]) == (idx2 - idx1):
           nbBoutsOk += 1
           listOfAcceptableBouts.append(timing)
+          listOfBoutsLenght.append(timing[1] - timing[0])
+          if timing[1] - timing[0] < 80:
+            listOfAcceptableBouts_below_80.append(timing)
+          elif (timing[1] - timing[0] >= 80) and (timing[1] - timing[0] <= 120):
+            listOfAcceptableBouts_80_to_120.append(timing)
+          else:
+            listOfAcceptableBouts_above_120.append(timing)
     print("Total number of bouts:", nbBouts, "; Number of bouts with no removed frames:", nbBoutsOk)
     print("Length of listOfAcceptableBouts:", len(listOfAcceptableBouts))
-    chosenIndexes = random.sample(range(len(listOfAcceptableBouts) + 1), numberOfSamplesToGenerate)
+    chosenIndexes = random.sample(range(len(listOfAcceptableBouts_80_to_120) + 1), numberOfSamplesToGenerate)
     for index in chosenIndexes:
-      print(listOfAcceptableBouts[index])
+      print(listOfAcceptableBouts_80_to_120[index])
+    plt.hist(listOfBoutsLenght, bins=50)
+    plt.show()
     
