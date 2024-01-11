@@ -9,8 +9,8 @@ import json
 import numpy as np
 
 from PyQt5.QtCore import Qt, QSize, QTimer
-from PyQt5.QtGui import QColor, QPainter
-from PyQt5.QtWidgets import QApplication, QButtonGroup, QCheckBox, QFileDialog, QHBoxLayout, QMessageBox, QLabel, QProgressDialog, QPushButton, QRadioButton, QSlider, QSpinBox, QStyleOptionSlider, QVBoxLayout
+from PyQt5.QtGui import QColor, QFont, QFontMetrics, QPainter
+from PyQt5.QtWidgets import QApplication, QButtonGroup, QCheckBox, QFileDialog, QGridLayout, QHBoxLayout, QMessageBox, QLabel, QProgressDialog, QPushButton, QRadioButton, QSizePolicy, QSlider, QSpinBox, QStyleOptionSlider, QVBoxLayout
 
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
@@ -215,7 +215,7 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
   xOriginal = x
   yOriginal = y
 
-  def getFrame(frameSlider, timer=None, trackingPointsGroup=None, stopTimer=True, frameIdx=None, returnFPS=False):
+  def getFrame(frameSlider, timer=None, trackingPointsGroup=None, stopTimer=True, returnHeadPos=False, returnOffsets=False, frameIdx=None, returnFPS=False):
     nonlocal x
     nonlocal y
     nonlocal lengthX
@@ -250,6 +250,10 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
 
       x = max(xmin + xOriginal, 0)
       y = max(ymin + yOriginal, 0)
+      if returnHeadPos:
+        return HeadX[l] - x + xOriginal, HeadY[l] - y + yOriginal
+      if returnOffsets:
+        return x - xOriginal, y - yOriginal
       lengthX = xmax - xmin
       lengthY = ymax - ymin
 
@@ -278,6 +282,20 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
   return getFrame, frameRange, start if start > 0 else 0, boutMap is not None, supstruct['wellPositions'], wellShape, hyperparameters
 
 
+class _ElidedLabel(QLabel):
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self._value = None
+    self._fm = QFontMetrics(QFont())
+
+  def setValue(self, value, formatCb):
+    self._value = value
+    self.setText('' if value is None else self._fm.elidedText(formatCb(value), Qt.TextElideMode.ElideRight, self.size().width()))
+
+  def getValue(self):
+    return self._value
+
+
 def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, framesToShow=0, ZZoutputLocation='', supstruct=None, config=None):
   frameInfo = getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, framesToShow=framesToShow, ZZoutputLocation=ZZoutputLocation, supstruct=supstruct, config=config)
   if frameInfo is None:
@@ -286,7 +304,122 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
   layout = QVBoxLayout()
 
   video = QLabel()
-  layout.addWidget(video, stretch=1)
+  if zoom:
+    video.setAlignment(Qt.AlignmentFlag.AlignCenter)
+    video.minimumSizeHint = lambda: QSize(250, 250)
+  sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
+  sizePolicy.setRetainSizeWhenHidden(True)
+  video.setSizePolicy(sizePolicy)
+  if zoom and folderName.endswith('.h5'):
+    videoLayout = QHBoxLayout()
+    videoLayout.addWidget(video, stretch=1)
+    layout.addLayout(videoLayout, stretch=1)
+    validationLayout = QGridLayout()
+    validationLayout.setColumnStretch(3, 1)
+    validationLayout.setRowStretch(5, 1)
+    validationLayout.addWidget(QLabel('Frame:'), 0, 0)
+    frameSpinbox = QSpinBox()
+    frameSpinbox.setRange(*frameRange)
+    frameSpinbox.setStyleSheet(util.SPINBOX_STYLESHEET)
+    frameSpinbox.setMinimumWidth(70)
+    frameSpinbox.valueChanged.connect(lambda value: timer.stop() or frameSlider.setValue(value))
+    validationLayout.addWidget(frameSpinbox, 0, 1, 1, 2)
+    bendCheckbox = QCheckBox('Bend')
+    bendCheckbox.toggled.connect(lambda checked: saveChanges() or clearButton.setEnabled(True))
+    validationLayout.addWidget(bendCheckbox, 1, 0, 1, 2)
+    headingButton = QPushButton('Heading:')
+
+    def updateHeading():
+      from zebrazoom.code.extractParameters import calculateAngle
+      exitSignals = [frameSlider.valueChanged, manualValidationWidget.expanded, headingButton.clicked, tailExtremityButton.clicked]
+      if toggleTrackingPoints:
+        exitSignals.extend([btnGroup.idToggled, sizeSpinbox.valueChanged, contrastCheckbox.toggled])
+      points = util.getPointOnFrame(getFrame(frameSlider, timer, btnGroup, stopTimer), video, basePoint=getFrame(frameSlider, returnHeadPos=True), exitSignals=exitSignals)
+      if points is None:
+        return
+      headingLabel.setValue(calculateAngle(*points), str)
+      saveChanges()
+      clearButton.setEnabled(True)
+
+    headingButton.clicked.connect(lambda: QTimer.singleShot(0, updateHeading))
+    validationLayout.addWidget(headingButton, 2, 0)
+    headingLabel = _ElidedLabel()
+    validationLayout.addWidget(headingLabel, 2, 1, 1, 2)
+    tailExtremityButton = QPushButton('Tail extremity:')
+
+    def updateTailExtremity():
+      exitSignals = [frameSlider.valueChanged, manualValidationWidget.expanded, headingButton.clicked, tailExtremityButton.clicked]
+      if toggleTrackingPoints:
+        exitSignals.extend([btnGroup.idToggled, sizeSpinbox.valueChanged, contrastCheckbox.toggled])
+      point = util.getPointOnFrame(getFrame(frameSlider, timer, btnGroup, stopTimer), video, exitSignals=exitSignals)
+      if point is None:
+        return
+      tailExtremityLabel.setValue(tuple(map(sum, zip(point, getFrame(frameSlider, returnOffsets=True)))), lambda point: ', '.join(map(str, point)))
+      saveChanges()
+      clearButton.setEnabled(True)
+
+    tailExtremityButton.clicked.connect(lambda: QTimer.singleShot(0, updateTailExtremity))
+    validationLayout.addWidget(tailExtremityButton, 3, 0)
+    tailExtremityLabel = _ElidedLabel()
+    validationLayout.addWidget(tailExtremityLabel, 3, 1, 1, 2)
+    clearButton = QPushButton('Clear values')
+    clearButton.setEnabled(False)
+    clearButton.clicked.connect(lambda: updateWidgets(False, np.nan, (-1, -1)) or saveChanges() or clearButton.setEnabled(False))
+    validationLayout.addWidget(clearButton, 4, 0, 1, 3, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    def saveChanges():
+      import h5py
+      filePath = os.path.join(ZZoutputLocation if ZZoutputLocation else paths.getDefaultZZoutputFolder(), folderName)
+      with h5py.File(filePath, 'r+') as results:
+        firstFrame = results.attrs['firstFrame']
+        arraySize = results.attrs['lastFrame'] - firstFrame + 1
+        perFrameGroup = results[f'dataForWell{numWell}'][f'dataForAnimal{numAnimal}']['dataPerFrame']
+        if 'manualBend' not in perFrameGroup:
+          perFrameGroup.create_dataset('manualBend', data=np.full(arraySize, False, dtype=bool))
+        if 'manualHeading' not in perFrameGroup:
+          perFrameGroup.create_dataset('manualHeading', data=np.full(arraySize, np.nan))
+        if 'manualTailExtremity' not in perFrameGroup:
+          perFrameGroup.create_dataset('manualTailExtremity', data=np.full(arraySize, -1, dtype=[('X', int), ('Y', int)]))  # float array is required in order to support nan
+          perFrameGroup['manualTailExtremity'].attrs['columns'] = ('X', 'Y')
+        idx = frameSlider.value() - firstFrame
+        bend = bendCheckbox.isChecked()
+        perFrameGroup['manualBend'][idx] = bend if bend != -1 else np.nan
+        heading = headingLabel.getValue()
+        perFrameGroup['manualHeading'][idx] = heading if heading is not None else np.nan
+        tailExtremity = tailExtremityLabel.getValue()
+        perFrameGroup['manualTailExtremity'][idx] = tailExtremity if tailExtremity is not None else (-1, -1)
+
+    manualValidationWidget = util.Expander(None, 'Manual validation', validationLayout, retainWidth=True)
+
+    def updateWidgets(bend, heading, tailExtremity):
+      blocked = bendCheckbox.blockSignals(True)
+      bendCheckbox.setChecked(bend)
+      bendCheckbox.blockSignals(blocked)
+      headingLabel.setValue(heading if not np.isnan(heading) else None, str)
+      tailExtremityLabel.setValue(tailExtremity if tailExtremity != (-1, -1) else None, lambda tailExtremity: ', '.join(map(str, tailExtremity)))
+
+    def manualValidationExpanded(expanded):
+      timer.stop()
+      if not expanded:
+        return
+      import h5py
+      filePath = os.path.join(ZZoutputLocation if ZZoutputLocation else paths.getDefaultZZoutputFolder(), folderName)
+      with h5py.File(filePath, 'r+') as results:
+        idx = frameSlider.value() - results.attrs['firstFrame']
+        perFrameGroup = results[f'dataForWell{numWell}'][f'dataForAnimal{numAnimal}']['dataPerFrame']
+        bend = perFrameGroup['manualBend'][idx] if 'manualBend' in perFrameGroup else False
+        heading = perFrameGroup['manualHeading'][idx] if 'manualHeading' in perFrameGroup else np.nan
+        tailExtremity = tuple(perFrameGroup['manualTailExtremity'][idx]) if 'manualTailExtremity' in perFrameGroup else (-1, -1)
+      blocked = frameSpinbox.blockSignals(True)
+      frameSpinbox.setValue(frameSlider.value())
+      frameSpinbox.blockSignals(blocked)
+      updateWidgets(bend, heading, tailExtremity)
+      clearButton.setEnabled(bool(tailExtremityLabel.text() or headingLabel.text() or bendCheckbox.isChecked()))
+
+    manualValidationWidget.expanded.connect(manualValidationExpanded)
+    videoLayout.addWidget(manualValidationWidget, alignment=Qt.AlignmentFlag.AlignTop)
+  else:
+    layout.addWidget(video, stretch=1)
 
   frameSlider = FrameSlider(Qt.Orientation.Horizontal)
   frameSlider.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
@@ -294,6 +427,14 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
   frameSlider.setRange(*frameRange)
   frameSlider.setValue(frame)
   frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer), video))
+
+  if zoom and folderName.endswith('.h5'):
+    def updateManualValidationWidgets(value):
+      if not manualValidationWidget.isExpanded():
+        return
+      manualValidationExpanded(True)
+    frameSlider.valueChanged.connect(updateManualValidationWidgets)
+
   layout.addWidget(frameSlider)
   shortcutsLabel = QLabel("Left Arrow, Right Arrow, Page Up, Page Down, Home and End keys can be used to navigate through the video.")
   shortcutsLabel.setWordWrap(True)

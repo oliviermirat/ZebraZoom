@@ -185,7 +185,8 @@ def showDialog(layout, title=None, buttons=(), labelInfo=None, timeout=None, exi
   loop = QEventLoop()
   mainLayout = QVBoxLayout()
   mainLayout.addLayout(layout)
-  mainLayout.addLayout(_getButtonsLayout(buttons, loop, dialog=dialog))
+  if buttons:
+    mainLayout.addLayout(_getButtonsLayout(buttons, loop, dialog=dialog))
   app = QApplication.instance()
   if hasattr(app, 'registerWindow'):
     app.registerWindow(dialog)
@@ -430,8 +431,12 @@ def setPixmapFromCv(img, label, preferredSize=None, zoomable=False):
     label.setPixmap(originalPixmap)
     label.show()
   if preferredSize is None:
-    preferredSize = label.pixmap().size()
-  size = preferredSize.scaled(label.size(), Qt.AspectRatioMode.KeepAspectRatio)
+    preferredSize = originalPixmap.size()
+  labelSize = label.size()
+  if preferredSize.height() > labelSize.height() or preferredSize.width() > labelSize.width():
+    size = preferredSize.scaled(labelSize, Qt.AspectRatioMode.KeepAspectRatio)
+  else:
+    size = preferredSize
   if not zoomable:
     img = cv2.resize(img, (int(size.width() * scaling), int(size.height() * scaling)))
     pixmap = _cvToPixmap(img)
@@ -462,6 +467,89 @@ def setPixmapFromCv(img, label, preferredSize=None, zoomable=False):
         delta = image._borderPoint - image._center
         return image._center, int(math.sqrt(delta.x() * delta.x() + delta.y() * delta.y()))
       label.getInfo = calculateRadius
+
+
+class _TemporaryZoomableImagePoint(_ZoomableImage):
+  pointSelected = pyqtSignal(QPoint)
+  abort = pyqtSignal()
+
+  def __init__(self, parent=None, basePoint=None):
+    super().__init__(parent)
+    self._point = None
+    self._basePoint = None if basePoint is None else QPoint(*basePoint)
+    self._currentPosition = None
+    self.setMouseTracking(True)
+
+  def keyPressEvent(self, evt):
+    if evt.key() == Qt.Key.Key_Escape:
+      self.abort.emit()
+      return
+    super().keyPressEvent(evt)
+
+  def mouseMoveEvent(self, evt):
+    self._currentPosition = self.mapToScene(evt.pos()).toPoint()
+    self.viewport().update()
+    super().mouseMoveEvent(evt)
+
+  def mouseReleaseEvent(self, evt):
+    if not self._dragging:
+      if self._pixmap.isUnderMouse():
+        self._point = self.mapToScene(evt.pos()).toPoint()
+        self.viewport().update()
+        self.pointSelected.emit(self._point)
+    else:
+      self._dragging = False
+      QApplication.restoreOverrideCursor()
+    super().mouseReleaseEvent(evt)
+
+  def leaveEvent(self, evt):
+    QApplication.restoreOverrideCursor()
+    self._currentPosition = None
+    self.viewport().update()
+    super().leaveEvent(evt)
+
+  def paintEvent(self, evt):
+    super().paintEvent(evt)
+    if self._basePoint is None or self._currentPosition is None:
+      return
+    qp = QPainter(self.viewport())
+    qp.setPen(QColor(255, 0, 0))
+    qp.drawLine(self.mapFromScene(self._basePoint), self.mapFromScene(QPointF(self._currentPosition)))
+    qp.end()
+
+  def getCoordinates(self):
+    return None if self._point is None else (self._point.x(), self._point.y()) if self._basePoint is None else ((self._basePoint.x(), self._basePoint.y()), (self._point.x(), self._point.y()))
+
+
+def getPointOnFrame(frame, label, basePoint=None, exitSignals=()):
+  label.hide()
+  image = _TemporaryZoomableImagePoint(basePoint=basePoint)
+  labelSize = label.size()
+  pixmap = _cvToPixmap(frame)
+  size = pixmap.size()
+  if size.height() > labelSize.height() or size.width() > labelSize.width():
+    size = size.scaled(labelSize, Qt.AspectRatioMode.KeepAspectRatio)
+  widthDiff = labelSize.width() - size.width()
+  heightDiff = labelSize.height() - size.height()
+  horizontalMargin = widthDiff // 2
+  verticalMargin = heightDiff // 2
+  image.setViewportMargins(horizontalMargin + widthDiff % 2, verticalMargin + heightDiff % 2, horizontalMargin, verticalMargin)
+  image.sizeHint = lambda: labelSize
+  image.setMaximumSize(labelSize)
+  image.viewport().setFixedSize(size)
+  image.setPixmap(pixmap)
+  label.parentWidget().layout().replaceWidget(label, image)
+  image.setFocus()
+  loop = QEventLoop()
+  for signal in exitSignals:
+    signal.connect(lambda *args: loop.exit())
+  image.pointSelected.connect(lambda point: loop.exit())
+  image.abort.connect(loop.exit)
+  loop.exec()
+  image.hide()
+  image.parentWidget().layout().replaceWidget(image, label)
+  label.show()
+  return image.getCoordinates()
 
 
 class _DoubleSlider(QSlider):
@@ -1142,9 +1230,12 @@ def addToHistory(fn):
 
 
 class Expander(QWidget):
-  def __init__(self, parent, title, layout, animationDuration=200, showFrame=False, addScrollbars=False):
+  expanded = pyqtSignal(bool)
+
+  def __init__(self, parent, title, layout, animationDuration=200, showFrame=False, addScrollbars=False, retainWidth=False):
     super().__init__()
 
+    self._retainWidth = retainWidth
     self._toggleButton = toggleButton = QToolButton()
     toggleButton.setStyleSheet("QToolButton { border: none; }")
     toggleButton.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
@@ -1191,6 +1282,7 @@ class Expander(QWidget):
     contentAnimation.setEndValue(contentHeight)
 
     def startAnimation(checked):
+      self.expanded.emit(checked)
       arrowType = Qt.ArrowType.DownArrow if checked else Qt.ArrowType.RightArrow
       direction = QAbstractAnimation.Direction.Forward if checked else QAbstractAnimation.Direction.Backward
       toggleButton.setArrowType(arrowType)
@@ -1217,6 +1309,16 @@ class Expander(QWidget):
     for i in range(self._toggleAnimation.animationCount() - 1):
       self._toggleAnimation.animationAt(i).setEndValue(self._collapseHeight + contentHeight)
     self._toggleAnimation.animationAt(self._toggleAnimation.animationCount() - 1).setEndValue(contentHeight)
+
+  def sizeHint(self):
+    hint = super().sizeHint()
+    if not self._retainWidth or self._contentArea.layout() is None:
+      return hint
+    contentHint = self._contentArea.layout().sizeHint()
+    return QSize(max(hint.width(), contentHint.width()), hint.height())
+
+  def isExpanded(self):
+    return self._toggleButton.isChecked()
 
 
 class _InteractiveLabelCircle(QLabel):
