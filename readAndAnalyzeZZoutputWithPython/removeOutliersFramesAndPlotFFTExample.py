@@ -53,7 +53,8 @@ for numAnimal in [0, 1]:
     TailAngle0  = dataAPI.getDataPerTimeInterval(videoName, numWell, numAnimal, startTimeInSeconds, endTimeInSeconds, "TailAngle")
     TailAngle0 = TailAngle0 * (180 / math.pi)
     TailLength0 = dataAPI.getDataPerTimeInterval(videoName, numWell, numAnimal, startTimeInSeconds, endTimeInSeconds, "TailLength")
-    boutTimings = dataAPI.listAllBouts(videoName, numWell, numAnimal)
+    firstFrame, _lastFrame = dataAPI.getFirstAndLastFrame(videoName)
+    boutTimings = [(start - firstFrame, end - firstFrame) for start, end in dataAPI.listAllBouts(videoName, numWell, numAnimal)]
   else:
     pandasData = pd.read_csv(excelData[numAnimal])
     TailAngle0  = pandasData["tailAngle"].to_numpy()
@@ -63,7 +64,7 @@ for numAnimal in [0, 1]:
   totalLength0 = 0
   if usingHdf5format:
     for timing in boutTimings:
-      totalLength0 += timing[1] - timing[0]
+      totalLength0 += timing[1] - timing[0] + 1
     print("percentage of time spent swimming:", totalLength0 / (10 * 60 * videoFPS))
   if keepOnlyBouts:
     if usingHdf5format:
@@ -71,9 +72,9 @@ for numAnimal in [0, 1]:
       TailLength0b  = np.array([])
       FrameNumber0b = np.array([])
       for timing in boutTimings:
-        TailAngle0b   = np.append(TailAngle0b,  TailAngle0[timing[0]:timing[1]])
-        TailLength0b  = np.append(TailLength0b, TailLength0[timing[0]:timing[1]])
-        FrameNumber0b = np.append(FrameNumber0b, FrameNumber0[timing[0]:timing[1]])
+        TailAngle0b   = np.append(TailAngle0b,  TailAngle0[timing[0]:timing[1]+1])
+        TailLength0b  = np.append(TailLength0b, TailLength0[timing[0]:timing[1]+1])
+        FrameNumber0b = np.append(FrameNumber0b, FrameNumber0[timing[0]:timing[1]+1])
       TailAngle0   = TailAngle0b
       TailLength0  = TailLength0b
       FrameNumber0 = FrameNumber0b
@@ -180,10 +181,10 @@ for numAnimal in [0, 1]:
     nbBoutsOk = 0
     for timing in boutTimings:
       nbBouts += 1
-      if len(np.where(FrameNumber0 == timing[0])[0]) and len(np.where(FrameNumber0 == timing[1]-1)[0]):
+      if len(np.where(FrameNumber0 == timing[0])[0]) and len(np.where(FrameNumber0 == timing[1])[0]):
         idx1 = np.where(FrameNumber0 == timing[0])[0][0]
-        idx2 = np.where(FrameNumber0 == timing[1]-1)[0][0]
-        if (timing[1] - 1 - timing[0]) == (idx2 - idx1):
+        idx2 = np.where(FrameNumber0 == timing[1])[0][0]
+        if (timing[1] - timing[0]) == (idx2 - idx1):
           nbBoutsOk += 1
           listOfAcceptableBouts.append(timing)
     print("Total number of bouts:", nbBouts, "; Number of bouts with no removed frames:", nbBoutsOk)
