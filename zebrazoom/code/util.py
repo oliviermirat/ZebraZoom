@@ -432,7 +432,11 @@ def setPixmapFromCv(img, label, preferredSize=None, zoomable=False):
     label.show()
   if preferredSize is None:
     preferredSize = originalPixmap.size()
-  size = preferredSize.scaled(label.size(), Qt.AspectRatioMode.KeepAspectRatio)
+  labelSize = label.size()
+  if preferredSize.height() > labelSize.height() or preferredSize.width() > labelSize.width():
+    size = preferredSize.scaled(labelSize, Qt.AspectRatioMode.KeepAspectRatio)
+  else:
+    size = preferredSize
   if not zoomable:
     img = cv2.resize(img, (int(size.width() * scaling), int(size.height() * scaling)))
     pixmap = _cvToPixmap(img)
@@ -522,7 +526,9 @@ def getPointOnFrame(frame, label, basePoint=None, exitSignals=()):
   image = _TemporaryZoomableImagePoint(basePoint=basePoint)
   labelSize = label.size()
   pixmap = _cvToPixmap(frame)
-  size = pixmap.size().scaled(labelSize, Qt.AspectRatioMode.KeepAspectRatio)
+  size = pixmap.size()
+  if size.height() > labelSize.height() or size.width() > labelSize.width():
+    size = size.scaled(labelSize, Qt.AspectRatioMode.KeepAspectRatio)
   widthDiff = labelSize.width() - size.width()
   heightDiff = labelSize.height() - size.height()
   horizontalMargin = widthDiff // 2
