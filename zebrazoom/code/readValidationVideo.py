@@ -10,7 +10,7 @@ import numpy as np
 
 from PyQt5.QtCore import Qt, QSize, QTimer
 from PyQt5.QtGui import QColor, QFont, QFontMetrics, QPainter
-from PyQt5.QtWidgets import QApplication, QButtonGroup, QCheckBox, QFileDialog, QGridLayout, QHBoxLayout, QMessageBox, QLabel, QPushButton, QRadioButton, QSizePolicy, QSlider, QSpinBox, QStyleOptionSlider, QVBoxLayout
+from PyQt5.QtWidgets import QApplication, QButtonGroup, QCheckBox, QFileDialog, QGridLayout, QHBoxLayout, QMessageBox, QLabel, QProgressDialog, QPushButton, QRadioButton, QSizePolicy, QSlider, QSpinBox, QStyleOptionSlider, QVBoxLayout
 
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
