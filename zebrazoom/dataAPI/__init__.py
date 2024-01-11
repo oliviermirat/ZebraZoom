@@ -15,3 +15,4 @@ from .setFPSandPixelSize import *
 from .getFPSandPixelSize import *
 from .applyMedianFilterOnCurvature import *
 from .getConfigurationFileUsed import *
+from .getNumberOfOscillationsAndTBFPerBout import *
