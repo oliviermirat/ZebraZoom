@@ -4,7 +4,7 @@ import sys
 
 def getRootDataFolder():
   if getattr(sys, 'frozen', False):
-    installationFolder = os.path.dirname(sys.executable)
+    installationFolder = sys._MEIPASS
     if os.path.exists(os.path.join(installationFolder, 'Uninstall.exe')):  # installed using the installer
       from PyQt5.QtCore import QStandardPaths
       return os.path.join(QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DocumentsLocation), 'ZebraZoom')
