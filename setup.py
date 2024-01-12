@@ -23,13 +23,13 @@ setup(
   install_requires=[
     "scikit-learn>=1.2.2",
     "h5py",
-    "numpy<=1.24.3",
+    "numpy",
     "matplotlib>=3.5.2",
     "scipy",
-    "pandas==1.5.3",
+    "pandas>=1.5.3",
     "openpyxl>=3.1.2",
     "filterpy",
-    "opencv-python-headless<4.5.1.48",
+    "opencv-python-headless",
     "xlrd>=2.0.1",
     "seaborn",
     "PyQt5>=5.15.0",
@@ -95,8 +95,10 @@ setup(
   include_package_data=True,
   classifiers=[
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.6',
-    'Programming Language :: Python :: 3.7',
-    'Programming Language :: Python :: 3.8'
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10'
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3.12',
   ],
 )

@@ -7,7 +7,9 @@ def _init():
   dirname = os.path.dirname(__file__)
   dirs = [os.path.join(dirname, name) for name in os.listdir(dirname) if os.path.isdir(os.path.join(dirname, name))]
   for loader, module, is_pkg in pkgutil.iter_modules(dirs):
-    loader.find_module(module).load_module(module)
+    spec = loader.find_spec(module)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
 
 
 _init()

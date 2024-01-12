@@ -40,7 +40,7 @@ def initialise():
     textedit.setReadOnly(True)
     layout.addWidget(textedit)
     timer = QTimer()
-    timer.setInterval(0.1)
+    timer.setInterval(1)
     timer.timeout.connect(lambda: _update(textedit, timer))
     timer.start()
     util.showDialog(layout, title="Tracking in Progress", exitSignals=(textedit.finished,))
