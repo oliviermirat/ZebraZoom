@@ -322,7 +322,7 @@ class StartPage(QWidget):
                 try:
                     os.rmdir('zebrazoom')
                 except OSError:
-                    continue  # directory is not empty; leave it
+                    pass  # directory is not empty; leave it
         request = QNetworkRequest(QUrl('https://github.com/oliviermirat/ZebraZoom/releases/latest'))
         request.setAttribute(QNetworkRequest.Attribute.RedirectPolicyAttribute, QNetworkRequest.RedirectPolicy.NoLessSafeRedirectPolicy)
         self._reply = self._networkManager.get(request)
