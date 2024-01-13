@@ -54,18 +54,22 @@ if __name__ == '__main__' and getattr(sys, 'frozen', False):  # running an insta
     zebrazoomExecutable = 'ZebraZoom.exe' if sys.platform.startswith('win') else 'ZebraZoomApp' if sys.platform == 'darwin' else "ZebraZoom"
     atexit.register(os.execl, zebrazoomExecutable, zebrazoomExecutable)
     installationFolder = os.path.dirname(os.path.dirname(sys.executable))
-    atexit.register(os.chdir, installationFolder)
+    legacyFormat = os.path.exists(os.path.join(installationFolder, zebrazoomExecutable))
+    atexit.register(os.chdir, installationFolder if legacyFormat else os.path.dirname(installationFolder))
 
     app = _Application(sys.argv)
     loop = QEventLoop()
     networkManager = QNetworkAccessManager()
-    assetName = 'ZebraZoom-%s.zip' % ('update-Windows' if sys.platform.startswith('win') else 'update-macOS' if sys.platform == 'darwin' else 'Linux',)
+    if legacyFormat:
+        assetName = f"ZebraZoom-{'update-Windows' if sys.platform.startswith('win') else 'update-macOS' if sys.platform == 'darwin' else 'Linux'}.zip"
+    else:
+        assetName = f"ZebraZoom-{'Windows' if sys.platform.startswith('win') else 'macOS' if sys.platform == 'darwin' else 'Linux'}.zip"
     window = _UpdaterWindow()
     window.show()
     rect = window.geometry()
     rect.moveCenter(window.screen().availableGeometry().center())
     window.setGeometry(rect)
-    downloadRequest = QNetworkRequest(QUrl('https://github.com/oliviermirat/ZebraZoom/releases/latest/download/%s' % assetName))
+    downloadRequest = QNetworkRequest(QUrl(f'https://github.com/oliviermirat/ZebraZoom/releases/latest/download/{assetName}'))
     downloadRequest.setAttribute(QNetworkRequest.Attribute.RedirectPolicyAttribute, QNetworkRequest.RedirectPolicy.NoLessSafeRedirectPolicy)
     download = networkManager.get(downloadRequest)
 
@@ -83,6 +87,8 @@ if __name__ == '__main__' and getattr(sys, 'frozen', False):  # running an insta
     try:
         with open(os.path.join(installationFolder, 'installedFiles.txt')) as f:
             installedFiles = f.read().splitlines()
+        if not legacyFormat:
+            installedFiles.append(os.path.join('..', zebrazoomExecutable))
     except EnvironmentError:
         QMessageBox.critical(window, "Error deleting old files", "Could not delete some of the old files. Installation might have been damaged, please reinstall ZebraZoom manually.")
         sys.exit(0)
@@ -118,8 +124,8 @@ if __name__ == '__main__' and getattr(sys, 'frozen', False):  # running an insta
             processedSize = 0
             window.updateState(processedSize, totalSize, 'Extracting new files...')
             for info in archive.infolist():
-                extractToFolder = installationFolder
-                if info.filename.startswith('updater/updater'):
+                extractToFolder = installationFolder if legacyFormat else os.path.dirname(installationFolder)
+                if 'updater/updater' in info.filename:
                     info.filename += '.new'
                 elif dataInDocuments and any(info.filename.startswith(folder) for folder in ('zebrazoom/configuration', 'zebrazoom/dataAnalysis', 'zebrazoom/ZZoutput')):
                     info.filename = info.filename.lstrip('zebrazoom/')

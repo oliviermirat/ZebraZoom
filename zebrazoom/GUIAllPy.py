@@ -114,7 +114,7 @@ class ZebraZoomApp(PlainApplication):
 
         self._windows = set()
         self.window = QMainWindow()
-        self.window.setWindowIcon(QIcon('icon.ico'))
+        self.window.setWindowIcon(QIcon(os.path.join(sys._MEIPASS if getattr(sys, 'frozen', False) else '', 'icon.ico')))
         self.window.closeEvent = self._windowClosed(self.window, self.window.closeEvent)
         layout = QStackedLayout()
         self.frames = {}

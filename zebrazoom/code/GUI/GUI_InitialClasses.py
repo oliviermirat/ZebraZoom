@@ -273,7 +273,7 @@ class StartPage(QWidget):
                 self._shownDetail = None
 
     def _launchUpdate(self):
-        installationFolder = os.path.dirname(sys.executable)
+        installationFolder = sys._MEIPASS
         if sys.platform.startswith('win'):
           atexit.register(subprocess.Popen, os.path.join(installationFolder, 'updater', 'updater.exe'), shell=True)
         else:
@@ -310,19 +310,10 @@ class StartPage(QWidget):
         self._updateBtn.hide()
         self._updateStatusLabel.setText("Checking for updates...")
         util.apply_style(self._updateStatusLabel, color='orange')
-        updaterExecutable = 'updater/updater.exe' if sys.platform.startswith('win') else 'updater/updater'
+        updaterExecutable = os.path.join(sys._MEIPASS, 'updater/updater.exe' if sys.platform.startswith('win') else 'updater/updater')
         updatedUpdater = updaterExecutable + '.new'
         if os.path.exists(updatedUpdater):  # first run after an update
             os.replace(updatedUpdater, updaterExecutable)
-            if version.parse(zebrazoom.__version__) > version.parse('1.34.8'):  # installation folder structure was changed after this release
-                import shutil
-                for subfolder in ('configuration', 'dataAnalysis', 'rolloverDetectionConfiguration', 'ZZoutput'):
-                    if os.path.exists(f'zebrazoom/{subfolder}'):
-                        shutil.move(f'zebrazoom/{subfolder}', f'ZebraZoom/zebrazoom/{subfolder}')
-                try:
-                    os.rmdir('zebrazoom')
-                except OSError:
-                    pass  # directory is not empty; leave it
         request = QNetworkRequest(QUrl('https://github.com/oliviermirat/ZebraZoom/releases/latest'))
         request.setAttribute(QNetworkRequest.Attribute.RedirectPolicyAttribute, QNetworkRequest.RedirectPolicy.NoLessSafeRedirectPolicy)
         self._reply = self._networkManager.get(request)
