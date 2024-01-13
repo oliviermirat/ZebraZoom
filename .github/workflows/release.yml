@@ -73,14 +73,14 @@ jobs:
           mkdir dist/ZebraZoom/ZebraZoom/zebrazoom/code/GUI/tracking
           cp -r ../zebrazoom/code/GUI/tracking/customTrackingImplementations dist/ZebraZoom/ZebraZoom/zebrazoom/code/GUI/tracking/customTrackingImplementations
           mkdir dist/ZebraZoom/updater
-          mv dist/updater.exe dist/ZebraZoom/updater
+          mv dist/updater.exe dist/ZebraZoom/ZebraZoom/updater
           cp ../icon.ico dist/ZebraZoom/ZebraZoom
       - name: Run the created executable
         run: |
           build/dist/ZebraZoom/ZebraZoom exit
       - name: Generate the list of installed files
         run: |
-          cd build/dist/ZebraZoom
+          cd build/dist/ZebraZoom/ZebraZoom
           python3 -c "exec('''\nimport os\n\ndef walk(path):\n    files = []\n    for entry in os.scandir(path):\n        if entry.is_dir(follow_symlinks=False):\n            yield from walk(entry.path)\n            yield entry.path\n        else:\n            files.append(entry.path)\n    yield from files\n\nwith open('installedFiles.txt', 'w') as f:\n    f.write('\\n'.join(map(os.path.relpath, walk('.'))))\n''')"
       - name: Create archive
         run: |
@@ -201,14 +201,14 @@ jobs:
           mkdir dist/ZebraZoomApp/ZebraZoom/zebrazoom/code/GUI/tracking
           cp -r ../zebrazoom/code/GUI/tracking/customTrackingImplementations dist/ZebraZoomApp/ZebraZoom/zebrazoom/code/GUI/tracking/customTrackingImplementations
           mkdir dist/ZebraZoomApp/updater
-          mv dist/updater dist/ZebraZoomApp/updater
+          mv dist/updater dist/ZebraZoomApp/ZebraZoom/updater
           cp ../icon.ico dist/ZebraZoomApp/ZebraZoom
       - name: Run the created executable
         run: |
           build/dist/ZebraZoomApp/ZebraZoomApp exit
       - name: Generate the list of installed files
         run: |
-          cd build/dist/ZebraZoomApp
+          cd build/dist/ZebraZoomApp/ZebraZoom
           python3 - <<-EOF
           import os
 
