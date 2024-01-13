@@ -72,7 +72,7 @@ jobs:
           cp -r ../zebrazoom/code/tracking/customTrackingImplementations dist/ZebraZoom/ZebraZoom/zebrazoom/code/tracking/customTrackingImplementations
           mkdir dist/ZebraZoom/ZebraZoom/zebrazoom/code/GUI/tracking
           cp -r ../zebrazoom/code/GUI/tracking/customTrackingImplementations dist/ZebraZoom/ZebraZoom/zebrazoom/code/GUI/tracking/customTrackingImplementations
-          mkdir dist/ZebraZoom/updater
+          mkdir dist/ZebraZoom/ZebraZoom/updater
           mv dist/updater.exe dist/ZebraZoom/ZebraZoom/updater
           cp ../icon.ico dist/ZebraZoom/ZebraZoom
       - name: Run the created executable
@@ -200,7 +200,7 @@ jobs:
           cp -r ../zebrazoom/code/tracking/customTrackingImplementations dist/ZebraZoomApp/ZebraZoom/zebrazoom/code/tracking/customTrackingImplementations
           mkdir dist/ZebraZoomApp/ZebraZoom/zebrazoom/code/GUI/tracking
           cp -r ../zebrazoom/code/GUI/tracking/customTrackingImplementations dist/ZebraZoomApp/ZebraZoom/zebrazoom/code/GUI/tracking/customTrackingImplementations
-          mkdir dist/ZebraZoomApp/updater
+          mkdir dist/ZebraZoomApp/ZebraZoom/updater
           mv dist/updater dist/ZebraZoomApp/ZebraZoom/updater
           cp ../icon.ico dist/ZebraZoomApp/ZebraZoom
       - name: Run the created executable
