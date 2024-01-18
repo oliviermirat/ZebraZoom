@@ -178,7 +178,7 @@ def showInProgressPage(text):
   return decorator
 
 
-def showDialog(layout, title=None, buttons=(), labelInfo=None, timeout=None, exitSignals=()):
+def showDialog(layout, title=None, buttons=(), labelInfo=None, timeout=None, exitSignals=(), focusWidgets=None):
   dialog = QWidget()
   for signal in exitSignals:
     signal.connect(lambda *args: dialog.close())
@@ -225,6 +225,11 @@ def showDialog(layout, title=None, buttons=(), labelInfo=None, timeout=None, exi
   dialog.closeEvent = _dialogClosed(loop, dialog.closeEvent)
   if timeout is not None:
     QTimer.singleShot(timeout, lambda: dialog.close())
+  if focusWidgets is not None:
+    for child in dialog.findChildren(QWidget):
+      if child in focusWidgets or any(child.isAncestorOf(widget) for widget in focusWidgets) or any(widget.isAncestorOf(child) for widget in focusWidgets):
+        continue
+      child.setFocusPolicy(Qt.FocusPolicy.NoFocus)
   loop.exec()
 
 def _cvToPixmap(img):

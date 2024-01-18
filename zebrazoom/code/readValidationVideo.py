@@ -522,6 +522,10 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
 
   startFrame = getFrame(frameSlider, timer, btnGroup, stopTimer)
   timer.start()
-  util.showDialog(layout, title="Video", labelInfo=(startFrame, video))
+  focusWidgets = {frameSlider}
+  if zoom and folderName.endswith('.h5'):
+    focusWidgets.add(frameSpinbox)
+  QTimer.singleShot(0, lambda: frameSlider.setFocus())
+  util.showDialog(layout, title="Video", labelInfo=(startFrame, video), focusWidgets=focusWidgets)
   timer.stop()
   del getFrame
