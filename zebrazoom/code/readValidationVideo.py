@@ -215,7 +215,7 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
   xOriginal = x
   yOriginal = y
 
-  def getFrame(frameSlider, timer=None, trackingPointsGroup=None, stopTimer=True, returnHeadPos=False, returnOffsets=False, frameIdx=None, returnFPS=False):
+  def getFrame(frameSlider, timer=None, trackingPointsGroup=None, stopTimer=True, returnHeadPos=False, returnOffsets=False, frameIdx=None, returnFPS=False, manualBendCheckbox=None):
     nonlocal x
     nonlocal y
     nonlocal lengthX
@@ -276,6 +276,9 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
       font = cv2.FONT_HERSHEY_SIMPLEX
       cv2.putText(img, str(frameNumber), (int(0), int(lengthY+25)), font, 1, (0,255,0))
 
+    if trackingPointsGroup is not None and not trackingPointsGroup.checkedId() and manualBendCheckbox is not None and manualBendCheckbox.isChecked():
+      cv2.circle(img, (20, 20), 20, (0, 0, 255), -1)
+
     return (img, int(cap.get(5) if not hyperparameters['outputValidationVideoFps'] > 0 else hyperparameters['outputValidationVideoFps'])) if returnFPS else img
 
   wellShape = None if config.get("noWellDetection", False) or (hyperparameters["headEmbeded"] and not hyperparameters["oneWellManuallyChosenTopLeft"]) else 'rectangle' if config.get("wellsAreRectangles", False) or len(config.get("oneWellManuallyChosenTopLeft", '')) or int(config.get("multipleROIsDefinedDuringExecution", 0)) or config.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
@@ -310,6 +313,7 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
   sizePolicy = QSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
   sizePolicy.setRetainSizeWhenHidden(True)
   video.setSizePolicy(sizePolicy)
+  bendCheckbox = None
   if zoom and folderName.endswith('.h5'):
     videoLayout = QHBoxLayout()
     videoLayout.addWidget(video, stretch=1)
@@ -325,7 +329,7 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     frameSpinbox.valueChanged.connect(lambda value: timer.stop() or frameSlider.setValue(value))
     validationLayout.addWidget(frameSpinbox, 0, 1, 1, 2)
     bendCheckbox = QCheckBox('Bend')
-    bendCheckbox.toggled.connect(lambda checked: saveChanges() or clearButton.setEnabled(True))
+    bendCheckbox.toggled.connect(lambda checked: saveChanges() or clearButton.setEnabled(True) or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer, manualBendCheckbox=bendCheckbox), video))
     validationLayout.addWidget(bendCheckbox, 1, 0, 1, 2)
     headingButton = QPushButton('Heading:')
 
@@ -364,7 +368,7 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     validationLayout.addWidget(tailExtremityLabel, 3, 1, 1, 2)
     clearButton = QPushButton('Clear values')
     clearButton.setEnabled(False)
-    clearButton.clicked.connect(lambda: updateWidgets(False, np.nan, (-1, -1)) or saveChanges() or clearButton.setEnabled(False))
+    clearButton.clicked.connect(lambda: updateWidgets(False, np.nan, (-1, -1)) or saveChanges() or clearButton.setEnabled(False) or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer, manualBendCheckbox=bendCheckbox), video))
     validationLayout.addWidget(clearButton, 4, 0, 1, 3, alignment=Qt.AlignmentFlag.AlignCenter)
 
     def saveChanges():
@@ -426,7 +430,6 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
   frameSlider.setPageStep(50)
   frameSlider.setRange(*frameRange)
   frameSlider.setValue(frame)
-  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer), video))
 
   if zoom and folderName.endswith('.h5'):
     def updateManualValidationWidgets(value):
@@ -434,6 +437,8 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
         return
       manualValidationExpanded(True)
     frameSlider.valueChanged.connect(updateManualValidationWidgets)
+
+  frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer, manualBendCheckbox=bendCheckbox), video))
 
   layout.addWidget(frameSlider)
   shortcutsLabel = QLabel("Left Arrow, Right Arrow, Page Up, Page Down, Home and End keys can be used to navigate through the video.")
@@ -456,18 +461,18 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     noPointsRadioButton = QRadioButton('None')
     trackingPointsLayout.addWidget(noPointsRadioButton)
     btnGroup.addButton(noPointsRadioButton, id=0)
-    btnGroup.idToggled.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer), video))
+    btnGroup.idToggled.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer, manualBendCheckbox=bendCheckbox), video))
     trackingPointsLayout.addWidget(QLabel('Size:'))
     sizeSpinbox = QSpinBox()
     sizeSpinbox.setMinimum(1)
     sizeSpinbox.setValue(hyperparameters["trackingPointSizeDisplay"])
     sizeSpinbox.valueChanged.connect(lambda value: hyperparameters.update({"trackingPointSizeDisplay": value}))
-    sizeSpinbox.valueChanged.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer), video))
+    sizeSpinbox.valueChanged.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer, manualBendCheckbox=bendCheckbox), video))
     trackingPointsLayout.addWidget(sizeSpinbox)
     contrastCheckbox = QCheckBox('Contrast')
     contrastCheckbox.setChecked(bool(hyperparameters['outputValidationVideoContrastImprovement']))
     contrastCheckbox.toggled.connect(lambda checked: hyperparameters.update({"outputValidationVideoContrastImprovement": int(checked)}))
-    contrastCheckbox.toggled.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer), video))
+    contrastCheckbox.toggled.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer, manualBendCheckbox=bendCheckbox), video))
     trackingPointsLayout.addWidget(contrastCheckbox)
     saveButton = QPushButton('Start save')
 
@@ -520,7 +525,7 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     stopTimer = True
   timer.timeout.connect(nextFrame)
 
-  startFrame = getFrame(frameSlider, timer, btnGroup, stopTimer)
+  startFrame = getFrame(frameSlider, timer, btnGroup, stopTimer, manualBendCheckbox=bendCheckbox)
   timer.start()
   focusWidgets = {frameSlider}
   if zoom and folderName.endswith('.h5'):
