@@ -9,8 +9,8 @@ def testingWellAnimalBout(numWell, numAnimal, numBout):
   kinematicParametersAuto = dataAPI.getKinematicParametersPerBout(videoName, numWell, numAnimal, numBout)
   kinematicParametersManual = dataAPI.getNbOscAndTBFPerBoutFromManualClassification(videoName, numWell, numAnimal, numBout)
 
-  print("Automatic: Number of oscillations:", kinematicParametersAuto['Number of Oscillations'], "; medianOfInstantaneousTBF:", kinematicParametersAuto['medianOfInstantaneousTBF'], "; Mean Instantenous TBF:", kinematicParametersAuto['Mean TBF (Hz)'], "; Mean TBF (quotient):", kinematicParametersAuto['meanTBF'])
   print("Manual: Number of oscillations:", kinematicParametersManual[0], "; TBF (quotient):", kinematicParametersManual[1], "; Mean instantaneous TBF:", kinematicParametersManual[2])
+  print("Automatic: Number of oscillations:", kinematicParametersAuto['Number of Oscillations'], "; Mean TBF (quotient):", kinematicParametersAuto['meanTBF'], "; Mean Instantenous TBF:", kinematicParametersAuto['Mean TBF (Hz)'], "; medianOfInstantaneousTBF:", kinematicParametersAuto['medianOfInstantaneousTBF'])
   
   print("Max absolute TBA (deg.):", kinematicParametersAuto['Max absolute TBA (deg.)'])
   print("Absolute Yaw (deg):", kinematicParametersAuto["Absolute Yaw (deg)"])
