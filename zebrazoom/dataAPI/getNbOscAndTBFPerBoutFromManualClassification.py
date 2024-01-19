@@ -27,7 +27,7 @@ def getNbOscAndTBFPerBoutFromManualClassification(videoName: str, numWell: int, 
       if dataGroup['manualBend'][i]:
         Bend_Timing.append(i)
     if not(0 in Bend_Timing):
-      Bend_Timing = [0] + Bend_Timing
+      Bend_Timing = [start] + Bend_Timing
     
     # Number of Oscillations calculation
     lastBendTiming = Bend_Timing[len(Bend_Timing) - 1]
