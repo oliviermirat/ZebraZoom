@@ -638,9 +638,9 @@ class SliderWithSpinbox(QWidget):
     self.minimum = spinbox.minimum
     self.maximum = spinbox.maximum
     self.setValue = lambda value: spinbox.setValue(value) or slider.setValue(value)
-    self.setMinimum = lambda min_: spinbox.setMinimum(min_) or slider.setMinimum(min_) or minLabel.setText(str(int(min_)))
-    self.setMaximum = lambda max_: spinbox.setMaximum(max_) or slider.setMaximum(max_) or maxLabel.setText(str(int(max_)))
-    self.setRange = lambda min_, max_: spinbox.setRange(min_, max_) or slider.setRange(min_, max_)
+    self.setMinimum = lambda min_: spinbox.setMinimum(int(min_)) or slider.setMinimum(int(min_)) or minLabel.setText(str(int(min_)))
+    self.setMaximum = lambda max_: spinbox.setMaximum(int(max_)) or slider.setMaximum(int(max_)) or maxLabel.setText(str(int(max_)))
+    self.setRange = lambda min_, max_: spinbox.setRange(int(min_), int(max_)) or slider.setRange(int(min_), int(max_))
     self.setSingleStep = lambda step: spinbox.setSingleStep(step) or slider.setSingleStep(step)
     self.isSliderDown = slider.isSliderDown
     self.sliderWidth = slider.width

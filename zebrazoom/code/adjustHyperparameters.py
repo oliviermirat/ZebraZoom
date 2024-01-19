@@ -134,9 +134,9 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
       if name == "frameGapComparision" and maxx == hyperparameters["lastFrame"] - hyperparameters["firstFrame"] - 1:
         continue
       if (hyperparameters[name] - minn) > (maxx - minn) * 0.9:
-        maxx = minn + (hyperparameters[name] - minn) * 1.1
+        maxx = int(minn + (hyperparameters[name] - minn) * 1.1)
       elif maxx - minn > 255 and hyperparameters[name] < minn + (maxx - minn) * 0.1:
-        maxx = minn + (maxx - minn) * 0.9
+        maxx = int(minn + (maxx - minn) * 0.9)
       else:
         continue
       if name == "frameGapComparision":
@@ -151,7 +151,7 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
         timer = QTimer()
         timers.append(timer)
         timer.setSingleShot(True)
-        newPosition = min(localCursorX / slider.sliderWidth(), 1) * maxx
+        newPosition = int(min(localCursorX / slider.sliderWidth(), 1) * maxx)
         timer.timeout.connect(lambda slider=slider: (slider.setPosition(newPosition) if newPosition > 0 else widgets['loop'].exit()) or timers.remove(timer))
         timer.start(30)
     if 'frameSlider' in widgets:
