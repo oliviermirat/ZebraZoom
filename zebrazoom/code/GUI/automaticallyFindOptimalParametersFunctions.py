@@ -292,7 +292,7 @@ def evaluateMinPixelDiffForBackExtractForCenterOfMassTracking(videoPath, backgro
   contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
   tailTipDistError = 1000000000000000
   for contour in contours:
-    dist = cv2.pointPolygonTest(contour, (image["headCoordinates"][0], image["headCoordinates"][1]), True)
+    dist = cv2.pointPolygonTest(contour, (float(image["headCoordinates"][0]), float(image["headCoordinates"][1])), True)
     if dist >= 0:
       for pt in contour:
         contourToPointOnBorderDistance = math.sqrt((pt[0][0] - tailTipGroundTruth[0])**2 + (pt[0][1] - tailTipGroundTruth[1])**2)
@@ -368,7 +368,7 @@ def findBestBackgroundSubstractionParameterForEachImage(data, videoPath, backgro
       contourClickedByUser = 0
       contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
       for contour in contours:
-        dist = cv2.pointPolygonTest(contour, (image["headCoordinates"][0], image["headCoordinates"][1]), True)
+        dist = cv2.pointPolygonTest(contour, (float(image["headCoordinates"][0]), float(image["headCoordinates"][1])), True)
         if dist >= 0:
           contourClickedByUser = contour
       if not(type(contourClickedByUser) == int): # We found the contour that the user selected
@@ -402,7 +402,7 @@ def findInitialBlobArea(data, videoPath, background, wellPositions, hyperparamet
       contourClickedByUser = 0
       contours, hierarchy = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
       for contour in contours:
-        dist = cv2.pointPolygonTest(contour, (image["headCoordinates"][0], image["headCoordinates"][1]), True)
+        dist = cv2.pointPolygonTest(contour, (float(image["headCoordinates"][0]), float(image["headCoordinates"][1])), True)
         if dist >= 0:
           contourClickedByUser = contour
       

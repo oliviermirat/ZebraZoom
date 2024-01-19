@@ -307,8 +307,8 @@ class EyeTrackingMixin(ComputeHeadingMixin, HeadTrackingHeadingCalculationMixin)
     threshEye2[:,len(threshEye2[0])-1] = 255
     contours, hierarchy = cv2.findContours(threshEye2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     for contour in contours:
-      dist1 = cv2.pointPolygonTest(contour, (eye1X, eye1Y), True)
-      dist2 = cv2.pointPolygonTest(contour, (eye2X, eye2Y), True)
+      dist1 = cv2.pointPolygonTest(contour, (float(eye1X), float(eye1Y)), True)
+      dist2 = cv2.pointPolygonTest(contour, (float(eye2X), float(eye2Y)), True)
       if dist1 >= 0:
         maxContour1b = contour
       if dist2 >= 0:

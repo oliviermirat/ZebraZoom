@@ -298,7 +298,7 @@ class TailTrackingExtremityDetectMixin(_FindTailExtremityMixin):
     n = len(tail2)
     allMidlinePointsInsideBlob = True
     for j in range(0, n):
-      dist = cv2.pointPolygonTest(bodyContour,(tail2[j][0],tail2[j][1]),False)
+      dist = cv2.pointPolygonTest(bodyContour,(float(tail2[j][0]),float(tail2[j][1])),False)
       if dist < 0:
         allMidlinePointsInsideBlob = False
 
@@ -387,7 +387,7 @@ class TailTrackingExtremityDetectMixin(_FindTailExtremityMixin):
       headPos    = np.array(headPosition)
       testBorder = headPos + factor * unitVector
       testBorder = testBorder.astype(int)
-      while (cv2.pointPolygonTest(bodyContour, (testBorder[0], testBorder[1]), True) > 0) and (factor < 100) and (testBorder[0] >= 0) and (testBorder[1] >= 0) and (testBorder[0] < len(dst[0])) and (testBorder[1] < len(dst)):
+      while (cv2.pointPolygonTest(bodyContour, (float(testBorder[0]), float(testBorder[1])), True) > 0) and (factor < 100) and (testBorder[0] >= 0) and (testBorder[1] >= 0) and (testBorder[0] < len(dst[0])) and (testBorder[1] < len(dst)):
         factor = factor + 1
         testBorder = headPos + factor * unitVector
 
@@ -441,7 +441,7 @@ class TailTrackingExtremityDetectMixin(_FindTailExtremityMixin):
       factor = 1
       testBorder = headPos + factor * unitVector
       testBorder = testBorder.astype(int)
-      while (cv2.pointPolygonTest(bodyContour, (testBorder[0], testBorder[1]), True) > 0) and (factor < 100) and (testBorder[0] >= 0) and (testBorder[1] >= 0) and (testBorder[0] < len(dst[0])) and (testBorder[1] < len(dst)):
+      while (cv2.pointPolygonTest(bodyContour, (float(testBorder[0]), float(testBorder[1])), True) > 0) and (factor < 100) and (testBorder[0] >= 0) and (testBorder[1] >= 0) and (testBorder[0] < len(dst[0])) and (testBorder[1] < len(dst)):
         factor = factor + 1
         testBorder = headPos + factor * unitVector
 
@@ -507,7 +507,7 @@ class TailTrackingExtremityDetectMixin(_FindTailExtremityMixin):
         bodyContour = 0
         contours, hierarchy = cv2.findContours(thresh1_b, cv2.RETR_TREE, contourPrecision)
         for contour in contours:
-          dist = cv2.pointPolygonTest(contour, (x, y), True)
+          dist = cv2.pointPolygonTest(contour, (float(x), float(y)), True)
           if dist >= 0:
             M = cv2.moments(contour)
             if M['m00']:
@@ -558,7 +558,7 @@ class TailTrackingExtremityDetectMixin(_FindTailExtremityMixin):
     for contour in contours:
       area = cv2.contourArea(contour)
       if (area >= self._hyperparameters["minAreaBody"]) and (area <= self._hyperparameters["maxAreaBody"]):
-        dist = cv2.pointPolygonTest(contour, (x, y), True)
+        dist = cv2.pointPolygonTest(contour, (float(x), float(y)), True)
         if dist >= 0 or self._hyperparameters["saveBodyMask"]:
           M = cv2.moments(contour)
           if M['m00']:

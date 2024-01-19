@@ -297,7 +297,7 @@ class HeadTrackingHeadingCalculationMixin:
       factor = factor + 1
       testCenter = PtClosest + factor * unitVector
       testCenter = testCenter.astype(int)
-      dist = cv2.pointPolygonTest(contour, (testCenter[0], testCenter[1]), True)
+      dist = cv2.pointPolygonTest(contour, (float(testCenter[0]), float(testCenter[1])), True)
       if dist > maxDist:
         maxDist = dist
         indMax  = factor
@@ -308,7 +308,7 @@ class HeadTrackingHeadingCalculationMixin:
     return testCenter
 
   def __reajustCenterOfMassIfNecessary(self, contour, x, y, lenX, lenY):
-    inside = cv2.pointPolygonTest(contour, (x, y), True)
+    inside = cv2.pointPolygonTest(contour, (float(x), float(y)), True)
     if inside < 0:
 
       minDist = 100000000000000
@@ -328,7 +328,7 @@ class HeadTrackingHeadingCalculationMixin:
         factor = 5
         testCenter = PtClosest + factor * unitVector
         testCenter = testCenter.astype(int)
-        while (cv2.pointPolygonTest(contour, (testCenter[0], testCenter[1]), True) <= 0) and (factor > 1):
+        while (cv2.pointPolygonTest(contour, (float(testCenter[0]), float(testCenter[1])), True) <= 0) and (factor > 1):
           factor = factor - 1
           testCenter = PtClosest + factor * unitVector
       else:
@@ -590,7 +590,7 @@ class HeadTrackingHeadingCalculationMixin:
           correspondingContour = 0
           contours, hierarchy = cv2.findContours(thresh2,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
           for contour in contours:
-            dist = cv2.pointPolygonTest(contour, (x_curFrame_animal_Id, y_curFrame_animal_Id), True)
+            dist = cv2.pointPolygonTest(contour, (float(x_curFrame_animal_Id), float(y_curFrame_animal_Id)), True)
             if dist >= 0:
               correspondingContour = contour
           thresh2bis = np.zeros((len(thresh2), len(thresh2[0])))

@@ -79,7 +79,7 @@ class ComputeHeadingMixin:
 
     contours, hierarchy = cv2.findContours(thresh1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
     for contour in contours:
-      dist = cv2.pointPolygonTest(contour, (x, y), True)
+      dist = cv2.pointPolygonTest(contour, (float(x), float(y)), True)
       if dist >= 0:
         M = cv2.moments(contour)
         if M['m00']:

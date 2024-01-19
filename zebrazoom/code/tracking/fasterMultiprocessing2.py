@@ -40,7 +40,7 @@ class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDet
     headPos    = np.array(headPosition)
     testBorder = headPos + factor * unitVector
     testBorder = testBorder.astype(int)
-    while (cv2.pointPolygonTest(bodyContour, (testBorder[0], testBorder[1]), True) > 0) and (factor < 100) and (testBorder[0] >= 0) and (testBorder[1] >= 0) and (testBorder[0] < len(curFrame[0])) and (testBorder[1] < len(curFrame)):
+    while (cv2.pointPolygonTest(bodyContour, (float(testBorder[0]), float(testBorder[1])), True) > 0) and (factor < 100) and (testBorder[0] >= 0) and (testBorder[1] >= 0) and (testBorder[0] < len(curFrame[0])) and (testBorder[1] < len(curFrame)):
       factor = factor + 1
       testBorder = headPos + factor * unitVector
 

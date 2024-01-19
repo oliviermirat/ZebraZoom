@@ -21,7 +21,7 @@ class TailTrackingDifficultBackgroundMixin:
       factor = factor + 1
       testCenter = PtClosest + factor * unitVector
       testCenter = testCenter.astype(int)
-      dist = cv2.pointPolygonTest(contour, (testCenter[0], testCenter[1]), True)
+      dist = cv2.pointPolygonTest(contour, (float(testCenter[0]), float(testCenter[1])), True)
       if dist > maxDist:
         maxDist = dist
         indMax  = factor
@@ -32,7 +32,7 @@ class TailTrackingDifficultBackgroundMixin:
     return testCenter
 
   def __reajustCenterOfMassIfNecessary(self, contour, x, y, lenX, lenY):
-    inside = cv2.pointPolygonTest(contour, (x, y), True)
+    inside = cv2.pointPolygonTest(contour, (float(x), float(y)), True)
     if inside < 0:
 
       minDist = 100000000000000
@@ -52,7 +52,7 @@ class TailTrackingDifficultBackgroundMixin:
         factor = 5
         testCenter = PtClosest + factor * unitVector
         testCenter = testCenter.astype(int)
-        while (cv2.pointPolygonTest(contour, (testCenter[0], testCenter[1]), True) <= 0) and (factor > 1):
+        while (cv2.pointPolygonTest(contour, (float(testCenter[0]), float(testCenter[1])), True) <= 0) and (factor > 1):
           factor = factor - 1
           testCenter = PtClosest + factor * unitVector
       else:
@@ -207,7 +207,7 @@ class TailTrackingDifficultBackgroundMixin:
             frame2 = self.__addWhiteBorders(frame2)
           contours, hierarchy = cv2.findContours(frame2, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
           for contour in contours:
-            if cv2.pointPolygonTest(contour, (previousCenterDetectedX, previousCenterDetectedY), False) >= 0:
+            if cv2.pointPolygonTest(contour, (float(previousCenterDetectedX), float(previousCenterDetectedY)), False) >= 0:
               animalBodyArea = cv2.contourArea(contour)
               ROIHalfDiam = int(math.sqrt(animalBodyArea) * 4)
           print("animalBodyArea:", animalBodyArea)

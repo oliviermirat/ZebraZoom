@@ -4,14 +4,6 @@ import sys
 import multiprocessing
 multiprocessing.freeze_support()  # documentation mistakenly states this is required only on Windows; it's also required on Mac and does nothing on Linux
 
-def _pointPolygonTest(fn):  # before opencv 4.5.1.48, pt also accepted integers
-  def inner(contour, pt, measureDist):
-    return fn(contour, tuple(float(val) for val in pt), measureDist)
-  return inner
-
-import cv2
-cv2.pointPolygonTest = _pointPolygonTest(cv2.pointPolygonTest)
-
 import zebrazoom.code.paths as paths
 
 import zebrazoom._subcommands as subcommands
