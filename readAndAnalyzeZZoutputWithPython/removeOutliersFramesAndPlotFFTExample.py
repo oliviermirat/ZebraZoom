@@ -200,9 +200,27 @@ for numAnimal in [0, 1]:
             listOfAcceptableBouts_above_120.append(timing)
     print("Total number of bouts:", nbBouts, "; Number of bouts with no removed frames:", nbBoutsOk)
     print("Length of listOfAcceptableBouts:", len(listOfAcceptableBouts))
-    chosenIndexes = random.sample(range(len(listOfAcceptableBouts_80_to_120) + 1), numberOfSamplesToGenerate)
-    for index in chosenIndexes:
-      print(listOfAcceptableBouts_80_to_120[index])
-    plt.hist(listOfBoutsLenght, bins=50)
-    plt.show()
     
+    print("Between 80 and 120: ", len(listOfAcceptableBouts_80_to_120), " bouts")
+    if len(listOfAcceptableBouts_80_to_120):
+      chosenIndexes = random.sample(range(len(listOfAcceptableBouts_80_to_120)), numberOfSamplesToGenerate)
+      for index in chosenIndexes:
+        print(listOfAcceptableBouts_80_to_120[index])
+      plt.hist(listOfBoutsLenght, bins=50)
+      plt.show()
+    
+    print("Below 80:", len(listOfAcceptableBouts_below_80), " bouts")
+    if len(listOfAcceptableBouts_below_80):
+      chosenIndexes = random.sample(range(len(listOfAcceptableBouts_below_80) + 1), numberOfSamplesToGenerate)
+      for index in chosenIndexes:
+        print(listOfAcceptableBouts_below_80[index])
+      plt.hist(listOfBoutsLenght, bins=50)
+      plt.show()
+
+    print("Above 120:", len(listOfAcceptableBouts_above_120), " bouts")
+    if len(listOfAcceptableBouts_above_120):
+      chosenIndexes = random.sample(range(len(listOfAcceptableBouts_above_120) + 1), numberOfSamplesToGenerate)
+      for index in chosenIndexes:
+        print(listOfAcceptableBouts_above_120[index])
+      plt.hist(listOfBoutsLenght, bins=50)
+      plt.show()    

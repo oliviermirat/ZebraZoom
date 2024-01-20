@@ -16,3 +16,6 @@ from .getFPSandPixelSize import *
 from .applyMedianFilterOnCurvature import *
 from .getConfigurationFileUsed import *
 from .getNbOscAndTBFPerBoutFromManualClassification import *
+from .plotManualVsAutomaticBendLocations import *
+from .plotKinematicParametersHist import *
+from .deleteAutomaticallyCalculatedKinematicParameters import *

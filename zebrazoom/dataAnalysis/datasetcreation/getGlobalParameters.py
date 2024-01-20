@@ -125,8 +125,10 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     
     
     elif parameterToCalculate == 'meanTBF':
-      
-      meanTBF = NumberOfOscillations / BoutDuration # This is a bit of a "hack" (not very "clean"), it only works because the listOfParametersToCalculate provided contains NumberOfOscillations and BoutDuration before meanTBF
+      if len(curbout["Bend_Timing"]):
+        meanTBF = NumberOfOscillations / ((curbout["Bend_Timing"][len(curbout["Bend_Timing"]) - 1]) / fps)
+      else:
+        meanTBF = NumberOfOscillations / BoutDuration # This is a bit of a "hack" (not very "clean"), it only works because the listOfParametersToCalculate provided contains NumberOfOscillations and BoutDuration before meanTBF
       listOfParametersCalculated.append(meanTBF)
     
     

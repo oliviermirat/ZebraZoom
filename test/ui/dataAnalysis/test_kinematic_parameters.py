@@ -182,7 +182,7 @@ def _generateResults():
         _EXPECTED_RESULTS['Median absolute TBA (deg.)'].append(np.median(list(map(abs, degreeBendAmplitudes))))
         _EXPECTED_RESULTS['medianBendAmplitudeSigned'].append(np.median(degreeBendAmplitudes))
         _EXPECTED_RESULTS['Number of Oscillations'].append(len(degreeBendAmplitudes) / 2)
-        _EXPECTED_RESULTS['meanTBF'].append((len(degreeBendAmplitudes) * fps)  / (2 * duration))
+        _EXPECTED_RESULTS['meanTBF'].append(len(degreeBendAmplitudes)  / (2 * bendTimings[-1] / fps))
         _EXPECTED_RESULTS['maxTailAngleAmplitude'].append(max(map(lambda x: math.degrees(abs(x)), angles)))
         _EXPECTED_RESULTS['Absolute Yaw (deg)'].append(math.degrees(math.atan(yMove / xMove)))
         _EXPECTED_RESULTS['Signed Yaw (deg)'].append(-math.degrees(math.atan(yMove / xMove)))
@@ -992,10 +992,11 @@ def test_flagged_bouts(qapp, qtbot, monkeypatch):
   viewParametersPage = _goToVisualizationPage(qapp, qtbot)
 
   # Select the first test result folder
-  resultsIndex = viewParametersPage._tree.model().mapFromSource(viewParametersPage._tree.model().sourceModel().index(os.path.join(viewParametersPage._tree.model().sourceModel().rootPath(), 'test1.h5'))).siblingAtColumn(0)
+  resultsItem = next(results for results in viewParametersPage._tree.model().sourceModel().rootItem.iter_paths() if results.filename.endswith('test1.h5'))
+  resultsIndex = viewParametersPage._tree.model().mapFromSource(viewParametersPage._tree.model().sourceModel().createIndex(resultsItem.childNumber(), 0, resultsItem))
   qtbot.mouseClick(viewParametersPage._tree.viewport(), Qt.MouseButton.LeftButton, pos=viewParametersPage._tree.visualRect(resultsIndex).center())
   qapp.processEvents()
-  qtbot.waitUntil(lambda: [index.row() for index in viewParametersPage._tree.selectedIndexes()] == [resultsIndex.row()])
+  qtbot.waitUntil(lambda: resultsIndex in viewParametersPage._tree.selectedIndexes())
 
   # Flag the first bout and save the changes
   assert viewParametersPage.flag_movement_btn.text() == 'Flag Movement'
@@ -1037,10 +1038,11 @@ def test_flagged_bouts(qapp, qtbot, monkeypatch):
   viewParametersPage = _goToVisualizationPage(qapp, qtbot)
 
   # Select the first test result folder
-  resultsIndex = viewParametersPage._tree.model().mapFromSource(viewParametersPage._tree.model().sourceModel().index(os.path.join(viewParametersPage._tree.model().sourceModel().rootPath(), 'test1.h5'))).siblingAtColumn(0)
+  resultsItem = next(results for results in viewParametersPage._tree.model().sourceModel().rootItem.iter_paths() if results.filename.endswith('test1.h5'))
+  resultsIndex = viewParametersPage._tree.model().mapFromSource(viewParametersPage._tree.model().sourceModel().createIndex(resultsItem.childNumber(), 0, resultsItem))
   qtbot.mouseClick(viewParametersPage._tree.viewport(), Qt.MouseButton.LeftButton, pos=viewParametersPage._tree.visualRect(resultsIndex).center())
   qapp.processEvents()
-  qtbot.waitUntil(lambda: [index.row() for index in viewParametersPage._tree.selectedIndexes()] == [resultsIndex.row()])
+  qtbot.waitUntil(lambda: resultsIndex in viewParametersPage._tree.selectedIndexes())
 
   # Unflag the first bout so it doesn't mess with later tests and save the changes
   assert viewParametersPage.flag_movement_btn.text() == 'UnFlag Movement'
