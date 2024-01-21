@@ -23,7 +23,7 @@ def plotManualVsAutomaticBendLocations(videoName: str, numWell: int, numAnimal: 
     manualBendDetect = [1 if manualBendDetect[i] else 0 for i in range(len(manualBendDetect))]
     
     autoBendDetect   = np.array([0 for i in range(len(dataGroup['manualBend'][start:end]))])
-    for i in results['dataForWell0/dataForAnimal0/listOfBouts/bout'+str(numBout)+'/Bend_Timing'][:]:
+    for i in results['dataForWell0/dataForAnimal' + str(numAnimal) + '/listOfBouts/bout' + str(numBout) + '/Bend_Timing'][:]:
       if i < len(autoBendDetect):
         autoBendDetect[i] = 2
     

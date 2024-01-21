@@ -30,11 +30,10 @@ def getNbOscAndTBFPerBoutFromManualClassification(videoName: str, numWell: int, 
       Bend_Timing = [start] + Bend_Timing
     
     # Number of Oscillations calculation
-    lastBendTiming = Bend_Timing[len(Bend_Timing) - 1]
-    numberOfOscillations = dataGroup['manualBend'][start:lastBendTiming+1].sum() / 2
+    numberOfOscillations = dataGroup['manualBend'][start:end].sum() / 2
     
     # Quotient TBF calculation
-    boutDuration = (lastBendTiming + 1 - start) / results.attrs['videoFPS']
+    boutDuration = (end - start) / results.attrs['videoFPS']
     quotientTBF = numberOfOscillations / boutDuration
     
     # Instantaneous TBF calculation
