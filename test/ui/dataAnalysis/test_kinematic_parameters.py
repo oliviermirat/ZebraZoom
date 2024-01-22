@@ -182,7 +182,7 @@ def _generateResults():
         _EXPECTED_RESULTS['Median absolute TBA (deg.)'].append(np.median(list(map(abs, degreeBendAmplitudes))))
         _EXPECTED_RESULTS['medianBendAmplitudeSigned'].append(np.median(degreeBendAmplitudes))
         _EXPECTED_RESULTS['Number of Oscillations'].append(len(degreeBendAmplitudes) / 2)
-        _EXPECTED_RESULTS['meanTBF'].append(len(degreeBendAmplitudes)  / (2 * bendTimings[-1] / fps))
+        _EXPECTED_RESULTS['meanTBF'].append((len(degreeBendAmplitudes) * fps)  / (2 * duration))
         _EXPECTED_RESULTS['maxTailAngleAmplitude'].append(max(map(lambda x: math.degrees(abs(x)), angles)))
         _EXPECTED_RESULTS['Absolute Yaw (deg)'].append(math.degrees(math.atan(yMove / xMove)))
         _EXPECTED_RESULTS['Signed Yaw (deg)'].append(-math.degrees(math.atan(yMove / xMove)))
