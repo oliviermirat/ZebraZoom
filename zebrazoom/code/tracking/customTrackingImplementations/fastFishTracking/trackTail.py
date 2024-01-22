@@ -63,7 +63,7 @@ def trackTail(self, frameROI, headPosition, hyperparameters, wellNumber, frameNu
       output[0][idx][1] = output[0][len(points[0])-1][1]
   else:
     if len(points[0]) > hyperparameters["nbTailPoints"]:
-      output[0][hyperparameters["nbTailPoints"]-1][0] = points[0][len(points)-1]
-      output[0][hyperparameters["nbTailPoints"]-1][1] = points[1][len(points)-1]
+      output[0][hyperparameters["nbTailPoints"]-1][0] = points[0][len(points[0])-1]
+      output[0][hyperparameters["nbTailPoints"]-1][1] = points[1][len(points[0])-1]
   
   return output, lastFirstTheta
