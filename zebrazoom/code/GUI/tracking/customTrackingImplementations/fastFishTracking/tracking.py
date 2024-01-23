@@ -14,12 +14,24 @@ baseClass = zebrazoom.code.tracking.get_tracking_method('fastFishTracking.tracki
 class GUITracking(baseClass):
   def _adjustParameters(self, i, frame, widgets):
     if not self._hyperparameters['adjustFreelySwimTracking']:
-      return None # TODO: ensure chooseListOfWells param is temporarily set to 0; ensure this for bout detection too?
+      return None
     assert self._hyperparameters['onlyTrackThisOneWell'] != -1
-    hyperparametersListNames = ["maxDepth", "paramGaussianBlur"]
+    hyperparametersListNames = ["maxDepth", "paramGaussianBlur", "headEmbededParamTailDescentPixThreshStop", ("thetaDiffAccept", "thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd", "thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd2", 'nbList', 'nbListAfterAuthorizedRelativeLengthTailEnd', 'nbListAfterAuthorizedRelativeLengthTailEnd2', 'authorizedRelativeLengthTailEnd', 'authorizedRelativeLengthTailEnd2', 'maximumMedianValueOfAllPointsAlongTheTail', 'minimumHeadPixelValue', 'nbTailPoints')]
     organizationTab = [
-    [1, max(50, int(self._hyperparameters["maxDepth"] * 1.33)), "Should be set to the length (in pixels) of the fish."],
-    [1, 30, "Window of the gaussian filter applied on the fish."],]
+    [1, max(50, int(self._hyperparameters["maxDepth"] * 1.33)), "Target length of the tail"],
+    [1, 30, "Window of gaussian blur filter applied on the image"],
+    [1, 300, "Maximum pixel intensity authorized for a pixel to be considered inside the tail"],
+    ([1, 6, 'Maximum authorized angle difference between two subsequent segments in the first portion of the tail (in radians)'],
+     [1, 6, 'Maximum authorized angle difference between two subsequent segments in the second portion of the tail  (in radians)'],
+     [1, 6, 'Maximum authorized angle difference between two subsequent segments in the third portion of the tail  (in radians)'],
+     [1, 30, 'Number of "candidates" points considered for next point along the tail in the first portion of the tail'],
+     [1, 30, 'Number of "candidates" points considered for next point along the tail in the second portion of the tail'],
+     [1, 30, 'Number of "candidates" points considered for next point along the tail in the third portion of the tail'],
+     [0, 1, 'Cut off relative location between first and second tail segment (between 0 and 1)'],
+     [0, 1, 'Cut off relative location between second and third tail segment (between 0 and 1)'],
+     [1, 300, 'Maximum median pixel value of all points along the tail in order for the tail tracking to be accepted'],
+     [1, 300, 'Maximum pixel value authorized for a point to be considered as the head of the animal'],
+     [1, 20, 'Number of points along the tail in the output data'],),]
 
     title = "Adjust parameters in order for the background to be white and the animals to be gray/black."
 

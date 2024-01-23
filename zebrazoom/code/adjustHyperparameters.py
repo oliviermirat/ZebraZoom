@@ -8,14 +8,33 @@ import webbrowser
 MAX_INT32 = 2 ** 31 - 1
 
 
-def _createWidget(layout, status, values, info, name, widgets, hasCheckbox):
+def _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nameIdx=0):
   from PyQt5.QtCore import Qt
 
   import zebrazoom.code.util as util
 
-  minn, maxx, hint = info
-  double = name in ("authorizedRelativeLengthTailEnd", "maxDepth")
-  slider = util.SliderWithSpinbox(values[name], minn, maxx, name=name, double=double)
+  name = names[nameIdx] if isinstance(names, tuple) else names
+  minn, maxx, hint = info[nameIdx] if isinstance(names, tuple) else info
+  double = name in ("authorizedRelativeLengthTailEnd", "authorizedRelativeLengthTailEnd2", "maxDepth", "thetaDiffAccept", "thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd", "thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd2")
+  if isinstance(names, tuple):
+    slider = util.SliderWithSpinbox(values[name], minn, maxx, name=name, double=double, choices=names)
+
+    def choiceChanged(idx):
+      if names[idx] in widgets:
+        widget = widgets[names[idx]]
+        blocked = widget.blockSignals(True)
+        widget.setChoice(idx)
+        widget.blockSignals(blocked)
+        layout.replaceWidget(slider, widget)
+        slider.hide()
+        widget.show()
+      else:
+        layout.removeWidget(slider)
+        slider.hide()
+        _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nameIdx=idx)
+    slider.choiceChanged.connect(choiceChanged)
+  else:
+    slider = util.SliderWithSpinbox(values[name], minn, maxx, name=name, double=double)
   if name == "eyeFilterKernelSize" or name == "paramGaussianBlur":
     slider.setSingleStep(2)
 
@@ -126,11 +145,19 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
     frame.show()
     util.setPixmapFromCv(frameToShow, frame)
   else:
+    flattenedList = []
     for name in hyperparametersListNames:
+      if isinstance(name, tuple):
+        flattenedList.extend(name)
+      else:
+        flattenedList.append(name)
+    for name in flattenedList:
+      if name not in widgets:
+        continue
       slider = widgets[name]
       if slider.value() != hyperparameters[name]:
         slider.setValue(hyperparameters[name])
-      if name == "authorizedRelativeLengthTailEnd" or name == "eyeBinaryThreshold":
+      if name.startswith("authorizedRelativeLengthTailEnd") or name.startswith("thetaDiffAccept") or name == "eyeBinaryThreshold":
         continue
       minn = slider.minimum()
       maxx = slider.maximum()
@@ -174,7 +201,14 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
     hyperparametersListNames.append('steps')
 
   if widgets['saved']:
-    pickle.dump({name: hyperparameters[name] for name in hyperparametersListNames}, open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'wb'))
+    newParams = {}
+    for name in hyperparametersListNames:
+      if isinstance(name, tuple):
+        for name in name:
+          newParams[name] = hyperparameters[name]
+      else:
+        newParams[name] = hyperparameters[name]
+    pickle.dump(newParams, open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'wb'))
     temporaryPage = stackedLayout.currentWidget()
     stackedLayout.setCurrentWidget(widgets['oldWidget'])
     stackedLayout.removeWidget(temporaryPage)

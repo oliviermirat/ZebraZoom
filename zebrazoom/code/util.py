@@ -5,9 +5,9 @@ import numpy as np
 
 import cv2
 
-from PyQt5.QtCore import pyqtSignal, Qt, QAbstractAnimation, QAbstractEventDispatcher, QEventLoop, QLine, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRect, QRectF, QSize, QSizeF, QStandardPaths, QTimer
+from PyQt5.QtCore import pyqtSignal, Qt, QAbstractAnimation, QAbstractEventDispatcher, QEventLoop, QLine, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRect, QRectF, QSize, QSizeF, QStandardPaths, QStringListModel, QTimer
 from PyQt5.QtGui import QBrush, QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygon, QPolygonF, QTransform
-from PyQt5.QtWidgets import QApplication, QDoubleSpinBox, QFrame, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QSplitter, QSplitterHandle, QToolButton, QToolTip, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QComboBox, QDoubleSpinBox, QFrame, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QSplitter, QSplitterHandle, QToolButton, QToolTip, QVBoxLayout, QWidget
 PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
@@ -22,6 +22,7 @@ PRETTY_PARAMETER_NAMES = {
   'overwriteFirstStepValue': 'Minimum number of pixels between subsequent points',
   'overwriteLastStepValue': 'Maximum number of pixels between subsequent points',
   'overwriteHeadEmbededParamGaussianBlur': 'Gaussian blur applied on the image',
+  'nbList': 'Number of "candidates" points considered for next point along the tail in the first portion of the tail',
 }
 
 TITLE_FONT = QFont('Helvetica', 18, QFont.Weight.Bold, True)
@@ -582,8 +583,9 @@ class _DoubleSlider(QSlider):
 
 class SliderWithSpinbox(QWidget):
   valueChanged = pyqtSignal(int)
+  choiceChanged = pyqtSignal(int)
 
-  def __init__(self, value, minimum, maximum, name=None, double=False):
+  def __init__(self, value, minimum, maximum, name=None, double=False, choices=None):
     super().__init__()
     minimum = int(minimum)
     maximum = int(maximum)
@@ -628,10 +630,18 @@ class SliderWithSpinbox(QWidget):
 
     if name is not None:
       self.setFixedWidth(layout.totalSizeHint().width())
-      titleLabel = QLabel(PRETTY_PARAMETER_NAMES.get(name, name))
-      titleLabel.setMinimumSize(1, 1)
-      titleLabel.resizeEvent = lambda evt: titleLabel.setMinimumWidth(evt.size().width()) or titleLabel.setWordWrap(evt.size().width() <= titleLabel.sizeHint().width())
-      slider.rangeChanged.connect(lambda: titleLabel.setMinimumWidth(1) or titleLabel.setWordWrap(False))
+      if choices is not None:
+        currentIdx = choices.index(name)
+        titleLabel = QComboBox()
+        titleLabel.view().setWordWrap(True)
+        titleLabel.setModel(QStringListModel([PRETTY_PARAMETER_NAMES.get(name, name) for name in choices]))
+        titleLabel.setCurrentIndex(currentIdx)
+        titleLabel.currentIndexChanged.connect(lambda idx: self.choiceChanged.emit(idx))
+      else:
+        titleLabel = QLabel(PRETTY_PARAMETER_NAMES.get(name, name))
+        titleLabel.setMinimumSize(1, 1)
+        titleLabel.resizeEvent = lambda evt: titleLabel.setMinimumWidth(evt.size().width()) or titleLabel.setWordWrap(evt.size().width() <= titleLabel.sizeHint().width())
+        slider.rangeChanged.connect(lambda: titleLabel.setMinimumWidth(1) or titleLabel.setWordWrap(False))
       layout.addWidget(titleLabel, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
     self.value = spinbox.value
@@ -645,6 +655,7 @@ class SliderWithSpinbox(QWidget):
     self.isSliderDown = slider.isSliderDown
     self.sliderWidth = slider.width
     self.setPosition = slider.setSliderPosition
+    self.setChoice = lambda idx: titleLabel.setCurrentIndex(idx)
 
 
 def _chooseFrameLayout(cap, spinboxValues, title, titleStyle=None):

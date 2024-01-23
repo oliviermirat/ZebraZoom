@@ -110,6 +110,9 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
       adjustParamsInfo = self._adjustParameters(k, frameROI, widgets)
       if adjustParamsInfo is not None:
         k, widgets = adjustParamsInfo
+        if self._nbTailPoints != self._hyperparameters["nbTailPoints"]:
+          self._nbTailPoints = self._hyperparameters["nbTailPoints"]
+          self._trackingDataPerWell = [np.zeros((self._hyperparameters["nbAnimalsPerWell"], self._lastFrame-self._firstFrame+1, self._nbTailPoints, 2)) for _ in range(len(self._wellPositions))]
       else:
         k += 1
     
