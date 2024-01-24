@@ -22,7 +22,18 @@ PRETTY_PARAMETER_NAMES = {
   'overwriteFirstStepValue': 'Minimum number of pixels between subsequent points',
   'overwriteLastStepValue': 'Maximum number of pixels between subsequent points',
   'overwriteHeadEmbededParamGaussianBlur': 'Gaussian blur applied on the image',
+  'steps': 'Number of steps',
+  'thetaDiffAccept': 'Maximum authorized angle difference between two subsequent segments in the first portion of the tail (in radians)',
+  'thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd': 'Maximum authorized angle difference between two subsequent segments in the second portion of the tail  (in radians)',
+  'thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd2': 'Maximum authorized angle difference between two subsequent segments in the third portion of the tail  (in radians)',
   'nbList': 'Number of "candidates" points considered for next point along the tail in the first portion of the tail',
+  'nbListAfterAuthorizedRelativeLengthTailEnd': 'Number of "candidates" points considered for next point along the tail in the second portion of the tail',
+  'nbListAfterAuthorizedRelativeLengthTailEnd2': 'Number of "candidates" points considered for next point along the tail in the third portion of the tail',
+  'authorizedRelativeLengthTailEnd': 'Cut off relative location between first and second tail segment (between 0 and 1)',
+  'authorizedRelativeLengthTailEnd2': 'Cut off relative location between second and third tail segment (between 0 and 1)',
+  'maximumMedianValueOfAllPointsAlongTheTail': 'Maximum median pixel value of all points along the tail in order for the tail tracking to be accepted',
+  'minimumHeadPixelValue': 'Maximum pixel value authorized for a point to be considered as the head of the animal',
+  'nbTailPoints': 'Number of points along the tail in the output data',
 }
 
 TITLE_FONT = QFont('Helvetica', 18, QFont.Weight.Bold, True)
