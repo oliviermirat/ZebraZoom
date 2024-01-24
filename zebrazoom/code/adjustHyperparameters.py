@@ -9,19 +9,44 @@ MAX_INT32 = 2 ** 31 - 1
 
 
 def _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nameIdx=0):
-  from PyQt5.QtCore import Qt
+  from PyQt5.QtCore import Qt, QAbstractListModel
 
   import zebrazoom.code.util as util
 
-  name = names[nameIdx] if isinstance(names, tuple) else names
-  minn, maxx, hint = info[nameIdx] if isinstance(names, tuple) else info
-  double = name in ("authorizedRelativeLengthTailEnd", "authorizedRelativeLengthTailEnd2", "maxDepth", "thetaDiffAccept", "thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd", "thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd2")
-  if isinstance(names, tuple):
-    slider = util.SliderWithSpinbox(values[name], minn, maxx, name=name, double=double, choices=names)
+  stepIdx = None
+  if isinstance(names, QAbstractListModel):
+    stepsIdx = names.itemlist.index('steps')
+    names.updateSteps(len(values['steps']))
+    if nameIdx > stepsIdx:
+      stepIdx = nameIdx - (stepsIdx + 1)
+      nameIdx = stepsIdx
+      name = f'Step {stepIdx + 1}'
+    else:
+      name = names.itemlist[nameIdx]
+    minn, maxx, hint = info[nameIdx]
+  else:
+    name = names
+    minn, maxx, hint = info
+  if name not in values:
+    assert name.startswith('Step')
+    value = values['steps'][stepIdx]
+    minn = 1
+    maxx = values['maxDepth']
+  else:
+    value = values[name] if name != 'steps' else len(values[name])
+    if value < minn:
+      minn = int(value)
+    if value > maxx:
+      maxx = int(value * 1.33)
+  double = name in ("authorizedRelativeLengthTailEnd", "authorizedRelativeLengthTailEnd2", "maxDepth", "thetaDiffAccept", "thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd", "thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd2") or name not in values
+  if isinstance(names, QAbstractListModel):
+    slider = util.SliderWithSpinbox(value, minn, maxx, name=name, double=double, choices=names)
 
     def choiceChanged(idx):
-      if names[idx] in widgets:
-        widget = widgets[names[idx]]
+      if not slider.isVisible():
+        return
+      if names.itemlist[idx] in widgets:
+        widget = widgets[names.itemlist[idx]]
         blocked = widget.blockSignals(True)
         widget.setChoice(idx)
         widget.blockSignals(blocked)
@@ -34,7 +59,7 @@ def _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nam
         _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nameIdx=idx)
     slider.choiceChanged.connect(choiceChanged)
   else:
-    slider = util.SliderWithSpinbox(values[name], minn, maxx, name=name, double=double)
+    slider = util.SliderWithSpinbox(value, minn, maxx, name=name, double=double)
   if name == "eyeFilterKernelSize" or name == "paramGaussianBlur":
     slider.setSingleStep(2)
 
@@ -56,7 +81,27 @@ def _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nam
     if name == 'paramGaussianBlur' and not slider.value() % 2:
       slider.setValue(slider.value() + 1)
       return
-    values[name] = slider.value()
+    if name not in values:
+      assert name.startswith('Step ')
+      values['steps'][stepIdx] = slider.value()
+    elif name == 'steps':
+      newSteps = slider.value()
+      currentSteps = len(values[name])
+      difference = newSteps - currentSteps
+      if difference > 0:
+        newValues = []
+        for idx in range(difference):
+          stepName = f'Step {idx + currentSteps + 1}'
+          newValues.append(widgets[stepName].value() if stepName in widgets else values[name][-1])
+        values[name].extend(newValues)
+      elif difference < 0:
+        del values[name][difference:]
+      names.updateSteps(len(values[name]))
+    else:
+      values[name] = slider.value()
+    if name == 'headEmbededParamTailDescentPixThreshStop':
+      values['maximumMedianValueOfAllPointsAlongTheTail'] = slider.value()
+      values['minimumHeadPixelValue'] = slider.value()
     widgets['loop'].exit()
   slider.valueChanged.connect(valueChanged)
 
@@ -75,7 +120,7 @@ def _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nam
 
 
 def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, title, organizationTab, widgets, documentationLink=None, addContrastCheckbox=False):
-  from PyQt5.QtCore import Qt, QEventLoop, QTimer
+  from PyQt5.QtCore import Qt, QAbstractListModel, QEventLoop, QTimer
   from PyQt5.QtGui import QCursor
   from PyQt5.QtWidgets import QApplication, QCheckBox, QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
 
@@ -147,25 +192,26 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
   else:
     flattenedList = []
     for name in hyperparametersListNames:
-      if isinstance(name, tuple):
-        flattenedList.extend(name)
+      if isinstance(name, QAbstractListModel):
+        flattenedList.extend((n for n in name.itemlist if n in hyperparameters))
       else:
         flattenedList.append(name)
     for name in flattenedList:
       if name not in widgets:
         continue
       slider = widgets[name]
-      if slider.value() != hyperparameters[name]:
-        slider.setValue(hyperparameters[name])
+      value = len(hyperparameters[name]) if name == 'steps' else hyperparameters[name]
+      if slider.value() != value:
+        slider.setValue(value)
       if name.startswith("authorizedRelativeLengthTailEnd") or name.startswith("thetaDiffAccept") or name == "eyeBinaryThreshold":
         continue
       minn = slider.minimum()
       maxx = slider.maximum()
       if name == "frameGapComparision" and maxx == hyperparameters["lastFrame"] - hyperparameters["firstFrame"] - 1:
         continue
-      if (hyperparameters[name] - minn) > (maxx - minn) * 0.9:
-        maxx = int(minn + (hyperparameters[name] - minn) * 1.1)
-      elif maxx - minn > 255 and hyperparameters[name] < minn + (maxx - minn) * 0.1:
+      if (value - minn) > (maxx - minn) * 0.9:
+        maxx = int(minn + (value - minn) * 1.1)
+      elif maxx - minn > 255 and value < minn + (maxx - minn) * 0.1:
         maxx = int(minn + (maxx - minn) * 0.9)
       else:
         continue
@@ -195,17 +241,13 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
   for timer in timers:
     timer.stop()
 
-  if 'maxDepth' in hyperparametersListNames:
-    maxDepth = hyperparameters['maxDepth']
-    hyperparameters['steps'] = [maxDepth / 3.6, maxDepth / 2.4, maxDepth / 1.8]
-    hyperparametersListNames.append('steps')
-
   if widgets['saved']:
     newParams = {}
     for name in hyperparametersListNames:
-      if isinstance(name, tuple):
-        for name in name:
-          newParams[name] = hyperparameters[name]
+      if isinstance(name, QAbstractListModel):
+        for name in name.itemlist:
+          if name in hyperparameters:
+            newParams[name] = hyperparameters[name]
       else:
         newParams[name] = hyperparameters[name]
     pickle.dump(newParams, open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'wb'))

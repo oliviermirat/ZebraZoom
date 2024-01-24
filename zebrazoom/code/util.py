@@ -5,7 +5,7 @@ import numpy as np
 
 import cv2
 
-from PyQt5.QtCore import pyqtSignal, Qt, QAbstractAnimation, QAbstractEventDispatcher, QEventLoop, QLine, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRect, QRectF, QSize, QSizeF, QStandardPaths, QStringListModel, QTimer
+from PyQt5.QtCore import pyqtSignal, Qt, QAbstractAnimation, QAbstractEventDispatcher, QEventLoop, QLine, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRect, QRectF, QSize, QSizeF, QStandardPaths, QTimer
 from PyQt5.QtGui import QBrush, QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygon, QPolygonF, QTransform
 from PyQt5.QtWidgets import QApplication, QComboBox, QDoubleSpinBox, QFrame, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QSplitter, QSplitterHandle, QToolButton, QToolTip, QVBoxLayout, QWidget
 PYQT6 = False
@@ -631,10 +631,10 @@ class SliderWithSpinbox(QWidget):
     if name is not None:
       self.setFixedWidth(layout.totalSizeHint().width())
       if choices is not None:
-        currentIdx = choices.index(name)
+        currentIdx = choices.itemlist.index(name)
         titleLabel = QComboBox()
         titleLabel.view().setWordWrap(True)
-        titleLabel.setModel(QStringListModel([PRETTY_PARAMETER_NAMES.get(name, name) for name in choices]))
+        titleLabel.setModel(choices)
         titleLabel.setCurrentIndex(currentIdx)
         titleLabel.currentIndexChanged.connect(lambda idx: self.choiceChanged.emit(idx))
       else:
