@@ -20,14 +20,17 @@ class _CustomListModel(QAbstractListModel):
     self.itemlist = list_
 
   def rowCount(self, parent=QModelIndex()):
-    return len(self.itemlist)
+    itemCount = len(self.itemlist)
+    return itemCount * 2 - 1
 
   def data(self, index, role):
     if not index.isValid():
       return None
+    if role == Qt.AccessibleDescriptionRole and index.row() % 2:
+      return 'separator'
     if role != Qt.DisplayRole:
       return None
-    name = self.itemlist[index.row()]
+    name = self.itemlist[index.row() // 2]
     return util.PRETTY_PARAMETER_NAMES.get(name, name)
 
   def updateSteps(self, newSteps):
@@ -35,11 +38,11 @@ class _CustomListModel(QAbstractListModel):
     currentSteps = listSize - (self.itemlist.index('steps') + 1)
     difference = newSteps - currentSteps
     if difference > 0:
-      self.beginInsertRows(QModelIndex(), listSize, listSize + difference - 1)
+      self.beginInsertRows(QModelIndex(), listSize * 2 - 1, (listSize + difference) * 2 - 1)
       self.itemlist.extend((f'Step {currentSteps + 1 + idx}' for idx in range(difference)))
       self.endInsertRows()
     elif difference < 0:
-      self.beginRemoveRows(QModelIndex(), listSize + difference, listSize - 1)
+      self.beginRemoveRows(QModelIndex(), listSize * 2 - 1 + difference * 2, listSize * 2 - 2)
       del self.itemlist[difference:]
       self.endRemoveRows()
 

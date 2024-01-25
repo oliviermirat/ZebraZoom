@@ -642,7 +642,7 @@ class SliderWithSpinbox(QWidget):
     if name is not None:
       self.setFixedWidth(layout.totalSizeHint().width())
       if choices is not None:
-        currentIdx = choices.itemlist.index(name)
+        currentIdx = choices.itemlist.index(name) * 2
         titleLabel = QComboBox()
         titleLabel.view().setWordWrap(True)
         titleLabel.setModel(choices)

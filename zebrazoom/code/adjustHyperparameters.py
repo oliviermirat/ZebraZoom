@@ -45,8 +45,9 @@ def _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nam
     def choiceChanged(idx):
       if not slider.isVisible():
         return
-      if names.itemlist[idx] in widgets:
-        widget = widgets[names.itemlist[idx]]
+      choiceIdx = idx // 2
+      if names.itemlist[choiceIdx] in widgets:
+        widget = widgets[names.itemlist[choiceIdx]]
         blocked = widget.blockSignals(True)
         widget.setChoice(idx)
         widget.blockSignals(blocked)
@@ -56,7 +57,7 @@ def _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nam
       else:
         layout.removeWidget(slider)
         slider.hide()
-        _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nameIdx=idx)
+        _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nameIdx=choiceIdx)
     slider.choiceChanged.connect(choiceChanged)
   else:
     slider = util.SliderWithSpinbox(value, minn, maxx, name=name, double=double)
