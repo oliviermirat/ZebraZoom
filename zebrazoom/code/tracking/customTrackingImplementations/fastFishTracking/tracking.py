@@ -37,7 +37,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
 
   def _updateBackgroundAtInterval(self, i, wellNumber, initialCurFrame, trackingHeadTailAllAnimals, frame):
     if i % self._hyperparameters["updateBackgroundAtInterval"] == 0:
-      showImages = True
+      showImages = False
       firstFrameToShow = -1
       if showImages and i > firstFrameToShow:
         self._debugFrame(self._background, title='background before')
@@ -78,7 +78,13 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     ret, self._background = cap.read()
     if resizeFrameFactor:
       self._background = cv2.resize(self._background, (int(len(self._background[0])/resizeFrameFactor), int(len(self._background)/resizeFrameFactor)))
-    cap.set(cv2.CAP_PROP_POS_FRAMES, int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) - 1)
+    if "lastFrameForInitialBackDetect" in self._hyperparameters and self._hyperparameters["lastFrameForInitialBackDetect"]:
+      if int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) <= self._hyperparameters["lastFrameForInitialBackDetect"]:
+        cap.set(cv2.CAP_PROP_POS_FRAMES, int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) - 1)
+      else:
+        cap.set(cv2.CAP_PROP_POS_FRAMES, self._hyperparameters["lastFrameForInitialBackDetect"])
+    else:
+      cap.set(cv2.CAP_PROP_POS_FRAMES, int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) - 1)
     ret, frame = cap.read()
     if resizeFrameFactor:
       frame = cv2.resize(frame, (int(len(frame[0])/resizeFrameFactor), int(len(frame)/resizeFrameFactor)))
