@@ -32,6 +32,37 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     self._times2 = np.zeros((self._lastFrame - self._firstFrame + 1, 5))
     self._printInterTime = False
 
+  def _debugFrame(self, frame, title=None, buttons=(), timeout=None):
+    util.showFrame(frame, title=title, buttons=buttons, timeout=timeout)
+
+  def _updateBackgroundAtInterval(self, i, wellNumber, initialCurFrame, trackingHeadTailAllAnimals, frame):
+    if i % self._hyperparameters["updateBackgroundAtInterval"] == 0:
+      showImages = True
+      firstFrameToShow = -1
+      if showImages and i > firstFrameToShow:
+        self._debugFrame(self._background, title='background before')
+      xvalues = [trackingHeadTailAllAnimals[0, i-self._firstFrame][k][0] for k in range(0, len(trackingHeadTailAllAnimals[0, i-self._firstFrame]))]
+      yvalues = [trackingHeadTailAllAnimals[0, i-self._firstFrame][k][1] for k in range(0, len(trackingHeadTailAllAnimals[0, i-self._firstFrame]))]
+      xmin = min(xvalues)
+      xmax = max(xvalues)
+      ymin = min(yvalues)
+      ymax = max(yvalues)
+      dist = 1 * math.sqrt((xmax - xmin) ** 2 + (ymax - ymin) ** 2)
+      xmin = int(xmin - dist) if xmin - dist >= 0 else 0
+      xmax = int(xmax + dist) if xmax + dist < len(frame[0]) else len(frame[0]) - 1
+      ymin = int(ymin - dist) if ymin - dist >= 0 else 0
+      ymax = int(ymax + dist) if ymax + dist < len(frame) else len(frame) - 1
+      if xmin != xmax and ymin != ymax:
+        partOfBackgroundToSave = self._background[self._wellPositions[wellNumber]["topLeftY"]+ymin:self._wellPositions[wellNumber]["topLeftY"]+ymax, self._wellPositions[wellNumber]["topLeftX"]+xmin:self._wellPositions[wellNumber]["topLeftX"]+xmax].copy() # copy ???
+        if showImages and i > firstFrameToShow:
+          self._debugFrame(partOfBackgroundToSave, title='partOfBackgroundToSave')
+      self._background[self._wellPositions[wellNumber]["topLeftY"]:self._wellPositions[wellNumber]["topLeftY"]+self._wellPositions[wellNumber]["lengthY"], self._wellPositions[wellNumber]["topLeftX"]:self._wellPositions[wellNumber]["topLeftX"]+self._wellPositions[wellNumber]["lengthX"]] = initialCurFrame.copy()
+      if showImages and i > firstFrameToShow:
+        self._debugFrame(self._background, title='background middle')
+      if xmin != xmax and ymin != ymax:
+        self._background[self._wellPositions[wellNumber]["topLeftY"]+ymin:self._wellPositions[wellNumber]["topLeftY"]+ymax, self._wellPositions[wellNumber]["topLeftX"]+xmin:self._wellPositions[wellNumber]["topLeftX"]+xmax] = partOfBackgroundToSave
+      if showImages and i > firstFrameToShow:
+        self._debugFrame(self._background, title='background after')
 
   def run(self):
     
@@ -54,7 +85,8 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
     if self._hyperparameters["chooseWellsToRunTrackingOnWithFirstAndLastFrame"]:
       self._listOfWellsOnWhichToRunTheTracking = getListOfWellsOnWhichToRunTheTracking(self, self._background[:,:,0], frame[:,:,0])
     print("listOfWellsOnWhichToRunTheTracking:", self._listOfWellsOnWhichToRunTheTracking)
-    self._background = cv2.max(frame, self._background) # INCONSISTENT!!! should be changed!
+    if not(self._hyperparameters["useFirstFrameAsBackground"]):
+      self._background = cv2.max(frame, self._background) # INCONSISTENT!!! should be changed!
     self._background = cv2.cvtColor(self._background, cv2.COLOR_BGR2GRAY) # INCONSISTENT!!! should be changed!
     cap.set(cv2.CAP_PROP_POS_FRAMES, self._firstFrame)
     
@@ -87,6 +119,10 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
       times[k-self._firstFrame, 0] = time2 - time1
       times[k-self._firstFrame, 1] = time3 - time2
       k += 1
+      
+      if self._hyperparameters["updateBackgroundAtInterval"]:
+        for wellNumber in range(0, len(self._wellPositions)):
+          self._updateBackgroundAtInterval(k-1, wellNumber, frame[self._wellPositions[wellNumber]["topLeftY"]:self._wellPositions[wellNumber]["topLeftY"]+self._wellPositions[wellNumber]["lengthY"], self._wellPositions[wellNumber]["topLeftX"]:self._wellPositions[wellNumber]["topLeftX"]+self._wellPositions[wellNumber]["lengthX"], 0], self._trackingDataPerWell[wellNumber], frame)
     
     if resizeFrameFactor:
       self._trackingDataPerWell = [resizeFrameFactor * elem for elem in self._trackingDataPerWell]
