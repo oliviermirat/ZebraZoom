@@ -8,6 +8,15 @@ import webbrowser
 MAX_INT32 = 2 ** 31 - 1
 
 
+def __calculateSteps(maxDepth, numberOfSteps):
+  steps = [maxDepth / 1.8, maxDepth / 2.4, maxDepth / 3.6]
+  if numberOfSteps <= 3:
+    return reversed(steps[:numberOfSteps])
+  if numberOfSteps > 3:
+    steps.extend((maxDepth / (3.6 + 0.2 * (numberOfSteps - i)) for i in reversed(range(numberOfSteps - 3))))
+  return reversed(steps)
+
+
 def _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nameIdx=0):
   from PyQt5.QtCore import Qt, QAbstractListModel
 
@@ -92,17 +101,20 @@ def _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nam
       if difference > 0:
         newValues = []
         for idx in range(difference):
-          stepName = f'Step {idx + currentSteps + 1}'
-          newValues.append(widgets[stepName].value() if stepName in widgets else values[name][-1])
-        values[name].extend(newValues)
+          stepName = f'Step {idx + 1}'
+          defaultSteps = list(__calculateSteps(values['maxDepth'], newSteps))
+          newValues.append(defaultSteps[idx])
+        values[name][:0] = newValues
       elif difference < 0:
-        del values[name][difference:]
+        del values[name][:-difference]
       names.updateSteps(len(values[name]))
     else:
       values[name] = slider.value()
     if name == 'headEmbededParamTailDescentPixThreshStop':
       values['maximumMedianValueOfAllPointsAlongTheTail'] = slider.value()
       values['minimumHeadPixelValue'] = slider.value()
+    elif name == 'maxDepth':
+      values['steps'][:] = __calculateSteps(slider.value(), len(values['steps']))
     widgets['loop'].exit()
   slider.valueChanged.connect(valueChanged)
 
@@ -197,6 +209,14 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
         flattenedList.extend((n for n in name.itemlist if n in hyperparameters))
       else:
         flattenedList.append(name)
+    for idx in range(len(hyperparameters['steps'])):
+      name = f'Step {idx + 1}'
+      if name not in widgets:
+        continue
+      slider = widgets[name]
+      value = hyperparameters['steps'][idx]
+      if slider.value() != value:
+        slider.setValue(value)
     for name in flattenedList:
       if name not in widgets:
         continue
