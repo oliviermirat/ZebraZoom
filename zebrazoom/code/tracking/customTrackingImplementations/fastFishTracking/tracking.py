@@ -120,15 +120,15 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod):
           backgroundSubtractionOnWholeImage(self, frame, k-self._firstFrame)
         else:
           backgroundSubtractionOnlyOnROIs(self, frame, k-self._firstFrame)
+        if self._hyperparameters["updateBackgroundAtInterval"]:
+          for wellNumber in range(0, len(self._wellPositions)):
+            self._updateBackgroundAtInterval(k-1, wellNumber, frame[self._wellPositions[wellNumber]["topLeftY"]:self._wellPositions[wellNumber]["topLeftY"]+self._wellPositions[wellNumber]["lengthY"], self._wellPositions[wellNumber]["topLeftX"]:self._wellPositions[wellNumber]["topLeftX"]+self._wellPositions[wellNumber]["lengthX"], 0], self._trackingDataPerWell[wellNumber], frame)
       
       time3 = time.time()
       times[k-self._firstFrame, 0] = time2 - time1
       times[k-self._firstFrame, 1] = time3 - time2
       k += 1
-      
-      if self._hyperparameters["updateBackgroundAtInterval"]:
-        for wellNumber in range(0, len(self._wellPositions)):
-          self._updateBackgroundAtInterval(k-1, wellNumber, frame[self._wellPositions[wellNumber]["topLeftY"]:self._wellPositions[wellNumber]["topLeftY"]+self._wellPositions[wellNumber]["lengthY"], self._wellPositions[wellNumber]["topLeftX"]:self._wellPositions[wellNumber]["topLeftX"]+self._wellPositions[wellNumber]["lengthX"], 0], self._trackingDataPerWell[wellNumber], frame)
+    
     
     if resizeFrameFactor:
       self._trackingDataPerWell = [resizeFrameFactor * elem for elem in self._trackingDataPerWell]
