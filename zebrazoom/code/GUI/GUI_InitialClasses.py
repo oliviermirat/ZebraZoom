@@ -20,7 +20,7 @@ from matplotlib.figure import Figure
 from PyQt5.QtCore import pyqtSignal, Qt, QAbstractItemModel, QDir, QEvent, QLine, QModelIndex, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel, QTimer, QUrl
 from PyQt5.QtGui import QColor, QCursor, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
-from PyQt5.QtWidgets import QAbstractItemView, QApplication, QDialog, QLabel, QWidget, QFileDialog, QFileIconProvider, QFormLayout, QFrame, QGridLayout, QHeaderView, QLineEdit, QListView, QListWidget, QListWidgetItem, QMessageBox, QHeaderView, QPushButton, QSizePolicy, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QStackedLayout, QComboBox, QTreeView, QToolTip
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QDialog, QLabel, QWidget, QFileDialog, QFileIconProvider, QFormLayout, QFrame, QGridLayout, QHeaderView, QLineEdit, QListView, QListWidget, QListWidgetItem, QMessageBox, QHeaderView, QPushButton, QSizePolicy, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QStackedLayout, QComboBox, QTextEdit, QTreeView, QToolTip
 PYQT6 = False
 
 import zebrazoom
@@ -1175,6 +1175,23 @@ class ViewParameters(util.CollapsibleSplitter):
         self._startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
         layout.addWidget(self._startPageBtn, 10, 1, Qt.AlignmentFlag.AlignCenter)
 
+        showConfigFileBtn = QPushButton('Show configuration file')
+
+        def showConfigFile():
+          dialog = QDialog(self.controller.window)
+          dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+          dialog.setWindowTitle('Configuration File')
+          dialog.sizeHint = lambda: QSize(640, 480)
+          textEdit = QTextEdit()
+          textEdit.setPlainText(json.dumps(self._config, indent=2))
+          textEdit.setReadOnly(True)
+          layout = QHBoxLayout()
+          layout.addWidget(textEdit)
+          dialog.setLayout(layout)
+          dialog.exec()
+        showConfigFileBtn.clicked.connect(showConfigFile)
+        layout.addWidget(showConfigFileBtn, 10, 4, Qt.AlignmentFlag.AlignCenter)
+
         def _updateConfigWidgets():
           if controller.configFile:  # page shown while testing config
             message.show()
@@ -1278,7 +1295,7 @@ class ViewParameters(util.CollapsibleSplitter):
             with h5py.File(fullPath, 'r') as results:
               self.dataRef = createSuperStructFromH5(results)
               import numpy as np
-              self._config = {key: value if not isinstance(value, np.ndarray) else value.tolist() for key, value in results['configurationFileUsed'].attrs.items()}
+              self._config = {key: value.item() if isinstance(value, np.number) else value if not isinstance(value, np.ndarray) else value.tolist() for key, value in results['configurationFileUsed'].attrs.items()}
           except:
             self.setFolder(None)
             QMessageBox.critical(self.controller.window, 'Cannot read the results', 'The selected results file is corrupt and could not be read.')
