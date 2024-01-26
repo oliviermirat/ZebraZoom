@@ -7,7 +7,7 @@ import cv2
 
 from PyQt5.QtCore import pyqtSignal, Qt, QAbstractAnimation, QAbstractEventDispatcher, QEventLoop, QLine, QParallelAnimationGroup, QPoint, QPointF, QPropertyAnimation, QRect, QRectF, QSize, QSizeF, QStandardPaths, QTimer
 from PyQt5.QtGui import QBrush, QColor, QFont, QImage, QPainter, QPen, QPixmap, QPolygon, QPolygonF, QTransform
-from PyQt5.QtWidgets import QApplication, QDoubleSpinBox, QFrame, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QSplitter, QSplitterHandle, QToolButton, QToolTip, QVBoxLayout, QWidget
+from PyQt5.QtWidgets import QApplication, QComboBox, QDoubleSpinBox, QFrame, QGraphicsPixmapItem, QGraphicsScene, QGraphicsView, QGridLayout, QLabel, QLayout, QHBoxLayout, QPushButton, QScrollArea, QSizePolicy, QSlider, QSpinBox, QSplitter, QSplitterHandle, QToolButton, QToolTip, QVBoxLayout, QWidget
 PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
@@ -22,6 +22,18 @@ PRETTY_PARAMETER_NAMES = {
   'overwriteFirstStepValue': 'Minimum number of pixels between subsequent points',
   'overwriteLastStepValue': 'Maximum number of pixels between subsequent points',
   'overwriteHeadEmbededParamGaussianBlur': 'Gaussian blur applied on the image',
+  'steps': 'Number of steps',
+  'thetaDiffAccept': 'Maximum authorized angle difference between two subsequent segments in the first portion of the tail (in radians)',
+  'thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd': 'Maximum authorized angle difference between two subsequent segments in the second portion of the tail  (in radians)',
+  'thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd2': 'Maximum authorized angle difference between two subsequent segments in the third portion of the tail  (in radians)',
+  'nbList': 'Number of "candidates" points considered for next point along the tail in the first portion of the tail',
+  'nbListAfterAuthorizedRelativeLengthTailEnd': 'Number of "candidates" points considered for next point along the tail in the second portion of the tail',
+  'nbListAfterAuthorizedRelativeLengthTailEnd2': 'Number of "candidates" points considered for next point along the tail in the third portion of the tail',
+  'authorizedRelativeLengthTailEnd': 'Cut off relative location between first and second tail segment (between 0 and 1)',
+  'authorizedRelativeLengthTailEnd2': 'Cut off relative location between second and third tail segment (between 0 and 1)',
+  'maximumMedianValueOfAllPointsAlongTheTail': 'Maximum median pixel value of all points along the tail in order for the tail tracking to be accepted',
+  'minimumHeadPixelValue': 'Maximum pixel value authorized for a point to be considered as the head of the animal',
+  'nbTailPoints': 'Number of points along the tail in the output data',
 }
 
 TITLE_FONT = QFont('Helvetica', 18, QFont.Weight.Bold, True)
@@ -582,8 +594,9 @@ class _DoubleSlider(QSlider):
 
 class SliderWithSpinbox(QWidget):
   valueChanged = pyqtSignal(int)
+  choiceChanged = pyqtSignal(int)
 
-  def __init__(self, value, minimum, maximum, name=None, double=False):
+  def __init__(self, value, minimum, maximum, name=None, double=False, choices=None):
     super().__init__()
     minimum = int(minimum)
     maximum = int(maximum)
@@ -628,10 +641,18 @@ class SliderWithSpinbox(QWidget):
 
     if name is not None:
       self.setFixedWidth(layout.totalSizeHint().width())
-      titleLabel = QLabel(PRETTY_PARAMETER_NAMES.get(name, name))
-      titleLabel.setMinimumSize(1, 1)
-      titleLabel.resizeEvent = lambda evt: titleLabel.setMinimumWidth(evt.size().width()) or titleLabel.setWordWrap(evt.size().width() <= titleLabel.sizeHint().width())
-      slider.rangeChanged.connect(lambda: titleLabel.setMinimumWidth(1) or titleLabel.setWordWrap(False))
+      if choices is not None:
+        currentIdx = choices.itemlist.index(name) * 2
+        titleLabel = QComboBox()
+        titleLabel.view().setWordWrap(True)
+        titleLabel.setModel(choices)
+        titleLabel.setCurrentIndex(currentIdx)
+        titleLabel.currentIndexChanged.connect(lambda idx: self.choiceChanged.emit(idx))
+      else:
+        titleLabel = QLabel(PRETTY_PARAMETER_NAMES.get(name, name))
+        titleLabel.setMinimumSize(1, 1)
+        titleLabel.resizeEvent = lambda evt: titleLabel.setMinimumWidth(evt.size().width()) or titleLabel.setWordWrap(evt.size().width() <= titleLabel.sizeHint().width())
+        slider.rangeChanged.connect(lambda: titleLabel.setMinimumWidth(1) or titleLabel.setWordWrap(False))
       layout.addWidget(titleLabel, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
     self.value = spinbox.value
@@ -645,6 +666,7 @@ class SliderWithSpinbox(QWidget):
     self.isSliderDown = slider.isSliderDown
     self.sliderWidth = slider.width
     self.setPosition = slider.setSliderPosition
+    self.setChoice = lambda idx: titleLabel.setCurrentIndex(idx)
 
 
 def _chooseFrameLayout(cap, spinboxValues, title, titleStyle=None):
