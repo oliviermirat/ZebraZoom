@@ -25,13 +25,16 @@ def _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nam
   stepIdx = None
   if isinstance(names, QAbstractListModel):
     stepsIdx = names.itemlist.index('steps')
-    names.updateSteps(len(values['steps']))
-    if nameIdx > stepsIdx:
+    stepCount = len(values['steps'])
+    names.updateSteps(stepCount)
+    if stepsIdx < nameIdx <= stepsIdx + stepCount:
       stepIdx = nameIdx - (stepsIdx + 1)
       nameIdx = stepsIdx
       name = f'Step {stepIdx + 1}'
     else:
       name = names.itemlist[nameIdx]
+      if nameIdx > stepsIdx:
+        nameIdx -= stepCount
     minn, maxx, hint = info[nameIdx]
   else:
     name = names
@@ -217,6 +220,7 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
       value = hyperparameters['steps'][idx]
       if slider.value() != value:
         slider.setValue(value)
+      slider.setMaximum(hyperparameters['maxDepth'])
     for name in flattenedList:
       if name not in widgets:
         continue

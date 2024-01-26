@@ -18,6 +18,7 @@ class _CustomListModel(QAbstractListModel):
   def __init__(self, list_, *args, **kwargs):
     super().__init__(*args, **kwargs)
     self.itemlist = list_
+    self._baseItemCount = len(list_)
 
   def rowCount(self, parent=QModelIndex()):
     itemCount = len(self.itemlist)
@@ -35,15 +36,18 @@ class _CustomListModel(QAbstractListModel):
 
   def updateSteps(self, newSteps):
     listSize = len(self.itemlist)
-    currentSteps = listSize - (self.itemlist.index('steps') + 1)
+    currentSteps = listSize - self._baseItemCount
+    lastStepIdx = self.itemlist.index('steps') + currentSteps
     difference = newSteps - currentSteps
     if difference > 0:
-      self.beginInsertRows(QModelIndex(), listSize * 2 - 1, (listSize + difference) * 2 - 1)
-      self.itemlist.extend((f'Step {currentSteps + 1 + idx}' for idx in range(difference)))
+      startIdx = lastStepIdx * 2 - 1
+      self.beginInsertRows(QModelIndex(), startIdx, startIdx + difference * 2 - 1)
+      self.itemlist[lastStepIdx+1:lastStepIdx+1] = (f'Step {currentSteps + 1 + idx}' for idx in range(difference))
       self.endInsertRows()
     elif difference < 0:
-      self.beginRemoveRows(QModelIndex(), listSize * 2 - 1 + difference * 2, listSize * 2 - 2)
-      del self.itemlist[difference:]
+      startIdx = (lastStepIdx + difference + 2) - 1
+      self.beginRemoveRows(QModelIndex(), startIdx, startIdx - difference * 2 - 1)
+      del self.itemlist[startIdx:startIdx-difference]
       self.endRemoveRows()
 
 
@@ -52,12 +56,13 @@ class GUITracking(baseClass):
     if not self._hyperparameters['adjustFreelySwimTracking']:
       return None
     assert self._hyperparameters['onlyTrackThisOneWell'] != -1
-    hyperparametersListNames = ["maxDepth", "paramGaussianBlur", "headEmbededParamTailDescentPixThreshStop", _CustomListModel(["thetaDiffAccept", "thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd", "thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd2", 'nbList', 'nbListAfterAuthorizedRelativeLengthTailEnd', 'nbListAfterAuthorizedRelativeLengthTailEnd2', 'authorizedRelativeLengthTailEnd', 'authorizedRelativeLengthTailEnd2', 'maximumMedianValueOfAllPointsAlongTheTail', 'minimumHeadPixelValue', 'nbTailPoints', 'steps'])]
+    hyperparametersListNames = ["maxDepth", "paramGaussianBlur", "headEmbededParamTailDescentPixThreshStop", _CustomListModel(['steps', "thetaDiffAccept", "thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd", "thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd2", 'nbList', 'nbListAfterAuthorizedRelativeLengthTailEnd', 'nbListAfterAuthorizedRelativeLengthTailEnd2', 'authorizedRelativeLengthTailEnd', 'authorizedRelativeLengthTailEnd2', 'maximumMedianValueOfAllPointsAlongTheTail', 'minimumHeadPixelValue', 'nbTailPoints'])]
     organizationTab = [
     [1, 50, "Target length of the tail"],
     [1, 30, "Window of gaussian blur filter applied on the image"],
     [1, 300, "Maximum pixel intensity authorized for a pixel to be considered inside the tail"],
-    ([1, 6, 'Maximum authorized angle difference between two subsequent segments in the first portion of the tail (in radians)'],
+    ([1, 10, 'List of possible number of pixels between two subsequent points along the tail'],
+     [1, 6, 'Maximum authorized angle difference between two subsequent segments in the first portion of the tail (in radians)'],
      [1, 6, 'Maximum authorized angle difference between two subsequent segments in the second portion of the tail  (in radians)'],
      [1, 6, 'Maximum authorized angle difference between two subsequent segments in the third portion of the tail  (in radians)'],
      [1, 30, 'Number of "candidates" points considered for next point along the tail in the first portion of the tail'],
@@ -67,8 +72,7 @@ class GUITracking(baseClass):
      [0, 1, 'Cut off relative location between second and third tail segment (between 0 and 1)'],
      [1, 300, 'Maximum median pixel value of all points along the tail in order for the tail tracking to be accepted'],
      [1, 300, 'Maximum pixel value authorized for a point to be considered as the head of the animal'],
-     [1, 20, 'Number of points along the tail in the output data'],
-     [1, 10, 'List of possible number of pixels between two subsequent points along the tail'],),]
+     [1, 20, 'Number of points along the tail in the output data'],),]
 
     title = "Adjust parameters in order for the background to be white and the animals to be gray/black."
 
