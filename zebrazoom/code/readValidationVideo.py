@@ -8,7 +8,7 @@ import cv2
 import json
 import numpy as np
 
-from PyQt5.QtCore import Qt, QSize, QTimer
+from PyQt5.QtCore import pyqtSignal, Qt, QSize, QTimer
 from PyQt5.QtGui import QColor, QFont, QFontMetrics, QPainter
 from PyQt5.QtWidgets import QApplication, QButtonGroup, QCheckBox, QFileDialog, QGridLayout, QHBoxLayout, QMessageBox, QLabel, QProgressDialog, QPushButton, QRadioButton, QSizePolicy, QSlider, QSpinBox, QStyleOptionSlider, QVBoxLayout
 
@@ -18,6 +18,19 @@ import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.createValidationVideo import calculateInfoFrameForFrame, drawInfoFrame, improveContrast
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.preprocessImage import preprocessImage
+
+
+class _CustomTimer(QTimer):
+  started = pyqtSignal()
+  stopped = pyqtSignal()
+
+  def start(self):
+    super().start()
+    self.started.emit()
+
+  def stop(self):
+    super().stop()
+    self.stopped.emit()
 
 
 class FrameSlider(QSlider):
@@ -322,12 +335,6 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     validationLayout.setColumnStretch(3, 1)
     validationLayout.setRowStretch(5, 1)
     validationLayout.addWidget(QLabel('Frame:'), 0, 0)
-    frameSpinbox = QSpinBox()
-    frameSpinbox.setRange(*frameRange)
-    frameSpinbox.setStyleSheet(util.SPINBOX_STYLESHEET)
-    frameSpinbox.setMinimumWidth(70)
-    frameSpinbox.valueChanged.connect(lambda value: timer.stop() or frameSlider.setValue(value))
-    validationLayout.addWidget(frameSpinbox, 0, 1, 1, 2)
     bendCheckbox = QCheckBox('Bend')
     bendCheckbox.toggled.connect(lambda checked: saveChanges() or clearButton.setEnabled(True) or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer, topLeftCircleCb=topLeftCircleCb), video))
     validationLayout.addWidget(bendCheckbox, 1, 0, 1, 2)
@@ -415,9 +422,6 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
         bend = perFrameGroup['manualBend'][idx] if 'manualBend' in perFrameGroup else False
         heading = perFrameGroup['manualHeading'][idx] if 'manualHeading' in perFrameGroup else np.nan
         tailExtremity = tuple(perFrameGroup['manualTailExtremity'][idx]) if 'manualTailExtremity' in perFrameGroup else (-1, -1)
-      blocked = frameSpinbox.blockSignals(True)
-      frameSpinbox.setValue(frameSlider.value())
-      frameSpinbox.blockSignals(blocked)
       updateWidgets(bend, heading, tailExtremity)
       clearButton.setEnabled(bool(tailExtremityLabel.text() or headingLabel.text() or bendCheckbox.isChecked()))
       util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer, topLeftCircleCb=topLeftCircleCb), video)
@@ -428,22 +432,42 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
   else:
     layout.addWidget(video, stretch=1)
 
+  sliderLayout = QHBoxLayout()
   frameSlider = FrameSlider(Qt.Orientation.Horizontal)
   frameSlider.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
   frameSlider.setPageStep(50)
   frameSlider.setRange(*frameRange)
   frameSlider.setValue(frame)
 
-  if zoom and folderName.endswith('.h5'):
-    def updateManualValidationWidgets(value):
+  def updateManualValidationWidgets(value):
+    blocked = frameSpinbox.blockSignals(True)
+    frameSpinbox.setValue(frameSlider.value())
+    frameSpinbox.blockSignals(blocked)
+    if zoom and folderName.endswith('.h5'):
       if not manualValidationWidget.isExpanded():
         return
       manualValidationExpanded(True)
-    frameSlider.valueChanged.connect(updateManualValidationWidgets)
+  frameSlider.valueChanged.connect(updateManualValidationWidgets)
 
   frameSlider.valueChanged.connect(lambda: util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer, topLeftCircleCb=topLeftCircleCb), video))
+  sliderLayout.addWidget(frameSlider)
 
-  layout.addWidget(frameSlider)
+  frameSpinbox = QSpinBox()
+  frameSpinbox.setRange(*frameRange)
+  frameSpinbox.setStyleSheet(util.SPINBOX_STYLESHEET)
+  frameSpinbox.setMinimumWidth(70)
+  frameSpinbox.valueChanged.connect(lambda value: timer.stop() or frameSlider.setValue(value))
+  sliderLayout.addWidget(frameSpinbox)
+
+  playBtn = QPushButton()
+  style = playBtn.style()
+  playIcon = style.standardIcon(style.SP_MediaPlay)
+  pauseIcon = style.standardIcon(style.SP_MediaPause)
+  playBtn.setIcon(playIcon)
+  playBtn.clicked.connect(lambda: timer.stop() if timer.isActive() else timer.start())
+  sliderLayout.addWidget(playBtn)
+
+  layout.addLayout(sliderLayout)
   shortcutsLabel = QLabel("Left Arrow, Right Arrow, Page Up, Page Down, Home and End keys can be used to navigate through the video.")
   shortcutsLabel.setWordWrap(True)
   layout.addWidget(shortcutsLabel)
@@ -518,7 +542,9 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     layout.addLayout(trackingPointsLayout)
 
   stopTimer = True
-  timer = QTimer()
+  timer = _CustomTimer()
+  timer.started.connect(lambda: playBtn.setIcon(pauseIcon))
+  timer.stopped.connect(lambda: playBtn.setIcon(playIcon))
   timer.setInterval(1)
 
   def nextFrame():
@@ -531,8 +557,7 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
   startFrame = getFrame(frameSlider, timer, btnGroup, stopTimer, topLeftCircleCb=topLeftCircleCb)
   timer.start()
   focusWidgets = {frameSlider}
-  if zoom and folderName.endswith('.h5'):
-    focusWidgets.add(frameSpinbox)
+  focusWidgets.add(frameSpinbox)
   QTimer.singleShot(0, lambda: frameSlider.setFocus())
   util.showDialog(layout, title="Video", labelInfo=(startFrame, video), focusWidgets=focusWidgets)
   timer.stop()
