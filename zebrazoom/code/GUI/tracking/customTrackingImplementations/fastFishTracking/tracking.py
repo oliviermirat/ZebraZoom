@@ -92,7 +92,27 @@ class GUITracking(baseClass):
       x = output[k, i-self._firstFrame][0][0]
       y = output[k, i-self._firstFrame][0][1]
 
-    return adjustHyperparameters(i, self._hyperparameters, hyperparametersListNames, frame2, title, organizationTab, widgets)
+    if widgets is not None and 'zoomInCheckbox' in widgets and widgets['zoomInCheckbox'].isChecked():
+      halfLength = 125.5
+      xmin = int(x - halfLength)
+      xmax = int(x + halfLength)
+      ymin = int(y - halfLength)
+      ymax = int(y + halfLength)
+
+      x = max(xmin, 0)
+      y = max(ymin, 0)
+      lengthX = xmax - xmin
+      lengthY = ymax - ymin
+
+      frameHeight, frameWidth = frame.shape[:2]
+      if y + lengthY >= frameHeight:
+        lengthY = frameHeight - y - 1
+      if x + lengthX >= frameWidth:
+        lengthX = frameWidth - x - 1
+
+      frame2 = frame2[y:y+lengthY, x:x+lengthX]
+
+    return adjustHyperparameters(i, self._hyperparameters, hyperparametersListNames, frame2, title, organizationTab, widgets, addZoomCheckbox=True)
 
 
 zebrazoom.code.tracking.register_tracking_method('fastFishTracking.tracking', GUITracking)

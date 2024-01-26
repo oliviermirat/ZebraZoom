@@ -135,7 +135,7 @@ def _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nam
     layout.addWidget(slider, 3 if hasCheckbox else 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
 
-def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, title, organizationTab, widgets, documentationLink=None, addContrastCheckbox=False):
+def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, title, organizationTab, widgets, documentationLink=None, addContrastCheckbox=False, addZoomCheckbox=False):
   from PyQt5.QtCore import Qt, QAbstractListModel, QEventLoop, QTimer
   from PyQt5.QtGui import QCursor
   from PyQt5.QtWidgets import QApplication, QCheckBox, QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
@@ -164,13 +164,18 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
       checkbox.toggled.connect(lambda: widgets['loop'].exit())
       QTimer.singleShot(0, lambda: checkbox.setChecked(hyperparameters["outputValidationVideoContrastImprovement"]))
       layout.addWidget(checkbox, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    elif addZoomCheckbox:
+      checkbox = QCheckBox('Zoom in')
+      widgets['zoomInCheckbox'] = checkbox
+      checkbox.toggled.connect(lambda: widgets['loop'].exit())
+      layout.addWidget(checkbox, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
     if l is not None:
-      _createWidget(layout, status, widgets, (hyperparameters["firstFrame"], hyperparameters["lastFrame"] - 1, "You can also go through the video with the keys left arrow (backward); right arrow (forward); page down (fast backward); page up (fast forward)"), "Frame number", widgets, addContrastCheckbox)
+      _createWidget(layout, status, widgets, (hyperparameters["firstFrame"], hyperparameters["lastFrame"] - 1, "You can also go through the video with the keys left arrow (backward); right arrow (forward); page down (fast backward); page up (fast forward)"), "Frame number", widgets, addContrastCheckbox or addZoomCheckbox)
     else:
       layout.addWidget(QWidget())
     for info, name in zip(organizationTab, hyperparametersListNames):
-      _createWidget(layout, status, hyperparameters, info, name, widgets, addContrastCheckbox)
+      _createWidget(layout, status, hyperparameters, info, name, widgets, addContrastCheckbox or addZoomCheckbox)
 
     mainLayout = QVBoxLayout()
     titleLabel = util.apply_style(QLabel(title), font=util.TITLE_FONT)
