@@ -1,3 +1,5 @@
+import math
+
 class UpdateBackgroundAtIntervalMixin:
   def _updateBackgroundAtInterval(self, i, wellNumber, initialCurFrame, trackingHeadTailAllAnimals, frame):
     if i % self._hyperparameters["updateBackgroundAtInterval"] == 0:
