@@ -599,7 +599,7 @@ class OptimizeConfigFile(QWidget):
                                            _VideoRotationWidget, _NonStationaryBackgroundWidget, _NoMultiprocessingWidget, _AdditionalCalculationsWidget, _DocumentationLinksWidget]
     self._advancedFastCenterOfMassWidgets = [StoreValidationVideoWidget, _SolveIssuesNearBordersWidget, _PostProcessTrajectoriesWidget, _OptimizeDataAnalysisWidget]
     self._advancedCenterOfMassWidgets = [StoreValidationVideoWidget, _SolveIssuesNearBordersWidget, _PostProcessTrajectoriesWidget, _OptimizeDataAnalysisWidget]
-    self._advancedFastFishTrackingWidgets = [StoreValidationVideoWidget, _OptimizeDataAnalysisWidget, _AdditionalCalculationsWidget]
+    self._advancedFastFishTrackingWidgets = [StoreValidationVideoWidget, _OptimizeDataAnalysisWidget, _AdditionalCalculationsWidget, _NonStationaryBackgroundWidget]
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Optimize previously created configuration file", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
