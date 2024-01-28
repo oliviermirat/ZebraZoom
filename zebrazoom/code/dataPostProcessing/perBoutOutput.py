@@ -50,7 +50,7 @@ def perBoutOutput(superStruct, hyperparameters, videoNameWithTimestamp):
     videoPath = os.path.join(hyperparameters["outputFolder"], f'{videoNameWithTimestamp}.avi')
   else:
     videoPath = os.path.join(hyperparameters["outputFolder"], hyperparameters["videoName"], f'{videoNameWithTimestamp}.avi')
-  cap = zzVideoReading.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath, hyperparameters)
   
   if (cap.isOpened()== False): 
     print("Error opening video stream or file")

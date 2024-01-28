@@ -187,9 +187,75 @@ class tifReading():
   def set(self, propToChange, numImage):
     if propToChange == 1:
       self.curPage = numImage
-    
 
-def VideoCapture(videoPath):
+
+class eventBasedReading():
+  
+  def __init__(self, videoPath, hyperparameters=0):
+    
+    from metavision_core.event_io.raw_reader import RawReader
+    
+    self.record_raw = RawReader(videoPath.replace(".bias", ".raw"))
+    self.height, self.width = self.record_raw.get_size()
+    self.curPage    = 0
+    
+    self.im  = np.zeros((self.height, self.width))
+    self.im[:, :] = 255
+    self.lastIm = np.zeros((self.height, self.width))
+    self.lastIm[:, :] = 255
+    
+    if hyperparameters:
+      self.delta_t_toLoad            = hyperparameters["delta_t_toLoad"]
+      self.nbPixelsAddAtEachFrame    = hyperparameters["nbPixelsAddAtEachFrame"]
+      self.maxSumAllPixelToKeepImage = hyperparameters["maxSumAllPixelToKeepImage"]
+      self.fps = 1 / (self.delta_t_toLoad / 1000000)
+  
+  def get(self, idOfInfoRequested):
+    if idOfInfoRequested == 1:
+      return self.curPage
+    elif idOfInfoRequested == 3:
+      return self.width
+    elif idOfInfoRequested == 4:
+      return self.height
+    elif idOfInfoRequested == 7:
+      return -1 # No information on lastFrame
+    elif idOfInfoRequested == 5:
+      return self.fps # fake input video fps
+  
+  def isOpened(self):
+    if self.record_raw:
+      return (not self.record_raw.is_done())
+    else:
+      return False
+  
+  def release(self):
+    self.record_raw.reset()
+  
+  def read(self):
+    if not self.record_raw.is_done():
+      events = self.record_raw.load_delta_t(self.delta_t_toLoad)
+      self.im = self.lastIm + self.nbPixelsAddAtEachFrame
+      events2 = np.array([events['x'], events['y'], events['p']])
+      self.im[events2[1], events2[0]] = events2[2]
+      self.im[self.im > 255] = 255
+      summm = np.sum(self.im) / (self.height * self.width)
+      if summm > self.maxSumAllPixelToKeepImage:
+        self.im = self.lastIm
+        self.im[[events[i][1] for i in range(len(events))], [events[i][0] for i in range(len(events))]] = [0 for i in range(len(events))]
+      self.lastIm = self.im
+      return [True, cv2.cvtColor(self.im.astype('uint8'), cv2.COLOR_GRAY2BGR)]
+    else:
+      return [False, []]
+  
+  def set(self, propToChange, numImage):
+    if propToChange == 1:
+      self.curPage = numImage    
+      self.record_raw.reset()
+      if numImage >= 1:
+        self.record_raw.load_delta_t(numImage * self.delta_t_toLoad)
+
+
+def VideoCapture(videoPath, hyperparameters=0):
   
   if '.seq' in videoPath:
     
@@ -208,7 +274,13 @@ def VideoCapture(videoPath):
     zzVidCapture = tifReading(videoPath)
     
     return zzVidCapture
-  
+
+  elif '.bias' in videoPath:
+    
+    zzVidCapture = eventBasedReading(videoPath, hyperparameters)
+    
+    return zzVidCapture
+    
   else:
     
     return cv2.VideoCapture(videoPath)

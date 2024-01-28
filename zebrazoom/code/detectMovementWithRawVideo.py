@@ -151,15 +151,15 @@ def detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumbe
   if hyperparameters["adjustDetectMovWithRawVideo"]:
     cap1 = []
     cap2 = 0
-    cap = zzVideoReading.VideoCapture(videoPath)
+    cap = zzVideoReading.VideoCapture(videoPath, hyperparameters)
     cap.set(1, debut_l)
     for k in range(debut_l, max_l):
       imgTemp = get_default_tracking_method()(videoPath, wellPositions, hyperparameters).getImageSequential(cap, k, wellNumber)
       cap1.append(imgTemp)
   else:
-    cap1 = zzVideoReading.VideoCapture(videoPath)
+    cap1 = zzVideoReading.VideoCapture(videoPath, hyperparameters)
     cap1.set(1, debut_l)
-    cap2 = zzVideoReading.VideoCapture(videoPath)
+    cap2 = zzVideoReading.VideoCapture(videoPath, hyperparameters)
     cap2.set(1, debut_l + hyperparameters["frameGapComparision"])
   
   while ((l < max_l) and (l-firstFrame < len(head))) or hyperparameters["adjustDetectMovWithRawVideo"]:

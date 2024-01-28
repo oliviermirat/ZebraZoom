@@ -47,7 +47,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
     resizeFrameFactor = self._hyperparameters["resizeFrameFactor"] if "resizeFrameFactor" in self._hyperparameters else 0
     
     # Getting video reader
-    cap = zzVideoReading.VideoCapture(self._videoPath)
+    cap = zzVideoReading.VideoCapture(self._videoPath, self._hyperparameters)
     if (cap.isOpened()== False):
       print("Error opening video stream or file")
     
@@ -70,6 +70,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
     print("listOfWellsOnWhichToRunTheTracking:", self._listOfWellsOnWhichToRunTheTracking)
     if not(self._hyperparameters["useFirstFrameAsBackground"]):
       self._background = cv2.max(frame, self._background) # INCONSISTENT!!! should be changed!
+    
     self._background = cv2.cvtColor(self._background, cv2.COLOR_BGR2GRAY) # INCONSISTENT!!! should be changed!
     cap.set(cv2.CAP_PROP_POS_FRAMES, self._firstFrame)
     
