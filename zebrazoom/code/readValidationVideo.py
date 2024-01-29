@@ -243,7 +243,9 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
 
     cap.set(1, l)
     ret, img = cap.read()
-
+    if type(img[0][0]) != np.ndarray:
+      img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+    
     if hyperparameters["imagePreProcessMethod"]:
       img = preprocessImage(img, hyperparameters)
     if hyperparameters["outputValidationVideoContrastImprovement"]:
