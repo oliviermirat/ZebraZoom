@@ -10,7 +10,8 @@ def backgroundSubtractionOnWholeImage(self, frame, k):
 
   # Color to grey scale transformation
   t1 = time.time()
-  frame = frame[:,:,0]
+  if type(frame[0][0]) == np.ndarray:
+    frame = frame[:,:,0]
   t2 = time.time()
   self._times2[k, 0] = t2 - t1
   if self._printInterTime:

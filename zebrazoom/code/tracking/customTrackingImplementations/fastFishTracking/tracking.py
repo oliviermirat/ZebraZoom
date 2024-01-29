@@ -70,8 +70,8 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
     print("listOfWellsOnWhichToRunTheTracking:", self._listOfWellsOnWhichToRunTheTracking)
     if not(self._hyperparameters["useFirstFrameAsBackground"]):
       self._background = cv2.max(frame, self._background) # INCONSISTENT!!! should be changed!
-    
-    self._background = cv2.cvtColor(self._background, cv2.COLOR_BGR2GRAY) # INCONSISTENT!!! should be changed!
+    if len(self._background.shape) == 3 and self._background.shape[2] == 3:
+      self._background = cv2.cvtColor(self._background, cv2.COLOR_BGR2GRAY) # INCONSISTENT!!! should be changed!
     cap.set(cv2.CAP_PROP_POS_FRAMES, self._firstFrame)
     
     if resizeFrameFactor:

@@ -11,7 +11,8 @@ import cv2
 def backgroundSubtractionOnlyOnROIs(self, frame, k):
   
   # Color to grey scale transformation
-  frame = frame[:,:,0]
+  if type(frame[0][0]) == np.ndarray:
+    frame = frame[:,:,0]
   
   # Bout detection
   if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:

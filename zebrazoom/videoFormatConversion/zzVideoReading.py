@@ -243,7 +243,7 @@ class eventBasedReading():
         self.im = self.lastIm
         self.im[[events[i][1] for i in range(len(events))], [events[i][0] for i in range(len(events))]] = [0 for i in range(len(events))]
       self.lastIm = self.im
-      return [True, cv2.cvtColor(self.im.astype('uint8'), cv2.COLOR_GRAY2BGR)]
+      return [True, self.im.astype('uint8')]
     else:
       return [False, []]
   
