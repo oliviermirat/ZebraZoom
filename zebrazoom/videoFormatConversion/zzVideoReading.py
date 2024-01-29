@@ -241,7 +241,7 @@ class eventBasedReading():
       summm = np.sum(self.im) / (self.height * self.width)
       if summm > self.maxSumAllPixelToKeepImage:
         self.im = self.lastIm
-        self.im[[events[i][1] for i in range(len(events))], [events[i][0] for i in range(len(events))]] = [0 for i in range(len(events))]
+        self.im[events2[1], events2[0]] = events2[2]
       self.lastIm = self.im
       return [True, self.im.astype('uint8')]
     else:
