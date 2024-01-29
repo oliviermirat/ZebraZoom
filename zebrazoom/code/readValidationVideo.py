@@ -334,7 +334,6 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     validationLayout = QGridLayout()
     validationLayout.setColumnStretch(3, 1)
     validationLayout.setRowStretch(5, 1)
-    validationLayout.addWidget(QLabel('Frame:'), 0, 0)
     bendCheckbox = QCheckBox('Bend')
     bendCheckbox.toggled.connect(lambda checked: saveChanges() or clearButton.setEnabled(True) or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer, topLeftCircleCb=topLeftCircleCb), video))
     validationLayout.addWidget(bendCheckbox, 1, 0, 1, 2)
