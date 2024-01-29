@@ -217,15 +217,16 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
         flattenedList.extend((n for n in name.itemlist if n in hyperparameters))
       else:
         flattenedList.append(name)
-    for idx in range(len(hyperparameters['steps'])):
-      name = f'Step {idx + 1}'
-      if name not in widgets:
-        continue
-      slider = widgets[name]
-      value = hyperparameters['steps'][idx]
-      if slider.value() != value:
-        slider.setValue(value)
-      slider.setMaximum(hyperparameters['maxDepth'])
+    if 'steps' in hyperparameters:
+      for idx in range(len(hyperparameters['steps'])):
+        name = f'Step {idx + 1}'
+        if name not in widgets:
+          continue
+        slider = widgets[name]
+        value = hyperparameters['steps'][idx]
+        if slider.value() != value:
+          slider.setValue(value)
+        slider.setMaximum(hyperparameters['maxDepth'])
     for name in flattenedList:
       if name not in widgets:
         continue
