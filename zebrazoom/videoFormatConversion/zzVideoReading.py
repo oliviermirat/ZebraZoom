@@ -211,12 +211,16 @@ class eventBasedReading():
       self.fps = 1 / (self.delta_t_toLoad / 1000000)
       
       # try replacing by iteration with load_n_events
-      events = self.record_raw.load_delta_t(1000*1000*60*96) # 4 days videos maximum
-      secondsLenght = (events[len(events) - 1][3] - events[0][3]) / (1000 * 1000)
+      events = self.record_raw.load_n_events(5000)
+      firstEventTime = events[0][3]
+      while not(self.record_raw.is_done()):
+        events = self.record_raw.load_n_events(5000)
+        lastEventTime = events[len(events) - 1][3]
+      secondsLenght = (lastEventTime - firstEventTime) / (1000 * 1000)
+      
       nbFrames = int(secondsLenght * self.fps)
       self.nbFrames = nbFrames
       print("nbFrames:", nbFrames, "; secondsLenght:", secondsLenght)
-      
       self.record_raw.reset()
     else:
       self.nbFrames = -1
@@ -260,10 +264,11 @@ class eventBasedReading():
   
   def set(self, propToChange, numImage):
     if propToChange == 1:
-      self.curPage = numImage    
-      self.record_raw.reset()
-      if numImage >= 1:
-        self.record_raw.load_delta_t(numImage * self.delta_t_toLoad)
+      print("setting image position")
+      if numImage < self.curPage:
+        self.record_raw.reset()
+      self.curPage = numImage
+      self.record_raw.seek_time((numImage / self.fps) * 1000 * 1000)
 
 
 def VideoCapture(videoPath, hyperparameters=0):
