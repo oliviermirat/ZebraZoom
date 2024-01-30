@@ -28,7 +28,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
     self.cap = zzVideoReading.VideoCapture(self._videoPath, self._hyperparameters)
     if (self.cap.isOpened()== False):
       print("Error opening video stream or file")
-    if self._hyperparameters["readEventBasedData"]:
+    if ("readEventBasedData" in self._hyperparameters) and self._hyperparameters["readEventBasedData"]:
       self._hyperparameters["lastFrame"] = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
     
     self._firstFrame = self._hyperparameters["firstFrame"]
@@ -75,7 +75,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
     if self._hyperparameters["chooseWellsToRunTrackingOnWithFirstAndLastFrame"] and self._hyperparameters["onlyTrackThisOneWell"] == -1:
       self._listOfWellsOnWhichToRunTheTracking = getListOfWellsOnWhichToRunTheTracking(self, self._background[:,:,0], frame[:,:,0])
     print("listOfWellsOnWhichToRunTheTracking:", self._listOfWellsOnWhichToRunTheTracking)
-    if not(self._hyperparameters["noBackgroundSubtraction"]):
+    if not("noBackgroundSubtraction" in self._hyperparameters) or not(self._hyperparameters["noBackgroundSubtraction"]):
       if not(self._hyperparameters["useFirstFrameAsBackground"]):
         self._background = cv2.max(frame, self._background) # INCONSISTENT!!! should be changed!
       if len(self._background.shape) == 3 and self._background.shape[2] == 3:
