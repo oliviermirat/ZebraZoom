@@ -50,7 +50,7 @@ class ZebraZoomVideoAnalysis:
     if self._hyperparameters["firstFrame"] > nbFrames and nbFrames != -1: # The nbFrames != -1 is for event based tracking
       print("Error for video " + self._videoName + ": The parameter 'firstFrame' in your configuration file is too big" + " (firstFrame value is " + str(self._hyperparameters["firstFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
       raise NameError("Error for video " + self._videoName + ": The parameter 'firstFrame' in your configuration file is too big" + " (firstFrame value is " + str(self._hyperparameters["firstFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
-    if (self._hyperparameters["lastFrame"] < 0) or (self._hyperparameters["lastFrame"] <= self._hyperparameters["firstFrame"]):
+    if ((self._hyperparameters["lastFrame"] < 0) or (self._hyperparameters["lastFrame"] <= self._hyperparameters["firstFrame"])) and not((nbFrames == - 1) and (self._hyperparameters["lastFrame"] == -1)):
       print("Error for video " + self._videoName + ": The parameter 'lastFrame' in your configuration file is too small" + " (lastFrame value is " + str(self._hyperparameters["lastFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
       raise NameError("Error for video " + self._videoName + ": The parameter 'lastFrame' in your configuration file is too small" + " (lastFrame value is " + str(self._hyperparameters["lastFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
     if self._hyperparameters["lastFrame"] > nbFrames and nbFrames != -1: # The nbFrames != -1 is for event based tracking

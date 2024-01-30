@@ -50,8 +50,9 @@ def backgroundSubtractionOnlyOnROIs(self, frame, k):
           frameROI = frame[roiYStart:roiYEnd, roiXStart:roiXEnd].copy()
           
           # Subtracting background of image
-          backgroundROI = self._background[roiYStart:roiYEnd, roiXStart:roiXEnd]
-          frameROI = 255 - np.where(backgroundROI >= frameROI, backgroundROI - frameROI, 0).astype(np.uint8)
+          if not(self._hyperparameters["noBackgroundSubtraction"]):
+            backgroundROI = self._background[roiYStart:roiYEnd, roiXStart:roiXEnd]
+            frameROI = 255 - np.where(backgroundROI >= frameROI, backgroundROI - frameROI, 0).astype(np.uint8)
 
           # Applying gaussian filter
           paramGaussianBlur = self._hyperparameters["paramGaussianBlur"]

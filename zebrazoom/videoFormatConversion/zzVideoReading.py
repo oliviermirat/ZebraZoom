@@ -209,6 +209,17 @@ class eventBasedReading():
       self.nbPixelsAddAtEachFrame    = hyperparameters["nbPixelsAddAtEachFrame"]
       self.maxSumAllPixelToKeepImage = hyperparameters["maxSumAllPixelToKeepImage"]
       self.fps = 1 / (self.delta_t_toLoad / 1000000)
+      
+      # try replacing by iteration with load_n_events
+      events = self.record_raw.load_delta_t(1000*1000*60*96) # 4 days videos maximum
+      secondsLenght = (events[len(events) - 1][3] - events[0][3]) / (1000 * 1000)
+      nbFrames = int(secondsLenght * self.fps)
+      self.nbFrames = nbFrames
+      print("nbFrames:", nbFrames, "; secondsLenght:", secondsLenght)
+      
+      self.record_raw.reset()
+    else:
+      self.nbFrames = -1
   
   def get(self, idOfInfoRequested):
     if idOfInfoRequested == 1:
@@ -218,9 +229,9 @@ class eventBasedReading():
     elif idOfInfoRequested == 4:
       return self.height
     elif idOfInfoRequested == 7:
-      return -1 # No information on lastFrame
+      return self.nbFrames
     elif idOfInfoRequested == 5:
-      return self.fps # fake input video fps
+      return self.fps
   
   def isOpened(self):
     if self.record_raw:
