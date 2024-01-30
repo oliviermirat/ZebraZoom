@@ -440,30 +440,40 @@ class _NonStationaryBackgroundWidget(QWidget):
     def updateBackroundOnEveryFrame(checked):
       if checked:
         self._configFile["updateBackgroundAtInterval"] = 1
-        self._configFile["useFirstFrameAsBackground"] = 1
       else:
         if self._originalUpdateBackgroundAtInterval is None:
           if "updateBackgroundAtInterval" in self._configFile:
             del self._configFile["updateBackgroundAtInterval"]
         else:
           self._configFile["updateBackgroundAtInterval"] = 0
+    self._updateBackgroundOnEveryFrameCheckbox.toggled.connect(updateBackroundOnEveryFrame)
+    layout.addWidget(self._updateBackgroundOnEveryFrameCheckbox, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    self._useFirstFrameAsBackgroundCheckbox = QCheckBox("Use the first frame as background")
+    def useFirstFrameAsBackground(checked):
+      if checked:
+        self._configFile["useFirstFrameAsBackground"] = 1
+      else:
         if self._originalUseFirstFrameAsBackground is None:
           if "useFirstFrameAsBackground" in self._configFile:
             del self._configFile["useFirstFrameAsBackground"]
         else:
           self._configFile["useFirstFrameAsBackground"] = 0
-    self._updateBackgroundOnEveryFrameCheckbox.toggled.connect(updateBackroundOnEveryFrame)
-    layout.addWidget(self._updateBackgroundOnEveryFrameCheckbox, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+    self._useFirstFrameAsBackgroundCheckbox.toggled.connect(useFirstFrameAsBackground)
+    layout.addWidget(self._useFirstFrameAsBackgroundCheckbox, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
     self.setLayout(layout)
 
   def refresh(self, configFile, videoPath=None):
     self._configFile = configFile
     self._originalUpdateBackgroundAtInterval = configFile.get("updateBackgroundAtInterval")
     self._originalUseFirstFrameAsBackground = configFile.get("useFirstFrameAsBackground")
-    if self._originalUpdateBackgroundAtInterval is not None and self._originalUseFirstFrameAsBackground is not None:
-      self._updateBackgroundOnEveryFrameCheckbox.setChecked(self._originalUpdateBackgroundAtInterval and self._originalUseFirstFrameAsBackground)
+    if self._originalUpdateBackgroundAtInterval is not None:
+      self._updateBackgroundOnEveryFrameCheckbox.setChecked(self._originalUpdateBackgroundAtInterval)
     else:
       self._updateBackgroundOnEveryFrameCheckbox.setChecked(False)
+    if self._originalUseFirstFrameAsBackground is not None:
+      self._useFirstFrameAsBackgroundCheckbox.setChecked(self._originalUseFirstFrameAsBackground)
+    else:
+      self._useFirstFrameAsBackgroundCheckbox.setChecked(False)
 
 
 class _NoMultiprocessingWidget(QWidget):
