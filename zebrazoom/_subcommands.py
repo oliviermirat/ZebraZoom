@@ -97,7 +97,7 @@ def kinematicParametersAnalysisCenterOfMassOnlyNoBoutsDetection(args):
   kinematicParametersAnalysisCenterOfMassOnlyNoBoutsDetection(sys)
 
 def visualizeMovingAndSleepingTime(args):
-  from zebrazoom.code.readValidationVideo import readValidationVideo
+  from zebrazoom.code.GUI.readValidationVideo import readValidationVideo
   import pandas as pd
   df = pd.read_excel(os.path.join(paths.getDefaultZZoutputFolder(), args.videoName, "sleepVsMoving_" + args.videoName + ".xlsx"))
   nbWells = int(len(df.columns)/3)
