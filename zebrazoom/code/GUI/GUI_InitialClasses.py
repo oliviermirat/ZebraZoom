@@ -973,7 +973,7 @@ class _VisualizationGroupDetails(QWidget):
     self._addResultsBtn = QPushButton("Add results set(s)")
     self._addResultsBtn.clicked.connect(self._addResults)
     buttonsLayout.addWidget(self._addResultsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
-    self._removeResultsBtn = QPushButton("Remove")
+    self._removeResultsBtn = QPushButton("Remove from group")
     self._removeResultsBtn.clicked.connect(self._removeSelected)
     self._removeResultsBtn.setEnabled(False)
     buttonsLayout.addWidget(self._removeResultsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
