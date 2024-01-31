@@ -1154,7 +1154,6 @@ def adjustFastFishTrackingPage(useNext=True, nextCb=None, detectBoutsMethod=None
     tempConfig["detectMovementWithRawVideoInsideTracking"] = 0
     tempConfig["storeH5"] = 1
     tempConfig["reloadWellPositions"] = 1
-    tempConfig["updateBackgroundAtInterval"] = 0
     tempConfig["adjustFreelySwimTracking"] = 1
 
     try:
