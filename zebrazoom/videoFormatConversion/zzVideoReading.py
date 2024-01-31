@@ -265,7 +265,7 @@ class eventBasedReading():
   def set(self, propToChange, numImage):
     if propToChange == 1:
       print("setting image position")
-      if numImage < self.curPage:
+      if numImage <= self.curPage:
         self.record_raw.reset()
       self.curPage = numImage
       self.record_raw.seek_time((numImage / self.fps) * 1000 * 1000)
