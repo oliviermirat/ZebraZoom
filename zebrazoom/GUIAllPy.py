@@ -177,6 +177,8 @@ class ZebraZoomApp(PlainApplication):
                 if reply != QMessageBox.StandardButton.Yes:
                     return True
             self.configFile.clear()
+            if self._temporaryZZoutputLocation is not None:
+              self._temporaryZZoutputLocation.cleanup()
             self._temporaryZZoutputLocation = None
             self.savedConfigFile = None
             self.videoToCreateConfigFileFor = ''

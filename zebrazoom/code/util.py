@@ -1595,11 +1595,11 @@ def getRotationAngle(frame, angle, dialog=False):
 
 
 class WellSelectionLabel(QLabel):
-  def __init__(self, width, height):
+  def __init__(self, width, height, selectedWell=0):
     super().__init__()
     self._width = width
     self._height = height
-    self._well = 0
+    self._well = selectedWell
     self._hoveredWell = None
     if QApplication.instance().wellPositions:
       self.setMouseTracking(True)
