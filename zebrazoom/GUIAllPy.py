@@ -341,11 +341,11 @@ class ZebraZoomApp(PlainApplication):
     def adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo):
       adjustParameterInsideAlgoFunctions.adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, firstFrameParamAdjust, adjustOnWholeVideo)
 
-    def calculateBackground(self, controller, nbImagesForBackgroundCalculation, useNext=True):
-      adjustParameterInsideAlgoFunctions.calculateBackground(self, controller, nbImagesForBackgroundCalculation, useNext)
+    def calculateBackground(self, *args, **kwargs):
+      adjustParameterInsideAlgoFunctions.calculateBackground(self, *args, **kwargs)
 
-    def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False, useNext=True, nextCb=None, reloadWellPositions=False):
-      adjustParameterInsideAlgoFunctions.calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen, automaticParameters, boutDetectionsOnly, useNext, nextCb, reloadWellPositions=reloadWellPositions)
+    def calculateBackgroundFreelySwim(self, *args, **kwargs):
+      adjustParameterInsideAlgoFunctions.calculateBackgroundFreelySwim(self, *args, **kwargs)
 
     def goToAdvanceSettings(self, controller, yes, no):
       configFilePrepareFunctions.goToAdvanceSettings(self, controller, yes, no)

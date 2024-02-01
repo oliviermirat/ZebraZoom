@@ -426,7 +426,7 @@ class _AlignedLabel(QWidget):  # this will mimick the alignment of SliderWithSpi
     self.setLayout(layout)
 
 
-def adjustParamInsideAlgoPage(useNext=True):
+def adjustParamInsideAlgoPage(useNext=True, frameIdx=None):
   app = QApplication.instance()
 
   layout = QVBoxLayout()
@@ -437,7 +437,7 @@ def adjustParamInsideAlgoPage(useNext=True):
 
   firstFrame = app.configFile.get("firstFrame", 1)
   maxFrame = cap.get(7) - 1
-  frameSlider = util.SliderWithSpinbox(firstFrame, 0, maxFrame, name="First frame")
+  frameSlider = util.SliderWithSpinbox(firstFrame if frameIdx is None else frameIdx, 0, maxFrame, name="First frame")
 
   def getFrame(improveContrast=None):
     cap.set(1, frameSlider.value())
@@ -699,7 +699,7 @@ def adjustParamInsideAlgoFreelySwimPage(useNext=True):
   page = _showPage(layout, (img, video))
 
 
-def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
+def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True, wellIdx=0, frameIdx=None):
   app = QApplication.instance()
 
   layout = QVBoxLayout()
@@ -710,7 +710,7 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
 
   firstFrame = app.configFile.get("firstFrame", 1)
   maxFrame = cap.get(7) - 1
-  frameSlider = util.SliderWithSpinbox(firstFrame, 0, maxFrame, name="First frame")
+  frameSlider = util.SliderWithSpinbox(firstFrame if frameIdx is None else frameIdx, 0, maxFrame, name="First frame")
 
   def getFrame():
     cap.set(1, frameSlider.value())
@@ -720,7 +720,7 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
 
   img = getFrame()
   height, width = img.shape[:2]
-  video = util.WellSelectionLabel(width, height)
+  video = util.WellSelectionLabel(width, height, selectedWell=wellIdx)
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
 
   sublayout = QHBoxLayout()
@@ -1161,7 +1161,6 @@ def adjustFastFishTrackingPage(useNext=True, nextCb=None, detectBoutsMethod=None
     tempConfig["storeH5"] = 1
     tempConfig["reloadWellPositions"] = 1
     tempConfig["adjustFreelySwimTracking"] = 1
-    tempConfig["popUpAlgoFollow"] = 0
 
     try:
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, tempConfig, argv).run()

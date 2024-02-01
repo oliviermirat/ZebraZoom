@@ -540,16 +540,14 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     trackingPointsLayout.addWidget(saveButton)
 
   adjustButton = None
-  if numWell != -1 and config is not None:
+  if config is not None and (numWell != -1 or config.get("headEmbeded", False)):
+    trackingImplementation = config.get('trackingImplementation')
+    if trackingImplementation is not None and trackingImplementation != 'fastFishTracking.tracking' or config.get("trackingMethod"):
+      return
     adjustButton = QPushButton('Adjust parameters')
     def adjustParametrsClicked():
       app = QApplication.instance()
-      app.configFile = config
-      trackingImplementation = app.configFile.get('trackingImplementation')
-      if trackingImplementation is not None and trackingImplementation != 'fastFishTracking.tracking':
-        QMessageBox.information(app.window, "Optimization not supported", "Optimization is not yet supported for this type of configuration file.")
-        app.configFile.clear()
-        return
+      app.configFile = {key: val for key, val in config.items() if key != 'popUpAlgoFollow'}
       app.savedConfigFile = app.configFile.copy()
       if originalVideoPath is None:
         app.videoToCreateConfigFileFor, _ = QFileDialog.getOpenFileName(app.window, "Select video to create config file for", os.path.expanduser("~"),
@@ -560,7 +558,15 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
         app.configFile.clear()
         return
       util.addToHistory(app.optimizeConfigFile)()
-      util.addToHistory(adjustFastFishTrackingPage)(useNext=False, wellPositions=wellPositions, wellShape=wellShape, wellIdx=numWell, frameIdx=frameSlider.value())
+      if app.configFile.get("trackingImplementation") == "fastFishTracking.tracking":
+        util.addToHistory(adjustFastFishTrackingPage)(useNext=False, wellPositions=wellPositions, wellShape=wellShape, wellIdx=numWell, frameIdx=frameSlider.value())
+      else:
+        trackingMethod = app.configFile.get("trackingMethod")
+        if not trackingMethod:
+          if app.configFile.get("headEmbeded", False):
+            util.addToHistory(app.calculateBackground)(app, 0, useNext=False, wellPositions=wellPositions, wellShape=wellShape, frameIdx=frameSlider.value())
+          else:
+            util.addToHistory(app.calculateBackgroundFreelySwim)(app, 0, automaticParameters=True, useNext=False, wellPositions=wellPositions, wellShape=wellShape, wellIdx=numWell, frameIdx=frameSlider.value())
     QTimer.singleShot(0, lambda: adjustButton.clicked.connect(adjustParametrsClicked))
     trackingPointsLayout.addWidget(adjustButton)
 
