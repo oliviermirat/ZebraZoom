@@ -54,7 +54,7 @@ def chooseVideoToCreateConfigFileFor(self, controller, reloadConfigFile):
     self.savedConfigFile = self.configFile.copy()
 
   self.videoToCreateConfigFileFor, _ = QFileDialog.getOpenFileName(self.window, "Select video to create config file for", os.path.expanduser("~"),
-                                                                   filter=f'Videos ({" ".join("*%s" % ext for ext in _util.VIDEO_EXTENSIONS)});; All files (*.*)')
+                                                                   filter=f'Videos ({" ".join("*%s" % ext for ext in util.VIDEO_EXTENSIONS)});; All files (*.*)')
   if not self.videoToCreateConfigFileFor:
     self.configFile.clear()
     return False
