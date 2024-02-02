@@ -426,7 +426,7 @@ class _AlignedLabel(QWidget):  # this will mimick the alignment of SliderWithSpi
     self.setLayout(layout)
 
 
-def adjustParamInsideAlgoPage(useNext=True):
+def adjustParamInsideAlgoPage(useNext=True, frameIdx=None):
   app = QApplication.instance()
 
   layout = QVBoxLayout()
@@ -437,7 +437,7 @@ def adjustParamInsideAlgoPage(useNext=True):
 
   firstFrame = app.configFile.get("firstFrame", 1)
   maxFrame = cap.get(7) - 1
-  frameSlider = util.SliderWithSpinbox(firstFrame, 0, maxFrame, name="First frame")
+  frameSlider = util.SliderWithSpinbox(firstFrame if frameIdx is None else frameIdx, 0, maxFrame, name="First frame")
 
   def getFrame(improveContrast=None):
     cap.set(1, frameSlider.value())
@@ -699,7 +699,7 @@ def adjustParamInsideAlgoFreelySwimPage(useNext=True):
   page = _showPage(layout, (img, video))
 
 
-def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
+def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True, wellIdx=0, frameIdx=None):
   app = QApplication.instance()
 
   layout = QVBoxLayout()
@@ -710,7 +710,7 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
 
   firstFrame = app.configFile.get("firstFrame", 1)
   maxFrame = cap.get(7) - 1
-  frameSlider = util.SliderWithSpinbox(firstFrame, 0, maxFrame, name="First frame")
+  frameSlider = util.SliderWithSpinbox(firstFrame if frameIdx is None else frameIdx, 0, maxFrame, name="First frame")
 
   def getFrame():
     cap.set(1, frameSlider.value())
@@ -720,7 +720,7 @@ def adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=True):
 
   img = getFrame()
   height, width = img.shape[:2]
-  video = util.WellSelectionLabel(width, height)
+  video = util.WellSelectionLabel(width, height, selectedWell=wellIdx)
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
 
   sublayout = QHBoxLayout()
@@ -1009,7 +1009,7 @@ def adjustBoutDetectionOnlyPage(useNext=True, nextCb=None):
   page = _showPage(layout, (img, video))
 
 
-def adjustFastFishTrackingPage(useNext=True, nextCb=None, detectBoutsMethod=None):
+def adjustFastFishTrackingPage(useNext=True, nextCb=None, detectBoutsMethod=None, wellPositions=None, wellShape=None, wellIdx=0, frameIdx=None):
   from zebrazoom.code.GUI.adjustParameterInsideAlgoFunctions import getMainArguments, prepareConfigFileForParamsAdjustements
 
   app = QApplication.instance()
@@ -1019,10 +1019,16 @@ def adjustFastFishTrackingPage(useNext=True, nextCb=None, detectBoutsMethod=None
   tempConfig["debugFindWells"] = 1
   tempConfig["exitAfterWellsDetection"] = 1
   tempConfig["storeH5"] = 1
-  app.wellPositions = []
+  app.wellPositions = [] if wellPositions is None else [(position['topLeftX'], position['topLeftY'], position['lengthX'], position['lengthY']) for idx, position in enumerate(wellPositions)]
+  app.wellShape = wellShape
   try:
     with app.busyCursor():
-      ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, tempConfig, ['outputFolder', app.ZZoutputLocation]).run()
+      if wellPositions is None:
+        ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, tempConfig, ['outputFolder', app.ZZoutputLocation]).run()
+      else:
+        zzAnalysis = ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, tempConfig, ['outputFolder', app.ZZoutputLocation])
+        zzAnalysis.storeConfigUsed(tempConfig)
+        zzAnalysis.storeWellPositions(wellPositions)
   except ValueError:
       pass
 
@@ -1034,7 +1040,7 @@ def adjustFastFishTrackingPage(useNext=True, nextCb=None, detectBoutsMethod=None
 
   firstFrame = app.configFile.get("firstFrame", 1)
   maxFrame = cap.get(7) - 1
-  frameSlider = util.SliderWithSpinbox(firstFrame, 0, maxFrame, name="First frame")
+  frameSlider = util.SliderWithSpinbox(firstFrame if frameIdx is None else frameIdx, 0, maxFrame, name="First frame")
 
   def getFrame():
     cap.set(1, frameSlider.value())
@@ -1044,7 +1050,7 @@ def adjustFastFishTrackingPage(useNext=True, nextCb=None, detectBoutsMethod=None
 
   img = getFrame()
   height, width = img.shape[:2]
-  video = util.WellSelectionLabel(width, height)
+  video = util.WellSelectionLabel(width, height, selectedWell=wellIdx)
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
 
   sublayout = QHBoxLayout()

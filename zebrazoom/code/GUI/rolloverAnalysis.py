@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import QAbstractItemView, QApplication, QFileDialog, QFileS
 
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
-from zebrazoom.code.readValidationVideo import getFramesCallback
+from zebrazoom.code.GUI.readValidationVideo import getFramesCallback
 
 
 class RolloverAnalysis(QWidget):

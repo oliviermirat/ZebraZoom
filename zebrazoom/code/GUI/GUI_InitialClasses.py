@@ -27,10 +27,11 @@ PYQT6 = False
 import zebrazoom
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
-from zebrazoom.code.readValidationVideo import readValidationVideo
 from zebrazoom.code.checkConsistencyOfParameters import checkConsistencyOfParameters
 from zebrazoom.code.GUI.configFilePrepare import StoreValidationVideoWidget
 from zebrazoom.code.GUI.GUI_InitialFunctions import chooseConfigFile, launchZebraZoom
+from zebrazoom.code.GUI.readValidationVideo import readValidationVideo
+
 
 LARGE_FONT= QFont("Verdana", 12)
 
