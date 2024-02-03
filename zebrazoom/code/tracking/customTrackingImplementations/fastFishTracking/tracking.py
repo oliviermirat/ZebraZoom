@@ -24,6 +24,13 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
     self._wellPositions = wellPositions
     self._hyperparameters = hyperparameters
     self._auDessusPerAnimalIdList = None
+    
+    self.cap = zzVideoReading.VideoCapture(self._videoPath, self._hyperparameters)
+    if (self.cap.isOpened()== False):
+      print("Error opening video stream or file")
+    if ("readEventBasedData" in self._hyperparameters) and self._hyperparameters["readEventBasedData"]:
+      self._hyperparameters["lastFrame"] = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    
     self._firstFrame = self._hyperparameters["firstFrame"]
     self._lastFrame = self._hyperparameters["lastFrame"]
     self._nbTailPoints = self._hyperparameters["nbTailPoints"]
@@ -47,7 +54,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
     resizeFrameFactor = self._hyperparameters["resizeFrameFactor"] if "resizeFrameFactor" in self._hyperparameters else 0
     
     # Getting video reader
-    cap = zzVideoReading.VideoCapture(self._videoPath)
+    cap = self.cap
     if (cap.isOpened()== False):
       print("Error opening video stream or file")
     
@@ -68,9 +75,11 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
     if self._hyperparameters["chooseWellsToRunTrackingOnWithFirstAndLastFrame"] and self._hyperparameters["onlyTrackThisOneWell"] == -1:
       self._listOfWellsOnWhichToRunTheTracking = getListOfWellsOnWhichToRunTheTracking(self, self._background[:,:,0], frame[:,:,0])
     print("listOfWellsOnWhichToRunTheTracking:", self._listOfWellsOnWhichToRunTheTracking)
-    if not(self._hyperparameters["useFirstFrameAsBackground"]):
-      self._background = cv2.max(frame, self._background) # INCONSISTENT!!! should be changed!
-    self._background = cv2.cvtColor(self._background, cv2.COLOR_BGR2GRAY) # INCONSISTENT!!! should be changed!
+    if not("noBackgroundSubtraction" in self._hyperparameters) or not(self._hyperparameters["noBackgroundSubtraction"]):
+      if not(self._hyperparameters["useFirstFrameAsBackground"]):
+        self._background = cv2.max(frame, self._background) # INCONSISTENT!!! should be changed!
+      if len(self._background.shape) == 3 and self._background.shape[2] == 3:
+        self._background = cv2.cvtColor(self._background, cv2.COLOR_BGR2GRAY) # INCONSISTENT!!! should be changed!
     cap.set(cv2.CAP_PROP_POS_FRAMES, self._firstFrame)
     
     if resizeFrameFactor:

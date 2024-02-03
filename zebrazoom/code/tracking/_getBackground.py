@@ -7,7 +7,7 @@ from zebrazoom.code.preprocessImage import preprocessBackgroundImage
 
 class GetBackgroundMixin:
   def _getBackground(self):
-    cap   = zzVideoReading.VideoCapture(self._videoPath)
+    cap   = zzVideoReading.VideoCapture(self._videoPath, self._hyperparameters)
     max_l = int(cap.get(7))
 
     backCalculationStep = self._hyperparameters["backCalculationStep"]

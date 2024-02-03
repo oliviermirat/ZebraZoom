@@ -10,7 +10,8 @@ def backgroundSubtractionOnWholeImage(self, frame, k):
 
   # Color to grey scale transformation
   t1 = time.time()
-  frame = frame[:,:,0]
+  if type(frame[0][0]) == np.ndarray:
+    frame = frame[:,:,0]
   t2 = time.time()
   self._times2[k, 0] = t2 - t1
   if self._printInterTime:
@@ -27,7 +28,8 @@ def backgroundSubtractionOnWholeImage(self, frame, k):
   
   # Subtracting background of image
   t1 = time.time()
-  frame = 255 - np.where(self._background >= frame, self._background - frame, 0).astype(np.uint8)
+  if not("noBackgroundSubtraction" in self._hyperparameters) or not(self._hyperparameters["noBackgroundSubtraction"]):
+    frame = 255 - np.where(self._background >= frame, self._background - frame, 0).astype(np.uint8)
   t2 = time.time()
   self._times2[k, 2] = t2 - t1
   if self._printInterTime:
@@ -61,7 +63,8 @@ def backgroundSubtractionOnWholeImage(self, frame, k):
           
           # Head position tracking
           (minVal, maxVal, headPosition, maxLoc) = cv2.minMaxLoc(frameROI)
-          if minVal >= self._hyperparameters["minimumHeadPixelValue"]:
+
+          if minVal >= self._hyperparameters["minimumHeadPixelValue"] or (("readEventBasedData" in self._hyperparameters) and self._hyperparameters["readEventBasedData"]):
             self._trackingDataPerWell[wellNumber][animalId][k] = self._trackingDataPerWell[wellNumber][animalId][k-1]
           else:
             if self._hyperparameters["trackTail"]:

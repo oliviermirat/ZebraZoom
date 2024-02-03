@@ -130,11 +130,11 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
     QMessageBox.critical(app.window, "Video not found", "Cannot display the validation video because it could not be found.")
     return
 
-  cap = zzVideoReading.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath, hyperparameters)
 
   nx    = int(cap.get(3))
   ny    = int(cap.get(4))
-  max_l = int(cap.get(7))
+  max_l = int(cap.get(7)) if int(cap.get(7)) != -1 else hyperparameters["lastFrame"] # The "if" is to deal with eventBased data reading
   if max_l == 1:
     return None
 
@@ -244,7 +244,9 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
 
     cap.set(1, l)
     ret, img = cap.read()
-
+    if type(img[0][0]) != np.ndarray:
+      img = cv2.cvtColor(img, cv2.COLOR_GRAY2RGB)
+    
     if hyperparameters["imagePreProcessMethod"]:
       img = preprocessImage(img, hyperparameters)
     if hyperparameters["outputValidationVideoContrastImprovement"]:

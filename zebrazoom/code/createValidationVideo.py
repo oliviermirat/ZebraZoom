@@ -208,7 +208,7 @@ def createValidationVideo(videoPath, superStruct, hyperparameters, outputName=No
   firstFrame                  = hyperparameters["firstFrame"]
   lastFrame                   = hyperparameters["lastFrame"]
 
-  cap = zzVideoReading.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath, hyperparameters)
   if (cap.isOpened() == False):
     print("Error opening video stream or file")
 

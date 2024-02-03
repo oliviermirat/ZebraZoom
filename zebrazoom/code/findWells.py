@@ -210,7 +210,7 @@ def _groupOfMultipleSameSizeAndShapeEquallySpacedWellsQt(videoPath, hyperparamet
 
   import zebrazoom.code.util as util
 
-  cap = zzVideoReading.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath, hyperparameters)
   if (cap.isOpened()== False):
     print("Error opening video stream or file")
   ret, frame = cap.read()
@@ -332,7 +332,7 @@ def _multipleROIsDefinedDuringExecutionQt(videoPath, hyperparameters):
 
   l = [None] * hyperparameters["nbWells"]
   frames = l[:]
-  cap = zzVideoReading.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath, hyperparameters)
   if (cap.isOpened()== False):
     print("Error opening video stream or file")
   ret, frame = cap.read()
@@ -375,7 +375,7 @@ def findWells(videoPath, hyperparameters):
 
   if hyperparameters["noWellDetection"]:
     
-    cap = zzVideoReading.VideoCapture(videoPath)
+    cap = zzVideoReading.VideoCapture(videoPath, hyperparameters)
     if (cap.isOpened()== False): 
       print("Error opening video stream or file")
     ret, frame = cap.read()
@@ -412,7 +412,7 @@ def findWells(videoPath, hyperparameters):
     frame_height = bottomRight_Y - topLeft_Y
     well = { 'topLeftX' : topLeft_X , 'topLeftY' : topLeft_Y , 'lengthX' : frame_width , 'lengthY': frame_height }
     l.append(well)
-    cap = zzVideoReading.VideoCapture(videoPath)
+    cap = zzVideoReading.VideoCapture(videoPath, hyperparameters)
     if (cap.isOpened()== False): 
       print("Error opening video stream or file")
     ret, frame = cap.read()
@@ -424,7 +424,7 @@ def findWells(videoPath, hyperparameters):
   
   # Circular or rectangular wells
   
-  cap = zzVideoReading.VideoCapture(videoPath)
+  cap = zzVideoReading.VideoCapture(videoPath, hyperparameters)
   if (cap.isOpened()== False): 
     print("Error opening video stream or file")
   ret, frame = cap.read()

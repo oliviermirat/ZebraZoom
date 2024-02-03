@@ -11,7 +11,8 @@ import cv2
 def backgroundSubtractionOnlyOnROIs(self, frame, k):
   
   # Color to grey scale transformation
-  frame = frame[:,:,0]
+  if type(frame[0][0]) == np.ndarray:
+    frame = frame[:,:,0]
   
   # Bout detection
   if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
@@ -49,8 +50,9 @@ def backgroundSubtractionOnlyOnROIs(self, frame, k):
           frameROI = frame[roiYStart:roiYEnd, roiXStart:roiXEnd].copy()
           
           # Subtracting background of image
-          backgroundROI = self._background[roiYStart:roiYEnd, roiXStart:roiXEnd]
-          frameROI = 255 - np.where(backgroundROI >= frameROI, backgroundROI - frameROI, 0).astype(np.uint8)
+          if not("noBackgroundSubtraction" in self._hyperparameters) or not(self._hyperparameters["noBackgroundSubtraction"]):
+            backgroundROI = self._background[roiYStart:roiYEnd, roiXStart:roiXEnd]
+            frameROI = 255 - np.where(backgroundROI >= frameROI, backgroundROI - frameROI, 0).astype(np.uint8)
 
           # Applying gaussian filter
           paramGaussianBlur = self._hyperparameters["paramGaussianBlur"]
