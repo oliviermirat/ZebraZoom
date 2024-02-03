@@ -44,6 +44,18 @@ class GetBackgroundMixin:
       cap.release()
       print("Background Extracted from first frame")
       return back
+      
+    if "lastFrameForInitialBackDetect" in self._hyperparameters and self._hyperparameters["lastFrameForInitialBackDetect"]:
+      if int(self._hyperparameters["lastFrame"]) <= self._hyperparameters["lastFrameForInitialBackDetect"]:
+        cap.set(cv2.CAP_PROP_POS_FRAMES, int(self._hyperparameters["lastFrame"]) - 1)
+      else:
+        cap.set(cv2.CAP_PROP_POS_FRAMES, self._hyperparameters["lastFrameForInitialBackDetect"])
+      ret, frame = cap.read()
+      back = cv2.max(frame, back)
+      back = cv2.cvtColor(back, cv2.COLOR_BGR2GRAY)
+      cap.release()
+      print("Background Extracted from first frame and frame " + str(self._hyperparameters["lastFrameForInitialBackDetect"]))
+      return back
 
     if ret and self._hyperparameters["invertBlackWhiteOnImages"]:
       back = 255 - back
