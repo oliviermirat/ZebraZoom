@@ -58,16 +58,36 @@ class ZebraZoomVideoAnalysis:
       self._hyperparameters["lastFrame"] = nbFrames - 2
       # raise NameError("Error: The parameter 'lastFrame' in your configuration file is too big")
 
-  def _storeConfigUsed(self):
-    '''Saving the configuration file used'''
+  def storeConfigUsed(self, config):
     if self._hyperparameters['storeH5']:
       with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
-        results.require_group("configurationFileUsed").attrs.update(self._configFile)
+        results.require_group("configurationFileUsed").attrs.update(config)
     else:
       if not os.path.exists(self._outputFolderVideo):
         os.makedirs(self._outputFolderVideo)
       with open(os.path.join(self._outputFolderVideo, 'configUsed.json'), 'w') as outfile:
-        json.dump(self._configFile, outfile)
+        json.dump(config, outfile)
+
+  def _storeConfigUsed(self):
+    '''Saving the configuration file used'''
+    self.storeConfigUsed(self._configFile)
+
+  def storeWellPositions(self, wellPositions, rotationAngleParams=None):
+    if self._hyperparameters['storeH5']:
+      with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
+        for idx, wellPos in enumerate(wellPositions):
+          results.require_group(f"wellPositions/well{idx}").attrs.update(wellPos)
+        if rotationAngleParams is not None:
+          results['configurationFileUsed'].attrs.update(rotationAngleParams)
+    else:
+      with open(os.path.join(self._outputFolderVideo, 'intermediaryWellPosition.txt'), 'wb') as outfile:
+        pickle.dump(wellPositions, outfile)
+      if rotationAngleParams is not None:
+        with open(os.path.join(self._outputFolderVideo, 'configUsed.json'), 'r') as f:
+          config = json.load(f)
+        config.update(rotationAngleParams)
+        with open(os.path.join(self._outputFolderVideo, 'configUsed.json'), 'w') as f:
+          json.dump(config, f)
 
   def getWellPositions(self):
     '''Get well positions'''
@@ -128,21 +148,7 @@ class ZebraZoomVideoAnalysis:
             app.wellShape = 'circle'
 
     if self.wellPositions is not None:
-      if self._hyperparameters['storeH5']:
-        with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
-          for idx, wellPositions in enumerate(self.wellPositions):
-            results.require_group(f"wellPositions/well{idx}").attrs.update(wellPositions)
-          if rotationAngleParams is not None:
-            results['configurationFileUsed'].attrs.update(rotationAngleParams)
-      else:
-        with open(os.path.join(self._outputFolderVideo, 'intermediaryWellPosition.txt'), 'wb') as outfile:
-          pickle.dump(self.wellPositions, outfile)
-        if rotationAngleParams is not None:
-          with open(os.path.join(self._outputFolderVideo, 'configUsed.json'), 'r') as f:
-            config = json.load(f)
-          config.update(rotationAngleParams)
-          with open(os.path.join(self._outputFolderVideo, 'configUsed.json'), 'w') as f:
-            json.dump(config, f)
+      self.storeWellPositions(self.wellPositions, rotationAngleParams=rotationAngleParams)
 
   def _runTracking(self):
     if 'trackingImplementation' in self._hyperparameters:

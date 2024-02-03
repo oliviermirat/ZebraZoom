@@ -6,6 +6,7 @@ import json
 import math
 import os
 import pickle
+import shutil
 import subprocess
 import sys
 import webbrowser
@@ -26,10 +27,11 @@ PYQT6 = False
 import zebrazoom
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
-from zebrazoom.code.readValidationVideo import readValidationVideo
 from zebrazoom.code.checkConsistencyOfParameters import checkConsistencyOfParameters
 from zebrazoom.code.GUI.configFilePrepare import StoreValidationVideoWidget
 from zebrazoom.code.GUI.GUI_InitialFunctions import chooseConfigFile, launchZebraZoom
+from zebrazoom.code.GUI.readValidationVideo import readValidationVideo
+
 
 LARGE_FONT= QFont("Verdana", 12)
 
@@ -712,7 +714,7 @@ class _VisualizationGroupItem(_VisualizationTreeItem):
       self.paths.append(_ResultsItem(fname, self))
       groupsItem.allPaths[fname] += 1
 
-  def removeResults(self, idx):
+  def removeResults(self, idx, delete=False):
     fname = self.paths[idx].filename
     groupsItem = self
     while not isinstance(groupsItem, _GroupsVisualizationGroupItem):
@@ -721,6 +723,14 @@ class _VisualizationGroupItem(_VisualizationTreeItem):
     if not groupsItem.allPaths[fname]:
       del groupsItem.allPaths[fname]
     del self.paths[idx]
+    if not delete:
+      return
+    app = QApplication.instance()
+    fname = os.path.join(app.ZZoutputLocation, fname)
+    if os.path.isfile(fname):
+      os.remove(fname)
+    elif os.path.isdir(fname):
+      shutil.rmtree(fname)
 
   def appendSubgroup(self):
     idx = 1
@@ -767,6 +777,18 @@ class _AllResultsVisualizationGroupItem(_VisualizationGroupItem):
     self.subgroups = []
     app = QApplication.instance()
     self.paths = []
+
+  def removeResults(self, idx, delete=False):
+    fname = self.paths[idx].filename
+    del self.paths[idx]
+    if not delete:
+      return
+    app = QApplication.instance()
+    fname = os.path.join(app.ZZoutputLocation, fname)
+    if os.path.isfile(fname):
+      os.remove(fname)
+    elif os.path.isdir(fname):
+      shutil.rmtree(fname)
 
 
 class _RootVisualizationGroupItem(_VisualizationGroupItem):
@@ -880,14 +902,14 @@ class _VisualizationTreeModel(QAbstractItemModel):
     self.endInsertRows()
     self._saveGroups()
 
-  def removeChildren(self, indices, parentIndex):
+  def removeChildren(self, indices, parentIndex, delete=False):
     parentItem = self.getItem(parentIndex)
     subgroupsSize = len(parentItem.subgroups)
     resultsIdxs = [idx - subgroupsSize  for idx in indices if idx >= subgroupsSize]
     groupsIdxs = indices[len(resultsIdxs):]
     for idx in resultsIdxs:
       self.beginRemoveRows(parentIndex, subgroupsSize + idx, subgroupsSize + idx)
-      parentItem.removeResults(idx)
+      parentItem.removeResults(idx, delete=delete)
       self.endRemoveRows()
     for idx in groupsIdxs:
       self.beginRemoveRows(parentIndex, idx, idx)
@@ -919,6 +941,12 @@ class _VisualizationTreeModel(QAbstractItemModel):
     return result
 
 
+class _ResultsListWidgetItem(QListWidgetItem):
+  def __init__(self, idx, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self.idx = idx
+
+
 class _VisualizationGroupDetails(QWidget):
   def __init__(self, proxyModel, getCurrentIndex):
     app = QApplication.instance()
@@ -946,16 +974,21 @@ class _VisualizationGroupDetails(QWidget):
     self._addResultsBtn = QPushButton("Add results set(s)")
     self._addResultsBtn.clicked.connect(self._addResults)
     buttonsLayout.addWidget(self._addResultsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
-    removeResultsBtn = QPushButton("Remove")
-    removeResultsBtn.clicked.connect(self._removeSelected)
-    removeResultsBtn.setEnabled(False)
-    buttonsLayout.addWidget(removeResultsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._removeResultsBtn = QPushButton("Remove from group")
+    self._removeResultsBtn.clicked.connect(self._removeSelected)
+    self._removeResultsBtn.setEnabled(False)
+    buttonsLayout.addWidget(self._removeResultsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._deleteResultsBtn = QPushButton("Delete results")
+    self._deleteResultsBtn.clicked.connect(lambda: self._removeSelected(delete=True))
+    self._deleteResultsBtn.setEnabled(False)
+    buttonsLayout.addWidget(self._deleteResultsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     buttonsLayout.addStretch()
     layout.addLayout(buttonsLayout)
 
     self._listWidget = QListWidget()
     self._listWidget.setSelectionMode(QListWidget.SelectionMode.ExtendedSelection)
-    self._listWidget.selectionModel().selectionChanged.connect(lambda *args: removeResultsBtn.setEnabled(self._listWidget.selectionModel().hasSelection()))
+    self._listWidget.selectionModel().selectionChanged.connect(lambda *args: self._removeResultsBtn.setEnabled(self._listWidget.selectionModel().hasSelection()))
+    self._listWidget.selectionModel().selectionChanged.connect(lambda *args: self._deleteResultsBtn.setEnabled(bool(self._getSelectedResults())))
     layout.addWidget(self._listWidget)
 
     self._startPageBtn = QPushButton("Go to the start page", self)
@@ -966,15 +999,21 @@ class _VisualizationGroupDetails(QWidget):
 
   def refresh(self):
     item = self._model.getItem(self._getCurrentIndex())
-    showResults = not isinstance(item, _GroupsVisualizationGroupItem)
+    showResults = not isinstance(item, (_GroupsVisualizationGroupItem, _AllResultsVisualizationGroupItem))
+    showDeleteOnly = isinstance(item, _AllResultsVisualizationGroupItem)
+    self._addGroupBtn.setVisible(not showDeleteOnly)
     self._addResultsBtn.setVisible(showResults)
+    self._removeResultsBtn.setVisible(not showDeleteOnly)
+    self._deleteResultsBtn.setVisible(showResults or showDeleteOnly)
     self._groupNameWidget.setVisible(showResults)
     self._groupNameLineEdit.setText(item.data(0))
     self._listWidget.clear()
     self._listWidget.addItems(results.data(0) for results in item.subgroups)
-    for results in item.paths:
+    for idx, results in enumerate(item.paths):
+      if isinstance(item, _AllResultsVisualizationGroupItem) and results.filename in item.parentItem.subgroups[0].allPaths:
+        continue
       index = self._model.createIndex(results.childNumber(), 0, results)
-      self._listWidget.addItem(QListWidgetItem(self._model.data(index, Qt.DecorationRole), results.filename))
+      self._listWidget.addItem(_ResultsListWidgetItem(idx, self._model.data(index, Qt.DecorationRole), results.filename))
 
   def _getMultipleFolders(self):
     app = QApplication.instance()
@@ -1036,9 +1075,18 @@ class _VisualizationGroupDetails(QWidget):
     self._model.addGroup(self._getCurrentIndex())
     self.refresh()
 
-  def _removeSelected(self):
-    selectedIdxs = sorted(set(map(lambda idx: idx.row(), self._listWidget.selectionModel().selectedIndexes())), reverse=True)
-    self._model.removeChildren(selectedIdxs, self._getCurrentIndex())
+  def _getSelectedResults(self):
+    cutoffIdx = len(self._model.getItem(self._getCurrentIndex()).subgroups)
+    return set(filter(lambda idx: idx >= cutoffIdx, map(lambda idx: idx.row(), self._listWidget.selectionModel().selectedIndexes())))
+
+  def _removeSelected(self, delete=False):
+    if delete and QMessageBox.question(QApplication.instance().window, "Delete results", "Are you sure you want to delete the selected results? This action removes the files from disk and cannot be undone.",
+                                       defaultButton=QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
+      return
+    selectedIdxs = sorted(set(map(lambda idx: idx.row(), self._listWidget.selectionModel().selectedIndexes())) if not delete else self._getSelectedResults(), reverse=True)
+    if isinstance(self._model.getItem(self._getCurrentIndex()), _AllResultsVisualizationGroupItem):
+      selectedIdxs = [self._listWidget.item(idx).idx for idx in selectedIdxs]
+    self._model.removeChildren(selectedIdxs, self._getCurrentIndex(), delete=delete)
     self._proxyModel.invalidateFilter()
     self.refresh()
 
@@ -1256,7 +1304,7 @@ class ViewParameters(util.CollapsibleSplitter):
         self._tree.hide()
 
     def setFolder(self, item):
-        if item is None or isinstance(item, (_RootVisualizationGroupItem, _AllResultsVisualizationGroupItem)):
+        if item is None or isinstance(item, _RootVisualizationGroupItem):
           self._tree.hide()
           self._tree.model().sourceModel().refresh()
           self._tree.model().invalidateFilter()

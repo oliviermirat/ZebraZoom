@@ -27,6 +27,7 @@ from PyQt5.QtWidgets import QAbstractItemView, QApplication, QCheckBox, QFileDia
 
 
 LARGE_FONT= ("Verdana", 12)
+
 _VIDEO_EXTENSIONS = {'.264', '.3g2', '.3gp', '.3gp2', '.3gpp', '.3gpp2', '.3mm', '.3p2', '.60d', '.787', '.89', '.aaf', '.aec', '.aep', '.aepx', '.aet', '.aetx', '.ajp',
                      '.ale', '.am', '.amc', '.amv', '.amx', '.anim', '.aqt', '.arcut', '.arf', '.asf', '.asx', '.avb', '.avc', '.avd', '.avi', '.avp', '.avs', '.avs',
                      '.avv', '.axm', '.bdm', '.bdmv', '.bdt2', '.bdt3', '.bik', '.bix', '.bmk', '.bnp', '.box', '.bs4', '.bsf', '.bvr', '.byu', '.camproj', '.camrec',
@@ -52,7 +53,7 @@ _VIDEO_EXTENSIONS = {'.264', '.3g2', '.3gp', '.3gp2', '.3gpp', '.3gpp2', '.3mm',
 
 
 def chooseVideoToAnalyze(self, createValidationVideo, chooseFrames):
-    videoName, _ = QFileDialog.getOpenFileName(self.window, 'Select video', os.path.expanduser("~"), filter=f'Videos ({" ".join("*%s" % ext for ext in _VIDEO_EXTENSIONS)});; All files (*.*)')
+    videoName, _ = QFileDialog.getOpenFileName(self.window, 'Select video', os.path.expanduser("~"), filter=f'Videos ({" ".join("*%s" % ext for ext in util.VIDEO_EXTENSIONS)});; All files (*.*)')
     if not videoName:
       return
     ZZargs = ([videoName],)
@@ -345,7 +346,7 @@ class _VideoSelectionPage(QWidget):
   def _addVideos(self):
     app = QApplication.instance()
     with self.__selectAddedRows():
-      self._table.model().addVideos(QFileDialog.getOpenFileNames(app.window, 'Select one or more videos', os.path.expanduser("~"), "Video files (%s)" % ' '.join('*%s' % ext for ext in _VIDEO_EXTENSIONS))[0])
+      self._table.model().addVideos(QFileDialog.getOpenFileNames(app.window, 'Select one or more videos', os.path.expanduser("~"), "Video files (%s)" % ' '.join('*%s' % ext for ext in util.VIDEO_EXTENSIONS))[0])
 
   def _addFolder(self):
     app = QApplication.instance()
@@ -353,7 +354,7 @@ class _VideoSelectionPage(QWidget):
     if selectedFolder is None:
       return
     with self.__selectAddedRows():
-      return self._table.model().addVideos([os.path.normpath(os.path.join(root, f)) for root, _dirs, files in os.walk(selectedFolder) for f in files if os.path.splitext(f)[1] in _VIDEO_EXTENSIONS])
+      return self._table.model().addVideos([os.path.normpath(os.path.join(root, f)) for root, _dirs, files in os.walk(selectedFolder) for f in files if os.path.splitext(f)[1] in util.VIDEO_EXTENSIONS])
 
   def _addMultipleFolders(self):
     app = QApplication.instance()
@@ -374,7 +375,7 @@ class _VideoSelectionPage(QWidget):
       return None
     with self.__selectAddedRows():
       self._table.model().addVideos([os.path.normpath(os.path.join(root, f)) for path in dialog.selectedFiles()
-                                     for root, _dirs, files in os.walk(path) for f in files if os.path.splitext(f)[1] in _VIDEO_EXTENSIONS])
+                                     for root, _dirs, files in os.walk(path) for f in files if os.path.splitext(f)[1] in util.VIDEO_EXTENSIONS])
 
   def _updateParallelTracking(self):
     if self._ZZkwargs.get('sbatchMode', False) or self._ZZkwargs.get('findMultipleROIs', False) or self._ZZkwargs.get('headEmbedded', False):

@@ -18,6 +18,7 @@ import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 from zebrazoom.code.createValidationVideo import calculateInfoFrameForFrame, drawInfoFrame, improveContrast
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.preprocessImage import preprocessImage
+from zebrazoom.code.GUI.adjustParameterInsideAlgo import adjustFastFishTrackingPage
 
 
 class _CustomTimer(QTimer):
@@ -297,7 +298,7 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
     return (img, int(cap.get(5) if not hyperparameters['outputValidationVideoFps'] > 0 else hyperparameters['outputValidationVideoFps'])) if returnFPS else img
 
   wellShape = None if config.get("noWellDetection", False) or (hyperparameters["headEmbeded"] and not hyperparameters["oneWellManuallyChosenTopLeft"]) else 'rectangle' if config.get("wellsAreRectangles", False) or len(config.get("oneWellManuallyChosenTopLeft", '')) or int(config.get("multipleROIsDefinedDuringExecution", 0)) or config.get("groupOfMultipleSameSizeAndShapeEquallySpacedWells", False) else 'circle'
-  return getFrame, frameRange, start if start > 0 else 0, boutMap is not None, supstruct['wellPositions'], wellShape, hyperparameters
+  return getFrame, frameRange, start if start > 0 else 0, boutMap is not None, supstruct['wellPositions'], wellShape, hyperparameters, videoPath if hyperparameters["copyOriginalVideoToOutputFolderForValidation"] or "pathToOriginalVideo" in supstruct else None
 
 
 class _ElidedLabel(QLabel):
@@ -318,7 +319,7 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
   frameInfo = getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, framesToShow=framesToShow, ZZoutputLocation=ZZoutputLocation, supstruct=supstruct, config=config)
   if frameInfo is None:
     return
-  getFrame, frameRange, frame, toggleTrackingPoints, _, _, hyperparameters = frameInfo
+  getFrame, frameRange, frame, toggleTrackingPoints, wellPositions, wellShape, hyperparameters, originalVideoPath = frameInfo
   layout = QVBoxLayout()
 
   video = QLabel()
@@ -336,7 +337,6 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     validationLayout = QGridLayout()
     validationLayout.setColumnStretch(3, 1)
     validationLayout.setRowStretch(5, 1)
-    validationLayout.addWidget(QLabel('Frame:'), 0, 0)
     bendCheckbox = QCheckBox('Bend')
     bendCheckbox.toggled.connect(lambda checked: saveChanges() or clearButton.setEnabled(True) or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer, topLeftCircleCb=topLeftCircleCb), video))
     validationLayout.addWidget(bendCheckbox, 1, 0, 1, 2)
@@ -474,8 +474,8 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
   shortcutsLabel.setWordWrap(True)
   layout.addWidget(shortcutsLabel)
   btnGroup = None
+  trackingPointsLayout = QHBoxLayout()
   if toggleTrackingPoints:
-    trackingPointsLayout = QHBoxLayout()
     plotTrackingPointsLabel = QLabel("Tracking points:")
     trackingPointsLayout.addWidget(plotTrackingPointsLabel)
     btnGroup = QButtonGroup()
@@ -540,8 +540,40 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
 
     saveButton.clicked.connect(saveVideo)
     trackingPointsLayout.addWidget(saveButton)
-    trackingPointsLayout.addStretch(1)
-    layout.addLayout(trackingPointsLayout)
+
+  adjustButton = None
+  if config is not None and (numWell != -1 or config.get("headEmbeded", False)):
+    trackingImplementation = config.get('trackingImplementation')
+    if trackingImplementation is not None and trackingImplementation != 'fastFishTracking.tracking' or config.get("trackingMethod"):
+      return
+    adjustButton = QPushButton('Adjust parameters')
+    def adjustParametrsClicked():
+      app = QApplication.instance()
+      app.configFile = {key: val for key, val in config.items() if key != 'popUpAlgoFollow'}
+      app.savedConfigFile = app.configFile.copy()
+      if originalVideoPath is None:
+        app.videoToCreateConfigFileFor, _ = QFileDialog.getOpenFileName(app.window, "Select video to create config file for", os.path.expanduser("~"),
+                                                                        filter=f'Videos ({" ".join("*%s" % ext for ext in util.VIDEO_EXTENSIONS)});; All files (*.*)')
+      else:
+        app.videoToCreateConfigFileFor = originalVideoPath.replace('\\', '/')
+      if not app.videoToCreateConfigFileFor:
+        app.configFile.clear()
+        return
+      util.addToHistory(app.optimizeConfigFile)()
+      if app.configFile.get("trackingImplementation") == "fastFishTracking.tracking":
+        util.addToHistory(adjustFastFishTrackingPage)(useNext=False, wellPositions=wellPositions, wellShape=wellShape, wellIdx=numWell, frameIdx=frameSlider.value())
+      else:
+        trackingMethod = app.configFile.get("trackingMethod")
+        if not trackingMethod:
+          if app.configFile.get("headEmbeded", False):
+            util.addToHistory(app.calculateBackground)(app, 0, useNext=False, wellPositions=wellPositions, wellShape=wellShape, frameIdx=frameSlider.value())
+          else:
+            util.addToHistory(app.calculateBackgroundFreelySwim)(app, 0, automaticParameters=True, useNext=False, wellPositions=wellPositions, wellShape=wellShape, wellIdx=numWell, frameIdx=frameSlider.value())
+    QTimer.singleShot(0, lambda: adjustButton.clicked.connect(adjustParametrsClicked))
+    trackingPointsLayout.addWidget(adjustButton)
+
+  trackingPointsLayout.addStretch(1)
+  layout.addLayout(trackingPointsLayout)
 
   stopTimer = True
   timer = _CustomTimer()
@@ -561,6 +593,6 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
   focusWidgets = {frameSlider}
   focusWidgets.add(frameSpinbox)
   QTimer.singleShot(0, lambda: frameSlider.setFocus())
-  util.showDialog(layout, title="Video", labelInfo=(startFrame, video), focusWidgets=focusWidgets)
+  util.showDialog(layout, title="Video", labelInfo=(startFrame, video), focusWidgets=focusWidgets, exitSignals=(adjustButton.clicked,) if adjustButton is not None else ())
   timer.stop()
   del getFrame

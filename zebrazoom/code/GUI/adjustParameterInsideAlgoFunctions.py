@@ -332,7 +332,7 @@ def adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, fi
   self.configFile = configFile
 
 
-def calculateBackground(self, controller, nbImagesForBackgroundCalculation, useNext=True):
+def calculateBackground(self, controller, nbImagesForBackgroundCalculation, useNext=True, wellPositions=None, wellShape=None, frameIdx=None):
 
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
 
@@ -343,15 +343,20 @@ def calculateBackground(self, controller, nbImagesForBackgroundCalculation, useN
   if int(nbImagesForBackgroundCalculation):
     configFile["nbImagesForBackgroundCalculation"] = int(nbImagesForBackgroundCalculation)
 
+  storeH5 = configFile.get('storeH5')
+  configFile['storeH5'] = 1
+  if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
+    del configFile["lastFrame"]
+
   app = QApplication.instance()
   app.wellPositions = []
   app.background = []
   with app.busyCursor():
+    if wellPositions is not None:
+      zzAnalysis = ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, ['outputFolder', app.ZZoutputLocation])
+      zzAnalysis.storeConfigUsed(configFile)
+      zzAnalysis.storeWellPositions(wellPositions)
     try:
-      storeH5 = configFile.get('storeH5')
-      configFile['storeH5'] = 1
-      if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
-        del configFile["lastFrame"]
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
     except ValueError:
       configFile["exitAfterBackgroundExtraction"] = 0
@@ -365,29 +370,34 @@ def calculateBackground(self, controller, nbImagesForBackgroundCalculation, useN
   configFile["headEmbededRemoveBack"]           = 0
   configFile["debugExtractBack"]                = 0
 
-  adjustParamInsideAlgoPage(useNext=useNext)
+  adjustParamInsideAlgoPage(useNext=useNext, frameIdx=frameIdx)
 
 
-def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False, useNext=True, nextCb=None, reloadWellPositions=False):
+def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalculation, morePreciseFastScreen=False, automaticParameters=False, boutDetectionsOnly=False, useNext=True, nextCb=None, reloadWellPositions=False, wellPositions=None, wellShape=None, wellIdx=0, frameIdx=None):
 
   [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self)
 
   configFile["exitAfterBackgroundExtraction"] = 1
   configFile["debugExtractBack"]              = 1
-  configFile["debugFindWells"]                = 1
+  configFile["debugFindWells"]                = int(wellPositions is None)
   configFile["reloadWellPositions"] = int(reloadWellPositions)
 
   if int(nbImagesForBackgroundCalculation):
     configFile["nbImagesForBackgroundCalculation"] = int(nbImagesForBackgroundCalculation)
 
+  storeH5 = configFile.get('storeH5')
+  configFile['storeH5'] = 1
+  if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
+    del configFile["lastFrame"]
+
   app = QApplication.instance()
   app.wellPositions = []
   with app.busyCursor():
+    if wellPositions is not None:
+      zzAnalysis = ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, ['outputFolder', app.ZZoutputLocation])
+      zzAnalysis.storeConfigUsed(configFile)
+      zzAnalysis.storeWellPositions(wellPositions)
     try:
-      storeH5 = configFile.get('storeH5')
-      configFile['storeH5'] = 1
-      if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
-        del configFile["lastFrame"]
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
     except ValueError:
       configFile["exitAfterBackgroundExtraction"] = 0
@@ -418,6 +428,6 @@ def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalcula
   elif boutDetectionsOnly:
     adjustBoutDetectionOnlyPage(useNext=useNext, nextCb=nextCb)
   elif automaticParameters:
-    adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=useNext)
+    adjustParamInsideAlgoFreelySwimAutomaticParametersPage(useNext=useNext, wellIdx=wellIdx, frameIdx=frameIdx)
   else:
     adjustParamInsideAlgoFreelySwimPage(useNext=useNext)
