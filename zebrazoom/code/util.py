@@ -676,9 +676,12 @@ class SliderWithSpinbox(QWidget):
       if choices is not None:
         currentIdx = choices.itemlist.index(name) * 2
         titleLabel = QComboBox()
-        titleLabel.view().setWordWrap(True)
+        titleLabel.setMaxVisibleItems(titleLabel.maxVisibleItems() * 2)
         titleLabel.setModel(choices)
         titleLabel.setCurrentIndex(currentIdx)
+        listView = titleLabel.view()
+        listView.setWordWrap(True)
+        listView.adjustSize()
         titleLabel.currentIndexChanged.connect(lambda idx: self.choiceChanged.emit(idx))
       else:
         titleLabel = QLabel(PRETTY_PARAMETER_NAMES.get(name, name))
