@@ -31,7 +31,12 @@ class _CustomListModel(QAbstractListModel):
       return 'separator'
     if role != Qt.DisplayRole:
       return None
-    name = self.itemlist[index.row() // 2]
+    idx = index.row() // 2
+    currentSteps = len(self.itemlist) - self._baseItemCount
+    stepIdx = idx - self.itemlist.index('steps')
+    if 0 < stepIdx <= currentSteps:
+      return f'Segment length between previous and next point: option {stepIdx}'
+    name = self.itemlist[idx]
     return util.PRETTY_PARAMETER_NAMES.get(name, name)
 
   def updateSteps(self, newSteps):

@@ -46,7 +46,7 @@ PRETTY_PARAMETER_NAMES = {
   'overwriteFirstStepValue': 'Minimum number of pixels between subsequent points',
   'overwriteLastStepValue': 'Maximum number of pixels between subsequent points',
   'overwriteHeadEmbededParamGaussianBlur': 'Gaussian blur applied on the image',
-  'steps': 'Number of steps',
+  'steps': 'Segment length between previous and next point: number of options',
   'thetaDiffAccept': 'Maximum authorized angle difference between two subsequent segments in the first portion of the tail (in radians)',
   'thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd': 'Maximum authorized angle difference between two subsequent segments in the second portion of the tail  (in radians)',
   'thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd2': 'Maximum authorized angle difference between two subsequent segments in the third portion of the tail  (in radians)',
