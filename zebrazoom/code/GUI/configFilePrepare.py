@@ -436,6 +436,7 @@ class _NonStationaryBackgroundWidget(QWidget):
     self._configFile = None
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Non stationary background"), font_size='16px'), alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+
     self._updateBackgroundOnEveryFrameCheckbox = QCheckBox("Update background on every frame")
     def updateBackroundOnEveryFrame(checked):
       if checked:
@@ -448,6 +449,7 @@ class _NonStationaryBackgroundWidget(QWidget):
           self._configFile["updateBackgroundAtInterval"] = 0
     self._updateBackgroundOnEveryFrameCheckbox.toggled.connect(updateBackroundOnEveryFrame)
     layout.addWidget(self._updateBackgroundOnEveryFrameCheckbox, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+
     self._useFirstFrameAsBackgroundCheckbox = QCheckBox("Use the first frame as background")
     def useFirstFrameAsBackground(checked):
       if checked:
@@ -460,12 +462,34 @@ class _NonStationaryBackgroundWidget(QWidget):
           self._configFile["useFirstFrameAsBackground"] = 0
     self._useFirstFrameAsBackgroundCheckbox.toggled.connect(useFirstFrameAsBackground)
     layout.addWidget(self._useFirstFrameAsBackgroundCheckbox, alignment=Qt.AlignmentFlag.AlignHCenter | Qt.AlignmentFlag.AlignTop)
+
+    formLayout = QFormLayout()
+    formLayout.setFormAlignment(Qt.AlignmentFlag.AlignCenter)
+    formLayout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+    self._lastFrameForInitialBackDetect = lastFrameForInitialBackDetect = QLineEdit()
+    lastFrameForInitialBackDetect.setValidator(QIntValidator(lastFrameForInitialBackDetect))
+    lastFrameForInitialBackDetect.validator().setBottom(1)
+
+    def updateLastFrameForInitialBackDetect(text):
+      if text:
+        self._configFile["lastFrameForInitialBackDetect"] = int(text)
+      else:
+          if self._originalLastFrameForInitialBackDetect is None:
+            if 'lastFrameForInitialBackDetect' in self._configFile:
+              del self._configFile['lastFrameForInitialBackDetect']
+          else:
+            self._configFile["lastFrameForInitialBackDetect"] = 0
+    lastFrameForInitialBackDetect.textChanged.connect(updateLastFrameForInitialBackDetect)
+    formLayout.addRow('Calculate background using the first frame and frame:', lastFrameForInitialBackDetect)
+    layout.addLayout(formLayout)
+
     self.setLayout(layout)
 
   def refresh(self, configFile, videoPath=None):
     self._configFile = configFile
     self._originalUpdateBackgroundAtInterval = configFile.get("updateBackgroundAtInterval")
     self._originalUseFirstFrameAsBackground = configFile.get("useFirstFrameAsBackground")
+    self._originalLastFrameForInitialBackDetect = configFile.get("lastFrameForInitialBackDetect")
     if self._originalUpdateBackgroundAtInterval is not None:
       self._updateBackgroundOnEveryFrameCheckbox.setChecked(self._originalUpdateBackgroundAtInterval)
     else:
@@ -474,6 +498,8 @@ class _NonStationaryBackgroundWidget(QWidget):
       self._useFirstFrameAsBackgroundCheckbox.setChecked(self._originalUseFirstFrameAsBackground)
     else:
       self._useFirstFrameAsBackgroundCheckbox.setChecked(False)
+    if self._originalLastFrameForInitialBackDetect is not None:
+      self._lastFrameForInitialBackDetect.setText(str(self._originalLastFrameForInitialBackDetect))
 
 
 class _NoMultiprocessingWidget(QWidget):
@@ -1662,14 +1688,42 @@ class FinishConfig(QWidget):
     def changingBackgroundToggled(checked):
       if checked:
         controller.configFile["updateBackgroundAtInterval"] = 1
-        controller.configFile["useFirstFrameAsBackground"] = 1
       else:
         if "updateBackgroundAtInterval" in controller.configFile:
           del controller.configFile["updateBackgroundAtInterval"]
-        if "useFirstFrameAsBackground" in controller.configFile:
-          del controller.configFile["useFirstFrameAsBackground"]
+      backgroundOptionsWidget.setVisible(checked)
     self._changingBackgroundCheckbox.toggled.connect(changingBackgroundToggled)
     layout.addWidget(self._changingBackgroundCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    backgroundOptionsLayout = QVBoxLayout()
+    useFirstFrameAsBackgroundCheckbox = QCheckBox('Use the first frame as background')
+    def useFirstFrameAsBackground(checked):
+      if checked:
+        controller.configFile["useFirstFrameAsBackground"] = 1
+      else:
+        if 'useFirstFrameAsBackground' in controller.configFile:
+          del controller.configFile["useFirstFrameAsBackground"]
+    useFirstFrameAsBackgroundCheckbox.toggled.connect(useFirstFrameAsBackground)
+    backgroundOptionsLayout.addWidget(useFirstFrameAsBackgroundCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
+    lastFrameForInitialBackDetect = QLineEdit()
+    lastFrameForInitialBackDetect.setValidator(QIntValidator(lastFrameForInitialBackDetect))
+    lastFrameForInitialBackDetect.validator().setBottom(1)
+
+    def updateLastFrameForInitialBackDetect(text):
+      if text:
+        controller.configFile["lastFrameForInitialBackDetect"] = int(text)
+      else:
+        if 'lastFrameForInitialBackDetect' in controller.configFile:
+          del controller.configFile['lastFrameForInitialBackDetect']
+    lastFrameForInitialBackDetect.textChanged.connect(updateLastFrameForInitialBackDetect)
+    lastFrameForInitialBackDetectLayout = QFormLayout()
+    lastFrameForInitialBackDetectLayout.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.FieldsStayAtSizeHint)
+    lastFrameForInitialBackDetectLayout.addRow('Calculate background using the first frame and frame:', lastFrameForInitialBackDetect)
+    backgroundOptionsLayout.addLayout(lastFrameForInitialBackDetectLayout)
+    backgroundOptionsWidget = QWidget()
+    backgroundOptionsWidget.setVisible(False)
+    backgroundOptionsWidget.setLayout(backgroundOptionsLayout)
+    layout.addWidget(backgroundOptionsWidget, alignment=Qt.AlignmentFlag.AlignCenter)
 
     self._calculateCurvatureCheckbox = QCheckBox("Calculate curvature")
     def calculateCurvatureToggled(checked):
