@@ -230,6 +230,9 @@ def showDialog(layout, title=None, buttons=(), labelInfo=None, timeout=None, exi
   dialog.move(0, 0)
   dialog.setWindowModality(Qt.WindowModality.ApplicationModal)
   dialog.setLayout(mainLayout)
+  screenSize = QApplication.primaryScreen().availableSize()
+  if hasattr(app, 'window'):
+    screenSize -= app.window.frameSize() - app.window.size()
   if labelInfo is not None:
     if len(labelInfo) == 2:
       img, label = labelInfo
@@ -240,13 +243,18 @@ def showDialog(layout, title=None, buttons=(), labelInfo=None, timeout=None, exi
     height, width = img.shape[:2]
     label.setMinimumSize(width, height)
     layoutSize = mainLayout.totalSizeHint()
-    label.setMinimumSize(1, 1)
+    widthDiff = layoutSize.width() - screenSize.width()
+    heightDiff = layoutSize.height() - screenSize.height()
+    if widthDiff > 0 or heightDiff > 0:
+      dialog.adjustSize()
+      labelSize = label.size()
+      label.setFixedSize(labelSize.scaled(labelSize - QSize(widthDiff if widthDiff > 0 else 0, heightDiff if heightDiff > 0 else 0), Qt.AspectRatioMode.KeepAspectRatio))
+      dialog.adjustSize()
+      layoutSize = mainLayout.totalSizeHint()
+      label.setMinimumSize(1, 1)
+      label.setMaximumSize(screenSize)
   else:
     layoutSize = mainLayout.totalSizeHint()
-  screenSize = QApplication.primaryScreen().availableSize()
-  if hasattr(app, 'window'):
-    screenSize -= app.window.frameSize() - app.window.size()
-  if layoutSize.width() > screenSize.width() or layoutSize.height() > screenSize.height():
     layoutSize.scale(screenSize, Qt.AspectRatioMode.KeepAspectRatio)
   dialog.setFixedSize(layoutSize)
   dialog.show()
@@ -517,7 +525,7 @@ class _TemporaryZoomableImagePoint(_ZoomableImage):
   def __init__(self, parent=None, basePoint=None):
     super().__init__(parent)
     self._point = None
-    self._basePoint = None if basePoint is None else QPoint(*basePoint)
+    self._basePoint = None if basePoint is None else QPoint(*map(int, basePoint))
     self._currentPosition = None
     self.setMouseTracking(True)
 
