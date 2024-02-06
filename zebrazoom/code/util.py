@@ -255,7 +255,8 @@ def showDialog(layout, title=None, buttons=(), labelInfo=None, timeout=None, exi
       label.setMaximumSize(screenSize)
   else:
     layoutSize = mainLayout.totalSizeHint()
-    layoutSize.scale(screenSize, Qt.AspectRatioMode.KeepAspectRatio)
+    if layoutSize.width() > screenSize.width() or layoutSize.height() > screenSize.height():
+      layoutSize.scale(screenSize, Qt.AspectRatioMode.KeepAspectRatio)
   dialog.setFixedSize(layoutSize)
   dialog.show()
   if labelInfo is not None:
