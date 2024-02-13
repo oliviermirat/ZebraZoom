@@ -245,22 +245,55 @@ class eventBasedReading():
   
   def release(self):
     self.record_raw.reset()
+
+  # Retrieve only latest events
+  # def read(self):
+    # if not self.record_raw.is_done():
+      # events = self.record_raw.load_delta_t(self.delta_t_toLoad)
+      # self.lastIm = np.zeros((self.height, self.width))
+      # self.lastIm[:, :] = 255
+      # self.im = self.lastIm
+      # events2 = np.array([events['x'], events['y'], events['p']])
+      # self.im[events2[1], events2[0]] = events2[2]
+      # return [True, self.im.astype('uint8')]
+    # else:
+      # return [False, []]
   
+  # Time surface, all events
   def read(self):
     if not self.record_raw.is_done():
       events = self.record_raw.load_delta_t(self.delta_t_toLoad)
       self.im = self.lastIm + self.nbPixelsAddAtEachFrame
       events2 = np.array([events['x'], events['y'], events['p']])
-      self.im[events2[1], events2[0]] = events2[2]
+      self.im[events2[1], events2[0]] = 0 #events2[2]
       self.im[self.im > 255] = 255
       summm = np.sum(self.im) / (self.height * self.width)
       if summm > self.maxSumAllPixelToKeepImage:
         self.im = self.lastIm
-        self.im[events2[1], events2[0]] = events2[2]
+        self.im[events2[1], events2[0]] = 0 #events2[2]
       self.lastIm = self.im
       return [True, self.im.astype('uint8')]
     else:
       return [False, []]
+
+  # Time surface, choosing only positive or negative events
+  # def read(self):
+    # if not self.record_raw.is_done():
+      # events = self.record_raw.load_delta_t(self.delta_t_toLoad)
+      # self.im = self.lastIm + self.nbPixelsAddAtEachFrame
+      # events2 = np.array([events['x'], events['y'], events['p']])
+      # if len(events2[0]) > 0:
+        # events2 = events2[:, events2[2] != 1]
+      # self.im[events2[1], events2[0]] = 0 #events2[2]
+      # self.im[self.im > 255] = 255
+      # summm = np.sum(self.im) / (self.height * self.width)
+      # if summm > self.maxSumAllPixelToKeepImage:
+        # self.im = self.lastIm
+        # self.im[events2[1], events2[0]] = 0 #events2[2]
+      # self.lastIm = self.im
+      # return [True, self.im.astype('uint8')]
+    # else:
+      # return [False, []]
   
   def set(self, propToChange, numImage):
     if propToChange == 1:
