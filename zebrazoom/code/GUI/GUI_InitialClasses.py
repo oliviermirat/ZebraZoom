@@ -998,7 +998,8 @@ class _VisualizationGroupDetails(QWidget):
     self.setLayout(layout)
 
   def refresh(self):
-    item = self._model.getItem(self._getCurrentIndex())
+    currentIndex = self._getCurrentIndex()
+    item = self._model.getItem(currentIndex)
     showResults = not isinstance(item, (_GroupsVisualizationGroupItem, _AllResultsVisualizationGroupItem))
     showDeleteOnly = isinstance(item, _AllResultsVisualizationGroupItem)
     self._addGroupBtn.setVisible(not showDeleteOnly)
@@ -1008,12 +1009,14 @@ class _VisualizationGroupDetails(QWidget):
     self._groupNameWidget.setVisible(showResults)
     self._groupNameLineEdit.setText(item.data(0))
     self._listWidget.clear()
-    self._listWidget.addItems(results.data(0) for results in item.subgroups)
-    for idx, results in enumerate(item.paths):
-      if isinstance(item, _AllResultsVisualizationGroupItem) and results.filename in item.parentItem.subgroups[0].allPaths:
-        continue
-      index = self._model.createIndex(results.childNumber(), 0, results)
-      self._listWidget.addItem(_ResultsListWidgetItem(idx, self._model.data(index, Qt.DecorationRole), results.filename))
+    proxyIndex = self._proxyModel.mapFromSource(currentIndex)
+    for idx in range(self._proxyModel.rowCount(proxyIndex)):
+      sourceIndex = self._proxyModel.mapToSource(self._proxyModel.index(idx, 0, proxyIndex))
+      childItem = self._model.getItem(sourceIndex)
+      if not isinstance(childItem, _ResultsItem):
+        self._listWidget.addItem(_ResultsListWidgetItem(sourceIndex.row(), childItem.data(0)))
+      else:
+        self._listWidget.addItem(_ResultsListWidgetItem(sourceIndex.row(), self._model.data(sourceIndex, Qt.DecorationRole), childItem.filename))
 
   def _getMultipleFolders(self):
     app = QApplication.instance()
@@ -1077,15 +1080,13 @@ class _VisualizationGroupDetails(QWidget):
 
   def _getSelectedResults(self):
     cutoffIdx = len(self._model.getItem(self._getCurrentIndex()).subgroups)
-    return set(filter(lambda idx: idx >= cutoffIdx, map(lambda idx: idx.row(), self._listWidget.selectionModel().selectedIndexes())))
+    return set(filter(lambda idx: idx >= cutoffIdx, map(lambda idx: self._listWidget.item(idx.row()).idx, self._listWidget.selectionModel().selectedIndexes())))
 
   def _removeSelected(self, delete=False):
     if delete and QMessageBox.question(QApplication.instance().window, "Delete results", "Are you sure you want to delete the selected results? This action removes the files from disk and cannot be undone.",
                                        defaultButton=QMessageBox.StandardButton.No) != QMessageBox.StandardButton.Yes:
       return
-    selectedIdxs = sorted(set(map(lambda idx: idx.row(), self._listWidget.selectionModel().selectedIndexes())) if not delete else self._getSelectedResults(), reverse=True)
-    if isinstance(self._model.getItem(self._getCurrentIndex()), _AllResultsVisualizationGroupItem):
-      selectedIdxs = [self._listWidget.item(idx).idx for idx in selectedIdxs]
+    selectedIdxs = sorted(set(map(lambda idx: self._listWidget.item(idx.row()).idx, self._listWidget.selectionModel().selectedIndexes())) if not delete else self._getSelectedResults(), reverse=True)
     self._model.removeChildren(selectedIdxs, self._getCurrentIndex(), delete=delete)
     self._proxyModel.invalidateFilter()
     self.refresh()
@@ -1294,6 +1295,7 @@ class ViewParameters(util.CollapsibleSplitter):
         stackedLayout.addWidget(dummyWidget)
         dummyWidget.setLayout(wrapperLayout)
         self._visualizationGroupDetails = _VisualizationGroupDetails(proxyModel, lambda: proxyModel.mapToSource(selectionModel.currentIndex()))
+        proxyModel.layoutChanged.connect(self._visualizationGroupDetails.refresh)
         stackedLayout.addWidget(self._visualizationGroupDetails)
         scrollArea = QScrollArea()
         scrollArea.setFrameShape(QFrame.Shape.NoFrame)
