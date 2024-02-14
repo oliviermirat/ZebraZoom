@@ -1411,7 +1411,7 @@ class NumberOfAnimals2(QWidget):
     slowBoutDetectionRadioButton = QRadioButton("Yes, with slow but more accurate bout detection", self)
     btnGroup2.addButton(slowBoutDetectionRadioButton, id=1)
     yesNoLayout2.addWidget(slowBoutDetectionRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
-    fastBoutDetectionRadioButton = QRadioButton("Yes, with fast but less accurate bout detection", self)
+    fastBoutDetectionRadioButton = QRadioButton("Yes, with fast but less accurate bout detection\nnot recommended in most cases", self)
     btnGroup2.addButton(fastBoutDetectionRadioButton, id=2)
     yesNoLayout2.addWidget(fastBoutDetectionRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
     noBoutsRadioButton = QRadioButton("No", self)
