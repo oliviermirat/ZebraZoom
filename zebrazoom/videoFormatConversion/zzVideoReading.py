@@ -210,7 +210,6 @@ class eventBasedReading():
       self.maxSumAllPixelToKeepImage = hyperparameters["maxSumAllPixelToKeepImage"]
       self.fps = 1 / (self.delta_t_toLoad / 1000000)
       
-      # try replacing by iteration with load_n_events
       events = self.record_raw.load_n_events(5000)
       firstEventTime = events[0][3]
       while not(self.record_raw.is_done()):
