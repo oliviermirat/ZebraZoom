@@ -316,8 +316,12 @@ class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDet
   def _formatOutput(self):
     # if self._hyperparameters["postProcessMultipleTrajectories"]:
       # self._postProcessMultipleTrajectories(self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingProbabilityOfGoodDetectionList[wellNumber])
-    return {wellNumber: extractParameters([self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], [], 0, 0, self._auDessusPerAnimalIdList[wellNumber]], wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background)
-            for wellNumber in range(self._firstWell, self._lastWell + 1)}
+    if self._auDessusPerAnimalIdList == None:
+      return {wellNumber: extractParameters([self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], [], 0, 0, 0], wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background)
+              for wellNumber in range(self._firstWell, self._lastWell + 1)}
+    else:
+      return {wellNumber: extractParameters([self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], [], 0, 0, self._auDessusPerAnimalIdList[wellNumber]], wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background)
+              for wellNumber in range(self._firstWell, self._lastWell + 1)}
 
   def run(self):
     self._background = self.getBackground()
