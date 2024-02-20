@@ -1684,7 +1684,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
         legend = legendAx.legend(wedges, ['High angle bouts\n(> 25 deg)', 'Low angle bouts\n(<= 25 deg)'], loc='center')
         legendAx.axis('off')
         legendFigure.canvas.draw()
-        legendWidget.setFixedSize(*legend.get_window_extent().bounds[2:])
+        legendWidget.setFixedSize(*map(int, legend.get_window_extent().bounds[2:]))
       figure.figure.canvas.draw()
     scrollArea.setAlignment(Qt.AlignmentFlag.AlignLeft)
     scrollArea.setWidget(chartsWidget)
@@ -2114,7 +2114,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
         legend = legendAx.legend(handles, labels, title=ax.get_legend().get_title().get_text(), loc='center')
         legendAx.axis('off')
         legendFigure.canvas.draw()
-        legendWidget.setFixedSize(*legend.get_window_extent().bounds[2:])
+        legendWidget.setFixedSize(*map(int, legend.get_window_extent().bounds[2:]))
       else:
         break
 

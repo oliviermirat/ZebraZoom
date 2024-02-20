@@ -429,7 +429,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   
   # Saving dataframe for the whole set of videos as a matlab file
   if saveAllBoutsSuperStructuresInMatlabFormat:
-    scipy.io.savemat(os.path.join(resFolder, nameOfFile + '.mat'), {'struct1':dfParam.to_dict("list")})
+    scipy.io.savemat(os.path.join(resFolder, nameOfFile + '.mat'), {'struct1': dfParam.to_dict("list")}, long_field_names=True)
 
   if calculateRolloverParameters:
     globParam.extend(['numberOfRolloverFrames', 'rolloverProbabilitiesSum', 'numberOfRolloverFramesNormalized', 'rolloverProbabilitiesSumNormalized'])
