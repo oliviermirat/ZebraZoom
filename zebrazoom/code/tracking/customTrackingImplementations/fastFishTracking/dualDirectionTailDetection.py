@@ -26,7 +26,7 @@ def dualDirectionTailDetection(headPosition, frame, points, angle, maxDepth, ste
     cv2.circle(frameDisplay, (x, y), 3, (0,0,0),   -1)
     util.showFrame(frameDisplay, title="HeadEmbeddedTailTracking")
   
-  if np.sum(np.sum(255 - frame)) < hyperparameters["minimumPixelIntensitySumForAnimalDetection"]:
+  if ("minimumPixelIntensitySumForAnimalDetection" in hyperparameters) and (np.sum(np.sum(255 - frame)) < hyperparameters["minimumPixelIntensitySumForAnimalDetection"]):
     return ([], angle, 255)
   
   while (distSubsquentPoints > 0 and depth < maxDepth and ((pixSur < pixSurMax) or (depth < hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth))):
@@ -205,7 +205,7 @@ def dualDirectionTailDetection(headPosition, frame, points, angle, maxDepth, ste
     
     else:
       distSubsquentPoints = 0
-    
+  
   lenPoints = len(points[0]) - 1
   if points[0, lenPoints-1] == points[0, lenPoints] and points[1, lenPoints-1] == points[1, lenPoints]:
     points = points[:, :len(points[0])-1]
@@ -214,6 +214,27 @@ def dualDirectionTailDetection(headPosition, frame, points, angle, maxDepth, ste
     # print(np.median(pixTotList), np.mean(pixTotList), pixTotList)
   
   medianPixTotList = np.median(pixTotList)
+  
+  if ("dualDirectionRemoveShortestDirectionFromHead" in hyperparameters) and hyperparameters["dualDirectionRemoveShortestDirectionFromHead"]:
+    accumulatedLength1 = 0
+    accumulatedLength2 = 0
+    headPositionIndex = -1
+    passedHeadPosition = False
+    for i in range(len(points[0])):
+      if i > 0:
+        length = math.sqrt((points[0, i-1] - points[0, i])**2 + (points[1, i-1] - points[1, i])**2)
+        if not(passedHeadPosition):
+          accumulatedLength1 += length
+        else:
+          accumulatedLength2 += length
+      if (headPosition[0] == points[0, i]) and (headPosition[1] == points[1, i]):
+        passedHeadPosition = True
+        headPositionIndex  = i
+    if accumulatedLength1 > accumulatedLength2:
+      points2 = points[:, :headPositionIndex+1]
+      points  = points2[:, ::-1]
+    else:
+      points  = points[:, headPositionIndex:]
   
   return (points, lastFirstTheta, medianPixTotList)
   

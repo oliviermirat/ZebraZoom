@@ -21,7 +21,7 @@ def testingWellAnimalBout(numWell, numAnimal, numBout):
   dataAPI.plotManualVsAutomaticBendLocations(videoName, numWell, numAnimal, numBout)
 
 
-videoName = "23.05.19.ao-07-f-1-2-long1"
+videoName = "C:/Users/mirat/Desktop/openZZ/ZebraZoom/zebrazoom/ZZoutput/23.05.19.ao-07-f-1-2-long1_2024_01_09-17_37_45.h5"
 
 outlierRemoval = False
 
