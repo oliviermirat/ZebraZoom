@@ -5,6 +5,7 @@ from .getDataPerBout import *
 from .getDataPerTimeInterval import *
 from .getFirstAndLastFrame import *
 from .getKinematicParametersPerBout import *
+from .getKinematicParametersPerInterval import *
 from .getTailAngleHeatmapPerBout import *
 from .getTailAngleHeatmapPerTimeInterval import *
 from .listAllBouts import *
