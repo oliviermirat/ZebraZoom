@@ -231,10 +231,10 @@ def dualDirectionTailDetection(headPosition, frame, points, angle, maxDepth, ste
         passedHeadPosition = True
         headPositionIndex  = i
     if accumulatedLength1 > accumulatedLength2:
-      points2 = points[:, :headPositionIndex+1]
+      points2 = points[:, :headPositionIndex]
       points  = points2[:, ::-1]
     else:
-      points  = points[:, headPositionIndex:]
+      points  = points[:, headPositionIndex+1:]
   
   return (points, lastFirstTheta, medianPixTotList)
   
