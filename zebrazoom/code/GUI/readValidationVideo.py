@@ -320,6 +320,8 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
   if frameInfo is None:
     return
   getFrame, frameRange, frame, toggleTrackingPoints, wellPositions, wellShape, hyperparameters, originalVideoPath = frameInfo
+  if wellShape is None:
+    wellShape = 'rectangle'
   layout = QVBoxLayout()
 
   video = QLabel()
