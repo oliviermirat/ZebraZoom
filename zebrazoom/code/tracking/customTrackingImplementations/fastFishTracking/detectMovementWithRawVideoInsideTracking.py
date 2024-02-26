@@ -4,12 +4,14 @@ import math
 import cv2
 
 def detectMovementWithRawVideoInsideTracking(self, i, grey):
+  returnPreviousFrame = False
   if self._previousFrames is None:
     self._previousFrames = queue.Queue(self._hyperparameters["frameGapComparision"])
     self._auDessusPerAnimalIdList = [[np.zeros((self._lastFrame-self._firstFrame+1, 1)) for nbAnimalsPerWell in range(0, self._hyperparameters["nbAnimalsPerWell"])]
                                      for wellNumber in range(len(self._wellPositions))]
   halfDiameterRoiBoutDetect = self._hyperparameters["halfDiameterRoiBoutDetect"]
   if self._previousFrames.full():
+    returnPreviousFrame = True
     previousFrame   = self._previousFrames.get()
     curFrame        = grey
     for wellNumber in self._listOfWellsOnWhichToRunTheTracking:
@@ -64,3 +66,8 @@ def detectMovementWithRawVideoInsideTracking(self, i, grey):
         self._auDessusPerAnimalIdList[wellNumber][animalId][i] = 0 # Need to improve this part
   
   self._previousFrames.put(grey)
+  
+  if returnPreviousFrame:
+    return previousFrame
+  else:
+    return grey

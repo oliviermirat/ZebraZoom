@@ -20,7 +20,9 @@ def backgroundSubtractionOnWholeImage(self, frame, k):
   # Bout detection
   if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
     t1 = time.time()
-    detectMovementWithRawVideoInsideTracking(self, k, frame)
+    prevFrame = detectMovementWithRawVideoInsideTracking(self, k, frame)
+    if ("detectMovementCompareWithTheFuture" in self._hyperparameters) and self._hyperparameters["detectMovementCompareWithTheFuture"]:
+      frame = prevFrame
     t2 = time.time()
     self._times2[k, 1] = t2 - t1
     if self._printInterTime:

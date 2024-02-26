@@ -134,6 +134,14 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
     
     cap.release()
     
+    if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
+      frameGapComparision = self._hyperparameters["frameGapComparision"]
+      nbFrames = len(self._trackingDataPerWell[0][0])
+      for wellNumber in range(len(self._trackingDataPerWell)):
+        for animalId in range(len(self._trackingDataPerWell[wellNumber])):
+          self._trackingDataPerWell[wellNumber][animalId][:nbFrames-frameGapComparision][:][:] = self._trackingDataPerWell[wellNumber][animalId][frameGapComparision:nbFrames][:][:]
+          self._auDessusPerAnimalIdList[wellNumber][animalId][:nbFrames-frameGapComparision] = self._auDessusPerAnimalIdList[wellNumber][animalId][frameGapComparision:nbFrames]
+    
     print("")
     print("Color to grey:"           , np.median(self._times2[:,0]))
     print("Bout detection:"          , np.median(self._times2[:,1]))

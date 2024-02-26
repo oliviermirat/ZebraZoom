@@ -477,6 +477,7 @@ def _setFastTrackingParams(app):
   app.configFile["backgroundSubtractionOnWholeImage"] = 0
   app.configFile["backgroundSubtractionOnROIhalfDiameter"] = 90
   app.configFile["chooseWellsToRunTrackingOnWithFirstAndLastFrame"] = 0
+  app.configFile["detectMovementCompareWithTheFuture"] = 1
 
 
 def _setMaxDepthParams(app):

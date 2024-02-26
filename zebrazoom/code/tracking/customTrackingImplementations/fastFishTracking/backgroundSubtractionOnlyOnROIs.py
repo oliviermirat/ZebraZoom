@@ -16,7 +16,9 @@ def backgroundSubtractionOnlyOnROIs(self, frame, k):
   
   # Bout detection
   if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
-    detectMovementWithRawVideoInsideTracking(self, k, frame)
+    prevFrame = detectMovementWithRawVideoInsideTracking(self, k, frame)
+    if ("detectMovementCompareWithTheFuture" in self._hyperparameters) and self._hyperparameters["detectMovementCompareWithTheFuture"]:
+      frame = prevFrame
   
   # Going through each well/arena/tank and applying tracking method on it
   t1 = time.time()
