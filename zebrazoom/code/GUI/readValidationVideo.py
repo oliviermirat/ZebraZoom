@@ -524,12 +524,21 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
         progressDialog.setAutoReset(False)
         progressDialog.setWindowModality(Qt.WindowModality.ApplicationModal)
         frame, videoFPS = getFrame(frameSlider, trackingPointsGroup=btnGroup, frameIdx=frameSlider.firstSaveFrame, returnFPS=True)
-        height, width = frame.shape[:2]
+        height, width = frame.shape[:2] if not zoom else (250, 250)
         cap = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'MJPG'), videoFPS, (width, height))
         for frameIdx in range(frameSlider.firstSaveFrame, lastSaveFrame + 1):
           progressDialog.setValue(frameIdx)
           progressDialog.setLabelText(f'Saving frame {frameIdx}...')
-          cap.write(getFrame(frameSlider, trackingPointsGroup=btnGroup, frameIdx=frameIdx))
+          frame = getFrame(frameSlider, trackingPointsGroup=btnGroup, frameIdx=frameIdx)
+          frameHeight, frameWidth = frame.shape[:2]
+          if frameHeight < height or frameWidth < width:
+            xOffset = (width - frameWidth) // 2
+            yOffset = (height - frameHeight) // 2
+            copy = cv2.resize(frame, (height, width))
+            copy[:] = 0
+            copy[yOffset:yOffset+frameHeight, xOffset:xOffset+frameWidth] = frame
+            frame = copy
+          cap.write(frame)
           if progressDialog.wasCanceled():
             break
         progressDialog.setLabelText('Saving video...')
