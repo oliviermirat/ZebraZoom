@@ -1167,6 +1167,9 @@ def adjustFastFishTrackingPage(useNext=True, nextCb=None, detectBoutsMethod=None
     except ValueError:
       newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
       configFile.update(newhyperparameters)
+      for param in ('dualDirectionTailDetection', 'dualDirectionRemoveShortestDirectionFromHead'):
+        if param not in newhyperparameters and param in configFile:
+          del configFile[param]
     except NameError:
       print("Configuration file parameters changes discarded.")
 

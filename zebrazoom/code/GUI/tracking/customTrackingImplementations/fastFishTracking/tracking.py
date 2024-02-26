@@ -61,7 +61,25 @@ class GUITracking(baseClass):
     if not self._hyperparameters['adjustFreelySwimTracking']:
       return None
     assert self._hyperparameters['onlyTrackThisOneWell'] != -1
-    hyperparametersListNames = ["maxDepth", "paramGaussianBlur", "headEmbededParamTailDescentPixThreshStop", _CustomListModel(['steps', "thetaDiffAccept", "thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd", "thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd2", 'nbList', 'nbListAfterAuthorizedRelativeLengthTailEnd', 'nbListAfterAuthorizedRelativeLengthTailEnd2', 'authorizedRelativeLengthTailEnd', 'authorizedRelativeLengthTailEnd2', 'maximumMedianValueOfAllPointsAlongTheTail', 'minimumHeadPixelValue', 'nbTailPoints'])]
+
+    def trackingAlgorithmChanged(idx, hyperparameters):
+      params = (None, 'dualDirectionTailDetection', 'dualDirectionRemoveShortestDirectionFromHead')
+      for param in params[1:]:
+        if param == params[idx]:
+          hyperparameters[param] = 1
+        else:
+          if param in hyperparameters:
+            del hyperparameters[param]
+
+
+    def getTrackingAlgorithmIndex(hyperparameters):
+      params = (None, 'dualDirectionTailDetection', 'dualDirectionRemoveShortestDirectionFromHead')
+      for param in params[1:]:
+        if hyperparameters.get(param, False):
+          return params.index(param)
+      return 0
+
+    hyperparametersListNames = ["maxDepth", "paramGaussianBlur", "headEmbededParamTailDescentPixThreshStop", _CustomListModel(['steps', "thetaDiffAccept", "thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd", "thetaDiffAcceptAfterAuthorizedRelativeLengthTailEnd2", 'nbList', 'nbListAfterAuthorizedRelativeLengthTailEnd', 'nbListAfterAuthorizedRelativeLengthTailEnd2', 'authorizedRelativeLengthTailEnd', 'authorizedRelativeLengthTailEnd2', 'maximumMedianValueOfAllPointsAlongTheTail', 'minimumHeadPixelValue', 'nbTailPoints']), ('dualDirectionTailDetection', 'dualDirectionRemoveShortestDirectionFromHead')]
     organizationTab = [
     [1, 50, "Target length of the tail"],
     [1, 30, "Window of gaussian blur filter applied on the image"],
@@ -77,7 +95,8 @@ class GUITracking(baseClass):
      [0, 1, 'Cut off relative location between second and third tail segment (between 0 and 1)'],
      [1, 300, 'Maximum median pixel value of all points along the tail in order for the tail tracking to be accepted'],
      [1, 300, 'Maximum pixel value authorized for a point to be considered as the head of the animal'],
-     [1, 20, 'Number of points along the tail in the output data'],),]
+     [1, 20, 'Number of points along the tail in the output data'],),
+    ['Tracking algorithm', ('Default algorithm: tail descent by segments from head', 'Descent by segments from head in both directions', 'Dual directions descent: remove the shortest direction'), trackingAlgorithmChanged, getTrackingAlgorithmIndex],]
 
     title = "Adjust parameters in order for the background to be white and the animals to be gray/black."
 

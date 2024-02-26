@@ -17,8 +17,35 @@ def __calculateSteps(maxDepth, numberOfSteps):
   return reversed(steps)
 
 
-def _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nameIdx=0):
-  from PyQt5.QtCore import Qt, QAbstractListModel
+def __createComboBox(layout, status, values, info, names, widgets, nameIdx):
+  from PyQt5.QtWidgets import QComboBox, QGridLayout, QWidget
+
+  name, choices, callback, getCurrentIndex = info
+  combobox = QComboBox()
+  combobox.setContentsMargins(20, 5, 20, 5)
+  combobox.addItems(choices)
+  combobox.setCurrentIndex(getCurrentIndex(values))
+  listView = combobox.view()
+  listView.setWordWrap(True)
+  listView.adjustSize()
+  combobox.currentIndexChanged.connect(lambda idx: callback(idx, values))
+  combobox.currentIndexChanged.connect(lambda idx: widgets['loop'].exit())
+
+  layout = QGridLayout()  # this is required to align combobox with sliders
+  layout.setColumnStretch(0, 1)
+  layout.setRowStretch(0, 1)
+  layout.setColumnStretch(2, 1)
+  layout.setVerticalSpacing(0)
+  layout.setContentsMargins(20, 5, 20, 5)
+  layout.addWidget(combobox, 1, 1)
+  wrapperWidget = QWidget()
+  wrapperWidget.setLayout(layout)
+
+  return name, wrapperWidget
+
+
+def __createSlider(layout, status, values, info, names, widgets, hasCheckbox, nameIdx, widgetPosition=None):
+  from PyQt5.QtCore import QAbstractListModel
 
   import zebrazoom.code.util as util
 
@@ -69,7 +96,7 @@ def _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nam
       else:
         layout.removeWidget(slider)
         slider.hide()
-        _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nameIdx=choiceIdx)
+        _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nameIdx=choiceIdx, widgetPosition=widgetPosition)
     slider.choiceChanged.connect(choiceChanged)
   else:
     slider = util.SliderWithSpinbox(value, minn, maxx, name=name, double=double)
@@ -120,19 +147,28 @@ def _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nam
       values['steps'][:] = __calculateSteps(slider.value(), len(values['steps']))
     widgets['loop'].exit()
   slider.valueChanged.connect(valueChanged)
+  return name, slider
+
+def _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nameIdx=0, widgetPosition=None):
+  from PyQt5.QtCore import Qt
+
+  if isinstance(names, tuple):
+    name, widget = __createComboBox(layout, status, values, info, names, widgets, nameIdx)
+  else:
+    name, widget = __createSlider(layout, status, values, info, names, widgets, hasCheckbox, nameIdx, widgetPosition=layout.count()if widgetPosition is None else widgetPosition)
 
   if name != "Frame number":
-    elements = layout.count() - (4 if hasCheckbox else 3)  # frame, status, checkbox, frameSlider
+    elements = (widgetPosition if widgetPosition is not None else layout.count()) - (4 if hasCheckbox else 3)  # frame, status, checkbox, frameSlider
     row = elements // 2 + (4 if hasCheckbox else 3)
     col = elements % 2
     if len(values) == 1:
-      layout.addWidget(slider, row, col, 1, 2, Qt.AlignmentFlag.AlignCenter)
+      layout.addWidget(widget, row, col, 1, 2, Qt.AlignmentFlag.AlignCenter)
     else:
-      layout.addWidget(slider, row, col, Qt.AlignmentFlag.AlignLeft if col else Qt.AlignmentFlag.AlignRight)
-    widgets[name] = slider
+      layout.addWidget(widget, row, col, Qt.AlignmentFlag.AlignLeft if col else Qt.AlignmentFlag.AlignRight)
+    widgets[name] = widget
   else:
-    widgets['frameSlider'] = slider
-    layout.addWidget(slider, 3 if hasCheckbox else 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    widgets['frameSlider'] = widget
+    layout.addWidget(widget, 3 if hasCheckbox else 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
 
 def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, title, organizationTab, widgets, documentationLink=None, addContrastCheckbox=False, addZoomCheckbox=False):
@@ -279,6 +315,10 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
         for name in name.itemlist:
           if name in hyperparameters:
             newParams[name] = hyperparameters[name]
+      elif isinstance(name, tuple):
+        for n in name:
+          if n in hyperparameters:
+            newParams[n] = hyperparameters[n]
       else:
         newParams[name] = hyperparameters[name]
     pickle.dump(newParams, open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'wb'))
