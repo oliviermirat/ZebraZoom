@@ -317,7 +317,7 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
             newParams[name] = hyperparameters[name]
       elif isinstance(name, tuple):
         for n in name:
-          if n in hyperparameters:
+          if hyperparameters.get(n, False):
             newParams[n] = hyperparameters[n]
       else:
         newParams[name] = hyperparameters[name]

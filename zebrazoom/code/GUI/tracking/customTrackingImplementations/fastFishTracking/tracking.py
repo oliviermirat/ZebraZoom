@@ -63,18 +63,18 @@ class GUITracking(baseClass):
     assert self._hyperparameters['onlyTrackThisOneWell'] != -1
 
     def trackingAlgorithmChanged(idx, hyperparameters):
-      params = (None, 'dualDirectionTailDetection', 'dualDirectionRemoveShortestDirectionFromHead')
-      for param in params[1:]:
-        if param == params[idx]:
+      params = ('dualDirectionTailDetection', 'dualDirectionRemoveShortestDirectionFromHead')
+      paramsToSet = {'dualDirectionTailDetection'} if idx == 1 else {'dualDirectionTailDetection', 'dualDirectionRemoveShortestDirectionFromHead'} if idx == 2 else set()
+      for param in params:
+        if param in paramsToSet:
           hyperparameters[param] = 1
         else:
           if param in hyperparameters:
             del hyperparameters[param]
 
-
     def getTrackingAlgorithmIndex(hyperparameters):
       params = (None, 'dualDirectionTailDetection', 'dualDirectionRemoveShortestDirectionFromHead')
-      for param in params[1:]:
+      for param in reversed(params[1:]):
         if hyperparameters.get(param, False):
           return params.index(param)
       return 0
