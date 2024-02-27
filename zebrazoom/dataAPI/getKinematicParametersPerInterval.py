@@ -7,6 +7,7 @@ from ._openResultsFile import openResultsFile
 
 def getKinematicParametersPerInterval(videoName: str, numWell: int, numAnimal: int, startFrame: int, endFrame: int) -> dict:
   with openResultsFile(videoName, 'r+') as results:
+        
     firstFrame = results.attrs['firstFrame']
     lastFrame = results.attrs['lastFrame']
     if startFrame < firstFrame or endFrame > lastFrame:
@@ -32,6 +33,39 @@ def getKinematicParametersPerInterval(videoName: str, numWell: int, numAnimal: i
     boutData['TailY_VideoReferential'] = np.column_stack([HeadPos['Y']] + [TailPosY[col] for col in dataGroup['TailPosY'].attrs['columns']])
     boutData['TailAngle_Raw'] = dataGroup['TailAngle'][start:end]
     boutData['Heading'] = dataGroup['Heading'][start:end]
+    
+    ### WARNING: THE IMPLEMENTATION BELLOW FOR BENDS WORKS AS LONG AS THE RANGE IS WITHIN A BOUT OR TWO SUBSEQUENT BOUTS
+    # Adding a bend_Timing column in the dataframe for the specific numWell and numAnimal
+    if 'bend_Timing' in dataGroup:
+      if not(len(dataGroup["bend_Timing"].shape)):
+        del dataGroup["bend_Timing"]
+        dataGroup.create_dataset("bend_Timing", (len(dataGroup['HeadPos']),), dtype=int)
+    else:
+      dataGroup.create_dataset("bend_Timing", (len(dataGroup['HeadPos']),), dtype=int)
+    dataGroup["bend_Timing"][:] = 0
+    for numBout in range(results[animalPath]['listOfBouts'].attrs["numberOfBouts"]):
+      BoutStart = results[animalPath]['listOfBouts']['bout'+str(numBout)].attrs["BoutStart"]
+      BoutEnd   = results[animalPath]['listOfBouts']['bout'+str(numBout)].attrs["BoutEnd"]
+      if ((BoutStart <= startFrame) and (startFrame <= BoutEnd)) or ((BoutStart <= endFrame) and (endFrame <= BoutEnd)):
+        dataGroup['bend_Timing'][BoutStart:BoutEnd] = [1 if (i in results[animalPath]['listOfBouts']['bout'+str(numBout)]['Bend_Timing']) else 0 for i in range(BoutEnd - BoutStart)]
+    # Adding Bend_Timing array to boutData
+    allBendsTiming = dataGroup["bend_Timing"][start:end]
+    Bend_Timing = []
+    for i in range(len(allBendsTiming)):
+      if allBendsTiming[i]:
+        Bend_Timing.append(i)
+    Bend_Timing_Saved = Bend_Timing.copy()
+    if Bend_Timing[0] == 0:
+      Bend_Timing = Bend_Timing[1:len(Bend_Timing)]
+    boutData['Bend_Timing'] = Bend_Timing
 
-    parametersToCalculate = ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'maxTailAngleAmplitude', 'Absolute Yaw (deg)', 'Signed Yaw (deg)']
-    return dict(zip(parametersToCalculate, getGlobalParameters(boutData, results.attrs['videoFPS'], results.attrs['videoPixelSize'], 4, None, parametersToCalculate, firstFrame, lastFrame)))
+    parametersToCalculate = ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'maxTailAngleAmplitude', 'Absolute Yaw (deg)', 'Signed Yaw (deg)', 'Number of Oscillations', 'meanTBF', 'Mean TBF (Hz)']
+    globParams = getGlobalParameters(boutData, results.attrs['videoFPS'], results.attrs['videoPixelSize'], 4, None, parametersToCalculate, firstFrame, lastFrame)
+    
+    TBF_quotient      = (len(Bend_Timing_Saved) / 2) / ((Bend_Timing_Saved[-1] - Bend_Timing_Saved[0] + 1) / results.attrs['videoFPS'])
+    TBF_instantaneous =  np.mean(results.attrs['videoFPS'] / (2 * np.diff(Bend_Timing_Saved)))
+    
+    
+    
+    
+    return dict(zip(parametersToCalculate + ['TBF_quotient', 'TBF_instantaneous'], globParams + [TBF_quotient, TBF_instantaneous]))
