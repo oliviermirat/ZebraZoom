@@ -1,6 +1,6 @@
+import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-import matplotlib.pyplot as plt
 
 # The type of excel files referenced below can be found in the 'plots and processed data' folders, which are accessible through the GUI by clicking, from the main menu of the GUI, on: 'Analyze ZebraZoom's output' -> 'View previous kinematic parameter analysis results' -> 'View 'plot and processed data' folders'
 # Choosing the excel file in the 'allBoutsMixed' folder or in the 'medianPerWellFirst' folders will result in different results as in the first case all bouts from all experiments are mixed up together whereas in the second case the median of each variable is taken for each videoName and well first (this only makes a difference if bouts of movements are being detected in your video of course)

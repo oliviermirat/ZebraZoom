@@ -1,6 +1,5 @@
-import numpy as np
-import pandas as pd
 import matplotlib.pyplot as plt
+import pandas as pd
 
 data = pd.read_excel('classifications.xlsx', index_col=0)
 

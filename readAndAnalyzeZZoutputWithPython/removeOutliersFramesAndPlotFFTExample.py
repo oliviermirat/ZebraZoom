@@ -1,11 +1,13 @@
-import zebrazoom.dataAPI as dataAPI
-from scipy.fft import fft, fftfreq
-import matplotlib.pyplot as plt
-import seaborn as sns
-import pandas as pd
-import numpy as np
-import random
 import math
+import random
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from scipy.fft import fft, fftfreq
+
+import zebrazoom.dataAPI as dataAPI
 
 ### Parameters to change
 

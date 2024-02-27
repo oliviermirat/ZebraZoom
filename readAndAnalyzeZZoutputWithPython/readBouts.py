@@ -1,11 +1,11 @@
 import json
-import matplotlib.pyplot as plt
-import cv2
-import numpy as np
 import math
 
-import zebrazoom.code.util as util
+import cv2
+import matplotlib.pyplot as plt
+import numpy as np
 
+import zebrazoom.code.util as util
 
 readingSpeed = 70
 zoom = 4

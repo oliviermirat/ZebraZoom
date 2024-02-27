@@ -1,5 +1,7 @@
-import zebrazoom.dataAPI as dataAPI
 import numpy as np
+
+import zebrazoom.dataAPI as dataAPI
+
 
 def testingWellAnimalBout(numWell, numAnimal, numBout):
   

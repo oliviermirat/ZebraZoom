@@ -1,5 +1,6 @@
-import zebrazoom
 import pickle
+
+import zebrazoom
 
 # Creating the dataframe on which the clustering will be applied
 

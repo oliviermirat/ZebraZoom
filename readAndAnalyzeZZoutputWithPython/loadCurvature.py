@@ -1,7 +1,8 @@
 # This is an example of how load and plot a curvature matrix stored in a pickle file
 
-import matplotlib.pyplot as plt
 import pickle
+
+import matplotlib.pyplot as plt
 
 outfile = open('../zebrazoom/ZZoutput/headEmbeddedZebrafishLarva/perBoutOutput/headEmbeddedZebrafishLarva_curvatureData0_0_0.txt', 'rb')
 curvature = pickle.load(outfile)

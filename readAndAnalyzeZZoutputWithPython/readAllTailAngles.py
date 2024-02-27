@@ -2,6 +2,7 @@
 # Below is an example of how to plot this output data "allTailAngles" and "allTailAnglesSmoothed"
 
 import json
+
 import matplotlib.pyplot as plt
 
 nameOfVideo = '4wellsZebrafishLarvaeEscapeResponses'
