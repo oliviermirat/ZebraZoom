@@ -45,7 +45,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
   def _debugFrame(self, frame, title=None, buttons=(), timeout=None):
     util.showFrame(frame, title=title, buttons=buttons, timeout=timeout)
 
-  def _adjustParameters(self, i, frame, widgets):
+  def _adjustParameters(self, i, frame, unprocessedFrame, widgets):
     return None
 
   def run(self):
@@ -106,7 +106,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
         frame = cv2.resize(frame, (int(len(frame[0])/resizeFrameFactor), int(len(frame)/resizeFrameFactor)))
       if ret:
         if self._hyperparameters["backgroundSubtractionOnWholeImage"] or k == self._firstFrame:
-          frameROI = backgroundSubtractionOnWholeImage(self, frame, k-self._firstFrame)
+          frameROI, unprocessedFrameROI = backgroundSubtractionOnWholeImage(self, frame, k-self._firstFrame)
         else:
           backgroundSubtractionOnlyOnROIs(self, frame, k-self._firstFrame)
         if self._hyperparameters["updateBackgroundAtInterval"]:
@@ -116,7 +116,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
       time3 = time.time()
       times[k-self._firstFrame, 0] = time2 - time1
       times[k-self._firstFrame, 1] = time3 - time2
-      adjustParamsInfo = self._adjustParameters(k, frameROI, widgets)
+      adjustParamsInfo = self._adjustParameters(k, frameROI, unprocessedFrameROI, widgets)
       if adjustParamsInfo is not None:
         k, widgets = adjustParamsInfo
         if self._nbTailPoints != self._hyperparameters["nbTailPoints"]:

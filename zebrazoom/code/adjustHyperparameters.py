@@ -171,10 +171,10 @@ def _createWidget(layout, status, values, info, names, widgets, hasCheckbox, nam
     layout.addWidget(widget, 3 if hasCheckbox else 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
 
-def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, title, organizationTab, widgets, documentationLink=None, addContrastCheckbox=False, addZoomCheckbox=False):
+def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToShow, title, organizationTab, widgets, documentationLink=None, addContrastCheckbox=False, addZoomCheckbox=False, addUnprocessedFrameCheckbox=False):
   from PyQt5.QtCore import Qt, QAbstractListModel, QEventLoop, QTimer
   from PyQt5.QtGui import QCursor
-  from PyQt5.QtWidgets import QApplication, QCheckBox, QGridLayout, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+  from PyQt5.QtWidgets import QApplication, QCheckBox, QGridLayout, QHBoxLayout, QLabel, QPushButton, QSpinBox, QVBoxLayout, QWidget
 
   import zebrazoom.code.paths as paths
   import zebrazoom.code.util as util
@@ -182,6 +182,8 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
   app = QApplication.instance()
   stackedLayout = app.window.centralWidget().layout()
   timers = []
+
+  hasCheckbox = addContrastCheckbox or addZoomCheckbox or addUnprocessedFrameCheckbox
 
   if widgets is None:
     widgets = {'Frame number': l, 'saved': False, 'discarded': False, 'loop': QEventLoop()}
@@ -194,24 +196,41 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
     status = QLabel()
     layout.addWidget(status, 1, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
-    if addContrastCheckbox:
-      checkbox = QCheckBox('Improve contrast')
-      widgets['contrastCheckbox'] = checkbox
-      checkbox.toggled.connect(lambda: widgets['loop'].exit())
-      QTimer.singleShot(0, lambda: checkbox.setChecked(hyperparameters["outputValidationVideoContrastImprovement"]))
-      layout.addWidget(checkbox, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
-    elif addZoomCheckbox:
-      checkbox = QCheckBox('Zoom in')
-      widgets['zoomInCheckbox'] = checkbox
-      checkbox.toggled.connect(lambda: widgets['loop'].exit())
-      layout.addWidget(checkbox, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
+    if hasCheckbox:
+      checkboxesLayout = QHBoxLayout()
+      checkboxesLayout.addStretch(1)
+      if addContrastCheckbox:
+        checkbox = QCheckBox('Improve contrast')
+        widgets['contrastCheckbox'] = checkbox
+        checkbox.toggled.connect(lambda: widgets['loop'].exit())
+        QTimer.singleShot(0, lambda: checkbox.setChecked(hyperparameters["outputValidationVideoContrastImprovement"]))
+        checkboxesLayout.addWidget(checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
+      if addUnprocessedFrameCheckbox:
+        checkbox = QCheckBox('Show unprocessed frame')
+        widgets['unprocessedFrameCheckbox'] = checkbox
+        checkbox.toggled.connect(lambda: widgets['loop'].exit())
+        checkboxesLayout.addWidget(checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
+      if addZoomCheckbox:
+        numberOfAnimals = hyperparameters.get('nbAnimalsPerWell', 1)
+        checkbox = QCheckBox('Zoom in to animal')
+        checkbox.getAnimalIdx = lambda: animalSpinbox.value() if numberOfAnimals > 1 else 0
+        widgets['zoomInCheckbox'] = checkbox
+        checkbox.toggled.connect(lambda: widgets['loop'].exit())
+        checkboxesLayout.addWidget(checkbox, alignment=Qt.AlignmentFlag.AlignCenter)
+        if numberOfAnimals > 1:
+          animalSpinbox = QSpinBox()
+          animalSpinbox.setRange(0, numberOfAnimals - 1)
+          animalSpinbox.valueChanged.connect(lambda: widgets['loop'].exit())
+          checkboxesLayout.addWidget(animalSpinbox, alignment=Qt.AlignmentFlag.AlignLeft)
+      checkboxesLayout.addStretch(1)
+      layout.addLayout(checkboxesLayout, 2, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
     if l is not None:
-      _createWidget(layout, status, widgets, (hyperparameters["firstFrame"], hyperparameters["lastFrame"] - 1, "You can also go through the video with the keys left arrow (backward); right arrow (forward); page down (fast backward); page up (fast forward)"), "Frame number", widgets, addContrastCheckbox or addZoomCheckbox)
+      _createWidget(layout, status, widgets, (hyperparameters["firstFrame"], hyperparameters["lastFrame"] - 1, "You can also go through the video with the keys left arrow (backward); right arrow (forward); page down (fast backward); page up (fast forward)"), "Frame number", widgets, hasCheckbox)
     else:
       layout.addWidget(QWidget())
     for info, name in zip(organizationTab, hyperparametersListNames):
-      _createWidget(layout, status, hyperparameters, info, name, widgets, addContrastCheckbox or addZoomCheckbox)
+      _createWidget(layout, status, hyperparameters, info, name, widgets, hasCheckbox)
 
     mainLayout = QVBoxLayout()
     titleLabel = util.apply_style(QLabel(title), font=util.TITLE_FONT)

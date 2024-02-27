@@ -7,6 +7,7 @@ import math
 import cv2
 
 def backgroundSubtractionOnWholeImage(self, frame, k):
+  unprocessedFrame = frame
 
   # Color to grey scale transformation
   t1 = time.time()
@@ -58,6 +59,7 @@ def backgroundSubtractionOnWholeImage(self, frame, k):
       lenghtWell_X = self._wellPositions[wellNumber]['lengthX']
       lenghtWell_Y = self._wellPositions[wellNumber]['lengthY']
       frameROI = frame[wellYtop:wellYtop+lenghtWell_Y, wellXtop:wellXtop+lenghtWell_X]
+      unprocessedFrameROI = unprocessedFrame[wellYtop:wellYtop+lenghtWell_Y, wellXtop:wellXtop+lenghtWell_X]
       unmodifiedFrameROI = frameROI.copy()
       
       for animalId in range(0, self._hyperparameters["nbAnimalsPerWell"]):
@@ -118,4 +120,4 @@ def backgroundSubtractionOnWholeImage(self, frame, k):
   if self._printInterTime:
     print("Tracking on each well:", t2 - t1)
   if self._hyperparameters['adjustFreelySwimTracking']:
-    return unmodifiedFrameROI
+    return unmodifiedFrameROI, unprocessedFrameROI

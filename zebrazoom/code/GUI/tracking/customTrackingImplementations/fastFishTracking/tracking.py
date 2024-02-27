@@ -57,7 +57,7 @@ class _CustomListModel(QAbstractListModel):
 
 
 class GUITracking(baseClass):
-  def _adjustParameters(self, i, frame, widgets):
+  def _adjustParameters(self, i, frame, unprocessedFrame, widgets):
     if not self._hyperparameters['adjustFreelySwimTracking']:
       return None
     assert self._hyperparameters['onlyTrackThisOneWell'] != -1
@@ -100,7 +100,9 @@ class GUITracking(baseClass):
 
     title = "Adjust parameters in order for the background to be white and the animals to be gray/black."
 
-    frame2 = cv2.cvtColor(frame,cv2.COLOR_GRAY2RGB)
+    frame2 = unprocessedFrame if widgets is not None and 'unprocessedFrameCheckbox' in widgets and widgets['unprocessedFrameCheckbox'].isChecked() else cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
+    zoomInCheckbox = None if widgets is None or 'zoomInCheckbox' not in widgets else widgets['zoomInCheckbox']
+    zoomInCoordinates = None
     wellNumber = self._hyperparameters['onlyTrackThisOneWell']
     nbTailPoints = self._hyperparameters['nbTailPoints']
     for k in range(0, self._hyperparameters["nbAnimalsPerWell"]):
@@ -115,8 +117,11 @@ class GUITracking(baseClass):
       cv2.circle(frame2, (x, y), 2, (0, 0, 255),   -1)
       x = output[k, i-self._firstFrame][0][0]
       y = output[k, i-self._firstFrame][0][1]
+      if zoomInCheckbox is not None and zoomInCheckbox.isChecked() and zoomInCheckbox.getAnimalIdx() == k:
+        zoomInCoordinates = (x, y)
 
-    if widgets is not None and 'zoomInCheckbox' in widgets and widgets['zoomInCheckbox'].isChecked():
+    if zoomInCoordinates is not None:
+      x, y = zoomInCoordinates
       halfLength = 125.5
       xmin = int(x - halfLength)
       xmax = int(x + halfLength)
@@ -136,7 +141,7 @@ class GUITracking(baseClass):
 
       frame2 = frame2[y:y+lengthY, x:x+lengthX]
 
-    return adjustHyperparameters(i, self._hyperparameters, hyperparametersListNames, frame2, title, organizationTab, widgets, addZoomCheckbox=True)
+    return adjustHyperparameters(i, self._hyperparameters, hyperparametersListNames, frame2, title, organizationTab, widgets, addZoomCheckbox=True, addUnprocessedFrameCheckbox=True)
 
 
 zebrazoom.code.tracking.register_tracking_method('fastFishTracking.tracking', GUITracking)
