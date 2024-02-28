@@ -96,7 +96,7 @@ class GUITracking(baseClass):
      [1, 300, 'Maximum median pixel value of all points along the tail in order for the tail tracking to be accepted'],
      [1, 300, 'Maximum pixel value authorized for a point to be considered as the head of the animal'],
      [1, 20, 'Number of points along the tail in the output data'],),
-    ['Tracking algorithm', ('Default algorithm: tail descent by segments from head', 'Descent by segments from head in both directions', 'Dual directions descent: remove the shortest direction'), trackingAlgorithmChanged, getTrackingAlgorithmIndex],]
+    ['Tracking algorithm', ('Default algorithm: tail descent by segments from head', 'Descent by segments from head in both directions', 'Descent by segments from head in both directions: remove the shortest direction'), trackingAlgorithmChanged, getTrackingAlgorithmIndex],]
 
     title = "Adjust parameters in order for the background to be white and the animals to be gray/black."
 
