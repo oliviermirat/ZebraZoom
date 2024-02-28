@@ -121,3 +121,4 @@ def backgroundSubtractionOnWholeImage(self, frame, k):
     print("Tracking on each well:", t2 - t1)
   if self._hyperparameters['adjustFreelySwimTracking']:
     return unmodifiedFrameROI, unprocessedFrameROI
+  return None, None
