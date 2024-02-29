@@ -1161,6 +1161,7 @@ def adjustFastFishTrackingPage(useNext=True, nextCb=None, detectBoutsMethod=None
     tempConfig["storeH5"] = 1
     tempConfig["reloadWellPositions"] = 1
     tempConfig["adjustFreelySwimTracking"] = 1
+    tempConfig["paramGaussianBlurForHeadPosition"] = 0
 
     try:
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, tempConfig, argv).run()

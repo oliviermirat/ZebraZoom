@@ -121,6 +121,9 @@ def __createSlider(layout, status, values, info, names, widgets, hasCheckbox, na
     if name == 'paramGaussianBlur' and not slider.value() % 2:
       slider.setValue(slider.value() + 1)
       return
+    if name == 'paramGaussianBlurForHeadPosition' and slider.value() and not slider.value() % 2:
+      slider.setValue(slider.value() + 1)
+      return
     if name not in values:
       assert name.startswith('Step ')
       values['steps'][stepIdx] = slider.value()
