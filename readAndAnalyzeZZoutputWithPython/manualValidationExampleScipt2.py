@@ -1,5 +1,6 @@
 import zebrazoom.dataAPI as dataAPI
 import numpy as np
+import pickle
 
 videoName = "C:/Users/mirat/Desktop/openZZ/ZebraZoom/zebrazoom/ZZoutput/23.05.19.ao-07-f-1-2-long1_2024_01_09-17_37_45.h5"
 numWell   = 0
@@ -37,10 +38,14 @@ for r in res:
 
 print("all_TBFQuotient:", all_TBFQuotient)
 print("all_TBFInsta:", all_TBFInsta)
-print("Mean of TBF quotient:", np.mean(all_TBFQuotient))
-print("Mean of TBF instantaneous:", np.mean(all_TBFInsta))
+print("Mean/Median of TBF quotient:", np.mean(all_TBFQuotient), np.median(all_TBFQuotient))
+print("Mean/Median of TBF instantaneous:", np.mean(all_TBFInsta), np.median(all_TBFInsta))
 
 print("all_TBFQuotient:", all_TBFQuotient2)
 print("all_TBFInsta:", all_TBFInsta2)
-print("Mean of TBF quotient:", np.mean(all_TBFQuotient2))
-print("Mean of TBF instantaneous:", np.mean(all_TBFInsta2))
+print("Mean/Median of TBF quotient:", np.mean(all_TBFQuotient2), np.median(all_TBFQuotient2))
+print("Mean/Median of TBF instantaneous:", np.mean(all_TBFInsta2), np.median(all_TBFInsta2))
+
+# Save array as pickle file
+with open("goodTracking.pkl", 'wb') as f:
+    pickle.dump(res, f)

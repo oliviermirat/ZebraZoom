@@ -1,5 +1,6 @@
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.detectMovementWithRawVideoInsideTracking import detectMovementWithRawVideoInsideTracking
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.trackTail import trackTail
+from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.removeAnimalJustTrackedFromFrame import removeAnimalJustTrackedFromFrame
 # import zebrazoom.code.tracking
 import numpy as np
 import time
@@ -40,6 +41,9 @@ def backgroundSubtractionOnWholeImage(self, frame, k):
   
   # Applying gaussian filter
   t1 = time.time()
+  if ("paramGaussianBlurForHeadPosition" in self._hyperparameters) and self._hyperparameters["paramGaussianBlurForHeadPosition"]:
+    frameGaussianBlurForHeadPosition = frame.copy()
+    frameGaussianBlurForHeadPosition = cv2.GaussianBlur(frameGaussianBlurForHeadPosition, (self._hyperparameters["paramGaussianBlurForHeadPosition"], self._hyperparameters["paramGaussianBlurForHeadPosition"]), 0)
   paramGaussianBlur = self._hyperparameters["paramGaussianBlur"]
   frame = cv2.GaussianBlur(frame, (paramGaussianBlur, paramGaussianBlur), 0)
   t2 = time.time()
@@ -67,7 +71,10 @@ def backgroundSubtractionOnWholeImage(self, frame, k):
         if self._hyperparameters["detectMovementWithRawVideoInsideTracking"] == 0 or self._auDessusPerAnimalIdList[wellNumber][animalId][k] or k <= 2:
           
           # Head position tracking
-          (minVal, maxVal, headPosition, maxLoc) = cv2.minMaxLoc(frameROI)
+          if ("paramGaussianBlurForHeadPosition" in self._hyperparameters) and self._hyperparameters["paramGaussianBlurForHeadPosition"]:
+            (minVal, maxVal, headPosition, maxLoc) = cv2.minMaxLoc(frameGaussianBlurForHeadPosition)
+          else:
+            (minVal, maxVal, headPosition, maxLoc) = cv2.minMaxLoc(frameROI)
 
           if minVal >= self._hyperparameters["minimumHeadPixelValue"] or (("readEventBasedData" in self._hyperparameters) and self._hyperparameters["readEventBasedData"]):
             self._trackingDataPerWell[wellNumber][animalId][k] = self._trackingDataPerWell[wellNumber][animalId][k-1]
@@ -93,14 +100,16 @@ def backgroundSubtractionOnWholeImage(self, frame, k):
                 end_point   = (int(3 * self._trackingDataPerWell[wellNumber][animalId][k][pointOnTail-1][0] - 2 * self._trackingDataPerWell[wellNumber][animalId][k][pointOnTail][0]), int(3 * self._trackingDataPerWell[wellNumber][animalId][k][pointOnTail-1][1] - 2 * self._trackingDataPerWell[wellNumber][animalId][k][pointOnTail][1]))
               if pointOnTail == len(self._trackingDataPerWell[wellNumber][animalId][k]) - 1:
                 end_point   = (int(2 * self._trackingDataPerWell[wellNumber][animalId][k][pointOnTail][0] - self._trackingDataPerWell[wellNumber][animalId][k][pointOnTail-1][0]), int(2 * self._trackingDataPerWell[wellNumber][animalId][k][pointOnTail][1] - self._trackingDataPerWell[wellNumber][animalId][k][pointOnTail-1][1]))
-              cv2.line(frameROI, start_point, end_point, (255, 255, 255), int(self._hyperparameters["maxDepth"]/3))
+              cv2.line(frameROI, start_point, end_point, (255, 255, 255), max(min(int(self._hyperparameters["maxDepth"]/3), 32), 1))
           else:
             cv2.circle(frameROI, (int(self._trackingDataPerWell[wellNumber][animalId][k][0][0]), int(self._trackingDataPerWell[wellNumber][animalId][k][0][1])), int(self._hyperparameters["maxDepth"]/4), (255, 255, 255), -1)
             for pointOnTail in range(1, len(self._trackingDataPerWell[wellNumber][animalId][k])):
               start_point = (int(self._trackingDataPerWell[wellNumber][animalId][k][pointOnTail-1][0]), int(self._trackingDataPerWell[wellNumber][animalId][k][pointOnTail-1][1]))
               end_point   = (int(self._trackingDataPerWell[wellNumber][animalId][k][pointOnTail][0]), int(self._trackingDataPerWell[wellNumber][animalId][k][pointOnTail][1]))
-              cv2.line(frameROI, start_point, end_point, (255, 255, 255), int(self._hyperparameters["maxDepth"]/5))
-        
+              cv2.line(frameROI, start_point, end_point, (255, 255, 255), max(min(int(self._hyperparameters["maxDepth"]/5), 32), 1))
+          if ("paramGaussianBlurForHeadPosition" in self._hyperparameters) and self._hyperparameters["paramGaussianBlurForHeadPosition"]:
+            frameGaussianBlurForHeadPosition = removeAnimalJustTrackedFromFrame(self, frameGaussianBlurForHeadPosition, wellNumber, animalId, k)
+      
       # Id invertion if necessary
       if self._hyperparameters["nbAnimalsPerWell"] > 1:
         # NEED TO IMPROVE THIS IN THE FUTURE!!!

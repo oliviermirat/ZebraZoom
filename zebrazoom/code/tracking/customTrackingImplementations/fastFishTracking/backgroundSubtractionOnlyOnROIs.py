@@ -20,6 +20,9 @@ def backgroundSubtractionOnlyOnROIs(self, frame, k):
     if ("detectMovementCompareWithTheFuture" in self._hyperparameters) and self._hyperparameters["detectMovementCompareWithTheFuture"]:
       frame = prevFrame
   
+  if ("paramGaussianBlurForHeadPosition" in self._hyperparameters) and self._hyperparameters["paramGaussianBlurForHeadPosition"]:
+    frameGaussianBlurForHeadPosition = frame.copy()
+  
   # Going through each well/arena/tank and applying tracking method on it
   t1 = time.time()
   for wellNumber in self._listOfWellsOnWhichToRunTheTracking:
@@ -50,18 +53,27 @@ def backgroundSubtractionOnlyOnROIs(self, frame, k):
             roiYEnd   = len(frame) - 1
             roiYStart = len(frame) - 2 * self._hyperparameters["backgroundSubtractionOnROIhalfDiameter"]
           frameROI = frame[roiYStart:roiYEnd, roiXStart:roiXEnd].copy()
+          if ("paramGaussianBlurForHeadPosition" in self._hyperparameters) and self._hyperparameters["paramGaussianBlurForHeadPosition"]:
+            frameGaussianBlurForHeadPositionROI = frameGaussianBlurForHeadPosition[roiYStart:roiYEnd, roiXStart:roiXEnd].copy()
           
           # Subtracting background of image
           if not("noBackgroundSubtraction" in self._hyperparameters) or not(self._hyperparameters["noBackgroundSubtraction"]):
             backgroundROI = self._background[roiYStart:roiYEnd, roiXStart:roiXEnd]
             frameROI = 255 - np.where(backgroundROI >= frameROI, backgroundROI - frameROI, 0).astype(np.uint8)
+            if ("paramGaussianBlurForHeadPosition" in self._hyperparameters) and self._hyperparameters["paramGaussianBlurForHeadPosition"]:
+              frameGaussianBlurForHeadPositionROI = 255 - np.where(backgroundROI >= frameGaussianBlurForHeadPositionROI, backgroundROI - frameGaussianBlurForHeadPositionROI, 0).astype(np.uint8)
 
           # Applying gaussian filter
           paramGaussianBlur = self._hyperparameters["paramGaussianBlur"]
           frameROI = cv2.GaussianBlur(frameROI, (paramGaussianBlur, paramGaussianBlur), 0)
+          if ("paramGaussianBlurForHeadPosition" in self._hyperparameters) and self._hyperparameters["paramGaussianBlurForHeadPosition"]:
+            frameGaussianBlurForHeadPositionROI = cv2.GaussianBlur(frameGaussianBlurForHeadPositionROI, (self._hyperparameters["paramGaussianBlurForHeadPosition"], self._hyperparameters["paramGaussianBlurForHeadPosition"]), 0)
           
           # Head position tracking
-          (minVal, maxVal, headPosition, maxLoc) = cv2.minMaxLoc(frameROI)
+          if ("paramGaussianBlurForHeadPosition" in self._hyperparameters) and self._hyperparameters["paramGaussianBlurForHeadPosition"]:
+            (minVal, maxVal, headPosition, maxLoc) = cv2.minMaxLoc(frameGaussianBlurForHeadPositionROI)
+          else:
+            (minVal, maxVal, headPosition, maxLoc) = cv2.minMaxLoc(frameROI)
           if minVal >= self._hyperparameters["minimumHeadPixelValue"]:
             self._trackingDataPerWell[wellNumber][animalId][k] = self._trackingDataPerWell[wellNumber][animalId][k-1]
             animalNotTracked[animalId] = 1
@@ -87,6 +99,8 @@ def backgroundSubtractionOnlyOnROIs(self, frame, k):
         # 'Removing' animal just tracked
         if self._hyperparameters["nbAnimalsPerWell"] > 1:
           frame = removeAnimalJustTrackedFromFrame(self, frame, wellNumber, animalId, k)
+          if ("paramGaussianBlurForHeadPosition" in self._hyperparameters) and self._hyperparameters["paramGaussianBlurForHeadPosition"]:
+            frameGaussianBlurForHeadPosition = removeAnimalJustTrackedFromFrame(self, frameGaussianBlurForHeadPosition, wellNumber, animalId, k)
       
       if "animalDetectionBackToWholeImage" in self._hyperparameters and self._hyperparameters["animalDetectionBackToWholeImage"] and np.sum(animalNotTracked):
         animalDetectionBackToWholeImage(self, k, frame, wellNumber, animalNotTracked)
