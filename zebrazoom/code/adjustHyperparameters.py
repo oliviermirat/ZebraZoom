@@ -146,8 +146,6 @@ def __createSlider(layout, status, values, info, names, widgets, hasCheckbox, na
     if name == 'headEmbededParamTailDescentPixThreshStop':
       values['maximumMedianValueOfAllPointsAlongTheTail'] = slider.value()
       values['minimumHeadPixelValue'] = slider.value()
-    elif name == 'maxDepth':
-      values['steps'][:] = __calculateSteps(slider.value(), len(values['steps']))
     widgets['loop'].exit()
   slider.valueChanged.connect(valueChanged)
   return name, slider
