@@ -519,7 +519,7 @@ def numberOfAnimals(nbanimals, animalsAlwaysVisible, forceBlobMethodForHeadTrack
   app.configFile["noBoutsDetection"] = 1
   app.configFile["noChecksForBoutSelectionInExtractParams"] = 1
   app.configFile["trackingPointSizeDisplay"] = 4
-  app.configFile["validationVideoPlotHeading"] = 0
+  app.configFile["validationVideoPlotHeading"] = 1 if algorithm == 2 else 0
 
   if calculateBends:
     app.configFile["extractAdvanceZebraParameters"] = 1
