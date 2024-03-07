@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 from zebrazoom.dataAnalysis.datasetcreation.getGlobalParameters import getGlobalParameters
 
@@ -65,7 +66,21 @@ def getKinematicParametersPerInterval(videoName: str, numWell: int, numAnimal: i
     TBF_quotient      = (len(Bend_Timing_Saved) / 2) / ((Bend_Timing_Saved[-1] - Bend_Timing_Saved[0] + 1) / results.attrs['videoFPS'])
     TBF_instantaneous =  np.mean(results.attrs['videoFPS'] / (2 * np.diff(Bend_Timing_Saved)))
     
-    
-    
+    ### Saving raw movement data in csv file
+    if 'TailAngle_smoothed' in dataGroup:
+      if not(len(dataGroup["TailAngle_smoothed"].shape)) or not(type(dataGroup["TailAngle_smoothed"][0]) == np.float):
+        del dataGroup["TailAngle_smoothed"]
+        dataGroup.create_dataset("TailAngle_smoothed", (len(dataGroup['HeadPos']),), dtype=float)
+    else:
+      dataGroup.create_dataset("TailAngle_smoothed", (len(dataGroup['HeadPos']),), dtype=float)
+    dataGroup["TailAngle_smoothed"][:] = 0
+    for numBout in range(results[animalPath]['listOfBouts'].attrs["numberOfBouts"]):
+      BoutStart = results[animalPath]['listOfBouts']['bout'+str(numBout)].attrs["BoutStart"]
+      BoutEnd   = results[animalPath]['listOfBouts']['bout'+str(numBout)].attrs["BoutEnd"]
+      if ((BoutStart <= startFrame) and (startFrame <= BoutEnd)) or ((BoutStart <= endFrame) and (endFrame <= BoutEnd)):
+        dataGroup['TailAngle_smoothed'][BoutStart-1:BoutEnd] = results[animalPath]['listOfBouts']['bout'+str(numBout)]['TailAngle_smoothed'][:]
+    # Export to csv
+    movementDataToExport= pd.DataFrame(np.transpose(np.array([dataGroup['TailAngle'][start:end], dataGroup['TailAngle_smoothed'][start:end], dataGroup['Heading'][start:end]])), columns=['TailAngle', 'TailAngle_smoothed', 'Heading'])
+    movementDataToExport.to_csv('animal' + str(numAnimal) + '_frame_' + str(startFrame) + '_to_' + str(endFrame) + '.csv')
     
     return dict(zip(parametersToCalculate + ['TBF_quotient', 'TBF_instantaneous'], globParams + [TBF_quotient, TBF_instantaneous]))
