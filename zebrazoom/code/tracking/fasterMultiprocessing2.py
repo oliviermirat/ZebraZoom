@@ -399,7 +399,12 @@ class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDet
           headPositionFirstFrame = 0
 
           ret, thresh1 = cv2.threshold(curFrame.copy(), 254, 255, cv2.THRESH_BINARY)
-
+          
+          thresh1[:,0] = 255
+          thresh1[0,:] = 255
+          thresh1[:, len(thresh1[0])-1] = 255
+          thresh1[len(thresh1)-1, :]    = 255
+          
           contours, hierarchy = cv2.findContours(thresh1,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
           areas = np.array([cv2.contourArea(contour) for contour in contours])
 

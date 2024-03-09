@@ -79,8 +79,16 @@ def getKinematicParametersPerInterval(videoName: str, numWell: int, numAnimal: i
       BoutEnd   = results[animalPath]['listOfBouts']['bout'+str(numBout)].attrs["BoutEnd"]
       if ((BoutStart <= startFrame) and (startFrame <= BoutEnd)) or ((BoutStart <= endFrame) and (endFrame <= BoutEnd)):
         dataGroup['TailAngle_smoothed'][BoutStart-1:BoutEnd] = results[animalPath]['listOfBouts']['bout'+str(numBout)]['TailAngle_smoothed'][:]
+    # Getting tail length
+    tailLength = []
+    for i in range(len(TailPosX)):
+      tailLength.append(np.sum(np.sqrt(np.diff([val for val in TailPosX[i]])**2 + np.diff([val for val in TailPosY[i]])**2)))
+    tailLength = np.array(tailLength)
+    # Getting subsequent points distance
+    subsequentPointsDistance = np.array([np.sqrt(np.sum((np.array([val for val in HeadPos[i+1]]) - np.array([val for val in HeadPos[i]]))**2)).tolist() for i in range(len(HeadPos)-1)] + [0])
+    
     # Export to csv
-    movementDataToExport= pd.DataFrame(np.transpose(np.array([dataGroup['TailAngle'][start:end], dataGroup['TailAngle_smoothed'][start:end], dataGroup['Heading'][start:end]])), columns=['TailAngle', 'TailAngle_smoothed', 'Heading'])
+    movementDataToExport= pd.DataFrame(np.transpose(np.array([dataGroup['TailAngle'][start:end], dataGroup['TailAngle_smoothed'][start:end], dataGroup['Heading'][start:end], tailLength, subsequentPointsDistance])), columns=['TailAngle', 'TailAngle_smoothed', 'Heading', 'TailLength', 'subsequentPointsDistance'])
     movementDataToExport.to_csv('animal' + str(numAnimal) + '_frame_' + str(startFrame) + '_to_' + str(endFrame) + '.csv')
     
     return dict(zip(parametersToCalculate + ['TBF_quotient', 'TBF_instantaneous'], globParams + [TBF_quotient, TBF_instantaneous]))
