@@ -1,4 +1,5 @@
 import math
+import cv2
 
 class UpdateBackgroundAtIntervalMixin:
   def _updateBackgroundAtInterval(self, i, wellNumber, initialCurFrame, trackingHeadTailAllAnimals, frame):
@@ -29,3 +30,14 @@ class UpdateBackgroundAtIntervalMixin:
         self._background[self._wellPositions[wellNumber]["topLeftY"]+ymin:self._wellPositions[wellNumber]["topLeftY"]+ymax, self._wellPositions[wellNumber]["topLeftX"]+xmin:self._wellPositions[wellNumber]["topLeftX"]+xmax] = partOfBackgroundToSave
       if showImages and i > firstFrameToShow:
         self._debugFrame(self._background, title='background after')
+
+  def _updateBackgroundAtIntervalRememberLastFrame(self, i, wellNumber, initialCurFrame, lastFrameRememberedForBackgroundExtract):
+    if (i - self._firstFrame) % self._hyperparameters["updateBackgroundAtIntervalRememberLastFrame"] == 0:
+      if i != self._firstFrame:
+        if self._hyperparameters["extractBackWhiteBackground"]:
+          self._background = cv2.max(initialCurFrame, lastFrameRememberedForBackgroundExtract)
+        else:
+          self._background = cv2.min(initialCurFrame, lastFrameRememberedForBackgroundExtract)
+      return initialCurFrame
+    else:
+      return lastFrameRememberedForBackgroundExtract

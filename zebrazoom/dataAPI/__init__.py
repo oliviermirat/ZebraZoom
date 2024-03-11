@@ -20,3 +20,4 @@ from .getNbOscAndTBFPerBoutFromManualClassification import *
 from .plotManualVsAutomaticBendLocations import *
 from .plotKinematicParametersHist import *
 from .deleteAutomaticallyCalculatedKinematicParameters import *
+from .createExcelFileWithRawData import *

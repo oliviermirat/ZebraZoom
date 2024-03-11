@@ -329,7 +329,9 @@ class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDet
     cap = zzVideoReading.VideoCapture(self._videoPath)
     if (cap.isOpened()== False):
       print("Error opening video stream or file")
-
+    
+    lastFrameRememberedForBackgroundExtract = 0
+    
     # if self._hyperparameters["backgroundSubtractorKNN"]:
       # fgbg = cv2.createBackgroundSubtractorKNN()
       # for i in range(0, min(self._lastFrame - 1, 500), int(min(self._lastFrame - 1, 500) / 10)):
@@ -468,7 +470,11 @@ class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDet
 
           if self._hyperparameters["updateBackgroundAtInterval"]:
             self._updateBackgroundAtInterval(i, wellNumber, initialCurFrame, self._trackingHeadTailAllAnimalsList[wellNumber], initialCurFrame)
-
+          
+          if ("updateBackgroundAtIntervalRememberLastFrame" in self._hyperparameters) and (self._hyperparameters["updateBackgroundAtIntervalRememberLastFrame"]):
+            lastFrameRememberedForBackgroundExtract = self._updateBackgroundAtIntervalRememberLastFrame(i, wellNumber, grey, lastFrameRememberedForBackgroundExtract)
+            
+          
           if self._hyperparameters["freqAlgoPosFollow"]:
             if i % self._hyperparameters["freqAlgoPosFollow"] == 0:
               print("Tracking at frame", i)
