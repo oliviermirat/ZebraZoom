@@ -1103,6 +1103,10 @@ class _SortedVisualizationTreeModel(QSortFilterProxyModel):
     model = self.sourceModel()
     if type(model.getItem(left)) is not type(model.getItem(right)):
       return False
+    leftValue = model.data(left, Qt.DisplayRole)
+    rightValue = model.data(right, Qt.DisplayRole)
+    if (leftValue is None) != (rightValue is None):
+       return leftValue is None
     return super().lessThan(left, right)
 
 
@@ -1121,7 +1125,7 @@ class ViewParameters(util.CollapsibleSplitter):
         proxyModel = _SortedVisualizationTreeModel()
         proxyModel.setSourceModel(model)
         tree.setModel(proxyModel)
-        tree.sortByColumn(0, Qt.AscendingOrder)
+        tree.sortByColumn(1, Qt.DescendingOrder)
         tree.setSortingEnabled(True)
         tree.setExpanded(proxyModel.index(1, 0, parent=tree.rootIndex()), True)
         header = tree.header()
