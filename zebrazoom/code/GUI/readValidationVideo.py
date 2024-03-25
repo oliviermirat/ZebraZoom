@@ -553,10 +553,7 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
     trackingPointsLayout.addWidget(saveButton)
 
   adjustButton = None
-  if config is not None and (numWell != -1 or config.get("headEmbeded", False)):
-    trackingImplementation = config.get('trackingImplementation')
-    if trackingImplementation is not None and trackingImplementation != 'fastFishTracking.tracking' or config.get("trackingMethod"):
-      return
+  if config is not None and (numWell != -1 or config.get("headEmbeded", False)) and ('trackingImplementation' not in config or config['trackingImplementation'] == 'fastFishTracking.tracking') and not config.get("trackingMethod"):
     adjustButton = QPushButton('Adjust parameters')
     def adjustParametrsClicked():
       app = QApplication.instance()
