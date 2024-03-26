@@ -507,6 +507,10 @@ def _fastTrackingBoutDetection(app, detectBoutsMethod):
     app.configFile["noBoutsDetection"] = 0
     if detectBoutsMethod == 1:
       app.configFile["detectMovementWithRawVideoInsideTracking"] = 1
+      app.configFile["thresForDetectMovementWithRawVideo"] = 23
+      app.configFile["frameGapComparision"] = 3
+      app.configFile["halfDiameterRoiBoutDetect"] = 100
+      app.configFile["minNbPixelForDetectMovementWithRawVideo"] = 3
     if detectBoutsMethod == 2:
       app.configFile["coordinatesOnlyBoutDetection"] = 1
   adjustFastFishTrackingPage(detectBoutsMethod=detectBoutsMethod)
