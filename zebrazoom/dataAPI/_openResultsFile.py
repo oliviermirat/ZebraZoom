@@ -16,7 +16,7 @@ def _findResultsFile(videoName):
   if os.path.exists(resultsPath):  # exact match
     return resultsPath
   path = next(reversed(sorted(name for name in os.listdir(ZZoutputPath)
-                              if os.path.splitext(name)[0][:-20] == videoName)), None)
+                              if os.path.splitext(name)[0][:-20] == videoName and name[-3::] == ".h5")), None)
   if path is None:
     raise ValueError(f'video {videoName} not found in the ZZoutput folder ({ZZoutputPath})')
   return os.path.join(ZZoutputPath, path)
