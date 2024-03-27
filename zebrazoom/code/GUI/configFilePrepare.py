@@ -1329,7 +1329,7 @@ class NumberOfAnimals(QWidget):
         nextBtn.setToolTip("Values must be entered in all fields.")
       elif int(nbanimals.text()) % controller.configFile["nbWells"]:
         nextBtn.setEnabled(False)
-        nextBtn.setToolTip(f"Number of animals must be divisible by the number of regions of interest/wells ({controller.configFile["nbWells"]}).")
+        nextBtn.setToolTip(f"Number of animals must be divisible by the number of regions of interest/wells ({controller.configFile['nbWells']}).")
       else:
         nextBtn.setEnabled(True)
         nextBtn.setToolTip(None)
@@ -1389,7 +1389,7 @@ class NumberOfAnimals2(QWidget):
         nextBtn.setToolTip("Values must be entered in all fields.")
       elif nbanimals.isVisible() and int(nbanimals.text()) % controller.configFile["nbWells"]:
         nextBtn.setEnabled(False)
-        nextBtn.setToolTip(f"Number of animals must be divisible by the number of regions of interest/wells ({controller.configFile["nbWells"]}).")
+        nextBtn.setToolTip(f"Number of animals must be divisible by the number of regions of interest/wells ({controller.configFile['nbWells']}).")
       else:
         nextBtn.setEnabled(True)
         nextBtn.setToolTip(None)
@@ -1525,7 +1525,7 @@ class NumberOfAnimalsCenterOfMass(QWidget):
         tooltip = "Values must be entered in all fields."
       elif nbanimals.isVisible() and int(nbanimals.text()) % controller.configFile["nbWells"]:
         enabled = False
-        tooltip = f"Number of animals must be divisible by the number of regions of interest/wells ({controller.configFile["nbWells"]})."
+        tooltip = f"Number of animals must be divisible by the number of regions of interest/wells ({controller.configFile['nbWells']})."
       else:
         enabled = True
         tooltip = None
