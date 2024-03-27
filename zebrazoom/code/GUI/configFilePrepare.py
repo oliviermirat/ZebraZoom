@@ -1324,9 +1324,16 @@ class NumberOfAnimals(QWidget):
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
     def updateButtons():
-      enabled = bool(nbanimals.text())
-      nextBtn.setEnabled(enabled)
-      nextBtn.setToolTip("Values must be entered in all fields." if not enabled else None)
+      if not bool(nbanimals.text()):
+        nextBtn.setEnabled(False)
+        nextBtn.setToolTip("Values must be entered in all fields.")
+      elif int(nbanimals.text()) % controller.configFile["nbWells"]:
+        nextBtn.setEnabled(False)
+        nextBtn.setToolTip(f"Number of animals must be divisible by the number of regions of interest/wells ({controller.configFile["nbWells"]}).")
+      else:
+        nextBtn.setEnabled(True)
+        nextBtn.setToolTip(None)
+
     self._updateButtons = updateButtons
 
     layout.addWidget(util.apply_style(QLabel("What's the total number of animals in your video?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -1377,9 +1384,15 @@ class NumberOfAnimals2(QWidget):
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), 0, 0, 1, 2, Qt.AlignmentFlag.AlignCenter)
 
     def updateButtons():
-      enabled = not nbanimals.isVisible() or bool(nbanimals.text())
-      nextBtn.setEnabled(enabled)
-      nextBtn.setToolTip("Values must be entered in all fields." if not enabled else None)
+      if nbanimals.isVisible() and not bool(nbanimals.text()):
+        nextBtn.setEnabled(False)
+        nextBtn.setToolTip("Values must be entered in all fields.")
+      elif nbanimals.isVisible() and int(nbanimals.text()) % controller.configFile["nbWells"]:
+        nextBtn.setEnabled(False)
+        nextBtn.setToolTip(f"Number of animals must be divisible by the number of regions of interest/wells ({controller.configFile["nbWells"]}).")
+      else:
+        nextBtn.setEnabled(True)
+        nextBtn.setToolTip(None)
     self._updateButtons = updateButtons
 
     self._nbanimalsLabel = util.apply_style(QLabel("What's the total number of animals in your video?", self), font_size='16px')
@@ -1507,10 +1520,18 @@ class NumberOfAnimalsCenterOfMass(QWidget):
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
     def updateButtons():
-      enabled = not nbanimals.isVisible() or bool(nbanimals.text())
+      if nbanimals.isVisible() and not bool(nbanimals.text()):
+        enabled = False
+        tooltip = "Values must be entered in all fields."
+      elif nbanimals.isVisible() and int(nbanimals.text()) % controller.configFile["nbWells"]:
+        enabled = False
+        tooltip = f"Number of animals must be divisible by the number of regions of interest/wells ({controller.configFile["nbWells"]})."
+      else:
+        enabled = True
+        tooltip = None
       for btn in (method1Btn, method2Btn, manualBtn):
         btn.setEnabled(enabled)
-        btn.setToolTip("Values must be entered in all fields." if not enabled else None)
+        btn.setToolTip(tooltip)
     self._updateButtons = updateButtons
 
     self._nbanimalsLabel = util.apply_style(QLabel("What's the total number of animals in your video?", self), font=QFont("Helvetica", 10))
