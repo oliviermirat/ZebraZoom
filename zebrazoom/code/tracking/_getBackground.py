@@ -31,6 +31,7 @@ class GetBackgroundMixin:
       if backCalculationStep <= 1:
         backCalculationStep = 1
 
+    cap.set(1, firstFrame)
     ret, back = cap.read()
 
     if self._hyperparameters["useFirstFrameAsBackground"]:
