@@ -525,6 +525,7 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
         progressDialog.setAutoClose(False)
         progressDialog.setAutoReset(False)
         progressDialog.setWindowModality(Qt.WindowModality.ApplicationModal)
+        progressDialog.setMinimumDuration(0)
         frame, videoFPS = getFrame(frameSlider, trackingPointsGroup=btnGroup, frameIdx=frameSlider.firstSaveFrame, returnFPS=True)
         height, width = frame.shape[:2] if not zoom else (250, 250)
         cap = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'MJPG'), videoFPS, (width, height))
