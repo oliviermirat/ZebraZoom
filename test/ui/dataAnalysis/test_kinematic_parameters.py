@@ -14,7 +14,7 @@ from pandas.testing import assert_frame_equal, assert_series_equal
 import pytest
 
 from PyQt5.QtCore import Qt, QPoint
-from PyQt5.QtWidgets import QFileDialog, QMessageBox
+from PyQt5.QtWidgets import QFileDialog, QMessageBox, QComboBox
 
 from zebrazoom.code import paths
 from zebrazoom.code.GUI.GUI_InitialClasses import StartPage, ViewParameters
@@ -422,8 +422,9 @@ def test_kinematic_parameters_small(qapp, qtbot, monkeypatch):
 
 
 def _enterChar(qapp, qtbot, widget, text):
-  for _ in range(10):
-    qtbot.keyClick(widget, Qt.Key.Key_Delete)
+  if not isinstance(widget, QComboBox):
+    for _ in range(10):
+      qtbot.keyClick(widget, Qt.Key.Key_Delete)
   qtbot.keyClick(widget, text)
   qtbot.keyClick(widget, Qt.Key.Key_Return)
   qapp.processEvents()
@@ -496,8 +497,10 @@ def test_visualization_filters(qapp, qtbot, monkeypatch, tmp_path):
   _enterChar(qapp, qtbot, filter0._maximumSpinbox, '1')
   expectedGenotypes = {'trial%d' % idx for idx in range(rowCount // 2, rowCount)}
   _enterChar(qapp, qtbot, filter0._nameComboBox, columns[0][0])
+  assert filter0.name() == columns[0]
   expectedGenotypes = {'trial%d' % idx for idx in range(1, rowCount, 2)}
   _enterChar(qapp, qtbot, filter0._nameComboBox, columns[-1][0])
+  assert filter0.name() == columns[-1]
 
   qtbot.mouseClick(resultsPage._addFilterBtn, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(lambda: len(resultsPage._filters) == 2)
@@ -507,6 +510,7 @@ def test_visualization_filters(qapp, qtbot, monkeypatch, tmp_path):
   _enterChar(qapp, qtbot, filter1._minimumSpinbox, '1')
   expectedGenotypes = {'trial%d' % idx for idx in range(rowCount // 2 + 1, rowCount, 2)}
   _enterChar(qapp, qtbot, filter1._nameComboBox, columns[0][0])
+  assert filter1.name() == columns[0]
 
   # Remove filters
   expectedGenotypes = {'trial%d' % idx for idx in range(rowCount // 2, rowCount)}
