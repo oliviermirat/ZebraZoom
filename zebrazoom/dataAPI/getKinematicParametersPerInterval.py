@@ -91,4 +91,4 @@ def getKinematicParametersPerInterval(videoName: str, numWell: int, numAnimal: i
     movementDataToExport= pd.DataFrame(np.transpose(np.array([dataGroup['TailAngle'][start:end], dataGroup['TailAngle_smoothed'][start:end], dataGroup['Heading'][start:end], tailLength, subsequentPointsDistance])), columns=['TailAngle', 'TailAngle_smoothed', 'Heading', 'TailLength', 'subsequentPointsDistance'])
     movementDataToExport.to_csv('animal' + str(numAnimal) + '_frame_' + str(startFrame) + '_to_' + str(endFrame) + '.csv')
     
-    return dict(zip(parametersToCalculate + ['TBF_quotient', 'TBF_instantaneous'], globParams + [TBF_quotient, TBF_instantaneous]))
+    return dict(zip(parametersToCalculate + ['TBF_quotient', 'TBF_instantaneous', 'Bend_Timing'], globParams + [TBF_quotient, TBF_instantaneous, Bend_Timing]))

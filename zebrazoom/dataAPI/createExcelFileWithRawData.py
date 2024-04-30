@@ -55,7 +55,7 @@ def createExcelFileWithRawData(videoName: str, numWell: int, numAnimal: int, sta
     subsequentPointsDistance = np.array([np.sqrt(np.sum((np.array([val for val in HeadPos[i+1]]) - np.array([val for val in HeadPos[i]]))**2)).tolist() for i in range(len(HeadPos)-1)] + [0])
     
     # Export to csv
-    movementDataToExport= pd.DataFrame(np.transpose(np.array([dataGroup['TailAngle'][start:end], dataGroup['TailAngle_smoothed'][start:end], dataGroup['Heading'][start:end], tailLength, subsequentPointsDistance])), columns=['TailAngle', 'TailAngle_smoothed', 'Heading', 'TailLength', 'subsequentPointsDistance'])
+    movementDataToExport= pd.DataFrame(np.transpose(np.array([dataGroup['TailAngle'][start:end], dataGroup['TailAngle_smoothed'][start:end], dataGroup['Heading'][start:end], tailLength, subsequentPointsDistance, boutData['HeadX'], boutData['HeadY']])), columns=['TailAngle', 'TailAngle_smoothed', 'Heading', 'TailLength', 'subsequentPointsDistance', 'HeadX', 'HeadY'])
     movementDataToExport.to_csv('animal' + str(numAnimal) + '_frame_' + str(startFrame) + '_to_' + str(endFrame) + '.csv')
     
     return movementDataToExport
