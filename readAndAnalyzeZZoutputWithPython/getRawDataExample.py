@@ -3,6 +3,7 @@ import zebrazoom.dataAPI as dataAPI
 import matplotlib.pyplot as plt
 import numpy as np
 import pickle
+import math
 
 videoName = "C:/Users/mirat/Desktop/openZZ/ZebraZoom/zebrazoom/ZZoutput/23.05.19.ac-12-f-1-2-vert-long1_2024_03_09-15_38_53.h5"
 numWell   = 0
@@ -15,6 +16,16 @@ dataAPI.setFPSandPixelSize(videoName, videoFPS, videoPixelSize)
 movementDataToExport = []
 for numAnimal in [0, 1]:
   movementDataToExport.append(dataAPI.createExcelFileWithRawData(videoName, numWell, numAnimal, 1, 108288))
+
+# Converting Heading to a more intuitive coordinate system
+def convertHeadingToMoreIntuitiveCoordinateSystem(angle):
+  angle = angle * (180 / math.pi)
+  if angle <= 180:
+    return -angle
+  else:
+    return 360 - angle
+for mov in movementDataToExport:
+  mov['Heading'] = [convertHeadingToMoreIntuitiveCoordinateSystem(val) for val in mov['Heading'].tolist()]
 
 # Plot tail angles, heading and bad tracking / small fish indicators (tailLength and subsequentPointsDistance)
 for mov in movementDataToExport:
@@ -135,22 +146,22 @@ def plotSectionAndTailAngleFFT(animalNumber, startSection, endSection):
   plt.show()
 
 print("Fish 0, period 1")
-plotSectionAndTailAngleFFT(0, 62800,  65580)
+plotSectionAndTailAngleFFT(0, 62800,  65580) # Fish "swimming up" the thank
 print("Fish 0, period 2")
-plotSectionAndTailAngleFFT(0, 80530,  82600)
+plotSectionAndTailAngleFFT(0, 80530,  82600) # Fish "swimming up" the thank
 print("Fish 0, period 3")
-plotSectionAndTailAngleFFT(0, 105540, 108000)
+plotSectionAndTailAngleFFT(0, 105540, 108000) # Fish "falling down" the tank
 print("Fish 0, period 4")
-plotSectionAndTailAngleFFT(0, 72690,  73180)
+plotSectionAndTailAngleFFT(0, 72690,  73180) # Fish "swimming down" the thank
 print("Fish 0, period 5")
-plotSectionAndTailAngleFFT(0, 7850,   8340)
+plotSectionAndTailAngleFFT(0, 7850,   8340) # Fish "swimming up" the thank
 
 print("Fish 1, period 1")
-plotSectionAndTailAngleFFT(1, 11950, 12900)
+plotSectionAndTailAngleFFT(1, 11950, 12900) # Fish "swimming down" the thank
 print("Fish 1, period 2")
-plotSectionAndTailAngleFFT(1, 28600, 29770)
+plotSectionAndTailAngleFFT(1, 28600, 29770) # Fish very slowly "swimming up" the thank but also stagnating / falling down some of the tiem
 print("Fish 1, period 3")
-plotSectionAndTailAngleFFT(1, 44750, 46220)
+plotSectionAndTailAngleFFT(1, 44750, 46220) # Fish "swimming down" the thank, most of the time
 print("Fish 1, period 4")
 plotSectionAndTailAngleFFT(1, 66100, 68750)
 print("Fish 1, period 5")
