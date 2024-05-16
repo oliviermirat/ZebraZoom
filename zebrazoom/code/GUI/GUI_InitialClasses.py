@@ -21,7 +21,7 @@ from matplotlib.figure import Figure
 from PyQt5.QtCore import pyqtSignal, Qt, QAbstractItemModel, QDir, QEvent, QLine, QModelIndex, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel, QTimer, QUrl
 from PyQt5.QtGui import QColor, QCursor, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
-from PyQt5.QtWidgets import QAbstractItemView, QApplication, QDialog, QLabel, QWidget, QFileDialog, QFileIconProvider, QFormLayout, QFrame, QGridLayout, QHeaderView, QLineEdit, QListView, QListWidget, QListWidgetItem, QMessageBox, QHeaderView, QPushButton, QSizePolicy, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QStackedLayout, QComboBox, QTextEdit, QTreeView, QToolTip
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QDialog, QLabel, QWidget, QFileDialog, QFileIconProvider, QFormLayout, QFrame, QGridLayout, QLineEdit, QListView, QListWidget, QListWidgetItem, QMessageBox, QPushButton, QSizePolicy, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QStackedLayout, QComboBox, QTextEdit, QTreeView, QToolTip
 PYQT6 = False
 
 import zebrazoom
@@ -801,8 +801,9 @@ class _RootVisualizationGroupItem(_VisualizationGroupItem):
 
 
 class _VisualizationTreeModel(QAbstractItemModel):
-  def __init__(self):
+  def __init__(self, groupsOnly):
     super().__init__()
+    self._groupsOnly = groupsOnly
     self.rootItem = _RootVisualizationGroupItem()
     self._iconProvider = QFileIconProvider()
     app = QApplication.instance()
@@ -859,7 +860,9 @@ class _VisualizationTreeModel(QAbstractItemModel):
   def flags(self, index):
     if not index.isValid():
       return 0
-    if type(self.getItem(index)) is _VisualizationGroupItem and not index.column():
+    if type(self.getItem(index)) is not _VisualizationGroupItem:
+      return Qt.ItemIsEnabled | Qt.ItemIsSelectable if not self._groupsOnly else Qt.ItemIsEnabled
+    if not index.column() and not self._groupsOnly:
       return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
     return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
@@ -1110,6 +1113,23 @@ class _SortedVisualizationTreeModel(QSortFilterProxyModel):
     return super().lessThan(left, right)
 
 
+def createVisualizationTree(groupsOnly=False):
+  tree = QTreeView()
+  tree.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.SelectedClicked)
+  tree.viewport().installEventFilter(_TooltipHelper(tree))
+  tree.sizeHint = lambda: QSize(150, 1)
+  model = _VisualizationTreeModel(groupsOnly)
+  proxyModel = _SortedVisualizationTreeModel()
+  proxyModel.setSourceModel(model)
+  tree.setModel(proxyModel)
+  tree.sortByColumn(1, Qt.DescendingOrder)
+  tree.setSortingEnabled(True)
+  tree.setExpanded(proxyModel.index(1, 0, parent=tree.rootIndex()), True)
+  tree.setColumnWidth(0, 300)
+  tree.resizeColumnToContents(1)
+  return tree
+
+
 class ViewParameters(util.CollapsibleSplitter):
     def __init__(self, controller):
         super().__init__(controller.window)
@@ -1117,20 +1137,9 @@ class ViewParameters(util.CollapsibleSplitter):
         self._headEmbedded = False
         self.visualization = 0
 
-        self._tree = tree = QTreeView()
-        self._tree.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.SelectedClicked)
-        tree.viewport().installEventFilter(_TooltipHelper(tree))
-        tree.sizeHint = lambda: QSize(150, 1)
-        model = _VisualizationTreeModel()
-        proxyModel = _SortedVisualizationTreeModel()
-        proxyModel.setSourceModel(model)
-        tree.setModel(proxyModel)
-        tree.sortByColumn(1, Qt.DescendingOrder)
-        tree.setSortingEnabled(True)
-        tree.setExpanded(proxyModel.index(1, 0, parent=tree.rootIndex()), True)
-        header = tree.header()
-        tree.setColumnWidth(0, 300)
-        tree.resizeColumnToContents(1)
+        self._tree = tree = createVisualizationTree()
+        proxyModel = tree.model()
+        model = proxyModel.sourceModel()
         selectionModel = tree.selectionModel()
         selectionModel.currentRowChanged.connect(lambda current, previous: current.row() == -1 or self.setFolder(model.getItem(proxyModel.mapToSource(current))))
 
