@@ -12,6 +12,7 @@ from PyQt5.QtWidgets import QAbstractItemView, QApplication, QFileDialog, QFileS
 
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
+from zebrazoom.code.GUI.GUI_InitialClasses import getVideosFromResultsGroups
 from zebrazoom.code.GUI.readValidationVideo import getFramesCallback
 
 
@@ -213,6 +214,9 @@ class _ResultsSelectionPage(QWidget):
     self._addMultipleFoldersBtn = QPushButton("Add results folders")
     self._addMultipleFoldersBtn.clicked.connect(self._addMultipleFolders)
     tableButtonsLayout.addWidget(self._addMultipleFoldersBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._addResultsGroupsBtn = QPushButton("Add results groups")
+    self._addResultsGroupsBtn.clicked.connect(self._addResultsGroups)
+    tableButtonsLayout.addWidget(self._addResultsGroupsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     chooseConfigsBtn = QPushButton("Choose config for selected results")
     chooseConfigsBtn.clicked.connect(lambda: self._table.model().setConfigs(sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes()))),
                                                                             QFileDialog.getOpenFileName(app.window, 'Select config file', paths.getRolloverDetectionConfigurationFolder(), "JSON (*.json)")[0]))
@@ -306,17 +310,14 @@ class _ResultsSelectionPage(QWidget):
     self._table.selectionModel().select(addedRows, QItemSelectionModel.SelectionFlag.ClearAndSelect | QItemSelectionModel.SelectionFlag.Rows)
     self._table.setFocus()
 
-  def _addMultipleFolders(self):
-    selectedFolders = self._getMultipleFolders()
-    if selectedFolders is None:
-      return
+  def __addVideos(self, paths):
     invalidFolders = []
-    for selectedFolder in selectedFolders:
-      if self._findResultsFile(selectedFolder) is None:
-        invalidFolders.append(selectedFolder)
+    for path in paths:
+      if self._findResultsFile(path) is None:
+        invalidFolders.append(path)
         continue
     with self.__selectAddedRows():
-      self._table.model().addVideos([os.path.normpath(path) for path in selectedFolders if path not in invalidFolders])
+      self._table.model().addVideos([os.path.normpath(path) for path in paths if path not in invalidFolders])
     if invalidFolders:
       app = QApplication.instance()
       warning = QMessageBox(app.window)
@@ -325,6 +326,18 @@ class _ResultsSelectionPage(QWidget):
       warning.setText("Some of the selected folders were ignored because they are not valid results folders.")
       warning.setDetailedText("\n".join(invalidFolders))
       warning.exec()
+
+  def _addMultipleFolders(self):
+    selectedFolders = self._getMultipleFolders()
+    if selectedFolders is None:
+      return
+    self.__addVideos(selectedFolders)
+
+  def _addResultsGroups(self):
+    selectedVideos = getVideosFromResultsGroups()
+    if selectedVideos is None:
+      return
+    self.__addVideos([path for path in selectedVideos if os.path.isdir(path)])  # only legacy results are supported in rollover analysis
 
   def _unsavedChangesWarning(self, fn, forceSave=False):
     app = QApplication.instance()
@@ -884,7 +897,7 @@ class ManualRolloverClassification(util.CollapsibleSplitter):
         self._centralWidget.hideChildren()
         self._messageLabel.show()
         return
-      self._getFrame, frameRange, _, toggleTrackingPoints, wellPositions, wellShape, _ = frameInfo
+      self._getFrame, frameRange, _, toggleTrackingPoints, wellPositions, wellShape, _, _ = frameInfo
 
       self._rolloverClassificationPath = os.path.join(self.controller.ZZoutputLocation, name, 'rolloverManualClassification.json')
       if os.path.exists(self._rolloverClassificationPath):

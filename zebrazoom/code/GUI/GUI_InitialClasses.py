@@ -21,7 +21,7 @@ from matplotlib.figure import Figure
 from PyQt5.QtCore import pyqtSignal, Qt, QAbstractItemModel, QDir, QEvent, QLine, QModelIndex, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel, QTimer, QUrl
 from PyQt5.QtGui import QColor, QCursor, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
-from PyQt5.QtWidgets import QAbstractItemView, QApplication, QDialog, QLabel, QWidget, QFileDialog, QFileIconProvider, QFormLayout, QFrame, QGridLayout, QLineEdit, QListView, QListWidget, QListWidgetItem, QMessageBox, QPushButton, QSizePolicy, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QStackedLayout, QComboBox, QTextEdit, QTreeView, QToolTip
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QDialog, QDialogButtonBox, QLabel, QWidget, QFileDialog, QFileIconProvider, QFormLayout, QFrame, QGridLayout, QLineEdit, QListView, QListWidget, QListWidgetItem, QMessageBox, QPushButton, QSizePolicy, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QStackedLayout, QComboBox, QTextEdit, QTreeView, QToolTip
 PYQT6 = False
 
 import zebrazoom
@@ -1113,7 +1113,7 @@ class _SortedVisualizationTreeModel(QSortFilterProxyModel):
     return super().lessThan(left, right)
 
 
-def createVisualizationTree(groupsOnly=False):
+def _createVisualizationTree(groupsOnly=False):
   tree = QTreeView()
   tree.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.SelectedClicked)
   tree.viewport().installEventFilter(_TooltipHelper(tree))
@@ -1130,6 +1130,33 @@ def createVisualizationTree(groupsOnly=False):
   return tree
 
 
+def getVideosFromResultsGroups():
+  app = QApplication.instance()
+  dialog = QDialog(app.window)
+  dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+  dialog.setWindowTitle('Select one or more results groups')
+  dialog.sizeHint = lambda: QSize(800, 600)
+  dialog.setModal(True)
+  layout = QVBoxLayout()
+  tree = _createVisualizationTree(groupsOnly=True)
+  tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+  tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+  selectionModel = tree.selectionModel()
+  selectionModel.selectionChanged.connect(lambda *args: buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(bool(selectionModel.selectedRows())))
+  layout.addWidget(tree, stretch=1)
+  buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+  buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
+  buttonBox.accepted.connect(dialog.accept)
+  buttonBox.rejected.connect(dialog.reject)
+  layout.addWidget(buttonBox)
+  dialog.setLayout(layout)
+  if not dialog.exec():
+    return None
+  model = tree.model()
+  sourceModel = tree.model().sourceModel()
+  return sorted({os.path.join(app.ZZoutputLocation, path.filename) for index in selectionModel.selectedRows() for path in sourceModel.getItem(model.mapToSource(index)).iter_paths()})
+
+
 class ViewParameters(util.CollapsibleSplitter):
     def __init__(self, controller):
         super().__init__(controller.window)
@@ -1137,7 +1164,7 @@ class ViewParameters(util.CollapsibleSplitter):
         self._headEmbedded = False
         self.visualization = 0
 
-        self._tree = tree = createVisualizationTree()
+        self._tree = tree = _createVisualizationTree()
         proxyModel = tree.model()
         model = proxyModel.sourceModel()
         selectionModel = tree.selectionModel()

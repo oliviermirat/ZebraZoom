@@ -27,7 +27,7 @@ from zebrazoom.dataAnalysis.dataanalysis import sortGenotypes
 from zebrazoom.dataAnalysis.dataanalysis.populationComparaison import populationComparaison
 from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
 from zebrazoom.dataAnalysis.datasetcreation.generatePklDataFileForVideo import generatePklDataFileForVideo
-from zebrazoom.code.GUI.GUI_InitialClasses import createVisualizationTree
+from zebrazoom.code.GUI.GUI_InitialClasses import getVideosFromResultsGroups
 
 
 class _ExperimentFilesModel(QFileSystemModel):
@@ -923,29 +923,10 @@ class CreateExperimentOrganizationExcel(QWidget):
     self.__addVideos(selectedFolders)
 
   def _addResultsGroups(self):
-    dialog = QDialog(self.controller.window)
-    dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
-    dialog.setWindowTitle('Select one or more results groups')
-    dialog.sizeHint = lambda: QSize(800, 600)
-    dialog.setModal(True)
-    layout = QVBoxLayout()
-    tree = createVisualizationTree(groupsOnly=True)
-    tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-    tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
-    selectionModel = tree.selectionModel()
-    selectionModel.selectionChanged.connect(lambda *args: buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(bool(selectionModel.selectedRows())))
-    layout.addWidget(tree, stretch=1)
-    buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
-    buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
-    buttonBox.accepted.connect(dialog.accept)
-    buttonBox.rejected.connect(dialog.reject)
-    layout.addWidget(buttonBox)
-    dialog.setLayout(layout)
-    if not dialog.exec():
+    selectedVideos = getVideosFromResultsGroups()
+    if selectedVideos is None:
       return
-    model = tree.model()
-    sourceModel = tree.model().sourceModel()
-    self.__addVideos(sorted({os.path.join(self.controller.ZZoutputLocation, path.filename) for index in selectionModel.selectedRows() for path in sourceModel.getItem(model.mapToSource(index)).iter_paths()}))
+    self.__addVideos(selectedVideos)
 
   def _removeVideos(self):
     selectedIdxs = sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes())))
