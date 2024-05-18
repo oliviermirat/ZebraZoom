@@ -21,7 +21,7 @@ from matplotlib.figure import Figure
 from PyQt5.QtCore import pyqtSignal, Qt, QAbstractItemModel, QDir, QEvent, QLine, QModelIndex, QObject, QPoint, QPointF, QRect, QSize, QSortFilterProxyModel, QTimer, QUrl
 from PyQt5.QtGui import QColor, QCursor, QFont, QFontMetrics, QPainter, QPainterPath, QPolygonF
 from PyQt5.QtNetwork import QNetworkAccessManager, QNetworkReply, QNetworkRequest
-from PyQt5.QtWidgets import QAbstractItemView, QApplication, QDialog, QLabel, QWidget, QFileDialog, QFileIconProvider, QFormLayout, QFrame, QGridLayout, QHeaderView, QLineEdit, QListView, QListWidget, QListWidgetItem, QMessageBox, QHeaderView, QPushButton, QSizePolicy, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QStackedLayout, QComboBox, QTextEdit, QTreeView, QToolTip
+from PyQt5.QtWidgets import QAbstractItemView, QApplication, QDialog, QDialogButtonBox, QLabel, QWidget, QFileDialog, QFileIconProvider, QFormLayout, QFrame, QGridLayout, QLineEdit, QListView, QListWidget, QListWidgetItem, QMessageBox, QPushButton, QSizePolicy, QHBoxLayout, QVBoxLayout, QCheckBox, QScrollArea, QSpinBox, QStackedLayout, QComboBox, QTextEdit, QTreeView, QToolTip
 PYQT6 = False
 
 import zebrazoom
@@ -801,8 +801,9 @@ class _RootVisualizationGroupItem(_VisualizationGroupItem):
 
 
 class _VisualizationTreeModel(QAbstractItemModel):
-  def __init__(self):
+  def __init__(self, groupsOnly):
     super().__init__()
+    self._groupsOnly = groupsOnly
     self.rootItem = _RootVisualizationGroupItem()
     self._iconProvider = QFileIconProvider()
     app = QApplication.instance()
@@ -859,7 +860,9 @@ class _VisualizationTreeModel(QAbstractItemModel):
   def flags(self, index):
     if not index.isValid():
       return 0
-    if type(self.getItem(index)) is _VisualizationGroupItem and not index.column():
+    if type(self.getItem(index)) is not _VisualizationGroupItem:
+      return Qt.ItemIsEnabled | Qt.ItemIsSelectable if not self._groupsOnly else Qt.ItemIsEnabled
+    if not index.column() and not self._groupsOnly:
       return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
     return Qt.ItemIsEnabled | Qt.ItemIsSelectable
 
@@ -947,6 +950,16 @@ class _ResultsListWidgetItem(QListWidgetItem):
     self.idx = idx
 
 
+class _ResultsFileDialogModel(QSortFilterProxyModel):
+  def __init__(self, *args, allPaths=None, **kwargs):
+    super().__init__(*args, **kwargs)
+    self._allPaths = allPaths if allPaths is not None else {}
+
+  def filterAcceptsRow(self, row, parent):
+    model = self.sourceModel()
+    return model.fileName(model.index(row, 0, parent)) not in self._allPaths
+
+
 class _VisualizationGroupDetails(QWidget):
   def __init__(self, proxyModel, getCurrentIndex):
     app = QApplication.instance()
@@ -1027,6 +1040,7 @@ class _VisualizationGroupDetails(QWidget):
     dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
     dialog.setNameFilter('HDF5 (*.h5)')
     dialog.accept = lambda: QDialog.accept(dialog)
+    dialog.setProxyModel(_ResultsFileDialogModel(allPaths=self._model.rootItem.subgroups[0].allPaths))
 
     def updateText():
       selected = []
@@ -1093,11 +1107,18 @@ class _VisualizationGroupDetails(QWidget):
 
 
 class _SortedVisualizationTreeModel(QSortFilterProxyModel):
+  def __init__(self, *args, showH5=True, **kwargs):
+    super().__init__(*args, **kwargs)
+    self._showH5 = showH5
+
   def filterAcceptsRow(self, row, parent):
     parentItem = self.sourceModel().getItem(parent)
+    childItem = parentItem.child(row)
+    if not self._showH5 and getattr(childItem, 'filename', '').endswith('.h5'):
+      return False
     if not isinstance(parentItem, _AllResultsVisualizationGroupItem):
       return True
-    return parentItem.child(row).filename not in parentItem.parentItem.subgroups[0].allPaths
+    return childItem.filename not in parentItem.parentItem.subgroups[0].allPaths
 
   def lessThan(self, left, right):
     model = self.sourceModel()
@@ -1110,6 +1131,50 @@ class _SortedVisualizationTreeModel(QSortFilterProxyModel):
     return super().lessThan(left, right)
 
 
+def _createVisualizationTree(groupsOnly=False, showH5=True):
+  tree = QTreeView()
+  tree.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.SelectedClicked)
+  tree.viewport().installEventFilter(_TooltipHelper(tree))
+  tree.sizeHint = lambda: QSize(150, 1)
+  model = _VisualizationTreeModel(groupsOnly)
+  proxyModel = _SortedVisualizationTreeModel(showH5=showH5)
+  proxyModel.setSourceModel(model)
+  tree.setModel(proxyModel)
+  tree.sortByColumn(1, Qt.DescendingOrder)
+  tree.setSortingEnabled(True)
+  tree.setExpanded(proxyModel.index(1, 0, parent=tree.rootIndex()), True)
+  tree.setColumnWidth(0, 300)
+  tree.resizeColumnToContents(1)
+  return tree
+
+
+def getVideosFromResultsGroups(showH5=True):
+  app = QApplication.instance()
+  dialog = QDialog(app.window)
+  dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
+  dialog.setWindowTitle('Select one or more results groups')
+  dialog.sizeHint = lambda: QSize(800, 600)
+  dialog.setModal(True)
+  layout = QVBoxLayout()
+  tree = _createVisualizationTree(groupsOnly=True, showH5=showH5)
+  tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+  tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+  selectionModel = tree.selectionModel()
+  selectionModel.selectionChanged.connect(lambda *args: buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(bool(selectionModel.selectedRows())))
+  layout.addWidget(tree, stretch=1)
+  buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
+  buttonBox.button(QDialogButtonBox.StandardButton.Ok).setEnabled(False)
+  buttonBox.accepted.connect(dialog.accept)
+  buttonBox.rejected.connect(dialog.reject)
+  layout.addWidget(buttonBox)
+  dialog.setLayout(layout)
+  if not dialog.exec():
+    return None
+  model = tree.model()
+  sourceModel = tree.model().sourceModel()
+  return sorted({os.path.join(app.ZZoutputLocation, path.filename) for index in selectionModel.selectedRows() for path in sourceModel.getItem(model.mapToSource(index)).iter_paths()})
+
+
 class ViewParameters(util.CollapsibleSplitter):
     def __init__(self, controller):
         super().__init__(controller.window)
@@ -1117,20 +1182,9 @@ class ViewParameters(util.CollapsibleSplitter):
         self._headEmbedded = False
         self.visualization = 0
 
-        self._tree = tree = QTreeView()
-        self._tree.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.SelectedClicked)
-        tree.viewport().installEventFilter(_TooltipHelper(tree))
-        tree.sizeHint = lambda: QSize(150, 1)
-        model = _VisualizationTreeModel()
-        proxyModel = _SortedVisualizationTreeModel()
-        proxyModel.setSourceModel(model)
-        tree.setModel(proxyModel)
-        tree.sortByColumn(1, Qt.DescendingOrder)
-        tree.setSortingEnabled(True)
-        tree.setExpanded(proxyModel.index(1, 0, parent=tree.rootIndex()), True)
-        header = tree.header()
-        tree.setColumnWidth(0, 300)
-        tree.resizeColumnToContents(1)
+        self._tree = tree = _createVisualizationTree()
+        proxyModel = tree.model()
+        model = proxyModel.sourceModel()
         selectionModel = tree.selectionModel()
         selectionModel.currentRowChanged.connect(lambda current, previous: current.row() == -1 or self.setFolder(model.getItem(proxyModel.mapToSource(current))))
 

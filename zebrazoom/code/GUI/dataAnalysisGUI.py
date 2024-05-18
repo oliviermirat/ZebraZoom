@@ -27,6 +27,7 @@ from zebrazoom.dataAnalysis.dataanalysis import sortGenotypes
 from zebrazoom.dataAnalysis.dataanalysis.populationComparaison import populationComparaison
 from zebrazoom.dataAnalysis.datasetcreation.createDataFrame import createDataFrame
 from zebrazoom.dataAnalysis.datasetcreation.generatePklDataFileForVideo import generatePklDataFileForVideo
+from zebrazoom.code.GUI.GUI_InitialClasses import getVideosFromResultsGroups
 
 
 class _ExperimentFilesModel(QFileSystemModel):
@@ -465,7 +466,7 @@ class _MultipleInputDialog(QDialog):
     self._mmWidth.textChanged.connect(updateOKButton)
     self._mmHeight.textChanged.connect(updateOKButton)
 
-    buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel);
+    buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
 
     layout = QFormLayout(self)
     layout.addRow("Video width (pixels)", self._pixelWidth)
@@ -537,6 +538,9 @@ class CreateExperimentOrganizationExcel(QWidget):
     self._addVideosBtn = QPushButton("Add video(s)")
     self._addVideosBtn.clicked.connect(self._addVideos)
     tableButtonsLayout.addWidget(self._addVideosBtn, alignment=Qt.AlignmentFlag.AlignLeft)
+    self._addResultsGroupsBtn = QPushButton("Add results groups")
+    self._addResultsGroupsBtn.clicked.connect(self._addResultsGroups)
+    tableButtonsLayout.addWidget(self._addResultsGroupsBtn, alignment=Qt.AlignmentFlag.AlignLeft)
     removeVideosBtn = QPushButton("Remove selected videos")
     removeVideosBtn.clicked.connect(self._removeVideos)
     tableButtonsLayout.addWidget(removeVideosBtn, alignment=Qt.AlignmentFlag.AlignLeft)
@@ -879,19 +883,16 @@ class CreateExperimentOrganizationExcel(QWidget):
       return None
     return dialog.selectedFiles()
 
-  def _addVideos(self):
-    selectedFolders = self._getMultipleFolders()
-    if selectedFolders is None:
-      return
+  def __addVideos(self, paths):
     invalidFolders = []
-    for selectedFolder in selectedFolders:
-      resultsFile = self._findResultsFile(selectedFolder)
+    for path in paths:
+      resultsFile = self._findResultsFile(path)
       if resultsFile is None:
-        invalidFolders.append(selectedFolder)
+        invalidFolders.append(path)
         continue
-      wellPositions, _wellShape = self._getWellPositions(selectedFolder)
+      wellPositions, _wellShape = self._getWellPositions(path)
       if wellPositions is None:
-        invalidFolders.append(selectedFolder)
+        invalidFolders.append(path)
         continue
       numWells = 1 if not wellPositions else len(wellPositions)
       emptyArray = ["[%s]" % ','.join(" " for _ in range(numWells))]
@@ -904,7 +905,7 @@ class CreateExperimentOrganizationExcel(QWidget):
       else:
         videoFPS = ' '
         videoPixelSize = ' '
-      model.addVideo({"path": [os.path.dirname(selectedFolder)], "trial_id": [os.path.basename(selectedFolder)], "fq": [videoFPS], "pixelsize": [videoPixelSize], "condition": emptyArray, "genotype": emptyArray, "include": includeArray})
+      model.addVideo({"path": [os.path.dirname(path)], "trial_id": [os.path.basename(path)], "fq": [videoFPS], "pixelsize": [videoPixelSize], "condition": emptyArray, "genotype": emptyArray, "include": includeArray})
       model.insertRow(model.rowCount())
       self._table.selectionModel().setCurrentIndex(model.index(model.rowCount() - 1, 1), QItemSelectionModel.SelectionFlag.ClearAndSelect)
     if invalidFolders:
@@ -914,6 +915,18 @@ class CreateExperimentOrganizationExcel(QWidget):
       warning.setText("Some of the selected folders were ignored because they are not valid results folders.")
       warning.setDetailedText("\n".join(invalidFolders))
       warning.exec()
+
+  def _addVideos(self):
+    selectedFolders = self._getMultipleFolders()
+    if selectedFolders is None:
+      return
+    self.__addVideos(selectedFolders)
+
+  def _addResultsGroups(self):
+    selectedVideos = getVideosFromResultsGroups()
+    if selectedVideos is None:
+      return
+    self.__addVideos(selectedVideos)
 
   def _removeVideos(self):
     selectedIdxs = sorted(set(map(lambda idx: idx.row(), self._table.selectionModel().selectedIndexes())))
