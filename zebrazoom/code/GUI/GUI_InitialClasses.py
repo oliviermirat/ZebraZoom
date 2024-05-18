@@ -1096,11 +1096,18 @@ class _VisualizationGroupDetails(QWidget):
 
 
 class _SortedVisualizationTreeModel(QSortFilterProxyModel):
+  def __init__(self, *args, showH5=True, **kwargs):
+    super().__init__(*args, **kwargs)
+    self._showH5 = showH5
+
   def filterAcceptsRow(self, row, parent):
     parentItem = self.sourceModel().getItem(parent)
+    childItem = parentItem.child(row)
+    if not self._showH5 and getattr(childItem, 'filename', '').endswith('.h5'):
+      return False
     if not isinstance(parentItem, _AllResultsVisualizationGroupItem):
       return True
-    return parentItem.child(row).filename not in parentItem.parentItem.subgroups[0].allPaths
+    return childItem.filename not in parentItem.parentItem.subgroups[0].allPaths
 
   def lessThan(self, left, right):
     model = self.sourceModel()
@@ -1113,13 +1120,13 @@ class _SortedVisualizationTreeModel(QSortFilterProxyModel):
     return super().lessThan(left, right)
 
 
-def _createVisualizationTree(groupsOnly=False):
+def _createVisualizationTree(groupsOnly=False, showH5=True):
   tree = QTreeView()
   tree.setEditTriggers(QAbstractItemView.EditTrigger.DoubleClicked | QAbstractItemView.EditTrigger.SelectedClicked)
   tree.viewport().installEventFilter(_TooltipHelper(tree))
   tree.sizeHint = lambda: QSize(150, 1)
   model = _VisualizationTreeModel(groupsOnly)
-  proxyModel = _SortedVisualizationTreeModel()
+  proxyModel = _SortedVisualizationTreeModel(showH5=showH5)
   proxyModel.setSourceModel(model)
   tree.setModel(proxyModel)
   tree.sortByColumn(1, Qt.DescendingOrder)
@@ -1130,7 +1137,7 @@ def _createVisualizationTree(groupsOnly=False):
   return tree
 
 
-def getVideosFromResultsGroups():
+def getVideosFromResultsGroups(showH5=True):
   app = QApplication.instance()
   dialog = QDialog(app.window)
   dialog.setWindowFlags(dialog.windowFlags() & ~Qt.WindowContextHelpButtonHint)
@@ -1138,7 +1145,7 @@ def getVideosFromResultsGroups():
   dialog.sizeHint = lambda: QSize(800, 600)
   dialog.setModal(True)
   layout = QVBoxLayout()
-  tree = _createVisualizationTree(groupsOnly=True)
+  tree = _createVisualizationTree(groupsOnly=True, showH5=showH5)
   tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
   tree.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
   selectionModel = tree.selectionModel()

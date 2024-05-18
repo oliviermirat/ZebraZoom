@@ -334,7 +334,7 @@ class _ResultsSelectionPage(QWidget):
     self.__addVideos(selectedFolders)
 
   def _addResultsGroups(self):
-    selectedVideos = getVideosFromResultsGroups()
+    selectedVideos = getVideosFromResultsGroups(showH5=False)
     if selectedVideos is None:
       return
     self.__addVideos([path for path in selectedVideos if os.path.isdir(path)])  # only legacy results are supported in rollover analysis
