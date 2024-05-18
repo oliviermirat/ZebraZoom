@@ -950,6 +950,16 @@ class _ResultsListWidgetItem(QListWidgetItem):
     self.idx = idx
 
 
+class _ResultsFileDialogModel(QSortFilterProxyModel):
+  def __init__(self, *args, allPaths=None, **kwargs):
+    super().__init__(*args, **kwargs)
+    self._allPaths = allPaths if allPaths is not None else {}
+
+  def filterAcceptsRow(self, row, parent):
+    model = self.sourceModel()
+    return model.fileName(model.index(row, 0, parent)) not in self._allPaths
+
+
 class _VisualizationGroupDetails(QWidget):
   def __init__(self, proxyModel, getCurrentIndex):
     app = QApplication.instance()
@@ -1030,6 +1040,7 @@ class _VisualizationGroupDetails(QWidget):
     dialog.setOption(QFileDialog.Option.DontUseNativeDialog, True)
     dialog.setNameFilter('HDF5 (*.h5)')
     dialog.accept = lambda: QDialog.accept(dialog)
+    dialog.setProxyModel(_ResultsFileDialogModel(allPaths=self._model.rootItem.subgroups[0].allPaths))
 
     def updateText():
       selected = []
