@@ -263,6 +263,11 @@ class _WellsSelectionLabel(QLabel):
   def totalWells(self):
     return len(self._wellPositions) if self._wellPositions is not None else 1
 
+  def getSelectedWellSize(self):
+    if self._wellPositions is not None and len(self._wells) == 1:
+      return self._wellPositions[next(iter(self._wells))][2:]
+    return None
+
 
 class _DummyFullSet(object):
   def __contains__(self, item):
@@ -444,7 +449,7 @@ class _ExperimentOrganizationSelectionModel(QItemSelectionModel):
 
 
 class _MultipleInputDialog(QDialog):
-  def __init__(self, parent, width, height):
+  def __init__(self, parent, width, height, wellSelected):
     super().__init__(parent)
 
     self._pixelWidth = QLineEdit()
@@ -469,10 +474,11 @@ class _MultipleInputDialog(QDialog):
     buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok | QDialogButtonBox.StandardButton.Cancel)
 
     layout = QFormLayout(self)
-    layout.addRow("Video width (pixels)", self._pixelWidth)
-    layout.addRow("Video height (pixels)", self._pixelHeight)
-    layout.addRow("Video width (mm)", self._mmWidth)
-    layout.addRow("Video height (mm)", self._mmHeight)
+    name = 'Video' if not wellSelected else 'Well'
+    layout.addRow(f"{name} width (pixels)", self._pixelWidth)
+    layout.addRow(f"{name} height (pixels)", self._pixelHeight)
+    layout.addRow(f"{name} width (mm)", self._mmWidth)
+    layout.addRow(f"{name} height (mm)", self._mmHeight)
     layout.addWidget(buttonBox)
 
     buttonBox.accepted.connect(self.accept)
@@ -581,13 +587,17 @@ class CreateExperimentOrganizationExcel(QWidget):
     pixelSizeDialogButton = QPushButton("Calculate pixel size")
 
     def calculatePixelSize():
-      exampleFrame = self._findExampleFrame(self._shownVideo)
-      if exampleFrame is not None:
-        height, width = map(str, exampleFrame.shape[:2])
+      wellSize = self._frame.getSelectedWellSize()
+      if wellSize is not None:
+        width, height = map(str, wellSize)
       else:
-        height, width = '', ''
-      dialog = _MultipleInputDialog(controller.window, width, height)
-      dialog.setWindowTitle("Enter video dimensions")
+        exampleFrame = self._findExampleFrame(self._shownVideo)
+        if exampleFrame is not None:
+          height, width = map(str, exampleFrame.shape[:2])
+        else:
+          height, width = '', ''
+      dialog = _MultipleInputDialog(controller.window, width, height, wellSize is not None)
+      dialog.setWindowTitle(f"Enter {'video' if wellSize is None else 'well'} dimensions")
       if dialog.exec():
         self._pixelSizeLineEdit.setText(str(dialog.getPixelSize()))
         self._pixelSizeChanged()
