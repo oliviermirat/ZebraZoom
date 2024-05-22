@@ -136,6 +136,11 @@ class ZebraZoomApp(PlainApplication):
         selectedFolder = QFileDialog.getExistingDirectory(self.window, "Select ZZoutput folder", os.path.expanduser("~"))
         if selectedFolder:
           self._ZZoutputLocation = selectedFolder
+        # recreate ViewParameters page to ensure it uses the new ZZoutputLocation
+        layout = self.window.centralWidget().layout()
+        oldWidget = layout.widget(self.frames['ViewParameters'])
+        layout.replaceWidget(oldWidget, ViewParameters(self))
+        oldWidget.setParent(None)
 
     @property
     def ZZoutputLocation(self):
