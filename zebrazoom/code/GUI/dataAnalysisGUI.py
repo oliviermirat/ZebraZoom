@@ -2080,6 +2080,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
         app = QApplication.instance()
         groupedData = data.groupby(['Genotype', 'Condition'])
         filename, _ = QFileDialog.getSaveFileName(app.window, 'Select file', os.path.expanduser('~'), "Excel (*.xlsx)")
+        filename = str(filename)
         if not filename.endswith('.xlsx'):
           filename = f'{filename}.xlsx'
         pd.concat([groupedData.get_group(key)[shownParams].add_suffix(' %s %s' % key).reset_index(drop=True) for key in groupedData.groups], axis=1).to_excel(filename, index=False)
