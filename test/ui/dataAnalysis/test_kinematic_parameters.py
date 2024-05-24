@@ -4,6 +4,7 @@ import math
 import os
 import pickle
 import random
+import shutil
 
 import h5py
 import numpy as np
@@ -1058,6 +1059,60 @@ def test_flagged_bouts(qapp, qtbot, monkeypatch):
   # Go back to the start page
   qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
   qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage))
+
+
+@pytest.mark.long
+def test_alternative_ZZoutput(qapp, qtbot, monkeypatch, tmp_path):
+  global _VIDEO_NAMES
+  # create alternative ZZoutput folder, copy some results there and rename them
+  defaultZZoutputLocation = qapp.ZZoutputLocation
+  newFolder = d = tmp_path / "newZZoutput"
+  newFolder.mkdir()
+  videoIndices = set([idx for idx in range(len(_VIDEO_NAMES)) if 2 < _WELLS_PER_VIDEO[idx] < 6][:2])
+  assert len(videoIndices) == 2
+  newNames = [f'asd{idx}{_VIDEO_NAMES[idx]}' for idx in videoIndices]
+  try:
+    oldVideoNames = _VIDEO_NAMES[:]
+    for idx, name in zip(videoIndices, newNames):
+      shutil.copytree(os.path.join(defaultZZoutputLocation, _VIDEO_NAMES[idx]), os.path.join(newFolder, name))
+      os.rename(os.path.join(newFolder, name, f'results_{_VIDEO_NAMES[idx]}.txt'), os.path.join(newFolder, name, f'results_{name}.txt'))
+      _VIDEO_NAMES[idx] = name
+    # set the new folder as the selected output folder and create the experiment
+    monkeypatch.setattr(qapp, '_ZZoutputLocation', str(newFolder))
+    createExcelPage = _goToCreateExcelPage(qapp, qtbot)
+    conditionsList = [(('condition1', 'condition1', 'condition2', 'condition2') * 2)[:_WELLS_PER_VIDEO[sorted(videoIndices)[0]]],
+                      (('condition1', 'condition2', 'condition1', 'condition2') * 2)[:_WELLS_PER_VIDEO[sorted(videoIndices)[1]]]]
+    genotypesList = [(('genotype1', 'genotype1', 'genotype2', 'genotype2') * 2)[:_WELLS_PER_VIDEO[sorted(videoIndices)[0]]],
+                     (('genotype1', 'genotype2', 'genotype1', 'genotype2') * 2)[:_WELLS_PER_VIDEO[sorted(videoIndices)[1]]]]
+    conditions = map(lambda x: '[%s]' % ','.join(x), conditionsList)
+    genotypes = map(lambda x: '[%s]' % ','.join(x), genotypesList)
+    _createExperimentOrganizationExcel(createExcelPage, qapp, qtbot, monkeypatch, indices=videoIndices, conditions=conditions, genotypes=genotypes)
+  finally:
+    _VIDEO_NAMES = oldVideoNames
+
+  monkeypatch.setattr(QMessageBox, 'question', lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
+  qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod))
+  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison))
+
+  populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
+  monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
+  qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization))
+
+  _test_kinematic_parameters_small_check_results()
+
+  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
+  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage))
+
+  # set the default ZZoutput folder again and ensure errors are detected, set it back to the new folder and ensure no errors
+  monkeypatch.setattr(qapp, '_ZZoutputLocation', defaultZZoutputLocation)
+  createExcelPage = _goToCreateExcelPage(qapp, qtbot)
+  _selectExperiment(createExcelPage, qapp, qtbot, f'Experiment {count[0] - 1}.xlsx')
+  assert createExcelPage._table.model().getErrors(createExcelPage._getWellPositions, createExcelPage._findResultsFile)
+  monkeypatch.setattr(qapp, '_ZZoutputLocation', str(newFolder))
+  assert not createExcelPage._table.model().getErrors(createExcelPage._getWellPositions, createExcelPage._findResultsFile)
 
 
 @pytest.mark.long
