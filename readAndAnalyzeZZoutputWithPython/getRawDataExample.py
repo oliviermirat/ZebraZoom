@@ -9,8 +9,11 @@ videoName = "C:/Users/mirat/Desktop/openZZ/ZebraZoom/zebrazoom/ZZoutput/23.05.19
 numWell   = 0
 
 videoFPS = 160
-videoPixelSize = 0.01
+videoPixelSize = 0.128
 dataAPI.setFPSandPixelSize(videoName, videoFPS, videoPixelSize)
+
+saveFigs   = True
+figsFormat = 'png' # 'svg'
 
 # Getting data
 movementDataToExport = []
@@ -24,28 +27,41 @@ def convertHeadingToMoreIntuitiveCoordinateSystem(angle):
     return -angle
   else:
     return 360 - angle
+
 for mov in movementDataToExport:
   mov['Heading'] = [convertHeadingToMoreIntuitiveCoordinateSystem(val) for val in mov['Heading'].tolist()]
+  mov['TailAngle']          = (180 / math.pi) * mov['TailAngle']
+  mov['TailAngle_smoothed'] = (180 / math.pi) * mov['TailAngle_smoothed']
+  mov['HeadX']              = mov['HeadX'] * videoPixelSize
+  mov['HeadY']              = ((90 / videoPixelSize) - mov['HeadY']) * videoPixelSize
+  mov['TailLength']         = mov['TailLength'] * videoPixelSize
 
 # Plot tail angles, heading and bad tracking / small fish indicators (tailLength and subsequentPointsDistance)
-for mov in movementDataToExport:
+for fishNum, mov in enumerate(movementDataToExport):
   columns_to_plot = [['TailAngle', 'TailAngle_smoothed'], ['Heading'], ['TailLength', 'subsequentPointsDistance']]
-  fig, axs = plt.subplots(3, 1)
+  labels = [['Deflection angle', 'Smoothed deflection angle'], ['Pitch'], ['TailLength', 'Subsequent coordinates distance']]
+  if saveFigs:
+    fig, axs = plt.subplots(3, 1, figsize=(19, 10))
+  else:
+    fig, axs = plt.subplots(3, 1)
   for i, columns in enumerate(columns_to_plot):
     if 'TailLength' in columns:
       scaler = MinMaxScaler()
       scaled_data = scaler.fit_transform(mov[['TailLength', 'subsequentPointsDistance']])
-      axs[i].plot(mov.index, scaled_data[:, 0], label='Scaled TailLength')
-      axs[i].scatter(mov.index, scaled_data[:, 1], label='Scaled subsequentPointsDistance', color='orange', marker='o')
+      axs[i].plot(mov.index / videoFPS, scaled_data[:, 0], label='Scaled tail length')
+      axs[i].scatter(mov.index / videoFPS, scaled_data[:, 1], label='Scaled subsequent coordinates distance', color='orange', marker='o')
       mov['Scaled_TailLength']               = scaled_data[:, 0]
       mov['Scaled_subsequentPointsDistance'] = scaled_data[:, 1]
     else:
-      for column in columns:
-        axs[i].plot(mov.index, mov[column], label=column)
-    axs[i].set_title('Plot of ' + ', '.join(columns))
+      for j, column in enumerate(columns):
+        axs[i].plot(mov.index / videoFPS, mov[column], label=labels[i][j])
+    axs[i].set_title(', '.join(labels[i]))
     axs[i].legend()
   plt.tight_layout()
-  plt.show()
+  if saveFigs:
+    plt.savefig('Fish' + str(fishNum) + '_initial.' + figsFormat, format=figsFormat)
+  else:
+    plt.show()
 
 # Removing data for which the indicators are suggesting bad tracking / small fish
 # for mov in movementDataToExport:
@@ -80,18 +96,25 @@ for idx, mov in enumerate(movementDataToExport2):
 
 for idx, mov in enumerate(movementDataToExport2):
   columns_to_plot = [['TailAngle', 'TailAngle_smoothed'], ['Heading'], ['TailLength', 'subsequentPointsDistance']]
-  fig, axs = plt.subplots(3, 1)
+  labels = [['Deflection angle', 'Smoothed deflection angle'], ['Pitch'], ['TailLength', 'Subsequent coordinates distance']]
+  if saveFigs:
+    fig, axs = plt.subplots(3, 1, figsize=(19, 10))
+  else:
+    fig, axs = plt.subplots(3, 1)
   for i, columns in enumerate(columns_to_plot):
     if 'TailLength' in columns:
-      axs[i].plot(mov.index,    mov['TailLength'],               label='Scaled TailLength')
-      axs[i].scatter(mov.index, mov['subsequentPointsDistance'], label='Scaled subsequentPointsDistance', color='orange', marker='o')
+      axs[i].plot(mov.index / videoFPS,    mov['TailLength'],               label='Scaled TailLength')
+      axs[i].scatter(mov.index / videoFPS, mov['subsequentPointsDistance'], label='Scaled subsequentPointsDistance', color='orange', marker='o')
     else:
-      for column in columns:
-        axs[i].plot(mov.index, mov[column], label=column)
-    axs[i].set_title('Plot of ' + ', '.join(columns))
+      for j, column in enumerate(columns):
+        axs[i].plot(mov.index / videoFPS, mov[column], label=labels[i][j])
+    axs[i].set_title(', '.join(labels[i]))
     axs[i].legend()
   plt.tight_layout()
-  plt.show()
+  if saveFigs:
+    plt.savefig('Fish' + str(idx) + '_badPartsRemoved.' + figsFormat, format=figsFormat)
+  else:
+    plt.show()
 
 for idx, mov in enumerate(movementDataToExport2):
   print(str((np.sum(~mov['Heading'].isna()) / len(mov)) * 100) + "% kept")
@@ -102,39 +125,52 @@ for idx, mov in enumerate(movementDataToExport2):
 
 from scipy.fft import fft, fftfreq
 
-# Switching to more intuitive coordinates
-for idx, mov in enumerate(movementDataToExport2):
-  mov['HeadX'] = 650 - mov['HeadX']
-  mov['HeadY'] = 650 - mov['HeadY']
-
 ###
 
 for idx, mov in enumerate(movementDataToExport2):
   columns_to_plot = [['TailAngle', 'TailAngle_smoothed'], ['Heading'], ['TailLength'], [ 'HeadY']]
-  fig, axs = plt.subplots(4, 1)
+  labels = [['Deflection angle', 'Smoothed deflection angle'], ['Pitch'], ['Tail length'], ['Vertical position']]
+  if saveFigs:
+    fig, axs = plt.subplots(4, 1, figsize=(19, 10))
+  else:
+    fig, axs = plt.subplots(4, 1)
   for i, columns in enumerate(columns_to_plot):
-    for column in columns:
-      axs[i].plot(mov.index, mov[column], label=column)
-    axs[i].set_title('Plot of ' + ', '.join(columns))
+    for j, column in enumerate(columns):
+      axs[i].plot(mov.index / videoFPS, mov[column], label=labels[i][j])
+    axs[i].set_title(', '.join(labels[i]))
     axs[i].legend()
   plt.tight_layout()
-  plt.show()
+  if saveFigs:
+    plt.savefig('Fish' + str(idx) + '_badPartsRemoved2.' + figsFormat, format=figsFormat)
+  else:
+    plt.show()
 
 
-def plotSectionAndTailAngleFFT(animalNumber, startSection, endSection):
+def plotSectionAndTailAngleFFT(plotNumber, animalNumber, startSection, endSection):
   
   mov = movementDataToExport2[animalNumber][startSection:endSection]
   columns_to_plot = [['HeadY', 'HeadX'], ['TailAngle', 'TailAngle_smoothed'], ['Heading'], ['TailLength']]
-  fig, axs = plt.subplots(4, 1)
+  labels = [['Vertical position', 'Horizontal position'], ['Deflection angle', 'Smoothed deflection angle'], ['Pitch'], ['TailLength']]
+  if saveFigs:
+    fig, axs = plt.subplots(4, 1, figsize=(19, 10))
+  else:
+    fig, axs = plt.subplots(4, 1)
   for i, columns in enumerate(columns_to_plot):
-    for column in columns:
-      axs[i].plot(mov.index, mov[column], label=column)
-    axs[i].set_title('Plot of ' + ', '.join(columns))
+    for j, column in enumerate(columns):
+      axs[i].plot(mov.index / videoFPS, mov[column], label=labels[i][j])
+    axs[i].set_title(', '.join(labels[i]))
     axs[i].legend()
   plt.tight_layout()
-  plt.show()
+  if saveFigs:
+    plt.savefig('Fish' + str(animalNumber) + '_period' + str(plotNumber) + '_frames_' + str(startSection) + '_to_' + str(endSection) + '.' + figsFormat, format=figsFormat)
+  else:
+    plt.show()
 
   # Fourrier transform on not nan sections of the tail angle
+  if saveFigs:
+    fig, axs = plt.subplots(1, 1, figsize=(19, 10))
+  else:
+    fig, axs = plt.subplots(1, 1)
   notNanSections = ~np.isnan(mov['HeadY'])
   tailAngleNotNan = mov['TailAngle'][notNanSections].copy().tolist()
   N = len(tailAngleNotNan)
@@ -143,26 +179,77 @@ def plotSectionAndTailAngleFFT(animalNumber, startSection, endSection):
   yf0 = fft(tailAngleNotNan)
   plt.plot(xf, 2.0/N * np.abs(yf0[0:N//2]))
   plt.grid()
-  plt.show()
+  if saveFigs:
+    plt.savefig('Fish' + str(animalNumber) + '_period' + str(plotNumber) + '_frames_' + str(startSection) + '_to_' + str(endSection) + '_FFT.' + figsFormat, format=figsFormat)
+  else:
+    plt.show()
+  
+  return mov['Heading']
+
+allPitchesFromSectionsFish0 = []
+allPitchesFromSectionsFish1 = []
+allPitchesFromSectionsBothFish = []
 
 print("Fish 0, period 1")
-plotSectionAndTailAngleFFT(0, 62800,  65580) # Fish "swimming up" the thank
+allPitchesFromSectionsFish0.extend([x for x in plotSectionAndTailAngleFFT(1, 0, 62800,  65580).tolist() if not math.isnan(x)]) # Fish "swimming up" the thank
 print("Fish 0, period 2")
-plotSectionAndTailAngleFFT(0, 80530,  82600) # Fish "swimming up" the thank
+allPitchesFromSectionsFish0.extend([x for x in plotSectionAndTailAngleFFT(2, 0, 80530,  82600).tolist() if not math.isnan(x)]) # Fish "swimming up" the thank
 print("Fish 0, period 3")
-plotSectionAndTailAngleFFT(0, 105540, 108000) # Fish "falling down" the tank
+allPitchesFromSectionsFish0.extend([x for x in plotSectionAndTailAngleFFT(3, 0, 105540, 108000).tolist() if not math.isnan(x)]) # Fish "falling down" the tank
 print("Fish 0, period 4")
-plotSectionAndTailAngleFFT(0, 72690,  73180) # Fish "swimming down" the thank
+allPitchesFromSectionsFish0.extend([x for x in plotSectionAndTailAngleFFT(4, 0, 72690,  73180).tolist() if not math.isnan(x)]) # Fish "swimming down" the thank
 print("Fish 0, period 5")
-plotSectionAndTailAngleFFT(0, 7850,   8340) # Fish "swimming up" the thank
+allPitchesFromSectionsFish0.extend([x for x in plotSectionAndTailAngleFFT(5, 0, 7850,   8340).tolist() if not math.isnan(x)]) # Fish "swimming up" the thank
 
 print("Fish 1, period 1")
-plotSectionAndTailAngleFFT(1, 11950, 12900) # Fish "swimming down" the thank
+allPitchesFromSectionsFish1.extend([x for x in plotSectionAndTailAngleFFT(1, 1, 11950, 12900).tolist() if not math.isnan(x)]) # Fish "swimming down" the thank
 print("Fish 1, period 2")
-plotSectionAndTailAngleFFT(1, 28600, 29770) # Fish very slowly "swimming up" the thank but also stagnating / falling down some of the tiem
+allPitchesFromSectionsFish1.extend([x for x in plotSectionAndTailAngleFFT(2, 1, 28600, 29770).tolist() if not math.isnan(x)]) # Fish very slowly "swimming up" the thank but also stagnating / falling down some of the tiem
 print("Fish 1, period 3")
-plotSectionAndTailAngleFFT(1, 44750, 46220) # Fish "swimming down" the thank, most of the time
+allPitchesFromSectionsFish1.extend([x for x in plotSectionAndTailAngleFFT(3, 1, 44750, 46220).tolist() if not math.isnan(x)]) # Fish "swimming down" the thank, most of the time
 print("Fish 1, period 4")
-plotSectionAndTailAngleFFT(1, 66100, 68750)
+allPitchesFromSectionsFish1.extend([x for x in plotSectionAndTailAngleFFT(4, 1, 66100, 68750).tolist() if not math.isnan(x)])
 print("Fish 1, period 5")
-plotSectionAndTailAngleFFT(1, 96550, 97775)
+allPitchesFromSectionsFish1.extend([x for x in plotSectionAndTailAngleFFT(5, 1, 96550, 97775).tolist() if not math.isnan(x)])
+
+allPitchesFromSectionsBothFish = allPitchesFromSectionsFish0.copy()
+allPitchesFromSectionsBothFish.extend(allPitchesFromSectionsFish1)
+
+if saveFigs:
+  fig, axs = plt.subplots(1, 1, figsize=(19, 10))
+else:
+  fig, axs = plt.subplots(1, 1)
+plt.hist(allPitchesFromSectionsBothFish, bins=10, color='blue', edgecolor='black')
+plt.xlabel('Pitch')
+plt.ylabel('Frequency')
+plt.title('Pitch')
+if saveFigs:
+  plt.savefig('PitchHistogramBothFish.' + figsFormat, format=figsFormat)
+else:
+  plt.show()
+
+if saveFigs:
+  fig, axs = plt.subplots(1, 1, figsize=(19, 10))
+else:
+  fig, axs = plt.subplots(1, 1)
+plt.hist(allPitchesFromSectionsFish0, bins=10, color='blue', edgecolor='black')
+plt.xlabel('Pitch')
+plt.ylabel('Frequency')
+plt.title('Pitch')
+if saveFigs:
+  plt.savefig('PitchHistogramFish0.' + figsFormat, format=figsFormat)
+else:
+  plt.show()
+
+if saveFigs:
+  fig, axs = plt.subplots(1, 1, figsize=(19, 10))
+else:
+  fig, axs = plt.subplots(1, 1)
+plt.hist(allPitchesFromSectionsFish1, bins=10, color='blue', edgecolor='black')
+plt.xlabel('Pitch')
+plt.ylabel('Frequency')
+plt.title('Pitch')
+if saveFigs:
+  plt.savefig('PitchHistogramFish1.' + figsFormat, format=figsFormat)
+else:
+  plt.show()

@@ -104,3 +104,6 @@ goodTracking.pkl
 
 goodTrackingInterSaved.pkl
 goodTrackingSaved.pkl
+
+readAndAnalyzeZZoutputWithPython/*.png
+readAndAnalyzeZZoutputWithPython/*.csv
