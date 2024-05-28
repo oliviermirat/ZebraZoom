@@ -277,7 +277,6 @@ class _DummyFullSet(object):
 class _ExperimentOrganizationModel(QAbstractTableModel):
   _COLUMN_NAMES = ["path", "trial_id", "fq", "pixelsize", "condition", "genotype", "include"]
   _COLUMN_TITLES = [None, "Video", "FPS", "Pixel Size", "Condition", "Genotype", "Include"]
-  _DEFAULT_ZZOUTPUT = paths.getDefaultZZoutputFolder()
 
   def __init__(self, filename):
     super().__init__()
@@ -331,11 +330,11 @@ class _ExperimentOrganizationModel(QAbstractTableModel):
   def videoPath(self, row):
     path, folderName = self._data.iloc[row, list(map(self._data.columns.get_loc, self._COLUMN_NAMES[:2]))]
     if path == "defaultZZoutputFolder":
-      path = self._DEFAULT_ZZOUTPUT
+      path = QApplication.instance().ZZoutputLocation
     return os.path.join(path, folderName)
 
   def addVideo(self, videoData):
-    if os.path.normpath(videoData["path"][0]) == os.path.normpath(self._DEFAULT_ZZOUTPUT):
+    if os.path.normpath(videoData["path"][0]) == os.path.normpath(QApplication.instance().ZZoutputLocation):
       videoData["path"][0] = "defaultZZoutputFolder"
     self.beginInsertRows(QModelIndex(), self.rowCount(), self.rowCount())
     self._data = pd.concat([self._data, pd.DataFrame.from_dict(videoData)], ignore_index=True)
@@ -2081,6 +2080,9 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
         app = QApplication.instance()
         groupedData = data.groupby(['Genotype', 'Condition'])
         filename, _ = QFileDialog.getSaveFileName(app.window, 'Select file', os.path.expanduser('~'), "Excel (*.xlsx)")
+        filename = str(filename)
+        if not filename.endswith('.xlsx'):
+          filename = f'{filename}.xlsx'
         pd.concat([groupedData.get_group(key)[shownParams].add_suffix(' %s %s' % key).reset_index(drop=True) for key in groupedData.groups], axis=1).to_excel(filename, index=False)
       self._exportData = exportData
       self._exportFiguresBtn.setEnabled(True)
