@@ -15,6 +15,10 @@ dataAPI.setFPSandPixelSize(videoName, videoFPS, videoPixelSize)
 saveFigs   = True
 figsFormat = 'png' # 'svg'
 
+outlierRemoval = True
+
+nbBins = 35
+
 # Getting data
 movementDataToExport = []
 for numAnimal in [0, 1]:
@@ -79,10 +83,11 @@ for mov in movementDataToExport:
   mov['fishTooSmall'] = new_column_values
 
 movementDataToExport2 = movementDataToExport.copy()
-for idx, mov in enumerate(movementDataToExport2):
-  movementDataToExport2[idx].loc[mov['fishTooSmall'] != 0] = np.nan
-  # rows_below_2_radians = movementDataToExport2[idx]['Heading'] < 2
-  # movementDataToExport2[idx].loc[rows_below_2_radians, 'Heading'] += 2 * np.pi
+if outlierRemoval:
+  for idx, mov in enumerate(movementDataToExport2):
+    movementDataToExport2[idx].loc[mov['fishTooSmall'] != 0] = np.nan
+    # rows_below_2_radians = movementDataToExport2[idx]['Heading'] < 2
+    # movementDataToExport2[idx].loc[rows_below_2_radians, 'Heading'] += 2 * np.pi
 
 def replace_outliers_with_nan(heading_series):
   window_size = 20
@@ -91,8 +96,9 @@ def replace_outliers_with_nan(heading_series):
   heading_series[diff >= 1.5] = np.nan
   return heading_series
 
-for idx, mov in enumerate(movementDataToExport2):
-  movementDataToExport2[idx]['Heading'] = replace_outliers_with_nan(movementDataToExport2[idx]['Heading'])
+if outlierRemoval:
+  for idx, mov in enumerate(movementDataToExport2):
+    movementDataToExport2[idx]['Heading'] = replace_outliers_with_nan(movementDataToExport2[idx]['Heading'])
 
 for idx, mov in enumerate(movementDataToExport2):
   columns_to_plot = [['TailAngle', 'TailAngle_smoothed'], ['Heading'], ['TailLength', 'subsequentPointsDistance']]
@@ -188,38 +194,67 @@ def plotSectionAndTailAngleFFT(plotNumber, animalNumber, startSection, endSectio
 
 allPitchesFromSectionsFish0 = []
 allPitchesFromSectionsFish1 = []
+allPitchesFromSectionsFishGoingUp   = []
+allPitchesFromSectionsFishGoingDown = []
 allPitchesFromSectionsBothFish = []
 
 print("Fish 0, period 1")
-allPitchesFromSectionsFish0.extend([x for x in plotSectionAndTailAngleFFT(1, 0, 62800,  65580).tolist() if not math.isnan(x)]) # Fish "swimming up" the thank
+fish0_Period1 = [x for x in plotSectionAndTailAngleFFT(1, 0, 62800,  65580).tolist() if not math.isnan(x)] # Fish "swimming up" the thank
 print("Fish 0, period 2")
-allPitchesFromSectionsFish0.extend([x for x in plotSectionAndTailAngleFFT(2, 0, 80530,  82600).tolist() if not math.isnan(x)]) # Fish "swimming up" the thank
+fish0_Period2 = [x for x in plotSectionAndTailAngleFFT(2, 0, 80530,  82600).tolist() if not math.isnan(x)] # Fish "swimming up" the thank
 print("Fish 0, period 3")
-allPitchesFromSectionsFish0.extend([x for x in plotSectionAndTailAngleFFT(3, 0, 105540, 108000).tolist() if not math.isnan(x)]) # Fish "falling down" the tank
+fish0_Period3 = [x for x in plotSectionAndTailAngleFFT(3, 0, 105540, 108000).tolist() if not math.isnan(x)] # Fish "falling down" the tank
 print("Fish 0, period 4")
-allPitchesFromSectionsFish0.extend([x for x in plotSectionAndTailAngleFFT(4, 0, 72690,  73180).tolist() if not math.isnan(x)]) # Fish "swimming down" the thank
+fish0_Period4 = [x for x in plotSectionAndTailAngleFFT(4, 0, 72690,  73180).tolist() if not math.isnan(x)] # Fish "swimming down" the thank
 print("Fish 0, period 5")
-allPitchesFromSectionsFish0.extend([x for x in plotSectionAndTailAngleFFT(5, 0, 7850,   8340).tolist() if not math.isnan(x)]) # Fish "swimming up" the thank
+fish0_Period5 = [x for x in plotSectionAndTailAngleFFT(5, 0, 7850,   8340).tolist() if not math.isnan(x)] # Fish "swimming up" the thank
+
+allPitchesFromSectionsFishGoingUp.extend(fish0_Period1)
+allPitchesFromSectionsFishGoingUp.extend(fish0_Period2)
+allPitchesFromSectionsFishGoingDown.extend(fish0_Period3)
+allPitchesFromSectionsFishGoingDown.extend(fish0_Period4)
+allPitchesFromSectionsFishGoingUp.extend(fish0_Period5)
+
+allPitchesFromSectionsFish0.extend(fish0_Period1)
+allPitchesFromSectionsFish0.extend(fish0_Period2)
+allPitchesFromSectionsFish0.extend(fish0_Period3)
+allPitchesFromSectionsFish0.extend(fish0_Period4)
+allPitchesFromSectionsFish0.extend(fish0_Period5)
 
 print("Fish 1, period 1")
-allPitchesFromSectionsFish1.extend([x for x in plotSectionAndTailAngleFFT(1, 1, 11950, 12900).tolist() if not math.isnan(x)]) # Fish "swimming down" the thank
+fish1_Period1 = [x for x in plotSectionAndTailAngleFFT(1, 1, 11950, 12900).tolist() if not math.isnan(x)] # Fish "swimming down" the thank
 print("Fish 1, period 2")
-allPitchesFromSectionsFish1.extend([x for x in plotSectionAndTailAngleFFT(2, 1, 28600, 29770).tolist() if not math.isnan(x)]) # Fish very slowly "swimming up" the thank but also stagnating / falling down some of the tiem
+fish1_Period2 = [x for x in plotSectionAndTailAngleFFT(2, 1, 28600, 29770).tolist() if not math.isnan(x)] # Fish very slowly "swimming up" the thank but also stagnating / falling down some of the tiem
 print("Fish 1, period 3")
-allPitchesFromSectionsFish1.extend([x for x in plotSectionAndTailAngleFFT(3, 1, 44750, 46220).tolist() if not math.isnan(x)]) # Fish "swimming down" the thank, most of the time
+fish1_Period3 = [x for x in plotSectionAndTailAngleFFT(3, 1, 44750, 46220).tolist() if not math.isnan(x)] # Fish "swimming down" the thank, most of the time
 print("Fish 1, period 4")
-allPitchesFromSectionsFish1.extend([x for x in plotSectionAndTailAngleFFT(4, 1, 66100, 68750).tolist() if not math.isnan(x)])
+fish1_Period4 = [x for x in plotSectionAndTailAngleFFT(4, 1, 66100, 68750).tolist() if not math.isnan(x)] # going down
 print("Fish 1, period 5")
-allPitchesFromSectionsFish1.extend([x for x in plotSectionAndTailAngleFFT(5, 1, 96550, 97775).tolist() if not math.isnan(x)])
+fish1_Period5 = [x for x in plotSectionAndTailAngleFFT(5, 1, 96550, 97775).tolist() if not math.isnan(x)] # going down
+
+allPitchesFromSectionsFishGoingDown.extend(fish1_Period1)
+allPitchesFromSectionsFishGoingUp.extend(fish1_Period2)
+allPitchesFromSectionsFishGoingDown.extend(fish1_Period3)
+allPitchesFromSectionsFishGoingDown.extend(fish1_Period4)
+allPitchesFromSectionsFishGoingDown.extend(fish1_Period5)
+
+allPitchesFromSectionsFish1.extend(fish1_Period1)
+allPitchesFromSectionsFish1.extend(fish1_Period2)
+allPitchesFromSectionsFish1.extend(fish1_Period3)
+allPitchesFromSectionsFish1.extend(fish1_Period4)
+allPitchesFromSectionsFish1.extend(fish1_Period5)
 
 allPitchesFromSectionsBothFish = allPitchesFromSectionsFish0.copy()
 allPitchesFromSectionsBothFish.extend(allPitchesFromSectionsFish1)
+
+
+# All
 
 if saveFigs:
   fig, axs = plt.subplots(1, 1, figsize=(19, 10))
 else:
   fig, axs = plt.subplots(1, 1)
-plt.hist(allPitchesFromSectionsBothFish, bins=10, color='blue', edgecolor='black')
+plt.hist(allPitchesFromSectionsBothFish, bins=nbBins, color='blue', edgecolor='black')
 plt.xlabel('Pitch')
 plt.ylabel('Frequency')
 plt.title('Pitch')
@@ -228,11 +263,13 @@ if saveFigs:
 else:
   plt.show()
 
+# Fish 0
+
 if saveFigs:
   fig, axs = plt.subplots(1, 1, figsize=(19, 10))
 else:
   fig, axs = plt.subplots(1, 1)
-plt.hist(allPitchesFromSectionsFish0, bins=10, color='blue', edgecolor='black')
+plt.hist(allPitchesFromSectionsFish0, bins=nbBins, color='blue', edgecolor='black')
 plt.xlabel('Pitch')
 plt.ylabel('Frequency')
 plt.title('Pitch')
@@ -241,15 +278,47 @@ if saveFigs:
 else:
   plt.show()
 
+# Fish 1
+
 if saveFigs:
   fig, axs = plt.subplots(1, 1, figsize=(19, 10))
 else:
   fig, axs = plt.subplots(1, 1)
-plt.hist(allPitchesFromSectionsFish1, bins=10, color='blue', edgecolor='black')
+plt.hist(allPitchesFromSectionsFish1, bins=nbBins, color='blue', edgecolor='black')
 plt.xlabel('Pitch')
 plt.ylabel('Frequency')
 plt.title('Pitch')
 if saveFigs:
   plt.savefig('PitchHistogramFish1.' + figsFormat, format=figsFormat)
+else:
+  plt.show()
+
+# Fish going down
+
+if saveFigs:
+  fig, axs = plt.subplots(1, 1, figsize=(19, 10))
+else:
+  fig, axs = plt.subplots(1, 1)
+plt.hist(allPitchesFromSectionsFishGoingDown, bins=nbBins, color='blue', edgecolor='black')
+plt.xlabel('Pitch')
+plt.ylabel('Frequency')
+plt.title('Pitch')
+if saveFigs:
+  plt.savefig('PitchHistogramFishGoingDown.' + figsFormat, format=figsFormat)
+else:
+  plt.show()
+
+# Fish going up
+
+if saveFigs:
+  fig, axs = plt.subplots(1, 1, figsize=(19, 10))
+else:
+  fig, axs = plt.subplots(1, 1)
+plt.hist(allPitchesFromSectionsFishGoingUp, bins=nbBins, color='blue', edgecolor='black')
+plt.xlabel('Pitch')
+plt.ylabel('Frequency')
+plt.title('Pitch')
+if saveFigs:
+  plt.savefig('PitchHistogramFishGoingUp.' + figsFormat, format=figsFormat)
 else:
   plt.show()
