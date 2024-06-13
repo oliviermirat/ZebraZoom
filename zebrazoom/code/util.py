@@ -631,8 +631,12 @@ class SliderWithSpinbox(QWidget):
 
   def __init__(self, value, minimum, maximum, name=None, double=False, choices=None):
     super().__init__()
-    minimum = int(minimum)
-    maximum = int(maximum)
+    type_ = int if not double else float
+    value = type_(value)
+    minimum = type_(minimum)
+    maximum = type_(maximum)
+    formatMin = lambda x: (math.floor(x) if type_ is float else int(x))
+    formatMax = lambda x: (math.ceil(x) if type_ is float else int(x))
 
     layout = QGridLayout()
     layout.setRowStretch(0, 1)
@@ -641,9 +645,9 @@ class SliderWithSpinbox(QWidget):
     layout.setColumnStretch(5, 1)
     layout.setVerticalSpacing(0)
 
-    minLabel = QLabel(str(minimum))
+    minLabel = QLabel(str(formatMin(minimum)))
     layout.addWidget(minLabel, 1, 1, Qt.AlignmentFlag.AlignLeft)
-    maxLabel = QLabel(str(maximum))
+    maxLabel = QLabel(str(formatMax(maximum)))
     layout.addWidget(maxLabel, 1, 3, Qt.AlignmentFlag.AlignRight)
     slider = QSlider(Qt.Orientation.Horizontal) if not double else _DoubleSlider(Qt.Orientation.Horizontal)
     slider.setMinimumWidth(350)
@@ -695,9 +699,9 @@ class SliderWithSpinbox(QWidget):
     self.minimum = spinbox.minimum
     self.maximum = spinbox.maximum
     self.setValue = lambda value: spinbox.setValue(value) or slider.setValue(value)
-    self.setMinimum = lambda min_: spinbox.setMinimum(int(min_)) or slider.setMinimum(int(min_)) or minLabel.setText(str(int(min_)))
-    self.setMaximum = lambda max_: spinbox.setMaximum(int(max_)) or slider.setMaximum(int(max_)) or maxLabel.setText(str(int(max_)))
-    self.setRange = lambda min_, max_: spinbox.setRange(int(min_), int(max_)) or slider.setRange(int(min_), int(max_))
+    self.setMinimum = lambda min_: spinbox.setMinimum(type_(min_)) or slider.setMinimum(type_(min_)) or minLabel.setText(str(formatMin(min_)))
+    self.setMaximum = lambda max_: spinbox.setMaximum(type_(max_)) or slider.setMaximum(type_(max_)) or maxLabel.setText(str(formatMax(max_)))
+    self.setRange = lambda min_, max_: spinbox.setRange(type_(min_), type_(max_)) or slider.setRange(type_(min_), type_(max_))
     self.setSingleStep = lambda step: spinbox.setSingleStep(step) or slider.setSingleStep(step)
     self.isSliderDown = slider.isSliderDown
     self.sliderWidth = slider.width

@@ -69,8 +69,8 @@ def __createSlider(layout, status, values, info, names, widgets, hasCheckbox, na
   if name not in values:
     assert name.startswith('Step')
     value = values['steps'][stepIdx]
-    minn = 1
-    maxx = values['maxDepth']
+    minn = 0.01
+    maxx = max(values['maxDepth'], value * 1.33)
   else:
     value = values[name] if name != 'steps' else len(values[name])
     if value < minn:
@@ -282,7 +282,16 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
         value = hyperparameters['steps'][idx]
         if slider.value() != value:
           slider.setValue(value)
-        slider.setMaximum(hyperparameters['maxDepth'])
+        minn = slider.minimum()
+        maxx = slider.maximum()
+        if (value - minn) > (maxx - minn) * 0.9:
+          maxx = int(minn + (value - minn) * 1.1)
+        elif maxx - minn > 255 and value < minn + (maxx - minn) * 0.1:
+          maxx = int(minn + (maxx - minn) * 0.9)
+        else:
+          continue
+        maxx = min(maxx, MAX_INT32)
+        slider.setMaximum(maxx)
     for name in flattenedList:
       if name not in widgets:
         continue
