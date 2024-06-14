@@ -15,6 +15,8 @@ dataAPI.setFPSandPixelSize(videoName, videoFPS, videoPixelSize)
 saveFigs   = True
 figsFormat = 'png' # 'svg'
 
+angleOnlyWithPlusMinus90 = True
+
 nbBins = 35
 
 # Getting data
@@ -25,10 +27,21 @@ for numAnimal in [0, 1]:
 # Converting Heading to a more intuitive coordinate system
 def convertHeadingToMoreIntuitiveCoordinateSystem(angle):
   angle = angle * (180 / math.pi)
-  if angle <= 180:
-    return -angle
+  if not(angleOnlyWithPlusMinus90):
+    if angle <= 180:
+      return -angle
+    else:
+      return 360 - angle
   else:
-    return 360 - angle
+    if angle <= 180:
+      angle = -angle
+    else:
+      angle = 360 - angle
+    if angle < -90:
+      angle = -180 - angle
+    if angle > 90:
+      angle = 180 - angle
+    return angle
 
 for mov in movementDataToExport:
   mov['Heading'] = [convertHeadingToMoreIntuitiveCoordinateSystem(val) for val in mov['Heading'].tolist()]

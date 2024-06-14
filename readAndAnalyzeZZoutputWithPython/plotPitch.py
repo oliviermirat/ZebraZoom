@@ -14,8 +14,10 @@ dataAPI.setFPSandPixelSize(videoName, videoFPS, videoPixelSize)
 
 saveFigs   = True
 figsFormat = 'png' # 'svg'
+angleOnlyWithPlusMinus90 = True
 
-outlierRemoval = True
+removeFishTooSmall = True
+outlierRemovalForHeading = False
 
 nbBins = 35
 
@@ -27,10 +29,21 @@ for numAnimal in [0, 1]:
 # Converting Heading to a more intuitive coordinate system
 def convertHeadingToMoreIntuitiveCoordinateSystem(angle):
   angle = angle * (180 / math.pi)
-  if angle <= 180:
-    return -angle
+  if not(angleOnlyWithPlusMinus90):
+    if angle <= 180:
+      return -angle
+    else:
+      return 360 - angle
   else:
-    return 360 - angle
+    if angle <= 180:
+      angle = -angle
+    else:
+      angle = 360 - angle
+    if angle < -90:
+      angle = -180 - angle
+    if angle > 90:
+      angle = 180 - angle
+    return angle
 
 for mov in movementDataToExport:
   mov['Heading'] = [convertHeadingToMoreIntuitiveCoordinateSystem(val) for val in mov['Heading'].tolist()]
@@ -83,7 +96,7 @@ for mov in movementDataToExport:
   mov['fishTooSmall'] = new_column_values
 
 movementDataToExport2 = movementDataToExport.copy()
-if outlierRemoval:
+if removeFishTooSmall:
   for idx, mov in enumerate(movementDataToExport2):
     movementDataToExport2[idx].loc[mov['fishTooSmall'] != 0] = np.nan
     # rows_below_2_radians = movementDataToExport2[idx]['Heading'] < 2
@@ -96,7 +109,7 @@ def replace_outliers_with_nan(heading_series):
   heading_series[diff >= 1.5] = np.nan
   return heading_series
 
-if outlierRemoval:
+if outlierRemovalForHeading:
   for idx, mov in enumerate(movementDataToExport2):
     movementDataToExport2[idx]['Heading'] = replace_outliers_with_nan(movementDataToExport2[idx]['Heading'])
 
