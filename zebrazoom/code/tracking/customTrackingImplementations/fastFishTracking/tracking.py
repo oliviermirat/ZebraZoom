@@ -134,7 +134,7 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
     
     cap.release()
     
-    if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
+    if self._hyperparameters["detectMovementWithRawVideoInsideTracking"] and ("detectMovementCompareWithTheFuture" in self._hyperparameters) and self._hyperparameters["detectMovementCompareWithTheFuture"]:
       frameGapComparision = self._hyperparameters["frameGapComparision"]
       nbFrames = len(self._trackingDataPerWell[0][0])
       for wellNumber in range(len(self._trackingDataPerWell)):
