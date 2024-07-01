@@ -78,6 +78,7 @@ jobs:
       - name: Run the created executable
         run: |
           build/dist/ZebraZoom/ZebraZoom exit
+          rm build/dist/ZebraZoom/ZebraZoom/zebrazoom/ZZoutput/_groupsInternal.pkl
       - name: Generate the list of installed files
         run: |
           cd build/dist/ZebraZoom/ZebraZoom
@@ -206,6 +207,7 @@ jobs:
       - name: Run the created executable
         run: |
           build/dist/ZebraZoomApp/ZebraZoomApp exit
+          rm build/dist/ZebraZoomApp/ZebraZoom/zebrazoom/ZZoutput/_groupsInternal.pkl
       - name: Generate the list of installed files
         run: |
           cd build/dist/ZebraZoomApp/ZebraZoom
@@ -300,6 +302,7 @@ jobs:
       - name: Run the created executable
         run: |
           build/dist/ZebraZoom/ZebraZoom exit
+          rm build/dist/ZebraZoom/ZebraZoom/zebrazoom/ZZoutput/_groupsInternal.pkl
       - name: Generate the list of installed files
         run: |
           cd build/dist/ZebraZoom
@@ -368,6 +371,7 @@ jobs:
       - name: Run the created executable
         run: |
           build/dist/ZebraZoomApp/ZebraZoomApp exit
+          rm build/dist/ZebraZoomApp/ZebraZoom/zebrazoom/ZZoutput/_groupsInternal.pkl
       - name: Generate the list of installed files
         run: |
           cd build/dist/ZebraZoomApp
