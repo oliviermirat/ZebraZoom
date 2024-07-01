@@ -812,7 +812,12 @@ class _VisualizationTreeModel(QAbstractItemModel):
         group = pickle.load(f)
       group.parentItem = self.rootItem
       self.rootItem.subgroups.append(group)
-    except (OSError, pickle.PickleError):
+    except (OSError, pickle.PickleError, MemoryError):
+      if os.path.exists(os.path.join(app.ZZoutputLocation, '_groupsInternal.pkl')):
+        cnt = 1
+        while os.path.exists(os.path.join(app.ZZoutputLocation, f'_groupsInternal.pkl.old{cnt}')):
+          cnt += 1
+        os.rename(os.path.join(app.ZZoutputLocation, '_groupsInternal.pkl'), os.path.join(app.ZZoutputLocation, f'_groupsInternal.pkl.old{cnt}'))
       self.rootItem.subgroups.append(_GroupsVisualizationGroupItem(self.rootItem))
       self._saveGroups()
     self.rootItem.subgroups.append(_AllResultsVisualizationGroupItem(self.rootItem))
