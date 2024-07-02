@@ -111,7 +111,9 @@ jobs:
           ref: master
       - name: Install dependencies
         run: |
-          yum install -y mesa-libGL
+          sed -i 's/mirrorlist=/#mirrorlist=/g' /etc/yum.repos.d/CentOS-Base.repo
+          sed -i 's$#baseurl=http://mirror$baseurl=http://vault$g' /etc/yum.repos.d/CentOS-Base.repo
+          yum --disablerepo="*" --enablerepo="base" install -y mesa-libGL
           python3 -m pip install --upgrade pip setuptools wheel
           python3 -m pip install pyinstaller
           python3 -m pip install -e .
