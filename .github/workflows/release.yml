@@ -102,7 +102,7 @@ jobs:
     needs: create_release
     runs-on: ubuntu-latest
     container:
-      image: quay.io/pypa/manylinux2014_x86_64
+      image: centos/python-38-centos7
       options: --user root
     steps:
       - name: Checkout repository
