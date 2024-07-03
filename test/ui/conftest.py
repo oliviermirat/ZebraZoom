@@ -37,7 +37,7 @@ def monkeypatchPaths(monkeypatch_session, tmp_path_factory):  # move all relevan
   dataAnalysisFolder.mkdir()
   experimentOrganizationExcelFolder = dataAnalysisFolder / 'experimentOrganizationExcel'
   experimentOrganizationExcelFolder.mkdir()
-  shutil.copyfile(os.path.join(paths.getRootDataFolder(), 'dataAnalysis', 'experimentOrganizationExcel', 'example.xls'), os.path.join(experimentOrganizationExcelFolder, 'example.xls'))
+  shutil.copyfile(os.path.join(paths.getRootDataFolder(), 'dataAnalysis', 'experimentOrganizationExcel', 'example.xlsx'), os.path.join(experimentOrganizationExcelFolder, 'example.xlsx'))
   (dataAnalysisFolder / 'data').mkdir()
   (dataAnalysisFolder / 'resultsClustering').mkdir()
   (dataAnalysisFolder / 'resultsKinematic').mkdir()
