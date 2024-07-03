@@ -88,7 +88,7 @@ setup(
         "zebrazoom/code/GUI/wholeVideo.png",
         "zebrazoom/code/GUI/headEmbedded.png",
         
-        "zebrazoom/dataAnalysis/experimentOrganizationExcel/example.xls"
+        "zebrazoom/dataAnalysis/experimentOrganizationExcel/example.xlsx"
       ],
     )
   ],
