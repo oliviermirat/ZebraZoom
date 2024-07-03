@@ -1224,7 +1224,7 @@ class TestExampleExperiment:
 
   def _selectExample(self, qapp, qtbot, noBends=False):
     createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-    _selectExperiment(createExcelPage, qapp, qtbot, f'{self._noBendsExampleExperiment}.xlsx' if noBends else 'example.xls')
+    _selectExperiment(createExcelPage, qapp, qtbot, f'{self._noBendsExampleExperiment}.xlsx' if noBends else 'example.xlsx')
     qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod))
     qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
