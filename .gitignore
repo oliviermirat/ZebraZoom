@@ -108,3 +108,4 @@ goodTrackingSaved.pkl
 readAndAnalyzeZZoutputWithPython/*.png
 readAndAnalyzeZZoutputWithPython/*.csv
 readAndAnalyzeZZoutputWithPython/*.pkl
+readAndAnalyzeZZoutputWithPython/*.svg

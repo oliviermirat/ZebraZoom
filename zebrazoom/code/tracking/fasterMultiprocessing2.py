@@ -10,6 +10,8 @@ from ._base import register_tracking_method
 from ._fasterMultiprocessingBase import BaseFasterMultiprocessing
 from ._tailExtremityTracking import TailTrackingExtremityDetectMixin
 
+from zebrazoom.code.deepLearningFunctions.labellingFunctions import drawWhitePointsOnInitialImages, saveImagesAndData
+
 
 class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDetectMixin):
   def __init__(self, videoPath, wellPositions, hyperparameters):
@@ -457,6 +459,9 @@ class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDet
                   tail = np.array([tail[0][1:len(tail[0])]])
                 tail = np.insert(tail, 0, headPosition, axis=1)
                 self._trackingHeadTailAllAnimalsList[wellNumber][animal_Id, i-self._firstFrame] = tail
+                
+                if self._hyperparameters["saveBodyMask"]:
+                  saveImagesAndData(self._hyperparameters, bodyContour, initialCurFrame, wellNumber, i)
 
           # Eye tracking for frame i
           # if self._hyperparameters["eyeTracking"]:
