@@ -32,6 +32,8 @@ def tailAnglesHeatMap(superStruct, hyperparameters, videoNameWithTimestamp):
   # Going through each well, each fish and each bout
   for i in range(0, len(superStruct["wellPoissMouv"])):
     for j in range(0, len(superStruct["wellPoissMouv"][i])):
+      if not superStruct["wellPoissMouv"][i][j]:  # no bouts, nothing to calculate
+        continue
       tailAngleHeatmaps = {}
       if hyperparameters["saveAllDataEvenIfNotInBouts"]:
         fname = os.path.join(hyperparameters["outputFolder"], videoNameWithTimestamp, f'allData_{hyperparameters["videoName"]}_wellNumber{i}_animal{j}.csv')

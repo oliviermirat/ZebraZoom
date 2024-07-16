@@ -21,6 +21,8 @@ def createSuperStructFromH5(results):
       animalGroup = wellGroup[f'dataForAnimal{animalIdx}']
       animalData = []
       wellData.append(animalData)
+      if 'dataPerFrame' not in animalGroup:
+        continue
       dataGroup = animalGroup['dataPerFrame']
       HeadPos = dataGroup['HeadPos'][:]
       TailPosX = dataGroup['TailPosX'][:]
