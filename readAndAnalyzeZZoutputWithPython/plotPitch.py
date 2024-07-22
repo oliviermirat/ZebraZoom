@@ -27,6 +27,7 @@ movementDataToExport = []
 for numAnimal in [0, 1]:
   movementDataToExport.append(dataAPI.createExcelFileWithRawData(videoName, numWell, numAnimal, 1, 108288))
 
+
 # Converting Heading to a more intuitive coordinate system
 def convertHeadingToMoreIntuitiveCoordinateSystem(angle):
   angle = angle * (180 / math.pi)
@@ -90,7 +91,7 @@ for mov in movementDataToExport:
     start_index = max(0, int(i - window_size / 2))
     end_index = min(len(mov), int(i + window_size / 2))
     window_slice = mov[start_index:end_index]
-    if any(window_slice['Scaled_TailLength'] < 0.45) or any(window_slice['Scaled_subsequentPointsDistance'] > 0.5):
+    if any(window_slice['Scaled_TailLength'] < 0.45): #any(window_slice['Scaled_TailLength'] < 0.45) or any(window_slice['Scaled_subsequentPointsDistance'] > 0.5):
       new_column_values.append(1)
     else:
       new_column_values.append(0)
@@ -226,20 +227,38 @@ def plotSectionAndTailAngleFFT(plotNumber, animalNumber, startSection, endSectio
   return mov['Heading']
 
 
+movementDataToExportOriginal = []
+for numAnimal in [0, 1]:
+  movementDataToExportOriginal.append(dataAPI.createExcelFileWithRawData(videoName, numWell, numAnimal, 1, 108288))
+
+for mov in movementDataToExportOriginal:
+  mov['Heading'] = [convertHeadingToMoreIntuitiveCoordinateSystem(val) for val in mov['Heading'].tolist()]
+  mov['TailAngle']          = (180 / math.pi) * mov['TailAngle']
+  mov['TailAngle_smoothed'] = (180 / math.pi) * mov['TailAngle_smoothed']
+  mov['HeadX']              = mov['HeadX'] * videoPixelSize
+  mov['HeadY']              = ((90 / videoPixelSize) - mov['HeadY']) * videoPixelSize
+  mov['TailLength']         = mov['TailLength'] * videoPixelSize
+  
+
 def plotSectionAndTailAngleFFT_concise(plotNumber, animalNumber, startSection, endSection):
   
   mov = movementDataToExport2[animalNumber][startSection:endSection]
-  columns_to_plot = [['HeadY'], ['Heading']]
-  labels = [['Vertical position'], ['Pitch']]
+  mov2 = movementDataToExportOriginal[animalNumber][startSection:endSection].copy()
+  columns_to_plot = [['HeadY'], ['Heading'], ['TailLength']]
+  labels = [['Vertical position'], ['Pitch'], ['TailLength']]
   if saveFigs:
-    fig, axs = plt.subplots(2, 1, figsize=(19, 10))
+    fig, axs = plt.subplots(3, 1, figsize=(19, 10))
   else:
-    fig, axs = plt.subplots(2, 1)
+    fig, axs = plt.subplots(3, 1)
   for i, columns in enumerate(columns_to_plot):
     for j, column in enumerate(columns):
-      axs[i].plot(mov.index / videoFPS, mov[column], label=labels[i][j])
+      if column == 'Heading':
+        axs[i].plot(mov.index / videoFPS, mov[column], label=labels[i][j])
+      else:
+        axs[i].plot(mov2.index / videoFPS, mov2[column], label=labels[i][j])
     axs[i].set_title(', '.join(labels[i]))
     axs[i].legend()
+  axs[2].plot(mov2.index / videoFPS, [2.5725 for i in range(len(mov2[column]))], label='Threshold')
   plt.tight_layout()
   if saveFigs:
     plt.savefig('Fish' + str(animalNumber) + '_period' + str(plotNumber) + '_frames_' + str(startSection) + '_to_' + str(endSection) + '.' + figsFormat, format=figsFormat)
@@ -248,7 +267,7 @@ def plotSectionAndTailAngleFFT_concise(plotNumber, animalNumber, startSection, e
   
   filename = 'data_fish' + str(animalNumber) + '_period' + str(plotNumber) + '.pkl'
   with open(filename, 'wb') as file:
-    pickle.dump({'Time': mov.index / videoFPS, 'Vertical position': mov['HeadY'], 'Pitch': mov['Heading']}, file)
+    pickle.dump({'Time': mov.index / videoFPS, 'Vertical position': mov2['HeadY'], 'Pitch': mov['Heading'], 'Tail Length': mov2['Scaled_TailLength']}, file)
   
   return mov['Heading']
 
