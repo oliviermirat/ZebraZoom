@@ -3,13 +3,13 @@ import os
 import cv2
 import matplotlib.pyplot as plt
 
-from .createTrackingPointsFrame import createTrackingPointsFrame
+from .plotSingleFrameTrackingPoints import plotSingleFrameTrackingPoints
 from .getCurvaturePerBout import getCurvaturePerBout
 from .getFPSandPixelSize import getFPSandPixelSize
 from .plotCurvatureYaxisApproximate import plotCurvatureYaxisApproximateImplementation
 
 
-def getTrackingFramesAndCurvatureFromFolder(pathToFolder: str):
+def getSingleFrameTrackingAndCurvatureForFolder(pathToFolder: str):
   for basename in os.listdir(pathToFolder):
     if not basename.endswith('.h5'):
       continue
@@ -21,4 +21,4 @@ def getTrackingFramesAndCurvatureFromFolder(pathToFolder: str):
     plotCurvatureYaxisApproximateImplementation(*getCurvaturePerBout(filename, 0, 0, 0), 1, pixelSize)
     plt.savefig(os.path.join(outputFolder, basename.replace('.h5', '_curvature.png')), dpi=300, bbox_inches='tight')
     plt.close()
-    cv2.imwrite(os.path.join(outputFolder, basename.replace('.h5', '.png')), createTrackingPointsFrame(filename))
+    cv2.imwrite(os.path.join(outputFolder, basename.replace('.h5', '.png')), plotSingleFrameTrackingPoints(filename))

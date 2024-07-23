@@ -5,7 +5,7 @@ from ._createSuperStructFromH5 import createSuperStructFromH5
 from ._openResultsFile import openResultsFile
 
 
-def createTrackingPointsFrame(videoName: str):
+def plotSingleFrameTrackingPoints(videoName: str):
   with openResultsFile(videoName, 'r') as results:
     hyperparameters = getHyperparametersSimple(dict(results['configurationFileUsed'].attrs))
     superStruct = createSuperStructFromH5(results)
@@ -17,4 +17,7 @@ def createTrackingPointsFrame(videoName: str):
         # assume we only have one bout
         bout = superStruct["wellPoissMouv"][i][j][0]
         infoFrame.extend(calculateInfoFrameForFrame(superStruct, hyperparameters, i, j, 0, bout["BoutStart"], colorModifTab))
-    return processFrame(results['exampleFrame'][:], hyperparameters, infoFrame, colorModifTab)
+    exampleFrame = results['exampleFrame'][:]
+    if hyperparameters['invertBlackWhiteOnImages']:
+      exampleFrame = 255 - exampleFrame
+    return processFrame(exampleFrame, hyperparameters, infoFrame, colorModifTab)
