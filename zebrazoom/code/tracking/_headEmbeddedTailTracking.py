@@ -344,8 +344,10 @@ class HeadEmbeddedTailTrackingMixin(TailTrackingBase):
 
     frame = cv2.GaussianBlur(frame, (gaussian_blur, gaussian_blur), 0)
 
-    # angle = self._hyperparameters["headEmbededParamInitialAngle"]
-    angle = 0 #self._calculateAngle(x, y, tailTip[0], tailTip[1])
+    if ("initialTailForMaxDepthCalculNotStraight" in self._hyperparameters) and self._hyperparameters["initialTailForMaxDepthCalculNotStraight"]:
+      angle = self._hyperparameters["headEmbededParamInitialAngle"]
+    else:
+      angle = self._calculateAngle(x, y, tailTip[0], tailTip[1])
 
     points = np.zeros((2, 0))
 
@@ -385,7 +387,7 @@ class HeadEmbeddedTailTrackingMixin(TailTrackingBase):
     return output
 
   def _headEmbededTailTrackFindMaxDepth(self, frame):
-    if False:
+    if not(("initialTailForMaxDepthCalculNotStraight" in self._hyperparameters) and self._hyperparameters["initialTailForMaxDepthCalculNotStraight"]):
       return math.sqrt((self._headPositionFirstFrame[0] - self._tailTipFirstFrame[0])**2 + (self._headPositionFirstFrame[1] - self._tailTipFirstFrame[1])**2)
 
     headEmbededParamTailDescentPixThreshStopInit = self._hyperparameters["headEmbededParamTailDescentPixThreshStop"]
