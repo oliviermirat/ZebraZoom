@@ -23,3 +23,6 @@ from .deleteAutomaticallyCalculatedKinematicParameters import *
 from .createExcelFileWithRawData import *
 from .plotSingleFrameTrackingPoints import *
 from .getSingleFrameTrackingAndCurvatureForFolder import *
+from .plotSingleFrameTrackingPoints import *
+from .getSingleFrameDistanceToAxis import *
+from .getSingleFrameTrackingAndDistanceToAxisForFolder import *
