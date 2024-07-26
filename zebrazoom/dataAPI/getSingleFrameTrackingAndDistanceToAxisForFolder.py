@@ -35,4 +35,4 @@ def getSingleFrameTrackingAndDistanceToAxisForFolder(pathToFolder: str):
     curvature, xTimeValues, yDistanceAlongTheTail = getCurvaturePerBout(filename, 0, 0, 0)
     TailPosX = getDataPerBout(filename, 0, 0, 0, 'TailPosX')
     TailPosY = getDataPerBout(filename, 0, 0, 0, 'TailPosY')
-    pd.DataFrame(np.column_stack((np.insert(yDistanceAlongTheTail[:, 0][::-1], 0, 0), TailPosX[0, :], TailPosY[0, :], getSingleFrameDistanceToAxis(filename))), columns=['distanceAlongTheTail', 'TailPosX', 'TailPosY', 'distanceToAxis']).to_excel(os.path.join(outputFolder, basename.replace('.h5', '.xlsx')))
+    pd.DataFrame(np.column_stack((np.insert(yDistanceAlongTheTail[:, 0][::-1], 0, 0), TailPosX[0, :], TailPosY[0, :], getSingleFrameDistanceToAxis(filename, pixelSize))), columns=['distanceAlongTheTail', 'TailPosX', 'TailPosY', 'distanceToAxis']).to_excel(os.path.join(outputFolder, basename.replace('.h5', '.xlsx')))
