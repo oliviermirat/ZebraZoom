@@ -200,6 +200,20 @@ def drawInfoFrame(frame, infoFrame, colorModifTab, hyperparameters):
         cv2.putText(frame, str(numAnimal), (int(x + 10), int(y + 10)), cv2.FONT_HERSHEY_SIMPLEX, 1, (red, green, blue), 2)
 
 
+def processFrame(frame, hyperparameters, infoFrame, colorModifTab):
+  if hyperparameters["imagePreProcessMethod"]:
+    frame = preprocessImage(frame, hyperparameters)
+
+  if hyperparameters["reduceImageResolutionPercentage"]:
+    frame_height, frame_width = frame.shape[:2]
+    frame = cv2.resize(frame, (int(frame_width * hyperparameters["reduceImageResolutionPercentage"]), int(frame_height * hyperparameters["reduceImageResolutionPercentage"])), interpolation = cv2.INTER_AREA)
+  if hyperparameters["outputValidationVideoContrastImprovement"]:
+    frame = improveContrast(frame, hyperparameters)
+
+  drawInfoFrame(frame, infoFrame, colorModifTab, hyperparameters)
+  return frame
+
+
 def createValidationVideo(videoPath, superStruct, hyperparameters, outputName=None):
 
   if (hyperparameters["freqAlgoPosFollow"] != 0):
@@ -241,19 +255,11 @@ def createValidationVideo(videoPath, superStruct, hyperparameters, outputName=No
         print("Validation video creation: frame:", l)
     
       ret, frame = cap.read()
-      
-      if hyperparameters["imagePreProcessMethod"]:
-        frame = preprocessImage(frame, hyperparameters)
-      
-      if ret:
-        if hyperparameters["reduceImageResolutionPercentage"]:
-          frame = cv2.resize(frame, (int(frame_width * hyperparameters["reduceImageResolutionPercentage"]), int(frame_height * hyperparameters["reduceImageResolutionPercentage"])), interpolation = cv2.INTER_AREA)
-        if hyperparameters["outputValidationVideoContrastImprovement"]:
-          frame = improveContrast(frame, hyperparameters)
-        
-        drawInfoFrame(frame, infoFrame[l], colorModifTab, hyperparameters)
-          
-        out.write(frame)
+      if not ret:
+        continue
+
+      frame = processFrame(frame, hyperparameters, infoFrame[l], colorModifTab)
+      out.write(frame)
   
   out.release()
   
