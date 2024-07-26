@@ -70,6 +70,9 @@ class Tracking(zebrazoom.code.tracking.BaseTrackingMethod, UpdateBackgroundAtInt
     else:
       cap.set(cv2.CAP_PROP_POS_FRAMES, int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) - 1)
     ret, frame = cap.read()
+    while not(ret):
+      cap.set(cv2.CAP_PROP_POS_FRAMES, int(cap.get(cv2.CAP_PROP_POS_FRAMES)) - 1)
+      ret, frame = cap.read()
     if resizeFrameFactor:
       frame = cv2.resize(frame, (int(len(frame[0])/resizeFrameFactor), int(len(frame)/resizeFrameFactor)))
     if self._hyperparameters["chooseWellsToRunTrackingOnWithFirstAndLastFrame"] and self._hyperparameters["onlyTrackThisOneWell"] == -1:
