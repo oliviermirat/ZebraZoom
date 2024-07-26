@@ -29,7 +29,8 @@ class TailTrackingMixin(HeadEmbeddedTailTrackingMixin, CenterOfMassTailTrackingM
       else:
         oppHeading = (heading + math.pi) % (2 * math.pi) # INSERTED FOR THE REFACTORING
         if self._hyperparameters["centerOfMassTailTracking"] == 0:
-          trackingHeadTailAllAnimalsI = self._headEmbededTailTracking(headPosition, i, frame, maxDepth, tailTip)
+          trackingHeadTailAllAnimalsI, headingNew = self._headEmbededTailTracking(headPosition, i, frame, maxDepth, tailTip)
+          trackingHeadingAllAnimals[animalId, i-self._firstFrame] = headingNew
         else:
           trackingHeadTailAllAnimalsI = self._centerOfMassTailTracking(headPosition, frame, maxDepth)
 
