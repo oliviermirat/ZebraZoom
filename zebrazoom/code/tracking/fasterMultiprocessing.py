@@ -24,6 +24,11 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
                                                       for _ in range(self._hyperparameters["nbWells"])]
     else:
       self._trackingProbabilityOfGoodDetectionList = 0
+    
+    if self._hyperparameters["headingCalculationMethod"]:
+      self._trackingProbabilityOfHeadingGoodCalculation = [np.zeros((self._hyperparameters["nbAnimalsPerWell"], self._lastFrame-self._firstFrame+1)) for _ in range(self._hyperparameters["nbWells"])]
+    else:
+      self._trackingProbabilityOfHeadingGoodCalculation = 0
 
   def _adjustParameters(self, i, frame, widgets):
     return None
@@ -32,7 +37,11 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
     if self._hyperparameters["postProcessMultipleTrajectories"]:
       for wellNumber in range(self._firstWell, self._lastWell + 1):
         self._postProcessMultipleTrajectories(self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingProbabilityOfGoodDetectionList[wellNumber])
-
+    
+    if "postProcessHeadingWithTrajectory_minDist" in self._hyperparameters and self._hyperparameters["postProcessHeadingWithTrajectory_minDist"]:
+      for wellNumber in range(self._firstWell, self._lastWell + 1):
+        self._postProcessHeadingWithTrajectory(self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], self._trackingProbabilityOfHeadingGoodCalculation[wellNumber])
+    
     return {wellNumber: extractParameters([self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], [], 0, 0] + ([self._auDessusPerAnimalIdList[wellNumber]] if self._auDessusPerAnimalIdList is not None else []), wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background)
             for wellNumber in range(self._firstWell, self._lastWell + 1)}
 
@@ -102,8 +111,12 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
               blur = cv2.GaussianBlur(curFrame, (self._hyperparameters["paramGaussianBlur"], self._hyperparameters["paramGaussianBlur"]),0)
             else:
               blur = curFrame
-            thresh1 = 0
-            thresh2 = 0
+            if "headingCalculationMethod" in self._hyperparameters:
+              t, thresh1 = cv2.threshold(curFrame, 254, 255, cv2.THRESH_BINARY)
+              t, thresh2 = cv2.threshold(curFrame, 254, 255, cv2.THRESH_BINARY)
+            else:
+              thresh1 = 0
+              thresh2 = 0
             gray    = 0
           else:
             [frame2, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back, xHead, yHead] = self._getImages(0, i, wellNumber, frame)
@@ -111,7 +124,7 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
           headPositionFirstFrame = 0
 
           # Head tracking and heading calculation
-          lastFirstTheta = self._headTrackingHeadingCalculation(i, blur, thresh1, thresh2, gray, self._hyperparameters["erodeSize"], int(cap.get(3)), int(cap.get(4)), self._trackingHeadingAllAnimalsList[wellNumber], self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingProbabilityOfGoodDetectionList[wellNumber], headPositionFirstFrame, self._wellPositions[wellNumber]["lengthX"])
+          lastFirstTheta = self._headTrackingHeadingCalculation(i, blur, thresh1, thresh2, gray, self._hyperparameters["erodeSize"], int(cap.get(3)), int(cap.get(4)), self._trackingHeadingAllAnimalsList[wellNumber], self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingProbabilityOfGoodDetectionList[wellNumber], headPositionFirstFrame, self._wellPositions[wellNumber]["lengthX"], 0, 0, wellNumber)
 
           # Tail tracking for frame i
           if self._hyperparameters["trackTail"] == 1 :

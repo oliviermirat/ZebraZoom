@@ -32,7 +32,52 @@ class BaseZebraZoomTrackingMethod(BaseTrackingMethod, GetBackgroundMixin, Update
     array2[:window-1] = array[:window-1]
     array2[-window+1:] = array[-window+1:]
     return array2
-
+  
+  def _postProcessHeadingWithTrajectory(self, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingProbabilityOfHeadingGoodCalculation):
+    for animalId in range(0, len(trackingHeadTailAllAnimals)):
+      last_index   = 0
+      last_xHead   = trackingHeadTailAllAnimals[animalId][last_index][0][0]
+      last_yHead   = trackingHeadTailAllAnimals[animalId][last_index][0][1]
+      last_heading = (trackingHeadingAllAnimals[animalId][last_index] + math.pi) % (2*math.pi)
+      curDist = 0
+      for frameNumber in range(0, len(trackingHeadTailAllAnimals[animalId])):
+        xHead = trackingHeadTailAllAnimals[animalId][frameNumber][0][0]
+        yHead = trackingHeadTailAllAnimals[animalId][frameNumber][0][1]
+        heading = trackingHeadingAllAnimals[animalId][frameNumber]
+        dist = math.sqrt((xHead - last_xHead)**2 + (yHead - last_yHead)**2)
+        if dist > self._hyperparameters["postProcessHeadingWithTrajectory_minDist"]:
+          last_heading = self._calculateAngle(xHead, yHead, last_xHead, last_yHead)
+          last_index += 1
+          last_xHead   = trackingHeadTailAllAnimals[animalId][last_index][0][0]
+          last_yHead   = trackingHeadTailAllAnimals[animalId][last_index][0][1]
+        if self._distBetweenThetas((heading + math.pi) % (2*math.pi), last_heading) > self._distBetweenThetas(heading, last_heading) and self._distBetweenThetas(heading, last_heading) < 0.25 * math.pi and abs(trackingProbabilityOfHeadingGoodCalculation[0, frameNumber]) <= 10:
+          trackingHeadingAllAnimals[animalId][frameNumber] = (heading + math.pi) % (2*math.pi)
+          print("Inversion of heading in post processing, animalId:", animalId, " ; frame:", frameNumber, "; proba:", trackingProbabilityOfHeadingGoodCalculation[0, frameNumber])
+      
+      potentiallyAbnormalRangeIndStart = -1
+      for revert in [0, 1]:
+        if revert:
+          trackingHeadingAllAnimals[animalId] = np.flip(trackingHeadingAllAnimals[animalId])
+        for frameNumber in range(1, len(trackingHeadTailAllAnimals[animalId])):
+          heading = trackingHeadingAllAnimals[animalId][frameNumber]
+          if self._distBetweenThetas(heading, trackingHeadingAllAnimals[animalId][potentiallyAbnormalRangeIndStart-1 if potentiallyAbnormalRangeIndStart!=-1 else frameNumber-1]) > 0.8 * math.pi:
+            if potentiallyAbnormalRangeIndStart == -1:
+              potentiallyAbnormalRangeIndStart = frameNumber
+          else:
+            if potentiallyAbnormalRangeIndStart != -1:
+              if frameNumber - potentiallyAbnormalRangeIndStart > 100:
+                print("heading post processing second step: potentiallyAbnormalRange too long, reseting")
+                potentiallyAbnormalRangeIndStart = -1
+              else:
+                print("Second heading post processing step: looking for potential invertion between frame", potentiallyAbnormalRangeIndStart, "and", frameNumber)
+                for frameNumber2 in range(potentiallyAbnormalRangeIndStart, frameNumber):
+                  if self._distBetweenThetas(trackingHeadingAllAnimals[animalId][frameNumber2], trackingHeadingAllAnimals[animalId][potentiallyAbnormalRangeIndStart-1]) > math.pi / 2:
+                    print("Second heading post processing step: inverting angle for frame", frameNumber2)
+                    trackingHeadingAllAnimals[animalId][frameNumber2] = (trackingHeadingAllAnimals[animalId][frameNumber2] + math.pi) % (2*math.pi)
+                potentiallyAbnormalRangeIndStart = -1
+      trackingHeadingAllAnimals[animalId] = np.flip(trackingHeadingAllAnimals[animalId])
+  
+  
   def _postProcessMultipleTrajectories(self, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection):
     maxDistanceAuthorized = self._hyperparameters["postProcessMaxDistanceAuthorized"]
     maxDisapearanceFrames = self._hyperparameters["postProcessMaxDisapearanceFrames"]

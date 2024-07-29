@@ -115,6 +115,12 @@ def createDistanceBetweenFramesExcelFile(args):
   app = PlainApplication(sys.argv)
   createDistanceBetweenFramesExcelFile(paths.getDefaultZZoutputFolder(), args.videoFPS, args.videoPixelSize) # fps, pixelSize
 
+def createDistanceSpeedHeadingDeltaHeadingExcelFile(args):
+  from zebrazoom.dataAnalysis.createCustomDataStructure.createDistanceSpeedHeadingDeltaHeadingExcelFile import createDistanceSpeedHeadingDeltaHeadingExcelFile
+  from zebrazoom.GUIAllPy import PlainApplication
+  app = PlainApplication(sys.argv)
+  createDistanceSpeedHeadingDeltaHeadingExcelFile(paths.getDefaultZZoutputFolder(), args.videoFPS, args.videoPixelSize) # fps, pixelSize
+
 def removeLargeInstantaneousDistanceData(args):
   from zebrazoom.dataAnalysis.createCustomDataStructure.removeLargeInstantaneousDistanceData import removeLargeInstantaneousDistanceData
   from zebrazoom.GUIAllPy import PlainApplication

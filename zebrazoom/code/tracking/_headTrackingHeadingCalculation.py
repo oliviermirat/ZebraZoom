@@ -644,7 +644,7 @@ class HeadTrackingHeadingCalculationMixin:
 
     return headPosition
 
-  def _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, gray, erodeSize, frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, headPosition, lengthX, xmin=0, ymin=0):
+  def _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, gray, erodeSize, frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, headPosition, lengthX, xmin=0, ymin=0, wellNumber=-1):
     xHB_TN = 0
     heading = 0
     x = 0
@@ -710,7 +710,7 @@ class HeadTrackingHeadingCalculationMixin:
 
             # Calculate heading for frame i
             if type(thresh1) != int:
-              [heading, lastFirstTheta] = self._calculateHeading(x, y, i, thresh1, thresh2, takeTheHeadClosestToTheCenter)
+              [heading, lastFirstTheta] = self._calculateHeading(x, y, i, thresh1, thresh2, takeTheHeadClosestToTheCenter, 0, wellNumber)
 
             if (self._hyperparameters["headEmbededTeresaNicolson"] == 1):
               heading = 0
