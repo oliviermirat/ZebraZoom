@@ -51,7 +51,7 @@ def createDistanceSpeedHeadingDeltaHeadingExcelFile(ZZoutputFolder, fps, pixelSi
     
     print("totalNumberOfFrames: ", totalNumberOfFrames)
 
-    data = pd.DataFrame(data=[[wellNum, frameNum, frameNum/fps, (frameNum/fps)/60, float('nan'), float('nan'), 0, 0, 0, 0] for wellNum in range(0, numberOfWells) for frameNum in range(firstFrame, lastFrame)], columns=['wellId', 'frameNumber', 'second', 'minute', 'xPosition', 'yPosition', 'instantaneousDistance', 'instantaneousSpeed', 'heading', 'deltaHeading'])
+    data = pd.DataFrame(data=[[wellNum, frameNum, frameNum/fps, (frameNum/fps)/60, float('nan'), float('nan'), float('nan'), float('nan'), float('nan'), float('nan')] for wellNum in range(0, numberOfWells) for frameNum in range(firstFrame, lastFrame)], columns=['wellId', 'frameNumber', 'second', 'minute', 'xPosition', 'yPosition', 'instantaneousDistance', 'instantaneousSpeed', 'heading', 'deltaHeading'])
     
     for numWell in range(0, len(supstruct['wellPoissMouv'])):  
       for numAnimal in range(0, len(supstruct['wellPoissMouv'][numWell])):
