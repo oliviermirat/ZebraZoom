@@ -11,7 +11,7 @@ def upload_asset():
     # if the upload fails, keep retrying
     while True:
         try:
-            response = requests.post(os.environ['UPLOAD_URL'].replace('{?name,label}', f"?name={os.environ['ASSET_NAME']}", headers=headers, data=data)
+            response = requests.post(os.environ['UPLOAD_URL'].replace('{?name,label}', f"?name={os.environ['ASSET_NAME']}"), headers=headers, data=data)
             if response.status_code == 201:
               break
         except:
