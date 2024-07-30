@@ -157,18 +157,14 @@ jobs:
           cd build/dist/ZebraZoom
           zip -r ../ZebraZoom.zip *
       - name: Upload archive
-        uses: Wandalen/wretry.action@v1.0.25
+        uses: actions/upload-release-asset@latest
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          action: actions/upload-release-asset@latest
-          with: |
-            upload_url: ${{ needs.create_release.outputs.upload_url }}
-            asset_name: ZebraZoom-${{ runner.os }}.zip
-            asset_path: build/dist/ZebraZoom.zip
-            asset_content_type: application/zip
-          attempt_limit: 10
-          attempt_delay: 2000
+          upload_url: ${{ needs.create_release.outputs.upload_url }}
+          asset_name: ZebraZoom-${{ runner.os }}.zip
+          asset_path: build/dist/ZebraZoom.zip
+          asset_content_type: application/zip
 
   deploy_mac:
     name: Deploy on macOS
