@@ -7,7 +7,7 @@ import numpy as np
 class ComputeHeadingMixin:
   def _computeHeading(self, thresh1, x, y, headSize, wellNumber=-1, frameNumber=-1):
     if headSize == -1:
-      print("Setting headSize to 25 instead of -1, this may be a problem in some cases")
+      # print("Setting headSize to 25 instead of -1, this may be a problem in some cases")
       headSize = 25 # This was introduced to fix bug when config file creation for center of mass only tracking 16/11/22
 
     videoWidth  = self._hyperparameters["videoWidth"]
