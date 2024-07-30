@@ -76,7 +76,15 @@ class BaseZebraZoomTrackingMethod(BaseTrackingMethod, GetBackgroundMixin, Update
                     trackingHeadingAllAnimals[animalId][frameNumber2] = (trackingHeadingAllAnimals[animalId][frameNumber2] + math.pi) % (2*math.pi)
                 potentiallyAbnormalRangeIndStart = -1
       trackingHeadingAllAnimals[animalId] = np.flip(trackingHeadingAllAnimals[animalId])
-  
+      
+      for frameNumber in range(1, len(trackingHeadTailAllAnimals[animalId])-1):
+        headingBef  = trackingHeadingAllAnimals[animalId][frameNumber-1]
+        headingPres = trackingHeadingAllAnimals[animalId][frameNumber]
+        headingAft  = trackingHeadingAllAnimals[animalId][frameNumber+1]
+        if self._distBetweenThetas(headingBef, headingPres) > 110*(math.pi/180) and self._distBetweenThetas(headingPres, headingAft) > 110*(math.pi/180):
+          print("Third heading post processing step: inverting frame", frameNumber)
+          trackingHeadingAllAnimals[animalId][frameNumber] = (trackingHeadingAllAnimals[animalId][frameNumber] + math.pi) % (2 * math.pi)
+
   
   def _postProcessMultipleTrajectories(self, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection):
     maxDistanceAuthorized = self._hyperparameters["postProcessMaxDistanceAuthorized"]
