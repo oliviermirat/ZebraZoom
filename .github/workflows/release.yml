@@ -163,8 +163,10 @@ jobs:
           ASSET_NAME: ZebraZoom-${{ runner.os }}.zip
           ASSET_PATH: build/dist/ZebraZoom.zip
           ASSET_CONTENT_TYPE: application/zip
+        # we need an old version of urllib for this since this centOS has really old openssl
         run: |
           python3 -m pip install requests
+          python3 -m pip install urllib3==1.26.6
           python3 upload_asset.py
 
   deploy_mac:
