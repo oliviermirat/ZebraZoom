@@ -5,7 +5,7 @@ import time
 
 def upload_asset():
     headers = {'Authorization': f"token {os.environ['GITHUB_TOKEN']}",
-               'Content-Type': os.environ['ASSET_CONTENT_TYPE',}
+               'Content-Type': os.environ['ASSET_CONTENT_TYPE'],}
     params = (('name', filename),)
     with open(os.environ['ASSET_PATH'], 'rb') as f:
         data = f.read()
