@@ -106,7 +106,7 @@ jobs:
       options: --user root
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
+        uses: taiki-e/checkout-action@v1
         with:
           ref: master
       - name: Install dependencies
@@ -157,18 +157,17 @@ jobs:
           cd build/dist/ZebraZoom
           zip -r ../ZebraZoom.zip *
       - name: Upload archive
-        uses: Wandalen/wretry.action@v1.0.25
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          action: actions/upload-release-asset@latest
-          with: |
-            upload_url: ${{ needs.create_release.outputs.upload_url }}
-            asset_name: ZebraZoom-${{ runner.os }}.zip
-            asset_path: build/dist/ZebraZoom.zip
-            asset_content_type: application/zip
-          attempt_limit: 10
-          attempt_delay: 2000
+          UPLOAD_URL: ${{ needs.create_release.outputs.upload_url }}
+          ASSET_NAME: ZebraZoom-${{ runner.os }}.zip
+          ASSET_PATH: build/dist/ZebraZoom.zip
+          ASSET_CONTENT_TYPE: application/zip
+        # we need an old version of urllib for this since this centOS has really old openssl
+        run: |
+          python3 -m pip install requests
+          python3 -m pip install urllib3==1.26.6
+          python3 upload_asset.py
 
   deploy_mac:
     name: Deploy on macOS
