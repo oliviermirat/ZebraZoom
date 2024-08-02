@@ -528,7 +528,7 @@ def _runTracking(args, createValidationVideo, ZZoutputLocation):
   name        = os.path.splitext(nameWithExt)[0]
   videoExt    = os.path.splitext(nameWithExt)[1][1:]
 
-  tabParams = ["zebraZoomVideoAnalysis", path, name, videoExt, config, "freqAlgoPosFollow", 100, "outputFolder", ZZoutputLocation]
+  tabParams = ["zebraZoomVideoAnalysis", path, name, videoExt, config, "freqAlgoPosFollow", 100, "popUpAlgoFollow", 0, "outputFolder", ZZoutputLocation]
   if createValidationVideo is not None:
     tabParams.extend(['createValidationVideo', createValidationVideo])
   try:
