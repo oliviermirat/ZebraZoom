@@ -159,8 +159,8 @@ def calculateInfoFrame(superStruct, hyperparameters, nbFrames, colorModifTab):
         BoutStart = superStruct["wellPoissMouv"][i][j][k]["BoutStart"]
         BoutEnd = superStruct["wellPoissMouv"][i][j][k]["BoutEnd"]
         mouvLength = len(superStruct["wellPoissMouv"][i][j][k]["HeadX"])
-        for l in range(mouvLength):
-          infoFrame[BoutStart + l].extend(calculateInfoFrameForFrame(superStruct, hyperparameters, i, j, k, BoutStart + l, colorModifTab) if BoutStart + l < nbFrames else [])
+        for l in range(BoutStart, min(BoutEnd + 1, nbFrames)):
+          infoFrame[l].extend(calculateInfoFrameForFrame(superStruct, hyperparameters, i, j, k, l, colorModifTab))
   return infoFrame
 
 
