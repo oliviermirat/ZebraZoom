@@ -83,8 +83,11 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
       ret, frame = cap.read()
 
       if ret:
-
+        
         if self._hyperparameters["backgroundSubtractorKNN"]:
+          if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
+            frameOri = frame.copy()
+            frameOri = cv2.cvtColor(frameOri, cv2.COLOR_BGR2GRAY)
           frame = fgbg.apply(frame)
           frame = 255 - frame
 
@@ -147,15 +150,22 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
               print("Tracking at frame", i)
 
         if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
-          previousFrames = self._detectMovementWithRawVideoInsideTracking(i, grey, previousFrames)
-
+          previousFrames = self._detectMovementWithRawVideoInsideTracking(i, frameOri, previousFrames)
+      
       paramsAdjusted = self._adjustParameters(i, frame, widgets)
       if paramsAdjusted is not None:
         i, widgets = paramsAdjusted
         cap.set(1, i)
       else:
         i = i + 1
-
+    
+    if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
+      frameGapComparision = self._hyperparameters["frameGapComparision"]
+      nbFrames = len(self._trackingHeadTailAllAnimalsList[0][0])
+      for wellNumber in range(len(self._trackingHeadTailAllAnimalsList)):
+        for animalId in range(len(self._trackingHeadTailAllAnimalsList[wellNumber])):
+          self._auDessusPerAnimalIdList[wellNumber][animalId][:nbFrames-frameGapComparision] = self._auDessusPerAnimalIdList[wellNumber][animalId][frameGapComparision:nbFrames]
+      
     cap.release()
     return self._formatOutput()
 
