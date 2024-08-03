@@ -84,10 +84,11 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
 
       if ret:
         
+        if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
+          frameOri = frame.copy()
+          frameOri = cv2.cvtColor(frameOri, cv2.COLOR_BGR2GRAY)
+        
         if self._hyperparameters["backgroundSubtractorKNN"]:
-          if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
-            frameOri = frame.copy()
-            frameOri = cv2.cvtColor(frameOri, cv2.COLOR_BGR2GRAY)
           frame = fgbg.apply(frame)
           frame = 255 - frame
 
