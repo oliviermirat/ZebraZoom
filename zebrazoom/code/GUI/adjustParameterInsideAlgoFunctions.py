@@ -64,7 +64,10 @@ def detectBouts(self, controller, wellNumber, firstFrame, adjustOnWholeVideo, re
   if configFile.get('trackingImplementation') == 'fastFishTracking.tracking':
     configFile['detectMovementWithRawVideoInsideTracking'] = 1
 
-  temporarilyRemovedParams = {param: configFile.pop(param, None) for param in ("fasterMultiprocessing", "useFirstFrameAsBackground", "updateBackgroundAtInterval", "detectMovementWithRawVideoInsideTracking")}
+  paramsToRemove = ["useFirstFrameAsBackground", "updateBackgroundAtInterval", "detectMovementWithRawVideoInsideTracking"]
+  if configFile.get("fasterMultiprocessing", 0) == 2:
+    paramsToRemove.append("fasterMultiprocessing")
+  temporarilyRemovedParams = {param: configFile.pop(param, None) for param in paramsToRemove}
 
   configFile["noBoutsDetection"] = 0
   if "trackTail" in configFile:
