@@ -11,11 +11,12 @@ from scipy.optimize import curve_fit
 from ._centerOfMassTailTracking import CenterOfMassTailTrackingMixin
 from ._tailExtremityTracking import TailTrackingExtremityDetectMixin
 from ._headEmbeddedTailTracking import HeadEmbeddedTailTrackingMixin
+from ._headEmbeddedTailTrackingForImage import HeadEmbeddedTailTrackingForImageMixin
 from ._headEmbeddedTailTrackingTeresaNicolson import HeadEmbeddedTailTrackingTeresaNicolsonMixin
 from ._tailTrackingBlobDescent import TailTrackingBlobDescentMixin
 
 
-class TailTrackingMixin(HeadEmbeddedTailTrackingMixin, CenterOfMassTailTrackingMixin, HeadEmbeddedTailTrackingTeresaNicolsonMixin, TailTrackingBlobDescentMixin, TailTrackingExtremityDetectMixin):
+class TailTrackingMixin(HeadEmbeddedTailTrackingMixin, CenterOfMassTailTrackingMixin, HeadEmbeddedTailTrackingTeresaNicolsonMixin, TailTrackingBlobDescentMixin, TailTrackingExtremityDetectMixin, HeadEmbeddedTailTrackingForImageMixin):
   def _tailTracking(self, animalId, i, frame, thresh1, threshForBlackFrames, thetaDiffAccept, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, lastFirstTheta, maxDepth, tailTip, initialCurFrame, back, wellNumber=-1, xmin=0, ymin=0):
     headPosition = [trackingHeadTailAllAnimals[animalId, i-self._firstFrame][0][0]-xmin, trackingHeadTailAllAnimals[animalId, i-self._firstFrame][0][1]-ymin]
     heading      = trackingHeadingAllAnimals[animalId, i-self._firstFrame]
@@ -29,7 +30,11 @@ class TailTrackingMixin(HeadEmbeddedTailTrackingMixin, CenterOfMassTailTrackingM
       else:
         oppHeading = (heading + math.pi) % (2 * math.pi) # INSERTED FOR THE REFACTORING
         if self._hyperparameters["centerOfMassTailTracking"] == 0:
-          trackingHeadTailAllAnimalsI = self._headEmbededTailTracking(headPosition, i, frame, maxDepth, tailTip)
+          if self._hyperparameters["headEmbededTailTrackingForImage"] == 0:
+            trackingHeadTailAllAnimalsI = self._headEmbededTailTracking(headPosition, i, frame, maxDepth, tailTip)
+          else:
+            trackingHeadTailAllAnimalsI, headingNew = self._headEmbededTailTrackingForImage(headPosition, i, frame, maxDepth, tailTip)
+            trackingHeadingAllAnimals[animalId, i-self._firstFrame] = headingNew
         else:
           trackingHeadTailAllAnimalsI = self._centerOfMassTailTracking(headPosition, frame, maxDepth)
 
