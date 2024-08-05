@@ -415,10 +415,7 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
         maxDepth = self._headEmbededTailTrackFindMaxDepthTeresaNicolson(frame)
       else:
         if self._hyperparameters["centerOfMassTailTracking"] == 0:
-          if self._hyperparameters["headEmbededTailTrackingForImage"] == 0:
-            maxDepth = self._headEmbededTailTrackFindMaxDepth(frame)
-          else:
-            maxDepth = self._headEmbededTailTrackFindMaxDepthForImage(frame)
+          maxDepth = self._headEmbededTailTrackFindMaxDepth(frame)
         else:
           maxDepth = self._centerOfMassTailTrackFindMaxDepth(frame)
 
