@@ -168,6 +168,7 @@ CONFIG_DEFAULT = \
   "detectMouthInsteadOfHeadTwoSides" : 0,
   "findCenterOfAnimalByIterativelyDilating" : 0,
   "readjustCenterOfMassIfNotInsideContour": 0,
+  "headEmbededTailTrackingForImage": 0,
 
   "eyeTracking" : 0,
   "adjustHeadEmbeddedEyeTracking": 0,
