@@ -15,7 +15,146 @@ maxThresholdMinus = 20
 #
 
 class HeadEmbeddedTailTrackingForImageMixin(TailTrackingBase):
-  
+
+  def __smoothTail(self, points, nbTailPoints, smoothingFactor):
+    points3 = [np.array(points[0]), np.array(points[1])]
+
+    y = points[0]
+    x = linspace(0, 1, len(y))
+
+    if len(x) > 3:
+      interpolated_points = {}
+
+      try:
+        if smoothingFactor != -1:
+          tck, u = splprep(points3, s=smoothingFactor)
+        else:
+          tck, u = splprep(points3)
+        u2 = [i/(nbTailPoints-1) for i in range(0, nbTailPoints)]
+        interpolated_points = splev(u2, tck)
+        newX = interpolated_points[0]
+        newY = interpolated_points[1]
+      except:
+        newX = points[0]
+        newY = points[1]
+
+    else:
+      newX = points[0]
+      newY = points[1]
+
+    return [newX, newY]
+
+  def __findNextPoints(self, depth, x, y, frame, points, angle, maxDepth, steps, nbList, initialImage, debug, dontChooseThisPoint = [], maxRadiusForDontChoosePoint = 0):
+    lenX = len(frame[0]) - 1
+    lenY = len(frame) - 1
+
+    thetaDiffAccept = 1
+
+    if depth < self._hyperparameters["initialTailPortionMaxSegmentDiffAngleCutOffPos"] * maxDepth:
+      thetaDiffAccept = self._hyperparameters["initialTailPortionMaxSegmentDiffAngleValue"]
+
+    if depth > 0.85*maxDepth:
+      thetaDiffAccept = 0.6
+
+    if self._hyperparameters["headEmbededMaxAngleBetweenSubsequentSegments"]:
+      thetaDiffAccept = self._hyperparameters["headEmbededMaxAngleBetweenSubsequentSegments"]
+
+    pixTotMax = 1000000
+    maxTheta  = angle
+
+    l = [i*(math.pi/nbList) for i in range(0,2*nbList) if self._distBetweenThetas(i*(math.pi/nbList), angle) < thetaDiffAccept]
+
+    # if debug:
+      # print("debug")
+
+    for step in steps:
+
+      if (step < maxDepth - depth) or (step == steps[0]):
+
+        for theta in l:
+
+          xNew = self._assignValueIfBetweenRange(int(x + step * (math.cos(theta))), 0, lenX)
+          yNew = self._assignValueIfBetweenRange(int(y + step * (math.sin(theta))), 0, lenY)
+          pixTot = frame[yNew][xNew]
+
+          # if debug:
+            # print([theta,pixTot])
+
+          # Keeps that theta angle as maximum if appropriate
+          if (pixTot < pixTotMax):
+            if (len(dontChooseThisPoint) == 0):
+              pixTotMax = pixTot
+              maxTheta = theta
+              xTot = xNew
+              yTot = yNew
+            else:
+              dist = 1000000000000000000
+              for num in range(0, len(dontChooseThisPoint[0])):
+                dist = min(dist, math.sqrt((xNew - dontChooseThisPoint[0, num])**2 + (yNew - dontChooseThisPoint[1, num])**2))
+              if (not(dist <= maxRadiusForDontChoosePoint)):
+                pixTotMax = pixTot
+                maxTheta = theta
+                xTot = xNew
+                yTot = yNew
+
+    w = 4
+    ym = yTot - w
+    yM = yTot + w
+    xm = xTot - w
+    xM = xTot + w
+    if ym < 0:
+      ym = 0
+    if xm < 0:
+      xm = 0
+    if yM > len(initialImage):
+      yM = len(initialImage)
+    if xM > len(initialImage[0]):
+      xM = len(initialImage[0])
+
+    pixSur = np.min(frame[ym:yM, xm:xM]) #initialImage[ym:yM, xm:xM])
+    # if debug:
+      # print("depth:", depth, " ; maxDepth:", maxDepth, " ; pixSur:", pixSur)
+
+    # if depth > 0.95*maxDepth:
+      # pixTot = frame[y][x]
+      # if (pixTot < pixTotMax):
+        # pixTotMax = pixTot
+        # maxTheta = theta
+        # xTot = x
+        # yTot = y
+        # depth = maxDepth + 10
+
+    # if debug:
+      # print(["max:",maxTheta,pixTotMax])
+
+    # Calculates distance between new and old point
+    distSubsquentPoints = math.sqrt((xTot - x)**2 + (yTot - y)**2)
+
+    pixSurMax = self._hyperparameters["headEmbededParamTailDescentPixThreshStop"]
+    # pixSurMax = 220 #150 #245 #150
+    if depth + distSubsquentPoints < maxDepth and ((pixSur < pixSurMax) or (depth < self._hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth)):
+      points = self._appendPoint(xTot, yTot, points)
+    else:
+      vectX = xTot - x
+      vectY = yTot - y
+      xTot  = int(x + (maxDepth / (depth + distSubsquentPoints)) * vectX)
+      yTot  = int(y + (maxDepth / (depth + distSubsquentPoints)) * vectY)
+      points = self._appendPoint(xTot, yTot, points)
+    if debug:
+      cv2.circle(frame, (xTot, yTot), 3, (255,0,0),   -1)
+      self._debugFrame(frame, title='HeadEmbeddedTailTracking')
+
+    newTheta = self._calculateAngle(x,y,xTot,yTot)
+    if distSubsquentPoints > 0 and depth + distSubsquentPoints < maxDepth and ((pixSur < pixSurMax) or (depth < self._hyperparameters["authorizedRelativeLengthTailEnd"]*maxDepth)):
+      (points,nop) = self.__findNextPoints(depth+distSubsquentPoints,xTot,yTot,frame,points,newTheta,maxDepth,steps,nbList,initialImage,debug)
+
+    if depth == 0:
+      lenPoints = len(points[0]) - 1
+      if points[0, lenPoints-1] == points[0, lenPoints] and points[1, lenPoints-1] == points[1, lenPoints]:
+        points = points[:, :len(points[0])-1]
+
+    return (points,newTheta)
+
   def _headEmbededTailTrackingForImage(self, headPosition, i, frame, maxDepth, tailTip, trackingHeadingAllAnimals=[]):
     steps   = self._hyperparameters["step"]
     nbList  = 10 if self._hyperparameters["nbList"] == -1 else self._hyperparameters["nbList"]
