@@ -31,7 +31,7 @@ setup(
     "filterpy",
     "opencv-python-headless",
     "xlrd>=2.0.1",
-    "seaborn",
+    "seaborn<=0.12.2",
     "PyQt5>=5.15.0",
     "xlwt",
     "threadpoolctl>=3.1.0",
