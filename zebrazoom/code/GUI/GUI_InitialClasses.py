@@ -1279,10 +1279,6 @@ class ViewParameters(util.CollapsibleSplitter):
         self.next_btn.clicked.connect(self.printNextResults)
         layout.addWidget(self.next_btn, 9, 2, Qt.AlignmentFlag.AlignCenter)
 
-        kine_btn = QPushButton("Check kinematic parameters\n(beta version)", self)
-        kine_btn.clicked.connect(lambda: checkConsistencyOfParameters([self.currentResultFolder]))
-        layout.addWidget(kine_btn, 10, 2, Qt.AlignmentFlag.AlignCenter)
-
         self._startPageBtn = QPushButton("Go to the start page", self)
         self._startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
         layout.addWidget(self._startPageBtn, 10, 1, Qt.AlignmentFlag.AlignCenter)
