@@ -1136,7 +1136,7 @@ class PopulationComparison(QWidget):
     layout.addWidget(self._advancedOptionsExpander)
 
     self._launchBtn = util.apply_style(QPushButton("Launch Analysis"), background_color=util.DEFAULT_BUTTON_COLOR)
-    self._launchBtn.clicked.connect(lambda: self._populationComparison(self._tailTrackingParametersCheckbox.isChecked(), self._saveInMatlabFormatCheckbox.isChecked(), self._saveRawDataCheckbox.isChecked(), self._forcePandasRecreation.isChecked(), '0' if self._noOutlierRemovalButton.isChecked() else self._minNbBendForBoutDetect.text() if self._bendsOutlierRemovalButton.isChecked() else None, self._keepDiscardedBoutsCheckbox.isChecked(), self._frameStepForDistanceCalculation.text()))
+    self._launchBtn.clicked.connect(lambda: self._populationComparison(self._tailTrackingParametersCheckbox.isChecked(), self._saveInMatlabFormatCheckbox.isChecked(), self._saveRawDataCheckbox.isChecked(), self._forcePandasRecreation.isChecked(), '0' if self._noOutlierRemovalButton.isChecked() else self._minNbBendForBoutDetect.text() if self._bendsOutlierRemovalButton.isChecked() else None, '1' if self._noOutlierRemovalButton.isChecked() else self._keepDiscardedBoutsCheckbox.isChecked(), self._frameStepForDistanceCalculation.text()))
     layout.addWidget(self._launchBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     self._startPageBtn = QPushButton("Go to the start page")
     self._startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
