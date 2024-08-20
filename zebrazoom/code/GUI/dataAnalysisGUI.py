@@ -1703,7 +1703,7 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       legendFigure = legendWidget.figure
       if not legendFigure.get_axes():
         legendAx = legendFigure.add_subplot(111)
-        legend = legendAx.legend(wedges, ['High angle bouts\n(> 25 deg)', 'Low angle bouts\n(<= 25 deg)'], loc='center')
+        legend = legendAx.legend(wedges, ['High angle bouts\n(> 25 deg)', 'Low angle bouts\n(<= 25 deg)'], loc='center', frameon=False)
         legendAx.axis('off')
         legendFigure.canvas.draw()
         legendWidget.setFixedSize(*map(int, legend.get_window_extent().bounds[2:]))
@@ -2112,38 +2112,46 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       ax.set_title(param, fontsize=16 * self._chartScaleFactor)
       ax.tick_params(axis='both', which='major', labelsize=10 * self._chartScaleFactor)
       figure.figure.canvas.draw()
+
+    # manually create legend
+    handles = None
+    labels = None
+    size = None
+    for legendWidget in self._legends:
+      legendFigure = legendWidget.figure
+      if not legendFigure.get_axes():
+        if handles is None and labels is None:
+          dummyData = pd.DataFrame({'Genotype': self._palette.keys(), 'asd': [0.] * len(self._palette)})
+          b = sns.boxplot(data=dummyData, y='asd', hue="Genotype", palette=self._palette, hue_order=self._palette.keys(), legend='full')
+          handles, labels = b.get_legend_handles_labels()
+          size = tuple(map(int, b.get_legend().get_window_extent().bounds[2:]))
+          b.cla()
+        legendAx = legendFigure.add_subplot(111)
+        legend = legendAx.legend(handles, labels, title='Genotype', loc='center', frameon=False)
+        legendAx.axis('off')
+        legendFigure.canvas.draw()
+        legendWidget.setFixedSize(*size)
+      else:
+        break
+
     scrollArea.setAlignment(Qt.AlignmentFlag.AlignLeft)
     scrollArea.setWidget(chartsWidget)
 
   def _plotFigure(self, param, figure, data, plotOutliersAndMean, plotPoints):
     ax = figure.add_subplot(111)
-    if plotPoints:
-      b = sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean,
-                      palette=self._palette, hue_order=self._palette.keys(), boxprops={'facecolor': 'none', 'zorder': 1})
+    if data[param].dropna().empty:
+      ax.text(.5, .5, 'Data could not be plotted.', ha='center')
+      ax.axis('off')
+    elif plotPoints:
+      sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean,
+                  palette=self._palette, hue_order=self._palette.keys(), boxprops={'facecolor': 'none', 'zorder': 1}, legend=False)
       sns.stripplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", size=5, hue_order=self._palette.keys(), dodge=True,
-                    palette=self._palette, jitter=0.25, alpha=0.4, zorder=0)
+                    palette=self._palette, jitter=0.25, alpha=0.4, zorder=0, legend=False)
     else:
-      b = sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean,
-                      palette=self._palette, hue_order=self._palette.keys())
-    b.set_ylabel('', fontsize=0)
-    b.set_xlabel('', fontsize=0)
-
-    for legendWidget in self._legends:
-      legendFigure = legendWidget.figure
-      if not legendFigure.get_axes():
-        legendAx = legendFigure.add_subplot(111)
-        handles, labels = ax.get_legend_handles_labels()
-        if plotPoints:  # legend contains duplicated genotypes (one for boxplot, one for stripplot)
-          handles = handles[:len(handles)//2]
-          labels = labels[:len(labels)//2]
-        legend = legendAx.legend(handles, labels, title=ax.get_legend().get_title().get_text(), loc='center')
-        legendAx.axis('off')
-        legendFigure.canvas.draw()
-        legendWidget.setFixedSize(*map(int, legend.get_window_extent().bounds[2:]))
-      else:
-        break
-
-    ax.legend().remove()
+      sns.boxplot(ax=ax, data=data, x="Condition", y=param, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean,
+                  palette=self._palette, hue_order=self._palette.keys(), legend=False)
+    ax.set_ylabel('', fontsize=0)
+    ax.set_xlabel('', fontsize=0)
 
   def _iterAllFigures(self):
     for typeDict in self._figures.values():

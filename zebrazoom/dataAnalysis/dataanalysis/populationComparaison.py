@@ -116,8 +116,13 @@ def populationComparaison(nameOfFile, resFolder, globParam, conditions, genotype
             tabToPlot = tabAx[idx%nbColumns]
         else:
           tabToPlot = tabAx[int(idx/nbColumns), idx%nbColumns]
-        
-        b = sns.boxplot(ax=tabToPlot, data=dfParam, x="Condition", y=parameter, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean, palette=palette, hue_order=palette.keys())
+
+        if dfParam[parameter].dropna().empty:
+          tabToPlot.text(.5, .5, 'Data could not be plotted.', ha='center')
+          tabToPlot.axis('off')
+          b = tabToPlot
+        else:
+          b = sns.boxplot(ax=tabToPlot, data=dfParam, x="Condition", y=parameter, hue="Genotype", showmeans=plotOutliersAndMean, showfliers=plotOutliersAndMean, palette=palette, hue_order=palette.keys())
         # if plotOutliersAndMean and (medianPerWellFirstForEachKinematicParameter or medianPerGenotypeFirstForEachKinematicParameter): # or len(concatenatedValues[0]) < 100):
           # sns.stripplot(ax=tabToPlot, data=dfParam, x="Condition", y=parameter, hue="Genotype", color=".25")
         b.set_ylabel('', fontsize=0)
