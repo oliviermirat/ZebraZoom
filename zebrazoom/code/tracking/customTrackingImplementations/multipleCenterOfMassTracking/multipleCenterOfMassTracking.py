@@ -9,6 +9,8 @@ from ..._eyeTracking import EyeTrackingMixin
 from ..._fasterMultiprocessingBase import BaseFasterMultiprocessing
 from ..._getImages import GetImagesMixin
 
+from zebrazoom.code.tracking.customTrackingImplementations.multipleCenterOfMassTracking._headTrackingHeadingCalculation import _headTrackingHeadingCalculation
+
 import zebrazoom.code.tracking
 
 
@@ -71,8 +73,6 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
     previousFrames = None
     widgets = None
     while (i < self._lastFrame + 1):
-    
-      print(i, "just checking!!!!!!!!!!!!!!!!!!!!!!!!")
 
       if (self._hyperparameters["freqAlgoPosFollow"] != 0) and (i % self._hyperparameters["freqAlgoPosFollow"] == 0):
         print("Tracking: frame:",i)
@@ -136,7 +136,7 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
           headPositionFirstFrame = 0
 
           # Head tracking and heading calculation
-          lastFirstTheta = self._headTrackingHeadingCalculation(i, blur, thresh1, thresh2, gray, self._hyperparameters["erodeSize"], int(cap.get(3)), int(cap.get(4)), self._trackingHeadingAllAnimalsList[wellNumber], self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingProbabilityOfGoodDetectionList[wellNumber], headPositionFirstFrame, self._wellPositions[wellNumber]["lengthX"], 0, 0, wellNumber)
+          lastFirstTheta = _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, gray, self._hyperparameters["erodeSize"], int(cap.get(3)), int(cap.get(4)), self._trackingHeadingAllAnimalsList[wellNumber], self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingProbabilityOfGoodDetectionList[wellNumber], headPositionFirstFrame, self._wellPositions[wellNumber]["lengthX"], 0, 0, wellNumber)
 
           # Tail tracking for frame i
           if self._hyperparameters["trackTail"] == 1 :
