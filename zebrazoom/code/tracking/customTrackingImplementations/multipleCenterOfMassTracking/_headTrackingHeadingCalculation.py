@@ -3,7 +3,7 @@ import math
 import cv2
 import numpy as np
 
-from skimage.feature import peak_local_max
+# from skimage.feature import peak_local_max
 
 def _calculateMinDistFromOtherAnimals(self, animal_Id, trackingHeadTailAllAnimals, i):
   mindist   = 1000000
