@@ -9,6 +9,8 @@ from ._eyeTracking import EyeTrackingMixin
 from ._fasterMultiprocessingBase import BaseFasterMultiprocessing
 from ._getImages import GetImagesMixin
 
+import zebrazoom.code.util as util
+
 
 class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImagesMixin):
   def __init__(self, videoPath, wellPositions, hyperparameters):
@@ -44,7 +46,24 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
     
     return {wellNumber: extractParameters([self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], [], 0, 0] + ([self._auDessusPerAnimalIdList[wellNumber]] if self._auDessusPerAnimalIdList is not None else []), wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background)
             for wellNumber in range(self._firstWell, self._lastWell + 1)}
-
+  
+  def _setToWhiteAllPixelsTooFarFromTheCenter(self, image, maxDist, wellNumber):
+    
+    if hasattr(self, 'maskForTooFarFromCenter') and wellNumber < len(self.maskForTooFarFromCenter):
+      mask = self.maskForTooFarFromCenter[wellNumber]
+    else:
+      height, width = image.shape[:2]
+      center_x, center_y = width // 2, height // 2
+      y, x = np.ogrid[:height, :width]
+      distance_from_center = np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+      mask = distance_from_center > maxDist
+      if not(hasattr(self, 'maskForTooFarFromCenter')):
+        self.maskForTooFarFromCenter = []
+      self.maskForTooFarFromCenter.append(mask)
+    
+    image[mask] = 255
+    return image
+  
   def run(self):
     self._background = self.getBackground()
 
@@ -105,6 +124,9 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
               grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
             curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX].copy()
+            if "setToWhiteAllPixelsTooFarFromTheCenter" in self._hyperparameters and self._hyperparameters["setToWhiteAllPixelsTooFarFromTheCenter"]:
+              curFrame = self._setToWhiteAllPixelsTooFarFromTheCenter(curFrame, self._hyperparameters["setToWhiteAllPixelsTooFarFromTheCenter"], wellNumber)
+            
             if not(self._hyperparameters["backgroundSubtractorKNN"]):
               back = self._background[ytop:ytop+lenY, xtop:xtop+lenX]
               putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
@@ -116,8 +138,23 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
             else:
               blur = curFrame
             if "headingCalculationMethod" in self._hyperparameters:
-              t, thresh1 = cv2.threshold(curFrame, 254, 255, cv2.THRESH_BINARY)
-              t, thresh2 = cv2.threshold(curFrame, 254, 255, cv2.THRESH_BINARY)
+            
+              if "useOriginalImageForHeadingCalculation" in self._hyperparameters and self._hyperparameters["useOriginalImageForHeadingCalculation"]:
+                grey2 = frameOri.copy()
+                curFrame2 = grey2[ytop:ytop+lenY, xtop:xtop+lenX]
+                back = self._background[ytop:ytop+lenY, xtop:xtop+lenX]
+                if self._hyperparameters["debugExtractBack"]:
+                  util.showFrame(self._setToWhiteAllPixelsTooFarFromTheCenter(back, self._hyperparameters["setToWhiteAllPixelsTooFarFromTheCenter"], wellNumber), title="back")
+                putToWhite = ( curFrame2.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
+                curFrame2[putToWhite] = 255
+                if "setToWhiteAllPixelsTooFarFromTheCenter" in self._hyperparameters and self._hyperparameters["setToWhiteAllPixelsTooFarFromTheCenter"]:
+                  curFrame2 = self._setToWhiteAllPixelsTooFarFromTheCenter(curFrame2, self._hyperparameters["setToWhiteAllPixelsTooFarFromTheCenter"], wellNumber)
+                t, thresh1 = cv2.threshold(curFrame2, 254, 255, cv2.THRESH_BINARY)
+                t, thresh2 = cv2.threshold(curFrame2, 254, 255, cv2.THRESH_BINARY)
+              else:
+                t, thresh1 = cv2.threshold(curFrame, 254, 255, cv2.THRESH_BINARY)
+                t, thresh2 = cv2.threshold(curFrame, 254, 255, cv2.THRESH_BINARY)
+              
             else:
               thresh1 = 0
               thresh2 = 0
