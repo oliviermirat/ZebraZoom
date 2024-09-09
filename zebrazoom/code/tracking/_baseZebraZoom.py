@@ -44,9 +44,10 @@ class BaseZebraZoomTrackingMethod(BaseTrackingMethod, GetBackgroundMixin, Update
         xHead = trackingHeadTailAllAnimals[animalId][frameNumber][0][0]
         yHead = trackingHeadTailAllAnimals[animalId][frameNumber][0][1]
         heading = trackingHeadingAllAnimals[animalId][frameNumber]
+        last_heading = self._calculateAngle(xHead, yHead, last_xHead, last_yHead)
         dist = math.sqrt((xHead - last_xHead)**2 + (yHead - last_yHead)**2)
-        if dist > self._hyperparameters["postProcessHeadingWithTrajectory_minDist"]:
-          last_heading = self._calculateAngle(xHead, yHead, last_xHead, last_yHead)
+        while dist > self._hyperparameters["postProcessHeadingWithTrajectory_minDist"] and last_index+1 < len(trackingHeadTailAllAnimals[animalId]):
+          dist = math.sqrt((xHead - last_xHead)**2 + (yHead - last_yHead)**2)
           last_index += 1
           last_xHead   = trackingHeadTailAllAnimals[animalId][last_index][0][0]
           last_yHead   = trackingHeadTailAllAnimals[animalId][last_index][0][1]
