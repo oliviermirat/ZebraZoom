@@ -24,7 +24,7 @@ setup(
     "scikit-learn>=1.2.2",
     "h5py",
     "numpy",
-    "matplotlib>=3.5.2",
+    "matplotlib>=3.6.0",
     "scipy<=1.11.4",
     "pandas>=1.5.3",
     "openpyxl>=3.1.2",
