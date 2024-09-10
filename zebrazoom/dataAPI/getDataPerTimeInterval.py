@@ -9,6 +9,9 @@ def getDataPerTimeInterval(videoName: str, numWell: int, numAnimal: int, startTi
   with openResultsFile(videoName, 'r') as results:
     firstFrame = results.attrs['firstFrame']
     firstFrameInSeconds = firstFrame / results.attrs['videoFPS']
+    if startTimeInSeconds == 0 and firstFrame == 1:
+      # when running tracking on the whole video, firstFrame is 1, but from the user's perspective, startTimeInSeconds is 0
+      startTimeInSeconds = firstFrameInSeconds
     lastFrameInSeconds = results.attrs['lastFrame'] / results.attrs['videoFPS']
     if startTimeInSeconds < firstFrameInSeconds or endTimeInSeconds > lastFrameInSeconds:
       raise ValueError(f'Tracking was performed from {firstFrameInSeconds}s to {lastFrameInSeconds}s, start and end times must be within this interval.')
