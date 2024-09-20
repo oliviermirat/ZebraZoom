@@ -66,7 +66,7 @@ class ComputeHeadingMixin:
     if self._hyperparameters["debugHeadingCalculation"]:
       img2 = img.copy()
       img2 = cv2.cvtColor(img2, cv2.COLOR_GRAY2BGR)
-      cv2.line(img2, (int(len(img2[0])/2), int(len(img2)/2)), (int(len(img[0])/2 + 20 * math.cos(theta)), int(len(img)/2 + 20 * math.sin(theta))), (255,0,0), 1)
+      cv2.line(img2, (int(len(img2[0])/2), int(len(img2)/2)), (int(len(img[0])/2 + 20 * math.cos(theta)), int(len(img)/2 + 20 * math.sin(theta))), (255,0,0), 1) #self._hyperparameters["findHeadingOppDirectionThroughLineDrawing_radius"] if "findHeadingOppDirectionThroughLineDrawing_radius" in self._hyperparameters else 1)
       self._debugFrame(img2, title='imgForHeadingCalculation')
 
     return theta

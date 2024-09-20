@@ -103,7 +103,7 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
 
       if ret:
         
-        if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
+        if "useOriginalImageForHeadingCalculation" in self._hyperparameters and self._hyperparameters["useOriginalImageForHeadingCalculation"]:
           frameOri = frame.copy()
           frameOri = cv2.cvtColor(frameOri, cv2.COLOR_BGR2GRAY)
         

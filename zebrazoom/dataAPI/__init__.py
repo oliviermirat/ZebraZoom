@@ -26,3 +26,4 @@ from .getSingleFrameTrackingAndCurvatureForFolder import *
 from .plotSingleFrameTrackingPoints import *
 from .getSingleFrameDistanceToAxis import *
 from .getSingleFrameTrackingAndDistanceToAxisForFolder import *
+from .setDataPerTimeInterval import *
