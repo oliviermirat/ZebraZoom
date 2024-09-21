@@ -40,6 +40,10 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
       for wellNumber in range(self._firstWell, self._lastWell + 1):
         self._postProcessMultipleTrajectories(self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingProbabilityOfGoodDetectionList[wellNumber])
     
+    if "postProcessHeadingWithTrajectoryAdvanced" in self._hyperparameters and self._hyperparameters["postProcessHeadingWithTrajectoryAdvanced"]:
+      for wellNumber in range(self._firstWell, self._lastWell + 1):
+        self._postProcessHeadingWithTrajectoryAdvanced(self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], self._trackingProbabilityOfHeadingGoodCalculation[wellNumber])
+    
     if "postProcessHeadingWithTrajectory_minDist" in self._hyperparameters and self._hyperparameters["postProcessHeadingWithTrajectory_minDist"]:
       for wellNumber in range(self._firstWell, self._lastWell + 1):
         self._postProcessHeadingWithTrajectory(self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], self._trackingProbabilityOfHeadingGoodCalculation[wellNumber])

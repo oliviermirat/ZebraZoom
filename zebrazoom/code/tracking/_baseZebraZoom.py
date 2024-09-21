@@ -33,6 +33,76 @@ class BaseZebraZoomTrackingMethod(BaseTrackingMethod, GetBackgroundMixin, Update
     array2[-window+1:] = array[-window+1:]
     return array2
   
+  @staticmethod
+  def _putAngleInOtherAngleReferential(firstAngle, secondAngle):
+    secondAngleInFirstReferential = secondAngle - firstAngle
+    return abs(math.pi - ((secondAngleInFirstReferential + 2 * math.pi) % (2 * math.pi)))
+  
+  @staticmethod
+  def _calculateListOfSurroundingAngles(self, frameNumber, headingValue, headPos, windowNbFrames, minDist):
+
+    listOfSurroundingAngles    = []
+    listOfSurroundingAnglesOri = []
+    
+    xPos = headPos[frameNumber][0][0]
+    yPos = headPos[frameNumber][0][1]
+
+    back = 1
+    while frameNumber - back >= 0 and len(listOfSurroundingAngles) < windowNbFrames:
+      xPosAround = headPos[frameNumber - back][0][0]
+      yPosAround = headPos[frameNumber - back][0][1]
+      if math.sqrt((xPosAround - xPos) ** 2 + (yPosAround - yPos) ** 2) >= minDist:
+        listOfSurroundingAngles    = [self._putAngleInOtherAngleReferential(headingValue, self._calculateAngle(xPosAround, yPosAround, xPos, yPos))] + listOfSurroundingAngles
+        listOfSurroundingAnglesOri = [self._calculateAngle(xPosAround, yPosAround, xPos, yPos)] + listOfSurroundingAnglesOri
+      back += 1
+    if len(listOfSurroundingAngles) < windowNbFrames:
+      while len(listOfSurroundingAngles) < windowNbFrames:
+        listOfSurroundingAngles    = [listOfSurroundingAngles[0] if len(listOfSurroundingAngles) else 0] + listOfSurroundingAngles
+        listOfSurroundingAnglesOri = [listOfSurroundingAnglesOri[0] if len(listOfSurroundingAnglesOri) else 0] + listOfSurroundingAnglesOri
+
+    fwd = 1
+    while frameNumber + fwd < len(headPos) and len(listOfSurroundingAngles) < 2 * windowNbFrames:
+      xPosAround = headPos[frameNumber + fwd][0][0]
+      yPosAround = headPos[frameNumber + fwd][0][1]
+      if math.sqrt((xPosAround - xPos) ** 2 + (yPosAround - yPos) ** 2) >= minDist:
+        listOfSurroundingAngles.append(self._putAngleInOtherAngleReferential(headingValue, self._calculateAngle(xPos, yPos, xPosAround, yPosAround)))
+        listOfSurroundingAnglesOri.append(self._calculateAngle(xPos, yPos, xPosAround, yPosAround))
+      fwd += 1
+    if len(listOfSurroundingAngles) < 2 * windowNbFrames:
+      while len(listOfSurroundingAngles) < 2 * windowNbFrames:
+        listOfSurroundingAngles.append(listOfSurroundingAngles[len(listOfSurroundingAngles) - 1] if len(listOfSurroundingAngles) else 0)
+        listOfSurroundingAnglesOri.append(listOfSurroundingAnglesOri[len(listOfSurroundingAnglesOri) - 1] if len(listOfSurroundingAnglesOri) else 0)
+    
+    return [listOfSurroundingAngles, listOfSurroundingAnglesOri]
+  
+  
+  def _postProcessHeadingWithTrajectoryAdvanced(self, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingProbabilityOfHeadingGoodCalculation):
+
+    mean_Error = 148.91
+    std_Error  = 30.63
+    windowNbFrames = 30
+    minDist = 10
+    
+    for animalId in range(0, len(trackingHeadTailAllAnimals)):
+      for frameNumber in range(0, len(trackingHeadTailAllAnimals[animalId])):
+        headPos = trackingHeadTailAllAnimals[animalId]
+        heading = trackingHeadingAllAnimals[animalId]
+        if frameNumber < windowNbFrames or frameNumber >= len(trackingHeadTailAllAnimals[animalId]) - windowNbFrames:
+          heading[frameNumber] = float('nan')
+        else:
+          [listOfSurroundingAngles, listOfSurroundingAnglesOri] = self._calculateListOfSurroundingAngles(self, frameNumber, heading[frameNumber], headPos, windowNbFrames, minDist)
+          sumErrorLoc = np.sum(listOfSurroundingAngles)
+          if (sumErrorLoc < mean_Error - 2 * std_Error):
+            [listOfSurroundingAngles, listOfSurroundingAnglesOri] = self._calculateListOfSurroundingAngles(self, frameNumber, (heading[frameNumber] + math.pi) % (2 * math.pi), headPos, windowNbFrames, minDist)
+            sumErrorLocReverse = np.sum(listOfSurroundingAngles)
+            if (sumErrorLocReverse > mean_Error - 1 * std_Error):
+              heading[frameNumber] = (heading[frameNumber] + math.pi) % (2 * math.pi)
+              # print("Animal:", animalId, "; Frame number:", frameNumber, "; + Pi applied")
+            else:
+              heading[frameNumber] = float('nan')
+              # print("Animal:", animalId, "; Frame number:", frameNumber, "; set to NaN")
+  
+  
   def _postProcessHeadingWithTrajectory(self, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingProbabilityOfHeadingGoodCalculation):
     for animalId in range(0, len(trackingHeadTailAllAnimals)):
       last_index   = 0
