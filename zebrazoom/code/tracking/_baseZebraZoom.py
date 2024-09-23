@@ -78,10 +78,10 @@ class BaseZebraZoomTrackingMethod(BaseTrackingMethod, GetBackgroundMixin, Update
   
   def _postProcessHeadingWithTrajectoryAdvanced(self, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingProbabilityOfHeadingGoodCalculation):
 
-    mean_Error = 148.91
-    std_Error  = 30.63
+    mean_Error = 2.48183
+    std_Error  = 0.25525
     windowNbFrames = 30
-    minDist = 10
+    minDist = 5
     
     for animalId in range(0, len(trackingHeadTailAllAnimals)):
       for frameNumber in range(0, len(trackingHeadTailAllAnimals[animalId])):
@@ -91,16 +91,17 @@ class BaseZebraZoomTrackingMethod(BaseTrackingMethod, GetBackgroundMixin, Update
           heading[frameNumber] = float('nan')
         else:
           [listOfSurroundingAngles, listOfSurroundingAnglesOri] = self._calculateListOfSurroundingAngles(self, frameNumber, heading[frameNumber], headPos, windowNbFrames, minDist)
-          sumErrorLoc = np.sum(listOfSurroundingAngles)
+          sumErrorLoc = np.mean(listOfSurroundingAngles)
           if (sumErrorLoc < mean_Error - 2 * std_Error):
             [listOfSurroundingAngles, listOfSurroundingAnglesOri] = self._calculateListOfSurroundingAngles(self, frameNumber, (heading[frameNumber] + math.pi) % (2 * math.pi), headPos, windowNbFrames, minDist)
-            sumErrorLocReverse = np.sum(listOfSurroundingAngles)
-            if (sumErrorLocReverse > mean_Error - 1 * std_Error):
-              heading[frameNumber] = (heading[frameNumber] + math.pi) % (2 * math.pi)
-              # print("Animal:", animalId, "; Frame number:", frameNumber, "; + Pi applied")
-            else:
+            if True:
               heading[frameNumber] = float('nan')
-              # print("Animal:", animalId, "; Frame number:", frameNumber, "; set to NaN")
+            else:
+              sumErrorLocReverse = np.mean(listOfSurroundingAngles)
+              if (sumErrorLocReverse > mean_Error - 1 * std_Error):
+                heading[frameNumber] = (heading[frameNumber] + math.pi) % (2 * math.pi)
+              else:
+                heading[frameNumber] = float('nan')
   
   
   def _postProcessHeadingWithTrajectory(self, trackingHeadTailAllAnimals, trackingHeadingAllAnimals, trackingProbabilityOfHeadingGoodCalculation):
