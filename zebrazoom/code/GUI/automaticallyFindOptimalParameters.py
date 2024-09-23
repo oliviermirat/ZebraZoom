@@ -120,7 +120,7 @@ def _automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, de
       hyperparameters["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] = bodyContourArea * configFile["nbAnimalsPerWell"]
   hyperparameters["maxAreaBody"] = 5 * bodyContourArea
   hyperparameters["minAreaBody"] = int(bodyContourArea / 5)
-  hyperparameters["trackingPointSizeDisplay"] = int(np.ceil(math.sqrt(bodyContourArea) / 15))
+  hyperparameters["trackingPointSizeDisplay"] = int(np.ceil(math.sqrt(bodyContourArea if bodyContourArea > 0 else 0.1) / 15))
   if zebrafishToTrack:
     hyperparameters["minTailSize"] = tailLength / 10
     hyperparameters["maxTailSize"] = tailLength * 2
@@ -134,7 +134,7 @@ def _automaticallyFindOptimalParameters(self, controller, realExecThroughGUI, de
       configFile["adjustMinPixelDiffForBackExtract_nbBlackPixelsMax"] = bodyContourArea * configFile["nbAnimalsPerWell"]
   configFile["maxAreaBody"] = 5 * bodyContourArea
   configFile["minAreaBody"] = int(bodyContourArea / 5)
-  configFile["trackingPointSizeDisplay"] = int(np.ceil(math.sqrt(bodyContourArea) / 15))
+  configFile["trackingPointSizeDisplay"] = int(np.ceil(math.sqrt(bodyContourArea if bodyContourArea > 0 else 0.1) / 15))
   if zebrafishToTrack:
     configFile["minTailSize"] = tailLength / 10
     configFile["maxTailSize"] = tailLength * 2
