@@ -2,10 +2,10 @@ import numpy as np
 from scipy.interpolate import UnivariateSpline
 
 #Heading change in degrees
-def getDeltaHead(b, fromHeadingValues=False):
-  if fromHeadingValues:
+def getDeltaHead(b, fromHeadingIdx=None):
+  if fromHeadingIdx is not None:
     slope0 = b['Heading'][0]
-    slope1 = b['Heading'][-1]
+    slope1 = b['Heading'][fromHeadingIdx]
   else:
     numps = int(len(b["TailX_VideoReferential"][0]) / 3) # Taking point at a third of the lenght of the tail
     if numps == 0:
