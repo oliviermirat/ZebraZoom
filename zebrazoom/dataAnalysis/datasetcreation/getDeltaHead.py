@@ -4,8 +4,8 @@ from scipy.interpolate import UnivariateSpline
 #Heading change in degrees
 def getDeltaHead(b, fromHeadingIdx=None):
   if fromHeadingIdx is not None:
-    slope0 = b['Heading'][0]
-    slope1 = b['Heading'][fromHeadingIdx]
+    slope0 = b['Heading'][0] * 180 / np.pi
+    slope1 = b['Heading'][fromHeadingIdx] * 180 / np.pi
   else:
     numps = int(len(b["TailX_VideoReferential"][0]) / 3) # Taking point at a third of the lenght of the tail
     if numps == 0:
