@@ -1401,12 +1401,12 @@ class FigureCanvas(FigureCanvas):  # XXX: this is a workaround for https://githu
 
 
 class KinematicParametersVisualization(util.CollapsibleSplitter):
-  _IGNORE_COLUMNS = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
+  _IGNORE_COLUMNS = {'Trial_ID', 'Well_ID', 'Animal_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
   _FILENAME = 'globalParametersInsideCategories'
   _CHART_SIZE = QSize(464, 348)
   _BOUT_OCCURRENCE_PARAMS = ['Bout Rate (bouts / s)', 'IBI (s)', 'Bout Counts']
   _SPEED_RELATED_PARAMS = ['Bout Distance (mm)', 'Bout Duration (s)', 'Bout Speed (mm/s)', 'Number of Oscillations', 'Max TBF (Hz)', 'Mean TBF (Hz)']
-  _AMPLITUDE_RELATED_PARAMS = ['Max absolute TBA (deg.)', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)', 'TBA#1 Amplitude (deg)', 'TBA#1 timing (s)', 'Absolute Yaw (deg)', 'Signed Yaw (deg)']
+  _AMPLITUDE_RELATED_PARAMS = ['Max absolute TBA (deg.)', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)', 'TBA#1 Amplitude (deg)', 'TBA#1 timing (s)', 'Absolute Yaw (deg)', 'Signed Yaw (deg)', 'Absolute Yaw (deg) (from heading vals)', 'Signed Yaw (deg) (from heading vals)', 'headingRangeWidth']
 
   def __init__(self, data):
     super().__init__()
