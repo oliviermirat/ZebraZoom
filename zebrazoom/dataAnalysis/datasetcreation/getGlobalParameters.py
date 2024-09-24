@@ -284,8 +284,17 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
 
     elif parameterToCalculate == 'headingRangeWidth':
       deltas = [getDeltaHead(curbout, fromHeadingIdx=idx) for idx in range(1, curbout["BoutEnd"] - curbout["BoutStart"] + 1)]
-      listOfParametersCalculated.append(max(deltas) - min(deltas))
-
+      maxDeltas = max(deltas)
+      minDeltas = min(deltas)
+      if curbout["BoutEnd"] - curbout["BoutStart"] <= 1:
+        listOfParametersCalculated.append(abs(maxDeltas))
+      else:
+        if maxDeltas > 0 and minDeltas > 0:
+          listOfParametersCalculated.append(maxDeltas)
+        elif maxDeltas < 0 and minDeltas < 0:
+          listOfParametersCalculated.append(abs(minDeltas))
+        else:
+          listOfParametersCalculated.append(maxDeltas - minDeltas)
 
     elif parameterToCalculate == 'xstart':
       
