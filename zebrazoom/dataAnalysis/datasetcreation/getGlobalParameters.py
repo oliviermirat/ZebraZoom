@@ -72,7 +72,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
         for j in range(0, len(heading)-1):
           if not(np.isnan(heading[j+1])) and not(np.isnan(heading[j])):
             angularDifferential = angularDifferential + [(min(abs((heading[j+1] - heading[j]) * (180 / np.pi)) % 180, abs((heading[j+1] - heading[j] + 2 * np.pi) * (180 / np.pi)) % 180, abs((heading[j+1] - heading[j] - 2 * np.pi) * (180 / np.pi)) % 180)) / (frameStepForDistanceCalculation / fps)]
-        listOfParametersCalculated.append(np.mean(angularDifferential))
+        listOfParametersCalculated.append(np.mean(angularDifferential) if angularDifferential else 0)
       else:
         listOfParametersCalculated.append(0)
     
