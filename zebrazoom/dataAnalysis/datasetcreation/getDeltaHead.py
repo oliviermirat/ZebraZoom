@@ -4,6 +4,8 @@ from scipy.interpolate import UnivariateSpline
 #Heading change in degrees
 def getDeltaHead(b, fromHeadingIdx=None):
   if fromHeadingIdx is not None:
+    if 'Heading' not in b:
+      return np.nan
     slope0 = b['Heading'][0] * 180 / np.pi
     slope1 = b['Heading'][fromHeadingIdx] * 180 / np.pi
   else:
