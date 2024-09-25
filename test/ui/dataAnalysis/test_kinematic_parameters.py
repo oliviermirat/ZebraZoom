@@ -558,7 +558,7 @@ def _test_basic_check_results(expectedResults=_EXPECTED_RESULTS):
   assert not os.path.exists(os.path.join(dataFolder, 'Experiment 2.mat'))
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    chartCount = 2 if folder == 'allBoutsMixed' else 3
+    chartCount = 3
     assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
@@ -778,7 +778,7 @@ def _test_frames_for_distance_calculation_check_results():
     assert_series_equal(expectedResultsAll[col], dataframe[col])
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    chartCount = 2 if folder == 'allBoutsMixed' else 3
+    chartCount = 3
     assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
