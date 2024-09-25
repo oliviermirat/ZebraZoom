@@ -24,7 +24,8 @@ from zebrazoom.code.GUI.dataAnalysisGUI import KinematicParametersVisualization,
 
 _DEFAULT_KEYS = ['Trial_ID', 'Well_ID', 'Animal_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition',
                  'Genotype', 'videoDuration', 'Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)',
-                 'Angular Velocity (deg/s)', 'percentTimeSpentSwimming', 'Bout Counts', 'Bout Rate (bouts / s)']
+                 'Angular Velocity (deg/s)', 'Absolute Yaw (deg) (from heading vals)', 'Signed Yaw (deg) (from heading vals)',
+                 'headingRangeWidth', 'percentTimeSpentSwimming', 'Bout Counts', 'Bout Rate (bouts / s)']
 
 _EXPECTED_RESULTS = {'Trial_ID': [],
                      'Well_ID': [],
@@ -54,6 +55,9 @@ _EXPECTED_RESULTS = {'Trial_ID': [],
                      'maxTailAngleAmplitude': [],
                      'Absolute Yaw (deg)': [],
                      'Signed Yaw (deg)': [],
+                     'Absolute Yaw (deg) (from heading vals)': [],
+                     'Signed Yaw (deg) (from heading vals)': [],
+                     'headingRangeWidth': [],
                      'TBA#1 timing (s)': [],
                      'TBA#1 Amplitude (deg)': [],
                      'firstBendAmplitudeSigned': [],
@@ -186,7 +190,10 @@ def _generateResults():
         _EXPECTED_RESULTS['meanTBF'].append((len(degreeBendAmplitudes) * fps)  / (2 * duration))
         _EXPECTED_RESULTS['maxTailAngleAmplitude'].append(max(map(lambda x: math.degrees(abs(x)), angles)))
         _EXPECTED_RESULTS['Absolute Yaw (deg)'].append(math.degrees(math.atan(yMove / xMove)))
-        _EXPECTED_RESULTS['Signed Yaw (deg)'].append(-math.degrees(math.atan(yMove / xMove)))
+        _EXPECTED_RESULTS['Signed Yaw (deg)'].append(math.degrees(math.atan(yMove / xMove)))
+        _EXPECTED_RESULTS['Absolute Yaw (deg) (from heading vals)'].append(0) # XXX: modify test data to include non-zero yaw? currently covered by TestExampleExperiment
+        _EXPECTED_RESULTS['Signed Yaw (deg) (from heading vals)'].append(0) # XXX: modify test data to include non-zero yaw? currently covered by TestExampleExperiment
+        _EXPECTED_RESULTS['headingRangeWidth'].append(0) # XXX: modify test data to include non-zero yaw? currently covered by TestExampleExperiment
         _EXPECTED_RESULTS['TBA#1 timing (s)'].append(bendTimings[0] / fps)
         _EXPECTED_RESULTS['TBA#1 Amplitude (deg)'].append(abs(degreeBendAmplitudes[0]))
         _EXPECTED_RESULTS['firstBendAmplitudeSigned'].append(degreeBendAmplitudes[0])
@@ -389,7 +396,7 @@ def _test_kinematic_parameters_small_check_results():
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    chartCount = 7
+    chartCount = 7 if folder == 'allBoutsMixed' else 8
     assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
@@ -710,7 +717,7 @@ def _test_kinematic_parameters_large_check_results():
     assert_series_equal(expectedResultsAll[col], dataframe[col])
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    chartCount = 7
+    chartCount = 7 if folder == 'allBoutsMixed' else 8
     assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
@@ -831,7 +838,7 @@ def _test_minimum_number_of_bends_check_results():
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):  # no charts with outliers
-    chartCount = 7
+    chartCount = 7 if folder == 'allBoutsMixed' else 8
     assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
@@ -869,7 +876,7 @@ def _test_keep_data_for_discarded_bouts_check_results():
   generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
   generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
   assert list(generatedExcelAll.columns) == [key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]
-  colsToKeep = {'Trial_ID', 'Well_ID', 'Animal_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration', 'Bout Distance (mm)', 'Bout Duration (s)', 'Bout Speed (mm/s)', 'IBI (s)', 'Angular Velocity (deg/s)'}
+  colsToKeep = {'Trial_ID', 'Well_ID', 'Animal_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration', 'Bout Distance (mm)', 'Bout Duration (s)', 'Bout Speed (mm/s)', 'Absolute Yaw (deg) (from heading vals)', 'Signed Yaw (deg) (from heading vals)', 'headingRangeWidth', 'IBI (s)', 'Angular Velocity (deg/s)'}
   expectedResultsDict = {k: [x if numOfOsc * 2 >= 12 or k in colsToKeep else np.nan for x, numOfOsc in zip(v, _EXPECTED_RESULTS['Number of Oscillations'])]
                          for k, v in _EXPECTED_RESULTS.items()}
   assert expectedResultsDict['xmean'].count(np.nan) > 0  # make sure some bouts were discarded
@@ -888,7 +895,7 @@ def _test_keep_data_for_discarded_bouts_check_results():
   assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):  # no charts with outliers
-    chartCount = 7
+    chartCount = 7 if folder == 'allBoutsMixed' else 8
     assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
@@ -950,7 +957,7 @@ def _test_gaussian_outlier_removal():
     assert_series_equal(expectedResultsAll[col], dataframe[col])
 
   for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    chartCount = 7
+    chartCount = 7 if folder == 'allBoutsMixed' else 8
     assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
     assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
 
