@@ -1698,11 +1698,20 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       if not figure.figure.get_axes():  # check whether we've already plotted it
         ax = figure.figure.add_subplot(111)
         data = [highAngles, lowAngles]
-        wedges, texts, autotexts = ax.pie(data, autopct=lambda pct: self._pieChartFormatter(pct, data), textprops={'fontsize': 10 * self._chartScaleFactor})
+        if not any(data):
+          ax.text(.5, .5, 'Data could not be plotted.', ha='center')
+          ax.axis('off')
+        else:
+          ax.pie(data, autopct=lambda pct: self._pieChartFormatter(pct, data), textprops={'fontsize': 10 * self._chartScaleFactor})
       ax = figure.figure.get_axes()[0]
       ax.set_title('Genotype: %s\nCondition: %s' % combination, fontsize=16 * self._chartScaleFactor)
       legendFigure = legendWidget.figure
       if not legendFigure.get_axes():
+        dummyData = [1, 1]
+        dummyAx = figure.figure.add_subplot(111)
+        wedges, texts, autotexts  = dummyAx.pie(dummyData, autopct=lambda pct: self._pieChartFormatter(pct, dummyData), textprops={'fontsize': 10 * self._chartScaleFactor})
+        dummyAx.cla()
+        figure.figure.delaxes(dummyAx)
         legendAx = legendFigure.add_subplot(111)
         legend = legendAx.legend(wedges, ['High angle bouts\n(> 25 deg)', 'Low angle bouts\n(<= 25 deg)'], loc='center', frameon=False)
         legendAx.axis('off')
