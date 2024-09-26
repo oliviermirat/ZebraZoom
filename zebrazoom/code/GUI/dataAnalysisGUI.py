@@ -1158,6 +1158,7 @@ class PopulationComparison(QWidget):
     if minNbBendForBoutDetect is None:
       minNbBendForBoutDetect = 0
       gaussianFitOutlierRemoval = True
+      keep = True
     elif len(minNbBendForBoutDetect) == 0:
       minNbBendForBoutDetect = 3
 
