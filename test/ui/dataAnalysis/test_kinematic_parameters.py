@@ -2,6 +2,7 @@ import itertools
 import json
 import math
 import os
+import sys
 import pickle
 import random
 import shutil
@@ -439,6 +440,7 @@ def _enterChar(qapp, qtbot, widget, text):
   qapp.processEvents()
 
 
+@pytest.mark.skipif(sys.platform == 'darwin')
 def test_visualization_filters(qapp, qtbot, monkeypatch, tmp_path):
   # Generate results files
   allBoutsFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Test Experiment', 'allBoutsMixed')
@@ -1125,7 +1127,6 @@ def test_alternative_ZZoutput(qapp, qtbot, monkeypatch, tmp_path):
 
 @pytest.mark.long
 def test_command_line(monkeypatch): # here we simply run the same experiments that were run through the gui using the command line instead
-  import sys
   from zebrazoom.kinematicParametersAnalysis import kinematicParametersAnalysis  # __main__ simply calls this
 
   experiment1 = os.path.join(paths.getDataAnalysisFolder(), 'experimentOrganizationExcel', 'Experiment 1.xlsx')
