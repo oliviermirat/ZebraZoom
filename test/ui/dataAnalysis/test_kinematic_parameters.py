@@ -434,7 +434,8 @@ def _enterChar(qapp, qtbot, widget, text):
     for _ in range(10):
       qtbot.keyClick(widget, Qt.Key.Key_Delete)
   qtbot.keyClick(widget, text)
-  qtbot.keyClick(widget, Qt.Key.Key_Return)
+  if not isinstance(widget, QComboBox):
+    qtbot.keyClick(widget, Qt.Key.Key_Return)
   qapp.processEvents()
 
 
