@@ -72,7 +72,7 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
         for j in range(0, len(heading)-1):
           if not(np.isnan(heading[j+1])) and not(np.isnan(heading[j])):
             angularDifferential = angularDifferential + [(min(abs((heading[j+1] - heading[j]) * (180 / np.pi)) % 180, abs((heading[j+1] - heading[j] + 2 * np.pi) * (180 / np.pi)) % 180, abs((heading[j+1] - heading[j] - 2 * np.pi) * (180 / np.pi)) % 180)) / (frameStepForDistanceCalculation / fps)]
-        listOfParametersCalculated.append(np.mean(angularDifferential))
+        listOfParametersCalculated.append(np.mean(angularDifferential) if angularDifferential else 0)
       else:
         listOfParametersCalculated.append(0)
     
@@ -270,6 +270,22 @@ def getGlobalParameters(curbout, fps, pixelSize, frameStepForDistanceCalculation
     elif parameterToCalculate == 'Signed Yaw (deg)':
       deltahead  = getDeltaHead(curbout)
       listOfParametersCalculated.append(deltahead)
+
+
+    elif parameterToCalculate == 'Absolute Yaw (deg) (from heading vals)':
+      
+      deltahead  = abs(getDeltaHead(curbout, fromHeadingIdx=-1))
+      listOfParametersCalculated.append(deltahead)
+    
+    elif parameterToCalculate == 'Signed Yaw (deg) (from heading vals)':
+      deltahead  = getDeltaHead(curbout, fromHeadingIdx=-1)
+      listOfParametersCalculated.append(deltahead)
+
+
+    elif parameterToCalculate == 'headingRangeWidth':
+      deltas = [getDeltaHead(curbout, fromHeadingIdx=idx) for idx in range(1, curbout["BoutEnd"] - curbout["BoutStart"] + 1)]
+      deltas.append(0)
+      listOfParametersCalculated.append(max(deltas) - min(deltas))
 
     elif parameterToCalculate == 'xstart':
       

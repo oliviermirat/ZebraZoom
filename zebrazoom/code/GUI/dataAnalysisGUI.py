@@ -1097,9 +1097,9 @@ class PopulationComparison(QWidget):
     self._minNbBendForBoutDetect.validator().setBottom(0)
     self._minNbBendForBoutDetect.setText('3')
     bendsRemovalLayout.addWidget(self._minNbBendForBoutDetect, alignment=Qt.AlignmentFlag.AlignCenter)
-    bendsRemovalLayout.addWidget(util.apply_style(QLabel("If, for a bout, the tail tracking related kinematic parameters are being discarded because of a low amount of bends,"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    bendsRemovalLayout.addWidget(util.apply_style(QLabel("should the Bout Duration (s), Bout Distance (mm), Bout Speed (mm/s) and IBI (s) also be discarded for that bout?"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
-    self._keepDiscardedBoutsCheckbox = QCheckBox("Keep Bout Duration (s), Bout Distance (mm), Bout Speed (mm/s) and IBI (s) in that situation")
+    bendsRemovalLayout.addWidget(util.apply_style(QLabel("If, for a bout, the tail tracking related kinematic parameters are being discarded because of a low amount of bends, should the Bout Duration (s), Bout Distance (mm),"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    bendsRemovalLayout.addWidget(util.apply_style(QLabel(" Bout Speed (mm/s), Absolute Yaw (deg) (from heading vals), Signed Yaw (deg) (from heading vals), headingRangeWidth and IBI (s) also be discarded for that bout?"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    self._keepDiscardedBoutsCheckbox = QCheckBox("Keep Bout Duration (s), Bout Distance (mm), Bout Speed (mm/s), Absolute Yaw (deg) (from heading vals), Signed Yaw (deg) (from heading vals), headingRangeWidth and IBI (s) in that situation")
     bendsRemovalLayout.addWidget(self._keepDiscardedBoutsCheckbox, alignment=Qt.AlignmentFlag.AlignCenter)
     bendsRemovalLayout.addWidget(util.apply_style(QLabel("Please ignore the two questions above if you're only looking at Bout Duration (s), Bout Distance (mm), Bout Speed (mm/s) and IBI (s)."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     bendsRemovalWidget = QWidget()
@@ -1158,6 +1158,7 @@ class PopulationComparison(QWidget):
     if minNbBendForBoutDetect is None:
       minNbBendForBoutDetect = 0
       gaussianFitOutlierRemoval = True
+      keep = True
     elif len(minNbBendForBoutDetect) == 0:
       minNbBendForBoutDetect = 3
 
@@ -1401,12 +1402,12 @@ class FigureCanvas(FigureCanvas):  # XXX: this is a workaround for https://githu
 
 
 class KinematicParametersVisualization(util.CollapsibleSplitter):
-  _IGNORE_COLUMNS = {'Trial_ID', 'Well_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
+  _IGNORE_COLUMNS = {'Trial_ID', 'Well_ID', 'Animal_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
   _FILENAME = 'globalParametersInsideCategories'
   _CHART_SIZE = QSize(464, 348)
   _BOUT_OCCURRENCE_PARAMS = ['Bout Rate (bouts / s)', 'IBI (s)', 'Bout Counts']
   _SPEED_RELATED_PARAMS = ['Bout Distance (mm)', 'Bout Duration (s)', 'Bout Speed (mm/s)', 'Number of Oscillations', 'Max TBF (Hz)', 'Mean TBF (Hz)']
-  _AMPLITUDE_RELATED_PARAMS = ['Max absolute TBA (deg.)', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)', 'TBA#1 Amplitude (deg)', 'TBA#1 timing (s)', 'Absolute Yaw (deg)', 'Signed Yaw (deg)']
+  _AMPLITUDE_RELATED_PARAMS = ['Max absolute TBA (deg.)', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)', 'TBA#1 Amplitude (deg)', 'TBA#1 timing (s)', 'Absolute Yaw (deg)', 'Signed Yaw (deg)', 'Absolute Yaw (deg) (from heading vals)', 'Signed Yaw (deg) (from heading vals)', 'headingRangeWidth']
 
   def __init__(self, data):
     super().__init__()
@@ -1697,11 +1698,20 @@ class KinematicParametersVisualization(util.CollapsibleSplitter):
       if not figure.figure.get_axes():  # check whether we've already plotted it
         ax = figure.figure.add_subplot(111)
         data = [highAngles, lowAngles]
-        wedges, texts, autotexts = ax.pie(data, autopct=lambda pct: self._pieChartFormatter(pct, data), textprops={'fontsize': 10 * self._chartScaleFactor})
+        if not any(data):
+          ax.text(.5, .5, 'Data could not be plotted.', ha='center')
+          ax.axis('off')
+        else:
+          ax.pie(data, autopct=lambda pct: self._pieChartFormatter(pct, data), textprops={'fontsize': 10 * self._chartScaleFactor})
       ax = figure.figure.get_axes()[0]
       ax.set_title('Genotype: %s\nCondition: %s' % combination, fontsize=16 * self._chartScaleFactor)
       legendFigure = legendWidget.figure
       if not legendFigure.get_axes():
+        dummyData = [1, 1]
+        dummyAx = figure.figure.add_subplot(111)
+        wedges, texts, autotexts  = dummyAx.pie(dummyData, autopct=lambda pct: self._pieChartFormatter(pct, dummyData), textprops={'fontsize': 10 * self._chartScaleFactor})
+        dummyAx.cla()
+        figure.figure.delaxes(dummyAx)
         legendAx = legendFigure.add_subplot(111)
         legend = legendAx.legend(wedges, ['High angle bouts\n(> 25 deg)', 'Low angle bouts\n(<= 25 deg)'], loc='center', frameon=False)
         legendAx.axis('off')

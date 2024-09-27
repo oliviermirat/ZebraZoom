@@ -119,9 +119,9 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   basicInformation = ['Trial_ID', 'Well_ID', 'Animal_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration']
   # Global parameters
   if tailAngleKinematicParameterCalculation:
-    globParam  = ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Angular Velocity (deg/s)', 'Max TBF (Hz)', 'Mean TBF (Hz)', 'medianOfInstantaneousTBF', 'Mean TBF (Hz) (based on first 4 bends)', 'Mean TBF (Hz) (based on first 6 bends)', 'Max absolute TBA (deg.)', 'maxBendAmplitudeSigned', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)', 'medianBendAmplitudeSigned', 'Number of Oscillations', 'meanTBF', 'maxTailAngleAmplitude', 'Absolute Yaw (deg)', 'Signed Yaw (deg)', 'TBA#1 timing (s)', 'TBA#1 Amplitude (deg)', 'firstBendAmplitudeSigned', 'IBI (s)', 'xmean', 'ymean', 'binaryClass25degMaxTailAngle', 'tailAngleIntegralSigned', 'BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral', 'maxInstantaneousSpeed']
+    globParam  = ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Angular Velocity (deg/s)', 'Max TBF (Hz)', 'Mean TBF (Hz)', 'medianOfInstantaneousTBF', 'Mean TBF (Hz) (based on first 4 bends)', 'Mean TBF (Hz) (based on first 6 bends)', 'Max absolute TBA (deg.)', 'maxBendAmplitudeSigned', 'Mean absolute TBA (deg.)', 'Median absolute TBA (deg.)', 'medianBendAmplitudeSigned', 'Number of Oscillations', 'meanTBF', 'maxTailAngleAmplitude', 'Absolute Yaw (deg)', 'Signed Yaw (deg)', 'Absolute Yaw (deg) (from heading vals)', 'Signed Yaw (deg) (from heading vals)', 'headingRangeWidth', 'TBA#1 timing (s)', 'TBA#1 Amplitude (deg)', 'firstBendAmplitudeSigned', 'IBI (s)', 'xmean', 'ymean', 'binaryClass25degMaxTailAngle', 'tailAngleIntegralSigned', 'BoutFrameNumberStart', 'tailAngleSymmetry', 'secondBendAmpDividedByFirst', 'tailAngleIntegral', 'maxInstantaneousSpeed']
   else:
-    globParam  = ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Angular Velocity (deg/s)']
+    globParam  = ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Angular Velocity (deg/s)', 'Absolute Yaw (deg) (from heading vals)', 'Signed Yaw (deg) (from heading vals)', 'headingRangeWidth']
   
   if type(addToGlobalParameters) == list:
     globParam = globParam + addToGlobalParameters  
@@ -174,7 +174,7 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
   conditions = []
   # This is for the potential reload from previously calculated parameters (stored in the pkl file)
   if keepSpeedDistDurWhenLowNbBends == 1:
-    onlyKeepTheseColumns = basicInformation + ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Angular Velocity (deg/s)', 'IBI (s)']
+    onlyKeepTheseColumns = basicInformation + ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Angular Velocity (deg/s)', 'Absolute Yaw (deg) (from heading vals)', 'Signed Yaw (deg) (from heading vals)', 'headingRangeWidth', 'IBI (s)']
   else:
     onlyKeepTheseColumns = basicInformation
   removeColumnsWhenAppropriate = [col for col in dfCols if not(col in onlyKeepTheseColumns)]
@@ -399,9 +399,9 @@ def createDataFrame(dataframeOptions, excelFileDataFrame="", forcePandasDfRecrea
                   # Calculating the global kinematic parameters and more and stores them the dataframe
                   
                   previousBoutEnd = supstruct["wellPoissMouv"][Well_ID][fishId][NumBout-1]["BoutEnd"] if NumBout > 0 else 0
-                  listOfGlobalParameters = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation, previousBoutEnd, ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Angular Velocity (deg/s)', 'IBI (s)'] + addToGlobalParameters, firstFrame, lastFrame, minimumFrameToFrameDistanceToBeConsideredAsMoving)
+                  listOfGlobalParameters = getGlobalParameters(dataForBout, fq, pixelsize, frameStepForDistanceCalculation, previousBoutEnd, ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Angular Velocity (deg/s)', 'Absolute Yaw (deg) (from heading vals)', 'Signed Yaw (deg) (from heading vals)', 'headingRangeWidth', 'IBI (s)'] + addToGlobalParameters, firstFrame, lastFrame, minimumFrameToFrameDistanceToBeConsideredAsMoving)
                   
-                  toPutInDataFrameColumn = toPutInDataFrameColumn + ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Angular Velocity (deg/s)', 'IBI (s)'] + addToGlobalParameters
+                  toPutInDataFrameColumn = toPutInDataFrameColumn + ['Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)', 'Angular Velocity (deg/s)', 'Absolute Yaw (deg) (from heading vals)', 'Signed Yaw (deg) (from heading vals)', 'headingRangeWidth', 'IBI (s)'] + addToGlobalParameters
                   toPutInDataFrame       = toPutInDataFrame       + listOfGlobalParameters
                   
                 # Adding bout parameters to the dataframe created for the current well
