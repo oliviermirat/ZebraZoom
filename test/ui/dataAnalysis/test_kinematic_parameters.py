@@ -440,7 +440,7 @@ def _enterChar(qapp, qtbot, widget, text):
   qapp.processEvents()
 
 
-@pytest.mark.skipif(sys.platform == 'darwin')
+@pytest.mark.skipif(sys.platform == 'darwin', reason='fails on Mac GitHub runner')
 def test_visualization_filters(qapp, qtbot, monkeypatch, tmp_path):
   # Generate results files
   allBoutsFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Test Experiment', 'allBoutsMixed')
