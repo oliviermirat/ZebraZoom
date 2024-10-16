@@ -31,7 +31,10 @@ def monkeypatchPaths(monkeypatch_session, tmp_path_factory):  # move all relevan
   ZZoutputFolder.mkdir()
   requiredResultsFolders = ('example1', 'example2', 'example3', 'standardValueFreelySwimZebrafishLarvae')
   for folder in requiredResultsFolders:
-    shutil.copytree(os.path.join(paths.getRootDataFolder(), 'ZZoutput', folder), ZZoutputFolder / folder)
+    shutil.copytree(os.path.join(paths.getRootDataFolder(), 'ZZoutput', folder), ZZoutputFolder / folder, ignore=shutil.ignore_patterns('parametersUsedForCalculation.json', '*.pkl', '*.xlsx'))
+  requiredResultsFiles = ('example1.h5',)
+  for filename in requiredResultsFiles:
+    shutil.copyfile(os.path.join(paths.getRootDataFolder(), 'ZZoutput', filename),  ZZoutputFolder / filename)
 
   dataAnalysisFolder = rootPath / 'dataAnalysis'
   dataAnalysisFolder.mkdir()

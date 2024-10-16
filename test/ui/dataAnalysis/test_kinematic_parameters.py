@@ -1,16 +1,10 @@
-import itertools
 import json
-import math
 import os
 import sys
 import pickle
-import random
 import shutil
 
-import h5py
-import numpy as np
 import pandas as pd
-import scipy
 from pandas.testing import assert_frame_equal, assert_series_equal
 
 import pytest
@@ -21,282 +15,6 @@ from PyQt5.QtWidgets import QFileDialog, QMessageBox, QComboBox
 from zebrazoom.code import paths
 from zebrazoom.code.GUI.GUI_InitialClasses import StartPage, ViewParameters
 from zebrazoom.code.GUI.dataAnalysisGUI import KinematicParametersVisualization, ChooseDataAnalysisMethod, CreateExperimentOrganizationExcel, PopulationComparison
-
-
-_DEFAULT_KEYS = ['Trial_ID', 'Well_ID', 'Animal_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition',
-                 'Genotype', 'videoDuration', 'Bout Duration (s)', 'Bout Distance (mm)', 'Bout Speed (mm/s)',
-                 'Angular Velocity (deg/s)', 'Absolute Yaw (deg) (from heading vals)', 'Signed Yaw (deg) (from heading vals)',
-                 'headingRangeWidth', 'percentTimeSpentSwimming', 'Bout Counts', 'Bout Rate (bouts / s)']
-
-_EXPECTED_RESULTS = {'Trial_ID': [],
-                     'Well_ID': [],
-                     'Animal_ID': [],
-                     'NumBout': [],
-                     'BoutStart': [],
-                     'BoutEnd': [],
-                     'Condition': [],
-                     'Genotype': [],
-                     'videoDuration': [],
-                     'Bout Duration (s)': [],
-                     'Bout Distance (mm)': [],
-                     'Bout Speed (mm/s)': [],
-                     'Angular Velocity (deg/s)': [],
-                     'Max TBF (Hz)': [],
-                     'Mean TBF (Hz)': [],
-                     'medianOfInstantaneousTBF': [],
-                     'Mean TBF (Hz) (based on first 4 bends)': [],
-                     'Mean TBF (Hz) (based on first 6 bends)': [],
-                     'Max absolute TBA (deg.)': [],
-                     'maxBendAmplitudeSigned': [],
-                     'Mean absolute TBA (deg.)': [],
-                     'Median absolute TBA (deg.)': [],
-                     'medianBendAmplitudeSigned': [],
-                     'Number of Oscillations': [],
-                     'meanTBF': [],
-                     'maxTailAngleAmplitude': [],
-                     'Absolute Yaw (deg)': [],
-                     'Signed Yaw (deg)': [],
-                     'Absolute Yaw (deg) (from heading vals)': [],
-                     'Signed Yaw (deg) (from heading vals)': [],
-                     'headingRangeWidth': [],
-                     'TBA#1 timing (s)': [],
-                     'TBA#1 Amplitude (deg)': [],
-                     'firstBendAmplitudeSigned': [],
-                     'IBI (s)': [],
-                     'xmean': [],
-                     'ymean': [],
-                     'binaryClass25degMaxTailAngle': [],
-                     'tailAngleIntegralSigned': [],
-                     'BoutFrameNumberStart': [],
-                     'tailAngleSymmetry': [],
-                     'secondBendAmpDividedByFirst': [],
-                     'tailAngleIntegral': [],
-                     'maxInstantaneousSpeed': [],
-                     'percentTimeSpentSwimming': [],
-                     'Bout Counts': [],
-                     'Bout Rate (bouts / s)': [],}
-_MEDIAN_ONLY_KEYS = {'percentTimeSpentSwimming', 'Bout Counts', 'Bout Rate (bouts / s)'}
-_FIRST_BOUT_REMOVED_RESULTS = {key: [] for key in _MEDIAN_ONLY_KEYS}
-_ALL_ONLY_KEYS = {'Animal_ID', 'NumBout', 'BoutStart', 'BoutEnd'}
-
-_VIDEO_NAMES = ['test%d' % idx for idx in range(1, 7)]
-_VIDEO_NAMES[0] = f'{_VIDEO_NAMES[0]}.h5'
-_WELLS_PER_VIDEO = []
-_CONDITIONS = []
-_CONDITIONS_LIST = []
-_GENOTYPES = []
-_GENOTYPES_LIST = []
-_FPS = []
-_PIXEL_SIZES = []
-
-
-def _generateWave(amplitudes, duration):
-  angles = []
-  for amplitude in amplitudes:
-    interval = random.randint(1, duration // 10)
-    steps = [x * (amplitude // (interval + 1)) for x in range(1, interval + 1)]
-    angles.extend([0, *steps, amplitude, *steps[::-1], 0, *map(lambda x: -x, steps), -amplitude, *map(lambda x: -x, steps[::-1])])
-  for angle in itertools.islice(itertools.cycle(angles), duration):
-    yield math.radians(angle)
-
-
-def _generateResults():
-  random.seed(777)
-  resultsList = []
-  for videoIdx, video in enumerate(_VIDEO_NAMES):
-    numberOfWells = random.randint(10, 20) if videoIdx < 2 else random.randint(1, 5)  # generate a few large ones just to test it, but make sure tests don't run for too long
-    _WELLS_PER_VIDEO.append(numberOfWells)
-    conditions = ['condition%d' % random.randint(1, 4) for _ in range(numberOfWells)]
-    _CONDITIONS_LIST.append(conditions)
-    genotypes = ['genotype%d' % random.randint(1, 4) for _ in range(numberOfWells)]
-    _GENOTYPES_LIST.append(genotypes)
-    _CONDITIONS.append('[%s]' % ', '.join(conditions))
-    _GENOTYPES.append('[%s]' % ', '.join(genotypes))
-    firstFrame = random.randint(0, 500)
-    lastFrame = random.randint(firstFrame + 1000, 10000)
-    wellPoissMouv = []
-    fps = random.randint(1, 500)
-    _FPS.append(fps)
-    pixelSize = random.randint(1, 500)
-    _PIXEL_SIZES.append(pixelSize)
-    results = {'firstFrame': firstFrame, 'lastFrame': lastFrame}
-    results['wellPositions'] = [{'topLeftX': idx * 550, 'topLeftY': idx * 550, 'lengthX': 500, 'lengthY': 500} for idx in range(numberOfWells)]
-    for wellIdx in range(numberOfWells):
-      numberOfBouts = random.randint(1, 7)
-      boutStartFrames = set()
-      for _ in range(numberOfBouts):
-        frame = random.randint(firstFrame, lastFrame - 25)
-        while boutStartFrames & set(range(frame - 25, frame + 25)):
-          frame = random.randint(firstFrame, lastFrame - 25)
-        boutStartFrames.add(frame)
-      boutStartFrames = sorted(boutStartFrames)
-      boutDurations = [random.randint(20 if len(boutStartFrames) > 1 else 70, (boutStartFrames[idx+1] if idx + 1 < len(boutStartFrames) else lastFrame) - frame - 3) for idx, frame in enumerate(boutStartFrames)]
-      wellBouts = []
-      for boutIdx, (startFrame, duration) in enumerate(zip(boutStartFrames, boutDurations)):
-        amplitudes = [random.choice([1, -1]) * random.randint(10, 80) for _ in range(3)]
-        angles = list(_generateWave(amplitudes, duration))
-        xMove = random.randint(1, 5)
-        yMove = random.randint(1, 5)
-        headX = [xMove * frame for frame in range(duration)]
-        headY = [yMove * frame for frame in range(duration)]
-        headX[1] = xMove * 3
-        headY[1] = yMove * 3
-        bendAmplitudes = []
-        bendTimings = []
-        radiansAmplitudes = set(map(math.radians, amplitudes))
-        for idx, angle in enumerate(angles):
-          if angle in radiansAmplitudes or -angle in radiansAmplitudes:
-            bendAmplitudes.append(angle)
-            bendTimings.append(idx)
-        instantaneousTBF =  [fps / (2 * bendTimings[0])] + [fps / (2 * diff) for diff in map(lambda x, y: y - x, bendTimings, bendTimings[1:])]
-        bout = {'AnimalNumber': 0,
-                'BoutStart': startFrame,
-                'BoutEnd': startFrame + duration - 1,
-                'TailAngle_Raw': angles,
-                'TailAngle_smoothed': angles,
-                'TailX_VideoReferential': [[x] + [x * 0 for a in range(8)] for x in headX],
-                'TailY_VideoReferential': [[y] + [y * 0 for a in range(8)] for y in headY],
-                'HeadX': headX,
-                'HeadY': headY,
-                'Bend_Amplitude': bendAmplitudes,
-                'Bend_Timing': bendTimings,
-                'Heading': [0] * duration}
-        wellBouts.append(bout)
-        degreeBendAmplitudes = list(map(math.degrees, bendAmplitudes))
-        _EXPECTED_RESULTS['Trial_ID'].append(video)
-        _EXPECTED_RESULTS['Well_ID'].append(wellIdx)
-        _EXPECTED_RESULTS['Animal_ID'].append(0)
-        _EXPECTED_RESULTS['Condition'].append(conditions[wellIdx])
-        _EXPECTED_RESULTS['Genotype'].append(genotypes[wellIdx])
-        _EXPECTED_RESULTS['videoDuration'].append((lastFrame - firstFrame) / fps)
-        _EXPECTED_RESULTS['NumBout'].append(boutIdx)
-        _EXPECTED_RESULTS['BoutStart'].append(startFrame)
-        _EXPECTED_RESULTS['BoutEnd'].append(startFrame + duration - 1)
-        _EXPECTED_RESULTS['Bout Duration (s)'].append(duration / fps)
-        _EXPECTED_RESULTS['Bout Distance (mm)'].append(math.sqrt(xMove * xMove + yMove * yMove) * pixelSize * (duration - 1))
-        _EXPECTED_RESULTS['maxInstantaneousSpeed'].append(math.sqrt(xMove * xMove + yMove * yMove) * 3 * pixelSize * fps)
-        _EXPECTED_RESULTS['Bout Speed (mm/s)'].append(math.sqrt(xMove * xMove + yMove * yMove) * pixelSize * fps)
-        _EXPECTED_RESULTS['Angular Velocity (deg/s)'].append(0) # XXX: modify test data to include non-zero angular velocity?
-        _EXPECTED_RESULTS['Max TBF (Hz)'].append(max(instantaneousTBF))
-        _EXPECTED_RESULTS['Mean TBF (Hz)'].append(np.mean(instantaneousTBF))
-        _EXPECTED_RESULTS['medianOfInstantaneousTBF'].append(np.median(instantaneousTBF))
-        _EXPECTED_RESULTS['Mean TBF (Hz) (based on first 4 bends)'].append(np.mean(instantaneousTBF[:4]))
-        _EXPECTED_RESULTS['Mean TBF (Hz) (based on first 6 bends)'].append(np.mean(instantaneousTBF[:6]))
-        _EXPECTED_RESULTS['Max absolute TBA (deg.)'].append(max(map(abs, degreeBendAmplitudes)))
-        _EXPECTED_RESULTS['maxBendAmplitudeSigned'].append(max(degreeBendAmplitudes, key=abs))
-        _EXPECTED_RESULTS['Mean absolute TBA (deg.)'].append(np.mean(list(map(abs, degreeBendAmplitudes))))
-        _EXPECTED_RESULTS['Median absolute TBA (deg.)'].append(np.median(list(map(abs, degreeBendAmplitudes))))
-        _EXPECTED_RESULTS['medianBendAmplitudeSigned'].append(np.median(degreeBendAmplitudes))
-        _EXPECTED_RESULTS['Number of Oscillations'].append(len(degreeBendAmplitudes) / 2)
-        _EXPECTED_RESULTS['meanTBF'].append((len(degreeBendAmplitudes) * fps)  / (2 * duration))
-        _EXPECTED_RESULTS['maxTailAngleAmplitude'].append(max(map(lambda x: math.degrees(abs(x)), angles)))
-        _EXPECTED_RESULTS['Absolute Yaw (deg)'].append(math.degrees(math.atan(yMove / xMove)))
-        _EXPECTED_RESULTS['Signed Yaw (deg)'].append(math.degrees(math.atan(yMove / xMove)))
-        _EXPECTED_RESULTS['Absolute Yaw (deg) (from heading vals)'].append(0) # XXX: modify test data to include non-zero yaw? currently covered by TestExampleExperiment
-        _EXPECTED_RESULTS['Signed Yaw (deg) (from heading vals)'].append(0) # XXX: modify test data to include non-zero yaw? currently covered by TestExampleExperiment
-        _EXPECTED_RESULTS['headingRangeWidth'].append(0) # XXX: modify test data to include non-zero yaw? currently covered by TestExampleExperiment
-        _EXPECTED_RESULTS['TBA#1 timing (s)'].append(bendTimings[0] / fps)
-        _EXPECTED_RESULTS['TBA#1 Amplitude (deg)'].append(abs(degreeBendAmplitudes[0]))
-        _EXPECTED_RESULTS['firstBendAmplitudeSigned'].append(degreeBendAmplitudes[0])
-        _EXPECTED_RESULTS['IBI (s)'].append((startFrame - (boutStartFrames[boutIdx-1] + boutDurations[boutIdx-1] - 1 if boutIdx else 0)) / fps)
-        _EXPECTED_RESULTS['xmean'].append(sum(headX) * pixelSize / len(headX))
-        _EXPECTED_RESULTS['ymean'].append(sum(headY) * pixelSize / len(headY))
-        _EXPECTED_RESULTS['binaryClass25degMaxTailAngle'].append(1 if max(map(lambda x: math.degrees(abs(x)), angles)) > 25 else 0)
-        _EXPECTED_RESULTS['tailAngleIntegralSigned'].append(sum(map(math.degrees, angles)))
-        _EXPECTED_RESULTS['BoutFrameNumberStart'].append(startFrame)
-        _EXPECTED_RESULTS['tailAngleSymmetry'].append(-sorted((min(angles), max(angles)), key=abs)[0] / sorted((min(angles), max(angles)), key=abs)[1])
-        _EXPECTED_RESULTS['secondBendAmpDividedByFirst'].append(degreeBendAmplitudes[1] / degreeBendAmplitudes[0])
-        _EXPECTED_RESULTS['tailAngleIntegral'].append(sum(map(lambda x: abs(math.degrees(x)), angles)))
-        _EXPECTED_RESULTS['percentTimeSpentSwimming'].append(100 * sum(boutDurations) / (lastFrame - firstFrame))
-        _FIRST_BOUT_REMOVED_RESULTS['percentTimeSpentSwimming'].append(100 * sum(boutDurations[1:]) / (lastFrame - firstFrame) if not videoIdx and not wellIdx else _EXPECTED_RESULTS['percentTimeSpentSwimming'][-1])
-        _EXPECTED_RESULTS['Bout Counts'].append(numberOfBouts)
-        _FIRST_BOUT_REMOVED_RESULTS['Bout Counts'].append(numberOfBouts - 1 if not videoIdx and not wellIdx else _EXPECTED_RESULTS['Bout Counts'][-1])
-        _EXPECTED_RESULTS['Bout Rate (bouts / s)'].append(numberOfBouts * fps / (lastFrame - firstFrame))
-        _FIRST_BOUT_REMOVED_RESULTS['Bout Rate (bouts / s)'].append((numberOfBouts - 1) * fps / (lastFrame - firstFrame) if not videoIdx and not wellIdx else _EXPECTED_RESULTS['Bout Rate (bouts / s)'][-1])
-      wellPoissMouv.append([wellBouts])
-    results['wellPoissMouv'] = wellPoissMouv
-    resultsList.append(results)
-  return resultsList
-
-
-@pytest.fixture(scope="module", autouse=True)
-def _createResultsFolder():
-  with open(os.path.join(paths.getConfigurationFolder(), '4wellsZebrafishLarvaeEscapeResponses.json')) as configFile:
-    config = json.load(configFile)
-
-  generatedResults = _generateResults()
-  with h5py.File(os.path.join(paths.getDefaultZZoutputFolder(), _VIDEO_NAMES[0]), 'w') as results:
-    superStruct = generatedResults[0]
-    for idx, wellPositions in enumerate(superStruct['wellPositions']):
-      results.require_group(f"wellPositions/well{idx}").attrs.update(wellPositions)
-    config['nbWells'] = _WELLS_PER_VIDEO[0]
-    results.require_group("configurationFileUsed").attrs.update(config)
-    results.attrs['version'] = 0
-    results.attrs['firstFrame'] = superStruct["firstFrame"]
-    results.attrs['lastFrame'] = superStruct['lastFrame']
-    results.attrs['videoFPS'] = _FPS[0]
-    results.attrs['videoPixelSize'] = _PIXEL_SIZES[0]
-    results.create_dataset('exampleFrame', data=np.zeros((1, 1, 1)))
-    if 'pathToOriginalVideo' in superStruct:
-      results.attrs['pathToOriginalVideo'] = superStruct['pathToOriginalVideo']
-    for wellIdx, well in enumerate(superStruct['wellPoissMouv']):
-      for animalIdx, animal in enumerate(well):
-        perFrameData = {}
-        listOfBouts = results.require_group(f"dataForWell{wellIdx}/dataForAnimal{animalIdx}/listOfBouts")
-        listOfBouts.attrs['numberOfBouts'] = len(animal)
-        for boutIdx, bout in enumerate(animal):
-          boutGroup = listOfBouts.require_group(f'bout{boutIdx}')
-          boutGroup.attrs['BoutStart'] = bout['BoutStart']
-          boutGroup.attrs['BoutEnd'] = bout['BoutEnd']
-          boutStart = bout['BoutStart'] - superStruct['firstFrame']
-          boutEnd = bout['BoutEnd'] - superStruct['firstFrame'] + 1
-          for key, value in bout.items():
-            if key == 'AnimalNumber':
-              continue
-            if key in ('HeadX', 'HeadY'):
-              if 'HeadPos' not in perFrameData:
-                headPosData = np.empty(superStruct['lastFrame'] - superStruct['firstFrame'] + 1, dtype=[('X', float), ('Y', float)])
-                headPosData[:] = np.nan
-                perFrameData['HeadPos'] = headPosData
-              perFrameData['HeadPos'][key[-1]][boutStart:boutEnd] = value
-            elif key in ('Heading', 'TailAngle_Raw'):
-              if key == 'TailAngle_Raw':
-                key = 'TailAngle'
-              if key not in perFrameData:
-                data = np.empty(superStruct['lastFrame'] - superStruct['firstFrame'] + 1, dtype=float)
-                data[:] = np.nan
-                perFrameData[key] = data
-              perFrameData[key][boutStart:boutEnd] = value
-            elif key in ('TailX_VideoReferential', 'TailY_VideoReferential'):
-              key = f'TailPos{key[4]}'
-              value = np.array(value).T
-              if key not in perFrameData:
-                headPosData = np.empty(superStruct['lastFrame'] - superStruct['firstFrame'] + 1, dtype=[(f'Pos{idx + 1}', float) for idx in range(value.shape[0] - 1)])
-                headPosData[:] = np.nan
-                perFrameData[key] = headPosData
-              for idx, val in enumerate(value[1:]):
-                perFrameData[key][f'Pos{idx + 1}'][boutStart:boutEnd] = val
-            elif isinstance(value, list):
-              boutGroup.create_dataset(key, data=np.array(value))
-            else:
-              boutGroup.attrs[key] = value
-        for key, data in perFrameData.items():
-          dataset = results.create_dataset(f"dataForWell{wellIdx}/dataForAnimal{animalIdx}/dataPerFrame/{key}", data=data)
-          if len(data.dtype):
-            dataset.attrs['columns'] = data.dtype.names
-    from zebrazoom.dataAPI._createSuperStructFromH5 import createSuperStructFromH5
-    assert createSuperStructFromH5(results)['wellPoissMouv'] == superStruct['wellPoissMouv']
-
-  for nbWells, name, results in zip(_WELLS_PER_VIDEO[1:], _VIDEO_NAMES[1:], generatedResults[1:]):
-    folder = os.path.join(paths.getDefaultZZoutputFolder(), name)
-    os.mkdir(folder)
-    with open(os.path.join(folder, 'intermediaryWellPosition.txt'), 'wb') as wellPositionsFile:
-      pickle.dump(results['wellPositions'], wellPositionsFile)
-    config['nbWells'] = nbWells
-    with open(os.path.join(folder, 'configUsed.json'), 'w') as configFile:
-      json.dump(config, configFile)
-    with open(os.path.join(folder, 'results_%s.txt' % name), 'w') as resultsFile:
-      json.dump(results, resultsFile)
 
 
 def _enterCellText(qtbot, table, row, column, text):
@@ -370,66 +88,6 @@ def _resetPopulationComparisonPageState(page, qapp):  # this is required because
   qapp.processEvents()
 
 
-def _test_kinematic_parameters_small_check_results():
-  videoIndices = set([idx for idx in range(len(_VIDEO_NAMES)) if 2 < _WELLS_PER_VIDEO[idx] < 6][:2])
-  conditionsList = [(('condition1', 'condition1', 'condition2', 'condition2') * 2)[:_WELLS_PER_VIDEO[sorted(videoIndices)[0]]],
-                    (('condition1', 'condition2', 'condition1', 'condition2') * 2)[:_WELLS_PER_VIDEO[sorted(videoIndices)[1]]]]
-  genotypesList = [(('genotype1', 'genotype1', 'genotype2', 'genotype2') * 2)[:_WELLS_PER_VIDEO[sorted(videoIndices)[0]]],
-                   (('genotype1', 'genotype2', 'genotype1', 'genotype2') * 2)[:_WELLS_PER_VIDEO[sorted(videoIndices)[1]]]]
-  outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Experiment 1')
-  generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
-  generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
-  assert list(generatedExcelAll.columns) == [key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]
-  trialIds = {_VIDEO_NAMES[idx]: row for row, idx in enumerate(sorted(videoIndices))}
-  expectedResultsDict = {k: [x for video, x in zip(_EXPECTED_RESULTS['Trial_ID'], v) if video in trialIds]
-                         for k, v in _EXPECTED_RESULTS.items()}
-  expectedResultsDict['Condition'] = [conditionsList[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsDict['Trial_ID'], expectedResultsDict['Well_ID'])]
-  expectedResultsDict['Genotype'] = [genotypesList[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsDict['Trial_ID'], expectedResultsDict['Well_ID'])]
-  expectedResultsAll = pd.DataFrame(expectedResultsDict).astype(generatedExcelAll.dtypes.to_dict())
-  assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]])
-  generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
-  assert list(generatedExcelMedian.columns) == [key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]
-  expectedResultsMedian = expectedResultsAll.groupby(['Trial_ID', 'Well_ID'], as_index=False).median(numeric_only=True)
-  expectedResultsMedian['Condition'] = [conditionsList[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
-  expectedResultsMedian['Genotype'] = [genotypesList[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
-  seen = set()
-  expectedResultsMedian['Trial_ID'] = [x if x not in seen and not seen.add(x) else np.nan for x in expectedResultsMedian['Trial_ID']]
-  assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
-
-  for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    chartCount = 7 if folder == 'allBoutsMixed' else 8
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
-    assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
-
-
-def test_kinematic_parameters_small(qapp, qtbot, monkeypatch):
-  createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-  videoIndices = set([idx for idx in range(len(_VIDEO_NAMES)) if 2 < _WELLS_PER_VIDEO[idx] < 6][:2])
-  assert len(videoIndices) == 2
-  conditionsList = [(('condition1', 'condition1', 'condition2', 'condition2') * 2)[:_WELLS_PER_VIDEO[sorted(videoIndices)[0]]],
-                    (('condition1', 'condition2', 'condition1', 'condition2') * 2)[:_WELLS_PER_VIDEO[sorted(videoIndices)[1]]]]
-  genotypesList = [(('genotype1', 'genotype1', 'genotype2', 'genotype2') * 2)[:_WELLS_PER_VIDEO[sorted(videoIndices)[0]]],
-                   (('genotype1', 'genotype2', 'genotype1', 'genotype2') * 2)[:_WELLS_PER_VIDEO[sorted(videoIndices)[1]]]]
-  conditions = map(lambda x: '[%s]' % ','.join(x), conditionsList)
-  genotypes = map(lambda x: '[%s]' % ','.join(x), genotypesList)
-  _createExperimentOrganizationExcel(createExcelPage, qapp, qtbot, monkeypatch, indices=videoIndices, conditions=conditions, genotypes=genotypes)
-  monkeypatch.setattr(QMessageBox, 'question', lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
-  qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod), timeout=20000)
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison), timeout=20000)
-
-  populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-  monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
-  qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
-
-  _test_kinematic_parameters_small_check_results()
-
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
-
-
 def _enterChar(qapp, qtbot, widget, text):
   if not isinstance(widget, QComboBox):
     for _ in range(10):
@@ -441,14 +99,18 @@ def _enterChar(qapp, qtbot, widget, text):
 
 
 @pytest.mark.skipif(sys.platform == 'darwin', reason='fails on Mac GitHub runner')
-def test_visualization_filters(qapp, qtbot, monkeypatch, tmp_path):
+def test_visualization_filters(qapp, qtbot, monkeypatch, tmp_path, store_results):
+  if store_results:
+    return
   # Generate results files
   allBoutsFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Test Experiment', 'allBoutsMixed')
   os.makedirs(allBoutsFolder)
   medianFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Test Experiment', 'medianPerWellFirst')
   os.makedirs(medianFolder)
+  expectedResultsFolder = os.path.join(os.path.dirname(__file__), 'expected_results', 'test_basic')
+  medianPerWellColumns = pd.read_csv(os.path.join(expectedResultsFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.csv')).columns
   columns = ['Bout Speed (mm/s)', 'Number of Oscillations', 'maxTailAngleAmplitude']
-  ignoredKeys = [key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS | set(columns)]
+  ignoredKeys = [key for key in medianPerWellColumns if key not in columns]
   medianData = pd.DataFrame(index=pd.MultiIndex.from_product([[0, 1]] * len(columns), names=columns)).reset_index()
   rowCount = 2 ** len(columns)
   for key in ignoredKeys:
@@ -535,653 +197,6 @@ def test_visualization_filters(qapp, qtbot, monkeypatch, tmp_path):
   qapp.processEvents()
 
 
-def _test_basic_check_results(expectedResults=_EXPECTED_RESULTS):
-  outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Experiment 2')
-  generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
-  generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
-  assert list(generatedExcelAll.columns) == [key for key in _DEFAULT_KEYS if key not in _MEDIAN_ONLY_KEYS]
-  expectedResultsAll = pd.DataFrame(expectedResults).astype(generatedExcelAll.dtypes.to_dict())
-  assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _DEFAULT_KEYS if key not in _MEDIAN_ONLY_KEYS]])
-  generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
-  assert list(generatedExcelMedian.columns) == [key for key in _DEFAULT_KEYS if key not in _ALL_ONLY_KEYS]
-  expectedResultsMedian = expectedResultsAll.groupby(['Trial_ID', 'Well_ID'], as_index=False).median(numeric_only=True)
-  trialIds = {trialId: idx for idx, trialId in enumerate(_VIDEO_NAMES)}
-  expectedResultsMedian['Condition'] = [_CONDITIONS_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
-  expectedResultsMedian['Genotype'] = [_GENOTYPES_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
-  seen = set()
-  expectedResultsMedian['Trial_ID'] = [x if x not in seen and not seen.add(x) else np.nan for x in expectedResultsMedian['Trial_ID']]
-  assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _DEFAULT_KEYS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
-  dataFolder = os.path.join(paths.getDataAnalysisFolder(), 'data')
-  pickleFile = os.path.join(dataFolder, 'Experiment 2.pkl')
-  assert os.path.exists(pickleFile)
-  with open(pickleFile, 'rb') as f:
-    dataframe = pickle.load(f).astype(generatedExcelAll.dtypes.to_dict())
-  for col in (key for key in _DEFAULT_KEYS if key not in _MEDIAN_ONLY_KEYS):
-    assert_series_equal(expectedResultsAll[col], dataframe[col])
-  assert not os.path.exists(os.path.join(dataFolder, 'Experiment 2.mat'))
-
-  for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    chartCount = 3
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
-    assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
-
-
-@pytest.mark.long
-def test_basic(qapp, qtbot, monkeypatch):
-  import zebrazoom.dataAPI
-  zebrazoom.dataAPI.getKinematicParametersPerBout('test1', 0, 0, 0)  # force parameter calculation
-
-  createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-  _createExperimentOrganizationExcel(createExcelPage, qapp, qtbot, monkeypatch)
-  monkeypatch.setattr(QMessageBox, 'question', lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
-  qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod), timeout=20000)
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison), timeout=20000)
-
-  populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-  monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
-  _resetPopulationComparisonPageState(populationComparisonPage, qapp)
-  qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: not populationComparisonPage._tailTrackingParametersCheckbox.isChecked(), timeout=20000)
-  qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
-
-  _test_basic_check_results()
-
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
-
-
-@pytest.mark.long
-def test_force_recalculation(qapp, qtbot, monkeypatch):
-  assert os.path.exists(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'parametersUsedForCalculation.json'))
-  assert os.path.exists(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'test4.pkl'))
-  mtime = os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'parametersUsedForCalculation.json')).st_mtime
-  createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-  _createExperimentOrganizationExcel(createExcelPage, qapp, qtbot, monkeypatch, indices={0, 3}, conditions=[_CONDITIONS[0], _CONDITIONS[3]], genotypes=[_GENOTYPES[0], _GENOTYPES[3]])
-  monkeypatch.setattr(QMessageBox, 'question', lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
-  qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod), timeout=20000)
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison), timeout=20000)
-
-  populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-  monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
-  _resetPopulationComparisonPageState(populationComparisonPage, qapp)
-  qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: not populationComparisonPage._tailTrackingParametersCheckbox.isChecked(), timeout=20000)
-  qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
-
-  # ensure parameters were not recalculated
-  assert mtime == os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'parametersUsedForCalculation.json')).st_mtime
-
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
-
-  createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-  _selectExperiment(createExcelPage, qapp, qtbot, 'Experiment 3.xlsx')
-
-  qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod), timeout=20000)
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison), timeout=20000)
-  populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-  qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked, timeout=20000)
-  qtbot.mouseClick(populationComparisonPage._forcePandasRecreation, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._forcePandasRecreation.isChecked, timeout=20000)
-
-  qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
-
-  # ensure parameters were recalculated
-  assert mtime != os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'parametersUsedForCalculation.json')).st_mtime
-
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
-
-
-@pytest.mark.long
-def test_force_recalculation_from_dialog(qapp, qtbot, monkeypatch):
-  assert os.path.exists(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'parametersUsedForCalculation.json'))
-  assert os.path.exists(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'test4.pkl'))
-  mtime = os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'parametersUsedForCalculation.json')).st_mtime
-  createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-  _createExperimentOrganizationExcel(createExcelPage, qapp, qtbot, monkeypatch, indices={3}, conditions=[_CONDITIONS[3]], genotypes=[_GENOTYPES[3]])
-  monkeypatch.setattr(QMessageBox, 'question', lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
-  qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod), timeout=20000)
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison), timeout=20000)
-
-  populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-  monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
-  _resetPopulationComparisonPageState(populationComparisonPage, qapp)
-  qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: not populationComparisonPage._tailTrackingParametersCheckbox.isChecked(), timeout=20000)
-  qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
-
-  # ensure parameters were not recalculated
-  assert mtime == os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'parametersUsedForCalculation.json')).st_mtime
-
-  monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: True)
-
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
-
-  createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-  _selectExperiment(createExcelPage, qapp, qtbot, 'Experiment 3.xlsx')
-
-  qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod), timeout=20000)
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison), timeout=20000)
-  populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-  qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked, timeout=20000)
-
-  qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
-
-  # ensure parameters were recalculated
-  assert mtime != os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'parametersUsedForCalculation.json')).st_mtime
-
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
-
-
-def _test_kinematic_parameters_large_check_results():
-  outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Experiment 2')
-  dataFolder = os.path.join(paths.getDataAnalysisFolder(), 'data')
-  #assert os.path.exists(os.path.join(dataFolder, 'Experiment 2.mat'))  # ensure matlab file was created
-  #os.remove(os.path.join(dataFolder, 'Experiment 2.mat'))  # delete the file so it doesn't mess with later tests
-  generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
-  generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
-  assert list(generatedExcelAll.columns) == [key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]
-  expectedResultsAll = pd.DataFrame(_EXPECTED_RESULTS).astype(generatedExcelAll.dtypes.to_dict())
-  assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]])
-  generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
-  assert list(generatedExcelMedian.columns) == [key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]
-  expectedResultsMedian = expectedResultsAll.groupby(['Trial_ID', 'Well_ID'], as_index=False).median(numeric_only=True)
-  trialIds = {trialId: idx for idx, trialId in enumerate(_VIDEO_NAMES)}
-  expectedResultsMedian['Condition'] = [_CONDITIONS_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
-  expectedResultsMedian['Genotype'] = [_GENOTYPES_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
-  seen = set()
-  expectedResultsMedian['Trial_ID'] = [x if x not in seen and not seen.add(x) else np.nan for x in expectedResultsMedian['Trial_ID']]
-  assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
-  pickleFile = os.path.join(dataFolder, 'Experiment 2.pkl')
-  assert os.path.exists(pickleFile)
-  with open(pickleFile, 'rb') as f:
-    dataframe = pickle.load(f).astype(generatedExcelAll.dtypes.to_dict())
-  for col in (key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS):
-    assert_series_equal(expectedResultsAll[col], dataframe[col])
-
-  for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    chartCount = 7 if folder == 'allBoutsMixed' else 8
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
-    assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
-
-
-@pytest.mark.long
-def test_kinematic_parameters_large(qapp, qtbot, monkeypatch):
-  createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-  _selectExperiment(createExcelPage, qapp, qtbot, 'Experiment 2.xlsx')
-  qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod), timeout=20000)
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison), timeout=20000)
-
-  populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-  monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
-  _resetPopulationComparisonPageState(populationComparisonPage, qapp)
-  qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked, timeout=20000)
-  #qtbot.mouseClick(populationComparisonPage._saveInMatlabFormatCheckbox, Qt.MouseButton.LeftButton)
-  #qtbot.waitUntil(populationComparisonPage._saveInMatlabFormatCheckbox.isChecked, timeout=20000)
-  qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
-
-  _test_kinematic_parameters_large_check_results()
-
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
-
-
-def _test_frames_for_distance_calculation_check_results():
-  outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Experiment 2')
-  generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
-  generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
-  assert list(generatedExcelAll.columns) == [key for key in _DEFAULT_KEYS if key not in _MEDIAN_ONLY_KEYS]
-  trialIds = {name: idx for idx, name in enumerate(_VIDEO_NAMES)}
-  expectedResultsDict = {k: v[:] for k, v in _EXPECTED_RESULTS.items()}
-  expectedResultsDict['Bout Speed (mm/s)'] = [(speed / distance) * (distance + (distance / (end - start)) * 2)for speed, distance, start, end in
-                                  zip(expectedResultsDict['Bout Speed (mm/s)'], expectedResultsDict['Bout Distance (mm)'], _EXPECTED_RESULTS['BoutStart'], _EXPECTED_RESULTS['BoutEnd'])]
-  expectedResultsDict['Bout Distance (mm)'] = [distance + (distance / (end - start)) * 2 for distance, start, end in
-                                          zip(expectedResultsDict['Bout Distance (mm)'], _EXPECTED_RESULTS['BoutStart'], _EXPECTED_RESULTS['BoutEnd'])]
-  expectedResultsAll = pd.DataFrame(expectedResultsDict).astype(generatedExcelAll.dtypes.to_dict())
-  assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _DEFAULT_KEYS if key not in _MEDIAN_ONLY_KEYS]])
-  generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
-  assert list(generatedExcelMedian.columns) == [key for key in _DEFAULT_KEYS if key not in _ALL_ONLY_KEYS]
-  expectedResultsMedian = expectedResultsAll.groupby(['Trial_ID', 'Well_ID'], as_index=False).median(numeric_only=True)
-  trialIds = {trialId: idx for idx, trialId in enumerate(_VIDEO_NAMES)}
-  expectedResultsMedian['Condition'] = [_CONDITIONS_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
-  expectedResultsMedian['Genotype'] = [_GENOTYPES_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
-  seen = set()
-  expectedResultsMedian['Trial_ID'] = [x if x not in seen and not seen.add(x) else np.nan for x in expectedResultsMedian['Trial_ID']]
-  assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _DEFAULT_KEYS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
-  dataFolder = os.path.join(paths.getDataAnalysisFolder(), 'data')
-  pickleFile = os.path.join(dataFolder, 'Experiment 2.pkl')
-  assert os.path.exists(pickleFile)
-  with open(pickleFile, 'rb') as f:
-    dataframe = pickle.load(f).astype(generatedExcelAll.dtypes.to_dict())
-  for col in (key for key in _DEFAULT_KEYS if key not in _MEDIAN_ONLY_KEYS):
-    assert_series_equal(expectedResultsAll[col], dataframe[col])
-
-  for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    chartCount = 3
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)} | {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
-    assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
-
-
-@pytest.mark.long
-def test_frames_for_distance_calculation(qapp, qtbot, monkeypatch):
-  createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-  _selectExperiment(createExcelPage, qapp, qtbot, 'Experiment 2.xlsx')
-  qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod), timeout=20000)
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison), timeout=20000)
-
-  populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-  monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
-  _resetPopulationComparisonPageState(populationComparisonPage, qapp)
-  qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: not populationComparisonPage._tailTrackingParametersCheckbox.isChecked(), timeout=20000)
-  qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked, timeout=20000)
-  qtbot.mouseClick(populationComparisonPage._frameStepForDistanceCalculation, Qt.MouseButton.LeftButton)
-  qtbot.keyClicks(populationComparisonPage._frameStepForDistanceCalculation, '1')
-  qtbot.waitUntil(lambda: populationComparisonPage._frameStepForDistanceCalculation.text() == '1', timeout=20000)
-
-  qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
-
-  _test_frames_for_distance_calculation_check_results()
-
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
-
-
-def _test_minimum_number_of_bends_check_results():
-  outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Experiment 2')
-  generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
-  generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
-  assert list(generatedExcelAll.columns) == [key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]
-  colsToKeep = {'Trial_ID', 'Well_ID', 'Animal_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
-  expectedResultsDict = {k: [x if numOfOsc * 2 >= 12 or k in colsToKeep else np.nan for x, numOfOsc in zip(v, _EXPECTED_RESULTS['Number of Oscillations'])]
-                         for k, v in _EXPECTED_RESULTS.items()}
-  assert expectedResultsDict['Bout Duration (s)'].count(np.nan) > 0  # make sure some bouts were discarded
-  expectedResultsAll = pd.DataFrame(expectedResultsDict).astype(generatedExcelAll.dtypes.to_dict())
-  assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]])
-  generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
-  assert list(generatedExcelMedian.columns) == [key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]
-  groupedResults = expectedResultsAll.groupby(['Trial_ID', 'Well_ID'], as_index=False)
-  expectedResultsMedian = groupedResults.median(numeric_only=True)
-  trialIds = {trialId: idx for idx, trialId in enumerate(_VIDEO_NAMES)}
-  expectedResultsMedian['Condition'] = [_CONDITIONS_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
-  expectedResultsMedian['Genotype'] = [_GENOTYPES_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
-  seen = set()
-  expectedResultsMedian['Trial_ID'] = [x if x not in seen and not seen.add(x) else np.nan for x in expectedResultsMedian['Trial_ID']]
-  expectedResultsMedian['Bout Counts'] = expectedResultsAll.groupby(['Trial_ID', 'Well_ID'])['Number of Oscillations'].apply(lambda x: (x * 2 >= 12).sum()).reset_index(name='count')['count']
-  expectedResultsMedian['Bout Rate (bouts / s)'] = expectedResultsMedian['Bout Counts'] / expectedResultsMedian['videoDuration']
-  expectedResultsMedian['percentTimeSpentSwimming'] = groupedResults['Bout Duration (s)'].sum()['Bout Duration (s)'].div(expectedResultsMedian['videoDuration']).mul(100)
-  assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
-
-  for folder in ('allBoutsMixed', 'medianPerWellFirst'):  # no charts with outliers
-    chartCount = 7 if folder == 'allBoutsMixed' else 8
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
-    assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
-
-
-@pytest.mark.long
-def test_minimum_number_of_bends(qapp, qtbot, monkeypatch):
-  createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-  _selectExperiment(createExcelPage, qapp, qtbot, 'Experiment 2.xlsx')
-  qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod), timeout=20000)
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison), timeout=20000)
-  populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-  monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
-  _resetPopulationComparisonPageState(populationComparisonPage, qapp)
-  qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked, timeout=20000)
-  qtbot.mouseClick(populationComparisonPage._bendsOutlierRemovalButton, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._bendsOutlierRemovalButton.isChecked, timeout=20000)
-  qtbot.mouseClick(populationComparisonPage._minNbBendForBoutDetect, Qt.MouseButton.LeftButton)
-  qtbot.keyClicks(populationComparisonPage._minNbBendForBoutDetect, '12')
-  qtbot.waitUntil(lambda: populationComparisonPage._minNbBendForBoutDetect.text() == '12', timeout=20000)
-
-  qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
-
-  _test_minimum_number_of_bends_check_results()
-
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
-
-
-def _test_keep_data_for_discarded_bouts_check_results():
-  outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Experiment 2')
-  generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
-  generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
-  assert list(generatedExcelAll.columns) == [key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]
-  colsToKeep = {'Trial_ID', 'Well_ID', 'Animal_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration', 'Bout Distance (mm)', 'Bout Duration (s)', 'Bout Speed (mm/s)', 'Absolute Yaw (deg) (from heading vals)', 'Signed Yaw (deg) (from heading vals)', 'headingRangeWidth', 'IBI (s)', 'Angular Velocity (deg/s)'}
-  expectedResultsDict = {k: [x if numOfOsc * 2 >= 12 or k in colsToKeep else np.nan for x, numOfOsc in zip(v, _EXPECTED_RESULTS['Number of Oscillations'])]
-                         for k, v in _EXPECTED_RESULTS.items()}
-  assert expectedResultsDict['xmean'].count(np.nan) > 0  # make sure some bouts were discarded
-  expectedResultsAll = pd.DataFrame(expectedResultsDict).astype(generatedExcelAll.dtypes.to_dict())
-  assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]])
-  generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
-  assert list(generatedExcelMedian.columns) == [key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]
-  groupedResults = expectedResultsAll.groupby(['Trial_ID', 'Well_ID'], as_index=False)
-  expectedResultsMedian = groupedResults.median(numeric_only=True)
-  trialIds = {trialId: idx for idx, trialId in enumerate(_VIDEO_NAMES)}
-  expectedResultsMedian['Condition'] = [_CONDITIONS_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
-  expectedResultsMedian['Genotype'] = [_GENOTYPES_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
-  seen = set()
-  expectedResultsMedian['Trial_ID'] = [x if x not in seen and not seen.add(x) else np.nan for x in expectedResultsMedian['Trial_ID']]
-  expectedResultsMedian['percentTimeSpentSwimming'] = groupedResults['Bout Duration (s)'].sum()['Bout Duration (s)'].div(expectedResultsMedian['videoDuration']).mul(100)
-  assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
-
-  for folder in ('allBoutsMixed', 'medianPerWellFirst'):  # no charts with outliers
-    chartCount = 7 if folder == 'allBoutsMixed' else 8
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
-    assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
-
-
-@pytest.mark.long
-def test_keep_data_for_discarded_bouts(qapp, qtbot, monkeypatch):
-  createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-  _selectExperiment(createExcelPage, qapp, qtbot, 'Experiment 2.xlsx')
-  qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod), timeout=20000)
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison), timeout=20000)
-  populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-  monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
-  _resetPopulationComparisonPageState(populationComparisonPage, qapp)
-  qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked, timeout=20000)
-  qtbot.mouseClick(populationComparisonPage._bendsOutlierRemovalButton, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._bendsOutlierRemovalButton.isChecked, timeout=20000)
-  qtbot.mouseClick(populationComparisonPage._keepDiscardedBoutsCheckbox, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._keepDiscardedBoutsCheckbox.isChecked, timeout=20000)
-  qtbot.mouseClick(populationComparisonPage._minNbBendForBoutDetect, Qt.MouseButton.LeftButton)
-  qtbot.keyClicks(populationComparisonPage._minNbBendForBoutDetect, '12')
-
-  qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
-
-  _test_keep_data_for_discarded_bouts_check_results()
-
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
-
-
-def _test_gaussian_outlier_removal():
-  outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Experiment 2')
-  dataFolder = os.path.join(paths.getDataAnalysisFolder(), 'data')
-  generatedExcelAll = pd.read_excel(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.xlsx'))
-  generatedExcelAll = generatedExcelAll.loc[:, ~generatedExcelAll.columns.str.contains('^Unnamed')]
-  assert list(generatedExcelAll.columns) == [key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]
-  expectedResultsAll = pd.DataFrame(_EXPECTED_RESULTS).astype(generatedExcelAll.dtypes.to_dict())
-  colsToKeep = {'Trial_ID', 'Well_ID', 'Animal_ID', 'NumBout', 'BoutStart', 'BoutEnd', 'Condition', 'Genotype', 'videoDuration'}
-  columnsToCheckForOutliers = ('Bout Duration (s)', 'Bout Distance (mm)', 'Number of Oscillations', 'Max absolute TBA (deg.)', 'Absolute Yaw (deg)')
-  expectedResultsAll.loc[(np.abs(scipy.stats.zscore(expectedResultsAll[columnsToCheck].astype(float), nan_policy='omit')) > 3).any(axis=1), ~expectedResultsAll.columns.isin(colsToKeep)] = np.nan
-  assert_frame_equal(generatedExcelAll, expectedResultsAll[[key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS]])
-  generatedExcelMedian = pd.read_excel(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.xlsx'))
-  assert list(generatedExcelMedian.columns) == [key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]
-  expectedResultsMedian = expectedResultsAll.groupby(['Trial_ID', 'Well_ID'], as_index=False).median(numeric_only=True)
-  trialIds = {trialId: idx for idx, trialId in enumerate(_VIDEO_NAMES)}
-  expectedResultsMedian['Condition'] = [_CONDITIONS_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
-  expectedResultsMedian['Genotype'] = [_GENOTYPES_LIST[trialIds[trialId]][wellIdx] for trialId, wellIdx in zip(expectedResultsMedian['Trial_ID'], expectedResultsMedian['Well_ID'])]
-  seen = set()
-  expectedResultsMedian['Trial_ID'] = [x if x not in seen and not seen.add(x) else np.nan for x in expectedResultsMedian['Trial_ID']]
-  assert_frame_equal(generatedExcelMedian, expectedResultsMedian[[key for key in _EXPECTED_RESULTS if key not in _ALL_ONLY_KEYS]].astype(generatedExcelMedian.dtypes.to_dict()))
-  pickleFile = os.path.join(dataFolder, 'Experiment 2.pkl')
-  assert os.path.exists(pickleFile)
-  with open(pickleFile, 'rb') as f:
-    dataframe = pickle.load(f).astype(generatedExcelAll.dtypes.to_dict())
-  for col in (key for key in _EXPECTED_RESULTS if key not in _MEDIAN_ONLY_KEYS):
-    assert_series_equal(expectedResultsAll[col], dataframe[col])
-
-  for folder in ('allBoutsMixed', 'medianPerWellFirst'):
-    chartCount = 7 if folder == 'allBoutsMixed' else 8
-    assert set(os.listdir(os.path.join(outputFolder, folder))) == {'globalParametersInsideCategories.xlsx', 'globalParametersInsideCategories.csv', 'noMeanAndOutliersPlotted'}
-    assert set(os.listdir(os.path.join(outputFolder, folder, 'noMeanAndOutliersPlotted'))) == {'globalParametersInsideCategories_%d.png' % idx for idx in range(1, chartCount)}
-
-
-@pytest.mark.long
-def test_gaussian_outlier_removal(qapp, qtbot, monkeypatch):
-  createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-  _selectExperiment(createExcelPage, qapp, qtbot, 'Experiment 2.xlsx')
-  qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod), timeout=20000)
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison), timeout=20000)
-
-  populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-  monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
-  _resetPopulationComparisonPageState(populationComparisonPage, qapp)
-  qtbot.mouseClick(populationComparisonPage._gaussianOutlierRemovalButton, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._gaussianOutlierRemovalButton.isChecked, timeout=20000)
-  qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
-
-  _test_kinematic_parameters_small_check_results()
-
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
-
-
-def _goToVisualizationPage(qapp, qtbot):
-  startPage = qapp.window.centralWidget().layout().currentWidget()
-  assert isinstance(startPage, StartPage)
-  circle = list(startPage._flowchart.iterCircleRects())[-2]
-  qtbot.mouseMove(startPage, pos=QPoint(circle.x() + circle.width() // 2, circle.y() + circle.height()))
-  qtbot.waitUntil(lambda: startPage._shownDetail is startPage._detailsWidgets[-2], timeout=20000)
-  qtbot.mouseClick(startPage._shownDetail._visualizeOutputBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ViewParameters), timeout=20000)
-  viewParametersPage = qapp.window.centralWidget().layout().currentWidget()
-  qapp.processEvents()
-  assert viewParametersPage._tree.selectedIndexes() == []
-  return viewParametersPage
-
-
-@pytest.mark.long
-def test_flagged_bouts(qapp, qtbot, monkeypatch):
-  viewParametersPage = _goToVisualizationPage(qapp, qtbot)
-
-  # Select the first test result folder
-  resultsItem = next(results for results in viewParametersPage._tree.model().sourceModel().rootItem.iter_paths() if results.filename.endswith('test1.h5'))
-  resultsIndex = viewParametersPage._tree.model().mapFromSource(viewParametersPage._tree.model().sourceModel().createIndex(resultsItem.childNumber(), 0, resultsItem))
-  qtbot.mouseClick(viewParametersPage._tree.viewport(), Qt.MouseButton.LeftButton, pos=viewParametersPage._tree.visualRect(resultsIndex).center())
-  qapp.processEvents()
-  qtbot.waitUntil(lambda: resultsIndex in viewParametersPage._tree.selectedIndexes(), timeout=20000)
-
-  # Flag the first bout and save the changes
-  assert viewParametersPage.flag_movement_btn.text() == 'Flag Movement'
-  qtbot.mouseClick(viewParametersPage.flag_movement_btn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(viewParametersPage.superstruct_btn.isVisible, timeout=20000)
-  qtbot.mouseClick(viewParametersPage.superstruct_btn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: not viewParametersPage.superstruct_btn.isVisible(), timeout=20000)
-
-  # Go back to the start page
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
-
-  createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-  _selectExperiment(createExcelPage, qapp, qtbot, 'Experiment 2.xlsx')
-  qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod), timeout=20000)
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison), timeout=20000)
-
-  populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-  monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
-  _resetPopulationComparisonPageState(populationComparisonPage, qapp)
-  qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: not populationComparisonPage._tailTrackingParametersCheckbox.isChecked(), timeout=20000)
-  qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked, timeout=20000)
-  qtbot.mouseClick(populationComparisonPage._forcePandasRecreation, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(populationComparisonPage._forcePandasRecreation.isChecked, timeout=20000)
-  qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
-
-  expectedResults = _EXPECTED_RESULTS.copy()
-  expectedResults.update(_FIRST_BOUT_REMOVED_RESULTS)
-  _test_basic_check_results(expectedResults={param: values[1:] for param, values in expectedResults.items()})
-
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
-
-  viewParametersPage = _goToVisualizationPage(qapp, qtbot)
-
-  # Select the first test result folder
-  resultsItem = next(results for results in viewParametersPage._tree.model().sourceModel().rootItem.iter_paths() if results.filename.endswith('test1.h5'))
-  resultsIndex = viewParametersPage._tree.model().mapFromSource(viewParametersPage._tree.model().sourceModel().createIndex(resultsItem.childNumber(), 0, resultsItem))
-  qtbot.mouseClick(viewParametersPage._tree.viewport(), Qt.MouseButton.LeftButton, pos=viewParametersPage._tree.visualRect(resultsIndex).center())
-  qapp.processEvents()
-  qtbot.waitUntil(lambda: resultsIndex in viewParametersPage._tree.selectedIndexes(), timeout=20000)
-
-  # Unflag the first bout so it doesn't mess with later tests and save the changes
-  assert viewParametersPage.flag_movement_btn.text() == 'UnFlag Movement'
-  qtbot.mouseClick(viewParametersPage.flag_movement_btn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(viewParametersPage.superstruct_btn.isVisible, timeout=20000)
-  qtbot.mouseClick(viewParametersPage.superstruct_btn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: not viewParametersPage.superstruct_btn.isVisible(), timeout=20000)
-
-  # Go back to the start page
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
-
-
-@pytest.mark.long
-def test_alternative_ZZoutput(qapp, qtbot, monkeypatch, tmp_path):
-  global _VIDEO_NAMES
-  # create alternative ZZoutput folder, copy some results there and rename them
-  defaultZZoutputLocation = qapp.ZZoutputLocation
-  newFolder = d = tmp_path / "newZZoutput"
-  newFolder.mkdir()
-  videoIndices = set([idx for idx in range(len(_VIDEO_NAMES)) if 2 < _WELLS_PER_VIDEO[idx] < 6][:2])
-  assert len(videoIndices) == 2
-  newNames = [f'asd{idx}{_VIDEO_NAMES[idx]}' for idx in videoIndices]
-  try:
-    oldVideoNames = _VIDEO_NAMES[:]
-    for idx, name in zip(videoIndices, newNames):
-      shutil.copytree(os.path.join(defaultZZoutputLocation, _VIDEO_NAMES[idx]), os.path.join(newFolder, name))
-      os.rename(os.path.join(newFolder, name, f'results_{_VIDEO_NAMES[idx]}.txt'), os.path.join(newFolder, name, f'results_{name}.txt'))
-      _VIDEO_NAMES[idx] = name
-    # set the new folder as the selected output folder and create the experiment
-    monkeypatch.setattr(qapp, '_ZZoutputLocation', str(newFolder))
-    createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-    conditionsList = [(('condition1', 'condition1', 'condition2', 'condition2') * 2)[:_WELLS_PER_VIDEO[sorted(videoIndices)[0]]],
-                      (('condition1', 'condition2', 'condition1', 'condition2') * 2)[:_WELLS_PER_VIDEO[sorted(videoIndices)[1]]]]
-    genotypesList = [(('genotype1', 'genotype1', 'genotype2', 'genotype2') * 2)[:_WELLS_PER_VIDEO[sorted(videoIndices)[0]]],
-                     (('genotype1', 'genotype2', 'genotype1', 'genotype2') * 2)[:_WELLS_PER_VIDEO[sorted(videoIndices)[1]]]]
-    conditions = map(lambda x: '[%s]' % ','.join(x), conditionsList)
-    genotypes = map(lambda x: '[%s]' % ','.join(x), genotypesList)
-    _createExperimentOrganizationExcel(createExcelPage, qapp, qtbot, monkeypatch, indices=videoIndices, conditions=conditions, genotypes=genotypes)
-  finally:
-    _VIDEO_NAMES = oldVideoNames
-
-  monkeypatch.setattr(QMessageBox, 'question', lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
-  qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod), timeout=20000)
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison), timeout=20000)
-
-  populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-  monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
-  qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
-
-  _test_kinematic_parameters_small_check_results()
-
-  qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
-  qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
-
-  # set the default ZZoutput folder again and ensure errors are detected, set it back to the new folder and ensure no errors
-  monkeypatch.setattr(qapp, '_ZZoutputLocation', defaultZZoutputLocation)
-  createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-  _selectExperiment(createExcelPage, qapp, qtbot, f'Experiment {count[0] - 1}.xlsx')
-  assert createExcelPage._table.model().getErrors(createExcelPage._getWellPositions, createExcelPage._findResultsFile)
-  monkeypatch.setattr(qapp, '_ZZoutputLocation', str(newFolder))
-  assert not createExcelPage._table.model().getErrors(createExcelPage._getWellPositions, createExcelPage._findResultsFile)
-
-
-@pytest.mark.long
-def test_command_line(monkeypatch): # here we simply run the same experiments that were run through the gui using the command line instead
-  from zebrazoom.kinematicParametersAnalysis import kinematicParametersAnalysis  # __main__ simply calls this
-
-  experiment1 = os.path.join(paths.getDataAnalysisFolder(), 'experimentOrganizationExcel', 'Experiment 1.xlsx')
-  experiment2 = os.path.join(paths.getDataAnalysisFolder(), 'experimentOrganizationExcel', 'Experiment 2.xlsx')
-  experiment3 = os.path.join(paths.getDataAnalysisFolder(), 'experimentOrganizationExcel', 'Experiment 3.xlsx')
-
-  # pathToExcelFile frameStepForDistanceCalculation minimumNumberOfBendsPerBout keepSpeedDistDurWhenLowNbBends thresholdInDegreesBetweenSfsAndTurns tailAngleKinematicParameterCalculation
-  # saveRawDataInAllBoutsSuperStructure saveAllBoutsSuperStructuresInMatlabFormat forcePandasDfRecreation
-  test_kinematic_parameters_small_params = [experiment1, '4', '0', '0', '-1', '1', '0', '0']
-  test_basic_params = [experiment2, '4', '0', '0', '-1', '0', '0', '0', '1']
-  test_force_recalculation_params = [experiment3, '4', '0', '0', '-1', '0', '0', '0', '1']
-  test_kinematic_parameters_large_params = [experiment2, '4', '0', '0', '-1', '1', '0', '0']
-  test_frames_for_distance_calculation_params = [experiment2, '1', '0', '0', '-1', '0', '0', '0']
-  test_minimum_number_of_bends_params = [experiment2, '4', '12', '0', '-1', '1', '0', '0']
-  test_keep_data_for_discarded_bouts_params = [experiment2, '4', '12', '1', '-1', '1', '0', '0']
-
-  # test_kinematic_parameters_small
-  monkeypatch.setattr(sys, 'argv', [sys.executable, 'dataPostProcessing', 'kinematicParametersAnalysis', *test_kinematic_parameters_small_params])
-  kinematicParametersAnalysis(sys)
-  _test_kinematic_parameters_small_check_results()
-
-  # test_basic
-  monkeypatch.setattr(sys, 'argv', [sys.executable, 'dataPostProcessing', 'kinematicParametersAnalysis', *test_basic_params])
-  kinematicParametersAnalysis(sys)
-  _test_basic_check_results()
-
-  # test_force_recalculation
-  assert os.path.exists(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'parametersUsedForCalculation.json'))
-  assert os.path.exists(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'test4.pkl'))
-  mtime = os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'parametersUsedForCalculation.json')).st_mtime
-  monkeypatch.setattr(sys, 'argv', [sys.executable, 'dataPostProcessing', 'kinematicParametersAnalysis', *test_force_recalculation_params])
-  kinematicParametersAnalysis(sys)
-  assert mtime != os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'test4', 'parametersUsedForCalculation.json')).st_mtime
-
-  # test_kinematic_parameters_large
-  monkeypatch.setattr(sys, 'argv', [sys.executable, 'dataPostProcessing', 'kinematicParametersAnalysis', *test_kinematic_parameters_large_params])
-  kinematicParametersAnalysis(sys)
-  _test_kinematic_parameters_large_check_results()
-
-  # test_frames_for_distance_calculation
-  monkeypatch.setattr(sys, 'argv', [sys.executable, 'dataPostProcessing', 'kinematicParametersAnalysis', *test_frames_for_distance_calculation_params])
-  kinematicParametersAnalysis(sys)
-  _test_frames_for_distance_calculation_check_results()
-
-  # test_minimum_number_of_bends
-  monkeypatch.setattr(sys, 'argv', [sys.executable, 'dataPostProcessing', 'kinematicParametersAnalysis', *test_minimum_number_of_bends_params])
-  kinematicParametersAnalysis(sys)
-  _test_minimum_number_of_bends_check_results()
-
-  # test_keep_data_for_discarded_bouts
-  monkeypatch.setattr(sys, 'argv', [sys.executable, 'dataPostProcessing', 'kinematicParametersAnalysis', *test_keep_data_for_discarded_bouts_params])
-  kinematicParametersAnalysis(sys)
-  _test_keep_data_for_discarded_bouts_check_results()
-
-
 @pytest.fixture(scope="module", autouse=True)
 def _createNoBendsResults():
   exampleFolder = os.path.join(paths.getDefaultZZoutputFolder(), 'example2')
@@ -1200,14 +215,10 @@ def _createNoBendsResults():
     json.dump(results, resultsFile)
 
 
-@pytest.mark.long
-@pytest.mark.parametrize('recalculate', (True, False))
 class TestExampleExperiment:
-  def _createNoBendsExampleExperiment(self, qapp, qtbot, monkeypatch):
-    if hasattr(self, '_noBendsExampleExperiment'):
-      return
+  def _createExampleExperimentWithH5(self, qapp, qtbot, monkeypatch):
     createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-    videos = ('example1', 'example2noBends', 'example3')
+    videos = ('example1.h5', 'example2', 'example3')
     fpsList = (160, 160, 160)
     pixelSizes = (70, 70, 70)
     conditions = ["['nopH',nopH,'nopH','nopH','nopH','nopH','pH','pH','pH','pH','pH','pH']", "['nopH','nopH','nopH','nopH','nopH','nopH','pH','pH','pH','pH','pH','pH']", "['nopH','nopH','nopH','nopH','nopH','nopH','pH2','pH2','pH2','pH2','pH','pH']"]
@@ -1229,46 +240,125 @@ class TestExampleExperiment:
     qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._saveChangesBtn, Qt.MouseButton.LeftButton)
     qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
-    self._noBendsExampleExperiment = f'Experiment {count[0] - 1}'
 
-  def _selectExample(self, qapp, qtbot, noBends=False):
+  def _createNoBendsExampleExperiment(self, qapp, qtbot, monkeypatch):
     createExcelPage = _goToCreateExcelPage(qapp, qtbot)
-    _selectExperiment(createExcelPage, qapp, qtbot, f'{self._noBendsExampleExperiment}.xlsx' if noBends else 'example.xlsx')
+    videos = ('example1.h5', 'example2noBends', 'example3')
+    fpsList = (160, 160, 160)
+    pixelSizes = (70, 70, 70)
+    conditions = ["['nopH',nopH,'nopH','nopH','nopH','nopH','pH','pH','pH','pH','pH','pH']", "['nopH','nopH','nopH','nopH','nopH','nopH','pH','pH','pH','pH','pH','pH']", "['nopH','nopH','nopH','nopH','nopH','nopH','pH2','pH2','pH2','pH2','pH','pH']"]
+    genotypes = ["['WT','WT','WT','WT','WT','WT','WT','WT','WT','WT','WT','WT']", "['Mut','Mut','Mut','Mut','Mut','Mut','WT','WT','WT','WT','WT','WT']", "['WT','WT','WT','WT','WT','WT','Mut','Mut','Mut','Mut','Mut','Mut']"]
+    includes = ["[1,1,1,1,1,1,1,1,1,1,1,1]", "[1,1,1,1,1,1,1,1,1,1,1,1]", "[1,1,1,1,1,1,1,1,1,1,0,1]"]
+    qapp.processEvents()
+    qtbot.mouseClick(createExcelPage._newExperimentBtn, Qt.MouseButton.LeftButton)
+    qapp.processEvents()
+    qtbot.waitUntil(lambda: createExcelPage._tree.selectedIndexes() == [createExcelPage._tree.model().index(os.path.join(createExcelPage._tree.model().rootPath(), 'Experiment %d.xlsx' % count[0]))], timeout=20000)
+    count[0] += 1
+    qtbot.waitUntil(lambda: createExcelPage._table.model().rowCount() == 0, timeout=20000)
+    monkeypatch.setattr(createExcelPage, '_getMultipleFolders', lambda *args: [os.path.join(qapp.ZZoutputLocation, video) for video in videos])
+    qtbot.mouseClick(createExcelPage._addVideosBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: createExcelPage._table.model().rowCount() == len(videos), timeout=20000)
+    for idx, (fps, pixelSize, condition, genotype, include) in enumerate(zip(fpsList, pixelSizes, conditions, genotypes, includes)):
+      _enterRowValues(qtbot, createExcelPage._table, idx, (str(fps), str(pixelSize), condition, genotype, include))
+    monkeypatch.setattr(QMessageBox, 'information', lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
+    monkeypatch.setattr(QMessageBox, 'question', lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
+    qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._saveChangesBtn, Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
+
+  def _createAlternativeFolderExampleExperiment(self, qapp, qtbot, monkeypatch):
+    createExcelPage = _goToCreateExcelPage(qapp, qtbot)
+    videos = ('example1asd.h5', 'example2asd', 'example3asd')
+    fpsList = (160, 160, 160)
+    pixelSizes = (70, 70, 70)
+    conditions = ["['nopH',nopH,'nopH','nopH','nopH','nopH','pH','pH','pH','pH','pH','pH']", "['nopH','nopH','nopH','nopH','nopH','nopH','pH','pH','pH','pH','pH','pH']", "['nopH','nopH','nopH','nopH','nopH','nopH','pH2','pH2','pH2','pH2','pH','pH']"]
+    genotypes = ["['WT','WT','WT','WT','WT','WT','WT','WT','WT','WT','WT','WT']", "['Mut','Mut','Mut','Mut','Mut','Mut','WT','WT','WT','WT','WT','WT']", "['WT','WT','WT','WT','WT','WT','Mut','Mut','Mut','Mut','Mut','Mut']"]
+    includes = ["[1,1,1,1,1,1,1,1,1,1,1,1]", "[1,1,1,1,1,1,1,1,1,1,1,1]", "[1,1,1,1,1,1,1,1,1,1,0,1]"]
+    qapp.processEvents()
+    qtbot.mouseClick(createExcelPage._newExperimentBtn, Qt.MouseButton.LeftButton)
+    qapp.processEvents()
+    qtbot.waitUntil(lambda: createExcelPage._tree.selectedIndexes() == [createExcelPage._tree.model().index(os.path.join(createExcelPage._tree.model().rootPath(), 'Experiment %d.xlsx' % count[0]))], timeout=20000)
+    count[0] += 1
+    qtbot.waitUntil(lambda: createExcelPage._table.model().rowCount() == 0, timeout=20000)
+    monkeypatch.setattr(createExcelPage, '_getMultipleFolders', lambda *args: [os.path.join(qapp.ZZoutputLocation, video) for video in videos])
+    qtbot.mouseClick(createExcelPage._addVideosBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: createExcelPage._table.model().rowCount() == len(videos), timeout=20000)
+    for idx, (fps, pixelSize, condition, genotype, include) in enumerate(zip(fpsList, pixelSizes, conditions, genotypes, includes)):
+      _enterRowValues(qtbot, createExcelPage._table, idx, (str(fps), str(pixelSize), condition, genotype, include))
+    monkeypatch.setattr(QMessageBox, 'information', lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
+    monkeypatch.setattr(QMessageBox, 'question', lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
+    qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._saveChangesBtn, Qt.MouseButton.LeftButton)
+    qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
+
+  def _selectExample(self, qapp, qtbot, experiment='Experiment 1'):
+    createExcelPage = _goToCreateExcelPage(qapp, qtbot)
+    _selectExperiment(createExcelPage, qapp, qtbot, f'{experiment}.xlsx')
     qtbot.mouseClick(createExcelPage._runExperimentBtn, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ChooseDataAnalysisMethod), timeout=20000)
     qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._compareBtn, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), PopulationComparison), timeout=20000)
 
-  def _checkResults(self, resultsFolder, noBends=False):
-    outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', self._noBendsExampleExperiment if noBends else 'example')
-    expectedResultsFolder = os.path.join(os.path.dirname(__file__), 'expected_results', resultsFolder)
+  def _checkResults(self, resultsFolder, store_results, experiment='Experiment 1'):
+    outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', experiment)
+    if store_results:
+      expectedResultsFolder = os.path.join(os.path.dirname(__file__), 'generated_results', resultsFolder)
+      if not os.path.exists(os.path.join(expectedResultsFolder, 'allBoutsMixed')):
+        os.makedirs(os.path.join(expectedResultsFolder, 'allBoutsMixed'))
+      if not os.path.exists(os.path.join(expectedResultsFolder, 'medianPerWellFirst')):
+        os.makedirs(os.path.join(expectedResultsFolder, 'medianPerWellFirst'))
+    else:
+      expectedResultsFolder = os.path.join(os.path.dirname(__file__), 'expected_results', resultsFolder)
     with open(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.csv')) as f1, \
-        open(os.path.join(expectedResultsFolder, 'allBoutsMixed', 'globalParametersInsideCategories.csv')) as f2:
-      assert f1.read() == f2.read()
+        open(os.path.join(expectedResultsFolder, 'allBoutsMixed', 'globalParametersInsideCategories.csv'), 'w+' if store_results else 'r') as f2:
+      if store_results:
+        f2.write(f1.read())
+        f1.seek(0)
+        f2.seek(0)
+        expectedDF = pd.read_csv(f2)
+        generatedDF = pd.read_csv(f1)
+        for col in expectedDF.columns:
+          assert_series_equal(expectedDF[col], generatedDF[col])
+      else:
+        assert f1.read() == f2.read()
     with open(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.csv')) as f1, \
-        open(os.path.join(expectedResultsFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.csv')) as f2:
-      assert f1.read() == f2.read()
+        open(os.path.join(expectedResultsFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.csv'), 'w+' if store_results else 'r') as f2:
+      if store_results:
+        f2.write(f1.read())
+        f1.seek(0)
+        f2.seek(0)
+        expectedDF = pd.read_csv(f2)
+        generatedDF = pd.read_csv(f1)
+        for col in expectedDF.columns:
+          assert_series_equal(expectedDF[col], generatedDF[col])
+      else:
+        assert f1.read() == f2.read()
 
-  def test_kinematic_parameters(self, qapp, qtbot, monkeypatch, recalculate):
+  def test_kinematic_parameters(self, qapp, qtbot, monkeypatch, store_results):
+    '''
+    This test uses the default options when first starting zebrazoom (calculate tail tracking parameters, no outlier removal).
+    '''
+    self._createExampleExperimentWithH5(qapp, qtbot, monkeypatch)
     self._selectExample(qapp, qtbot)
 
     populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-    monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
     _resetPopulationComparisonPageState(populationComparisonPage, qapp)
-    qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
-    qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked, timeout=20000)
-    if recalculate:
-      qtbot.mouseClick(populationComparisonPage._forcePandasRecreation, Qt.MouseButton.LeftButton)
-      qtbot.waitUntil(populationComparisonPage._forcePandasRecreation.isChecked, timeout=20000)
     qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
 
-    self._checkResults('test_kinematic_parameters')
+    self._checkResults('test_kinematic_parameters', store_results)
 
     qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
 
-  def test_basic(self, qapp, qtbot, monkeypatch, recalculate):
+  @pytest.mark.parametrize('recalculate', (True, False))
+  def test_basic(self, qapp, qtbot, monkeypatch, recalculate, store_results):
+    '''
+    This test doesn't calculate tail tracking parameters and uses no outlier removal. It runs twice,
+    the first run selects 'Yes' when asked about reusing parameters, the second one selects 'No'.
+    '''
+    assert os.path.exists(os.path.join(paths.getDefaultZZoutputFolder(), 'example2', 'example2.pkl'))
+    mtime = os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'example2', 'parametersUsedForCalculation.json')).st_mtime
     self._selectExample(qapp, qtbot)
 
     populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
@@ -1279,17 +369,23 @@ class TestExampleExperiment:
     qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
 
-    self._checkResults('test_basic')
+    self._checkResults('test_basic', store_results)
+    # ensure recalculate flag was respected
+    assert (mtime == os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'example2', 'parametersUsedForCalculation.json')).st_mtime) != recalculate
 
     qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
 
-  def test_minimum_number_of_bends(self, qapp, qtbot, monkeypatch, recalculate):
+  def test_minimum_number_of_bends(self, qapp, qtbot, monkeypatch, store_results):
+    '''
+    This test calculates tail tracking parameters and uses bends based outlier removal with the minimum number of bends set to 3.
+    Other options are not changed.
+    '''
     self._createNoBendsExampleExperiment(qapp, qtbot, monkeypatch)
-    self._selectExample(qapp, qtbot, noBends=True)
+    self._selectExample(qapp, qtbot, experiment='Experiment 2')
 
     populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-    monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: recalculate)
+    monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
     _resetPopulationComparisonPageState(populationComparisonPage, qapp)
     qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked, timeout=20000)
@@ -1301,16 +397,20 @@ class TestExampleExperiment:
     qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
 
-    self._checkResults('test_minimum_number_of_bends', noBends=True)
+    self._checkResults('test_minimum_number_of_bends', store_results, experiment='Experiment 2')
 
     qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
 
-  def test_keep_data_for_discarded_bouts_and_frames_for_distance_calculation(self, qapp, qtbot, monkeypatch, recalculate):
+  def test_keep_data_for_discarded_bouts_and_frames_for_distance_calculation(self, qapp, qtbot, monkeypatch, store_results):
+    '''
+    This test calculates tail tracking parameters and uses bends based outlier removal with the minimum number of bends set to 3.
+    In addition to this, frameStepForDistanceCalculation is set to 10 and the checkbox for keeping data from discarded bouts is checked.
+    '''
     self._selectExample(qapp, qtbot)
 
     populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-    monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: recalculate)
+    monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
     _resetPopulationComparisonPageState(populationComparisonPage, qapp)
     qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked, timeout=20000)
@@ -1326,23 +426,242 @@ class TestExampleExperiment:
     qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
 
-    self._checkResults('test_keep_data_for_discarded_bouts_and_frames_for_distance_calculation')
+    self._checkResults('test_keep_data_for_discarded_bouts_and_frames_for_distance_calculation', store_results)
 
     qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
 
-  def test_gaussian_outlier_removal(self, qapp, qtbot, monkeypatch, recalculate):
+  def test_gaussian_outlier_removal(self, qapp, qtbot, monkeypatch, store_results):
+    '''
+    This test calculates tail tracking parameters and uses gaussian outlier removal.
+    Other options are not changed.
+    '''
     self._selectExample(qapp, qtbot)
 
     populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
-    monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: recalculate)
+    monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
     _resetPopulationComparisonPageState(populationComparisonPage, qapp)
     qtbot.mouseClick(populationComparisonPage._gaussianOutlierRemovalButton, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(populationComparisonPage._gaussianOutlierRemovalButton.isChecked, timeout=20000)
     qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
 
-    self._checkResults('test_gaussian_outlier_removal')
+    self._checkResults('test_gaussian_outlier_removal', store_results)
 
     qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
+
+  def _goToVisualizationPage(self, qapp, qtbot):
+    startPage = qapp.window.centralWidget().layout().currentWidget()
+    assert isinstance(startPage, StartPage)
+    circle = list(startPage._flowchart.iterCircleRects())[-2]
+    qtbot.mouseMove(startPage, pos=QPoint(circle.x() + circle.width() // 2, circle.y() + circle.height()))
+    qtbot.waitUntil(lambda: startPage._shownDetail is startPage._detailsWidgets[-2], timeout=20000)
+    qtbot.mouseClick(startPage._shownDetail._visualizeOutputBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), ViewParameters), timeout=20000)
+    viewParametersPage = qapp.window.centralWidget().layout().currentWidget()
+    qapp.processEvents()
+    assert viewParametersPage._tree.selectedIndexes() == []
+    return viewParametersPage
+
+  def test_flagged_bouts(self, qapp, qtbot, monkeypatch, store_results):
+    '''
+    This test does the following steps:
+      - go to  Visualization page
+      - flag the first bout in the first well of example1.h5 and example3 (this way we test flagging for both h5 and old style results)
+      - go to experiment creation page and run the experiment with the following options: Calculate tail tracking parameters unchecked, No outlier removal selected, Force recalculation of parameters checked
+      - go to Visualization page again and unflag the bout
+    '''
+    assert os.path.exists(os.path.join(paths.getDefaultZZoutputFolder(), 'example2', 'example2.pkl'))
+    mtime = os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'example2', 'parametersUsedForCalculation.json')).st_mtime
+    viewParametersPage = self._goToVisualizationPage(qapp, qtbot)
+
+    # Select example1.h5 results file
+    resultsItem = next(results for results in viewParametersPage._tree.model().sourceModel().rootItem.iter_paths() if results.filename.endswith('example1.h5'))
+    resultsIndex = viewParametersPage._tree.model().mapFromSource(viewParametersPage._tree.model().sourceModel().createIndex(resultsItem.childNumber(), 0, resultsItem))
+    qtbot.mouseClick(viewParametersPage._tree.viewport(), Qt.MouseButton.LeftButton, pos=viewParametersPage._tree.visualRect(resultsIndex).center())
+    qapp.processEvents()
+    qtbot.waitUntil(lambda: resultsIndex in viewParametersPage._tree.selectedIndexes(), timeout=20000)
+
+    # Flag the first bout and save the changes
+    assert viewParametersPage.flag_movement_btn.text() == 'Flag Movement'
+    qtbot.mouseClick(viewParametersPage.flag_movement_btn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(viewParametersPage.superstruct_btn.isVisible, timeout=20000)
+    qtbot.mouseClick(viewParametersPage.superstruct_btn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: not viewParametersPage.superstruct_btn.isVisible(), timeout=20000)
+
+    # Select example3 results folder
+    resultsItem = next(results for results in viewParametersPage._tree.model().sourceModel().rootItem.iter_paths() if results.filename.endswith('example3'))
+    resultsIndex = viewParametersPage._tree.model().mapFromSource(viewParametersPage._tree.model().sourceModel().createIndex(resultsItem.childNumber(), 0, resultsItem))
+    qtbot.mouseClick(viewParametersPage._tree.viewport(), Qt.MouseButton.LeftButton, pos=viewParametersPage._tree.visualRect(resultsIndex).center())
+    qapp.processEvents()
+    qtbot.waitUntil(lambda: resultsIndex in viewParametersPage._tree.selectedIndexes(), timeout=20000)
+
+    # Flag the first bout and save the changes
+    assert viewParametersPage.flag_movement_btn.text() == 'Flag Movement'
+    qtbot.mouseClick(viewParametersPage.flag_movement_btn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(viewParametersPage.superstruct_btn.isVisible, timeout=20000)
+    qtbot.mouseClick(viewParametersPage.superstruct_btn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: not viewParametersPage.superstruct_btn.isVisible(), timeout=20000)
+
+    # Go back to the start page
+    qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
+
+    self._selectExample(qapp, qtbot)
+
+    populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
+    monkeypatch.setattr(populationComparisonPage, '_warnParametersReused', lambda *args, **kwargs: False)
+    _resetPopulationComparisonPageState(populationComparisonPage, qapp)
+    qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: not populationComparisonPage._tailTrackingParametersCheckbox.isChecked(), timeout=20000)
+    qtbot.mouseClick(populationComparisonPage._advancedOptionsExpander._toggleButton, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(populationComparisonPage._advancedOptionsExpander._toggleButton.isChecked, timeout=20000)
+    qtbot.mouseClick(populationComparisonPage._forcePandasRecreation, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(populationComparisonPage._forcePandasRecreation.isChecked, timeout=20000)
+    qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
+
+    self._checkResults('test_flagged_bouts', store_results)
+    # ensure parameters were recalculated
+    assert mtime != os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'example2', 'parametersUsedForCalculation.json')).st_mtime
+
+    qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
+
+    viewParametersPage = self._goToVisualizationPage(qapp, qtbot)
+
+    # Select example1.h5 results file
+    resultsItem = next(results for results in viewParametersPage._tree.model().sourceModel().rootItem.iter_paths() if results.filename.endswith('example1.h5'))
+    resultsIndex = viewParametersPage._tree.model().mapFromSource(viewParametersPage._tree.model().sourceModel().createIndex(resultsItem.childNumber(), 0, resultsItem))
+    qtbot.mouseClick(viewParametersPage._tree.viewport(), Qt.MouseButton.LeftButton, pos=viewParametersPage._tree.visualRect(resultsIndex).center())
+    qapp.processEvents()
+    qtbot.waitUntil(lambda: resultsIndex in viewParametersPage._tree.selectedIndexes(), timeout=20000)
+
+    # Unflag the first bout so it doesn't mess with later tests and save the changes
+    assert viewParametersPage.flag_movement_btn.text() == 'UnFlag Movement'
+    qtbot.mouseClick(viewParametersPage.flag_movement_btn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(viewParametersPage.superstruct_btn.isVisible, timeout=20000)
+    qtbot.mouseClick(viewParametersPage.superstruct_btn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: not viewParametersPage.superstruct_btn.isVisible(), timeout=20000)
+
+    # Select example3 results folder
+    resultsItem = next(results for results in viewParametersPage._tree.model().sourceModel().rootItem.iter_paths() if results.filename.endswith('example3'))
+    resultsIndex = viewParametersPage._tree.model().mapFromSource(viewParametersPage._tree.model().sourceModel().createIndex(resultsItem.childNumber(), 0, resultsItem))
+    qtbot.mouseClick(viewParametersPage._tree.viewport(), Qt.MouseButton.LeftButton, pos=viewParametersPage._tree.visualRect(resultsIndex).center())
+    qapp.processEvents()
+    qtbot.waitUntil(lambda: resultsIndex in viewParametersPage._tree.selectedIndexes(), timeout=20000)
+
+    # Unflag the first bout so it doesn't mess with later tests and save the changes
+    assert viewParametersPage.flag_movement_btn.text() == 'UnFlag Movement'
+    qtbot.mouseClick(viewParametersPage.flag_movement_btn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(viewParametersPage.superstruct_btn.isVisible, timeout=20000)
+    qtbot.mouseClick(viewParametersPage.superstruct_btn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: not viewParametersPage.superstruct_btn.isVisible(), timeout=20000)
+
+    # Go back to the start page
+    qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
+
+  def test_alternative_ZZoutput(self, qapp, qtbot, monkeypatch, tmp_path, store_results):
+    '''
+    This test does the same thing as test_basic, but using results files from another folder.
+    Different results names are used to ensure errors are correctly detected if files do not exist in the current ZZoutputLocation.
+    '''
+    if store_results:
+      return  # this one uses test_basic_results, no need to store anything
+    # create alternative ZZoutput folder, copy some results there and rename them
+    defaultZZoutputLocation = qapp.ZZoutputLocation
+    newFolder = d = tmp_path / "newZZoutput"
+    newFolder.mkdir()
+    oldNames = ('example2', 'example3')
+    newNames = ('example2asd', 'example3asd')
+    for oldName, newName in zip(oldNames, newNames):
+      shutil.copytree(os.path.join(defaultZZoutputLocation, oldName), os.path.join(newFolder, newName))
+      os.rename(os.path.join(newFolder, newName, f'results_{oldName}.txt'), os.path.join(newFolder, newName, f'results_{newName}.txt'))
+    shutil.copyfile(os.path.join(defaultZZoutputLocation, 'example1.h5'), os.path.join(newFolder, 'example1asd.h5'))
+
+    monkeypatch.setattr(qapp, '_ZZoutputLocation', str(newFolder))
+    self._createAlternativeFolderExampleExperiment(qapp, qtbot, monkeypatch)
+
+    monkeypatch.setattr(QMessageBox, 'question', lambda *args, **kwargs: QMessageBox.StandardButton.Yes)
+    self._selectExample(qapp, qtbot, experiment='Experiment 3')
+
+    populationComparisonPage = qapp.window.centralWidget().layout().currentWidget()
+    _resetPopulationComparisonPageState(populationComparisonPage, qapp)
+    qtbot.mouseClick(populationComparisonPage._tailTrackingParametersCheckbox, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: not populationComparisonPage._tailTrackingParametersCheckbox.isChecked(), timeout=20000)
+    qtbot.mouseClick(populationComparisonPage._launchBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), KinematicParametersVisualization), timeout=20000)
+
+    # use results from test_basic, but update results names
+    outputFolder = os.path.join(paths.getDataAnalysisFolder(), 'resultsKinematic', 'Experiment 3')
+    expectedResultsFolder = os.path.join(os.path.dirname(__file__), 'expected_results', 'test_basic')
+    with open(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.csv')) as f1, \
+        open(os.path.join(expectedResultsFolder, 'allBoutsMixed', 'globalParametersInsideCategories.csv')) as f2:
+      assert f1.read() == f2.read().replace('example1', 'example1asd').replace('example2', 'example2asd').replace('example3', 'example3asd')
+    with open(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.csv')) as f1, \
+        open(os.path.join(expectedResultsFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.csv')) as f2:
+      assert f1.read() == f2.read().replace('example1', 'example1asd').replace('example2', 'example2asd').replace('example3', 'example3asd')
+
+    qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
+    qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
+
+    # set the default ZZoutput folder again and ensure errors are detected, set it back to the new folder and ensure no errors
+    monkeypatch.setattr(qapp, '_ZZoutputLocation', defaultZZoutputLocation)
+    createExcelPage = _goToCreateExcelPage(qapp, qtbot)
+    _selectExperiment(createExcelPage, qapp, qtbot, 'Experiment 3.xlsx')
+    assert createExcelPage._table.model().getErrors(createExcelPage._getWellPositions, createExcelPage._findResultsFile)
+    monkeypatch.setattr(qapp, '_ZZoutputLocation', str(newFolder))
+    assert not createExcelPage._table.model().getErrors(createExcelPage._getWellPositions, createExcelPage._findResultsFile)
+
+  @pytest.mark.long
+  def test_command_line(self, monkeypatch, store_results):
+    '''
+    This test replicates some of the previous tests using the command line instead of the GUI.
+    '''
+    from zebrazoom.kinematicParametersAnalysis import kinematicParametersAnalysis  # __main__ simply calls this
+
+    exampleExperiment = os.path.join(paths.getDataAnalysisFolder(), 'experimentOrganizationExcel', 'Experiment 1.xlsx')
+    noBendsExperiment = os.path.join(paths.getDataAnalysisFolder(), 'experimentOrganizationExcel', 'Experiment 2.xlsx')
+
+    # pathToExcelFile frameStepForDistanceCalculation minimumNumberOfBendsPerBout keepSpeedDistDurWhenLowNbBends thresholdInDegreesBetweenSfsAndTurns tailAngleKinematicParameterCalculation
+    # saveRawDataInAllBoutsSuperStructure saveAllBoutsSuperStructuresInMatlabFormat forcePandasDfRecreation
+    test_kinematic_parameters = [exampleExperiment, '4', '0', '0', '-1', '1', '0', '0', '1']
+    test_basic_recalculate = [exampleExperiment, '4', '0', '0', '-1', '0', '0', '0', '1']
+    test_basic = [exampleExperiment, '4', '0', '0', '-1', '0', '0', '0']
+    test_minimum_number_of_bends = [noBendsExperiment, '4', '3', '0', '-1', '1', '0', '0']
+    test_keep_data_for_discarded_bouts_and_frames_for_distance_calculation = [exampleExperiment, '10', '3', '1', '-1', '1', '0', '0']
+
+    # test_kinematic_parameters
+    monkeypatch.setattr(sys, 'argv', [sys.executable, 'dataPostProcessing', 'kinematicParametersAnalysis', *test_kinematic_parameters])
+    kinematicParametersAnalysis(sys)
+    self._checkResults('test_kinematic_parameters', store_results)
+
+    # test_basic_recalculate
+    assert os.path.exists(os.path.join(paths.getDefaultZZoutputFolder(), 'example2', 'example2.pkl'))
+    mtime = os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'example2', 'parametersUsedForCalculation.json')).st_mtime
+    monkeypatch.setattr(sys, 'argv', [sys.executable, 'dataPostProcessing', 'kinematicParametersAnalysis', *test_basic_recalculate])
+    kinematicParametersAnalysis(sys)
+    self._checkResults('test_basic', store_results)
+    # ensure parameters were recalculated
+    assert mtime != os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'example2', 'parametersUsedForCalculation.json')).st_mtime
+
+    # test_basic
+    assert os.path.exists(os.path.join(paths.getDefaultZZoutputFolder(), 'example2', 'example2.pkl'))
+    mtime = os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'example2', 'parametersUsedForCalculation.json')).st_mtime
+    monkeypatch.setattr(sys, 'argv', [sys.executable, 'dataPostProcessing', 'kinematicParametersAnalysis', *test_basic])
+    kinematicParametersAnalysis(sys)
+    self._checkResults('test_basic', store_results)
+    # ensure parameters were not recalculated
+    assert mtime == os.stat(os.path.join(paths.getDefaultZZoutputFolder(), 'example2', 'parametersUsedForCalculation.json')).st_mtime
+
+    # test_minimum_number_of_bends
+    monkeypatch.setattr(sys, 'argv', [sys.executable, 'dataPostProcessing', 'kinematicParametersAnalysis', *test_minimum_number_of_bends])
+    kinematicParametersAnalysis(sys)
+    self._checkResults('test_minimum_number_of_bends', store_results, experiment='Experiment 2')
+
+    # test_keep_data_for_discarded_bouts_and_frames_for_distance_calculation
+    monkeypatch.setattr(sys, 'argv', [sys.executable, 'dataPostProcessing', 'kinematicParametersAnalysis', *test_keep_data_for_discarded_bouts_and_frames_for_distance_calculation])
+    kinematicParametersAnalysis(sys)
+    self._checkResults('test_keep_data_for_discarded_bouts_and_frames_for_distance_calculation', store_results)
