@@ -24,4 +24,7 @@ def setDataPerTimeInterval(videoName: str, numWell: int, numAnimal: int, startTi
       allParameters = ', '.join(dataGroup.keys())
       raise ValueError(f'Parameter "{parameterName}" not found in results. Available parameters: {allParameters}')
     dataset = dataGroup[parameterName]
-    dataset[intervalStart:intervalEnd] = newValues
+    if parameterName == 'HeadPos':
+      dataset[intervalStart:intervalEnd] = [(newValues[i, 0], newValues[i, 1]) for i in range(len(newValues))]
+    else:
+      dataset[intervalStart:intervalEnd] = newValues
