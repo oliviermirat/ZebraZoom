@@ -1,0 +1,202 @@
+name: Release a new version - testing
+
+on:
+  workflow_dispatch:
+    inputs:
+      new_version:
+        description: Release version
+        required: true
+        type: string
+
+jobs:
+  deploy_windows:
+    name: Deploy on Windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: master
+      - name: Install Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install pyinstaller
+          pip install -e .
+      - name: Freeze the code
+        run: |
+          mkdir build
+          cd build
+          pyinstaller --console --icon=../icon.ico --onedir --contents-directory ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoom ../zebrazoom/__main__.py
+          pyinstaller --onefile --uac-admin --icon=../icon.ico --windowed -n updater ../updater.py
+          rm -erroraction silentlycontinue dist/ZebraZoom/ZebraZoom/zebrazoom/dataAnalysis/data/.gitignore
+          rm -erroraction silentlycontinue dist/ZebraZoom/ZebraZoom/zebrazoom/dataAnalysis/resultsClustering/.gitignore
+          rm -erroraction silentlycontinue dist/ZebraZoom/ZebraZoom/zebrazoom/dataAnalysis/resultsKinematic/.gitignore
+          mkdir dist/ZebraZoom/ZebraZoom/zebrazoom/code/tracking
+          cp -r ../zebrazoom/code/tracking/customTrackingImplementations dist/ZebraZoom/ZebraZoom/zebrazoom/code/tracking/customTrackingImplementations
+          mkdir dist/ZebraZoom/ZebraZoom/zebrazoom/code/GUI/tracking
+          cp -r ../zebrazoom/code/GUI/tracking/customTrackingImplementations dist/ZebraZoom/ZebraZoom/zebrazoom/code/GUI/tracking/customTrackingImplementations
+          mkdir dist/ZebraZoom/ZebraZoom/updater
+          mv dist/updater.exe dist/ZebraZoom/ZebraZoom/updater
+          cp ../icon.ico dist/ZebraZoom/ZebraZoom
+      - name: Run the created executable
+        run: |
+          build/dist/ZebraZoom/ZebraZoom exit
+          rm build/dist/ZebraZoom/ZebraZoom/zebrazoom/ZZoutput/_groupsInternal.pkl
+
+  deploy_linux:
+    name: Deploy on Linux
+    runs-on: ubuntu-latest
+    container:
+      image: centos/python-38-centos7
+      options: --user root
+    steps:
+      - name: Checkout repository
+        uses: taiki-e/checkout-action@v1
+        with:
+          ref: master
+      - name: Install dependencies
+        run: |
+          sed -i 's/mirrorlist=/#mirrorlist=/g' /etc/yum.repos.d/CentOS-Base.repo
+          sed -i 's$#baseurl=http://mirror$baseurl=http://vault$g' /etc/yum.repos.d/CentOS-Base.repo
+          yum --disablerepo="*" --enablerepo="base" install -y mesa-libGL
+          python3 -m pip install --upgrade pip setuptools wheel
+          python3 -m pip install pyinstaller
+          python3 -m pip install -e .
+      - name: Freeze the code
+        run: |
+          mkdir build
+          cd build
+          pyinstaller --console --icon=../icon.ico --onedir --contents-directory . --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoom ../zebrazoom/__main__.py
+          pyinstaller --onefile --icon=../icon.ico --windowed -n updater ../updater.py
+          rm -f dist/ZebraZoom/zebrazoom/dataAnalysis/data/.gitignore
+          rm -f dist/ZebraZoom/zebrazoom/dataAnalysis/resultsClustering/.gitignore
+          rm -f dist/ZebraZoom/zebrazoom/dataAnalysis/resultsKinematic/.gitignore
+          mkdir dist/ZebraZoom/zebrazoom/code/tracking
+          cp -r ../zebrazoom/code/tracking/customTrackingImplementations dist/ZebraZoom/zebrazoom/code/tracking/customTrackingImplementations
+          mkdir dist/ZebraZoom/zebrazoom/code/GUI/tracking
+          cp -r ../zebrazoom/code/GUI/tracking/customTrackingImplementations dist/ZebraZoom/zebrazoom/code/GUI/tracking/customTrackingImplementations
+          mkdir dist/ZebraZoom/updater
+          mv dist/updater dist/ZebraZoom/updater
+          cp ../icon.ico dist/ZebraZoom
+
+  deploy_mac:
+    name: Deploy on macOS
+    runs-on: macOS-latest
+    env:
+      PYTHON_VERSION: 3.9.12
+      MACOSX_DEPLOYMENT_TARGET: 10.9
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: master
+      - name: Install Python
+        run: |
+          curl https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-macosx10.9.pkg -o "python.pkg" && sudo installer -pkg python.pkg -target /
+      - name: Install dependencies
+        run: |
+          python3.9 -m pip install --upgrade pip setuptools==62.6.0 wheel  # XXX: a bug was introduced in setuptools 63.0.0, remove the version constraint once it's fixed
+          python3.9 -m pip install pyinstaller
+          python3.9 -m pip install -e .
+      - name: Freeze the code
+        run: |
+          mkdir build
+          cd build
+          python3.9 -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory ZebraZoom --osx-bundle-identifier ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoomApp ../zebrazoom/__main__.py
+          python3.9 -m PyInstaller --onefile --icon=../icon.ico --windowed --osx-bundle-identifier ZebraZoom.updater -n updater ../updater.py
+          rm -f dist/ZebraZoomApp/ZebraZoom/zebrazoom/dataAnalysis/data/.gitignore
+          rm -f dist/ZebraZoomApp/ZebraZoom/zebrazoom/dataAnalysis/resultsClustering/.gitignore
+          rm -f dist/ZebraZoomApp/ZebraZoom/zebrazoom/dataAnalysis/resultsKinematic/.gitignore
+          mkdir dist/ZebraZoomApp/ZebraZoom/zebrazoom/code/tracking
+          cp -r ../zebrazoom/code/tracking/customTrackingImplementations dist/ZebraZoomApp/ZebraZoom/zebrazoom/code/tracking/customTrackingImplementations
+          mkdir dist/ZebraZoomApp/ZebraZoom/zebrazoom/code/GUI/tracking
+          cp -r ../zebrazoom/code/GUI/tracking/customTrackingImplementations dist/ZebraZoomApp/ZebraZoom/zebrazoom/code/GUI/tracking/customTrackingImplementations
+          mkdir dist/ZebraZoomApp/ZebraZoom/updater
+          mv dist/updater dist/ZebraZoomApp/ZebraZoom/updater
+          cp ../icon.ico dist/ZebraZoomApp/ZebraZoom
+      - name: Run the created executable
+        run: |
+          build/dist/ZebraZoomApp/ZebraZoomApp exit
+          rm build/dist/ZebraZoomApp/ZebraZoom/zebrazoom/ZZoutput/_groupsInternal.pkl
+
+  deploy_windows_legacy:
+    name: Deploy legacy format on Windows
+    runs-on: windows-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: master
+      - name: Install Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.9'
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip setuptools wheel
+          pip install pyinstaller
+          pip install -e .
+      - name: Freeze the code
+        run: |
+          mkdir build
+          cd build
+          pyinstaller --console --icon=../icon.ico --onedir --contents-directory . --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoom ../zebrazoom/__main__.py
+          pyinstaller --onefile --uac-admin --icon=../icon.ico --windowed -n updater ../updater.py
+          rm -erroraction silentlycontinue dist/ZebraZoom/zebrazoom/dataAnalysis/data/.gitignore
+          rm -erroraction silentlycontinue dist/ZebraZoom/zebrazoom/dataAnalysis/resultsClustering/.gitignore
+          rm -erroraction silentlycontinue dist/ZebraZoom/zebrazoom/dataAnalysis/resultsKinematic/.gitignore
+          mkdir dist/ZebraZoom/zebrazoom/code/tracking
+          cp -r ../zebrazoom/code/tracking/customTrackingImplementations dist/ZebraZoom/zebrazoom/code/tracking/customTrackingImplementations
+          mkdir dist/ZebraZoom/zebrazoom/code/GUI/tracking
+          cp -r ../zebrazoom/code/GUI/tracking/customTrackingImplementations dist/ZebraZoom/zebrazoom/code/GUI/tracking/customTrackingImplementations
+          mkdir dist/ZebraZoom/updater
+          mv dist/updater.exe dist/ZebraZoom/updater
+          cp ../icon.ico dist/ZebraZoom
+      - name: Run the created executable
+        run: |
+          build/dist/ZebraZoom/ZebraZoom exit
+          rm build/dist/ZebraZoom/zebrazoom/ZZoutput/_groupsInternal.pkl
+
+  deploy_mac_legacy:
+    name: Deploy legacy format on macOS
+    runs-on: macOS-latest
+    env:
+      PYTHON_VERSION: 3.13.0
+      MACOSX_DEPLOYMENT_TARGET: 11
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          ref: master
+      - name: Install Python
+        run: |
+          curl https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-macosx10.9.pkg -o "python.pkg" && sudo installer -pkg python.pkg -target /
+      - name: Install dependencies
+        run: |
+          python3.9 -m pip install --upgrade pip setuptools==62.6.0 wheel  # XXX: a bug was introduced in setuptools 63.0.0, remove the version constraint once it's fixed
+          python3.9 -m pip install pyinstaller
+          python3.9 -m pip install -e .
+      - name: Freeze the code
+        run: |
+          mkdir build
+          cd build
+          python3.9 -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory . --osx-bundle-identifier ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoomApp ../zebrazoom/__main__.py
+          python3.9 -m PyInstaller --onefile --icon=../icon.ico --windowed --osx-bundle-identifier ZebraZoom.updater -n updater ../updater.py
+          rm -f dist/ZebraZoomApp/zebrazoom/dataAnalysis/data/.gitignore
+          rm -f dist/ZebraZoomApp/zebrazoom/dataAnalysis/resultsClustering/.gitignore
+          rm -f dist/ZebraZoomApp/zebrazoom/dataAnalysis/resultsKinematic/.gitignore
+          mkdir dist/ZebraZoomApp/zebrazoom/code/tracking
+          cp -r ../zebrazoom/code/tracking/customTrackingImplementations dist/ZebraZoomApp/zebrazoom/code/tracking/customTrackingImplementations
+          mkdir dist/ZebraZoomApp/zebrazoom/code/GUI/tracking
+          cp -r ../zebrazoom/code/GUI/tracking/customTrackingImplementations dist/ZebraZoomApp/zebrazoom/code/GUI/tracking/customTrackingImplementations
+          mkdir dist/ZebraZoomApp/updater
+          mv dist/updater dist/ZebraZoomApp/updater
+          cp ../icon.ico dist/ZebraZoomApp
+      - name: Run the created executable
+        run: |
+          build/dist/ZebraZoomApp/ZebraZoomApp exit
+          rm build/dist/ZebraZoomApp/zebrazoom/ZZoutput/_groupsInternal.pkl
