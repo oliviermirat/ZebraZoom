@@ -8,15 +8,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        python_version: [3.9, 3.13]
         os: [ubuntu-latest, windows-latest, macos-latest]
     runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
       - name: Install Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: ${{ matrix.python_version }}
       - name: Install Linux dependencies
         if: matrix.os == 'ubuntu-latest'
         run: |
