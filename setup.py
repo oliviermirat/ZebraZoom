@@ -25,7 +25,7 @@ setup(
     "h5py",
     "numpy",
     "matplotlib>=3.6.0",
-    "scipy<=1.11.4",
+    "scipy!=1.12.*",
     "pandas>=1.5.3",
     "openpyxl>=3.1.2",
     "filterpy",
