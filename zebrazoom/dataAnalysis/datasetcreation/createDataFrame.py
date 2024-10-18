@@ -7,7 +7,7 @@ import pandas as pd
 import json
 import numpy as np
 import warnings
-warnings.filterwarnings('ignore', category=np.VisibleDeprecationWarning)
+warnings.filterwarnings('ignore', category=getattr(np, 'VisibleDeprecationWarning', np.exceptions.VisibleDeprecationWarning))
 from zebrazoom.dataAnalysis.datasetcreation.getDynamicParameters import getDynamicParameters
 from zebrazoom.dataAnalysis.datasetcreation.getTailAngles import getTailAngles
 from zebrazoom.dataAnalysis.datasetcreation.getInstaSpeed import getInstaSpeed
