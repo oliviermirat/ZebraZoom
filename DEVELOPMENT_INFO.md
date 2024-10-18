@@ -20,3 +20,6 @@ When modifying the calculation of existing parameters, the same thing should be 
 # Investigating test failures
 When running tests, if the error is in `_checkResults` method, line `assert f1.read() == f2.read()` it means the parameters were not correctly calculated. If there are errors elsewhere, those are likely GitHub runner related errors, but the only way to be sure is to run the tests locally and ensure they work.
 If there is a persistent error elsewhere, it could be due to some changes in an external library. Also, if multiple tests fail, it's usually the best to check the first failed test, since others could've been caused by that failure.
+
+# Updating Python versions in GitHub actions
+To update Python versions on which automated tests will run, simply modify `python_version` variable under jobs-run_tests-strategy-matrix in test.yml and long_test.yml - it contains a list of versions on which tests will run.
