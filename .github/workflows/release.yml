@@ -8,6 +8,11 @@ on:
         required: true
         type: string
 
+env:
+  PYTHON_VERSION: 3.13
+  FULL_PYTHON_VERSION: 3.13.0
+  MACOS_DOWNLOAD_LINK: https://www.python.org/ftp/python/3.13.0/python-3.13.0-macos11.pkg
+
 jobs:
   create_release:
     name: Bump version and create Github release
@@ -51,14 +56,15 @@ jobs:
         with:
           ref: master
       - name: Install Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
+        id: python
         with:
-          python-version: '3.9'
+          python-version: ${{ env.FULL_PYTHON_VERSION }}
       - name: Install dependencies
         run: |
-          pip install --upgrade pip setuptools wheel
-          pip install pyinstaller
-          pip install -e .
+          ${{ steps.python.outputs.python-path }} -m pip install --upgrade pip setuptools wheel
+          ${{ steps.python.outputs.python-path }} -m pip install pyinstaller
+          ${{ steps.python.outputs.python-path }} -m pip install -e .
       - name: Freeze the code
         run: |
           mkdir build
@@ -82,7 +88,7 @@ jobs:
       - name: Generate the list of installed files
         run: |
           cd build/dist/ZebraZoom/ZebraZoom
-          python3 -c "exec('''\nimport os\n\ndef walk(path):\n    files = []\n    for entry in os.scandir(path):\n        if entry.is_dir(follow_symlinks=False):\n            yield from walk(entry.path)\n            yield entry.path\n        else:\n            files.append(entry.path)\n    yield from files\n\nwith open('installedFiles.txt', 'w') as f:\n    f.write('\\n'.join(map(os.path.relpath, walk('.'))))\n''')"
+          ${{ steps.python.outputs.python-path }} -c "exec('''\nimport os\n\ndef walk(path):\n    files = []\n    for entry in os.scandir(path):\n        if entry.is_dir(follow_symlinks=False):\n            yield from walk(entry.path)\n            yield entry.path\n        else:\n            files.append(entry.path)\n    yield from files\n\nwith open('installedFiles.txt', 'w') as f:\n    f.write('\\n'.join(map(os.path.relpath, walk('.'))))\n''')"
       - name: Create archive
         run: |
           cd build/dist/ZebraZoom
@@ -102,27 +108,34 @@ jobs:
     needs: create_release
     runs-on: ubuntu-latest
     container:
-      image: centos/python-38-centos7
+      image: rockylinux/rockylinux:8.10-ubi
       options: --user root
     steps:
       - name: Checkout repository
         uses: taiki-e/checkout-action@v1
         with:
           ref: master
-      - name: Install dependencies
+      - name: Install dependencies and build Python
         run: |
-          sed -i 's/mirrorlist=/#mirrorlist=/g' /etc/yum.repos.d/CentOS-Base.repo
-          sed -i 's$#baseurl=http://mirror$baseurl=http://vault$g' /etc/yum.repos.d/CentOS-Base.repo
-          yum --disablerepo="*" --enablerepo="base" install -y mesa-libGL
-          python3 -m pip install --upgrade pip setuptools wheel
-          python3 -m pip install pyinstaller
-          python3 -m pip install -e .
+          curl https://www.python.org/ftp/python/${{ env.FULL_PYTHON_VERSION }}/Python-${{ env.FULL_PYTHON_VERSION }}.tar.xz -o "Python-${{ env.FULL_PYTHON_VERSION }}.tar.xz"
+          yum groupinstall -y 'Development Tools'
+          yum install -y xz mesa-libGL bzip2-devel openssl-devel libffi-devel zlib-devel
+          tar xf Python-*.tar.xz
+          cd Python-*/
+          ./configure --with-ensurepip=install --enable-shared --enable-optimizations --prefix=/opt/python LDFLAGS=-Wl,-rpath=/opt/python/lib
+          make -j2
+          make altinstall
+          cd ..
+          rm -rf Python-*
+          /opt/python/bin/python${{ env.PYTHON_VERSION }} -m pip install --upgrade pip setuptools wheel
+          /opt/python/bin/python${{ env.PYTHON_VERSION }} -m pip install pyinstaller
+          /opt/python/bin/python${{ env.PYTHON_VERSION }} -m pip install -e .
       - name: Freeze the code
         run: |
           mkdir build
           cd build
-          pyinstaller --console --icon=../icon.ico --onedir --contents-directory . --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoom ../zebrazoom/__main__.py
-          pyinstaller --onefile --icon=../icon.ico --windowed -n updater ../updater.py
+          /opt/python/bin/python${{ env.PYTHON_VERSION }} -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory . --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoom ../zebrazoom/__main__.py
+          /opt/python/bin/python${{ env.PYTHON_VERSION }} -m PyInstaller --onefile --icon=../icon.ico --windowed -n updater ../updater.py
           rm -f dist/ZebraZoom/zebrazoom/dataAnalysis/data/.gitignore
           rm -f dist/ZebraZoom/zebrazoom/dataAnalysis/resultsClustering/.gitignore
           rm -f dist/ZebraZoom/zebrazoom/dataAnalysis/resultsKinematic/.gitignore
@@ -136,7 +149,7 @@ jobs:
       - name: Generate the list of installed files
         run: |
           cd build/dist/ZebraZoom
-          python3 - <<-EOF
+          /opt/python/bin/python${{ env.PYTHON_VERSION }} - <<-EOF
           import os
 
           def walk(path):
@@ -163,19 +176,14 @@ jobs:
           ASSET_NAME: ZebraZoom-${{ runner.os }}.zip
           ASSET_PATH: build/dist/ZebraZoom.zip
           ASSET_CONTENT_TYPE: application/zip
-        # we need an old version of urllib for this since this centOS has really old openssl
         run: |
-          python3 -m pip install requests
-          python3 -m pip install urllib3==1.26.6
-          python3 upload_asset.py
+          /opt/python/bin/python${{ env.PYTHON_VERSION }} -m pip install requests
+          /opt/python/bin/python${{ env.PYTHON_VERSION }} upload_asset.py
 
   deploy_mac:
     name: Deploy on macOS
     needs: create_release
     runs-on: macOS-latest
-    env:
-      PYTHON_VERSION: 3.9.12
-      MACOSX_DEPLOYMENT_TARGET: 10.9
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -183,18 +191,17 @@ jobs:
           ref: master
       - name: Install Python
         run: |
-          curl https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-macosx10.9.pkg -o "python.pkg" && sudo installer -pkg python.pkg -target /
+          curl ${{ env.MACOS_DOWNLOAD_LINK }} -o "python.pkg" && sudo installer -pkg python.pkg -target /
       - name: Install dependencies
         run: |
-          python3.9 -m pip install --upgrade pip setuptools==62.6.0 wheel  # XXX: a bug was introduced in setuptools 63.0.0, remove the version constraint once it's fixed
-          python3.9 -m pip install pyinstaller
-          python3.9 -m pip install -e .
+          python${{ env.PYTHON_VERSION }} -m pip install pyinstaller
+          python${{ env.PYTHON_VERSION }} -m pip install -e .
       - name: Freeze the code
         run: |
           mkdir build
           cd build
-          python3.9 -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory ZebraZoom --osx-bundle-identifier ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoomApp ../zebrazoom/__main__.py
-          python3.9 -m PyInstaller --onefile --icon=../icon.ico --windowed --osx-bundle-identifier ZebraZoom.updater -n updater ../updater.py
+          python${{ env.PYTHON_VERSION }} -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory ZebraZoom --osx-bundle-identifier ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoomApp ../zebrazoom/__main__.py
+          python${{ env.PYTHON_VERSION }} -m PyInstaller --onefile --icon=../icon.ico --windowed --osx-bundle-identifier ZebraZoom.updater -n updater ../updater.py
           rm -f dist/ZebraZoomApp/ZebraZoom/zebrazoom/dataAnalysis/data/.gitignore
           rm -f dist/ZebraZoomApp/ZebraZoom/zebrazoom/dataAnalysis/resultsClustering/.gitignore
           rm -f dist/ZebraZoomApp/ZebraZoom/zebrazoom/dataAnalysis/resultsKinematic/.gitignore
@@ -212,7 +219,7 @@ jobs:
       - name: Generate the list of installed files
         run: |
           cd build/dist/ZebraZoomApp/ZebraZoom
-          python3.9 - <<-EOF
+          python${{ env.PYTHON_VERSION }} - <<-EOF
           import os
 
           def walk(path):
@@ -276,14 +283,15 @@ jobs:
         with:
           ref: master
       - name: Install Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
+        id: python
         with:
-          python-version: '3.9'
+          python-version: ${{ env.FULL_PYTHON_VERSION }}
       - name: Install dependencies
         run: |
-          pip install --upgrade pip setuptools wheel
-          pip install pyinstaller
-          pip install -e .
+          ${{ steps.python.outputs.python-path }} -m pip install --upgrade pip setuptools wheel
+          ${{ steps.python.outputs.python-path }} -m pip install pyinstaller
+          ${{ steps.python.outputs.python-path }} -m pip install -e .
       - name: Freeze the code
         run: |
           mkdir build
@@ -307,7 +315,7 @@ jobs:
       - name: Generate the list of installed files
         run: |
           cd build/dist/ZebraZoom
-          python3 -c "exec('''\nimport os\n\ndef walk(path):\n    files = []\n    for entry in os.scandir(path):\n        if entry.is_dir(follow_symlinks=False):\n            yield from walk(entry.path)\n            yield entry.path\n        else:\n            files.append(entry.path)\n    yield from files\n\nwith open('installedFiles.txt', 'w') as f:\n    f.write('\\n'.join(map(os.path.relpath, walk('.'))))\n''')"
+          ${{ steps.python.outputs.python-path }} -c "exec('''\nimport os\n\ndef walk(path):\n    files = []\n    for entry in os.scandir(path):\n        if entry.is_dir(follow_symlinks=False):\n            yield from walk(entry.path)\n            yield entry.path\n        else:\n            files.append(entry.path)\n    yield from files\n\nwith open('installedFiles.txt', 'w') as f:\n    f.write('\\n'.join(map(os.path.relpath, walk('.'))))\n''')"
       - name: Create installer
         uses: joncloud/makensis-action@v3.3
       - name: Upload installer
@@ -337,9 +345,6 @@ jobs:
     name: Deploy legacy format on macOS
     needs: create_release
     runs-on: macOS-latest
-    env:
-      PYTHON_VERSION: 3.9.12
-      MACOSX_DEPLOYMENT_TARGET: 10.9
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -347,18 +352,17 @@ jobs:
           ref: master
       - name: Install Python
         run: |
-          curl https://www.python.org/ftp/python/${PYTHON_VERSION}/python-${PYTHON_VERSION}-macosx10.9.pkg -o "python.pkg" && sudo installer -pkg python.pkg -target /
+          curl ${{ env.MACOS_DOWNLOAD_LINK }} -o "python.pkg" && sudo installer -pkg python.pkg -target /
       - name: Install dependencies
         run: |
-          python3.9 -m pip install --upgrade pip setuptools==62.6.0 wheel  # XXX: a bug was introduced in setuptools 63.0.0, remove the version constraint once it's fixed
-          python3.9 -m pip install pyinstaller
-          python3.9 -m pip install -e .
+          python${{ env.PYTHON_VERSION }} -m pip install pyinstaller
+          python${{ env.PYTHON_VERSION }} -m pip install -e .
       - name: Freeze the code
         run: |
           mkdir build
           cd build
-          python3.9 -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory . --osx-bundle-identifier ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoomApp ../zebrazoom/__main__.py
-          python3.9 -m PyInstaller --onefile --icon=../icon.ico --windowed --osx-bundle-identifier ZebraZoom.updater -n updater ../updater.py
+          python${{ env.PYTHON_VERSION }} -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory . --osx-bundle-identifier ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoomApp ../zebrazoom/__main__.py
+          python${{ env.PYTHON_VERSION }} -m PyInstaller --onefile --icon=../icon.ico --windowed --osx-bundle-identifier ZebraZoom.updater -n updater ../updater.py
           rm -f dist/ZebraZoomApp/zebrazoom/dataAnalysis/data/.gitignore
           rm -f dist/ZebraZoomApp/zebrazoom/dataAnalysis/resultsClustering/.gitignore
           rm -f dist/ZebraZoomApp/zebrazoom/dataAnalysis/resultsKinematic/.gitignore
@@ -376,7 +380,7 @@ jobs:
       - name: Generate the list of installed files
         run: |
           cd build/dist/ZebraZoomApp
-          python3.9 - <<-EOF
+          python${{ env.PYTHON_VERSION }} - <<-EOF
           import os
 
           def walk(path):
@@ -422,9 +426,9 @@ jobs:
         with:
           ref: master
       - name: Install Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.9'
+          python-version: ${{ env.FULL_PYTHON_VERSION }}
       - name: Prepare package for PyPI release
         run: |
           pip install --upgrade pip setuptools wheel
