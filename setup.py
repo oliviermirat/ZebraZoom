@@ -36,6 +36,7 @@ setup(
     "xlwt",
     "threadpoolctl>=3.1.0",
     "tifffile",
+    "av",
   ],
   packages=setuptools.find_packages(),
   package_data={'zebrazoom.code.tracking.customTrackingImplementations': ['**/*.py'],

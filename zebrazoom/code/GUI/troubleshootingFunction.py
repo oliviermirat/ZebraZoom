@@ -1,10 +1,6 @@
-import numpy as np
-import json
-import cv2
-import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
-import math
-import json
 import os
+
+import av
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFileDialog, QProgressDialog
@@ -24,23 +20,11 @@ def chooseVideoToTroubleshootSplitVideo(self, controller):
     firstFrame = self.configFile["firstFrame"]
     lastFrame = self.configFile["lastFrame"]
     self.configFile = configFile
-    filename, _ = QFileDialog.getSaveFileName(controller.window, 'Choose where you want to save the sub-video.', os.path.join(os.path.dirname(self.videoToTroubleshootSplitVideo), 'subvideo.avi'), "AVI (*.avi)")
+    filename, _ = QFileDialog.getSaveFileName(controller.window, 'Choose where you want to save the sub-video.', os.path.join(os.path.dirname(self.videoToTroubleshootSplitVideo), 'subvideo.mkv'), "Matroska (*.mkv)")
     if not filename:
       return
 
     # Extracting sub-video
-
-    cap = zzVideoReading.VideoCapture(self.videoToTroubleshootSplitVideo)
-    if not cap.isOpened():
-      print("Error opening video stream or file")
-      return
-    cap.set(1, firstFrame)
-    width = int(cap.get(3))
-    height = int(cap.get(4))
-
-    out = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc('M','J','P','G'), 10, (width, height))
-    # out = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc('H','F','Y','U'), 10, (width, height))
-
     cancelled = False
     progressDialog = QProgressDialog("Saving video...", "Cancel", firstFrame, lastFrame, controller.window, Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
     progressDialog.setWindowTitle('Saving Video')
@@ -48,29 +32,36 @@ def chooseVideoToTroubleshootSplitVideo(self, controller):
     progressDialog.setAutoReset(False)
     progressDialog.setWindowModality(Qt.WindowModality.ApplicationModal)
     progressDialog.setMinimumDuration(0)
-    out = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'MJPG'), 10, (width, height))
-    for frameIdx in range(firstFrame, lastFrame):
-      progressDialog.setValue(frameIdx)
-      progressDialog.setLabelText(f'Saving frame {frameIdx}...')
-      ret, frame = cap.read()
-      if not ret:
-        print(f"Error reading at frame {frameIdx}")
-        break
-      frameHeight, frameWidth = frame.shape[:2]
-      if frameHeight < height or frameWidth < width:
-        xOffset = (width - frameWidth) // 2
-        yOffset = (height - frameHeight) // 2
-        copy = cv2.resize(frame, (height, width))
-        copy[:] = 0
-        copy[yOffset:yOffset+frameHeight, xOffset:xOffset+frameWidth] = frame
-        frame = copy
-      out.write(frame)
-      if progressDialog.wasCanceled():
-        cancelled = True
-        break
-    progressDialog.setLabelText('Saving video...')
-    cap.release()
-    out.release()
+    frameIdx = None
+
+    with av.open(self.videoToTroubleshootSplitVideo) as container, av.open(filename, 'w') as output:
+      instream = container.streams.video[0]
+
+      # Calculate the PTS we have to seek to and seek to the nearest keyframe
+      framerate = instream.average_rate
+      tb = instream.time_base
+      container.seek(round(firstFrame / (framerate * tb)), backward=True, any_frame=False, stream=instream)
+
+      outstream = output.add_stream('libx265', rate=10)
+      outstream.width = instream.codec_context.width
+      outstream.height = instream.codec_context.height
+      outstream.pix_fmt = instream.codec_context.pix_fmt
+      outstream.options = {'crf': '22'}
+      for frame in container.decode(instream):
+        if frameIdx is None:
+          frameIdx = int(frame.pts * tb * framerate)  # we cannot know which frame we ended up seeking to in advance, so we need to calculate the index from the pts of the first frame we read
+        if frameIdx >= firstFrame:
+          progressDialog.setValue(frameIdx)
+          progressDialog.setLabelText(f'Saving frame {frameIdx}...')
+          output.mux(outstream.encode(av.VideoFrame.from_image(frame.to_image())))
+        if frameIdx == lastFrame:
+          break
+        if progressDialog.wasCanceled():
+          cancelled = True
+          break
+        frameIdx += 1
+      progressDialog.setLabelText('Saving video...')
+      output.mux(outstream.encode(None))
     progressDialog.close()
     if not cancelled:
       self.show_frame("VideoToTroubleshootSplitVideo")
