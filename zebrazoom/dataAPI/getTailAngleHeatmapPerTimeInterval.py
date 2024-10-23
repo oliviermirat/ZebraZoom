@@ -5,7 +5,7 @@ from ._openResultsFile import openResultsFile
 
 
 def getTailAngleHeatmapPerTimeInterval(videoName: str, numWell: int, numAnimal: int, startTimeInSeconds: float, endTimeInSeconds: float) -> tuple:
-  if startTimeInSeconds >= endTimeInSeconds:
+  if endTimeInSeconds is not None and startTimeInSeconds >= endTimeInSeconds:
     raise ValueError('end time must be larger than start time')
   with openResultsFile(videoName, 'r+') as results:
     firstFrame = results.attrs['firstFrame']
@@ -14,6 +14,8 @@ def getTailAngleHeatmapPerTimeInterval(videoName: str, numWell: int, numAnimal: 
       # when running tracking on the whole video, firstFrame is 1, but from the user's perspective, startTimeInSeconds is 0
       startTimeInSeconds = firstFrameInSeconds
     lastFrameInSeconds = results.attrs['lastFrame'] / results.attrs['videoFPS']
+    if endTimeInSeconds is None:
+      endTimeInSeconds = lastFrameInSeconds
     if startTimeInSeconds < firstFrameInSeconds or endTimeInSeconds > lastFrameInSeconds:
       raise ValueError(f'Tracking was performed from {firstFrameInSeconds}s to {lastFrameInSeconds}s, start and end times must be within this interval.')
     if 'videoFPS' not in results.attrs:
