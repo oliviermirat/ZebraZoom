@@ -38,6 +38,7 @@ setup(
     "tifffile",
     "static-ffmpeg>=2.7",
     "ffmpeg-progress-yield",
+    "av",
   ],
   packages=setuptools.find_packages(),
   package_data={'zebrazoom.code.tracking.customTrackingImplementations': ['**/*.py'],
