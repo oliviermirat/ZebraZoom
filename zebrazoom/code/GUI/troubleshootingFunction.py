@@ -1,6 +1,9 @@
 import os
+import subprocess
 
-import av
+import ffmpeg_progress_yield
+import static_ffmpeg
+static_ffmpeg.add_paths()
 
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QFileDialog, QProgressDialog
@@ -20,48 +23,29 @@ def chooseVideoToTroubleshootSplitVideo(self, controller):
     firstFrame = self.configFile["firstFrame"]
     lastFrame = self.configFile["lastFrame"]
     self.configFile = configFile
-    filename, _ = QFileDialog.getSaveFileName(controller.window, 'Choose where you want to save the sub-video.', os.path.join(os.path.dirname(self.videoToTroubleshootSplitVideo), 'subvideo.mkv'), "Matroska (*.mkv)")
+    _, existingExtension = os.path.splitext(self.videoToTroubleshootSplitVideo)
+    filename, _ = QFileDialog.getSaveFileName(controller.window, 'Choose where you want to save the sub-video.', os.path.join(os.path.dirname(self.videoToTroubleshootSplitVideo), f'subvideo{existingExtension}'), f"Video (*{existingExtension})")
     if not filename:
       return
 
     # Extracting sub-video
     cancelled = False
-    progressDialog = QProgressDialog("Saving video...", "Cancel", firstFrame, lastFrame, controller.window, Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
+    progressDialog = QProgressDialog("Saving video...", "Cancel", 0, 100, controller.window, Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
     progressDialog.setWindowTitle('Saving Video')
     progressDialog.setAutoClose(False)
     progressDialog.setAutoReset(False)
     progressDialog.setWindowModality(Qt.WindowModality.ApplicationModal)
-    progressDialog.setMinimumDuration(0)
-    frameIdx = None
+    progressDialog.setMinimumDuration(500)
 
-    with av.open(self.videoToTroubleshootSplitVideo) as container, av.open(filename, 'w') as output:
-      instream = container.streams.video[0]
-
-      # Calculate the PTS we have to seek to and seek to the nearest keyframe
-      framerate = instream.average_rate
-      tb = instream.time_base
-      container.seek(round(firstFrame / (framerate * tb)), backward=True, any_frame=False, stream=instream)
-
-      outstream = output.add_stream('libx265', rate=10)
-      outstream.width = instream.codec_context.width
-      outstream.height = instream.codec_context.height
-      outstream.pix_fmt = instream.codec_context.pix_fmt
-      outstream.options = {'crf': '22'}
-      for frame in container.decode(instream):
-        if frameIdx is None:
-          frameIdx = int(frame.pts * tb * framerate)  # we cannot know which frame we ended up seeking to in advance, so we need to calculate the index from the pts of the first frame we read
-        if frameIdx >= firstFrame:
-          progressDialog.setValue(frameIdx)
-          progressDialog.setLabelText(f'Saving frame {frameIdx}...')
-          output.mux(outstream.encode(av.VideoFrame.from_image(frame.to_image())))
-        if frameIdx == lastFrame:
-          break
+    numerator, denominator = map(float, subprocess.check_output(["ffprobe", "-v", "error", "-select_streams", "v", "-of", "default=noprint_wrappers=1:nokey=1", "-show_entries", "stream=r_frame_rate", self.videoToTroubleshootSplitVideo], universal_newlines=True).split('/'))
+    fps = numerator / denominator
+    cmd = ffmpeg_progress_yield.FfmpegProgress(["ffmpeg", "-y", "-ss", f"{firstFrame / fps}", "-to", f"{lastFrame / fps}", "-i", self.videoToTroubleshootSplitVideo, "-force_key_frames", "00:00:00", "-c", "copy", filename])
+    for pct in cmd.run_command_with_progress():
         if progressDialog.wasCanceled():
           cancelled = True
+          cmd.quit_gracefully()
           break
-        frameIdx += 1
-      progressDialog.setLabelText('Saving video...')
-      output.mux(outstream.encode(None))
+        progressDialog.setValue(int(pct))
     progressDialog.close()
     if not cancelled:
       self.show_frame("VideoToTroubleshootSplitVideo")
