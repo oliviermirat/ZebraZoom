@@ -644,7 +644,7 @@ def __headTrackingTakeHeadClosestToWellCenter(self, thresh1, thresh2, blur, erod
 
   return headPosition
 
-def _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, gray, erodeSize, frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, headPosition, lengthX, xmin=0, ymin=0, wellNumber=-1):
+def _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, frameOri, erodeSize, frame_width, frame_height, trackingHeadingAllAnimals, trackingHeadTailAllAnimals, trackingProbabilityOfGoodDetection, headPosition, lengthX, xmin=0, ymin=0, wellNumber=-1):
   xHB_TN = 0
   heading = 0
   x = 0
@@ -660,16 +660,17 @@ def _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, gray, erode
 
     if False: #self._hyperparameters["nbAnimalsPerWell"] > 1 or self._hyperparameters["forceBlobMethodForHeadTracking"]:
 
-      if self._hyperparameters["multipleAnimalTrackingAdvanceAlgorithm"] == 0:
-        self._multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, gray, i, thresh1, xmin, ymin)
-      else:
-        self._multipleAnimalsHeadTrackingAdvance(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, gray, i, thresh1, thresh2, lengthX)
+      print("no")
+      # if self._hyperparameters["multipleAnimalTrackingAdvanceAlgorithm"] == 0:
+        # self._multipleAnimalsHeadTracking(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, gray, i, thresh1, xmin, ymin)
+      # else:
+        # self._multipleAnimalsHeadTrackingAdvance(trackingHeadingAllAnimals, trackingHeadTailAllAnimals, gray, i, thresh1, thresh2, lengthX)
 
-      heading = 0
-      headPosition = [0, 0]
-      x = 0
-      y = 0
-      lastFirstTheta = 0
+      # heading = 0
+      # headPosition = [0, 0]
+      # x = 0
+      # y = 0
+      # lastFirstTheta = 0
 
     else:
 
@@ -677,9 +678,9 @@ def _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, gray, erode
 
         if self._hyperparameters["findHeadPositionByUserInput"] == 0:
 
-          if type(blur) == int: # it won't be equal to int for images coming from the faster screen 'multiprocessing'
-            paramGaussianBlur = int((self._hyperparameters["paramGaussianBlur"] / 2)) * 2 + 1
-            blur = cv2.GaussianBlur(gray, (paramGaussianBlur, paramGaussianBlur), 0)
+          # if type(blur) == int: # it won't be equal to int for images coming from the faster screen 'multiprocessing'
+            # paramGaussianBlur = int((self._hyperparameters["paramGaussianBlur"] / 2)) * 2 + 1
+            # blur = cv2.GaussianBlur(gray, (paramGaussianBlur, paramGaussianBlur), 0)
 
           # Finds head position for frame i
           takeTheHeadClosestToTheCenter = self._hyperparameters["takeTheHeadClosestToTheCenter"]
@@ -688,7 +689,15 @@ def _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, gray, erode
           (minVal, maxVal, headPosition, maxLoc) = cv2.minMaxLoc(blur)
           # coordinates = peak_local_max(blur, num_peaks=6, min_distance=20) # threshold_abs=50 
           
+          # if i >= 250:
+            # import zebrazoom.code.util as util
+            # util.showFrame(frameOri, title="frameOri")
+          
           for animalNumber in range(self._hyperparameters["nbAnimalsPerWell"]):
+            
+            # if i >= 250:
+              # print("animalNumber:", animalNumber)
+              # util.showFrame(blur, title="write title here")
             
             if False:
               print(i, "; animalNumber:", animalNumber, "; minVal:", minVal, "; maxVal:", maxVal)
@@ -729,7 +738,11 @@ def _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, gray, erode
               heading = 0
               lastFirstTheta = 0
             
-            if minVal < 180: # 110: #180:
+            centeredROIValue = np.median(frameOri[headPosition[1]-1:headPosition[1]+2, headPosition[0]-1:headPosition[0]+2])
+            halfDiameter = 20 #30
+            largerROIValue   = np.median(frameOri[headPosition[1]-halfDiameter:headPosition[1]+halfDiameter+1, headPosition[0]-halfDiameter:headPosition[0]+halfDiameter+1])
+            
+            if minVal < 180 and centeredROIValue > largerROIValue: # 110: #180:
               trackingHeadTailAllAnimals[animalNumber, i-self._firstFrame][0][0] = headPosition[0]
               trackingHeadTailAllAnimals[animalNumber, i-self._firstFrame][0][1] = headPosition[1]
               trackingHeadingAllAnimals[animalNumber, i-self._firstFrame] = heading

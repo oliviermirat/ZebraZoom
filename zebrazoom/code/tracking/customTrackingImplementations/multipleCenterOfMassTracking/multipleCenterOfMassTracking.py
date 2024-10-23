@@ -88,8 +88,8 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
 
       if ret:
         
+        frameOri = frame.copy()
         if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
-          frameOri = frame.copy()
           frameOri = cv2.cvtColor(frameOri, cv2.COLOR_BGR2GRAY)
         
         if self._hyperparameters["backgroundSubtractorKNN"]:
@@ -136,7 +136,7 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
           headPositionFirstFrame = 0
 
           # Head tracking and heading calculation
-          lastFirstTheta = _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, gray, self._hyperparameters["erodeSize"], int(cap.get(3)), int(cap.get(4)), self._trackingHeadingAllAnimalsList[wellNumber], self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingProbabilityOfGoodDetectionList[wellNumber], headPositionFirstFrame, self._wellPositions[wellNumber]["lengthX"], 0, 0, wellNumber)
+          lastFirstTheta = _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, frameOri, self._hyperparameters["erodeSize"], int(cap.get(3)), int(cap.get(4)), self._trackingHeadingAllAnimalsList[wellNumber], self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingProbabilityOfGoodDetectionList[wellNumber], headPositionFirstFrame, self._wellPositions[wellNumber]["lengthX"], 0, 0, wellNumber)
 
           # Tail tracking for frame i
           if self._hyperparameters["trackTail"] == 1 :
