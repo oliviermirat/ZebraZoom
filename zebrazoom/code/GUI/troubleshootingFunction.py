@@ -80,7 +80,7 @@ def chooseVideoToTroubleshootSplitVideo(self, controller):
     if specialFormat:
         _runLegacy(self.videoToTroubleshootSplitVideo, filename, progressDialog, firstFrame, lastFrame)
     else:
-      numerator, denominator = map(float, subprocess.check_output(["ffprobe", "-v", "error", "-select_streams", "v", "-of", "default=noprint_wrappers=1:nokey=1", "-show_entries", "stream=r_frame_rate", self.videoToTroubleshootSplitVideo], universal_newlines=True).split('/'))
+      numerator, denominator = map(float, subprocess.check_output(["ffprobe", "-v", "error", "-select_streams", "v:0", "-of", "default=noprint_wrappers=1:nokey=1", "-show_entries", "stream=r_frame_rate", self.videoToTroubleshootSplitVideo], universal_newlines=True).split('/'))
       fps = numerator / denominator
       cmd = ffmpeg_progress_yield.FfmpegProgress(["ffmpeg", "-y", "-ss", f"{firstFrame / fps}", "-to", f"{lastFrame / fps}", "-i", self.videoToTroubleshootSplitVideo, "-force_key_frames", "00:00:00", "-c", "copy", filename])
       for pct in cmd.run_command_with_progress():
