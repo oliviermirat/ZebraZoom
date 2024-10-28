@@ -517,57 +517,66 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
         return
 
       app = QApplication.instance()
+      question = QMessageBox(QMessageBox.Icon.Question, "Choose video compression", "What kind of compression would you like to use for the video?\n\nUsing advanced compression will produce significantly smaller files, but might lead to some loss of quality.", parent=app.window, buttons=QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No | QMessageBox.StandardButton.Cancel)
+      question.button(QMessageBox.StandardButton.Yes).setText('Default')
+      question.button(QMessageBox.StandardButton.No).setText('Advanced')
+      response = question.exec()
+      newFormat = False if response == QMessageBox.StandardButton.Yes else True if response == QMessageBox.StandardButton.No else None
+      if newFormat is None:
+        return
+
       filename, _ = QFileDialog.getSaveFileName(app.window, 'Select file', os.path.expanduser('~'), "Matroska (*.mkv)")
-      if filename:
-        lastSaveFrame = frameSlider.value()
-        if lastSaveFrame < frameSlider.firstSaveFrame:
-          frameSlider.firstSaveFrame, lastSaveFrame = lastSaveFrame, frameSlider.firstSaveFrame
-        progressDialog = QProgressDialog("Saving video...", "Cancel", frameSlider.firstSaveFrame, lastSaveFrame, app.window, Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
-        progressDialog.setWindowTitle('Saving Video')
-        progressDialog.setAutoClose(False)
-        progressDialog.setAutoReset(False)
-        progressDialog.setWindowModality(Qt.WindowModality.ApplicationModal)
-        progressDialog.setMinimumDuration(0)
-        frame, videoFPS = getFrame(frameSlider, trackingPointsGroup=btnGroup, frameIdx=frameSlider.firstSaveFrame, returnFPS=True)
-        height, width = frame.shape[:2] if not zoom else (250, 250)
-        height += height % 2  # x265 requires width and height to be even numbers, so we might need to add one pixel
-        width += width % 2
-        newFormat = True
+      if not filename:
+        return
 
-        @contextlib.contextmanager
-        def cv2CM():
-          cap = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'MJPG'), videoFPS, (width, height))
-          yield cap
-          cap.release()
+      lastSaveFrame = frameSlider.value()
+      if lastSaveFrame < frameSlider.firstSaveFrame:
+        frameSlider.firstSaveFrame, lastSaveFrame = lastSaveFrame, frameSlider.firstSaveFrame
+      progressDialog = QProgressDialog("Saving video...", "Cancel", frameSlider.firstSaveFrame, lastSaveFrame, app.window, Qt.WindowType.WindowTitleHint | Qt.WindowType.WindowCloseButtonHint)
+      progressDialog.setWindowTitle('Saving Video')
+      progressDialog.setAutoClose(False)
+      progressDialog.setAutoReset(False)
+      progressDialog.setWindowModality(Qt.WindowModality.ApplicationModal)
+      progressDialog.setMinimumDuration(0)
+      frame, videoFPS = getFrame(frameSlider, trackingPointsGroup=btnGroup, frameIdx=frameSlider.firstSaveFrame, returnFPS=True)
+      height, width = frame.shape[:2] if not zoom else (250, 250)
+      height += height % 2  # x265 requires width and height to be even numbers, so we might need to add one pixel
+      width += width % 2
 
-        with av.open(filename, 'w') if newFormat else cv2CM() as output:
-          if hasattr(output, 'mux'):
-            outstream = output.add_stream('libx265', rate=videoFPS)
-            outstream.width = width
-            outstream.height = height
-            outstream.options = {'crf': '20'}
+      @contextlib.contextmanager
+      def cv2CM():
+        cap = cv2.VideoWriter(filename, cv2.VideoWriter_fourcc(*'MJPG'), videoFPS, (width, height))
+        yield cap
+        cap.release()
 
-          for frameIdx in range(frameSlider.firstSaveFrame, lastSaveFrame + 1):
-            progressDialog.setValue(frameIdx)
-            progressDialog.setLabelText(f'Saving frame {frameIdx}...')
-            frame = getFrame(frameSlider, trackingPointsGroup=btnGroup, frameIdx=frameIdx)
-            frameHeight, frameWidth = frame.shape[:2]
-            if frameHeight < height or frameWidth < width:
-              xOffset = (width - frameWidth) // 2
-              yOffset = (height - frameHeight) // 2
-              copy = cv2.resize(frame, (width, height))
-              copy[:] = 0
-              copy[yOffset:yOffset+frameHeight, xOffset:xOffset+frameWidth] = frame
-              frame = copy
-            if newFormat:
-              output.mux(outstream.encode(av.VideoFrame.from_ndarray(frame, format='bgr24')))
-            else:
-              output.write(frame)
-            if progressDialog.wasCanceled():
-              break
-          progressDialog.setLabelText('Saving video...')
+      with av.open(filename, 'w') if newFormat else cv2CM() as output:
+        if hasattr(output, 'mux'):
+          outstream = output.add_stream('libx265', rate=videoFPS)
+          outstream.width = width
+          outstream.height = height
+          outstream.options = {'crf': '20'}
+
+        for frameIdx in range(frameSlider.firstSaveFrame, lastSaveFrame + 1):
+          progressDialog.setValue(frameIdx)
+          progressDialog.setLabelText(f'Saving frame {frameIdx}...')
+          frame = getFrame(frameSlider, trackingPointsGroup=btnGroup, frameIdx=frameIdx)
+          frameHeight, frameWidth = frame.shape[:2]
+          if frameHeight < height or frameWidth < width:
+            xOffset = (width - frameWidth) // 2
+            yOffset = (height - frameHeight) // 2
+            copy = cv2.resize(frame, (width, height))
+            copy[:] = 0
+            copy[yOffset:yOffset+frameHeight, xOffset:xOffset+frameWidth] = frame
+            frame = copy
           if newFormat:
-            output.mux(outstream.encode(None))
+            output.mux(outstream.encode(av.VideoFrame.from_ndarray(frame, format='bgr24')))
+          else:
+            output.write(frame)
+          if progressDialog.wasCanceled():
+            break
+        progressDialog.setLabelText('Saving video...')
+        if newFormat:
+          output.mux(outstream.encode(None))
 
       progressDialog.close()
       saveButton.setText('Start save')
