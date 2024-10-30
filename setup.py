@@ -36,6 +36,8 @@ setup(
     "xlwt",
     "threadpoolctl>=3.1.0",
     "tifffile",
+    "static-ffmpeg>=2.7",
+    "ffmpeg-progress-yield",
   ],
   packages=setuptools.find_packages(),
   package_data={'zebrazoom.code.tracking.customTrackingImplementations': ['**/*.py'],
