@@ -22,4 +22,8 @@ When running tests, if the error is in `_checkResults` method, line `assert f1.r
 If there is a persistent error elsewhere, it could be due to some changes in an external library. Also, if multiple tests fail, it's usually the best to check the first failed test, since others could've been caused by that failure.
 
 # Updating Python versions in GitHub actions
-To update Python versions on which automated tests will run, simply modify `python_version` variable under jobs-run_tests-strategy-matrix in test.yml and long_test.yml - it contains a list of versions on which tests will run.
+To update Python versions on which automated tests will run, simply modify `python_version` variable under jobs-run_tests-strategy-matrix in test.yml and long_test.yml - it contains a list of major versions on which tests will run (e.g. [3.9, 3.13]).
+To change the Python version used for releases, change the following variables in release.yml, under `env` (near the top of the file):
+ - `PYTHON_VERSION`: the major Python version (e.g. 3.13)
+ - `FULL_PYTHON_VERSION`: the full Python version (e.g. 3.13.0)
+ - `MACOS_DOWNLOAD_LINK`: in most cases, only the version numbers will have to be changed, but sometimes the download link on the Python website changes the last part of the link - in this case, manually check the download link for MacOS on the python website and update it
