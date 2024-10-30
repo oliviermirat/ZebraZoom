@@ -4,7 +4,7 @@ from ._openResultsFile import openResultsFile
 
 
 def setDataPerTimeInterval(videoName: str, numWell: int, numAnimal: int, startTimeInSeconds: float, endTimeInSeconds: float, parameterName: str, newValues: np.array):
-  if endTimeInSeconds is not None and and startTimeInSeconds is not None and startTimeInSeconds >= endTimeInSeconds:
+  if endTimeInSeconds is not None and startTimeInSeconds is not None and startTimeInSeconds >= endTimeInSeconds:
     raise ValueError('end time must be larger than start time')
   with openResultsFile(videoName, 'a') as results:
     firstFrame = results.attrs['firstFrame']
