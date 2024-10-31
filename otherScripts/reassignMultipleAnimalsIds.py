@@ -8,12 +8,13 @@ import shutil
 import math
 import os
 
-videoNameOri = "DSCF0053_2024_10_18-18_49_22" #"DSCF0053_2024_10_17-14_48_39" #"DSCF0053_2024_08_26-11_44_52"
-videoName    = "DSCF0053_copy_2024_10_18-18_49_22" #"DSCF0053_copy_2024_10_17-14_48_39" #"DSCF0053_copy_2024_08_26-11_44_52"
+videoNameOri = "DSCF0053_2024_10_30-14_10_12" #"DSCF0053_2024_10_18-18_49_22"
+videoName    = "DSCF0053_copy_2024_10_30-14_10_12" #"DSCF0053_copy_2024_10_18-18_49_22"
+
 ZZoutputPath = os.path.join('zebrazoom', 'ZZoutput')
 
 startTimeInSeconds = 0
-endTimeInSeconds = 751.2916666666666 #41.666666666666664
+endTimeInSeconds = 83.33 #751.2916666666666 #41.666666666666664
 
 nbWells   = 1
 nbAnimals = 20
@@ -23,12 +24,23 @@ videoPixelSize = 0.01
 max_distance_threshold = 100
 max_NbFramesAllowedToDisapeared = 70
 minimumTraceLength = 50
+removeNewDetectionsTooClose = 8
 
 printDebug = False
 
 shutil.copyfile(os.path.join(ZZoutputPath, videoNameOri + ".h5"), os.path.join(ZZoutputPath, videoName + ".h5"))
 
 dataAPI.setFPSandPixelSize(videoName, videoFPS, videoPixelSize)
+
+def identifyPointsToClose(curr_positions, threshold, dataForLine, numFrame):
+  points = curr_positions[0]
+  valid_points = points[~np.all(points == 0, axis=1)]
+  distances = np.sqrt(np.sum((valid_points[:, np.newaxis, :] - valid_points[np.newaxis, :, :]) ** 2, axis=2))
+  close_pairs = np.argwhere((distances < threshold) & (distances >= 0))
+  close_pairs = [pair for pair in close_pairs if pair[0] < pair[1]]
+  for _, second_idx in close_pairs:
+    curr_positions[0, second_idx] = [0, 0]
+    dataForLine[second_idx][numFrame] = [0, 0]
 
 
 for numWell in range(nbWells):
@@ -48,12 +60,16 @@ for numWell in range(nbWells):
     if numFrame % 100 == 0:
       print("numFrame:", numFrame)
     
+
+    
     prev_positions = np.empty((0, 1, 2))
     curr_positions = np.empty((0, 2))
     for numAnimal in range(nbAnimals):
       prev_positions = np.append(prev_positions, np.array([np.array([dataForEachAnimal[numAnimal][numFrame-1]])]), axis = 0)
       curr_positions = np.append(curr_positions, np.array([dataForEachAnimal[numAnimal][numFrame]]), axis = 0)
     curr_positions = np.array([curr_positions])
+    if removeNewDetectionsTooClose > 0:
+      identifyPointsToClose(curr_positions, removeNewDetectionsTooClose, dataForEachAnimal, numFrame)
     
     distance_matrix = np.linalg.norm(prev_positions - curr_positions, axis=2)
     

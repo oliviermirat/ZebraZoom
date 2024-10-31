@@ -110,3 +110,8 @@ readAndAnalyzeZZoutputWithPython/*.png
 readAndAnalyzeZZoutputWithPython/*.csv
 readAndAnalyzeZZoutputWithPython/*.pkl
 readAndAnalyzeZZoutputWithPython/*.svg
+
+zebrazoom/code/GUI/tracking/customTrackingImplementations/fastFishTracking/__pycache__
+
+zebrazoom/code/tracking/customTrackingImplementations/yolov5/
+runs/
