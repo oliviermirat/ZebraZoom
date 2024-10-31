@@ -742,7 +742,11 @@ def _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, frameOri, e
             halfDiameter = 20 #30
             largerROIValue   = np.median(frameOri[headPosition[1]-halfDiameter:headPosition[1]+halfDiameter+1, headPosition[0]-halfDiameter:headPosition[0]+halfDiameter+1])
             
-            if minVal < 180 and centeredROIValue > largerROIValue: # 110: #180:
+            if "localMinimumDarkestThreshold" in self._hyperparameters and self._hyperparameters["localMinimumDarkestThreshold"]:
+              localMinimumDarkestThreshold = int(self._hyperparameters["localMinimumDarkestThreshold"])
+            else:
+              localMinimumDarkestThreshold = 180
+            if minVal < localMinimumDarkestThreshold and centeredROIValue > largerROIValue: # 110: #180:
               trackingHeadTailAllAnimals[animalNumber, i-self._firstFrame][0][0] = headPosition[0]
               trackingHeadTailAllAnimals[animalNumber, i-self._firstFrame][0][1] = headPosition[1]
               trackingHeadingAllAnimals[animalNumber, i-self._firstFrame] = heading

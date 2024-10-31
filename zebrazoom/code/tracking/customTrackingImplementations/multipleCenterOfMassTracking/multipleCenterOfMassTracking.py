@@ -57,7 +57,14 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
       print("Error opening video stream or file")
 
     if self._hyperparameters["backgroundSubtractorKNN"]:
-      fgbg = cv2.createBackgroundSubtractorKNN()
+      if "backgroundSubtractorKNN_history" in self._hyperparameters and self._hyperparameters["backgroundSubtractorKNN_history"]:
+        if "backgroundSubtractorKNN_dist2Threshold" in self._hyperparameters and self._hyperparameters["backgroundSubtractorKNN_dist2Threshold"]:
+          dist2Threshold = int(self._hyperparameters["backgroundSubtractorKNN_dist2Threshold"])
+        else:
+          dist2Threshold = 400
+        fgbg = cv2.createBackgroundSubtractorKNN(int(self._hyperparameters["backgroundSubtractorKNN_history"]), dist2Threshold)
+      else:
+        fgbg = cv2.createBackgroundSubtractorKNN()
       for i in range(0, min(self._lastFrame - 1, 500), int(min(self._lastFrame - 1, 500) / 10)):
         cap.set(1, min(self._lastFrame - 1, 500) - i)
         ret, frame = cap.read()
