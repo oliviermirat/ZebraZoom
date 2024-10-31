@@ -194,8 +194,8 @@ jobs:
           curl ${{ env.MACOS_DOWNLOAD_LINK }} -o "python.pkg" && sudo installer -pkg python.pkg -target /
       - name: Install dependencies
         run: |
-          python${{ env.PYTHON_VERSION }} -m pip install pyinstaller
-          python${{ env.PYTHON_VERSION }} -m pip install -e .
+          python${{ env.PYTHON_VERSION }} -m pip install --break-system-packages pyinstaller
+          python${{ env.PYTHON_VERSION }} -m pip install --break-system-packages -e .
       - name: Freeze the code
         run: |
           mkdir build
@@ -355,8 +355,8 @@ jobs:
           curl ${{ env.MACOS_DOWNLOAD_LINK }} -o "python.pkg" && sudo installer -pkg python.pkg -target /
       - name: Install dependencies
         run: |
-          python${{ env.PYTHON_VERSION }} -m pip install pyinstaller
-          python${{ env.PYTHON_VERSION }} -m pip install -e .
+          python${{ env.PYTHON_VERSION }} -m pip install --break-system-packages pyinstaller
+          python${{ env.PYTHON_VERSION }} -m pip install --break-system-packages -e .
       - name: Freeze the code
         run: |
           mkdir build
