@@ -28,5 +28,5 @@ from .getSingleFrameDistanceToAxis import *
 from .getSingleFrameTrackingAndDistanceToAxisForFolder import *
 from .setDataPerTimeInterval import *
 from .getWellCoordinates import *
-from .getNumberOfAnimals import *
+from .getNumberOfAnimalsPerWell import *
 from .getNumberOfWells import *
