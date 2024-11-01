@@ -24,6 +24,7 @@ If there is a persistent error elsewhere, it could be due to some changes in an 
 # Updating Python versions in GitHub actions
 To update Python versions on which automated tests will run, simply modify `python_version` variable under jobs-run_tests-strategy-matrix in test.yml and long_test.yml - it contains a list of major versions on which tests will run (e.g. [3.9, 3.13]).
 To change the Python version used for releases, change the following variables in release.yml, under `env` (near the top of the file):
- - `PYTHON_VERSION`: the major Python version (e.g. 3.13)
- - `FULL_PYTHON_VERSION`: the full Python version (e.g. 3.13.0)
- - `MACOS_DOWNLOAD_LINK`: in most cases, only the version numbers will have to be changed, but sometimes the download link on the Python website changes the last part of the link - in this case, manually check the download link for MacOS on the python website and update it
+ - `FULL_PYTHON_VERSION`: the full Python version to use for the release (e.g. 3.13.0)
+
+# Updating macOS runner versions for the release action
+Release action uses the oldest supported macOS version to ensure maximum compatibility. Once the currently used version reaches its end of life, the action should be updated to use the new oldest version. To do that, simply search for 'deploy_mac' and 'deploy_mac_legacy' in release.yaml and update 'runs-on' value for both.

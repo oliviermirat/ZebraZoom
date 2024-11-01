@@ -9,9 +9,7 @@ on:
         type: string
 
 env:
-  PYTHON_VERSION: 3.13
   FULL_PYTHON_VERSION: 3.13.0
-  MACOS_DOWNLOAD_LINK: https://www.python.org/ftp/python/3.13.0/python-3.13.0-macos11.pkg
 
 jobs:
   create_release:
@@ -127,15 +125,16 @@ jobs:
           make altinstall
           cd ..
           rm -rf Python-*
-          /opt/python/bin/python${{ env.PYTHON_VERSION }} -m pip install --upgrade pip setuptools wheel
-          /opt/python/bin/python${{ env.PYTHON_VERSION }} -m pip install pyinstaller
-          /opt/python/bin/python${{ env.PYTHON_VERSION }} -m pip install -e .
+          rm -f /opt/python/bin/python*-config
+          /opt/python/bin/python* -m pip install --upgrade pip setuptools wheel
+          /opt/python/bin/python* -m pip install pyinstaller
+          /opt/python/bin/python* -m pip install -e .
       - name: Freeze the code
         run: |
           mkdir build
           cd build
-          /opt/python/bin/python${{ env.PYTHON_VERSION }} -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory . --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoom ../zebrazoom/__main__.py
-          /opt/python/bin/python${{ env.PYTHON_VERSION }} -m PyInstaller --onefile --icon=../icon.ico --windowed -n updater ../updater.py
+          /opt/python/bin/python* -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory . --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoom ../zebrazoom/__main__.py
+          /opt/python/bin/python* -m PyInstaller --onefile --icon=../icon.ico --windowed -n updater ../updater.py
           rm -f dist/ZebraZoom/zebrazoom/dataAnalysis/data/.gitignore
           rm -f dist/ZebraZoom/zebrazoom/dataAnalysis/resultsClustering/.gitignore
           rm -f dist/ZebraZoom/zebrazoom/dataAnalysis/resultsKinematic/.gitignore
@@ -146,10 +145,11 @@ jobs:
           mkdir dist/ZebraZoom/updater
           mv dist/updater dist/ZebraZoom/updater
           cp ../icon.ico dist/ZebraZoom
+          /opt/python/bin/python* -c "import static_ffmpeg; static_ffmpeg.add_paths()"  # this will ensure ffmpeg is downloaded and shipped with the zip
       - name: Generate the list of installed files
         run: |
           cd build/dist/ZebraZoom
-          /opt/python/bin/python${{ env.PYTHON_VERSION }} - <<-EOF
+          /opt/python/bin/python* - <<-EOF
           import os
 
           def walk(path):
@@ -177,31 +177,34 @@ jobs:
           ASSET_PATH: build/dist/ZebraZoom.zip
           ASSET_CONTENT_TYPE: application/zip
         run: |
-          /opt/python/bin/python${{ env.PYTHON_VERSION }} -m pip install requests
-          /opt/python/bin/python${{ env.PYTHON_VERSION }} upload_asset.py
+          /opt/python/bin/python* -m pip install requests
+          /opt/python/bin/python* upload_asset.py
 
   deploy_mac:
     name: Deploy on macOS
     needs: create_release
-    runs-on: macOS-latest
+    runs-on: macOS-12
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
           ref: master
       - name: Install Python
-        run: |
-          curl ${{ env.MACOS_DOWNLOAD_LINK }} -o "python.pkg" && sudo installer -pkg python.pkg -target /
+        uses: actions/setup-python@v5
+        id: python
+        with:
+          python-version: ${{ env.FULL_PYTHON_VERSION }}
       - name: Install dependencies
         run: |
-          python${{ env.PYTHON_VERSION }} -m pip install --break-system-packages pyinstaller
-          python${{ env.PYTHON_VERSION }} -m pip install --break-system-packages -e .
+          ${{ steps.python.outputs.python-path }} -m pip install --upgrade pip setuptools wheel
+          ${{ steps.python.outputs.python-path }} -m pip install pyinstaller
+          ${{ steps.python.outputs.python-path }} -m pip install -e .
       - name: Freeze the code
         run: |
           mkdir build
           cd build
-          python${{ env.PYTHON_VERSION }} -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory ZebraZoom --osx-bundle-identifier ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoomApp ../zebrazoom/__main__.py
-          python${{ env.PYTHON_VERSION }} -m PyInstaller --onefile --icon=../icon.ico --windowed --osx-bundle-identifier ZebraZoom.updater -n updater ../updater.py
+          ${{ steps.python.outputs.python-path }} -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory ZebraZoom --osx-bundle-identifier ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoomApp ../zebrazoom/__main__.py
+          ${{ steps.python.outputs.python-path }} -m PyInstaller --onefile --icon=../icon.ico --windowed --osx-bundle-identifier ZebraZoom.updater -n updater ../updater.py
           rm -f dist/ZebraZoomApp/ZebraZoom/zebrazoom/dataAnalysis/data/.gitignore
           rm -f dist/ZebraZoomApp/ZebraZoom/zebrazoom/dataAnalysis/resultsClustering/.gitignore
           rm -f dist/ZebraZoomApp/ZebraZoom/zebrazoom/dataAnalysis/resultsKinematic/.gitignore
@@ -219,7 +222,7 @@ jobs:
       - name: Generate the list of installed files
         run: |
           cd build/dist/ZebraZoomApp/ZebraZoom
-          python${{ env.PYTHON_VERSION }} - <<-EOF
+          ${{ steps.python.outputs.python-path }} - <<-EOF
           import os
 
           def walk(path):
@@ -344,43 +347,46 @@ jobs:
   deploy_mac_legacy:
     name: Deploy legacy format on macOS
     needs: create_release
-    runs-on: macOS-latest
+    runs-on: macOS-12
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
         with:
           ref: master
       - name: Install Python
-        run: |
-          curl ${{ env.MACOS_DOWNLOAD_LINK }} -o "python.pkg" && sudo installer -pkg python.pkg -target /
+        uses: actions/setup-python@v5
+        id: python
+        with:
+          python-version: ${{ env.FULL_PYTHON_VERSION }}
       - name: Install dependencies
         run: |
-          python${{ env.PYTHON_VERSION }} -m pip install --break-system-packages pyinstaller
-          python${{ env.PYTHON_VERSION }} -m pip install --break-system-packages -e .
+          ${{ steps.python.outputs.python-path }} -m pip install --upgrade pip setuptools wheel
+          ${{ steps.python.outputs.python-path }} -m pip install pyinstaller
+          ${{ steps.python.outputs.python-path }} -m pip install -e .
       - name: Freeze the code
         run: |
           mkdir build
           cd build
-          python${{ env.PYTHON_VERSION }} -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory . --osx-bundle-identifier ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoomApp ../zebrazoom/__main__.py
-          python${{ env.PYTHON_VERSION }} -m PyInstaller --onefile --icon=../icon.ico --windowed --osx-bundle-identifier ZebraZoom.updater -n updater ../updater.py
-          rm -f dist/ZebraZoomApp/zebrazoom/dataAnalysis/data/.gitignore
-          rm -f dist/ZebraZoomApp/zebrazoom/dataAnalysis/resultsClustering/.gitignore
-          rm -f dist/ZebraZoomApp/zebrazoom/dataAnalysis/resultsKinematic/.gitignore
-          mkdir dist/ZebraZoomApp/zebrazoom/code/tracking
-          cp -r ../zebrazoom/code/tracking/customTrackingImplementations dist/ZebraZoomApp/zebrazoom/code/tracking/customTrackingImplementations
-          mkdir dist/ZebraZoomApp/zebrazoom/code/GUI/tracking
-          cp -r ../zebrazoom/code/GUI/tracking/customTrackingImplementations dist/ZebraZoomApp/zebrazoom/code/GUI/tracking/customTrackingImplementations
-          mkdir dist/ZebraZoomApp/updater
-          mv dist/updater dist/ZebraZoomApp/updater
-          cp ../icon.ico dist/ZebraZoomApp
+          ${{ steps.python.outputs.python-path }} -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory ZebraZoom --osx-bundle-identifier ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" -n ZebraZoomApp ../zebrazoom/__main__.py
+          ${{ steps.python.outputs.python-path }} -m PyInstaller --onefile --icon=../icon.ico --windowed --osx-bundle-identifier ZebraZoom.updater -n updater ../updater.py
+          rm -f dist/ZebraZoomApp/ZebraZoom/zebrazoom/dataAnalysis/data/.gitignore
+          rm -f dist/ZebraZoomApp/ZebraZoom/zebrazoom/dataAnalysis/resultsClustering/.gitignore
+          rm -f dist/ZebraZoomApp/ZebraZoom/zebrazoom/dataAnalysis/resultsKinematic/.gitignore
+          mkdir dist/ZebraZoomApp/ZebraZoom/zebrazoom/code/tracking
+          cp -r ../zebrazoom/code/tracking/customTrackingImplementations dist/ZebraZoomApp/ZebraZoom/zebrazoom/code/tracking/customTrackingImplementations
+          mkdir dist/ZebraZoomApp/ZebraZoom/zebrazoom/code/GUI/tracking
+          cp -r ../zebrazoom/code/GUI/tracking/customTrackingImplementations dist/ZebraZoomApp/ZebraZoom/zebrazoom/code/GUI/tracking/customTrackingImplementations
+          mkdir dist/ZebraZoomApp/ZebraZoom/updater
+          mv dist/updater dist/ZebraZoomApp/ZebraZoom/updater
+          cp ../icon.ico dist/ZebraZoomApp/ZebraZoom
       - name: Run the created executable
         run: |
           build/dist/ZebraZoomApp/ZebraZoomApp exit
-          rm build/dist/ZebraZoomApp/zebrazoom/ZZoutput/_groupsInternal.pkl
+          rm build/dist/ZebraZoomApp/ZebraZoom/zebrazoom/ZZoutput/_groupsInternal.pkl
       - name: Generate the list of installed files
         run: |
           cd build/dist/ZebraZoomApp
-          python${{ env.PYTHON_VERSION }} - <<-EOF
+          ${{ steps.python.outputs.python-path }} - <<-EOF
           import os
 
           def walk(path):
