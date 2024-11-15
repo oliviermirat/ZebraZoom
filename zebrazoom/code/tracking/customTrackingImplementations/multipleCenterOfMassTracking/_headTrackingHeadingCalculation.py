@@ -26,10 +26,6 @@ def _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, frameOri, e
         
         (minVal, maxVal, headPosition, maxLoc) = cv2.minMaxLoc(blur)
         
-        # if i >= 250:
-          # import zebrazoom.code.util as util
-          # util.showFrame(frameOri, title="frameOri")
-        
         if "localMinimumDarkestThreshold" in self._hyperparameters and self._hyperparameters["localMinimumDarkestThreshold"]:
           localMinimumDarkestThreshold = int(self._hyperparameters["localMinimumDarkestThreshold"])
         else:
@@ -45,12 +41,6 @@ def _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, frameOri, e
             x = headPosition[0]
             y = headPosition[1]
 
-            if (self._hyperparameters["headEmbededTeresaNicolson"] == 1) and (i == self._firstFrame):
-              xHB_TN = x
-
-            if (self._hyperparameters["headEmbededTeresaNicolson"] == 1):
-              headPosition = [xHB_TN + 100, y]
-
             if type(headPosition) == tuple:
               headPosition = list(headPosition)
               headPosition[0] = headPosition[0] + xmin
@@ -63,30 +53,21 @@ def _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, frameOri, e
             # Calculate heading for frame i
             if type(thresh1) != int:
               [heading, lastFirstTheta] = self._calculateHeading(x, y, i, thresh1, thresh2, takeTheHeadClosestToTheCenter, 0, wellNumber)
-
-            if (self._hyperparameters["headEmbededTeresaNicolson"] == 1):
-              heading = 0
-              lastFirstTheta = 0
             
-            okAll = True
-            if i > 110:
-              for oldFrame in oldFrameList:
-                compareDarknestWithThePastWindow = 10
-                centeredROIValue = np.mean(frameOri[headPosition[1]-compareDarknestWithThePastWindow:headPosition[1]+compareDarknestWithThePastWindow, headPosition[0]-compareDarknestWithThePastWindow:headPosition[0]+compareDarknestWithThePastWindow])
-                centeredROIValueOld = np.mean(oldFrame[headPosition[1]-compareDarknestWithThePastWindow:headPosition[1]+compareDarknestWithThePastWindow, headPosition[0]-compareDarknestWithThePastWindow:headPosition[0]+compareDarknestWithThePastWindow])
-                ok = (centeredROIValue > centeredROIValueOld)
-                okAll = (okAll and ok)
+            if "removeShades" in self._hyperparameters and self._hyperparameters["removeShades"]:
+              okAll = True
+              if i > 110:
+                for oldFrame in oldFrameList:
+                  compareDarknestWithThePastWindow = int(self._hyperparameters["headSize"] / 40)
+                  centeredROIValue = np.mean(frameOri[headPosition[1]-compareDarknestWithThePastWindow:headPosition[1]+compareDarknestWithThePastWindow, headPosition[0]-compareDarknestWithThePastWindow:headPosition[0]+compareDarknestWithThePastWindow])
+                  centeredROIValueOld = np.mean(oldFrame[headPosition[1]-compareDarknestWithThePastWindow:headPosition[1]+compareDarknestWithThePastWindow, headPosition[0]-compareDarknestWithThePastWindow:headPosition[0]+compareDarknestWithThePastWindow])
+                  if self._hyperparameters["brightAnimalDarkBackround"]:
+                    ok = (centeredROIValue > centeredROIValueOld)
+                  else:
+                    ok = (centeredROIValue < centeredROIValueOld)
+                  okAll = (okAll and ok)
             
-            # halfDiameter = 20 #30
-            # largerROIValue   = np.median(frameOri[headPosition[1]-halfDiameter:headPosition[1]+halfDiameter+1, headPosition[0]-halfDiameter:headPosition[0]+halfDiameter+1])
-            
-            # if i >= 50:
-              # print("centeredROIValue:", centeredROIValue, "; centeredROIValueOld:", centeredROIValueOld)
-              # import zebrazoom.code.util as util
-              # util.showFrame(frameOri[headPosition[1]-compareDarknestWithThePastWindow:headPosition[1]+compareDarknestWithThePastWindow, headPosition[0]-compareDarknestWithThePastWindow:headPosition[0]+compareDarknestWithThePastWindow], title="frameOri")
-              # util.showFrame(oldFrame[headPosition[1]-compareDarknestWithThePastWindow:headPosition[1]+compareDarknestWithThePastWindow, headPosition[0]-compareDarknestWithThePastWindow:headPosition[0]+compareDarknestWithThePastWindow], title="oldFrame")
-            
-            if minVal < localMinimumDarkestThreshold and okAll: # 110: #180:
+            if minVal < localMinimumDarkestThreshold and okAll:
               trackingHeadTailAllAnimals[animalNumber, i-self._firstFrame][0][0] = headPosition[0]
               trackingHeadTailAllAnimals[animalNumber, i-self._firstFrame][0][1] = headPosition[1]
               trackingHeadingAllAnimals[animalNumber, i-self._firstFrame] = heading
@@ -95,7 +76,7 @@ def _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, frameOri, e
               trackingHeadTailAllAnimals[animalNumber, i-self._firstFrame][0][1] = 0
               trackingHeadingAllAnimals[animalNumber, i-self._firstFrame] = 0
             
-            cv2.circle(blur, headPosition, 40, (255, 255, 255), -1)
+            cv2.circle(blur, headPosition, self._hyperparameters["headSize"], (255, 255, 255), -1)
             (minVal, maxVal, headPosition, maxLoc) = cv2.minMaxLoc(blur)
 
       else:

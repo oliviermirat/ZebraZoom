@@ -18,17 +18,8 @@ from collections import deque
 class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, GetImagesMixin):
   def __init__(self, videoPath, wellPositions, hyperparameters):
     super().__init__(videoPath, wellPositions, hyperparameters)
-    if self._hyperparameters["eyeTracking"]:
-      self._trackingEyesAllAnimalsList = [np.zeros((self._hyperparameters["nbAnimalsPerWell"], self._lastFrame-self._firstFrame+1, 8))
-                                          for _ in range(self._hyperparameters["nbWells"])]
-    else:
-      self._trackingEyesAllAnimals = 0
 
-    # if not(self._hyperparameters["nbAnimalsPerWell"] > 1) and not(self._hyperparameters["headEmbeded"]) and (self._hyperparameters["findHeadPositionByUserInput"] == 0) and (self._hyperparameters["takeTheHeadClosestToTheCenter"] == 0):
-    self._trackingProbabilityOfGoodDetectionList = [np.zeros((self._hyperparameters["nbAnimalsPerWell"], self._lastFrame-self._firstFrame+1))
-                                                      for _ in range(self._hyperparameters["nbWells"])]
-    # else:
-      # self._trackingProbabilityOfGoodDetectionList = 0
+    self._trackingProbabilityOfGoodDetectionList = [np.zeros((self._hyperparameters["nbAnimalsPerWell"], self._lastFrame-self._firstFrame+1)) for _ in range(self._hyperparameters["nbWells"])]
     
     if self._hyperparameters["headingCalculationMethod"]:
       self._trackingProbabilityOfHeadingGoodCalculation = [np.zeros((self._hyperparameters["nbAnimalsPerWell"], self._lastFrame-self._firstFrame+1)) for _ in range(self._hyperparameters["nbWells"])]
@@ -57,22 +48,21 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
     if (cap.isOpened()== False):
       print("Error opening video stream or file")
 
-    if self._hyperparameters["backgroundSubtractorKNN"]:
-      if "backgroundSubtractorKNN_history" in self._hyperparameters and self._hyperparameters["backgroundSubtractorKNN_history"]:
-        if "backgroundSubtractorKNN_dist2Threshold" in self._hyperparameters and self._hyperparameters["backgroundSubtractorKNN_dist2Threshold"]:
-          dist2Threshold = int(self._hyperparameters["backgroundSubtractorKNN_dist2Threshold"])
-        else:
-          dist2Threshold = 400
-        fgbg = cv2.createBackgroundSubtractorKNN(int(self._hyperparameters["backgroundSubtractorKNN_history"]), dist2Threshold, False)
+    if "backgroundSubtractorKNN_history" in self._hyperparameters and self._hyperparameters["backgroundSubtractorKNN_history"]:
+      if "backgroundSubtractorKNN_dist2Threshold" in self._hyperparameters and self._hyperparameters["backgroundSubtractorKNN_dist2Threshold"]:
+        dist2Threshold = int(self._hyperparameters["backgroundSubtractorKNN_dist2Threshold"])
       else:
-        fgbg = cv2.createBackgroundSubtractorKNN(detectShadows=False)
-      fgbg.setShadowThreshold(0.000001)
-      for i in range(0, min(self._lastFrame - 1, 500), int(min(self._lastFrame - 1, 500) / 10)):
-        cap.set(1, min(self._lastFrame - 1, 500) - i)
-        ret, frame = cap.read()
-        fgmask = fgbg.apply(frame)
-      cap.release()
-      cap = zzVideoReading.VideoCapture(self._videoPath)
+        dist2Threshold = 400
+      fgbg = cv2.createBackgroundSubtractorKNN(int(self._hyperparameters["backgroundSubtractorKNN_history"]), dist2Threshold)
+    else:
+      fgbg = cv2.createBackgroundSubtractorKNN()
+    
+    for i in range(0, min(self._lastFrame - 1, 500), int(min(self._lastFrame - 1, 500) / 10)):
+      cap.set(1, min(self._lastFrame - 1, 500) - i)
+      ret, frame = cap.read()
+      fgmask = fgbg.apply(frame)
+    cap.release()
+    cap = zzVideoReading.VideoCapture(self._videoPath)
     
     queue1 = deque()
     queue2 = deque()
@@ -103,27 +93,29 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
         if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
           frameOri = cv2.cvtColor(frameOri, cv2.COLOR_BGR2GRAY)
         
-        if len(queue1) >= 20:
-          oldFrame1 = queue1.popleft()
+        if "removeShades" in self._hyperparameters and self._hyperparameters["removeShades"]:
+          if len(queue1) >= 20:
+            oldFrame1 = queue1.popleft()
+          else:
+            oldFrame1 = frameOri.copy()
+          queue1.append(frameOri.copy())
+          if len(queue2) >= 50:
+            oldFrame2 = queue2.popleft()
+          else:
+            oldFrame2 = frameOri.copy()
+          queue2.append(frameOri.copy())
+          if len(queue3) >= 100:
+            oldFrame3 = queue3.popleft()
+          else:
+            oldFrame3 = frameOri.copy()
+          queue3.append(frameOri.copy())
         else:
-          oldFrame1 = frameOri.copy()
-        queue1.append(frameOri.copy())
+          oldFrame1 = 0
+          oldFrame2 = 0
+          oldFrame3 = 0
         
-        if len(queue2) >= 50:
-          oldFrame2 = queue2.popleft()
-        else:
-          oldFrame2 = frameOri.copy()
-        queue2.append(frameOri.copy())
-        
-        if len(queue3) >= 100:
-          oldFrame3 = queue3.popleft()
-        else:
-          oldFrame3 = frameOri.copy()
-        queue3.append(frameOri.copy())
-              
-        if self._hyperparameters["backgroundSubtractorKNN"]:
-          frame = fgbg.apply(frame)
-          frame = 255 - frame
+        frame = fgbg.apply(frame)
+        frame = 255 - frame
 
         for wellNumber in range(self._firstWell, self._lastWell + 1):
           minPixelDiffForBackExtract = self._hyperparameters["minPixelDiffForBackExtract"]
@@ -131,14 +123,9 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
           ytop = self._wellPositions[wellNumber]['topLeftY']
           lenX = self._wellPositions[wellNumber]['lengthX']
           lenY = self._wellPositions[wellNumber]['lengthY']
-          if self._hyperparameters["backgroundSubtractorKNN"]:
-            grey = frame
-          else:
-            grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+          grey = frame
           
           curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX].copy()
-          
-          self._hyperparameters["paramGaussianBlur"] = 31 #15 #31
             
           if self._hyperparameters["paramGaussianBlur"]:
             blur = cv2.GaussianBlur(curFrame, (self._hyperparameters["paramGaussianBlur"], self._hyperparameters["paramGaussianBlur"]),0)
