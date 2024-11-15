@@ -18,6 +18,8 @@ import glob
 import numpy as np
 from datetime import datetime
 
+import zebrazoom.dataAPI as dataAPI
+
 
 class ZebraZoomVideoAnalysis:
   def __init__(self, pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
@@ -304,6 +306,9 @@ class ZebraZoomVideoAnalysis:
     # Copying output result folder in another folder
     if len(self._hyperparameters["additionalOutputFolder"]):
       self._storeInAdditionalFolder()
+    
+    if "reassignMultipleAnimalsId" in self._hyperparameters and self._hyperparameters["reassignMultipleAnimalsId"]:
+      dataAPI.reassignMultipleAnimalsId(self._videoName, self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters["freqAlgoPosFollow"] if "freqAlgoPosFollow" in self._hyperparameters else 0)
 
     if self._hyperparameters["popUpAlgoFollow"]:
       import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow

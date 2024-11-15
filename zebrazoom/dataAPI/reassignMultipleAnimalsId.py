@@ -8,43 +8,6 @@ import shutil
 import math
 import os
 
-# First batch
-videoNameOri = "DSCF0053_2024_10_31-17_53_35" # Classic optimized
-videoNameOri = "DSCF0053_2024_10_18-18_49_22" # Classic
-videoNameOri = "DSCF0053_2024_10_30-14_10_12" # Deep learning Oli label
-
-# Second batch
-videoNameOri_Classic = "DSCF0053_CV_initial_2024_11_12-12_20_19" # Classic
-videoNameOri_ClassicOptimized = "DSCF0053_CV_optimized_2024_11_12-12_20_19" # Classic optimized
-videoNameOri_DL_OliLabel = "DSCF0053_2024_10_30-14_10_12"
-videoNameOri_DL_GauAntLabel = "DSCF0053_DL_GauAnt_labels_2024_11_12-13_32_40" # Deep learning GauAnt label
-videoNameOri_Panchon_ClassicOptimized = "DSCF0077_Pachon2024_CCV_2024_11_12-15_28_42"
-videoNameOri_Panchon_DL_GauAntLabel = "DSCF0077_Pachon2024_DL_2024_11_12-15_28_42"
-
-videoNameOriList = [videoNameOri_Classic, videoNameOri_ClassicOptimized, videoNameOri_DL_OliLabel, videoNameOri_DL_GauAntLabel, videoNameOri_Panchon_ClassicOptimized, videoNameOri_Panchon_DL_GauAntLabel]
-
-videoNameOriList = ["DSCF0053_DL_0.01_2024_11_12-13_32_41"]
-
-#####
-
-startTimeInSeconds = 0
-endTimeInSeconds = None
-
-nbWells   = 1
-nbAnimals = 20
-videoFPS  = 24
-videoPixelSize = 0.01
-
-max_distance_threshold = 100
-max_NbFramesAllowedToDisapeared = 50 #70
-minimumTraceLength = 50
-removeNewDetectionsTooClose = 8
-minDistTravel = 10 #-1
-
-printDebug = False
-
-#####
-
 
 def identifyPointsToClose(curr_positions, threshold, dataForLine, numFrame):
   points = curr_positions[0]
@@ -56,37 +19,46 @@ def identifyPointsToClose(curr_positions, threshold, dataForLine, numFrame):
     curr_positions[0, second_idx] = [0, 0]
     dataForLine[second_idx][numFrame] = [0, 0]
 
-for videoNameOri in videoNameOriList:
 
-  videoName = videoNameOri.replace("_2024_", "_copy_2024_")
+def reassignMultipleAnimalsId(videoName: str, nbWells: int, nbAnimalsPerWell: int, freqAlgoPosFollow: int):
 
-  ZZoutputPath = os.path.join('zebrazoom', 'ZZoutput')
+  startTimeInSeconds = 0
+  endTimeInSeconds = None
 
-  shutil.copyfile(os.path.join(ZZoutputPath, videoNameOri + ".h5"), os.path.join(ZZoutputPath, videoName + ".h5"))
+  nbWells   = 1
+  nbAnimals = 20
+  videoFPS  = 24
+  videoPixelSize = 0.01
 
-  dataAPI.setFPSandPixelSize(videoName, videoFPS, videoPixelSize)
+  max_distance_threshold = 100
+  max_NbFramesAllowedToDisapeared = 50
+  minimumTraceLength = 5
+  removeNewDetectionsTooClose = 8
+  minDistTravel = 1
+
+  printDebug = False
 
   for numWell in range(nbWells):
     
     numAnimal = 0
     
     dataForEachAnimal = []
-    for numAnimal in range(nbAnimals):
+    for numAnimal in range(nbAnimalsPerWell):
       data = dataAPI.getDataPerTimeInterval(videoName, numWell, numAnimal, startTimeInSeconds, endTimeInSeconds, "HeadPos")
       dataForEachAnimal.append(data)
     
-    maximalDisappearanceFrames = [2 * max_NbFramesAllowedToDisapeared for i in range(nbAnimals)]
-    nbFramesNotAtZero = [0 for i in range(nbAnimals)]
-    curFirstCoordinates = [[0, 0] for i in range(nbAnimals)]
+    maximalDisappearanceFrames = [2 * max_NbFramesAllowedToDisapeared for i in range(nbAnimalsPerWell)]
+    nbFramesNotAtZero = [0 for i in range(nbAnimalsPerWell)]
+    curFirstCoordinates = [[0, 0] for i in range(nbAnimalsPerWell)]
     
     for numFrame in range(1, len(dataForEachAnimal[0])):
       
-      if numFrame % 100 == 0:
-        print("numFrame:", numFrame)
+      if numFrame % freqAlgoPosFollow == 0:
+        print("reassignMultipleIds: numFrame:", numFrame)
       
       prev_positions = np.empty((0, 1, 2))
       curr_positions = np.empty((0, 2))
-      for numAnimal in range(nbAnimals):
+      for numAnimal in range(nbAnimalsPerWell):
         prev_positions = np.append(prev_positions, np.array([np.array([dataForEachAnimal[numAnimal][numFrame-1]])]), axis = 0)
         curr_positions = np.append(curr_positions, np.array([dataForEachAnimal[numAnimal][numFrame]]), axis = 0)
       curr_positions = np.array([curr_positions])
@@ -116,9 +88,9 @@ for videoNameOri in videoNameOriList:
       
       if printDebug:
         print("row_ind, col_ind:", row_ind, col_ind)
-        print(numFrame, [dataForEachAnimal[idAnimal][numFrame] for idAnimal in range(nbAnimals)])
+        print(numFrame, [dataForEachAnimal[idAnimal][numFrame] for idAnimal in range(nbAnimalsPerWell)])
       
-      if np.sum(row_ind == col_ind) != nbAnimals:
+      if np.sum(row_ind == col_ind) != nbAnimalsPerWell:
         newPossibilities = [dataForEachAnimal[i][numFrame].copy() for i in range(len(dataForEachAnimal))]
         for idx, rowId in enumerate(row_ind):
           colId = col_ind[idx]
@@ -126,9 +98,9 @@ for videoNameOri in videoNameOriList:
             dataForEachAnimal[rowId][numFrame] = newPossibilities[colId]
       
       if printDebug:
-        print(numFrame, [dataForEachAnimal[idAnimal][numFrame] for idAnimal in range(nbAnimals)])
+        print(numFrame, [dataForEachAnimal[idAnimal][numFrame] for idAnimal in range(nbAnimalsPerWell)])
       
-      for numAnimal in range(nbAnimals):
+      for numAnimal in range(nbAnimalsPerWell):
         if np.sum(dataForEachAnimal[numAnimal][numFrame - 1] == [0, 0]) != 2 and np.sum(dataForEachAnimal[numAnimal][numFrame] == [0, 0]) == 2: # No candidate point was found for the current numAnimal trace
           if maximalDisappearanceFrames[numAnimal] < max_NbFramesAllowedToDisapeared:
             dataForEachAnimal[numAnimal][numFrame] = dataForEachAnimal[numAnimal][numFrame - 1]
@@ -164,19 +136,15 @@ for videoNameOri in videoNameOriList:
           maximalDisappearanceFrames[numAnimal] = 0
       
       if printDebug:
-        print(numFrame, [dataForEachAnimal[idAnimal][numFrame] for idAnimal in range(nbAnimals)])
-
-      # if numFrame == 1076: #279:
-        # import pdb
-        # pdb.set_trace()
-
-    for numAnimal in range(nbAnimals):
+        print(numFrame, [dataForEachAnimal[idAnimal][numFrame] for idAnimal in range(nbAnimalsPerWell)])
+    
+    for numAnimal in range(nbAnimalsPerWell):
       if maximalDisappearanceFrames[numAnimal] != 0: # Removing artifically added points if the trace had not been "saved" by the end of the video
         nbFrameDisappeared = maximalDisappearanceFrames[numAnimal]
         for i in range(numFrame - nbFrameDisappeared, numFrame):
           dataForEachAnimal[numAnimal][i][0] = 0
           dataForEachAnimal[numAnimal][i][1] = 0
     
-    for numAnimal in range(nbAnimals):
+    for numAnimal in range(nbAnimalsPerWell):
       data = dataForEachAnimal[numAnimal]
       dataAPI.setDataPerTimeInterval(videoName, numWell, numAnimal, startTimeInSeconds, endTimeInSeconds, "HeadPos", data)

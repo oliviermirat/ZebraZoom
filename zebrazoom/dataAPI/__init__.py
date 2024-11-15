@@ -30,3 +30,4 @@ from .setDataPerTimeInterval import *
 from .getWellCoordinates import *
 from .getNumberOfAnimalsPerWell import *
 from .getNumberOfWells import *
+from .reassignMultipleAnimalsId import reassignMultipleAnimalsId
