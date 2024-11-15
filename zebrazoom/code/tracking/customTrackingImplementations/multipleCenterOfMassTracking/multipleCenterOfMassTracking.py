@@ -12,6 +12,7 @@ from ..._getImages import GetImagesMixin
 from zebrazoom.code.tracking.customTrackingImplementations.multipleCenterOfMassTracking._headTrackingHeadingCalculation import _headTrackingHeadingCalculation
 
 import zebrazoom.code.tracking
+from collections import deque
 
 
 class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, GetImagesMixin):
@@ -62,16 +63,21 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
           dist2Threshold = int(self._hyperparameters["backgroundSubtractorKNN_dist2Threshold"])
         else:
           dist2Threshold = 400
-        fgbg = cv2.createBackgroundSubtractorKNN(int(self._hyperparameters["backgroundSubtractorKNN_history"]), dist2Threshold)
+        fgbg = cv2.createBackgroundSubtractorKNN(int(self._hyperparameters["backgroundSubtractorKNN_history"]), dist2Threshold, False)
       else:
-        fgbg = cv2.createBackgroundSubtractorKNN()
+        fgbg = cv2.createBackgroundSubtractorKNN(detectShadows=False)
+      fgbg.setShadowThreshold(0.000001)
       for i in range(0, min(self._lastFrame - 1, 500), int(min(self._lastFrame - 1, 500) / 10)):
         cap.set(1, min(self._lastFrame - 1, 500) - i)
         ret, frame = cap.read()
         fgmask = fgbg.apply(frame)
       cap.release()
       cap = zzVideoReading.VideoCapture(self._videoPath)
-
+    
+    queue1 = deque()
+    queue2 = deque()
+    queue3 = deque()
+    
     i = self._firstFrame
 
     if self._firstFrame:
@@ -86,8 +92,6 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
         if self._hyperparameters["popUpAlgoFollow"]:
           from zebrazoom.code.popUpAlgoFollow import prepend
 
-          # prepend("Tracking: frame:" + str(i))
-
       if self._hyperparameters["debugTracking"]:
         print("frame:",i)
 
@@ -99,12 +103,29 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
         if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
           frameOri = cv2.cvtColor(frameOri, cv2.COLOR_BGR2GRAY)
         
+        if len(queue1) >= 20:
+          oldFrame1 = queue1.popleft()
+        else:
+          oldFrame1 = frameOri.copy()
+        queue1.append(frameOri.copy())
+        
+        if len(queue2) >= 50:
+          oldFrame2 = queue2.popleft()
+        else:
+          oldFrame2 = frameOri.copy()
+        queue2.append(frameOri.copy())
+        
+        if len(queue3) >= 100:
+          oldFrame3 = queue3.popleft()
+        else:
+          oldFrame3 = frameOri.copy()
+        queue3.append(frameOri.copy())
+              
         if self._hyperparameters["backgroundSubtractorKNN"]:
           frame = fgbg.apply(frame)
           frame = 255 - frame
 
         for wellNumber in range(self._firstWell, self._lastWell + 1):
-          # if self._hyperparameters["nbAnimalsPerWell"] == 1 and not(self._hyperparameters["forceBlobMethodForHeadTracking"]):
           minPixelDiffForBackExtract = self._hyperparameters["minPixelDiffForBackExtract"]
           xtop = self._wellPositions[wellNumber]['topLeftX']
           ytop = self._wellPositions[wellNumber]['topLeftY']
@@ -116,13 +137,6 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
             grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
           
           curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX].copy()
-          # if not(self._hyperparameters["backgroundSubtractorKNN"]):
-            # back = self._background[ytop:ytop+lenY, xtop:xtop+lenX]
-            # putToWhite = ( curFrame.astype('int32') >= (back.astype('int32') - minPixelDiffForBackExtract) )
-            # curFrame[putToWhite] = 255
-          # else:
-            # print("here")
-            # self._hyperparameters["paramGaussianBlur"] = int(math.sqrt(cv2.countNonZero(255 - curFrame) / self._hyperparameters["nbAnimalsPerWell"]) / 2) * 2 + 1
           
           self._hyperparameters["paramGaussianBlur"] = 31 #15 #31
             
@@ -137,27 +151,11 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
             thresh1 = 0
             thresh2 = 0
           gray    = 0
-          # else:
-            # [frame2, gray, thresh1, blur, thresh2, frame2, initialCurFrame, back, xHead, yHead] = self._getImages(0, i, wellNumber, frame)
 
           headPositionFirstFrame = 0
 
           # Head tracking and heading calculation
-          lastFirstTheta = _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, frameOri, self._hyperparameters["erodeSize"], int(cap.get(3)), int(cap.get(4)), self._trackingHeadingAllAnimalsList[wellNumber], self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingProbabilityOfGoodDetectionList[wellNumber], headPositionFirstFrame, self._wellPositions[wellNumber]["lengthX"], 0, 0, wellNumber)
-
-          # Tail tracking for frame i
-          if self._hyperparameters["trackTail"] == 1 :
-            threshForBlackFrames = 0
-            thetaDiffAccept = 1.2
-            lastFirstTheta = 0
-            maxDepth = 0
-            tailTipFirstFrame = []
-            for animalId in range(0, self._hyperparameters["nbAnimalsPerWell"]):
-              self._tailTracking(animalId, i, frame, thresh1, threshForBlackFrames, thetaDiffAccept, self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], lastFirstTheta, maxDepth, tailTipFirstFrame, initialCurFrame.copy(), back)
-
-          # Eye tracking for frame i
-          if self._hyperparameters["eyeTracking"]:
-            self._eyeTracking(animalId, i, frame, thresh1, self._trackingHeadingAllAnimalsList[wellNumber], self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber])
+          lastFirstTheta = _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, frameOri, self._hyperparameters["erodeSize"], int(cap.get(3)), int(cap.get(4)), self._trackingHeadingAllAnimalsList[wellNumber], self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingProbabilityOfGoodDetectionList[wellNumber], headPositionFirstFrame, self._wellPositions[wellNumber]["lengthX"], 0, 0, wellNumber, [oldFrame1, oldFrame2, oldFrame3])
 
           self._debugTracking(i, self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], curFrame)
 
