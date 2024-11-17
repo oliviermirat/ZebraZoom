@@ -20,9 +20,12 @@ def identifyPointsToClose(curr_positions, threshold, dataForLine, numFrame):
     dataForLine[second_idx][numFrame] = [0, 0]
 
 
-def reassignMultipleAnimalsId(videoName: str, nbWells: int, nbAnimalsPerWell: int, freqAlgoPosFollow: int):
-
-  startTimeInSeconds = 0
+def reassignMultipleAnimalsId(videoName: str, nbWells: int, nbAnimalsPerWell: int, freqAlgoPosFollow: int, self):
+  
+  # NEED TO REMOVE THE FOLLOWING LINE AS SOON AS GETDATAPERTIMEINTERVAL AND SETDATAPERTIMEINTERVAL ARE FIXED
+  dataAPI.setFPSandPixelSize(videoName, 24, 0.1)
+  
+  startTimeInSeconds = None
   endTimeInSeconds = None
 
   nbWells   = 1

@@ -307,9 +307,16 @@ class ZebraZoomVideoAnalysis:
     if len(self._hyperparameters["additionalOutputFolder"]):
       self._storeInAdditionalFolder()
     
+    # DataAPI calls
     if "reassignMultipleAnimalsId" in self._hyperparameters and self._hyperparameters["reassignMultipleAnimalsId"]:
-      dataAPI.reassignMultipleAnimalsId(self._videoName, self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters["freqAlgoPosFollow"] if "freqAlgoPosFollow" in self._hyperparameters else 0)
-
+      dataAPI.reassignMultipleAnimalsId(self._videoName, self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters["freqAlgoPosFollow"] if "freqAlgoPosFollow" in self._hyperparameters else 0, self)
+      
+    if "smoothHeadPositionsWindow" in self._hyperparameters and self._hyperparameters["smoothHeadPositionsWindow"]:
+      dataAPI.smoothHeadPositions(self._videoName, self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters["smoothHeadPositionsWindow"])
+      
+    if "coordinatesOnlyBoutDetectionMinDistDataAPI" in self._hyperparameters and self._hyperparameters["coordinatesOnlyBoutDetectionMinDistDataAPI"]:
+      dataAPI.detectBouts(self._videoName, self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self)
+    
     if self._hyperparameters["popUpAlgoFollow"]:
       import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 

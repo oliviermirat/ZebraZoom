@@ -31,3 +31,5 @@ from .getWellCoordinates import *
 from .getNumberOfAnimalsPerWell import *
 from .getNumberOfWells import *
 from .reassignMultipleAnimalsId import reassignMultipleAnimalsId
+from .detectBouts import *
+from .smoothHeadPositions import *

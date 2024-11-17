@@ -115,3 +115,5 @@ zebrazoom/code/GUI/tracking/customTrackingImplementations/fastFishTracking/__pyc
 
 zebrazoom/code/tracking/customTrackingImplementations/yolov5/
 runs/
+
+zebrazoom/code/tracking/customTrackingImplementations/yolov11/__pycache__
