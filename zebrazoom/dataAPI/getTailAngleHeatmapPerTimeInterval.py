@@ -8,26 +8,30 @@ def getTailAngleHeatmapPerTimeInterval(videoName: str, numWell: int, numAnimal: 
   if endTimeInSeconds is not None and startTimeInSeconds is not None and startTimeInSeconds >= endTimeInSeconds:
     raise ValueError('end time must be larger than start time')
   with openResultsFile(videoName, 'r+') as results:
-    firstFrame = results.attrs['firstFrame']
-    firstFrameInSeconds = firstFrame / results.attrs['videoFPS']
-    if startTimeInSeconds == 0 and firstFrame == 1:
-      # when running tracking on the whole video, firstFrame is 1, but from the user's perspective, startTimeInSeconds is 0
-      startTimeInSeconds = firstFrameInSeconds
-    lastFrameInSeconds = results.attrs['lastFrame'] / results.attrs['videoFPS']
-    if startTimeInSeconds is None:
-      startTimeInSeconds = firstFrameInSeconds
-    if endTimeInSeconds is None:
-      endTimeInSeconds = lastFrameInSeconds
-    if startTimeInSeconds < firstFrameInSeconds or endTimeInSeconds > lastFrameInSeconds:
-      raise ValueError(f'Tracking was performed from {firstFrameInSeconds}s to {lastFrameInSeconds}s, start and end times must be within this interval.')
-    if 'videoFPS' not in results.attrs:
-      raise ValueError(f'videoFPS not found in the results, cannot convert seconds to frames')
     boutsPath = f'dataForWell{numWell}/dataForAnimal{numAnimal}/listOfBouts'
     if boutsPath not in results:
       raise ValueError(f"bouts not found for animal {numAnimal} in well {numWell}")
+    if not startTimeInSeconds and endTimeInSeconds is None:
+      intervalStart = 0
+      intervalEnd = results.attrs['lastFrame'] - results.attrs['firstFrame']
+    else:
+      if 'videoFPS' not in results.attrs:
+        raise ValueError(f'videoFPS not found in the results, cannot convert seconds to frames')
+      firstFrame = results.attrs['firstFrame']
+      firstFrameInSeconds = firstFrame / results.attrs['videoFPS']
+      if startTimeInSeconds == 0 and firstFrame == 1:
+        # when running tracking on the whole video, firstFrame is 1, but from the user's perspective, startTimeInSeconds is 0
+        startTimeInSeconds = firstFrameInSeconds
+      lastFrameInSeconds = results.attrs['lastFrame'] / results.attrs['videoFPS']
+      if startTimeInSeconds is None:
+        startTimeInSeconds = firstFrameInSeconds
+      if endTimeInSeconds is None:
+        endTimeInSeconds = lastFrameInSeconds
+      if startTimeInSeconds < firstFrameInSeconds or endTimeInSeconds > lastFrameInSeconds:
+        raise ValueError(f'Tracking was performed from {firstFrameInSeconds}s to {lastFrameInSeconds}s, start and end times must be within this interval.')
+      intervalStart = int(startTimeInSeconds * results.attrs['videoFPS']) - firstFrame
+      intervalEnd = int(endTimeInSeconds * results.attrs['videoFPS']) - firstFrame
     boutsGroup = results[boutsPath]
-    intervalStart = int(startTimeInSeconds * results.attrs['videoFPS']) - firstFrame
-    intervalEnd = int(endTimeInSeconds * results.attrs['videoFPS']) - firstFrame
     dataGroup = results[f'dataForWell{numWell}/dataForAnimal{numAnimal}/dataPerFrame']
     if 'tailAngleHeatmap' in dataGroup:
       tailAngleHeatmap = dataGroup['tailAngleHeatmap']

@@ -8,6 +8,10 @@ def getCurvaturePerTimeInterval(videoName: str, numWell: int, numAnimal: int, st
   if endTimeInSeconds is not None and startTimeInSeconds is not None and startTimeInSeconds >= endTimeInSeconds:
     raise ValueError('end time must be larger than start time')
   with openResultsFile(videoName, 'r+') as results:
+    if 'videoFPS' not in results.attrs:
+      raise ValueError(f'videoFPS not found in the results, cannot convert seconds to frames')
+    if 'videoPixelSize' not in results.attrs:
+      raise ValueError(f'videoPixelSize not found in the results, cannot calculate distance')
     firstFrame = results.attrs['firstFrame']
     firstFrameInSeconds = firstFrame / results.attrs['videoFPS']
     if startTimeInSeconds == 0 and firstFrame == 1:
@@ -20,10 +24,6 @@ def getCurvaturePerTimeInterval(videoName: str, numWell: int, numAnimal: int, st
       endTimeInSeconds = lastFrameInSeconds
     if startTimeInSeconds < firstFrameInSeconds or endTimeInSeconds > lastFrameInSeconds:
       raise ValueError(f'Tracking was performed from {firstFrameInSeconds}s to {lastFrameInSeconds}s, start and end times must be within this interval.')
-    if 'videoFPS' not in results.attrs:
-      raise ValueError(f'videoFPS not found in the results, cannot convert seconds to frames')
-    if 'videoPixelSize' not in results.attrs:
-      raise ValueError(f'videoPixelSize not found in the results, cannot convert seconds to frames')
     intervalStart = int(startTimeInSeconds * results.attrs['videoFPS']) - firstFrame
     intervalEnd   = int(endTimeInSeconds * results.attrs['videoFPS']) - firstFrame
     dataGroup = results[f'dataForWell{numWell}/dataForAnimal{numAnimal}/dataPerFrame']
