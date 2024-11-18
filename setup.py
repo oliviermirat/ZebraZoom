@@ -39,6 +39,7 @@ setup(
     "static-ffmpeg>=2.7",
     "ffmpeg-progress-yield",
     "av",
+    "ultralytics",
   ],
   packages=setuptools.find_packages(),
   package_data={'zebrazoom.code.tracking.customTrackingImplementations': ['**/*.py'],
@@ -102,6 +103,5 @@ setup(
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3.12',
-    'Programming Language :: Python :: 3.13',
   ],
 )
