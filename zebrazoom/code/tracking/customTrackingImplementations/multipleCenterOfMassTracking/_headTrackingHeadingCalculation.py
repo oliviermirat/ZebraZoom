@@ -61,7 +61,7 @@ def _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, frameOri, e
                   compareDarknestWithThePastWindow = int(self._hyperparameters["headSize"] / 40)
                   centeredROIValue = np.mean(frameOri[headPosition[1]-compareDarknestWithThePastWindow:headPosition[1]+compareDarknestWithThePastWindow, headPosition[0]-compareDarknestWithThePastWindow:headPosition[0]+compareDarknestWithThePastWindow])
                   centeredROIValueOld = np.mean(oldFrame[headPosition[1]-compareDarknestWithThePastWindow:headPosition[1]+compareDarknestWithThePastWindow, headPosition[0]-compareDarknestWithThePastWindow:headPosition[0]+compareDarknestWithThePastWindow])
-                  if self._hyperparameters["brightAnimalDarkBackround"]:
+                  if self._hyperparameters["brightAnimalDarkBackground"]:
                     ok = (centeredROIValue > centeredROIValueOld)
                   else:
                     ok = (centeredROIValue < centeredROIValueOld)

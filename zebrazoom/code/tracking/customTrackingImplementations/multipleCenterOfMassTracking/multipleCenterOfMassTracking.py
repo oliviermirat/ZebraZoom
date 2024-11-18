@@ -153,9 +153,13 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
         if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
           previousFrames = self._detectMovementWithRawVideoInsideTracking(i, frameOri, previousFrames)
       
-      paramsAdjusted = self._adjustParameters(i, frame, widgets)
+      paramsAdjusted = self._adjustParameters(i, frame, frameOri, widgets)
       if paramsAdjusted is not None:
         i, widgets = paramsAdjusted
+        if self._hyperparameters.get('backgroundSubtractorKNN_history'):
+          fgbg.setHistory(self._hyperparameters['backgroundSubtractorKNN_history'])
+        if self._hyperparameters.get('backgroundSubtractorKNN_dist2Threshold'):
+          fgbg.setDist2Threshold(self._hyperparameters['backgroundSubtractorKNN_dist2Threshold'])
         cap.set(1, i)
       else:
         i = i + 1

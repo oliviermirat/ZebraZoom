@@ -1,17 +1,19 @@
 import os
+import pickle
 import webbrowser
 
 import cv2
 
-from PyQt5.QtCore import Qt, QSize
+from PyQt5.QtCore import Qt, QSize, QTimer
 from PyQt5.QtGui import QCursor, QFont, QIcon, QDoubleValidator, QIntValidator, QPixmap
 from PyQt5.QtWidgets import QApplication, QFrame, QFormLayout, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup, QSpacerItem
 PYQT6 = False
 
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
+import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
 from zebrazoom.code.GUI.adjustParameterInsideAlgo import adjustFastFishTrackingPage
-from zebrazoom.code.GUI.configFilePrepareFunctions import numberOfAnimals
+from zebrazoom.code.GUI.configFilePrepareFunctions import getMainArguments, numberOfAnimals
 
 
 class StoreValidationVideoWidget(QWidget):
@@ -1929,3 +1931,145 @@ class FinishConfig(QWidget):
   def showEvent(self, evt):
     self.refreshPage()
     super().showEvent(evt)
+
+
+class MultipleAnimalsCenterOfMass(QWidget):
+  def __init__(self, controller):
+    super().__init__(controller.window)
+    self.controller = controller
+    self.preferredSize = (1152, 768)
+
+    layout = QVBoxLayout()
+    layout.addWidget(util.apply_style(QLabel("Prepare Config File"), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    def updateButtons():
+      if not bool(nbanimals.text()):
+        enabled = False
+        tooltip = "Values must be entered in all fields."
+      else:
+        enabled = True
+        tooltip = None
+      nextBtn.setEnabled(enabled)
+      nextBtn.setToolTip(tooltip)
+    self._updateButtons = updateButtons
+
+    self._nbanimalsLabel = util.apply_style(QLabel("What's the maximum number of animals per well in your video?"), font=QFont("Helvetica", 10))
+    layout.addWidget(self._nbanimalsLabel, alignment=Qt.AlignmentFlag.AlignCenter)
+    self._nbanimals = nbanimals = QLineEdit(controller.window)
+    nbanimals.setValidator(QIntValidator(nbanimals))
+    nbanimals.validator().setBottom(0)
+    nbanimals.textChanged.connect(updateButtons)
+    layout.addWidget(nbanimals, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(util.apply_style(QLabel("Does the video contain bright animals on a dark background or dark animals on a bright background?"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    darkBGRadioButton = QRadioButton("Dark background, bright animals")
+    darkBGRadioButton.setChecked(True)
+    layout.addWidget(darkBGRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    brightBGRadioButton = QRadioButton("Bright background, dark animals")
+    layout.addWidget(brightBGRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(util.apply_style(QLabel("Should shades be tracked?"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    yesShadesRadioButton = QRadioButton("Yes")
+    layout.addWidget(yesShadesRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    noShadesRadioButton = QRadioButton("No")
+    noShadesRadioButton.setChecked(True)
+    layout.addWidget(noShadesRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    nextBtn = util.apply_style(QPushButton("Next"), background_color=util.DEFAULT_BUTTON_COLOR)
+
+    @util.addToHistory
+    def nextBtnClicked():
+      controller.show_frame("MultipleAnimalsCenterOfMass")
+      controller.configFile["trackingImplementation"] = "multipleCenterOfMassTracking"
+      controller.configFile['nbAnimalsPerWell'] = int(nbanimals.text())
+      controller.configFile['brightAnimalDarkBackground'] = int(darkBGRadioButton.isChecked())
+      controller.configFile['removeShades'] = int(noShadesRadioButton.isChecked())
+      controller.configFile['backgroundSubtractorKNN_history'] = 20
+      controller.configFile['backgroundSubtractorKNN_dist2Threshold'] = 210
+      controller.configFile['paramGaussianBlur'] = 31
+      controller.configFile['nbWells'] = 1
+      controller.configFile["noWellDetection"] = 1
+      controller.configFile["trackingMethod"] = 'fastCenterOfMassTracking_KNNbackgroundSubtraction'
+      controller.configFile['reassignMultipleAnimalsId'] = 1
+      controller.configFile['noBoutsDetection'] = 1
+      cap = zzVideoReading.VideoCapture(controller.videoToCreateConfigFileFor)
+      cap.set(1, controller.configFile.get("firstFrame", 1))
+      ret, frame = cap.read()
+      cap.release()
+
+      cancelled = False
+      def cancelledCb():
+        nonlocal cancelled
+        cancelled = True
+
+      _center, radius = util.getCircle(frame, 'Draw a circle around one of the animnals', backBtnCb=cancelledCb, zoomable=True, backBtnText='Back')
+      if radius is not None and not cancelled:
+        controller.configFile['headSize'] = radius
+        if self._adjustParameters():
+          QTimer.singleShot(0, lambda: util.addToHistory(controller.show_frame)("FinishConfig"))
+
+    nextBtn.clicked.connect(lambda: nextBtnClicked())
+    layout.addWidget(nextBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    alternativeBtn = QPushButton("Try alternative algorithms")
+
+    @util.addToHistory
+    def alternativeBtnClicked():
+      controller.organism = 'drosoorrodent'
+      controller.configFile["headEmbeded"] = 0
+      controller.configFile["freeSwimmingTailTrackingMethod"] = "none"
+      controller.show_frame("WellOrganisation")
+
+    alternativeBtn.clicked.connect(lambda: alternativeBtnClicked())
+    layout.addWidget(alternativeBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Try the using alternative algorithms only of the default one doesn't work."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+
+    buttonsLayout = QHBoxLayout()
+    buttonsLayout.addStretch()
+    backBtn = QPushButton("Back")
+    backBtn.setObjectName("back")
+    buttonsLayout.addWidget(backBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    startPageBtn = QPushButton("Go to the start page")
+    startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
+    buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    buttonsLayout.addStretch()
+    layout.addLayout(buttonsLayout)
+
+    self.setLayout(layout)
+
+  def showEvent(self, evt):
+    self._updateButtons()
+    super().showEvent(evt)
+
+  def _adjustParameters(self):
+    from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis
+
+    [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self.controller)
+
+    configFile["adjustFreelySwimTracking"] = 1
+
+    storeH5 = configFile.get('storeH5')
+    configFile['storeH5'] = 1
+    if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
+      del configFile["lastFrame"]
+
+    app = QApplication.instance()
+    app.wellPositions = []
+    with app.busyCursor():
+      zzAnalysis = ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, ['outputFolder', app.ZZoutputLocation])
+      zzAnalysis.storeConfigUsed(configFile)
+      try:
+        ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
+      except ValueError:
+        newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
+        for index in newhyperparameters:
+          configFile[index] = newhyperparameters[index]
+      except NameError:
+        print("Configuration file parameters changes discarded.")
+        return False
+      finally:
+        if storeH5 is not None:
+          configFile['storeH5'] = storeH5
+        else:
+          del configFile['storeH5']
+        del configFile['adjustFreelySwimTracking']
+    return True
