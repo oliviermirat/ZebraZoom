@@ -54,13 +54,13 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
     # Open the video
     cap = cv2.VideoCapture(self._videoPath)
     frameNum = 0
-    while cap.isOpened() and frameNum < self._lastFrame:
+    while cap.isOpened() and frameNum <= self._lastFrame:
       
       ret, frame = cap.read()
       if not ret:
         break
       
-      if frameNum > self._firstFrame:
+      if frameNum >= self._firstFrame:
       
         if frameNum % self._hyperparameters["freqAlgoPosFollow"] == 0:
           print("YOLO tracking at frame", frameNum)
