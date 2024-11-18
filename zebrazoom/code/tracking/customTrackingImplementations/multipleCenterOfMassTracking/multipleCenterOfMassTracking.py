@@ -26,7 +26,7 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
     else:
       self._trackingProbabilityOfHeadingGoodCalculation = 0
 
-  def _adjustParameters(self, i, frame, widgets):
+  def _adjustParameters(self, i, frame, unprocessedFrame, widgets):
     return None
 
   def _formatOutput(self):
