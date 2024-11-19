@@ -1941,6 +1941,7 @@ class MultipleAnimalsCenterOfMass(QWidget):
 
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Prepare Config File"), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addStretch()
 
     def updateButtons():
       if not bool(nbanimals.text()):
@@ -1960,20 +1961,29 @@ class MultipleAnimalsCenterOfMass(QWidget):
     nbanimals.validator().setBottom(0)
     nbanimals.textChanged.connect(updateButtons)
     layout.addWidget(nbanimals, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addStretch()
 
     layout.addWidget(util.apply_style(QLabel("Does the video contain bright animals on a dark background or dark animals on a bright background?"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    bgButtonGroup = QButtonGroup(self)
     darkBGRadioButton = QRadioButton("Dark background, bright animals")
+    bgButtonGroup.addButton(darkBGRadioButton)
     darkBGRadioButton.setChecked(True)
     layout.addWidget(darkBGRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
     brightBGRadioButton = QRadioButton("Bright background, dark animals")
+    bgButtonGroup.addButton(brightBGRadioButton)
     layout.addWidget(brightBGRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addStretch()
 
     layout.addWidget(util.apply_style(QLabel("Should shades be tracked?"), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    shadesButtonGroup = QButtonGroup(self)
     yesShadesRadioButton = QRadioButton("Yes")
+    shadesButtonGroup.addButton(yesShadesRadioButton)
     layout.addWidget(yesShadesRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
     noShadesRadioButton = QRadioButton("No")
+    shadesButtonGroup.addButton(noShadesRadioButton)
     noShadesRadioButton.setChecked(True)
     layout.addWidget(noShadesRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addStretch()
 
     nextBtn = util.apply_style(QPushButton("Next"), background_color=util.DEFAULT_BUTTON_COLOR)
 
@@ -1992,6 +2002,14 @@ class MultipleAnimalsCenterOfMass(QWidget):
       controller.configFile["trackingMethod"] = 'fastCenterOfMassTracking_KNNbackgroundSubtraction'
       controller.configFile['reassignMultipleAnimalsId'] = 1
       controller.configFile['noBoutsDetection'] = 1
+      controller.configFile['addOneFrameAtTheEndForBoutDetection'] = 1
+      controller.configFile['boutsMinNbFrames'] = 0
+      controller.configFile['fillGapFrameNb'] = 0
+      controller.configFile['findHeadingOppDirectionThroughLineDrawing_radius'] = 4
+      controller.configFile['headingCalculationMethod'] = 'simplyFromPreviousCalculations'
+      controller.configFile['trackingPointSizeDisplay'] = 3
+      controller.configFile['trackTail'] = 0
+      controller.configFile['validationVideoPlotHeading'] = 0
       cap = zzVideoReading.VideoCapture(controller.videoToCreateConfigFileFor)
       cap.set(1, controller.configFile.get("firstFrame", 1))
       ret, frame = cap.read()
@@ -2002,7 +2020,7 @@ class MultipleAnimalsCenterOfMass(QWidget):
         nonlocal cancelled
         cancelled = True
 
-      _center, radius = util.getCircle(frame, 'Draw a circle around one of the animnals', backBtnCb=cancelledCb, zoomable=True, backBtnText='Back')
+      _center, radius = util.getCircle(frame, 'Draw a circle around one of the animals', backBtnCb=cancelledCb, zoomable=True, backBtnText='Back')
       if radius is not None and not cancelled:
         controller.configFile['headSize'] = radius
         if self._adjustParameters():
@@ -2021,7 +2039,8 @@ class MultipleAnimalsCenterOfMass(QWidget):
 
     alternativeBtn.clicked.connect(lambda: alternativeBtnClicked())
     layout.addWidget(alternativeBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(util.apply_style(QLabel("Try the using alternative algorithms only of the default one doesn't work."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Try the using alternative algorithms only if the default one doesn't work."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addStretch()
 
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch()
