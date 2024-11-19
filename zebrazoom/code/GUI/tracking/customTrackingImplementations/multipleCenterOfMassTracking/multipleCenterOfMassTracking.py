@@ -12,11 +12,12 @@ class GUITracking(baseClass):
     if not self._hyperparameters['adjustFreelySwimTracking']:
       return None
 
-    hyperparametersListNames = ["backgroundSubtractorKNN_history", "backgroundSubtractorKNN_dist2Threshold", "paramGaussianBlur"]
+    hyperparametersListNames = ["backgroundSubtractorKNN_history", "backgroundSubtractorKNN_dist2Threshold", "paramGaussianBlur", "localMinimumDarkestThreshold"]
     organizationTab = [
     [1, 30, "The number of last frames that affect the background model."],
     [1, 400, "The threshold on the squared distance between the pixel and the sample to decide whether a pixel is close to a data sample."],
-    [1, 50, "Window of gaussian blur filter applied on the image when calculating head position"],]
+    [1, 50, "Window of gaussian blur filter applied on the image when calculating head position"],
+    [1, 400, "localMinimumDarkestThreshold"],]
     title = "Adjust parameters in order for the background to be white and the animals to be gray/black."
 
     frame2 = unprocessedFrame if widgets is not None and 'unprocessedFrameCheckbox' in widgets and widgets['unprocessedFrameCheckbox'].isChecked() else cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
