@@ -39,7 +39,7 @@ setup(
     "static-ffmpeg>=2.7",
     "ffmpeg-progress-yield",
     "av",
-    "ultralytics-headless",
+    "ultralyticsheadless",
   ],
   packages=setuptools.find_packages(),
   package_data={'zebrazoom.code.tracking.customTrackingImplementations': ['**/*.py'],
