@@ -8,7 +8,7 @@ from ..._fasterMultiprocessingBase import BaseFasterMultiprocessing
 
 import zebrazoom.code.tracking
 
-from ultralyticsheadless import YOLO
+from ultralytics import YOLO
 
 
 class Yolov11basedTracking(BaseFasterMultiprocessing):
