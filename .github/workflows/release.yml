@@ -127,6 +127,7 @@ jobs:
           rm -rf Python-*
           rm -f /opt/python/bin/python*-config
           /opt/python/bin/python* -m pip install --upgrade pip setuptools wheel
+          /opt/python/bin/python* -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu  # use CPU-only torch to keep the archive size reasonable
           /opt/python/bin/python* -m pip install pyinstaller
           /opt/python/bin/python* -m pip install -e .
       - name: Freeze the code
