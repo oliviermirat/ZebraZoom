@@ -309,7 +309,7 @@ class ZebraZoomVideoAnalysis:
     
     # DataAPI calls
     if "reassignMultipleAnimalsId" in self._hyperparameters and self._hyperparameters["reassignMultipleAnimalsId"]:
-      dataAPI.reassignMultipleAnimalsId(self._videoName, self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters["freqAlgoPosFollow"] if "freqAlgoPosFollow" in self._hyperparameters else 0, self)
+      dataAPI.reassignMultipleAnimalsId(self._videoName, self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters["freqAlgoPosFollow"] if ("freqAlgoPosFollow" in self._hyperparameters and self._hyperparameters["freqAlgoPosFollow"]) else 10, self)
       
     if "smoothHeadPositionsWindow" in self._hyperparameters and self._hyperparameters["smoothHeadPositionsWindow"]:
       dataAPI.smoothHeadPositions(self._videoName, self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters["smoothHeadPositionsWindow"])
