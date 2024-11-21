@@ -1,6 +1,7 @@
 from zebrazoom.code.extractParameters import extractParameters
 
 import cv2
+import os
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import numpy as np
 from zebrazoom.code.tracking import register_tracking_method
@@ -47,8 +48,17 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
             for wellNumber in range(self._firstWell, self._lastWell + 1)}
 
   def run(self):
-
-    model = YOLO(self._hyperparameters["DLmodelPath"])
+    
+    if os.path.exists(self._hyperparameters["DLmodelPath"]):
+      model = YOLO(self._hyperparameters["DLmodelPath"])
+    elif os.path.exists(os.path.join('zebrazoom', 'configuration', self._hyperparameters["DLmodelPath"])):
+      model = YOLO(os.path.join('zebrazoom', 'configuration', self._hyperparameters["DLmodelPath"]))
+    elif os.path.exists(os.path.join('ZebraZoom', 'zebrazoom', 'configuration', self._hyperparameters["DLmodelPath"])):
+      model = YOLO(os.path.join('ZebraZoom', 'zebrazoom', 'configuration', self._hyperparameters["DLmodelPath"]))
+    else:
+      print("Path to DL model not found")
+      raise ValueError("Path to DL model not found")
+    
     wellNum = 0
     
     # Open the video
