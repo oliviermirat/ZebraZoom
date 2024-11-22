@@ -1995,7 +1995,7 @@ class MultipleAnimalsCenterOfMass(QWidget):
       controller.configFile['brightAnimalDarkBackground'] = int(darkBGRadioButton.isChecked())
       controller.configFile['removeShades'] = int(noShadesRadioButton.isChecked())
       controller.configFile['backgroundSubtractorKNN_history'] = 20
-      controller.configFile['backgroundSubtractorKNN_dist2Threshold'] = 210
+      controller.configFile['backgroundSubtractorKNN_dist2Threshold'] = 400
       controller.configFile['localMinimumDarkestThreshold'] = 210
       controller.configFile['paramGaussianBlur'] = 31
       controller.configFile['nbWells'] = 1
