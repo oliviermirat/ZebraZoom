@@ -279,7 +279,7 @@ class StartPage(QWidget):
         if sys.platform.startswith('win'):
           atexit.register(subprocess.Popen, os.path.join(installationFolder, 'updater', 'updater.exe'), shell=True)
         else:
-          updaterExecutable = 'updater/updater'
+          updaterExecutable = os.path.join(installationFolder, 'updater', 'updater')
           atexit.register(os.execl, updaterExecutable, updaterExecutable)
           atexit.register(os.chdir, installationFolder)
         sys.exit(0)
