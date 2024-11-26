@@ -91,7 +91,7 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
       
       frameNum += 1
     
-    if frameNum <= len(self._trackingHeadTailAllAnimalsList[wellNum][animalNum]):
+    if frameNum <= len(self._trackingHeadTailAllAnimalsList[wellNum][0]):
       for animalNum in range(self._hyperparameters["nbAnimalsPerWell"]):
         self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][0] = self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame-1][0][0]
         self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][1] = self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame-1][0][1]
