@@ -14,11 +14,11 @@ class GUITracking(baseClass):
 
     hyperparametersListNames = ["backgroundSubtractorKNN_history", "backgroundSubtractorKNN_dist2Threshold", "paramGaussianBlur", "localMinimumDarkestThreshold", "headSize"]
     organizationTab = [
-    [1, 30, "The number of last frames that affect the background model."],
-    [1, 400, "The threshold on the squared distance between the pixel and the sample to decide whether a pixel is close to a data sample."],
-    [1, 50, "Window of gaussian blur filter applied on the image when calculating head position"],
-    [1, 400, "localMinimumDarkestThreshold"],
-    [1, self._hyperparameters['headSize'] * 1.3, "headSize"],]
+    [1, 30, "Number of previous frames taken into account to construct background model."],
+    [1, 400, "Threshold for foreground pixel detection: increase to detect less foreground pixels."],
+    [1, 50, "Window of gaussian filter applied on the image."],
+    [1, 400, "Decrease to detect smaller animals, increase to avoid detecting them."],
+    [1, self._hyperparameters['headSize'] * 1.3, "Minimum radius of animal, increase if multiple animals are detected where only one is present."],]
     title = "Adjust parameters in order for the background to be white and the animals to be gray/black."
 
     frame2 = unprocessedFrame if widgets is not None and 'unprocessedFrameCheckbox' in widgets and widgets['unprocessedFrameCheckbox'].isChecked() else cv2.cvtColor(frame, cv2.COLOR_GRAY2RGB)
