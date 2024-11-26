@@ -88,10 +88,7 @@ def chooseGeneralExperiment(self, controller, freeZebra, headEmbZebra, drosophil
     self.configFile["headEmbeded"] = 1
     chooseBeginningAndEndOfVideo(self, controller)
   else:
-    self.organism = 'drosoorrodent'
-    self.configFile["headEmbeded"] = 0
-    self.configFile["freeSwimmingTailTrackingMethod"] = "none"
-    controller.show_frame("WellOrganisation")
+    controller.show_frame('MultipleAnimalsCenterOfMass')
 
 
 def _getRegion(controller):

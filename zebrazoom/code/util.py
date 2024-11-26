@@ -1464,7 +1464,7 @@ class _InteractiveLabelCircle(QLabel):
     return center, int(math.sqrt(radius.dx() * radius.dx() + radius.dy() * radius.dy()))
 
 
-def getCircle(frame, title, backBtnCb=None, zoomable=False):
+def getCircle(frame, title, backBtnCb=None, zoomable=False, backBtnText='Cancel'):
   height, width, _ = frame.shape
 
   layout = QVBoxLayout()
@@ -1472,7 +1472,7 @@ def getCircle(frame, title, backBtnCb=None, zoomable=False):
   video = _InteractiveLabelCircle(width, height)
   layout.addWidget(video, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
   if backBtnCb is not None:
-    buttons = (("Cancel", backBtnCb, True), ("Ok", None, True, video.circleSelected, DEFAULT_BUTTON_COLOR))
+    buttons = ((backBtnText, backBtnCb, True), ("Ok", None, True, video.circleSelected, DEFAULT_BUTTON_COLOR))
   else:
     buttons = (("Ok", None, True, video.circleSelected, DEFAULT_BUTTON_COLOR),)
   showBlockingPage(layout, title=title, buttons=buttons, labelInfo=(frame, video, zoomable))

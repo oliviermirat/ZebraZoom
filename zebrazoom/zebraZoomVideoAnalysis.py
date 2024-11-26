@@ -308,14 +308,15 @@ class ZebraZoomVideoAnalysis:
       self._storeInAdditionalFolder()
     
     # DataAPI calls
-    if "reassignMultipleAnimalsId" in self._hyperparameters and self._hyperparameters["reassignMultipleAnimalsId"]:
-      dataAPI.reassignMultipleAnimalsId(self._videoName, self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters["freqAlgoPosFollow"] if "freqAlgoPosFollow" in self._hyperparameters else 0, self)
+    if self._hyperparameters['storeH5']:
+      if "reassignMultipleAnimalsId" in self._hyperparameters and self._hyperparameters["reassignMultipleAnimalsId"]:
+        dataAPI.reassignMultipleAnimalsId(self._hyperparameters['H5filename'], self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters["freqAlgoPosFollow"] if ("freqAlgoPosFollow" in self._hyperparameters and self._hyperparameters["freqAlgoPosFollow"]) else 10, self)
       
-    if "smoothHeadPositionsWindow" in self._hyperparameters and self._hyperparameters["smoothHeadPositionsWindow"]:
-      dataAPI.smoothHeadPositions(self._videoName, self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters["smoothHeadPositionsWindow"])
+      if "smoothHeadPositionsWindow" in self._hyperparameters and self._hyperparameters["smoothHeadPositionsWindow"]:
+        dataAPI.smoothHeadPositions(self._hyperparameters['H5filename'], self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters["smoothHeadPositionsWindow"])
       
-    if "coordinatesOnlyBoutDetectionMinDistDataAPI" in self._hyperparameters and self._hyperparameters["coordinatesOnlyBoutDetectionMinDistDataAPI"]:
-      dataAPI.detectBouts(self._videoName, self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self)
+      if "coordinatesOnlyBoutDetectionMinDistDataAPI" in self._hyperparameters and self._hyperparameters["coordinatesOnlyBoutDetectionMinDistDataAPI"]:
+        dataAPI.detectBouts(self._hyperparameters['H5filename'], self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self)
     
     if self._hyperparameters["popUpAlgoFollow"]:
       import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow

@@ -54,14 +54,14 @@ def _headTrackingHeadingCalculation(self, i, blur, thresh1, thresh2, frameOri, e
             if type(thresh1) != int:
               [heading, lastFirstTheta] = self._calculateHeading(x, y, i, thresh1, thresh2, takeTheHeadClosestToTheCenter, 0, wellNumber)
             
+            okAll = True
             if "removeShades" in self._hyperparameters and self._hyperparameters["removeShades"]:
-              okAll = True
               if i > 110:
                 for oldFrame in oldFrameList:
-                  compareDarknestWithThePastWindow = int(self._hyperparameters["headSize"] / 40)
+                  compareDarknestWithThePastWindow = int(self._hyperparameters["headSize"] / 2) if int(self._hyperparameters["headSize"] / 2) >= 2 else 2
                   centeredROIValue = np.mean(frameOri[headPosition[1]-compareDarknestWithThePastWindow:headPosition[1]+compareDarknestWithThePastWindow, headPosition[0]-compareDarknestWithThePastWindow:headPosition[0]+compareDarknestWithThePastWindow])
                   centeredROIValueOld = np.mean(oldFrame[headPosition[1]-compareDarknestWithThePastWindow:headPosition[1]+compareDarknestWithThePastWindow, headPosition[0]-compareDarknestWithThePastWindow:headPosition[0]+compareDarknestWithThePastWindow])
-                  if self._hyperparameters["brightAnimalDarkBackround"]:
+                  if self._hyperparameters["brightAnimalDarkBackground"]:
                     ok = (centeredROIValue > centeredROIValueOld)
                   else:
                     ok = (centeredROIValue < centeredROIValueOld)
