@@ -164,7 +164,7 @@ def calculateInfoFrame(superStruct, hyperparameters, nbFrames, colorModifTab):
   return infoFrame
 
 
-def drawInfoFrame(frame, infoFrame, colorModifTab, hyperparameters):
+def drawInfoFrame(frame, infoFrame, colorModifTab, hyperparameters, plotTrackingPoints=True):
   for data in infoFrame:
     x = data["x"]
     y = data["y"]
@@ -172,6 +172,18 @@ def drawInfoFrame(frame, infoFrame, colorModifTab, hyperparameters):
     red   = data["red"]
     green = data["green"]
     blue  = data["blue"]
+
+    if hyperparameters["validationVideoPlotAnimalNumber"]:
+      if "numAnimal" in data:
+        numAnimal = int(data["numAnimal"])
+        red       = int(0   + colorModifTab[numAnimal]["red"])
+        green     = int(255 - colorModifTab[numAnimal]["green"])
+        blue      = int(0   + colorModifTab[numAnimal]["blue"])
+        cv2.putText(frame, str(numAnimal), (int(x + 10), int(y + 10)), cv2.FONT_HERSHEY_SIMPLEX, 1, (red, green, blue), 2)
+
+    if not plotTrackingPoints:
+      continue
+
     if (data["Heading"] != -10):
       heading = data["Heading"]
       headingColor = data["headingColor"] if "headingColor" in data else (255,0,0)
@@ -190,14 +202,6 @@ def drawInfoFrame(frame, infoFrame, colorModifTab, hyperparameters):
     
     if x != float('nan') and y != float('nan') and not(math.isnan(x)) and not(math.isnan(y)):
       cv2.circle(frame, (int(x),int(y)), size, (red,green,blue), -1)
-
-    if hyperparameters["validationVideoPlotAnimalNumber"]:
-      if "numAnimal" in data:
-        numAnimal = int(data["numAnimal"])
-        red       = int(0   + colorModifTab[numAnimal]["red"])
-        green     = int(255 - colorModifTab[numAnimal]["green"])
-        blue      = int(0   + colorModifTab[numAnimal]["blue"])
-        cv2.putText(frame, str(numAnimal), (int(x + 10), int(y + 10)), cv2.FONT_HERSHEY_SIMPLEX, 1, (red, green, blue), 2)
 
 
 def processFrame(frame, hyperparameters, infoFrame, colorModifTab):

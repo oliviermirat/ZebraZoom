@@ -254,10 +254,10 @@ def getFramesCallback(videoPath, folderName, numWell, numAnimal, zoom, start, fr
     if hyperparameters["outputValidationVideoContrastImprovement"]:
       img = improveContrast(img, hyperparameters)
 
-    if boutMap is not None and l in boutMap and trackingPointsGroup is not None and trackingPointsGroup.checkedId():
+    if boutMap is not None and l in boutMap and trackingPointsGroup is not None:
       hyperparameters["plotOnlyOneTailPointForVisu"] = trackingPointsGroup.checkedId() == 1
       infoFrame = [info for args in boutMap[l] for info in calculateInfoFrameForFrame(supstruct, hyperparameters, *args, l, colorModifTab)]
-      drawInfoFrame(img, infoFrame, colorModifTab, hyperparameters)
+      drawInfoFrame(img, infoFrame, colorModifTab, hyperparameters, plotTrackingPoints=trackingPointsGroup.checkedId())
 
     if numWell != -1 and zoom:
       length = 250
@@ -584,6 +584,13 @@ def readValidationVideo(videoPath, folderName, numWell, numAnimal, zoom, start, 
 
     saveButton.clicked.connect(saveVideo)
     trackingPointsLayout.addWidget(saveButton)
+
+    if hyperparameters['nbAnimalsPerWell'] > 1:
+      showIdentitiesCheckbox = QCheckBox('Show Identities')
+      showIdentitiesCheckbox.setChecked(bool(hyperparameters["validationVideoPlotAnimalNumber"]))
+      showIdentitiesCheckbox.toggled.connect(lambda checked: hyperparameters.update({"validationVideoPlotAnimalNumber": int(checked)}))
+      showIdentitiesCheckbox.toggled.connect(lambda: timer.isActive() or util.setPixmapFromCv(getFrame(frameSlider, timer, btnGroup, stopTimer, topLeftCircleCb=topLeftCircleCb), video))
+      trackingPointsLayout.addWidget(showIdentitiesCheckbox)
 
   adjustButton = None
   if config is not None and (numWell != -1 or config.get("headEmbeded", False)) and ('trackingImplementation' not in config or config['trackingImplementation'] == 'fastFishTracking.tracking') and not config.get("trackingMethod"):
