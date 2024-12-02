@@ -4,8 +4,8 @@ import webbrowser
 
 import cv2
 
-from PyQt5.QtCore import Qt, QSize, QTimer
-from PyQt5.QtGui import QCursor, QFont, QIcon, QDoubleValidator, QIntValidator, QPixmap
+from PyQt5.QtCore import Qt, QSize, QTimer, QUrl
+from PyQt5.QtGui import QCursor, QDesktopServices, QFont, QIcon, QDoubleValidator, QIntValidator, QPixmap
 from PyQt5.QtWidgets import QApplication, QFrame, QFormLayout, QLabel, QWidget, QGridLayout, QPushButton, QHBoxLayout, QVBoxLayout, QCheckBox, QRadioButton, QLineEdit, QButtonGroup, QSpacerItem
 PYQT6 = False
 
@@ -874,9 +874,10 @@ class ChooseCenterOfMassTracking(QWidget):
     layout = QGridLayout()
     layout.setSpacing(2)
     layout.setRowStretch(2, 1)
+    layout.setRowStretch(3, 1)
     layout.setColumnStretch(0, 1)
     layout.setColumnStretch(2, 1)
-    layout.addItem(QSpacerItem(16, 16), 4, 1)
+    layout.addItem(QSpacerItem(16, 16), 5, 1)
     curDirPath = os.path.dirname(os.path.realpath(__file__))
 
     layout.addWidget(util.apply_style(QLabel("Prepare Config File", self), font=controller.title_font), 0, 0, 1, 3, Qt.AlignmentFlag.AlignCenter)
@@ -885,13 +886,30 @@ class ChooseCenterOfMassTracking(QWidget):
     fastCenterOfMassTitleLabel.setWordWrap(True)
     layout.addWidget(fastCenterOfMassTitleLabel, 1, 0)
     fastCenterOfMassImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'screen.png')), lambda: controller.chooseGeneralExperimentFirstStep(controller, False, False, False, False, False, True))
-    layout.addWidget(fastCenterOfMassImage, 2, 0)
+    layout.addWidget(fastCenterOfMassImage, 2, 0, 2, 1)
 
     centerOfMassTitleLabel = util.apply_style(QLabel("Center of mass tracking for more than one animal per well", self), font=QFont('Helvetica', 14, QFont.Weight.Bold))
     centerOfMassTitleLabel.setWordWrap(True)
     layout.addWidget(centerOfMassTitleLabel, 1, 2)
     centerOfMassImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'centerOfMassAnyAnimal.png')), lambda: controller.chooseGeneralExperimentFirstStep(controller, False, False, False, False, True, False))
     layout.addWidget(centerOfMassImage, 2, 2)
+
+    DLCenterOfMassLayout = QGridLayout()
+    DLCenterOfMassLayout.setColumnStretch(0, 1)
+    DLCenterOfMassLayout.setSpacing(2)
+    DLCenterOfMassLayout.setRowStretch(2, 1)
+    DLCenterOfMassTitleLabel = util.apply_style(QLabel("ZebraZoom deep learning based Center of mass tracking", self), font=QFont('Helvetica', 14, QFont.Weight.Bold))
+    DLCenterOfMassTitleLabel.setWordWrap(True)
+    DLCenterOfMassLayout.addWidget(DLCenterOfMassTitleLabel, 0, 0, 1, 2)
+    difficultVideosLabel = util.apply_style(QLabel("For videos difficult to track otherwise"), font_size='16px')
+    difficultVideosLabel.setWordWrap(True)
+    DLCenterOfMassLayout.addWidget(difficultVideosLabel, 1, 0, 1, 2)
+    DLCenterOfMassImage = _ClickableImageLabel(self, QPixmap(os.path.join(curDirPath, 'deepLearningCenterOfMass.jpg')), lambda: QDesktopServices.openUrl(QUrl("https://zebrazoom.org/documentation/docs/DLtracking/centerOfMassTracking")))
+    DLCenterOfMassLayout.addWidget(DLCenterOfMassImage, 2, 0)
+    pipetteLabel = util.apply_style(QLabel("For example for videos where a manual experimenter touches the animal with a pipette"), font_size='16px')
+    pipetteLabel.setWordWrap(True)
+    DLCenterOfMassLayout.addWidget(pipetteLabel, 2, 1, alignment=Qt.AlignmentFlag.AlignTop)
+    layout.addLayout(DLCenterOfMassLayout, 3, 2)
 
     buttonsLayout = QHBoxLayout()
     buttonsLayout.addStretch()
@@ -902,7 +920,7 @@ class ChooseCenterOfMassTracking(QWidget):
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
     buttonsLayout.addWidget(startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     buttonsLayout.addStretch()
-    layout.addLayout(buttonsLayout, 4, 0, 1, 3)
+    layout.addLayout(buttonsLayout, 5, 0, 1, 3)
 
     self.setLayout(layout)
 

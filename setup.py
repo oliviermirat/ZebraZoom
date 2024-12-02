@@ -91,6 +91,7 @@ setup(
         "zebrazoom/code/GUI/screen.png",
         "zebrazoom/code/GUI/wholeVideo.png",
         "zebrazoom/code/GUI/headEmbedded.png",
+        "zebrazoom/code/GUI/deepLearningCenterOfMass.jpg",
         
         "zebrazoom/dataAnalysis/experimentOrganizationExcel/example.xlsx"
       ],
