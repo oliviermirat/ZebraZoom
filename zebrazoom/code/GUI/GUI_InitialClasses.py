@@ -1209,7 +1209,7 @@ class ViewParameters(util.CollapsibleSplitter):
         proxyModel = tree.model()
         model = proxyModel.sourceModel()
         selectionModel = tree.selectionModel()
-        selectionModel.currentRowChanged.connect(lambda current, previous: current.row() == -1 or self.setFolder(model.getItem(proxyModel.mapToSource(current))))
+        selectionModel.currentRowChanged.connect(lambda current, previous: current.row() == -1 or self.setFolder(model.getItem(proxyModel.mapToSource(current))), type=Qt.ConnectionType.QueuedConnection)
 
         layout = QGridLayout()
 
@@ -1382,14 +1382,17 @@ class ViewParameters(util.CollapsibleSplitter):
         self.setChildrenCollapsible(False)
         self._tree.hide()
 
-    def setFolder(self, item):
+    def setFolder(self, item, reloadModel=False):
         if item is None or isinstance(item, _RootVisualizationGroupItem):
-          self._tree.hide()
-          self._tree.model().sourceModel().refresh()
-          self._tree.model().invalidateFilter()
+          if reloadModel:
+            blocked = self._tree.selectionModel().blockSignals(True)
+            self._tree.hide()
+            self._tree.model().sourceModel().refresh()
+            self._tree.model().invalidateFilter()
+            self._tree.selectionModel().reset()
+            self._tree.show()
+            self._tree.selectionModel().blockSignals(blocked)
           self._centralWidget.hideChildren()
-          self._tree.selectionModel().reset()
-          self._tree.show()
           self._updateConfigWidgets()
           return
         else:
@@ -1405,7 +1408,7 @@ class ViewParameters(util.CollapsibleSplitter):
         fullPath = os.path.join(self.controller.ZZoutputLocation, name)
         self.currentResultFolder = name
         if not os.path.exists(fullPath):
-            self.setFolder(None)
+            self.setFolder(None, reloadModel=True)
             QMessageBox.critical(self.controller.window, 'Cannot read the results', 'The selected results file no longer exists.')
             return
         if os.path.isdir(fullPath):
