@@ -119,3 +119,5 @@ runs/
 zebrazoom/code/tracking/customTrackingImplementations/yolov11/__pycache__
 
 zebrazoom/code/GUI/tracking/customTrackingImplementations/multipleCenterOfMassTracking/__pycache__
+
+DLrelatedFiles/__pycache__
