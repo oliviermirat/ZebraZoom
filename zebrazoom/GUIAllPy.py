@@ -251,7 +251,7 @@ class ZebraZoomApp(PlainApplication):
 
     def showViewParameters(self, folder=None):
         self.show_frame("ViewParameters")
-        self.window.centralWidget().layout().currentWidget().setFolder(folder)
+        self.window.centralWidget().layout().currentWidget().setFolder(folder, reloadModel=folder is None)
 
     def showManualRolloverClassification(self, folder=None):
         self.show_frame("ManualRolloverClassification")
