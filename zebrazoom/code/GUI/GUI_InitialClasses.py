@@ -677,6 +677,19 @@ class _ResultsItem(_VisualizationTreeItem):
       date = None
     self._data = [path, date]
 
+  def setData(self, column, value):
+    if column < 0 or column >= 1:
+        return False
+    try:
+      app = QApplication.instance()
+      newFilename = self.filename.replace(self._data[column], value)
+      os.rename(os.path.join(app.ZZoutputLocation, self.filename), os.path.join(app.ZZoutputLocation, newFilename))
+      self.filename = newFilename
+      self._data[column] = value
+    except OSError:
+      return False
+    return True
+
 
 class _VisualizationGroupItem(_VisualizationTreeItem):
   def __init__(self, name, parent=None):
@@ -865,7 +878,12 @@ class _VisualizationTreeModel(QAbstractItemModel):
   def flags(self, index):
     if not index.isValid():
       return 0
-    if type(self.getItem(index)) is not _VisualizationGroupItem:
+    item = self.getItem(index)
+    if isinstance(item, _ResultsItem):
+      if not index.column() and isinstance(item.parent(), _AllResultsVisualizationGroupItem):
+        return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable if not self._groupsOnly else Qt.ItemIsEnabled
+      return Qt.ItemIsEnabled | Qt.ItemIsSelectable if not self._groupsOnly else Qt.ItemIsEnabled
+    if type(item) is not _VisualizationGroupItem:
       return Qt.ItemIsEnabled | Qt.ItemIsSelectable if not self._groupsOnly else Qt.ItemIsEnabled
     if not index.column() and not self._groupsOnly:
       return Qt.ItemIsEditable | Qt.ItemIsEnabled | Qt.ItemIsSelectable
