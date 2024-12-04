@@ -49,6 +49,7 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
   resFolder                      = clusteringOptions['resFolder']
   nameOfFile                     = clusteringOptions['nameOfFile']
   globalParametersCalculations   = clusteringOptions['globalParametersCalculations']
+  useGenotypes = clusteringOptions.get('useGenotypes', False)
   
   modelUsedForClustering = clusteringOptions['modelUsedForClustering'] if 'modelUsedForClustering' in clusteringOptions else 'KMeans'
   
@@ -89,7 +90,7 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
   dfParam = pickle.load(infile)
   infile.close()
   
-  nbConditions = len(np.unique(dfParam['Condition'].values))
+  nbConditions = len(np.unique(dfParam['Condition' if not useGenotypes else 'Genotype'].values))
 
   # Applying PCA
   if classifier == 0:
@@ -191,7 +192,7 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
 
   ind = []
   for i in range(0,nbConditions):
-    ind.append(dfParam.loc[(dfParam['Condition'] == i)].index.values)
+    ind.append(dfParam.loc[(dfParam['Condition' if not useGenotypes else 'Genotype'] == i)].index.values)
     
   # KMean clustering
   if classifier == 0:
@@ -223,7 +224,7 @@ def applyClustering(clusteringOptions, classifier, outputFolder, ZZoutputLocatio
       probasClassJ = predictedProbas[:, sortedIndices[j]]
       dfParam['classProba' + str(j)] = probasClassJ
   
-  [proportions, sortedRepresentativeBouts, sortedRepresentativeBoutsIndex] = visualizeClusters(dfParam, labels2, [], modelUsedForClustering, nbConditions, nbCluster, nbFramesTakenIntoAccount, scaleGraphs, showFigures, outputFolderResult, 0, 1)
+  [proportions, sortedRepresentativeBouts, sortedRepresentativeBoutsIndex] = visualizeClusters(dfParam, labels2, [], modelUsedForClustering, nbConditions, nbCluster, nbFramesTakenIntoAccount, scaleGraphs, showFigures, outputFolderResult, 0, 1, useGenotypes=useGenotypes)
   
   if False:
     prepareForActiveLearning(proportions, sortedRepresentativeBouts, outputFolderResult, nbCluster, pca_result, dfParam, sortedRepresentativeBoutsIndex, tailAngles)

@@ -355,8 +355,8 @@ class ZebraZoomApp(PlainApplication):
     def goToAdvanceSettings(self, controller, yes, no):
       configFilePrepareFunctions.goToAdvanceSettings(self, controller, yes, no)
 
-    def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering='', removeOutliers=False, frameStepForDistanceCalculation='4', removeBoutsContainingNanValuesInParametersUsedForClustering=True, forcePandasRecreation=0):
-      dataAnalysisGUIFunctions.boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect, nbVideosToSave, modelUsedForClustering, removeOutliers, frameStepForDistanceCalculation, removeBoutsContainingNanValuesInParametersUsedForClustering, forcePandasRecreation)
+    def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering='', removeOutliers=False, frameStepForDistanceCalculation='4', removeBoutsContainingNanValuesInParametersUsedForClustering=True, forcePandasRecreation=0, useGenotypes=False):
+      dataAnalysisGUIFunctions.boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect, nbVideosToSave, modelUsedForClustering, removeOutliers, frameStepForDistanceCalculation, removeBoutsContainingNanValuesInParametersUsedForClustering, forcePandasRecreation, useGenotypes=useGenotypes)
 
     def openAnalysisFolder(self, homeDirectory, specificDirectory):
       dataAnalysisGUIFunctions.openAnalysisFolder(self, homeDirectory, specificDirectory)

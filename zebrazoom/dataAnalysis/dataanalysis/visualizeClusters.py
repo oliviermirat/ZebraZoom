@@ -6,7 +6,7 @@ import os
 
 from zebrazoom.dataAnalysis.dataanalysis import sortGenotypes
 
-def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClustering, nbConditions, nbCluster, nbFramesTakenIntoAccount, scaleGraphs, showFigures, outputFolderResult, videoSaveFirstTenBouts, globalParametersCalculations):
+def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClustering, nbConditions, nbCluster, nbFramesTakenIntoAccount, scaleGraphs, showFigures, outputFolderResult, videoSaveFirstTenBouts, globalParametersCalculations, useGenotypes=False):
   
   instaTBF   = ['instaTBF'+str(i)  for i in range(1, nbFramesTakenIntoAccount + 1)]
   instaAmp   = ['instaAmp'+str(i)  for i in range(1, nbFramesTakenIntoAccount + 1)]
@@ -33,16 +33,16 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
       # probasClassJ = predictedProbas[:, sortedIndices[j]]
       # dfParam['classProba' + str(j)] = probasClassJ
   
-  # Calculating proportions of each conditions in each class
+  # Calculating proportions of each condition/genotype in each class
   for clusterProportionsPerFish in [True, False]:
     proportions = np.zeros((nbConditions, nbCluster))
     if clusterProportionsPerFish:
-      df2 = dfParam[['Trial_ID', 'Well_ID', 'Condition', 'classification']]
+      df2 = dfParam[['Trial_ID', 'Well_ID', 'Condition' if not useGenotypes else 'Genotype', 'classification']]
       for i in range(0, nbCluster):
         df2.loc[df2['classification'] == i, 'classifiedAs'+str(i)] = 1
         df2.loc[df2['classification'] != i, 'classifiedAs'+str(i)] = 0
-      df2 = df2.groupby(['Trial_ID', 'Well_ID', 'Condition']).sum()
-      df2['Condition'] = [elem[2] for elem in df2.index]
+      df2 = df2.groupby(['Trial_ID', 'Well_ID', 'Condition' if not useGenotypes else 'Genotype']).sum()
+      df2['Condition' if not useGenotypes else 'Genotype'] = [elem[2] for elem in df2.index]
       df2['totalNbOfBouts'] = df2['classifiedAs0']
       if nbCluster >= 2:
         for i in range(1, nbCluster):
@@ -53,15 +53,15 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
       
       df2.to_excel(os.path.join(outputFolderResult, 'clusterProportionsPerAnimal.xlsx'))
       
-      for idxCond, cond in enumerate(np.unique(dfParam['Condition'].values)):
+      for idxCond, cond in enumerate(np.unique(dfParam['Condition' if not useGenotypes else 'Genotype'].values)):
         for classed in range(0, len(proportions[0])):
-          proportions[idxCond, classed] = np.median(df2.loc[df2['Condition'] == cond]['classifiedAs' + str(classed)])
+          proportions[idxCond, classed] = np.median(df2.loc[df2['Condition' if not useGenotypes else 'Genotype'] == cond]['classifiedAs' + str(classed)])
       
-      conditions = list(sortGenotypes(dfParam["Condition"].unique().tolist()))
+      conditions = list(sortGenotypes(dfParam['Condition' if not useGenotypes else 'Genotype'].unique().tolist()))
       fig, tabAx = plt.subplots(1, len(proportions[0]), figsize=(22.9, 8.8))
       for classed in range(0, len(proportions[0])):
-        b = sns.boxplot(ax=tabAx[int(classed)], data=df2, x='Condition', y='classifiedAs' + str(classed), showmeans=1, showfliers=1, order=conditions)
-        c = sns.stripplot(ax=tabAx[int(classed)], data=df2, x='Condition', y='classifiedAs' + str(classed), color='red', size=7, order=conditions)
+        b = sns.boxplot(ax=tabAx[int(classed)], data=df2, x='Condition' if not useGenotypes else 'Genotype', y='classifiedAs' + str(classed), showmeans=1, showfliers=1, order=conditions)
+        c = sns.stripplot(ax=tabAx[int(classed)], data=df2, x='Condition' if not useGenotypes else 'Genotype', y='classifiedAs' + str(classed), color='red', size=7, order=conditions)
         b.set_ylabel('', fontsize=0)
         b.set_xlabel('', fontsize=0)
         b.axes.set_title('Cluster ' + str(classed), fontsize=30)
@@ -69,10 +69,10 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
       
     else:
       
-      df2 = dfParam[['Condition','classification']]
-      for idxCond, cond in enumerate(np.unique(dfParam['Condition'].values)):
+      df2 = dfParam[['Condition' if not useGenotypes else 'Genotype','classification']]
+      for idxCond, cond in enumerate(np.unique(dfParam['Condition' if not useGenotypes else 'Genotype'].values)):
         for classed in range(0, len(proportions[0])):
-          proportions[idxCond, classed] = len(df2.loc[(df2['Condition'] == cond) & (df2['classification'] == classed)])
+          proportions[idxCond, classed] = len(df2.loc[(df2['Condition' if not useGenotypes else 'Genotype'] == cond) & (df2['classification'] == classed)])
       for i in range(0, nbConditions):
         proportions[i, :] = proportions[i, :] / sum(proportions[i, :])
     
@@ -84,7 +84,7 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
     labelX = ""
     for i in range(0, nbCluster):
       labelX = labelX + "Cluster " + str(i+1) + " : \n"
-      for j, cond in enumerate(np.unique(dfParam['Condition'].values)):
+      for j, cond in enumerate(np.unique(dfParam['Condition' if not useGenotypes else 'Genotype'].values)):
         labelX = labelX + str(cond) + ": " + str(round(proportions[j,i]*100*100)/100) + "%, "
         labelX = labelX + "\n"
       labelX = labelX + "\n"
@@ -98,10 +98,10 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
   
   fig, tabAx = plt.subplots(4, len(proportions[0]), figsize=(22.9, 8.8))
   
-  conditions = list(sortGenotypes(dfParam["Condition"].unique().tolist()))
+  conditions = list(sortGenotypes(dfParam['Condition' if not useGenotypes else 'Genotype'].unique().tolist()))
   for idxCond, cond in enumerate(conditions):
     for classed in range(0, len(proportions[0])):
-      dfTemp = dfParam.loc[(dfParam['Condition'] == cond) & (dfParam['classification'] == classed)]
+      dfTemp = dfParam.loc[(dfParam['Condition' if not useGenotypes else 'Genotype'] == cond) & (dfParam['classification'] == classed)]
       instaTBFtab   = dfTemp[instaTBF]
       instaAmptab   = dfTemp[instaAmp]
       instaAsymtab  = dfTemp[instaAsym]
@@ -166,7 +166,7 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
     else:
       tabAx[3, i].set_xlabel(labelX)
   
-  plt.savefig(os.path.join(outputFolderResult, 'medianValuesUsedForClusteringForEachClusterAndCondition.png'))
+  plt.savefig(os.path.join(outputFolderResult, f'medianValuesUsedForClusteringForEachClusterAnd{"Condition" if not useGenotypes else "Genotype"}.png'))
   
   if showFigures:
     plt.show()
@@ -222,7 +222,7 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
       tabAx2[3].set_xlabel(labelX)
     else:
       tabAx2[3, i].set_xlabel(labelX)
-  plt.savefig(os.path.join(outputFolderResult, 'mostRepresentativeBoutForEachClusterAndCondition.png'))
+  plt.savefig(os.path.join(outputFolderResult, f'mostRepresentativeBoutForEachClusterAnd{"Condition" if not useGenotypes else "Genotype"}.png'))
   if showFigures:
     plt.show()
 
@@ -440,23 +440,23 @@ def visualizeClusters(dfParam, classifications, predictedProbas, modelUsedForClu
     
       if calculateKinematicParametersPerFish:
         globParamTot = globParam1 + globParam2 + globParam3 + globParam4
-        dfKinematicInsideCluster = dfParam[['Trial_ID', 'Well_ID', 'classification', 'Condition'] + globParamTot].astype({col: 'float' for col in globParamTot}).groupby(['Trial_ID', 'Well_ID', 'classification', 'Condition']).median()
+        dfKinematicInsideCluster = dfParam[['Trial_ID', 'Well_ID', 'classification', 'Condition' if not useGenotypes else 'Genotype'] + globParamTot].astype({col: 'float' for col in globParamTot}).groupby(['Trial_ID', 'Well_ID', 'classification', 'Condition' if not useGenotypes else 'Genotype']).median()
         dfKinematicInsideCluster['classification'] = [elem[2] for elem in dfKinematicInsideCluster.index]
-        dfKinematicInsideCluster['Condition']      = [elem[3] for elem in dfKinematicInsideCluster.index]
+        dfKinematicInsideCluster['Condition' if not useGenotypes else 'Genotype']      = [elem[3] for elem in dfKinematicInsideCluster.index]
       else:
         dfKinematicInsideCluster = dfParam
       
-      conditions = dfParam["Condition"].unique().tolist()
+      conditions = dfParam['Condition' if not useGenotypes else 'Genotype'].unique().tolist()
       palette = dict(zip(sortGenotypes(conditions), sns.color_palette(n_colors=len(conditions))))
       for idxGlobParam, globParam in enumerate([globParam1, globParam2, globParam3, globParam4]):
         fig, tabAx = plt.subplots(2, 3, figsize=(22.9, 8.8))
         fig.tight_layout(pad=3.0)
         for idx, parameter in enumerate(globParam):
-          b = sns.boxplot(ax=tabAx[int(idx/3), idx%3], data=dfKinematicInsideCluster, x="classification", y=parameter, hue="Condition", showfliers = False, hue_order=palette.keys(), palette=palette)
+          b = sns.boxplot(ax=tabAx[int(idx/3), idx%3], data=dfKinematicInsideCluster, x="classification", y=parameter, hue='Condition' if not useGenotypes else 'Genotype', showfliers = False, hue_order=palette.keys(), palette=palette)
           b.set_ylabel('', fontsize=0)
           b.set_xlabel('', fontsize=0)
           b.axes.set_title(parameter,fontsize=30)
-        globParamFileName = 'globalParametersforEachCluster_Conditions_NoOutliers_' + str(idxGlobParam)
+        globParamFileName = f'globalParametersforEachCluster_{"Condition" if not useGenotypes else "Genotype"}_NoOutliers_' + str(idxGlobParam)
         if calculateKinematicParametersPerFish:
           globParamFileName = globParamFileName + '_PerFish.png'
         else:

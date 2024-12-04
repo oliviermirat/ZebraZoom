@@ -30,7 +30,7 @@ def openAnalysisFolder(self, homeDirectory, specificDirectory):
 
 
 @util.showInProgressPage('Parameters calculation')
-def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering=0, removeOutliers=False, frameStepForDistanceCalculation='4', removeBoutsContainingNanValuesInParametersUsedForClustering=True, forcePandasRecreation=0):
+def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbeded, minNbBendForBoutDetect=3, nbVideosToSave=0, modelUsedForClustering=0, removeOutliers=False, frameStepForDistanceCalculation='4', removeBoutsContainingNanValuesInParametersUsedForClustering=True, forcePandasRecreation=0, useGenotypes=False):
 
   if len(frameStepForDistanceCalculation) == 0:
     frameStepForDistanceCalculation = '4'
@@ -104,7 +104,8 @@ def boutClustering(self, controller, nbClustersToFind, FreelySwimming, HeadEmbed
     'nameOfFile' : self.experimentOrganizationExcel.split(".")[0],
     'modelUsedForClustering' : modelUsedForClustering,
     'removeOutliers'         : removeOutliers,
-    'removeBoutsContainingNanValuesInParametersUsedForClustering' : removeBoutsContainingNanValuesInParametersUsedForClustering
+    'removeBoutsContainingNanValuesInParametersUsedForClustering' : removeBoutsContainingNanValuesInParametersUsedForClustering,
+    'useGenotypes' : useGenotypes,
   }
   if int(FreelySwimming):
     clusteringOptions['useAnglesSpeedHeading'] = True

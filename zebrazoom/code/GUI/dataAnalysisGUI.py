@@ -1047,8 +1047,8 @@ class ChooseDataAnalysisMethod(QWidget):
     self.controller = controller
 
     layout = QVBoxLayout()
-    layout.addWidget(util.apply_style(QLabel("Choose the analysis you want to perform:"), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(QLabel("Warning: all the bouts flagged on the visualization page will be excluded from the analysis"), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Choose the analysis you want to perform:"), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
+    layout.addWidget(QLabel("Warning: all the bouts flagged on the visualization page will be excluded from the analysis"), alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
 
     self._compareBtn = util.apply_style(QPushButton("Compare populations with kinematic parameters"), background_color=util.DEFAULT_BUTTON_COLOR)
     self._compareBtn.clicked.connect(lambda: controller.show_frame("PopulationComparison"))
@@ -1056,11 +1056,11 @@ class ChooseDataAnalysisMethod(QWidget):
     layout.addWidget(QLabel('We recommend starting here'), alignment=Qt.AlignmentFlag.AlignCenter)
     self._clusterBtn = util.apply_style(QPushButton("Cluster bouts of movements  (for zebrafish only)"), background_color=util.DEFAULT_BUTTON_COLOR)
     self._clusterBtn.clicked.connect(lambda: controller.show_frame("BoutClustering"))
-    layout.addWidget(self._clusterBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(self._clusterBtn, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
 
     self._startPageBtn = QPushButton("Go to the start page")
     self._startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
-    layout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(self._startPageBtn, alignment=Qt.AlignmentFlag.AlignCenter, stretch=1)
 
     self.setLayout(layout)
 
@@ -1245,18 +1245,31 @@ class BoutClustering(QWidget):
     layout = QVBoxLayout()
     layout.addWidget(util.apply_style(QLabel("Bout Clustering:", self), font=controller.title_font), alignment=Qt.AlignmentFlag.AlignCenter)
 
-    layout.addWidget(QLabel("Choose number of cluster to find:", self), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel("Choose number of clusters to find:", self), alignment=Qt.AlignmentFlag.AlignCenter)
     nbClustersToFind = QLineEdit(controller.window)
     nbClustersToFind.setValidator(QIntValidator(nbClustersToFind))
     nbClustersToFind.validator().setBottom(0)
     layout.addWidget(nbClustersToFind, alignment=Qt.AlignmentFlag.AlignCenter)
 
     layout.addWidget(QLabel("Choose one of the options below:", self), alignment=Qt.AlignmentFlag.AlignCenter)
+    optionsButtonGroup = QButtonGroup(self)
     freelySwimmingRadioButton = QRadioButton("Freely swimming fish with tail tracking", self)
+    optionsButtonGroup.addButton(freelySwimmingRadioButton)
     freelySwimmingRadioButton.setChecked(True)
     layout.addWidget(freelySwimmingRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
     headEmbeddedRadioButton = QRadioButton("Head embeded fish with tail tracking", self)
+    optionsButtonGroup.addButton(headEmbeddedRadioButton)
     layout.addWidget(headEmbeddedRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+
+    layout.addWidget(QLabel("Should results be based on condition or genotype?", self), alignment=Qt.AlignmentFlag.AlignCenter)
+    resultsButtonGroup = QButtonGroup(self)
+    conditionRadioButton = QRadioButton("Condition", self)
+    resultsButtonGroup.addButton(conditionRadioButton)
+    conditionRadioButton.setChecked(True)
+    layout.addWidget(conditionRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
+    genotypeRadioButton = QRadioButton("Genotype", self)
+    resultsButtonGroup.addButton(genotypeRadioButton)
+    layout.addWidget(genotypeRadioButton, alignment=Qt.AlignmentFlag.AlignCenter)
 
     advancedOptionsLayout = QVBoxLayout()
     advancedOptionsLayout.addWidget(util.apply_style(QLabel("What's the minimum number of bends a bout should have to be taken into account for the analysis?", self), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
@@ -1296,7 +1309,7 @@ class BoutClustering(QWidget):
     layout.addWidget(util.Expander(self, "Show advanced options", advancedOptionsLayout))
 
     launchBtn = util.apply_style(QPushButton("Launch Analysis", self), background_color=util.DEFAULT_BUTTON_COLOR)
-    launchBtn.clicked.connect(lambda: controller.boutClustering(controller, nbClustersToFind.text(), freelySwimmingRadioButton.isChecked(), headEmbeddedRadioButton.isChecked(), minNbBendForBoutDetect.text(), nbVideosToSave.text(), modelUsedForClusteringCheckbox.isChecked(), removeOutliersCheckbox.isChecked(), frameStepForDistanceCalculation.text(), removeBoutsContainingNanValuesInParametersUsedForClustering.isChecked(), self._forcePandasRecreation.isChecked()))
+    launchBtn.clicked.connect(lambda: controller.boutClustering(controller, nbClustersToFind.text(), freelySwimmingRadioButton.isChecked(), headEmbeddedRadioButton.isChecked(), minNbBendForBoutDetect.text(), nbVideosToSave.text(), modelUsedForClusteringCheckbox.isChecked(), removeOutliersCheckbox.isChecked(), frameStepForDistanceCalculation.text(), removeBoutsContainingNanValuesInParametersUsedForClustering.isChecked(), self._forcePandasRecreation.isChecked(), useGenotypes=genotypeRadioButton.isChecked()))
     layout.addWidget(launchBtn, alignment=Qt.AlignmentFlag.AlignCenter)
     startPageBtn = QPushButton("Go to the start page", self)
     startPageBtn.clicked.connect(lambda: controller.show_frame("StartPage"))
