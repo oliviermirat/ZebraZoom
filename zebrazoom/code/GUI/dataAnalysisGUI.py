@@ -1053,6 +1053,7 @@ class ChooseDataAnalysisMethod(QWidget):
     self._compareBtn = util.apply_style(QPushButton("Compare populations with kinematic parameters"), background_color=util.DEFAULT_BUTTON_COLOR)
     self._compareBtn.clicked.connect(lambda: controller.show_frame("PopulationComparison"))
     layout.addWidget(self._compareBtn, alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(QLabel('We recommend starting here'), alignment=Qt.AlignmentFlag.AlignCenter)
     self._clusterBtn = util.apply_style(QPushButton("Cluster bouts of movements  (for zebrafish only)"), background_color=util.DEFAULT_BUTTON_COLOR)
     self._clusterBtn.clicked.connect(lambda: controller.show_frame("BoutClustering"))
     layout.addWidget(self._clusterBtn, alignment=Qt.AlignmentFlag.AlignCenter)
