@@ -184,7 +184,7 @@ jobs:
   deploy_mac:
     name: Deploy on macOS
     needs: create_release
-    runs-on: macOS-12
+    runs-on: macOS-13
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
@@ -348,7 +348,7 @@ jobs:
   deploy_mac_legacy:
     name: Deploy legacy format on macOS
     needs: create_release
-    runs-on: macOS-12
+    runs-on: macOS-13
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
