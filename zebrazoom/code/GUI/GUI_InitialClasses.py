@@ -684,6 +684,12 @@ class _ResultsItem(_VisualizationTreeItem):
       app = QApplication.instance()
       newFilename = self.filename.replace(self._data[column], value)
       os.rename(os.path.join(app.ZZoutputLocation, self.filename), os.path.join(app.ZZoutputLocation, newFilename))
+      if newFilename.endswith('.h5'):  # if h5 was used, there could be other files with the same name, but a different extension, we have to rename all of them
+        oldNameWithoutExt = self.filename[:-3]
+        newNameWithoutExt = newFilename[:-3]
+        for fname in os.listdir(app.ZZoutputLocation):
+          if fname.startswith(oldNameWithoutExt):
+            os.rename(os.path.join(app.ZZoutputLocation, fname), os.path.join(app.ZZoutputLocation, fname.replace(oldNameWithoutExt, newNameWithoutExt)))
       self.filename = newFilename
       self._data[column] = value
     except OSError:
@@ -814,6 +820,8 @@ class _RootVisualizationGroupItem(_VisualizationGroupItem):
 
 
 class _VisualizationTreeModel(QAbstractItemModel):
+  itemRenamed = pyqtSignal(str)
+
   def __init__(self, groupsOnly):
     super().__init__()
     self._groupsOnly = groupsOnly
@@ -963,6 +971,8 @@ class _VisualizationTreeModel(QAbstractItemModel):
     result = item.setData(index.column(), value)
     if result:
       self.dataChanged.emit(index, index)
+      if isinstance(item, _ResultsItem):
+        self.itemRenamed.emit(item.filename)
       self._saveGroups()
     return result
 
@@ -1208,6 +1218,7 @@ class ViewParameters(util.CollapsibleSplitter):
         self._tree = tree = _createVisualizationTree()
         proxyModel = tree.model()
         model = proxyModel.sourceModel()
+        model.itemRenamed.connect(lambda name: self._updateName(name))
         selectionModel = tree.selectionModel()
         selectionModel.currentRowChanged.connect(lambda current, previous: current.row() == -1 or self.setFolder(model.getItem(proxyModel.mapToSource(current))), type=Qt.ConnectionType.QueuedConnection)
 
@@ -1382,6 +1393,10 @@ class ViewParameters(util.CollapsibleSplitter):
         self.setChildrenCollapsible(False)
         self._tree.hide()
 
+    def _updateName(self, name):
+        self.title_label.setText(name)
+        self.currentResultFolder = name
+
     def setFolder(self, item, reloadModel=False):
         if item is None or isinstance(item, _RootVisualizationGroupItem):
           if reloadModel:
@@ -1404,9 +1419,8 @@ class ViewParameters(util.CollapsibleSplitter):
             return
 
         name = item if isinstance(item, str) else item.filename
-        self.title_label.setText(name)
+        self._updateName(name)
         fullPath = os.path.join(self.controller.ZZoutputLocation, name)
-        self.currentResultFolder = name
         if not os.path.exists(fullPath):
             self.setFolder(None, reloadModel=True)
             QMessageBox.critical(self.controller.window, 'Cannot read the results', 'The selected results file no longer exists.')
