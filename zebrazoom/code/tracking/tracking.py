@@ -451,16 +451,17 @@ class Tracking(BaseZebraZoomTrackingMethod, TailTrackingDifficultBackgroundMixin
 
       # Eye tracking for frame i
       if self._hyperparameters["eyeTracking"]:
-        if self._hyperparameters["headEmbeded"] == 1:
-          if self._hyperparameters["adjustHeadEmbeddedEyeTracking"]:
-            i, widgets = self._eyeTrackingHeadEmbedded(animalId, i, frame, thresh1, self._trackingHeadingAllAnimals, self._trackingHeadTailAllAnimals, self._trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate, widgets=widgets)
-            if not self._hyperparameters["eyeFilterKernelSize"] % 2:
-              self._hyperparameters["eyeFilterKernelSize"] -= 1
-            continue
+        for animalId in range(self._hyperparameters["nbAnimalsPerWell"]):
+          if self._hyperparameters["headEmbeded"] == 1:
+            if self._hyperparameters["adjustHeadEmbeddedEyeTracking"]:
+              i, widgets = self._eyeTrackingHeadEmbedded(animalId, i, frame, thresh1, self._trackingHeadingAllAnimals, self._trackingHeadTailAllAnimals, self._trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate, widgets=widgets)
+              if not self._hyperparameters["eyeFilterKernelSize"] % 2:
+                self._hyperparameters["eyeFilterKernelSize"] -= 1
+              continue
+            else:
+              self._eyeTrackingHeadEmbedded(animalId, i, frame, thresh1, self._trackingHeadingAllAnimals, self._trackingHeadTailAllAnimals, self._trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate)
           else:
-            self._eyeTrackingHeadEmbedded(animalId, i, frame, thresh1, self._trackingHeadingAllAnimals, self._trackingHeadTailAllAnimals, self._trackingEyesAllAnimals, leftEyeCoordinate, rightEyeCoordinate)
-        else:
-          self._eyeTracking(animalId, i, frame, thresh1, self._trackingHeadingAllAnimals, self._trackingHeadTailAllAnimals, self._trackingEyesAllAnimals)
+            self._eyeTracking(animalId, i, frame, thresh1, self._trackingHeadingAllAnimals, self._trackingHeadTailAllAnimals, self._trackingEyesAllAnimals)
 
       # Debug functions
       if self._hyperparameters["nbAnimalsPerWell"] > 1 or self._hyperparameters["forceBlobMethodForHeadTracking"] or self._hyperparameters["headEmbeded"] == 1 or self._hyperparameters["fixedHeadPositionX"] != -1:
