@@ -134,7 +134,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          /opt/python/bin/python* -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory . --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" --hidden-import="ultralytics" -n ZebraZoom ../zebrazoom/__main__.py
+          /opt/python/bin/python* -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory . --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" --hidden-import="sklearn.tree._partitioner" --hidden-import="ultralytics" -n ZebraZoom ../zebrazoom/__main__.py
           /opt/python/bin/python* -m PyInstaller --onefile --icon=../icon.ico --windowed -n updater ../updater.py
           rm -f dist/ZebraZoom/zebrazoom/dataAnalysis/data/.gitignore
           rm -f dist/ZebraZoom/zebrazoom/dataAnalysis/resultsClustering/.gitignore
@@ -204,7 +204,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          ${{ steps.python.outputs.python-path }} -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory ZebraZoom --osx-bundle-identifier ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" --hidden-import="ultralytics" -n ZebraZoomApp ../zebrazoom/__main__.py
+          ${{ steps.python.outputs.python-path }} -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory ZebraZoom --osx-bundle-identifier ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" --hidden-import="sklearn.tree._partitioner" --hidden-import="ultralytics" -n ZebraZoomApp ../zebrazoom/__main__.py
           ${{ steps.python.outputs.python-path }} -m PyInstaller --onefile --icon=../icon.ico --windowed --osx-bundle-identifier ZebraZoom.updater -n updater ../updater.py
           rm -f dist/ZebraZoomApp/ZebraZoom/zebrazoom/dataAnalysis/data/.gitignore
           rm -f dist/ZebraZoomApp/ZebraZoom/zebrazoom/dataAnalysis/resultsClustering/.gitignore
@@ -300,7 +300,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          pyinstaller --console --icon=../icon.ico --onedir --contents-directory . --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" --hidden-import="ultralytics" -n ZebraZoom ../zebrazoom/__main__.py
+          pyinstaller --console --icon=../icon.ico --onedir --contents-directory . --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" --hidden-import="sklearn.tree._partitioner" --hidden-import="ultralytics" -n ZebraZoom ../zebrazoom/__main__.py
           pyinstaller --onefile --uac-admin --icon=../icon.ico --windowed -n updater ../updater.py
           rm -erroraction silentlycontinue dist/ZebraZoom/zebrazoom/dataAnalysis/data/.gitignore
           rm -erroraction silentlycontinue dist/ZebraZoom/zebrazoom/dataAnalysis/resultsClustering/.gitignore
@@ -368,7 +368,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          ${{ steps.python.outputs.python-path }} -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory ZebraZoom --osx-bundle-identifier ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" --hidden-import="ultralytics" -n ZebraZoomApp ../zebrazoom/__main__.py
+          ${{ steps.python.outputs.python-path }} -m PyInstaller --console --icon=../icon.ico --onedir --contents-directory ZebraZoom --osx-bundle-identifier ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" --hidden-import="sklearn.tree._partitioner" --hidden-import="ultralytics" -n ZebraZoomApp ../zebrazoom/__main__.py
           ${{ steps.python.outputs.python-path }} -m PyInstaller --onefile --icon=../icon.ico --windowed --osx-bundle-identifier ZebraZoom.updater -n updater ../updater.py
           rm -f dist/ZebraZoomApp/ZebraZoom/zebrazoom/dataAnalysis/data/.gitignore
           rm -f dist/ZebraZoomApp/ZebraZoom/zebrazoom/dataAnalysis/resultsClustering/.gitignore
