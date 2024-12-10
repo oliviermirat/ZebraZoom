@@ -4,7 +4,7 @@ import cv2
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import math
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
-from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis
+from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis, TrackingError, ParametersDiscarded, TrackingDone
 import pickle
 import json
 import os
@@ -150,7 +150,7 @@ def getGroundTruthFromUser(self, controller, nbOfImagesToManuallyClassify, saveI
     initialConfigFile['storeH5'] = 1
     with app.busyCursor():
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, initialConfigFile, ["outputFolder", app.ZZoutputLocation]).run()
-  except ValueError:
+  except TrackingDone:
     pass
   finally:
     if storeH5 is not None:
@@ -429,7 +429,7 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
       storeH5 = configFile.get('storeH5')
       configFile['storeH5'] = 1
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, ["outputFolder", app.ZZoutputLocation]).run()
-    except ValueError:
+    except TrackingDone:
       configFile["exitAfterBackgroundExtraction"] = 0
     finally:
       if storeH5 is not None:
@@ -520,11 +520,11 @@ def boutDetectionParameters(data, configFile, pathToVideo, videoName, videoExt, 
       storeH5 = configFile.get('storeH5')
       configFile['storeH5'] = 1
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, ["outputFolder", app.ZZoutputLocation]).run()
-    except ValueError:
+    except TrackingDone:
       newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
       for index in newhyperparameters:
         configFile[index] = newhyperparameters[index]
-    except NameError:
+    except ParametersDiscarded:
       print("Configuration file parameters changes discarded.")
     finally:
       if storeH5 is not None:

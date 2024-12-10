@@ -13,7 +13,7 @@ from PyQt5.QtWidgets import QApplication, QGridLayout, QLabel, QLineEdit, QCheck
 import zebrazoom.videoFormatConversion.zzVideoReading as zzVideoReading
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
-from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis
+from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis, TrackingError, ParametersDiscarded, TrackingDone
 from zebrazoom.code.tracking import get_default_tracking_method, getBackground
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 
@@ -298,9 +298,9 @@ def _adjustEyeTracking(firstFrame, totalFrames, ellipse=False):
     if "lastFrame" in app.configFile and "firstFrame" in app.configFile and app.configFile["lastFrame"] < app.configFile["firstFrame"]:
       del app.configFile["lastFrame"]
     ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, app.configFile, argv).run()
-  except ValueError:
+  except TrackingDone:
     saved = True
-  except NameError:
+  except ParametersDiscarded:
     print("Configuration file parameters changes discarded.")
   finally:
     if storeH5 is not None:
@@ -1029,7 +1029,7 @@ def adjustFastFishTrackingPage(useNext=True, nextCb=None, detectBoutsMethod=None
         zzAnalysis = ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, tempConfig, ['outputFolder', app.ZZoutputLocation])
         zzAnalysis.storeConfigUsed(tempConfig)
         zzAnalysis.storeWellPositions(wellPositions)
-  except ValueError:
+  except TrackingDone:
       pass
 
   layout = QVBoxLayout()
@@ -1165,13 +1165,13 @@ def adjustFastFishTrackingPage(useNext=True, nextCb=None, detectBoutsMethod=None
 
     try:
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, tempConfig, argv).run()
-    except ValueError:
+    except TrackingDone:
       newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
       configFile.update(newhyperparameters)
       for param in ('dualDirectionTailDetection', 'dualDirectionRemoveShortestDirectionFromHead'):
         if param not in newhyperparameters and param in configFile:
           del configFile[param]
-    except NameError:
+    except ParametersDiscarded:
       print("Configuration file parameters changes discarded.")
 
   frameGapSlider = util.SliderWithSpinbox(app.configFile.get("frameGapComparision", 1), 1, 15, name="frameGapComparision")

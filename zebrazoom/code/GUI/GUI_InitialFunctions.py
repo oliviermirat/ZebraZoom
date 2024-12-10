@@ -16,7 +16,7 @@ import pandas as pd
 from zebrazoom.code.vars import getGlobalVariables
 globalVariables = getGlobalVariables()
 
-from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis
+from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis, TrackingError, ParametersDiscarded, TrackingDone
 from zebrazoom.getTailExtremityFirstFrame import getTailExtremityFirstFrame
 import zebrazoom.code.paths as paths
 import zebrazoom.code.util as util
@@ -533,9 +533,9 @@ def _runTracking(args, createValidationVideo, ZZoutputLocation):
     tabParams.extend(['createValidationVideo', createValidationVideo])
   try:
     ZebraZoomVideoAnalysis(path, name, videoExt, config, tabParams).run()
-  except ValueError:
+  except TrackingDone:
     print("moving on to the next video for ROIs identification")
-  except NameError:
+  except TrackingError:
     return
 
 
@@ -599,7 +599,7 @@ def launchZebraZoom(videos, configs, headEmbedded=False, sbatchMode=False, creat
             nbVideosToLaunch = nbVideosToLaunch + 1
           else:
             ZebraZoomVideoAnalysis(path, name, videoExt, config, tabParams).run()
-        except ValueError:
+        except TrackingDone:
           print("moving on to the next video for ROIs identification")
 
       else:

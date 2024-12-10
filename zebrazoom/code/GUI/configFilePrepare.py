@@ -2079,7 +2079,7 @@ class MultipleAnimalsCenterOfMass(QWidget):
     super().showEvent(evt)
 
   def _adjustParameters(self):
-    from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis
+    from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis, TrackingError, ParametersDiscarded, TrackingDone
 
     [pathToVideo, videoName, videoExt, configFile, argv] = getMainArguments(self.controller)
 
@@ -2097,11 +2097,11 @@ class MultipleAnimalsCenterOfMass(QWidget):
       zzAnalysis.storeConfigUsed(configFile)
       try:
         ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
-      except ValueError:
+      except TrackingDone:
         newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
         for index in newhyperparameters:
           configFile[index] = newhyperparameters[index]
-      except NameError:
+      except ParametersDiscarded:
         print("Configuration file parameters changes discarded.")
         return False
       finally:

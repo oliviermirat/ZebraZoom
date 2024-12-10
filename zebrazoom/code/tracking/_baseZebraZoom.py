@@ -301,6 +301,7 @@ class BaseZebraZoomTrackingMethod(BaseTrackingMethod, GetBackgroundMixin, Update
 
     if self._hyperparameters["exitAfterBackgroundExtraction"]:
       print("exitAfterBackgroundExtraction")
-      raise ValueError
+      from zebrazoom.zebraZoomVideoAnalysis import TrackingDone
+      raise TrackingDone
 
     return background

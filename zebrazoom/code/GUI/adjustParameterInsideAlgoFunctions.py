@@ -1,5 +1,5 @@
 import numpy as np
-from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis
+from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis, TrackingError, ParametersDiscarded, TrackingDone
 import os
 import pickle
 import cv2
@@ -97,12 +97,12 @@ def detectBouts(self, controller, wellNumber, firstFrame, adjustOnWholeVideo, re
       if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
         del configFile["lastFrame"]
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
-    except ValueError:
+    except TrackingDone:
       newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
       for index in newhyperparameters:
         configFile[index] = newhyperparameters[index]
-    except NameError:
-      print("Configuration file parameters changes discarded.")
+    except ParametersDiscarded:
+        print("Configuration file parameters changes discarded.")
     finally:
       if storeH5 is not None:
         configFile['storeH5'] = storeH5
@@ -149,11 +149,11 @@ def adjustHeadEmbededTracking(self, controller, wellNumber, firstFrame, adjustOn
     if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
       del configFile["lastFrame"]
     ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
-  except ValueError:
+  except TrackingDone:
     newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
     for index in newhyperparameters:
       configFile[index] = newhyperparameters[index]
-  except NameError:
+  except ParametersDiscarded:
     print("Configuration file parameters changes discarded.")
   finally:
     if storeH5 is not None:
@@ -192,11 +192,11 @@ def adjustFreelySwimTracking(self, controller, wellNumber, firstFrame, adjustOnW
     if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
       del configFile["lastFrame"]
     ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
-  except ValueError:
+  except TrackingDone:
     newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
     for index in newhyperparameters:
       configFile[index] = newhyperparameters[index]
-  except NameError:
+  except ParametersDiscarded:
     print("Configuration file parameters changes discarded.")
   finally:
     if storeH5 is not None:
@@ -244,11 +244,11 @@ def _adjustFastFreelySwimTracking(self, controller, oldFirstFrame, detectBouts):
     if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
       del configFile["lastFrame"]
     ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
-  except ValueError:
+  except TrackingDone:
     newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
     for index in newhyperparameters:
       configFile[index] = newhyperparameters[index]
-  except NameError:
+  except ParametersDiscarded:
     print("Configuration file parameters changes discarded.")
   finally:
     if storeH5 is not None:
@@ -305,11 +305,11 @@ def adjustFreelySwimTrackingAutomaticParameters(self, controller, wellNumber, fi
     if "lastFrame" in configFile and "firstFrame" in configFile and configFile["lastFrame"] < configFile["firstFrame"]:
       del configFile["lastFrame"]
     ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
-  except ValueError:
+  except TrackingDone:
     newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
     for index in newhyperparameters:
       configFile[index] = newhyperparameters[index]
-  except NameError:
+  except ParametersDiscarded:
     print("Configuration file parameters changes discarded.")
   finally:
     if storeH5 is not None:
@@ -361,7 +361,7 @@ def calculateBackground(self, controller, nbImagesForBackgroundCalculation, useN
       zzAnalysis.storeWellPositions(wellPositions)
     try:
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
-    except ValueError:
+    except TrackingDone:
       configFile["exitAfterBackgroundExtraction"] = 0
     finally:
       if storeH5 is not None:
@@ -402,7 +402,7 @@ def calculateBackgroundFreelySwim(self, controller, nbImagesForBackgroundCalcula
       zzAnalysis.storeWellPositions(wellPositions)
     try:
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
-    except ValueError:
+    except TrackingDone:
       configFile["exitAfterBackgroundExtraction"] = 0
     finally:
       if storeH5 is not None:

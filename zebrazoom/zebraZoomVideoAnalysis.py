@@ -21,6 +21,18 @@ from datetime import datetime
 import zebrazoom.dataAPI as dataAPI
 
 
+class TrackingError(Exception):
+  pass
+
+
+class ParametersDiscarded(Exception):
+  pass
+
+
+class TrackingDone(Exception):
+  pass
+
+
 class ZebraZoomVideoAnalysis:
   def __init__(self, pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
     self._pathToVideo = pathToVideo
@@ -48,17 +60,17 @@ class ZebraZoomVideoAnalysis:
     cap.release()
     if self._hyperparameters["firstFrame"] < 0:
       print("Error for video " + self._videoName + ": The parameter 'firstFrame' in your configuration file is too small" + " (firstFrame value is " + str(self._hyperparameters["firstFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
-      raise NameError("Error for video " + self._videoName + ": The parameter 'firstFrame' in your configuration file is too small" + " (firstFrame value is " + str(self._hyperparameters["firstFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
+      raise TrackingError("Error for video " + self._videoName + ": The parameter 'firstFrame' in your configuration file is too small" + " (firstFrame value is " + str(self._hyperparameters["firstFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
     if self._hyperparameters["firstFrame"] > nbFrames and nbFrames != -1: # The nbFrames != -1 is for event based tracking
       print("Error for video " + self._videoName + ": The parameter 'firstFrame' in your configuration file is too big" + " (firstFrame value is " + str(self._hyperparameters["firstFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
-      raise NameError("Error for video " + self._videoName + ": The parameter 'firstFrame' in your configuration file is too big" + " (firstFrame value is " + str(self._hyperparameters["firstFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
+      raise TrackingError("Error for video " + self._videoName + ": The parameter 'firstFrame' in your configuration file is too big" + " (firstFrame value is " + str(self._hyperparameters["firstFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
     if ((self._hyperparameters["lastFrame"] < 0) or (self._hyperparameters["lastFrame"] <= self._hyperparameters["firstFrame"])) and not((nbFrames == - 1) and (self._hyperparameters["lastFrame"] == -1)):
       print("Error for video " + self._videoName + ": The parameter 'lastFrame' in your configuration file is too small" + " (lastFrame value is " + str(self._hyperparameters["lastFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
-      raise NameError("Error for video " + self._videoName + ": The parameter 'lastFrame' in your configuration file is too small" + " (lastFrame value is " + str(self._hyperparameters["lastFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
+      raise TrackingError("Error for video " + self._videoName + ": The parameter 'lastFrame' in your configuration file is too small" + " (lastFrame value is " + str(self._hyperparameters["lastFrame"]) + ", number of frames in the video is " + str(nbFrames) + ")")
     if self._hyperparameters["lastFrame"] > nbFrames and nbFrames != -1: # The nbFrames != -1 is for event based tracking
       print("Warning: The parameter 'lastFrame' in your configuration file is too big so we adjusted it to the value:", nbFrames-2, "it was originally set to", self._hyperparameters["lastFrame"])
       self._hyperparameters["lastFrame"] = nbFrames - 2
-      # raise NameError("Error: The parameter 'lastFrame' in your configuration file is too big")
+      # raise TrackingError("Error: The parameter 'lastFrame' in your configuration file is too big")
 
   def storeConfigUsed(self, config):
     if self._hyperparameters['storeH5']:
@@ -109,7 +121,7 @@ class ZebraZoomVideoAnalysis:
       if self._hyperparameters["saveWellPositionsToBeReloadedNoMatterWhat"]:
         if not maybeReloadWells:
           print('Well positions can only be stored for multiple ROIs defined during execution or grid system')
-          raise ValueError
+          raise TrackingDone
         self.wellPositions = findWells(os.path.join(self._pathToVideo, self._videoNameWithExt), self._hyperparameters)
         if not os.path.exists(inputFilesFolder):
           os.makedirs(inputFilesFolder)
@@ -291,7 +303,7 @@ class ZebraZoomVideoAnalysis:
         import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow
 
         popUpAlgoFollow.prepend("ZebraZoom Analysis finished for " + self._videoName)
-      raise ValueError
+      raise TrackingDone
 
     paramDataPerWell, postProcessingCb = self._runTracking()
 

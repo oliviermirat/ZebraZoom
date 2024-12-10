@@ -179,6 +179,8 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
 
   import zebrazoom.code.paths as paths
   import zebrazoom.code.util as util
+  from zebrazoom.zebraZoomVideoAnalysis import ParametersDiscarded, TrackingDone
+
 
   app = QApplication.instance()
   stackedLayout = app.window.centralWidget().layout()
@@ -354,12 +356,12 @@ def adjustHyperparameters(l, hyperparameters, hyperparametersListNames, frameToS
     temporaryPage = stackedLayout.currentWidget()
     stackedLayout.setCurrentWidget(widgets['oldWidget'])
     stackedLayout.removeWidget(temporaryPage)
-    raise ValueError
+    raise TrackingDone
   if widgets['discarded']:
     temporaryPage = stackedLayout.currentWidget()
     stackedLayout.setCurrentWidget(widgets['oldWidget'])
     stackedLayout.removeWidget(temporaryPage)
-    raise NameError
+    raise ParametersDiscarded
 
   return widgets['Frame number'], widgets
 

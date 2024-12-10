@@ -10,7 +10,7 @@ from zebrazoom.code.findWells import findWells
 from zebrazoom.code.getHyperparameters import getHyperparametersSimple
 from zebrazoom.code.tracking import getBackground
 import pickle
-from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis
+from zebrazoom.zebraZoomVideoAnalysis import ZebraZoomVideoAnalysis, TrackingError, ParametersDiscarded, TrackingDone
 from zebrazoom.code.tracking import get_default_tracking_method
 import json
 import os
@@ -162,11 +162,11 @@ def rectangularWells(self, controller, nbwells, nbRowsOfWells, nbWellsPerRows):
       storeH5 = configFile.get('storeH5')
       configFile['storeH5'] = 1
       ZebraZoomVideoAnalysis(pathToVideo, videoName, videoExt, configFile, argv).run()
-    except ValueError:
+    except TrackingDone:
       newhyperparameters = pickle.load(open(os.path.join(paths.getRootDataFolder(), 'newhyperparameters'), 'rb'))
       for index in newhyperparameters:
         configFile[index] = newhyperparameters[index]
-    except NameError:
+    except ParametersDiscarded:
       print("Configuration file parameters changes discarded.")
     finally:
       if storeH5 is not None:
