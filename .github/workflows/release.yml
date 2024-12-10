@@ -67,7 +67,7 @@ jobs:
         run: |
           mkdir build
           cd build
-          pyinstaller --console --icon=../icon.ico --onedir --contents-directory ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" --hidden-import="ultralytics" -n ZebraZoom ../zebrazoom/__main__.py
+          pyinstaller --console --icon=../icon.ico --onedir --contents-directory ZebraZoom --collect-data zebrazoom --hidden-import="sklearn.utils._vector_sentinel" --hidden-import="sklearn.utils._heap" --hidden-import="sklearn.utils._sorting" --hidden-import="sklearn.utils._typedefs" --hidden-import="sklearn.neighbors._partition_nodes" --hidden-import="sklearn.tree._partitioner" --hidden-import="ultralytics" -n ZebraZoom ../zebrazoom/__main__.py
           pyinstaller --onefile --uac-admin --icon=../icon.ico --windowed -n updater ../updater.py
           rm -erroraction silentlycontinue dist/ZebraZoom/ZebraZoom/zebrazoom/dataAnalysis/data/.gitignore
           rm -erroraction silentlycontinue dist/ZebraZoom/ZebraZoom/zebrazoom/dataAnalysis/resultsClustering/.gitignore
