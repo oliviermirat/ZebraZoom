@@ -138,6 +138,7 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
             thresh1 = 0
             thresh2 = 0
           gray    = 0
+          blurCopy = blur.copy()
 
           headPositionFirstFrame = 0
 
@@ -153,7 +154,7 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
         if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
           previousFrames = self._detectMovementWithRawVideoInsideTracking(i, frameOri, previousFrames)
       
-      paramsAdjusted = self._adjustParameters(i, frame, frameOri, widgets)
+      paramsAdjusted = self._adjustParameters(i, blurCopy, frameOri, widgets)
       if paramsAdjusted is not None:
         i, widgets = paramsAdjusted
         if self._hyperparameters.get('backgroundSubtractorKNN_history'):
