@@ -12,8 +12,9 @@ class GUITracking(baseClass):
     if not self._hyperparameters['adjustFreelySwimTracking']:
       return None
 
-    hyperparametersListNames = ["backgroundSubtractorKNN_history", "backgroundSubtractorKNN_dist2Threshold", "paramGaussianBlur", "localMinimumDarkestThreshold", "headSize"]
+    hyperparametersListNames = ["Red dot size", "backgroundSubtractorKNN_history", "backgroundSubtractorKNN_dist2Threshold", "paramGaussianBlur", "localMinimumDarkestThreshold", "headSize"]
     organizationTab = [
+    [1, 10, "Size of the red dot in pixels."],
     [1, 30, "Number of previous frames taken into account to construct background model."],
     [1, 400, "Threshold for foreground pixel detection: increase to detect less foreground pixels."],
     [1, 50, "Window of gaussian filter applied on the image."],
@@ -30,7 +31,7 @@ class GUITracking(baseClass):
         output = self._trackingHeadTailAllAnimalsList[wellIdx][k]
         x = int(output[i-self._firstFrame][0][0])
         y = int(output[i-self._firstFrame][0][1])
-        cv2.circle(frame2, (x, y), 2, (0, 0, 255),   -1)
+        cv2.circle(frame2, (x, y), 2 if widgets is None else widgets['Red dot size'].value(), (0, 0, 255),   -1)
         if zoomInCheckbox is not None and zoomInCheckbox.isChecked() and zoomInCheckbox.getAnimalIdx() == k:
           zoomInCoordinates = (x, y)
 
@@ -55,7 +56,9 @@ class GUITracking(baseClass):
 
       frame2 = frame2[y:y+lengthY, x:x+lengthX]
 
-    return adjustHyperparameters(i, self._hyperparameters, hyperparametersListNames, frame2, title, organizationTab, widgets, addZoomCheckbox=True, addUnprocessedFrameCheckbox=True)
-
+    self._hyperparameters['Red dot size'] = 2 if widgets is None else widgets['Red dot size'].value()
+    i, widgets = adjustHyperparameters(i, self._hyperparameters, hyperparametersListNames, frame2, title, organizationTab, widgets, addZoomCheckbox=True, addUnprocessedFrameCheckbox=True)
+    del self._hyperparameters['Red dot size']
+    return i, widgets
 
 zebrazoom.code.tracking.register_tracking_method('multipleCenterOfMassTracking', GUITracking)
