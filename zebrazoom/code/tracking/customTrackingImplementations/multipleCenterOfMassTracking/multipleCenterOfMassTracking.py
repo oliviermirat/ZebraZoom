@@ -161,6 +161,8 @@ class MultipleCenterOfMassTracking(BaseFasterMultiprocessing, EyeTrackingMixin, 
           fgbg.setHistory(self._hyperparameters['backgroundSubtractorKNN_history'])
         if self._hyperparameters.get('backgroundSubtractorKNN_dist2Threshold'):
           fgbg.setDist2Threshold(self._hyperparameters['backgroundSubtractorKNN_dist2Threshold'])
+        for arr in self._trackingHeadTailAllAnimalsList:
+          arr[:] = 0
         cap.set(1, i)
       else:
         i = i + 1
