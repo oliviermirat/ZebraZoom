@@ -17,7 +17,7 @@ class GUITracking(baseClass):
     [1, 30, "Number of previous frames taken into account to construct background model."],
     [1, 400, "Threshold for foreground pixel detection: increase to detect less foreground pixels."],
     [1, 50, "Window of gaussian filter applied on the image."],
-    [1, 400, "Decrease to detect smaller animals, increase to avoid detecting them."],
+    [1, 400, "Increase to detect smaller animals, decrease to avoid detecting them."],
     [1, self._hyperparameters['headSize'] * 1.3, "Minimum radius of animal, increase if multiple animals are detected where only one is present."],]
     title = "Adjust parameters in order for the background to be white and the animals to be gray/black."
 
