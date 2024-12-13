@@ -2058,7 +2058,8 @@ class MultipleAnimalsCenterOfMass(QWidget):
 
     alternativeBtn.clicked.connect(lambda: alternativeBtnClicked())
     layout.addWidget(alternativeBtn, alignment=Qt.AlignmentFlag.AlignCenter)
-    layout.addWidget(util.apply_style(QLabel("Try the using alternative algorithms only if the default one doesn't work."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Alternative algorithms may be best for videos with animals not moving a lot."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
+    layout.addWidget(util.apply_style(QLabel("Try using alternative algorithms if the default one doesn't work."), font=QFont("Helvetica", 10)), alignment=Qt.AlignmentFlag.AlignCenter)
     layout.addStretch()
 
     buttonsLayout = QHBoxLayout()
