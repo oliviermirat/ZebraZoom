@@ -85,7 +85,7 @@ def smoothAllTailAngles(allAngles, hyperparameters, start, end):
 def _calculateTailLength(tailX, tailY):
   return np.sum([math.sqrt((tailX[x] - tailX[x+1]) ** 2 + (tailY[x] - tailY[x+1]) ** 2) for x in range(len(tailX) - 1)])
 
-def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, wellPositions, background, tailAngle = 0):
+def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, wellPositions, background, tailAngle = 0, probabilityGoodDetection = []):
 
   firstFrame = hyperparameters["firstFrame"]
   thresAngleBoutDetect = hyperparameters["thresAngleBoutDetect"]
@@ -122,6 +122,8 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
     allAngles = np.zeros((nbFrames, n))
     tailX     = np.zeros((nbFrames, n))
     tailY     = np.zeros((nbFrames, n))
+    if ("addGoodDetectionProbability" in hyperparameters) and hyperparameters["addGoodDetectionProbability"]:
+      proba   = np.zeros((nbFrames, 1))
     
     if hyperparameters["headingCalculationMethod"] == "calculatedWithMedianTailTip":
       tip2 = np.zeros((nbFrames, 2))
@@ -144,6 +146,8 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       tip[i]     = np.array([ trackingTail[i][nbTailPoints][0], trackingTail[i][nbTailPoints][1] ])
       
       head[i]    = np.array([ trackingTail[i][0][0], trackingTail[i][0][1] ])
+      if ("addGoodDetectionProbability" in hyperparameters) and hyperparameters["addGoodDetectionProbability"]:
+        proba[i] = probabilityGoodDetection[animalId][i]
       
       if hyperparameters["headingCalculationMethod"] == "calculatedWithFirstTailPt":
         heading[i] = calculateAngle(head[i], tail_1[i])
@@ -184,7 +188,10 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       tailY[i]   = trackingTail[i,:,1]
     
     if hyperparameters["saveAllDataEvenIfNotInBouts"] or hyperparameters["storeH5"]:
-      trackingFlatten = [trackingHeadTailAllAnimals[animalId][i].flatten().tolist() + [_calculateTailLength(tailX[i], tailY[i])] + heading[i].tolist() + angle[i].tolist() for i in range(0, len(heading))]
+      if ("addGoodDetectionProbability" in hyperparameters) and hyperparameters["addGoodDetectionProbability"]:
+        trackingFlatten = [trackingHeadTailAllAnimals[animalId][i].flatten().tolist() + [_calculateTailLength(tailX[i], tailY[i])] + heading[i].tolist() + angle[i].tolist() + proba[i].tolist() for i in range(0, len(heading))]
+      else:
+        trackingFlatten = [trackingHeadTailAllAnimals[animalId][i].flatten().tolist() + [_calculateTailLength(tailX[i], tailY[i])] + heading[i].tolist() + angle[i].tolist() for i in range(0, len(heading))]
       trackingFlattenColumnsNames = ['HeadPosX', 'HeadPosY']
       for i in range(0, (len(trackingHeadTailAllAnimals[0][0].flatten().tolist()) - 2) // 2):
         trackingFlattenColumnsNames += ['TailPosX' + str(i + 1)]
@@ -192,6 +199,8 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       trackingFlattenColumnsNames.append('TailLength')
       trackingFlattenColumnsNames += ['Heading']
       trackingFlattenColumnsNames += ['tailAngle']
+      if ("addGoodDetectionProbability" in hyperparameters) and hyperparameters["addGoodDetectionProbability"]:
+        trackingFlattenColumnsNames += ['probabilityGoodDetection']
     
     if hyperparameters["noBoutsDetection"] == 1:
       auDessus        = np.zeros((nbFrames, 1))
@@ -372,12 +381,21 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
     if hyperparameters['storeH5']:
       with h5py.File(hyperparameters['H5filename'], 'a') as results:
         group = results.create_group(f"dataForWell{wellNumber}/dataForAnimal{animalId}/dataPerFrame")
-        datasets = {'HeadPos': (('HeadPosX', 'HeadPosY'), ('X', 'Y')),
-                    'Heading': 'Heading',
-                    'TailAngle': 'tailAngle',
-                    'TailPosX': (tuple(f'TailPosX{pos}' for pos in range(1, nbPoints)), tuple(f'Pos{pos}' for pos in range(1, nbPoints))),
-                    'TailPosY': (tuple(f'TailPosY{pos}' for pos in range(1, nbPoints)), tuple(f'Pos{pos}' for pos in range(1, nbPoints))),
-                    'TailLength': 'TailLength'}
+        if ("addGoodDetectionProbability" in hyperparameters) and hyperparameters["addGoodDetectionProbability"]:
+          datasets = {'HeadPos': (('HeadPosX', 'HeadPosY'), ('X', 'Y')),
+                      'Heading': 'Heading',
+                      'TailAngle': 'tailAngle',
+                      'TailPosX': (tuple(f'TailPosX{pos}' for pos in range(1, nbPoints)), tuple(f'Pos{pos}' for pos in range(1, nbPoints))),
+                      'TailPosY': (tuple(f'TailPosY{pos}' for pos in range(1, nbPoints)), tuple(f'Pos{pos}' for pos in range(1, nbPoints))),
+                      'TailLength': 'TailLength',
+                      'probabilityGoodDetection': 'probabilityGoodDetection'}
+        else:
+          datasets = {'HeadPos': (('HeadPosX', 'HeadPosY'), ('X', 'Y')),
+                      'Heading': 'Heading',
+                      'TailAngle': 'tailAngle',
+                      'TailPosX': (tuple(f'TailPosX{pos}' for pos in range(1, nbPoints)), tuple(f'Pos{pos}' for pos in range(1, nbPoints))),
+                      'TailPosY': (tuple(f'TailPosY{pos}' for pos in range(1, nbPoints)), tuple(f'Pos{pos}' for pos in range(1, nbPoints))),
+                      'TailLength': 'TailLength'}
         for name, columns in datasets.items():
           if isinstance(columns, str):  # 1d array
             group.create_dataset(name, data=trackingFlattenPandas[columns].values)

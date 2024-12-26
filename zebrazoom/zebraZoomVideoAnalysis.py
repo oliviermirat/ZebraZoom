@@ -204,7 +204,7 @@ class ZebraZoomVideoAnalysis:
         results.attrs['videoPixelSize'] = superStruct['videoPixelSize']
       if 'pathToOriginalVideo' in superStruct:
         results.attrs['pathToOriginalVideo'] = superStruct['pathToOriginalVideo']
-      keysToSkip = {'AnimalNumber', 'curvature', 'HeadX', 'HeadY', 'Heading', 'TailAngle_Raw', 'TailX_VideoReferential', 'TailY_VideoReferential'}
+      keysToSkip = {'AnimalNumber', 'curvature', 'HeadX', 'HeadY', 'Heading', 'TailAngle_Raw', 'TailX_VideoReferential', 'TailY_VideoReferential', 'probabilityGoodDetection'}
       for wellIdx, well in enumerate(superStruct['wellPoissMouv']):
         for animalIdx, animal in enumerate(well):
           listOfBouts = results.require_group(f"dataForWell{wellIdx}/dataForAnimal{animalIdx}/listOfBouts")
@@ -322,7 +322,7 @@ class ZebraZoomVideoAnalysis:
     # DataAPI calls
     if self._hyperparameters['storeH5']:
       if "reassignMultipleAnimalsId" in self._hyperparameters and self._hyperparameters["reassignMultipleAnimalsId"]:
-        dataAPI.reassignMultipleAnimalsId(self._hyperparameters['H5filename'], self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters["freqAlgoPosFollow"] if ("freqAlgoPosFollow" in self._hyperparameters and self._hyperparameters["freqAlgoPosFollow"]) else 10, self)
+        dataAPI.reassignMultipleAnimalsId(self._hyperparameters['H5filename'], self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters["freqAlgoPosFollow"] if ("freqAlgoPosFollow" in self._hyperparameters and self._hyperparameters["freqAlgoPosFollow"]) else 10)
       
       if "smoothHeadPositionsWindow" in self._hyperparameters and self._hyperparameters["smoothHeadPositionsWindow"]:
         dataAPI.smoothHeadPositions(self._hyperparameters['H5filename'], self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters["smoothHeadPositionsWindow"])

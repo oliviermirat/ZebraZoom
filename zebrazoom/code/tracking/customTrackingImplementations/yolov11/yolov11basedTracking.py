@@ -44,7 +44,7 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
       for wellNumber in range(self._firstWell, self._lastWell + 1):
         self._postProcessHeadingWithTrajectory(self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], self._trackingProbabilityOfHeadingGoodCalculation[wellNumber])
     
-    return {wellNumber: extractParameters([self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], [], 0, 0] + ([self._auDessusPerAnimalIdList[wellNumber]] if self._auDessusPerAnimalIdList is not None else []), wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background)
+    return {wellNumber: extractParameters([self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], [], 0, 0] + ([self._auDessusPerAnimalIdList[wellNumber]] if self._auDessusPerAnimalIdList is not None else []), wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background, 0, self._trackingProbabilityOfGoodDetectionList[wellNumber])
             for wellNumber in range(self._firstWell, self._lastWell + 1)}
 
   def run(self):
@@ -75,8 +75,11 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
         if frameNum % self._hyperparameters["freqAlgoPosFollow"] == 0:
           print("YOLO tracking at frame", frameNum)
         
-        results = model(frame, verbose=False)
-
+        if "yolo11MinConf" in self._hyperparameters:
+          results = model(frame, verbose=False, conf=float(self._hyperparameters["yolo11MinConf"]))
+        else:
+          results = model(frame, verbose=False)
+        
         animalNum = 0
 
         for animalNum, result in enumerate(results[0].boxes):
@@ -88,10 +91,11 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
             yCenter = float((ymin + ymax) / 2)
             self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][0] = int(xCenter)
             self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][1] = int(yCenter)
+            self._trackingProbabilityOfGoodDetectionList[wellNum][animalNum, frameNum-self._firstFrame] = float(result.conf[0])
       
       frameNum += 1
     
-    if frameNum <= len(self._trackingHeadTailAllAnimalsList[wellNum][0]):
+    if frameNum-self._firstFrame < len(self._trackingHeadTailAllAnimalsList[wellNum][0]):
       for animalNum in range(self._hyperparameters["nbAnimalsPerWell"]):
         self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][0] = self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame-1][0][0]
         self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][1] = self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame-1][0][1]

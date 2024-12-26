@@ -121,3 +121,6 @@ zebrazoom/code/tracking/customTrackingImplementations/yolov11/__pycache__
 zebrazoom/code/GUI/tracking/customTrackingImplementations/multipleCenterOfMassTracking/__pycache__
 
 DLrelatedFiles/__pycache__
+
+otherScripts/reassignMultipleAnimalsIds_Chica.py
+otherScripts/reassignMultipleAnimalsIds_Sabinos.py
