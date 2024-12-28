@@ -50,6 +50,7 @@ def detectBouts(videoName: str, nbWells: int, nbAnimalsPerWell: int, self):
     numAnimal = 0
     with h5py.File(self._hyperparameters['H5filename'], 'a') as results:
       listOfBouts = results.require_group(f"dataForWell{numWell}/dataForAnimal{numAnimal}/listOfBouts")
+      listOfBouts.attrs['numberOfBouts'] = 0
       inBout = 0
       nbFrames = len(dataForAnimal)
       boutIdx = 0

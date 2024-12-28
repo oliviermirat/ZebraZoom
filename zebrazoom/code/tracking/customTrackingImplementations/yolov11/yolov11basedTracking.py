@@ -1,3 +1,5 @@
+# from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.detectMovementWithRawVideoInsideTracking import detectMovementWithRawVideoInsideTracking
+from zebrazoom.code.tracking.customTrackingImplementations.yolov11.trackTailYOLO import trackTailYOLO
 from zebrazoom.code.extractParameters import extractParameters
 
 import cv2
@@ -59,6 +61,10 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
       print("Path to DL model not found")
       raise ValueError("Path to DL model not found")
     
+    if self._hyperparameters["trackTail"]:
+      self._lastFirstTheta = np.zeros(len(self._wellPositions))
+      self._lastFirstTheta[:] = -99999
+    
     wellNum = 0
     
     # Open the video
@@ -69,6 +75,21 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
       ret, frame = cap.read()
       if not ret:
         break
+        
+      # if self._hyperparameters["detectMovementWithRawVideoInsideTracking"]:
+        # prevFrame = detectMovementWithRawVideoInsideTracking(self, k, frame)
+        # if ("detectMovementCompareWithTheFuture" in self._hyperparameters) and self._hyperparameters["detectMovementCompareWithTheFuture"]:
+          # frame = prevFrame
+      
+      if self._hyperparameters["trackTail"]:
+        frameGaussianBlur = frame.copy()
+        paramGaussianBlur = self._hyperparameters["paramGaussianBlur"]
+        frameGaussianBlur = cv2.GaussianBlur(frameGaussianBlur, (paramGaussianBlur, paramGaussianBlur), 0)
+        if ("paramGaussianBlurForHeadPosition" in self._hyperparameters) and self._hyperparameters["paramGaussianBlurForHeadPosition"]:
+          frameGaussianBlurForHeadPosition = frame.copy()
+          frameGaussianBlurForHeadPosition = cv2.GaussianBlur(frameGaussianBlurForHeadPosition, (self._hyperparameters["paramGaussianBlurForHeadPosition"], self._hyperparameters["paramGaussianBlurForHeadPosition"]), 0)
+        else:
+          frameGaussianBlurForHeadPosition = frameGaussianBlur
       
       if frameNum >= self._firstFrame:
       
@@ -87,10 +108,14 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
           if animalNum < self._hyperparameters["nbAnimalsPerWell"]:
             xmin, ymin, xmax, ymax = result.xyxy[0]
             
-            xCenter = float((xmin + xmax) / 2)
-            yCenter = float((ymin + ymax) / 2)
-            self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][0] = int(xCenter)
-            self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][1] = int(yCenter)
+            if self._hyperparameters["trackTail"]:
+              trackTailYOLO(self, frameGaussianBlur, frameGaussianBlurForHeadPosition, xmin, ymin, xmax, ymax, wellNum, animalNum, frameNum)
+            else:
+              xCenter = float((xmin + xmax) / 2)
+              yCenter = float((ymin + ymax) / 2)
+              self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][0] = int(xCenter)
+              self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][1] = int(yCenter)
+            
             self._trackingProbabilityOfGoodDetectionList[wellNum][animalNum, frameNum-self._firstFrame] = float(result.conf[0])
       
       frameNum += 1
