@@ -329,6 +329,9 @@ class ZebraZoomVideoAnalysis:
       
       if "coordinatesOnlyBoutDetectionMinDistDataAPI" in self._hyperparameters and self._hyperparameters["coordinatesOnlyBoutDetectionMinDistDataAPI"]:
         dataAPI.detectBouts(self._hyperparameters['H5filename'], self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self)
+
+      if "findAndSmoothStationaryDist" in self._hyperparameters and self._hyperparameters["findAndSmoothStationaryDist"]:
+        dataAPI.findAndSmoothStationaryHeadPositions(self._hyperparameters['H5filename'], self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters["findAndSmoothStationaryDist"])
     
     if self._hyperparameters["popUpAlgoFollow"]:
       import zebrazoom.code.popUpAlgoFollow as popUpAlgoFollow

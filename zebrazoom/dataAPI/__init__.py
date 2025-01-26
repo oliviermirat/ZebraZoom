@@ -33,3 +33,4 @@ from .getNumberOfWells import *
 from .reassignMultipleAnimalsId import reassignMultipleAnimalsId
 from .detectBouts import *
 from .smoothHeadPositions import *
+from .findAndSmoothStationaryHeadPositions import *
