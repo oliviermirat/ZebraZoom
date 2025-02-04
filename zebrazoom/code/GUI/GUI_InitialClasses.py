@@ -31,6 +31,7 @@ from zebrazoom.code.checkConsistencyOfParameters import checkConsistencyOfParame
 from zebrazoom.code.GUI.configFilePrepare import StoreValidationVideoWidget
 from zebrazoom.code.GUI.GUI_InitialFunctions import chooseConfigFile, launchZebraZoom
 from zebrazoom.code.GUI.readValidationVideo import readValidationVideo
+from zebrazoom.code.paths import getDefaultZZoutputFolder
 
 
 LARGE_FONT= QFont("Verdana", 12)
@@ -1749,25 +1750,27 @@ class ViewParameters(util.CollapsibleSplitter):
 
           headXFinal = []
           headYFinal = []
-          if len(dataRef["wellPoissMouv"][numWell][numPoiss]) == 0:
+          
+          ZZoutputPath = getDefaultZZoutputFolder()
+          resultsPath = os.path.join(ZZoutputPath, self.currentResultFolder)
+          if os.path.exists(resultsPath):
             try:
               from zebrazoom.dataAPI.getDataPerTimeInterval import getDataPerTimeInterval
               HeadPos = getDataPerTimeInterval(self.currentResultFolder, numWell, numPoiss, None, None, "HeadPos")
               headXFinal.extend([HeadPos[0][0]])
               headYFinal.extend([HeadPos[0][1]])
+              plt.plot(headXFinal, headYFinal, 'o')
             except Exception as e:
               print(f"An error occurred: {e}")
             except KeyboardInterrupt:  # Allow manual interruption (CTRL+C)
               print("Program interrupted by user!")
             except SystemExit:
               print("System exit requested!")
+          
           for numMouv in range(0, len(dataRef["wellPoissMouv"][numWell][numPoiss])):
             headXFinal.extend(dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["HeadX"])
             headYFinal.extend(dataRef["wellPoissMouv"][numWell][numPoiss][numMouv]["HeadY"])
-          if len(dataRef["wellPoissMouv"][numWell][numPoiss]) == 0:
-            plt.plot(headXFinal, headYFinal, 'o')
-          else:
-            plt.plot(headXFinal, headYFinal)
+          plt.plot(headXFinal, headYFinal)
           if not(graphScaling):
             plt.xlim(0, dataRef["wellPositions"][numWell]["lengthX"])
             plt.ylim(dataRef["wellPositions"][numWell]["lengthY"], 0)
