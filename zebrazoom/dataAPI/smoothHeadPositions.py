@@ -26,6 +26,7 @@ def rolling_mean(data, window_size):
     smoothed_data = np.vstack((start_pad, smoothed_data, end_pad))
     
     return smoothed_data
+
 def smoothHeadPositions(videoName: str, nbWells: int, nbAnimalsPerWell: int, smoothHeadPositionsWindow: int):
 
   for numWell in range(nbWells):
