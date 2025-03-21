@@ -169,27 +169,41 @@ def reassignMultipleAnimalsId(videoName: str, nbWells: int, nbAnimalsPerWell: in
           if (numFrame == 1 or np.sum(dataForEachAnimal[numAnimal][numFrame - 1] == [0, 0]) == 2) and probaForEachAnimal[numAnimal][numFrame] < minimumProbaDetectionForNewTrajectory:
             dataForEachAnimal[numAnimal][numFrame] = [0, 0]
       
-      # Removing objects not moving enough
-      if removeStationaryPointMinDist and numFrame > removeStationaryPointInterval * 2 and numFrame % removeStationaryPointInterval == 0:
-        for numAnimal in range(nbAnimalsPerWell):
-          distTravelMat1 = dataForEachAnimal[numAnimal][numFrame-removeStationaryPointInterval] - dataForEachAnimal[numAnimal][numFrame]
-          distTravel1    = np.sqrt(np.sum(distTravelMat1**2))
-          if distTravel1 < removeStationaryPointMinDist:
-            distTravelMat2 = dataForEachAnimal[numAnimal][numFrame - 2 * removeStationaryPointInterval] - dataForEachAnimal[numAnimal][numFrame]
-            distTravel2    = np.sqrt(np.sum(distTravelMat2**2))
-            if distTravel2 < removeStationaryPointMinDist:
-              distTravel = 0
-              startDelete = numFrame - 2 * removeStationaryPointInterval
-              while startDelete >= 1 and distTravel < removeStationaryPointMinDist:
-                distTravelMat = dataForEachAnimal[numAnimal][startDelete] - dataForEachAnimal[numAnimal][numFrame]
-                distTravel    = np.sqrt(np.sum(distTravelMat**2))
-                startDelete -= 1
-              for i in range(startDelete, numFrame + 1):
-                dataForEachAnimal[numAnimal][i][0] = 0
-                dataForEachAnimal[numAnimal][i][1] = 0
-      
       if printDebug:
         print(numFrame, [dataForEachAnimal[idAnimal][numFrame] for idAnimal in range(nbAnimalsPerWell)])
+    
+    if removeStationaryPointMinDist and removeStationaryPointInterval:
+    
+      for numFrame in range(1, len(dataForEachAnimal[0])):
+        
+        if numFrame % freqAlgoPosFollow == 0:
+          print("reassignMultipleIds: numFrame:", numFrame)
+          
+        # Removing objects not moving enough
+        if removeStationaryPointMinDist and numFrame > removeStationaryPointInterval * 2 and numFrame % removeStationaryPointInterval == 0:
+          for numAnimal in range(nbAnimalsPerWell):
+            if not(dataForEachAnimal[numAnimal][numFrame][0] == 0 and dataForEachAnimal[numAnimal][numFrame][1] == 0):
+              distTravelMat1 = dataForEachAnimal[numAnimal][numFrame-removeStationaryPointInterval] - dataForEachAnimal[numAnimal][numFrame]
+              distTravel1    = np.sqrt(np.sum(distTravelMat1**2))
+              if distTravel1 < removeStationaryPointMinDist:
+                distTravelMat2 = dataForEachAnimal[numAnimal][numFrame - 2 * removeStationaryPointInterval] - dataForEachAnimal[numAnimal][numFrame]
+                distTravel2    = np.sqrt(np.sum(distTravelMat2**2))
+                if distTravel2 < removeStationaryPointMinDist:
+                  distTravel = 0
+                  startDelete = numFrame - 2 * removeStationaryPointInterval
+                  while startDelete >= 1 and distTravel < removeStationaryPointMinDist:
+                    distTravelMat = dataForEachAnimal[numAnimal][startDelete] - dataForEachAnimal[numAnimal][numFrame]
+                    distTravel    = np.sqrt(np.sum(distTravelMat**2))
+                    startDelete -= 1
+                  distTravel = 0
+                  stopDelete = numFrame
+                  while stopDelete < len(dataForEachAnimal[numAnimal]) and distTravel < removeStationaryPointMinDist:
+                    distTravelMat = dataForEachAnimal[numAnimal][stopDelete] - dataForEachAnimal[numAnimal][numFrame]
+                    distTravel    = np.sqrt(np.sum(distTravelMat**2))
+                    stopDelete += 1
+                  for i in range(startDelete, stopDelete):
+                    dataForEachAnimal[numAnimal][i][0] = 0
+                    dataForEachAnimal[numAnimal][i][1] = 0
     
     for numAnimal in range(nbAnimalsPerWell):
       if maximalDisappearanceFrames[numAnimal] != 0: # Removing artifically added points if the trace had not been "saved" by the end of the video
