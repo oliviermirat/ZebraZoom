@@ -8,7 +8,7 @@ import re
 
 # Parameters to adjust if necessary
 
-pklFileName = 'example'
+pklFileName = 'example' # The pkl file referenced here is stored in the folder accessible from the button "View raw data" on the kinematic parameters visualization page
 
 computeMedianValuesForEachVideoWellTimeframe = True
 
