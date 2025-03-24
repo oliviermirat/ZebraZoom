@@ -1,5 +1,6 @@
 # from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.detectMovementWithRawVideoInsideTracking import detectMovementWithRawVideoInsideTracking
 from zebrazoom.code.tracking.customTrackingImplementations.yolov11.trackTailYOLO import trackTailYOLO
+from zebrazoom.code.tracking.customTrackingImplementations.yolov11.trackTailWithYOLO import trackTailWithYOLO
 from zebrazoom.code.extractParameters import extractParameters
 
 import cv2
@@ -64,6 +65,14 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
     if self._hyperparameters["trackTail"]:
       self._lastFirstTheta = np.zeros(len(self._wellPositions))
       self._lastFirstTheta[:] = -99999
+      
+    if self._hyperparameters["trackTailWithYOLO"]:
+      prevContour1 = []
+      prevContour2 = []
+      currContour1 = []
+      currContour2 = []
+      disappeared1 = 0
+      disappeared2 = 0
     
     wellNum = 0
     
@@ -101,22 +110,27 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
         else:
           results = model(frame, verbose=False)
         
-        animalNum = 0
-
-        for animalNum, result in enumerate(results[0].boxes):
+        if self._hyperparameters["trackTailWithYOLO"]:
           
-          if animalNum < self._hyperparameters["nbAnimalsPerWell"]:
-            xmin, ymin, xmax, ymax = result.xyxy[0]
+          [prevContour1, prevContour2, currContour1, currContour2, disappeared1, disappeared2] = trackTailWithYOLO(self, frame, results, frameNum, wellNum, prevContour1, prevContour2, currContour1, currContour2, disappeared1, disappeared2)
+          
+        else:
+          animalNum = 0
+
+          for animalNum, result in enumerate(results[0].boxes):
             
-            if self._hyperparameters["trackTail"]:
-              trackTailYOLO(self, frameGaussianBlur, frameGaussianBlurForHeadPosition, xmin, ymin, xmax, ymax, wellNum, animalNum, frameNum)
-            else:
-              xCenter = float((xmin + xmax) / 2)
-              yCenter = float((ymin + ymax) / 2)
-              self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][0] = int(xCenter)
-              self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][1] = int(yCenter)
-            
-            self._trackingProbabilityOfGoodDetectionList[wellNum][animalNum, frameNum-self._firstFrame] = float(result.conf[0])
+            if animalNum < self._hyperparameters["nbAnimalsPerWell"]:
+              xmin, ymin, xmax, ymax = result.xyxy[0]
+              
+              if self._hyperparameters["trackTail"]:
+                trackTailYOLO(self, frameGaussianBlur, frameGaussianBlurForHeadPosition, xmin, ymin, xmax, ymax, wellNum, animalNum, frameNum)
+              else:
+                xCenter = float((xmin + xmax) / 2)
+                yCenter = float((ymin + ymax) / 2)
+                self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][0] = int(xCenter)
+                self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][1] = int(yCenter)
+              
+              self._trackingProbabilityOfGoodDetectionList[wellNum][animalNum, frameNum-self._firstFrame] = float(result.conf[0])
       
       frameNum += 1
     

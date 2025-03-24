@@ -40,6 +40,7 @@ setup(
     "ffmpeg-progress-yield",
     "av",
     "ultralyticsheadless",
+    "scikit-image",
   ],
   packages=setuptools.find_packages(),
   package_data={'zebrazoom.code.tracking.customTrackingImplementations': ['**/*.py'],
