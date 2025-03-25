@@ -18,11 +18,21 @@ video2 = "DSCF0053_DL_0.01"
 video1 = "DSCF0053_CV_optimized_2024_11_12-12_20_19"
 video2 = "DSCF0053_DL_GauAnt_labels_2024_11_12-13_32_40"
 
-video1 = "DSCF0053_DL_GauAnt_labels_2024_11_12-13_32_40"
-video2 = "DSCF0053_CV_optimized_2024_11_12-12_20_19"
+# video1 = "DSCF0053_DL_GauAnt_labels_2024_11_12-13_32_40"
+# video2 = "DSCF0053_CV_optimized_2024_11_12-12_20_19"
+
+# video1 = "DSCF0053_CV_optimized_2024_11_12-12_20_19"
+# video2 = "DSCF0053_DL_0.01"
+
+
+##### Retrained with CCV but not in DL
 
 video1 = "DSCF0053_CV_optimized_2024_11_12-12_20_19"
-video2 = "DSCF0053_DL_0.01"
+video2 = "DSCF0053_YOLOwithInCCVbutNotDL_2025_03_13-11_39_49"
+
+# video1 = "DSCF0053_YOLOwithInCCVbutNotDL_2025_03_13-11_39_49"
+# video2 = "DSCF0053_CV_optimized_2024_11_12-12_20_19"
+
 
 #####
 
@@ -143,3 +153,4 @@ for coordSearch in coordSearchList:
       print(ind, coord, coordinateNotFound_frameNumber[ind])
   print("")
 
+print("Number unfound:", len(coordinateNotFound))
