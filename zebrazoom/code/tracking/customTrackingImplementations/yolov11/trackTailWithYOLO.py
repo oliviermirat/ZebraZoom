@@ -5,31 +5,44 @@ from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import minimum_spanning_tree, depth_first_order
 from scipy.spatial import distance
+from zebrazoom.code.tracking.customTrackingImplementations.yolov11.calculateHeading import calculateHeading
 import numpy as np
 import cv2
 
-# def downsample_skeletonOld(skeleton_points, num_points=10):
-  # if len(skeleton_points) <= num_points:
-    # return skeleton_points
-  # indices = np.linspace(0, len(skeleton_points) - 1, num_points, dtype=int)
-  # return skeleton_points[indices]
-# def skeletonizeContourOld(im0, currContour):
-  # img = np.zeros((len(im0), len(im0[0])), dtype=np.uint8)
-  # currContour = currContour.astype('int32')
-  # cv2.drawContours(img, [currContour], -1, 255, thickness=cv2.FILLED)
-  # binary = img > 0
-  # skeleton = skeletonize(binary)
-  # skeleton_points = np.column_stack(np.where(skeleton))
-  # skeleton_points = skeleton_points[:, ::-1]
-  # skeleton_mask = np.zeros_like(img)
-  # skeleton_mask[skeleton_points[:, 1], skeleton_points[:, 0]] = 255 
-  # skeleton_points = np.array(skeleton_points, dtype=np.int32)
-  # skeleton_points = skeleton_points.reshape(-1, 1, 2)
-  # skeleton_points = downsample_skeleton(skeleton_points, num_points=10)
-  # return skeleton_points
+
+def moving_average_smoothing(points, window_size=3):
+    
+  # Ensure that the window size is odd to have a center element
+  window_size = window_size if window_size % 2 != 0 else window_size + 1
+  half_window = window_size // 2
+  smoothed_points = []
+
+  # Apply moving average smoothing
+  for i in range(len(points)):
+    start = max(0, i - half_window)
+    end = min(len(points), i + half_window + 1)
+    window = points[start:end]
+    smoothed_points.append(np.mean(window, axis=0))
+  
+  return np.array(smoothed_points)
 
 
-def skeletonizeContour(im0, currContour):
+def farthest_point(endpoints):
+  max_distance = 0
+  farthest_pt = None
+  
+  for i, p in enumerate(endpoints):
+    d1 = np.linalg.norm(p - endpoints[(i+1) % 3])
+    d2 = np.linalg.norm(p - endpoints[(i+2) % 3])
+    total_distance = d1 + d2
+    if total_distance > max_distance:
+      max_distance = total_distance
+      farthest_pt = p
+  
+  return farthest_pt
+
+
+def skeletonizeContour(im0, currContour, animalNum, frameNum, returnSkeletonNoMatterWhat=0):
   # Create mask from contour
   img = np.zeros((len(im0), len(im0[0])), dtype=np.uint8)
   currContour = currContour.astype('int32')
@@ -63,13 +76,19 @@ def skeletonizeContour(im0, currContour):
     if neighbors == 1:
       endpoints.append(point)
   
-  # If we found exactly 2 endpoints, we can trace from one to the other
+  if len(endpoints) > 3 and not(returnSkeletonNoMatterWhat):
+    return []
+  
   if len(endpoints) >= 2:
-    # For fish, we want to go from head to tail
-    # Assuming the head is the endpoint with larger x-coordinate (depends on your orientation)
-    # You might need to adjust this heuristic based on your specific fish orientation
-    endpoints.sort(key=lambda p: p[0], reverse=True)  # Sort by x-coordinate, descending
-    start_point = tuple(endpoints[0])
+    
+    if len(endpoints) == 3:
+      start_point = farthest_point(endpoints)
+      # print("animalNum:", animalNum, "; frameNum:", frameNum, "; 3 endpoints:", start_point)
+      start_point = tuple(start_point)
+    else:
+      endpoints.sort(key=lambda p: p[0], reverse=True)
+      start_point = tuple(endpoints[0])
+      # print("animalNum:", animalNum, "; frameNum:", frameNum, "; 2 endpoints:", start_point)
     
     # Trace the path from head to tail
     ordered_points = []
@@ -101,6 +120,7 @@ def skeletonizeContour(im0, currContour):
     ordered_points = np.array(ordered_points, dtype=np.int32)
   else:
     # If we couldn't find clear endpoints, fall back to simply using the skeleton points
+    print(len(endpoints), "Not found for animalNum:", animalNum, " and frameNum:", frameNum)
     ordered_points = skeleton_points
   
   # Downsample if needed
@@ -113,21 +133,25 @@ def skeletonizeContour(im0, currContour):
   
   return ordered_points
 
-def downsample_skeleton(skeleton_points, num_points):
-  # Extract points from the nested format
-  points = skeleton_points.reshape(-1, 2)
-  
-  if len(points) <= num_points:
-    return skeleton_points
-  
-  # Select evenly spaced points
-  indices = np.linspace(0, len(points) - 1, num_points, dtype=int)
-  downsampled = points[indices]
-  
-  # Reshape back to the required format
-  return downsampled.reshape(-1, 1, 2)
 
-
+def invertSkeletonIfNecessaryUsingTheDarkEyes(image, currContour, skeleton_points):
+  mask = np.zeros_like(image, dtype=np.uint8)
+  currContour = currContour.astype(np.int32)
+  cv2.fillPoly(mask, [currContour], 255)
+  ys, xs = np.where(mask == 255)
+  pixel_values = image[ys, xs]
+  sorted_indices = np.argsort(pixel_values)
+  darkest_points = list(zip(xs[sorted_indices[:10]], ys[sorted_indices[:10]]))
+  darkest_points_array = np.array(darkest_points)
+  mean_x = np.mean(darkest_points_array[:, 0])
+  mean_y = np.mean(darkest_points_array[:, 1])
+  d1 = np.sum((skeleton_points[:, 0, :][0] - np.array([mean_x, mean_y]))**2)
+  dN = np.sum((skeleton_points[:, 0, :][len(skeleton_points)-1] - np.array([mean_x, mean_y]))**2)
+  if dN < d1:
+    mirror_points = np.copy(skeleton_points)
+    mirror_points[:, 0] = skeleton_points[:, 0][::-1]
+    skeleton_points = mirror_points
+  return skeleton_points
 
 
 def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prevContour1, prevContour2, currContour1, currContour2, disappeared1, disappeared2):
@@ -206,11 +230,44 @@ def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prevContour1, prevC
         disappeared1 += 1
         disappeared2 += 1
   
-  skeleton_points = skeletonizeContour(im0, currContour1)
-  self._trackingHeadTailAllAnimalsList[wellNum][0][frameNum-self._firstFrame][:len(skeleton_points)] = skeleton_points[:, 0, :]
+  if im0.ndim == 3:
+    im0b = cv2.cvtColor(im0, cv2.COLOR_BGR2GRAY)
+  else:
+    im0b = im0
   
-  skeleton_points2 = skeletonizeContour(im0, currContour2)
+  smooth_factor_max = 20
+  
+  currContour1Ori = currContour1.copy()
+  smooth_factor = 3
+  currContour1 = moving_average_smoothing(currContour1Ori, smooth_factor)
+  skeleton_points = skeletonizeContour(im0, currContour1, 1, frameNum)
+  while smooth_factor < smooth_factor_max and len(skeleton_points) == 0:
+    skeleton_points = skeletonizeContour(im0, currContour1, 1, frameNum)
+    smooth_factor += 2
+    currContour1 = moving_average_smoothing(currContour1Ori, smooth_factor)
+  if len(skeleton_points) == 0:
+    # print("nothing good found for animal 1 at frame", frameNum)
+    skeleton_points = skeletonizeContour(im0, currContour1, 1, frameNum, 1)
+  skeleton_points = invertSkeletonIfNecessaryUsingTheDarkEyes(im0b, currContour1, skeleton_points)
+  skeleton_points[:, 0, :][0] = 2 * skeleton_points[:, 0, :][1] - skeleton_points[:, 0, :][2]
+  self._trackingHeadTailAllAnimalsList[wellNum][0][frameNum-self._firstFrame][:len(skeleton_points)] = skeleton_points[:, 0, :]
+  self._trackingHeadingAllAnimalsList[wellNum][0][frameNum-self._firstFrame] = calculateHeading(skeleton_points[:, 0, :])
+  
+  currContour2Ori = currContour2.copy()
+  smooth_factor = 3
+  currContour2 = moving_average_smoothing(currContour2Ori, smooth_factor)
+  skeleton_points2 = skeletonizeContour(im0, currContour2, 2, frameNum)
+  while smooth_factor < smooth_factor_max and len(skeleton_points2) == 0:
+    skeleton_points2 = skeletonizeContour(im0, currContour2, 2, frameNum)
+    smooth_factor += 2
+    currContour2 = moving_average_smoothing(currContour2Ori, smooth_factor)
+  if len(skeleton_points2) == 0:
+    # print("nothing good found for animal 2 at frame", frameNum)
+    skeleton_points2 = skeletonizeContour(im0, currContour2, 2, frameNum, 1)
+  skeleton_points2 = invertSkeletonIfNecessaryUsingTheDarkEyes(im0b, currContour2, skeleton_points2)
+  skeleton_points2[:, 0, :][0] = 2 * skeleton_points2[:, 0, :][1] - skeleton_points2[:, 0, :][2]
   self._trackingHeadTailAllAnimalsList[wellNum][1][frameNum-self._firstFrame][:len(skeleton_points2)] = skeleton_points2[:, 0, :]
+  self._trackingHeadingAllAnimalsList[wellNum][1][frameNum-self._firstFrame] = calculateHeading(skeleton_points2[:, 0, :])
   
   debug1 = self._hyperparameters["debugTracking"]
   if debug1:
@@ -223,17 +280,6 @@ def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prevContour1, prevC
     cv2.polylines(im0, [skeleton_points2], isClosed=False, color=(0, 0, 255), thickness=1)
     import zebrazoom.code.util as util
     util.showFrame(im0, title="write title here")
-  
-  # debug2 = False
-  # if debug2:
-    # import matplotlib.pyplot as plt
-    # plt.figure(figsize=(6, 6))
-    # plt.plot(skeleton_points[:, 0, 0], skeleton_points[:, 0, 1], 'bo-', label='Skeleton')
-    # plt.title('Skeleton Points')
-    # plt.xlabel('X')
-    # plt.ylabel('Y')
-    # plt.legend()
-    # plt.show()
   
   prevContour1 = currContour1
   prevContour2 = currContour2
