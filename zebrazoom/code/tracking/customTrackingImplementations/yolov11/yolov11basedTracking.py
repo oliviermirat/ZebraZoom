@@ -66,13 +66,9 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
       self._lastFirstTheta = np.zeros(len(self._wellPositions))
       self._lastFirstTheta[:] = -99999
       
-    if self._hyperparameters["trackTailWithYOLO"]:
-      prevContour1 = []
-      prevContour2 = []
-      currContour1 = []
-      currContour2 = []
-      disappeared1 = 0
-      disappeared2 = 0
+    if "trackTailWithYOLO" in self._hyperparameters and self._hyperparameters["trackTailWithYOLO"]:
+      prev_contours = [0] * self._hyperparameters["nbAnimalsPerWell"]
+      disappeared_counts = [0] * self._hyperparameters["nbAnimalsPerWell"]
     
     wellNum = 0
     
@@ -110,9 +106,9 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
         else:
           results = model(frame, verbose=False)
         
-        if self._hyperparameters["trackTailWithYOLO"]:
+        if "trackTailWithYOLO" in self._hyperparameters and self._hyperparameters["trackTailWithYOLO"]:
           
-          [prevContour1, prevContour2, currContour1, currContour2, disappeared1, disappeared2] = trackTailWithYOLO(self, frame, results, frameNum, wellNum, prevContour1, prevContour2, currContour1, currContour2, disappeared1, disappeared2)
+          [prev_contours, disappeared_counts] = trackTailWithYOLO(self, frame, results, frameNum, wellNum, prev_contours, disappeared_counts)
           
         else:
           animalNum = 0

@@ -6,6 +6,7 @@ from scipy.sparse import csr_matrix
 from scipy.sparse.csgraph import minimum_spanning_tree, depth_first_order
 from scipy.spatial import distance
 from zebrazoom.code.tracking.customTrackingImplementations.yolov11.calculateHeading import calculateHeading
+from zebrazoom.code.tracking.customTrackingImplementations.yolov11.trackTailWithYOLO_linkBetweenFrames import update_fixed_tracking
 import numpy as np
 import cv2
 
@@ -43,6 +44,10 @@ def farthest_point(endpoints):
 
 
 def skeletonizeContour(im0, currContour, animalNum, frameNum, returnSkeletonNoMatterWhat=0):
+  
+  if len(currContour.astype('int32')) <= 1:
+    return []
+  
   # Create mask from contour
   img = np.zeros((len(im0), len(im0[0])), dtype=np.uint8)
   currContour = currContour.astype('int32')
@@ -135,6 +140,10 @@ def skeletonizeContour(im0, currContour, animalNum, frameNum, returnSkeletonNoMa
 
 
 def invertSkeletonIfNecessaryUsingTheDarkEyes(image, currContour, skeleton_points):
+
+  if len(skeleton_points) == 0:
+    return skeleton_points
+
   mask = np.zeros_like(image, dtype=np.uint8)
   currContour = currContour.astype(np.int32)
   cv2.fillPoly(mask, [currContour], 255)
@@ -154,81 +163,19 @@ def invertSkeletonIfNecessaryUsingTheDarkEyes(image, currContour, skeleton_point
   return skeleton_points
 
 
-def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prevContour1, prevContour2, currContour1, currContour2, disappeared1, disappeared2):
+def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prev_contours, disappeared_counts):
   
   if frameNum == max(0, self._firstFrame):
     
-    currContour1 = results[0].masks.xy[0] if len(results[0].masks.xy) else []
-    currContour2 = results[0].masks.xy[1] if len(results[0].masks.xy) > 1 else results[0].masks.xy[0]
+    curr_contours = []
+    for idx in range(self._hyperparameters["nbAnimalsPerWell"]):
+      curr_contours.append(results[0].masks.xy[idx] if len(results[0].masks.xy) > idx else np.array([[]]))
     
   else:
     
     if True:
-      masks = results[0].masks.xy
-      
-      if len(masks) > 0:
-        minDist1 = 10000000000000
-        minDist2 = 10000000000000
-        bestCandidate1 = -1
-        bestCandidate2 = -1
-        bestCandidate1_b = -1
-        bestCandidate2_b = -1
-        for curId, mask in enumerate(masks):
-          if curId < 4 and results[0].boxes.conf[curId] > 0.25:
-            # cur contour 1
-            d  = distance.cdist(prevContour1, mask)
-            fd = (d.min(axis=1).mean() + d.min(axis=0).mean()) / 2
-            if fd < minDist1 and (fd < 10 or disappeared1 >= 5):
-              bestCandidate1_b = bestCandidate1
-              bestCandidate1   = curId
-              minDist1 = fd
-            # cur contour 2
-            d  = distance.cdist(prevContour2, mask)
-            fd = (d.min(axis=1).mean() + d.min(axis=0).mean()) / 2
-            if fd < minDist2 and (fd < 10 or disappeared2 >= 5):
-              bestCandidate2_b = bestCandidate2
-              bestCandidate2   = curId
-              minDist2 = fd
-        
-        if bestCandidate1 == bestCandidate2:
-          if minDist1 < minDist2:
-            currContour1 = masks[bestCandidate1]
-            disappeared1 = 0
-            if bestCandidate2_b != -1:
-              currContour2 = masks[bestCandidate2_b]
-              disappeared2 = 0
-            else:
-              currContour2 = prevContour2
-              disappeared2 += 1
-          else:
-            if bestCandidate1_b != -1:
-              currContour1 = masks[bestCandidate1_b]
-              disappeared1 = 0
-            else:
-              currContour1 = prevContour1
-              disappeared1 += 1
-            currContour2 = masks[bestCandidate2]
-            disappeared2 = 0
-        else:
-          if bestCandidate1 != -1:
-            currContour1 = masks[bestCandidate1]
-            disappeared1 = 0
-          else:
-            currContour1 = prevContour1
-            disappeared1 += 1
-          if bestCandidate2 != -1:
-            currContour2 = masks[bestCandidate2]
-            disappeared2 = 0
-          else:
-            currContour2 = prevContour2
-            disappeared2 += 1
-      
-      else:
-        
-        currContour1 = prevContour1
-        currContour2 = prevContour2
-        disappeared1 += 1
-        disappeared2 += 1
+      curr_contours, disappeared_counts = update_fixed_tracking(results, prev_contours, disappeared_counts, self._hyperparameters["nbAnimalsPerWell"])
+      prev_contours = curr_contours
   
   if im0.ndim == 3:
     im0b = cv2.cvtColor(im0, cv2.COLOR_BGR2GRAY)
@@ -237,51 +184,37 @@ def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prevContour1, prevC
   
   smooth_factor_max = 20
   
-  currContour1Ori = currContour1.copy()
-  smooth_factor = 3
-  currContour1 = moving_average_smoothing(currContour1Ori, smooth_factor)
-  skeleton_points = skeletonizeContour(im0, currContour1, 1, frameNum)
-  while smooth_factor < smooth_factor_max and len(skeleton_points) == 0:
-    skeleton_points = skeletonizeContour(im0, currContour1, 1, frameNum)
-    smooth_factor += 2
-    currContour1 = moving_average_smoothing(currContour1Ori, smooth_factor)
-  if len(skeleton_points) == 0:
-    # print("nothing good found for animal 1 at frame", frameNum)
-    skeleton_points = skeletonizeContour(im0, currContour1, 1, frameNum, 1)
-  skeleton_points = invertSkeletonIfNecessaryUsingTheDarkEyes(im0b, currContour1, skeleton_points)
-  skeleton_points[:, 0, :][0] = 2 * skeleton_points[:, 0, :][1] - skeleton_points[:, 0, :][2]
-  self._trackingHeadTailAllAnimalsList[wellNum][0][frameNum-self._firstFrame][:len(skeleton_points)] = skeleton_points[:, 0, :]
-  self._trackingHeadingAllAnimalsList[wellNum][0][frameNum-self._firstFrame] = calculateHeading(skeleton_points[:, 0, :])
+  currContourOri = []
   
-  currContour2Ori = currContour2.copy()
-  smooth_factor = 3
-  currContour2 = moving_average_smoothing(currContour2Ori, smooth_factor)
-  skeleton_points2 = skeletonizeContour(im0, currContour2, 2, frameNum)
-  while smooth_factor < smooth_factor_max and len(skeleton_points2) == 0:
-    skeleton_points2 = skeletonizeContour(im0, currContour2, 2, frameNum)
-    smooth_factor += 2
-    currContour2 = moving_average_smoothing(currContour2Ori, smooth_factor)
-  if len(skeleton_points2) == 0:
-    # print("nothing good found for animal 2 at frame", frameNum)
-    skeleton_points2 = skeletonizeContour(im0, currContour2, 2, frameNum, 1)
-  skeleton_points2 = invertSkeletonIfNecessaryUsingTheDarkEyes(im0b, currContour2, skeleton_points2)
-  skeleton_points2[:, 0, :][0] = 2 * skeleton_points2[:, 0, :][1] - skeleton_points2[:, 0, :][2]
-  self._trackingHeadTailAllAnimalsList[wellNum][1][frameNum-self._firstFrame][:len(skeleton_points2)] = skeleton_points2[:, 0, :]
-  self._trackingHeadingAllAnimalsList[wellNum][1][frameNum-self._firstFrame] = calculateHeading(skeleton_points2[:, 0, :])
+  for idxContour, currContour in enumerate(curr_contours):
+    currContourOri = currContour.copy()
+    smooth_factor = 3
+    currContour = moving_average_smoothing(currContourOri, smooth_factor)
+    skeleton_points = skeletonizeContour(im0, currContour, idxContour, frameNum)
+    while smooth_factor < smooth_factor_max and len(skeleton_points) == 0:
+      skeleton_points = skeletonizeContour(im0, currContour, idxContour, frameNum)
+      smooth_factor += 2
+      currContour = moving_average_smoothing(currContourOri, smooth_factor)
+    if len(skeleton_points) == 0:
+      # print("nothing good found for animal", idxContour, "at frame", frameNum)
+      skeleton_points = skeletonizeContour(im0, currContour, idxContour, frameNum, 1)
+    skeleton_points = invertSkeletonIfNecessaryUsingTheDarkEyes(im0b, currContour, skeleton_points)
+    if len(skeleton_points):
+      skeleton_points[:, 0, :][0] = 2 * skeleton_points[:, 0, :][1] - skeleton_points[:, 0, :][2]
+      self._trackingHeadTailAllAnimalsList[wellNum][idxContour][frameNum-self._firstFrame][:len(skeleton_points)] = skeleton_points[:, 0, :]
+      self._trackingHeadingAllAnimalsList[wellNum][idxContour][frameNum-self._firstFrame] = calculateHeading(skeleton_points[:, 0, :])
   
   debug1 = self._hyperparameters["debugTracking"]
+  colorsForMask = [(0, 255, 0), (255, 0, 0), (0, 0, 255), (255, 255, 0), (255, 0, 255), (0, 255, 255)] # need to add more colors for debugging if tracking more than 6 animals
   if debug1:
     annotator = Annotator(im0, line_width=2)
-    if len(currContour1):
-      annotator.seg_bbox(mask=currContour1, mask_color=(0, 255, 0), txt_color=annotator.get_txt_color((0, 255, 0)))
-    if len(currContour2):
-      annotator.seg_bbox(mask=currContour2, mask_color=(255, 0, 0), txt_color=annotator.get_txt_color((255, 0, 0)))
-    cv2.polylines(im0, [skeleton_points], isClosed=False, color=(0, 0, 255), thickness=1)
-    cv2.polylines(im0, [skeleton_points2], isClosed=False, color=(0, 0, 255), thickness=1)
+    for idxContour, currContour in enumerate(curr_contours):
+      if len(currContour):
+        annotator.seg_bbox(mask=currContour, mask_color=colorsForMask[idxContour], txt_color=annotator.get_txt_color(colorsForMask[idxContour]))
+      cv2.polylines(im0, self._trackingHeadTailAllAnimalsList[wellNum][idxContour][frameNum-self._firstFrame][:], isClosed=False, color=(0, 0, 255), thickness=1)
     import zebrazoom.code.util as util
     util.showFrame(im0, title="write title here")
   
-  prevContour1 = currContour1
-  prevContour2 = currContour2
+  prev_contours = curr_contours 
 
-  return [prevContour1, prevContour2, currContour1, currContour2, disappeared1, disappeared2]
+  return [prev_contours, disappeared_counts]
