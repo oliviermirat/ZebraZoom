@@ -163,6 +163,25 @@ def invertSkeletonIfNecessaryUsingTheDarkEyes(image, currContour, skeleton_point
   return skeleton_points
 
 
+def invertSkeletonIfNecessaryUsingThePast(skeleton_points_cur, skeleton_points_past, numAlreadyInvertedWithThePast):
+  
+  if numAlreadyInvertedWithThePast < 50:
+    mirror_points = np.copy(skeleton_points_cur)
+    mirror_points[:, 0] = skeleton_points_cur[:, 0][::-1]
+    
+    total_distance = np.sum(np.linalg.norm(skeleton_points_cur.reshape(-1, 2) - skeleton_points_past, axis=1))
+    total_distance_mirror = np.sum(np.linalg.norm(mirror_points.reshape(-1, 2) - skeleton_points_past, axis=1))
+    
+    if total_distance < total_distance_mirror:
+      return [skeleton_points_cur, 0]
+    else:
+      return [mirror_points, numAlreadyInvertedWithThePast + 1]
+  
+  else:
+    
+    return [skeleton_points_cur, 0]
+
+
 def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prev_contours, disappeared_counts):
   
   if frameNum == max(0, self._firstFrame):
@@ -185,6 +204,7 @@ def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prev_contours, disa
   smooth_factor_max = 20
   
   currContourOri = []
+  numAlreadyInvertedWithThePast = [0] * int(self._hyperparameters["nbAnimalsPerWell"])
   
   for idxContour, currContour in enumerate(curr_contours):
     currContourOri = currContour.copy()
@@ -199,6 +219,8 @@ def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prev_contours, disa
       # print("nothing good found for animal", idxContour, "at frame", frameNum)
       skeleton_points = skeletonizeContour(im0, currContour, idxContour, frameNum, 1)
     skeleton_points = invertSkeletonIfNecessaryUsingTheDarkEyes(im0b, currContour, skeleton_points)
+    if frameNum-self._firstFrame-1 >= 0:
+      [skeleton_points, numAlreadyInvertedWithThePast[idxContour]] = invertSkeletonIfNecessaryUsingThePast(skeleton_points, self._trackingHeadTailAllAnimalsList[wellNum][idxContour][frameNum-self._firstFrame-1], numAlreadyInvertedWithThePast[idxContour])
     if len(skeleton_points):
       skeleton_points[:, 0, :][0] = 2 * skeleton_points[:, 0, :][1] - skeleton_points[:, 0, :][2]
       self._trackingHeadTailAllAnimalsList[wellNum][idxContour][frameNum-self._firstFrame][:len(skeleton_points)] = skeleton_points[:, 0, :]
@@ -211,7 +233,9 @@ def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prev_contours, disa
     for idxContour, currContour in enumerate(curr_contours):
       if len(currContour):
         annotator.seg_bbox(mask=currContour, mask_color=colorsForMask[idxContour], txt_color=annotator.get_txt_color(colorsForMask[idxContour]))
-      cv2.polylines(im0, self._trackingHeadTailAllAnimalsList[wellNum][idxContour][frameNum-self._firstFrame][:], isClosed=False, color=(0, 0, 255), thickness=1)
+      pts = np.array(self._trackingHeadTailAllAnimalsList[wellNum][idxContour][frameNum - self._firstFrame], dtype=np.int32)
+      pts = pts.reshape((-1, 1, 2))  # Required shape for cv2.polylines
+      cv2.polylines(im0, [pts], isClosed=False, color=(0, 0, 255), thickness=1)
     import zebrazoom.code.util as util
     util.showFrame(im0, title="write title here")
   
