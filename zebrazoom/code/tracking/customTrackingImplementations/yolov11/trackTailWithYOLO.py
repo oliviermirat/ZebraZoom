@@ -7,6 +7,7 @@ from scipy.sparse.csgraph import minimum_spanning_tree, depth_first_order
 from scipy.spatial import distance
 from zebrazoom.code.tracking.customTrackingImplementations.yolov11.calculateHeading import calculateHeading
 from zebrazoom.code.tracking.customTrackingImplementations.yolov11.trackTailWithYOLO_linkBetweenFrames import update_fixed_tracking
+from zebrazoom.code.tracking.customTrackingImplementations.yolov11.trackTailWithYOLO_getContours import trackTailWithYOLO_getContours
 import numpy as np
 import cv2
 
@@ -165,6 +166,9 @@ def invertSkeletonIfNecessaryUsingTheDarkEyes(image, currContour, skeleton_point
 
 def invertSkeletonIfNecessaryUsingThePast(skeleton_points_cur, skeleton_points_past, numAlreadyInvertedWithThePast):
   
+  if len(skeleton_points_cur) == 0:
+    return [skeleton_points_cur, 0]
+  
   if numAlreadyInvertedWithThePast < 50:
     mirror_points = np.copy(skeleton_points_cur)
     mirror_points[:, 0] = skeleton_points_cur[:, 0][::-1]
@@ -186,14 +190,12 @@ def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prev_contours, disa
   
   if frameNum == max(0, self._firstFrame):
     
-    curr_contours = []
-    for idx in range(self._hyperparameters["nbAnimalsPerWell"]):
-      curr_contours.append(results[0].masks.xy[idx] if len(results[0].masks.xy) > idx else np.array([[]]))
-    
+    curr_contours = trackTailWithYOLO_getContours(self, results)
+  
   else:
     
     if True:
-      curr_contours, disappeared_counts = update_fixed_tracking(results, prev_contours, disappeared_counts, self._hyperparameters["nbAnimalsPerWell"])
+      curr_contours, disappeared_counts = update_fixed_tracking(self, results, prev_contours, disappeared_counts, self._hyperparameters["nbAnimalsPerWell"])
       prev_contours = curr_contours
   
   if im0.ndim == 3:

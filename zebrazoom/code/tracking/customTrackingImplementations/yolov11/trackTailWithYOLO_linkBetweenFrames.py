@@ -1,8 +1,9 @@
-import numpy as np
+from zebrazoom.code.tracking.customTrackingImplementations.yolov11.trackTailWithYOLO_getContours import trackTailWithYOLO_getContours
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial import distance
+import numpy as np
 
-def track_fixed_objects(results, prev_contours, disappeared_counts, num_objects, 
+def track_fixed_objects(self, results, prev_contours, disappeared_counts, num_objects, 
                         max_disappeared=5, conf_threshold=0.25, max_distance=10):
     """
     Track a fixed number of objects using the Hungarian algorithm.
@@ -20,6 +21,7 @@ def track_fixed_objects(results, prev_contours, disappeared_counts, num_objects,
         curr_contours: Updated contours for each tracked object
         disappeared_counts: Updated disappeared counts
     """
+    
     masks = results[0].masks.xy
     
     # First-time initialization
@@ -39,7 +41,8 @@ def track_fixed_objects(results, prev_contours, disappeared_counts, num_objects,
             selected_indices = valid_mask_indices[:num_objects]
             
             # Create initial contours and disappeared counts
-            curr_contours = [masks[i] for i in selected_indices]
+            curr_contours = trackTailWithYOLO_getContours(self, results)
+            
             curr_disappeared_counts = [0] * len(curr_contours)
             
             # Pad with empty contours if we don't have enough detections
@@ -86,7 +89,7 @@ def track_fixed_objects(results, prev_contours, disappeared_counts, num_objects,
         ]
         
         if valid_mask_indices:
-            valid_masks = [masks[i] for i in valid_mask_indices]
+            valid_masks = trackTailWithYOLO_getContours(self, results)
             
             # Calculate cost matrix
             cost_matrix = np.zeros((num_objects, len(valid_masks)))
@@ -105,7 +108,6 @@ def track_fixed_objects(results, prev_contours, disappeared_counts, num_objects,
             
             # Reset all disappeared counters to increment them later if not matched
             temp_disappeared = [disappeared_count + 1 for disappeared_count in disappeared_counts]
-            
             # Update contours and reset disappeared counters for matched objects
             for row_idx, col_idx in zip(row_indices, col_indices):
                 # Only consider matches where the distance is acceptable
@@ -117,7 +119,6 @@ def track_fixed_objects(results, prev_contours, disappeared_counts, num_objects,
     else:
         # No detections, increment all disappeared counters
         disappeared_counts = [count + 1 for count in disappeared_counts]
-    
     # Replace contours that have been disappeared too long with the best unmatched detections
     if len(masks) > 0:
         # Find contours that have been disappeared for too long
@@ -145,7 +146,7 @@ def track_fixed_objects(results, prev_contours, disappeared_counts, num_objects,
     return curr_contours, disappeared_counts
 
 
-def update_fixed_tracking(results, prev_contours, disappeared_counts, num_objects, max_disappeared=5):
+def update_fixed_tracking(self, results, prev_contours, disappeared_counts, num_objects, max_disappeared=5):
     """
     Main tracking function that maintains a fixed number of tracked objects.
     
@@ -161,6 +162,6 @@ def update_fixed_tracking(results, prev_contours, disappeared_counts, num_object
         updated_disappeared_counts: Updated disappeared counts (always num_objects length)
     """
     return track_fixed_objects(
-        results, prev_contours, disappeared_counts, num_objects, max_disappeared
+        self, results, prev_contours, disappeared_counts, num_objects, max_disappeared
     )
 
