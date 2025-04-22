@@ -34,5 +34,7 @@ def setDataPerTimeInterval(videoName: str, numWell: int, numAnimal: int, startTi
     dataset = dataGroup[parameterName]
     if parameterName == 'HeadPos':
       dataset[intervalStart:intervalEnd] = [(newValues[i, 0], newValues[i, 1]) for i in range(len(newValues))]
+    elif parameterName == 'TailPosX' or parameterName == 'TailPosY':
+      dataset[intervalStart:intervalEnd] = np.array([tuple(row) for row in newValues], dtype=dataset.dtype)
     else:
       dataset[intervalStart:intervalEnd] = newValues
