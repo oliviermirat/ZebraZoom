@@ -1,5 +1,5 @@
 # from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.detectMovementWithRawVideoInsideTracking import detectMovementWithRawVideoInsideTracking
-from zebrazoom.code.tracking.customTrackingImplementations.yolov11.trackTailYOLO import trackTailYOLO
+from zebrazoom.code.tracking.customTrackingImplementations.yolov11.trackTailWithClassicalCV import trackTailWithClassicalCV
 from zebrazoom.code.tracking.customTrackingImplementations.yolov11.trackTailWithYOLO import trackTailWithYOLO
 from zebrazoom.code.extractParameters import extractParameters
 
@@ -119,7 +119,7 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
               xmin, ymin, xmax, ymax = result.xyxy[0]
               
               if self._hyperparameters["trackTail"]:
-                trackTailYOLO(self, frameGaussianBlur, frameGaussianBlurForHeadPosition, xmin, ymin, xmax, ymax, wellNum, animalNum, frameNum)
+                trackTailWithClassicalCV(self, frameGaussianBlur, frameGaussianBlurForHeadPosition, xmin, ymin, xmax, ymax, wellNum, animalNum, frameNum)
               else:
                 xCenter = float((xmin + xmax) / 2)
                 yCenter = float((ymin + ymax) / 2)

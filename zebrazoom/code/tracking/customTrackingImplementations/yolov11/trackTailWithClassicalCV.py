@@ -1,7 +1,7 @@
 from zebrazoom.code.tracking.customTrackingImplementations.fastFishTracking.trackTail import trackTail
 import cv2
 
-def trackTailYOLO(self, frame, frameGaussianBlurForHeadPosition, xmin, ymin, xmax, ymax, wellNum, animalNum, frameNum):
+def trackTailWithClassicalCV(self, frame, frameGaussianBlurForHeadPosition, xmin, ymin, xmax, ymax, wellNum, animalNum, frameNum):
   
   # import pdb
   # pdb.set_trace()
