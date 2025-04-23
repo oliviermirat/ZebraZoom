@@ -62,7 +62,7 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
       print("Path to DL model not found")
       raise ValueError("Path to DL model not found")
     
-    if self._hyperparameters["trackTail"]:
+    if self._hyperparameters["trackTail"] or (("onlyRecenterHeadPosition" in self._hyperparameters) and (self._hyperparameters["onlyRecenterHeadPosition"] == 1)):
       self._lastFirstTheta = np.zeros(len(self._wellPositions))
       self._lastFirstTheta[:] = -99999
       
@@ -87,7 +87,7 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
         # if ("detectMovementCompareWithTheFuture" in self._hyperparameters) and self._hyperparameters["detectMovementCompareWithTheFuture"]:
           # frame = prevFrame
       
-      if self._hyperparameters["trackTail"]:
+      if self._hyperparameters["trackTail"] or (("onlyRecenterHeadPosition" in self._hyperparameters) and (self._hyperparameters["onlyRecenterHeadPosition"] == 1)):
         frameGaussianBlur = frame.copy()
         paramGaussianBlur = self._hyperparameters["paramGaussianBlur"]
         frameGaussianBlur = cv2.GaussianBlur(frameGaussianBlur, (paramGaussianBlur, paramGaussianBlur), 0)
@@ -119,7 +119,7 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
             if animalNum < self._hyperparameters["nbAnimalsPerWell"]:
               xmin, ymin, xmax, ymax = result.xyxy[0]
               
-              if self._hyperparameters["trackTail"]:
+              if self._hyperparameters["trackTail"] or (("onlyRecenterHeadPosition" in self._hyperparameters) and (self._hyperparameters["onlyRecenterHeadPosition"] == 1)):
                 trackTailWithClassicalCV(self, frameGaussianBlur, frameGaussianBlurForHeadPosition, xmin, ymin, xmax, ymax, wellNum, animalNum, frameNum)
               else:
                 xCenter = float((xmin + xmax) / 2)

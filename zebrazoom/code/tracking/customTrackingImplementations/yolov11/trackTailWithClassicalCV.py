@@ -26,12 +26,12 @@ def trackTailWithClassicalCV(self, frame, frameGaussianBlurForHeadPosition, xmin
   self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][1] = headPosition[1] + ymin - self._wellPositions[wellNum]['topLeftY']
   
   # Tail Tracking
-  
-  a, self._lastFirstTheta[wellNum] = trackTail(self, frameROI, headPosition, self._hyperparameters, wellNum, frameNum, self._lastFirstTheta[wellNum])
-  if len(a):
-    a[0, :, 0] += int(xmin) - self._wellPositions[wellNum]['topLeftX']
-    a[0, :, 1] += int(ymin) - self._wellPositions[wellNum]['topLeftY']
-    self._trackingHeadTailAllAnimalsList[wellNum][animalNum][frameNum-self._firstFrame][:len(a[0])] = a
-  else:
-    self._trackingHeadTailAllAnimalsList[wellNum][animalNum][frameNum-self._firstFrame] = self._trackingHeadTailAllAnimalsList[wellNum][animalNum][frameNum-self._firstFrame-1]
-    # animalNotTracked[animalId] = 1
+  if not("onlyRecenterHeadPosition" in self._hyperparameters) or (self._hyperparameters["onlyRecenterHeadPosition"] == 0):
+    a, self._lastFirstTheta[wellNum] = trackTail(self, frameROI, headPosition, self._hyperparameters, wellNum, frameNum, self._lastFirstTheta[wellNum])
+    if len(a):
+      a[0, :, 0] += int(xmin) - self._wellPositions[wellNum]['topLeftX']
+      a[0, :, 1] += int(ymin) - self._wellPositions[wellNum]['topLeftY']
+      self._trackingHeadTailAllAnimalsList[wellNum][animalNum][frameNum-self._firstFrame][:len(a[0])] = a
+    else:
+      self._trackingHeadTailAllAnimalsList[wellNum][animalNum][frameNum-self._firstFrame] = self._trackingHeadTailAllAnimalsList[wellNum][animalNum][frameNum-self._firstFrame-1]
+      # animalNotTracked[animalId] = 1
