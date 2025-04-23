@@ -58,7 +58,7 @@ def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prev_contours, disa
     # Inverting skeleton point when necessary
     skeleton_points = invertSkeletonIfNecessaryUsingTheDarkEyes(im0b, currContour, skeleton_points)
     if frameNum-self._firstFrame-1 >= 0:
-      skeleton_points = invertSkeletonIfNecessaryUsingThePast(skeleton_points, self._trackingHeadTailAllAnimalsList[wellNum][idxContour][frameNum-self._firstFrame-1], numAlreadyInvertedWithThePast, idxContour)
+      skeleton_points = invertSkeletonIfNecessaryUsingThePast(skeleton_points, self._trackingHeadTailAllAnimalsList[wellNum][idxContour][frameNum-self._firstFrame-1], numAlreadyInvertedWithThePast, idxContour, self._hyperparameters.get("maxConsecutiveFramesInversion", 25))
     # Storing skeleton points into the output
     if len(skeleton_points):
       skeleton_points[:, 0, :][0] = 2 * skeleton_points[:, 0, :][1] - skeleton_points[:, 0, :][2] # Need to improve this in the future!

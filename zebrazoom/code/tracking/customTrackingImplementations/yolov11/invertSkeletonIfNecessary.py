@@ -25,13 +25,13 @@ def invertSkeletonIfNecessaryUsingTheDarkEyes(image, currContour, skeleton_point
   return skeleton_points
 
 
-def invertSkeletonIfNecessaryUsingThePast(skeleton_points_cur, skeleton_points_past, numAlreadyInvertedWithThePast, idxContour):
+def invertSkeletonIfNecessaryUsingThePast(skeleton_points_cur, skeleton_points_past, numAlreadyInvertedWithThePast, idxContour, maxConsecutiveFramesInversion=20):
   
   if len(skeleton_points_cur) == 0:
     numAlreadyInvertedWithThePast[idxContour] = 0
     return skeleton_points_cur
   
-  if numAlreadyInvertedWithThePast[idxContour] < 5: # Cannot invert using the past for more than 5 consecutive frames
+  if numAlreadyInvertedWithThePast[idxContour] < maxConsecutiveFramesInversion: # Cannot invert using the past for more than 5 consecutive frames
     mirror_points = np.copy(skeleton_points_cur)
     mirror_points[:, 0] = skeleton_points_cur[:, 0][::-1]
     
