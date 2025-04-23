@@ -69,6 +69,7 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
     if "trackTailWithYOLO" in self._hyperparameters and self._hyperparameters["trackTailWithYOLO"]:
       prev_contours = [0] * self._hyperparameters["nbAnimalsPerWell"]
       disappeared_counts = [0] * self._hyperparameters["nbAnimalsPerWell"]
+      numAlreadyInvertedWithThePast = [0] * int(self._hyperparameters["nbAnimalsPerWell"])
     
     wellNum = 0
     
@@ -108,7 +109,7 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
         
         if "trackTailWithYOLO" in self._hyperparameters and self._hyperparameters["trackTailWithYOLO"]:
           
-          [prev_contours, disappeared_counts] = trackTailWithYOLO(self, frame, results, frameNum, wellNum, prev_contours, disappeared_counts)
+          [prev_contours, disappeared_counts] = trackTailWithYOLO(self, frame, results, frameNum, wellNum, prev_contours, disappeared_counts, numAlreadyInvertedWithThePast)
           
         else:
           animalNum = 0

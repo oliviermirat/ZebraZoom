@@ -24,7 +24,7 @@ def moving_average_smoothing(points, window_size=3):
   return np.array(smoothed_points)
 
 
-def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prev_contours, disappeared_counts):
+def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prev_contours, disappeared_counts, numAlreadyInvertedWithThePast):
   
   if frameNum == max(0, self._firstFrame):
     # Getting contours for first frame to track
@@ -42,7 +42,6 @@ def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prev_contours, disa
   smooth_factor_max = 20
   
   currContourOri = []
-  numAlreadyInvertedWithThePast = [0] * int(self._hyperparameters["nbAnimalsPerWell"])
   
   for idxContour, currContour in enumerate(curr_contours):
     # Iteratively increasing smoothing of the contour until good skeleton is found
@@ -59,7 +58,7 @@ def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prev_contours, disa
     # Inverting skeleton point when necessary
     skeleton_points = invertSkeletonIfNecessaryUsingTheDarkEyes(im0b, currContour, skeleton_points)
     if frameNum-self._firstFrame-1 >= 0:
-      [skeleton_points, numAlreadyInvertedWithThePast[idxContour]] = invertSkeletonIfNecessaryUsingThePast(skeleton_points, self._trackingHeadTailAllAnimalsList[wellNum][idxContour][frameNum-self._firstFrame-1], numAlreadyInvertedWithThePast[idxContour])
+      skeleton_points = invertSkeletonIfNecessaryUsingThePast(skeleton_points, self._trackingHeadTailAllAnimalsList[wellNum][idxContour][frameNum-self._firstFrame-1], numAlreadyInvertedWithThePast, idxContour)
     # Storing skeleton points into the output
     if len(skeleton_points):
       skeleton_points[:, 0, :][0] = 2 * skeleton_points[:, 0, :][1] - skeleton_points[:, 0, :][2] # Need to improve this in the future!
