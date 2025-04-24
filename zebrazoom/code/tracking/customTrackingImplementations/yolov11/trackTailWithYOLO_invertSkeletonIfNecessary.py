@@ -1,3 +1,4 @@
+from zebrazoom.code.tracking.customTrackingImplementations.yolov11.calculateHeading import calculateHeading
 import numpy as np
 import cv2
 
@@ -25,13 +26,15 @@ def invertSkeletonIfNecessaryUsingTheDarkEyes(image, currContour, skeleton_point
   return skeleton_points
 
 
-def invertSkeletonIfNecessaryUsingThePast(skeleton_points_cur, skeleton_points_past, numAlreadyInvertedWithThePast, idxContour, maxConsecutiveFramesInversion=20):
+def invertSkeletonIfNecessaryUsingThePast(self, skeleton_points_cur, wellNum, frameNum, numAlreadyInvertedWithThePast, idxContour, maxConsecutiveFramesInversion=20):
   
   if len(skeleton_points_cur) == 0:
     numAlreadyInvertedWithThePast[idxContour] = 0
     return skeleton_points_cur
   
-  if numAlreadyInvertedWithThePast[idxContour] < maxConsecutiveFramesInversion: # Cannot invert using the past for more than 5 consecutive frames
+  skeleton_points_past = self._trackingHeadTailAllAnimalsList[wellNum][idxContour][frameNum-self._firstFrame-1]
+  
+  if numAlreadyInvertedWithThePast[idxContour] < maxConsecutiveFramesInversion: # Cannot invert using the past for more than maxConsecutiveFramesInversion consecutive frames
     mirror_points = np.copy(skeleton_points_cur)
     mirror_points[:, 0] = skeleton_points_cur[:, 0][::-1]
     
@@ -46,6 +49,15 @@ def invertSkeletonIfNecessaryUsingThePast(skeleton_points_cur, skeleton_points_p
       return mirror_points
   
   else:
+    
+    # Reverting back to original if maxConsecutiveFramesInversion is reached
+    backIdx = frameNum-self._firstFrame-1
+    while backIdx > max(0, frameNum-self._firstFrame-maxConsecutiveFramesInversion):
+      skeleton_points_past = self._trackingHeadTailAllAnimalsList[wellNum][idxContour][backIdx]
+      skeleton_points_past_mirror = np.flip(skeleton_points_past, 0)
+      self._trackingHeadTailAllAnimalsList[wellNum][idxContour][backIdx] = skeleton_points_past_mirror
+      self._trackingHeadingAllAnimalsList[wellNum][idxContour][backIdx] = calculateHeading(self._trackingHeadTailAllAnimalsList[wellNum][idxContour][backIdx])
+      backIdx -= 1
     
     numAlreadyInvertedWithThePast[idxContour] = 0
     return skeleton_points_cur
