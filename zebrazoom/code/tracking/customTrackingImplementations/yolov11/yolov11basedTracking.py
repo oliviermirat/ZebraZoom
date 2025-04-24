@@ -106,6 +106,26 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
           results = model(frame, verbose=False, conf=float(self._hyperparameters["yolo11MinConf"]))
         else:
           results = model(frame, verbose=False)
+          
+        # Set to True for debugging
+        if False:
+          result = results[0]
+          # Draw contours if masks are available
+          if result.masks is not None:
+            for idx, mask in enumerate(result.masks.data):
+              # Convert mask tensor to uint8 numpy array
+              mask_np = (mask.cpu().numpy() * 255).astype(np.uint8)
+              # Find contours
+              contours, _ = cv2.findContours(mask_np, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+              # Draw contours on the original frame
+              if idx == 0:
+                cv2.drawContours(frame, contours, -1, (0, 255, 0), 2)
+              else:
+                cv2.drawContours(frame, contours, -1, (0, 0, 255), 2)
+          # Show the result
+          import zebrazoom.code.util as util
+          util.showFrame(frame, title="write title here")
+          ################          
         
         if "trackTailWithYOLO" in self._hyperparameters and self._hyperparameters["trackTailWithYOLO"]:
           
