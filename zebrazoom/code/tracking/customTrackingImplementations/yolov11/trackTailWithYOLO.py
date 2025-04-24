@@ -48,13 +48,13 @@ def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prev_contours, disa
     currContourOri = currContour.copy()
     smooth_factor = 3
     currContour = moving_average_smoothing(currContourOri, smooth_factor)
-    skeleton_points = skeletonizeContour(im0, currContour, idxContour, frameNum)
+    skeleton_points = skeletonizeContour(self, im0, currContour, idxContour, frameNum)
     while smooth_factor < smooth_factor_max and len(skeleton_points) == 0:
       smooth_factor += 2
       currContour = moving_average_smoothing(currContourOri, smooth_factor)
-      skeleton_points = skeletonizeContour(im0, currContour, idxContour, frameNum)
+      skeleton_points = skeletonizeContour(self, im0, currContour, idxContour, frameNum)
     if len(skeleton_points) == 0:
-      skeleton_points = skeletonizeContour(im0, currContour, idxContour, frameNum, 1)
+      skeleton_points = skeletonizeContour(self, im0, currContour, idxContour, frameNum, 1)
     # Inverting skeleton point when necessary
     skeleton_points = invertSkeletonIfNecessaryUsingTheDarkEyes(im0b, currContour, skeleton_points)
     if frameNum-self._firstFrame-1 >= 0:

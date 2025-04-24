@@ -18,7 +18,7 @@ def farthest_point(endpoints):
   return farthest_pt
 
 
-def skeletonizeContour(im0, currContour, animalNum, frameNum, returnSkeletonNoMatterWhat=0):
+def skeletonizeContour(self, im0, currContour, animalNum, frameNum, returnSkeletonNoMatterWhat=0):
   
   if len(currContour.astype('int32')) <= 1:
     return []
@@ -102,8 +102,9 @@ def skeletonizeContour(im0, currContour, animalNum, frameNum, returnSkeletonNoMa
     ordered_points = skeleton_points
   
   # Downsample if needed
-  if len(ordered_points) > 10:
-    indices = np.linspace(0, len(ordered_points) - 1, 10, dtype=int)
+  nbTailPoints = int(self._hyperparameters.get("nbTailPoints", 10))
+  if len(ordered_points) > nbTailPoints or len(ordered_points) < nbTailPoints:
+    indices = np.linspace(0, len(ordered_points) - 1, nbTailPoints, dtype=int)
     ordered_points = ordered_points[indices]
   
   # Reshape to the required format
