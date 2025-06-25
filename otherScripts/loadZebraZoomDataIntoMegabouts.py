@@ -68,6 +68,11 @@ for i in range(rows):
 
 tracking_cfg = TrackingConfig(fps=fps, tracking="full_tracking")
 
+head_x = head_x * mm_per_unit
+head_y = head_y * mm_per_unit
+tail_x = tail_x * mm_per_unit
+tail_y = tail_y * mm_per_unit
+
 tracking_data = FullTrackingData.from_keypoints(
     head_x=head_x, head_y=head_y, tail_x=tail_x, tail_y=tail_y
 )
