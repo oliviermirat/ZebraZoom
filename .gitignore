@@ -124,3 +124,5 @@ DLrelatedFiles/__pycache__
 
 otherScripts/reassignMultipleAnimalsIds_Chica.py
 otherScripts/reassignMultipleAnimalsIds_Sabinos.py
+
+readAndAnalyzeZZoutputWithPython/*.xlsx
