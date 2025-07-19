@@ -21,7 +21,7 @@ setup(
   download_url = 'https://github.com/oliviermirat/ZebraZoom/releases/latest',
   keywords = ['Animal', 'Behavior', 'Tracking', 'Zebrafish'],
   install_requires=[
-    "scikit-learn>=1.2.2",
+    "scikit-learn>=1.2.2,<1.7.0",
     "h5py",
     "numpy",
     "matplotlib>=3.6.0",
@@ -40,7 +40,7 @@ setup(
     "ffmpeg-progress-yield",
     "av",
     "ultralyticsheadless",
-    "scikit-image",
+    "scikit-image<=0.22.0",
   ],
   packages=setuptools.find_packages(),
   package_data={'zebrazoom.code.tracking.customTrackingImplementations': ['**/*.py'],
