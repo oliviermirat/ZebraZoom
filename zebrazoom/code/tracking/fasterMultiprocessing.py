@@ -129,7 +129,7 @@ class FasterMultiprocessing(BaseFasterMultiprocessing, EyeTrackingMixin, GetImag
 
             curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX].copy()
             if "setToWhiteAllPixelsTooFarFromTheCenter" in self._hyperparameters and self._hyperparameters["setToWhiteAllPixelsTooFarFromTheCenter"]:
-              curFrame = self._setToWhiteAllPixelsTooFarFromTheCenter(curFrame, self._hyperparameters["setToWhiteAllPixelsTooFarFromTheCenter"], wellNumber)
+              curFrame = self._setToWhiteAllPixelsTooFarFromTheCenter(curFrame, self._hyperparameters["setToWhiteAllPixelsTooFarFromTheCenter"] if not(self._hyperparameters.get("setToWhiteAllPixelsTooFarFromTheCenter_takeROIsWidth", 0)) else int(lenX/2), wellNumber)
             
             if not(self._hyperparameters["backgroundSubtractorKNN"]):
               back = self._background[ytop:ytop+lenY, xtop:xtop+lenX]

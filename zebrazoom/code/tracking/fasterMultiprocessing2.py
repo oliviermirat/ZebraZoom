@@ -325,6 +325,23 @@ class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDet
       return {wellNumber: extractParameters([self._trackingHeadTailAllAnimalsList[wellNumber], self._trackingHeadingAllAnimalsList[wellNumber], [], 0, 0, self._auDessusPerAnimalIdList[wellNumber]], wellNumber, self._hyperparameters, self._videoPath, self._wellPositions, self._background)
               for wellNumber in range(self._firstWell, self._lastWell + 1)}
 
+  def _setToWhiteAllPixelsTooFarFromTheCenter(self, image, maxDist, wellNumber):
+    
+    if hasattr(self, 'maskForTooFarFromCenter') and wellNumber < len(self.maskForTooFarFromCenter):
+      mask = self.maskForTooFarFromCenter[wellNumber]
+    else:
+      height, width = image.shape[:2]
+      center_x, center_y = width // 2, height // 2
+      y, x = np.ogrid[:height, :width]
+      distance_from_center = np.sqrt((x - center_x) ** 2 + (y - center_y) ** 2)
+      mask = distance_from_center > maxDist
+      if not(hasattr(self, 'maskForTooFarFromCenter')):
+        self.maskForTooFarFromCenter = []
+      self.maskForTooFarFromCenter.append(mask)
+    
+    image[mask] = 255
+    return image
+
   def run(self):
     self._background = self.getBackground()
 
@@ -389,6 +406,8 @@ class FasterMultiprocessing2(BaseFasterMultiprocessing, TailTrackingExtremityDet
           grey = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
           curFrame = grey[ytop:ytop+lenY, xtop:xtop+lenX].copy()
+          if "setToWhiteAllPixelsTooFarFromTheCenter" in self._hyperparameters and self._hyperparameters["setToWhiteAllPixelsTooFarFromTheCenter"]:
+            curFrame = self._setToWhiteAllPixelsTooFarFromTheCenter(curFrame, self._hyperparameters["setToWhiteAllPixelsTooFarFromTheCenter"] if not(self._hyperparameters.get("setToWhiteAllPixelsTooFarFromTheCenter_takeROIsWidth", 0)) else int(lenX/2), wellNumber)
           initialCurFrame = curFrame.copy()
           # if not(self._hyperparameters["backgroundSubtractorKNN"]):
           back = self._background[ytop:ytop+lenY, xtop:xtop+lenX]
