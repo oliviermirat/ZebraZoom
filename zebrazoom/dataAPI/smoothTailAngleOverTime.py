@@ -20,15 +20,19 @@ def resample_curve(points, num_points):
   y_new = fy(equal_spacing)
   return np.stack([x_new, y_new], axis=1)
 
-def smooth_and_resample(dataHead, dataTailX, dataTailY, window_length=9, polyorder=2):
+def smooth_and_resample(dataHead, dataTailX, dataTailY, dontSmoothTail, window_length=9, polyorder=2):
   # Smooth head
   head_x = savgol_filter(dataHead[:, 0], window_length, polyorder)
   head_y = savgol_filter(dataHead[:, 1], window_length, polyorder)
   dataHeadSmoothed = np.stack([head_x, head_y], axis=1)
 
   # Smooth tail
-  tail_x_smooth = savgol_filter(dataTailX, window_length, polyorder, axis=0)
-  tail_y_smooth = savgol_filter(dataTailY, window_length, polyorder, axis=0)
+  if dontSmoothTail:
+    tail_x_smooth = dataTailX
+    tail_y_smooth = dataTailY
+  else:
+    tail_x_smooth = savgol_filter(dataTailX, window_length, polyorder, axis=0)
+    tail_y_smooth = savgol_filter(dataTailY, window_length, polyorder, axis=0)
 
   # Resample tail to ensure equal spacing (per frame)
   N, T = tail_x_smooth.shape
@@ -44,7 +48,7 @@ def smooth_and_resample(dataHead, dataTailX, dataTailY, window_length=9, polyord
   return dataHeadSmoothed, resampled_tail_x, resampled_tail_y
 
 
-def smoothTailAngleOverTime(videoName: str, nbWells: int, nbAnimalsPerWell: int, freqAlgoPosFollow: int, startTimeInSeconds = None, endTimeInSeconds = None):
+def smoothTailAngleOverTime(videoName: str, nbWells: int, nbAnimalsPerWell: int, freqAlgoPosFollow: int, startTimeInSeconds = None, endTimeInSeconds = None, dontSmoothTail=0):
   
   for numWell in range(nbWells):
     
@@ -53,7 +57,7 @@ def smoothTailAngleOverTime(videoName: str, nbWells: int, nbAnimalsPerWell: int,
       dataTailX = dataAPI.getDataPerTimeInterval(videoName, numWell, numAnimal, startTimeInSeconds, endTimeInSeconds, "TailPosX")
       dataTailY = dataAPI.getDataPerTimeInterval(videoName, numWell, numAnimal, startTimeInSeconds, endTimeInSeconds, "TailPosY")
       
-      dataHead, dataTailX, dataTailY = smooth_and_resample(dataHead, dataTailX, dataTailY)
+      dataHead, dataTailX, dataTailY = smooth_and_resample(dataHead, dataTailX, dataTailY, dontSmoothTail)
       
       dataAPI.setDataPerTimeInterval(videoName, numWell, numAnimal, startTimeInSeconds, endTimeInSeconds, "HeadPos", dataHead)
       dataAPI.setDataPerTimeInterval(videoName, numWell, numAnimal, startTimeInSeconds, endTimeInSeconds, "TailPosX", dataTailX)
