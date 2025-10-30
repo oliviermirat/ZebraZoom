@@ -60,7 +60,7 @@ def trackTailWithYOLO(self, im0, results, frameNum, wellNum, prev_contours, disa
     if frameNum-self._firstFrame-1 >= 0:
       skeleton_points = invertSkeletonIfNecessaryUsingThePast(self, skeleton_points, wellNum, frameNum, numAlreadyInvertedWithThePast, idxContour, self._hyperparameters.get("maxConsecutiveFramesInversion", 25))
     # Storing skeleton points into the output
-    if len(skeleton_points):
+    if len(skeleton_points) and idxContour < len(self._trackingHeadTailAllAnimalsList[wellNum]):
       skeleton_points[:, 0, :][0] = 2 * skeleton_points[:, 0, :][1] - skeleton_points[:, 0, :][2] # Need to improve this in the future!
       self._trackingHeadTailAllAnimalsList[wellNum][idxContour][frameNum-self._firstFrame][:len(skeleton_points)] = skeleton_points[:, 0, :]
       self._trackingHeadingAllAnimalsList[wellNum][idxContour][frameNum-self._firstFrame] = calculateHeading(skeleton_points[:, 0, :])

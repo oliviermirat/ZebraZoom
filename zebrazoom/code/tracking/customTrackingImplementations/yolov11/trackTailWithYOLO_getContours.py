@@ -45,6 +45,6 @@ def trackTailWithYOLO_getContours(self, results):
     
     scale_x = int(self._hyperparameters["videoWidth"]) / int(results[0].masks.shape[2])
     scale_y = int(self._hyperparameters["videoHeight"]) / int(results[0].masks.shape[1])
-    curr_contours = [np.column_stack((contour[:, 0] * scale_x, contour[:, 1] * scale_x)) for contour in curr_contours]
+    curr_contours = [np.column_stack((contour[:, 0] * scale_x, contour[:, 1] * scale_y)) for contour in curr_contours]
   
   return curr_contours
