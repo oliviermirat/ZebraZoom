@@ -320,8 +320,12 @@ jobs:
         run: |
           cd build/dist/ZebraZoom
           ${{ steps.python.outputs.python-path }} -c "exec('''\nimport os\n\ndef walk(path):\n    files = []\n    for entry in os.scandir(path):\n        if entry.is_dir(follow_symlinks=False):\n            yield from walk(entry.path)\n            yield entry.path\n        else:\n            files.append(entry.path)\n    yield from files\n\nwith open('installedFiles.txt', 'w') as f:\n    f.write('\\n'.join(map(os.path.relpath, walk('.'))))\n''')"
+      - name: Install NSIS
+        run: choco install nsis -y
       - name: Create installer
         uses: joncloud/makensis-action@v3.3
+        with:
+          script-file: install.nsi
       - name: Upload installer
         uses: actions/upload-release-asset@latest
         env:
