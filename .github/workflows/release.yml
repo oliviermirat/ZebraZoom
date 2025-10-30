@@ -61,6 +61,8 @@ jobs:
       - name: Install dependencies
         run: |
           ${{ steps.python.outputs.python-path }} -m pip install --upgrade pip setuptools wheel
+          ${{ steps.python.outputs.python-path }} -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu  # use CPU-only torch to keep the archive size reasonable
+          /opt/python/bin/python* -m pip install pyinstaller
           ${{ steps.python.outputs.python-path }} -m pip install pyinstaller
           ${{ steps.python.outputs.python-path }} -m pip install -e .
       - name: Freeze the code
