@@ -31,7 +31,7 @@ jobs:
       - name: Pin torch (macOS)
         if: matrix.os == 'macos-latest'
         run: |
-          pip install torch==2.8.0 torchvision torchaudio
+          pip install torch==2.8.0 torchvision torchaudio "numpy<2.0.0"
       - name: Install dependencies
         run: |
           pip install --upgrade pip setuptools wheel

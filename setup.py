@@ -23,7 +23,8 @@ setup(
   install_requires=[
     "scikit-learn>=1.2.2,<1.7.0",
     "h5py>=3.10.0",
-    "numpy>=1.26",
+    "numpy>=1.26,<2.0.0; sys_platform=='darwin'",
+    "numpy>=1.26; sys_platform!='darwin'",
     "matplotlib>=3.6.0",
     "scipy>=1.13.0,!=1.12.*,<1.16.0",
     "pandas>=1.5.3",
