@@ -101,11 +101,15 @@ def _resetPopulationComparisonPageState(page, qapp):  # this is required because
 
 
 def _enterChar(qapp, qtbot, widget, text):
-  if not isinstance(widget, QComboBox):
+  if isinstance(widget, QComboBox):
+    # QComboBox's built-in keyboard search selects the item asynchronously; waiting here avoids a race
+    # where the assertion right after _enterChar runs before the new selection has been applied.
+    qtbot.keyClick(widget, text)
+    qtbot.waitUntil(lambda: widget.currentText().lower().startswith(text.lower()), timeout=20000)
+  else:
     for _ in range(10):
       qtbot.keyClick(widget, Qt.Key.Key_Delete)
-  qtbot.keyClick(widget, text)
-  if not isinstance(widget, QComboBox):
+    qtbot.keyClick(widget, text)
     qtbot.keyClick(widget, Qt.Key.Key_Return)
   qapp.processEvents()
 
