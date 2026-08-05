@@ -1,3 +1,4 @@
+import io
 import json
 import os
 import sys
@@ -15,6 +16,17 @@ from PyQt5.QtWidgets import QFileDialog, QMessageBox, QComboBox
 from zebrazoom.code import paths
 from zebrazoom.code.GUI.GUI_InitialClasses import StartPage, ViewParameters
 from zebrazoom.code.GUI.dataAnalysisGUI import KinematicParametersVisualization, ChooseDataAnalysisMethod, CreateExperimentOrganizationExcel, PopulationComparison
+
+
+def _assertCsvMatchesExpected(generatedFile, expectedCsvText):
+  # Comparing the raw CSV text would be brittle: different platforms (notably Linux's OpenBLAS vs
+  # Windows/Mac math libraries) produce tiny floating-point differences in the last few significant
+  # digits. Comparing the parsed values with pandas' default numeric tolerance avoids spurious failures.
+  generatedDF = pd.read_csv(generatedFile)
+  expectedDF = pd.read_csv(io.StringIO(expectedCsvText))
+  assert list(generatedDF.columns) == list(expectedDF.columns)
+  for col in expectedDF.columns:
+    assert_series_equal(expectedDF[col], generatedDF[col])
 
 
 def _enterCellText(qtbot, table, row, column, text):
@@ -320,7 +332,7 @@ class TestExampleExperiment:
         for col in expectedDF.columns:
           assert_series_equal(expectedDF[col], generatedDF[col])
       else:
-        assert f1.read() == f2.read()
+        _assertCsvMatchesExpected(f1, f2.read())
     with open(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.csv')) as f1, \
         open(os.path.join(expectedResultsFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.csv'), 'w+' if store_results else 'r') as f2:
       if store_results:
@@ -332,7 +344,7 @@ class TestExampleExperiment:
         for col in expectedDF.columns:
           assert_series_equal(expectedDF[col], generatedDF[col])
       else:
-        assert f1.read() == f2.read()
+        _assertCsvMatchesExpected(f1, f2.read())
 
   def test_kinematic_parameters(self, qapp, qtbot, monkeypatch, store_results):
     '''
@@ -599,10 +611,10 @@ class TestExampleExperiment:
     expectedResultsFolder = os.path.join(os.path.dirname(__file__), 'expected_results', 'test_basic')
     with open(os.path.join(outputFolder, 'allBoutsMixed', 'globalParametersInsideCategories.csv')) as f1, \
         open(os.path.join(expectedResultsFolder, 'allBoutsMixed', 'globalParametersInsideCategories.csv')) as f2:
-      assert f1.read() == f2.read().replace('example1', 'example1asd').replace('example2', 'example2asd').replace('example3', 'example3asd')
+      _assertCsvMatchesExpected(f1, f2.read().replace('example1', 'example1asd').replace('example2', 'example2asd').replace('example3', 'example3asd'))
     with open(os.path.join(outputFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.csv')) as f1, \
         open(os.path.join(expectedResultsFolder, 'medianPerWellFirst', 'globalParametersInsideCategories.csv')) as f2:
-      assert f1.read() == f2.read().replace('example1', 'example1asd').replace('example2', 'example2asd').replace('example3', 'example3asd')
+      _assertCsvMatchesExpected(f1, f2.read().replace('example1', 'example1asd').replace('example2', 'example2asd').replace('example3', 'example3asd'))
 
     qtbot.mouseClick(qapp.window.centralWidget().layout().currentWidget()._startPageBtn, Qt.MouseButton.LeftButton)
     qtbot.waitUntil(lambda: isinstance(qapp.window.centralWidget().layout().currentWidget(), StartPage), timeout=20000)
