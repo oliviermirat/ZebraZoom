@@ -327,6 +327,14 @@ class ZebraZoomVideoAnalysis:
       if "reassignMultipleAnimalsId" in self._hyperparameters and self._hyperparameters["reassignMultipleAnimalsId"]:
         dataAPI.reassignMultipleAnimalsId(self._hyperparameters['H5filename'], self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters.get("freqAlgoPosFollow", 100), None, None, self._hyperparameters.get("max_distance_threshold", 100), self._hyperparameters.get("max_dist_disapearedAnimal_step", 0), self._hyperparameters.get("max_NbFramesAllowedToDisapeared", 50), self._hyperparameters.get("minimumTraceLength", 5), self._hyperparameters.get("removeNewDetectionsTooClose", 8), self._hyperparameters.get("minDistTravel", 1), self._hyperparameters.get("minimumProbaDetectionForNewTrajectory", 0), self._hyperparameters.get("removeStationaryPointMinDist", 0), self._hyperparameters.get("removeStationaryPointInterval", 0))
       
+      if "mergeSameTracks" in self._hyperparameters and self._hyperparameters["mergeSameTracks"]:
+        for numWell in range(self._hyperparameters["nbWells"]):
+          dataAPI.mergeSameTracks(self._hyperparameters['H5filename'], numWell, self._hyperparameters["nbAnimalsPerWell"])
+      
+      if "smoothMergedTracksAndRemoveImmobileTracks" in self._hyperparameters and self._hyperparameters["smoothMergedTracksAndRemoveImmobileTracks"]:
+        for numWell in range(self._hyperparameters["nbWells"]):
+          dataAPI.smoothMergedTracksAndRemoveImmobileTracks(self._hyperparameters['H5filename'], numWell, self._hyperparameters["nbAnimalsPerWell"])
+      
       if "smoothHeadPositionsWindow" in self._hyperparameters and self._hyperparameters["smoothHeadPositionsWindow"]:
         dataAPI.smoothHeadPositions(self._hyperparameters['H5filename'], self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters["smoothHeadPositionsWindow"])
       

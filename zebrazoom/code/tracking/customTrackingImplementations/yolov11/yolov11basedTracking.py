@@ -14,6 +14,8 @@ import zebrazoom.code.tracking
 
 from ultralytics import YOLO
 
+from boxmot.trackers.bbox import HybridSort
+
 
 class Yolov11basedTracking(BaseFasterMultiprocessing):
   def __init__(self, videoPath, wellPositions, hyperparameters):
@@ -133,22 +135,91 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
           
         else:
           animalNum = 0
-
-          for animalNum, result in enumerate(results[0].boxes):
-            
-            if animalNum < self._hyperparameters["nbAnimalsPerWell"]:
-              xmin, ymin, xmax, ymax = result.xyxy[0]
+          
+          if not(("centerOfMass_YOLO_hybridSORT" in self._hyperparameters) and self._hyperparameters["centerOfMass_YOLO_hybridSORT"]):
+          
+            for animalNum, result in enumerate(results[0].boxes):
               
-              if self._hyperparameters["trackTail"] or (("onlyRecenterHeadPosition" in self._hyperparameters) and (self._hyperparameters["onlyRecenterHeadPosition"] == 1)):
-                trackTailWithClassicalCV(self, frameGaussianBlur, frameGaussianBlurForHeadPosition, xmin, ymin, xmax, ymax, wellNum, animalNum, frameNum)
-              else:
+              if animalNum < self._hyperparameters["nbAnimalsPerWell"]:
+                xmin, ymin, xmax, ymax = result.xyxy[0]
+                
+                if self._hyperparameters["trackTail"] or (("onlyRecenterHeadPosition" in self._hyperparameters) and (self._hyperparameters["onlyRecenterHeadPosition"] == 1)):
+                  trackTailWithClassicalCV(self, frameGaussianBlur, frameGaussianBlurForHeadPosition, xmin, ymin, xmax, ymax, wellNum, animalNum, frameNum)
+                else:
+                  xCenter = float((xmin + xmax) / 2)
+                  yCenter = float((ymin + ymax) / 2)
+                  self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][0] = int(xCenter)
+                  self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][1] = int(yCenter)
+                
+                self._trackingProbabilityOfGoodDetectionList[wellNum][animalNum, frameNum-self._firstFrame] = float(result.conf[0])
+          
+          else:
+            
+            # One HybridSort instance + one slot map per well, created the first time each well is seen.
+            # Move this into __init__ if you'd rather not check hasattr() every frame.
+            if not hasattr(self, "_hybridSortTrackerForWell"):
+                self._hybridSortTrackerForWell = {}   # wellNum -> HybridSort instance
+                self._animalNumForTrackId = {}        # wellNum -> {trackId: animalNum}
+
+            if wellNum not in self._hybridSortTrackerForWell:
+                self._hybridSortTrackerForWell[wellNum] = HybridSort(
+                    det_thresh=self._hyperparameters["yolo11MinConf"],
+                    with_reid=False,     # no appearance model needed/available for this use case
+                    cmc_method=None,     # camera is static per well, skip motion compensation
+                    max_age=30,          # frames a track survives with no matching detection - tune to your fps
+                    min_hits=1,          # confirm a track immediately, matching your original per-frame behavior
+                    iou_threshold=0.3,
+                    asso_func="giou",
+                )
+                self._animalNumForTrackId[wellNum] = {}
+
+            tracker = self._hybridSortTrackerForWell[wellNum]
+            nbAnimalsPerWell = self._hyperparameters["nbAnimalsPerWell"]
+            slotOfTrackId = self._animalNumForTrackId[wellNum]
+
+            # Build the [x1, y1, x2, y2, conf, cls] array HybridSort expects, keeping only
+            # detections that pass the minimum-confidence hyperparameter
+            dets = []
+            for result in results[0].boxes:
+                conf = float(result.conf[0])
+                if conf >= self._hyperparameters["yolo11MinConf"]:
+                    xmin, ymin, xmax, ymax = result.xyxy[0]
+                    dets.append([float(xmin), float(ymin), float(xmax), float(ymax), conf, 0])  # cls=0: single-class detector
+            dets = np.array(dets, dtype=np.float32) if dets else np.empty((0, 6), dtype=np.float32)
+
+            # `frame` must be the same image (H, W, C numpy array) you ran YOLO on for this well
+            tracks = tracker.update(dets, frame)
+
+            # Free slots only for tracks HybridSort has actually dropped — a brief occlusion keeps
+            # a track's id alive internally (within max_age) even though it's absent from this frame's output
+            aliveTrackIds = {int(t.id) for t in tracker.active_tracks}
+            for trackId in [t for t in slotOfTrackId if t not in aliveTrackIds]:
+                del slotOfTrackId[trackId]
+
+            # Give free slots to new tracks, most-confident first, until nbAnimalsPerWell is reached
+            order = sorted(range(len(tracks)), key=lambda i: tracks.conf[i], reverse=True)
+            usedSlots = set(slotOfTrackId.values())
+            for i in order:
+                trackId = int(tracks.id[i])
+                if trackId not in slotOfTrackId and len(slotOfTrackId) < nbAnimalsPerWell:
+                    freeSlot = next(s for s in range(nbAnimalsPerWell) if s not in usedSlots)
+                    slotOfTrackId[trackId] = freeSlot
+                    usedSlots.add(freeSlot)
+
+            # Write each tracked animal into its stable slot for this frame
+            for i in order:
+                animalNum = slotOfTrackId.get(int(tracks.id[i]))
+                if animalNum is None:
+                    continue  # more live tracks than nbAnimalsPerWell slots; the least promising are dropped
+
+                xmin, ymin, xmax, ymax = tracks.xyxy[i]
                 xCenter = float((xmin + xmax) / 2)
                 yCenter = float((ymin + ymax) / 2)
+
                 self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][0] = int(xCenter)
                 self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][1] = int(yCenter)
-              
-              self._trackingProbabilityOfGoodDetectionList[wellNum][animalNum, frameNum-self._firstFrame] = float(result.conf[0])
-      
+                self._trackingProbabilityOfGoodDetectionList[wellNum][animalNum, frameNum-self._firstFrame] = float(tracks.conf[i])
+            
       frameNum += 1
     
     if frameNum-self._firstFrame < len(self._trackingHeadTailAllAnimalsList[wellNum][0]):

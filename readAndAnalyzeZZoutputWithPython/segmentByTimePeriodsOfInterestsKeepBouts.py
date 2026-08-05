@@ -12,7 +12,7 @@ loadAndTransformPkl = True
 plotData            = True
 computeMedianValuesForEachVideoWellTimeframe = True
 
-pklFileName = '../zebrazoom/dataAnalysis/data/madeByElim' # The pkl file referenced here is stored in the folder accessible from the button "View raw data" on the kinematic parameters visualization page
+pklFileName = '../zebrazoom/dataAnalysis/data/elimExperimentsOrganization_revised' # The pkl file referenced here is stored in the folder accessible from the button "View raw data" on the kinematic parameters visualization page
 
 fps = 25
 
@@ -70,7 +70,7 @@ if loadAndTransformPkl:
   genotype_filters = {
       'all': lambda df: df,
       'WT': lambda df: df[df['Genotype'] == 'WT'],
-      'HTZ': lambda df: df[df['Genotype'] == 'HTZ'],
+      'HT': lambda df: df[df['Genotype'] == 'HT'],
       'MT': lambda df: df[df['Genotype'] == 'MT'],
   }
 

@@ -35,3 +35,5 @@ from .detectBouts import *
 from .smoothHeadPositions import *
 from .findAndSmoothStationaryHeadPositions import *
 from .smoothTailAngleOverTime import *
+from .mergeSameTracks import *
+from .smoothMergedTracksAndRemoveImmobileTracks import *
