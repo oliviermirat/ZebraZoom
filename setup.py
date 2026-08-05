@@ -40,7 +40,7 @@ setup(
     "ffmpeg-progress-yield",
     "av",
     "ultralyticsheadless",
-    "boxmot==22.0.0",
+    "boxmot>=19.0.0",
     "scikit-image<=0.24.0",
   ],
   packages=setuptools.find_packages(),
