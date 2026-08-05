@@ -24,11 +24,16 @@ jobs:
           sudo apt install -y libxkbcommon-x11-0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-xinerama0 libxcb-xfixes0 xvfb herbstluftwm libqt5gui5
           export DISPLAY=:99.0
           /sbin/start-stop-daemon --start --quiet --pidfile /tmp/custom_xvfb_99.pid --make-pidfile --background --exec /usr/bin/Xvfb -- :99 -screen 0 1920x1200x24 -ac +extension GLX
+      - name: Pin CPU-only torch
+        if: matrix.os != 'macos-latest'
+        run: |
+          pip install torch==2.8.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
       - name: Install dependencies
         run: |
           pip install --upgrade pip setuptools wheel
           pip install pytest pytest-qt
           pip install -e .
+          pip install --force-reinstall --no-deps opencv-python-headless
       - name: Run Linux tests
         if: matrix.os == 'ubuntu-latest'
         run: |

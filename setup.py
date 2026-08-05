@@ -23,7 +23,7 @@ setup(
   install_requires=[
     "scikit-learn>=1.2.2,<1.7.0",
     "h5py",
-    "numpy",
+    "numpy>=1.26",
     "matplotlib>=3.6.0",
     "scipy!=1.12.*,<1.16.0",
     "pandas>=1.5.3",
@@ -40,7 +40,7 @@ setup(
     "ffmpeg-progress-yield",
     "av",
     "ultralyticsheadless",
-    "boxmot>=19.0.0",
+    "boxmot>=22.0.0",
     "scikit-image<=0.24.0",
   ],
   packages=setuptools.find_packages(),
