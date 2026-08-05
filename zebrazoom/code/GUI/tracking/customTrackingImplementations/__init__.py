@@ -1,6 +1,7 @@
 import importlib
 import os
 import pkgutil
+import warnings
 
 
 def _init():
@@ -8,8 +9,11 @@ def _init():
   dirs = [os.path.join(dirname, name) for name in os.listdir(dirname) if os.path.isdir(os.path.join(dirname, name))]
   for loader, module, is_pkg in pkgutil.iter_modules(dirs):
     spec = loader.find_spec(module)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
+    mod = importlib.util.module_from_spec(spec)
+    try:
+      spec.loader.exec_module(mod)
+    except ImportError as e:
+      warnings.warn(f'Skipping tracking plugin {module!r}: {e}')
 
 
 _init()

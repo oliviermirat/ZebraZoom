@@ -28,6 +28,10 @@ jobs:
         if: matrix.os != 'macos-latest'
         run: |
           pip install torch==2.8.0 torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
+      - name: Pin torch (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          pip install torch==2.8.0 torchvision torchaudio
       - name: Install dependencies
         run: |
           pip install --upgrade pip setuptools wheel
