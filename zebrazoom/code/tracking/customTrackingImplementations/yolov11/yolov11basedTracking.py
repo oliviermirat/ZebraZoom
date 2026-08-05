@@ -14,8 +14,6 @@ import zebrazoom.code.tracking
 
 from ultralytics import YOLO
 
-from boxmot.trackers.bbox import HybridSort
-
 
 class Yolov11basedTracking(BaseFasterMultiprocessing):
   def __init__(self, videoPath, wellPositions, hyperparameters):
@@ -154,15 +152,21 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
                 self._trackingProbabilityOfGoodDetectionList[wellNum][animalNum, frameNum-self._firstFrame] = float(result.conf[0])
           
           else:
-            
+
             # One HybridSort instance + one slot map per well, created the first time each well is seen.
             # Move this into __init__ if you'd rather not check hasattr() every frame.
             if not hasattr(self, "_hybridSortTrackerForWell"):
+                try:
+                  from boxmot.trackers.bbox import HybridSort
+                except ImportError as e:
+                  raise ImportError("centerOfMass_YOLO_hybridSORT requires a version of boxmot providing "
+                                     "boxmot.trackers.bbox.HybridSort, which isn't available in this environment") from e
+                self._HybridSort = HybridSort
                 self._hybridSortTrackerForWell = {}   # wellNum -> HybridSort instance
                 self._animalNumForTrackId = {}        # wellNum -> {trackId: animalNum}
 
             if wellNum not in self._hybridSortTrackerForWell:
-                self._hybridSortTrackerForWell[wellNum] = HybridSort(
+                self._hybridSortTrackerForWell[wellNum] = self._HybridSort(
                     det_thresh=self._hyperparameters["yolo11MinConf"],
                     with_reid=False,     # no appearance model needed/available for this use case
                     cmc_method=None,     # camera is static per well, skip motion compensation
