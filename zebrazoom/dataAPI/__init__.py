@@ -37,3 +37,4 @@ from .findAndSmoothStationaryHeadPositions import *
 from .smoothTailAngleOverTime import *
 from .mergeSameTracks import *
 from .smoothMergedTracksAndRemoveImmobileTracks import *
+from .synthesizeTracksFromDetectionCloud import *
