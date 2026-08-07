@@ -52,12 +52,21 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
 
   def run(self):
     
-    if os.path.exists(self._hyperparameters["DLmodelPath"]):
-      model = YOLO(self._hyperparameters["DLmodelPath"])
-    elif os.path.exists(os.path.join('zebrazoom', 'configuration', self._hyperparameters["DLmodelPath"])):
-      model = YOLO(os.path.join('zebrazoom', 'configuration', self._hyperparameters["DLmodelPath"]))
-    elif os.path.exists(os.path.join('ZebraZoom', 'zebrazoom', 'configuration', self._hyperparameters["DLmodelPath"])):
-      model = YOLO(os.path.join('ZebraZoom', 'zebrazoom', 'configuration', self._hyperparameters["DLmodelPath"]))
+    DLmodelPath = self._hyperparameters["DLmodelPath"]
+    if os.path.isabs(DLmodelPath):
+      modelPathCandidates = [DLmodelPath]
+    else:
+      modelPathCandidates = []
+      if self._hyperparameters.get("configFileFolder"):
+        modelPathCandidates.append(os.path.join(self._hyperparameters["configFileFolder"], DLmodelPath))
+      modelPathCandidates.append(DLmodelPath)
+      modelPathCandidates.append(os.path.join('zebrazoom', 'configuration', DLmodelPath))
+      modelPathCandidates.append(os.path.join('ZebraZoom', 'zebrazoom', 'configuration', DLmodelPath))
+
+    for modelPathCandidate in modelPathCandidates:
+      if os.path.exists(modelPathCandidate):
+        model = YOLO(modelPathCandidate)
+        break
     else:
       print("Path to DL model not found")
       raise ValueError("Path to DL model not found")

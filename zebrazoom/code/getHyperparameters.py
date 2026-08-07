@@ -328,6 +328,7 @@ def getHyperparameters(configFile, videoName, videoPath, argv):
   if isinstance(configFile, str):
     with open(configFile) as f:
       config = json.load(f)
+    hyperparameters["configFileFolder"] = os.path.dirname(os.path.abspath(configFile))
   else:
     assert isinstance(configFile, dict)
     config = configFile
