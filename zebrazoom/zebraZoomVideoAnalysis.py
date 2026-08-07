@@ -332,7 +332,7 @@ class ZebraZoomVideoAnalysis:
       # trusting HybridSORT's own slot assignment, so only run one or the other, not both.
       if "synthesizeTracksFromDetectionCloud" in self._hyperparameters and self._hyperparameters["synthesizeTracksFromDetectionCloud"]:
         for numWell in range(self._hyperparameters["nbWells"]):
-          dataAPI.synthesizeTracksFromDetectionCloud(self._hyperparameters['H5filename'], numWell, self._hyperparameters["nbAnimalsPerWell"])
+          dataAPI.synthesizeTracksFromDetectionCloud(self._hyperparameters['H5filename'], numWell, self._hyperparameters["nbAnimalsPerWell"], diagnosisMode=self._hyperparameters.get("synthesizeTracksFromDetectionCloudDiagnosisMode", 0))
       else:
         if "mergeSameTracks" in self._hyperparameters and self._hyperparameters["mergeSameTracks"]:
           for numWell in range(self._hyperparameters["nbWells"]):

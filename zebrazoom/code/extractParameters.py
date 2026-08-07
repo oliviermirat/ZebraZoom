@@ -91,6 +91,8 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
   thresAngleBoutDetect = hyperparameters["thresAngleBoutDetect"]
   debugExtractParams = hyperparameters["debugExtractParams"]
   tailAngleSmoothingFactor = hyperparameters["tailAngleSmoothingFactor"]
+  # "Extract Param ..." progress trace: off by default for YOLO tracking (very verbose there),
+  printExtractParamsTrace = 1 if hyperparameters.get("printExtractParamsTrace") == 1 else 0
 
   trackingHeadTailAllAnimals = trackingData[0]
   trackingHeadingAllAnimals  = trackingData[1]
@@ -136,7 +138,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
     
     for i in range(0,nbFrames):
     
-      if (hyperparameters["freqAlgoPosFollow"] != 0) and (i % hyperparameters["freqAlgoPosFollow"] == 0):
+      if printExtractParamsTrace and (hyperparameters["freqAlgoPosFollow"] != 0) and (i % hyperparameters["freqAlgoPosFollow"] == 0):
         print("Extract Param Begin: wellNumber:",wellNumber," ; frame:",i)
       
       tail_1[i]  = np.array([ trackingTail[i][1][0], trackingTail[i][1][1] ])
@@ -240,7 +242,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
       angleVariation  = np.zeros((nbFrames, 1))
       auDessus        = np.zeros((nbFrames, 1))
       for i in range(0,nbFrames):
-        if (hyperparameters["freqAlgoPosFollow"] != 0) and (i % (hyperparameters["freqAlgoPosFollow"]) == 0):
+        if printExtractParamsTrace and (hyperparameters["freqAlgoPosFollow"] != 0) and (i % (hyperparameters["freqAlgoPosFollow"]) == 0):
           print("Extract Param Middle: wellNumber:",wellNumber," ; frame:",i)
         min = 10000
         max = -10000
@@ -260,7 +262,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
     else:
       auDessus = detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumber, wellPositions, head, headPositionFirstFrame, tailTipFirstFrame)
     
-    if (hyperparameters["freqAlgoPosFollow"] != 0):
+    if printExtractParamsTrace and (hyperparameters["freqAlgoPosFollow"] != 0):
       print("Extract Param Middle: wellNumber:",wellNumber," ; frame:",i)
     
     auDessus2 = np.copy(auDessus)
@@ -286,7 +288,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
     
     for i in range(0, nbFrames):
     
-      if (hyperparameters["freqAlgoPosFollow"] != 0) and (i % (hyperparameters["freqAlgoPosFollow"]*10) == 0):
+      if printExtractParamsTrace and (hyperparameters["freqAlgoPosFollow"] != 0) and (i % (hyperparameters["freqAlgoPosFollow"]*10) == 0):
         print("Extract Param End1 Freq*10 : wellNumber:",wellNumber," ; frame:",i)
     
       if (position==0) and (auDessus2[i]==1):
@@ -335,7 +337,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
 
     for i in range(0,len(bouts)):
     
-      if (hyperparameters["freqAlgoPosFollow"] != 0) and (i % (hyperparameters["freqAlgoPosFollow"]*10) == 0):
+      if printExtractParamsTrace and (hyperparameters["freqAlgoPosFollow"] != 0) and (i % (hyperparameters["freqAlgoPosFollow"]*10) == 0):
         print("Extract Param End2 Freq*10 : wellNumber:",wellNumber," ; frame:",i)
       
       item = {}
