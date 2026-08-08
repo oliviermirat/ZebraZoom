@@ -430,7 +430,9 @@ def _buildTrackletsOnline(rawSlots, rawConfidence, nbAnimalsPerWell, nbFrames, c
                            splitAmbiguousClusters, gatingMahalanobisThreshold,
                            measurementNoiseBase, processNoiseScale, minHitsToConfirm,
                            maxMissesTentative, maxFramesToCoast, maxReacquisitionDistance,
-                           maxPlausibleSpeed, maxConsecutiveWeakMatches, diag, numWell):
+                           maxPlausibleSpeed, maxConsecutiveWeakMatches, diag, numWell,
+                           measurementConfidenceFloor=0.5, maxGatingCovariance=300.0,
+                           maxGapForReacquisitionFallback=2):
   """
   Frame-by-frame multi-object tracker producing a set of "tracklets"
   (trajectory fragments). Every active track carries its own
@@ -549,7 +551,15 @@ def _buildTrackletsOnline(rawSlots, rawConfidence, nbAnimalsPerWell, nbFrames, c
     meanConfidences = np.array([c['meanConfidence'] for c in subClusters], dtype=float)
     # effective sample size is scaled by how sure YOLO was about these points, not just how many
     # there were -- a cluster built from several LOW-confidence boxes is still not very trustworthy.
-    rVals = measurementNoiseBase / np.maximum(weights * meanConfidences, 0.1)
+    # Floored at measurementConfidenceFloor (NOT a lower, more permissive floor): letting rVals
+    # grow without real limit for a near-zero-confidence cluster makes the Mahalanobis cost of
+    # matching it artificially "cheap" for ANY nearby track, including one that rightfully
+    # belongs to a completely different, well-established detection a real distance away -- in
+    # one observed real case, a long-tracked fish briefly missed one frame and its own rightful,
+    # nearly-exact-position detection went unclaimed while it was instead matched, at a cost
+    # comfortably under gate, to an unrelated cluster 54px away purely because that cluster's
+    # confidence (0.03) let its effective noise balloon under the old, more permissive floor.
+    rVals = measurementNoiseBase / np.maximum(weights * meanConfidences, measurementConfidenceFloor)
 
     cost = np.empty((len(candidateTrackIds), len(subClusters)))
     mahalanobisCostMatrix = np.empty_like(cost)
@@ -557,7 +567,21 @@ def _buildTrackletsOnline(rawSlots, rawConfidence, nbAnimalsPerWell, nbFrames, c
       tr = activeTracks[tid]
       kf = tr['kf']
       HPHt = kf.H @ kf.P @ kf.H.T
-      a0, b0, c0, d0 = HPHt[0, 0], HPHt[0, 1], HPHt[1, 0], HPHt[1, 1]
+      # Capped for GATING purposes only -- the Kalman UPDATE a few lines below still uses the
+      # real, uncapped kf.P, so the filter's own internal state is unaffected. Left uncapped, a
+      # track that keeps missing for long enough eventually has a Pxx/Pyy so large that even a
+      # jump of ~100px prices out cheaper than gatingMahalanobisThreshold, no matter how far
+      # maxFramesToCoast is lowered -- there is always some "last possible frame" with maximally
+      # inflated covariance, and shrinking maxFramesToCoast only moves where that frame is, not
+      # whether it exists. In one observed real case a track coasting right up to
+      # maxFramesToCoast's limit had its covariance grow enough that a 92px jump to a
+      # low-confidence, unrelated cluster passed the gate (cost 8.06 against a 9.21 threshold)
+      # on the very last frame before it would otherwise have died. Capping how much the
+      # matching test is ever allowed to trust keeps the gate meaningful throughout the whole
+      # coasting window instead of only near its start.
+      a0 = min(HPHt[0, 0], maxGatingCovariance)
+      d0 = min(HPHt[1, 1], maxGatingCovariance)
+      b0, c0 = HPHt[0, 1], HPHt[1, 0]
       aArr, dArr = a0 + rVals, d0 + rVals
       detArr = aArr * dArr - b0 * c0
       yArr = centroids - kf.pos
@@ -567,8 +591,9 @@ def _buildTrackletsOnline(rawSlots, rawConfidence, nbAnimalsPerWell, nbFrames, c
 
       lastFrame, lastPos = tr['entries'][-1][0], tr['entries'][-1][1]
       staticDist = np.linalg.norm(centroids - lastPos, axis=1)
+      gapSinceLastMatch = t - lastFrame
 
-      if useReacquisitionFallback:
+      if useReacquisitionFallback and gapSinceLastMatch <= maxGapForReacquisitionFallback:
         # positional re-acquisition fallback: a fish that just made a sharp turn (e.g. off a
         # well wall) can badly fool the constant-velocity prediction used above, yet it still
         # can't have physically moved far from where it was last actually seen. Rescale plain
@@ -578,6 +603,18 @@ def _buildTrackletsOnline(rawSlots, rawConfidence, nbAnimalsPerWell, nbFrames, c
         # last frame doesn't need this crutch, and letting it use it anyway is exactly what let
         # an uncertain, coasting track's inflated (and therefore artificially cheap) covariance
         # outbid a confident track for a detection that rightfully belonged to the confident one.
+        #
+        # Also gated on gapSinceLastMatch: this fallback is a FLAT distance radius with no
+        # gap-scaling at all, unlike every other test here (the Mahalanobis cost naturally
+        # loosens as covariance grows, and even that is now capped -- see maxGatingCovariance).
+        # Its own comment states the scenario it exists for precisely: recovering from a sharp
+        # turn the constant-velocity model couldn't see coming, in a SINGLE missed frame. Left
+        # available for tracks that have been coasting many frames, it becomes a second, gap-
+        # blind route to exactly the failure maxGatingCovariance was added to close: in one
+        # observed real case, a track that had genuinely lost its fish 6 frames earlier matched
+        # a completely unrelated, low-confidence cluster 58.5px away -- just inside the flat
+        # 60px radius -- entirely through this fallback (its Mahalanobis-only cost, unaffected
+        # by this fallback, was far over gate).
         staticCost = (staticDist / maxReacquisitionDistance) * gatingMahalanobisThreshold
         cost[i, :] = np.minimum(mahalanobisCost, staticCost)
       else:
@@ -592,7 +629,6 @@ def _buildTrackletsOnline(rawSlots, rawConfidence, nbAnimalsPerWell, nbFrames, c
       # "the same object, just re-predicted with low confidence". No physical fish can outrun
       # a hard cap on how far it could plausibly have travelled since it was last actually
       # seen, so cap it here regardless of what either cost view above says.
-      gapSinceLastMatch = t - lastFrame
       maxPlausibleDist = maxReacquisitionDistance + maxPlausibleSpeed * gapSinceLastMatch
       cost[i, staticDist > maxPlausibleDist] += 1e6
     cost[cost > gatingMahalanobisThreshold] += 1e6
@@ -629,7 +665,7 @@ def _buildTrackletsOnline(rawSlots, rawConfidence, nbAnimalsPerWell, nbFrames, c
       # CONFIRMED track is currently competing for it) is an unresolved multi-fish blob:
       # trust its centroid for position but not for the velocity it would otherwise imply.
       isFused = cluster['spread'] > 0.3 * clusterDistanceThreshold
-      R = np.eye(2) * (measurementNoiseBase / max(cluster['weight'] * cluster['meanConfidence'], 0.1))
+      R = np.eye(2) * (measurementNoiseBase / max(cluster['weight'] * cluster['meanConfidence'], measurementConfidenceFloor))
 
       lastFrame, lastPos = tr['entries'][-1][0], tr['entries'][-1][1]
       gap = t - lastFrame
@@ -769,7 +805,19 @@ def _buildTrackletsOnline(rawSlots, rawConfidence, nbAnimalsPerWell, nbFrames, c
       # makes almost anything look "cheap" in raw Mahalanobis terms -- without this priority
       # split, a plain single Hungarian pass over every track at once can and does let a lost,
       # drifting track outbid the fish's rightful, actively-tracking track for its own detection.
-      confidentIds = [tid for tid in trackIds if activeTracks[tid]['misses'] == 0]
+      #
+      # "Confident" additionally requires strongHits well past minHitsToConfirm, not just
+      # misses==0 -- a track that only just reached 'confirmed' status a couple of frames ago
+      # has, by definition, never had the chance to miss yet, so misses==0 alone doesn't
+      # distinguish it from a track with months of established evidence behind it. Without this,
+      # a brand-new, barely-confirmed track spawned right next to an established track's
+      # temporarily-missed detection can win PASS 1's exclusive pick of that detection outright
+      # (the established track, having missed last frame, is demoted to PASS 2 and left with
+      # whatever's leftover) -- in one observed real case this is exactly how a long-tracked real
+      # fish's rightful next detection was handed to a track that had existed for all of 3 frames,
+      # forcing the real fish's own track onto a distant, wrong cluster instead.
+      confidentIds = [tid for tid in trackIds
+                       if activeTracks[tid]['misses'] == 0 and activeTracks[tid]['strongHits'] >= 2 * minHitsToConfirm]
       remainingClusterIdx = list(range(len(clusters)))
       if confidentIds:
         m, c = _matchAndApply(t, clusters, confidentIds, remainingClusterIdx, useReacquisitionFallback=False)
@@ -1208,10 +1256,13 @@ def synthesizeTracksFromDetectionCloud(videoName, numWell, nbAnimalsPerWell,
                                         splitAmbiguousClusters=True,
                                         gatingMahalanobisThreshold=9.21,
                                         measurementNoiseBase=25.0,
+                                        measurementConfidenceFloor=0.5,
+                                        maxGatingCovariance=300.0,
+                                        maxGapForReacquisitionFallback=2,
                                         processNoiseScale=1.0,
                                         minHitsToConfirm=3,
                                         maxMissesTentative=1,
-                                        maxFramesToCoast=15,
+                                        maxFramesToCoast=10,
                                         maxReacquisitionDistance=60,
                                         maxPlausibleSpeed=15,
                                         maxConsecutiveWeakMatches=3,
@@ -1220,8 +1271,8 @@ def synthesizeTracksFromDetectionCloud(videoName, numWell, nbAnimalsPerWell,
                                         collisionPruneMinFrames=5,
                                         minSegmentLength=3,
                                         minNetDisplacement=10,
-                                        minMeanConfidenceForReal=0.1,
-                                        minAverageSpeed=0.06,
+                                        minMeanConfidenceForReal=0.15,
+                                        minAverageSpeed=0.11,
                                         verbose=True,
                                         diagnosisMode=True,
                                         diagnosisLogPath=None):
@@ -1397,6 +1448,51 @@ def synthesizeTracksFromDetectionCloud(videoName, numWell, nbAnimalsPerWell,
       this divided by the number of raw points merged into it -- the
       variance of a mean of n iid samples is sigma^2 / n, so more duplicate
       detections directly buys a more precise position estimate.
+  measurementConfidenceFloor : float, default 0.5
+      Floor under (cluster weight * cluster mean confidence) before it's
+      used to scale measurement noise down -- prevents a near-zero-
+      confidence cluster's effective noise from growing without real limit.
+      Raising it makes very-low-confidence clusters trusted LESS both for
+      the Kalman update and, more importantly, for the matching gate: a
+      cluster whose effective noise is allowed to balloon becomes
+      artificially "cheap" to match for ANY nearby track in Mahalanobis
+      terms, including one that rightfully belongs to a completely
+      different, well-established track a real distance away. In one
+      observed real case, a long-tracked fish missed a single frame and its
+      own rightful, near-exact-position detection went unclaimed while it
+      was instead matched, at a cost comfortably under gate, to an
+      unrelated cluster 54px away purely because that cluster's confidence
+      (0.03) let its effective noise balloon under a lower, more permissive
+      floor. Lowering this back towards 0.1 restores the original, more
+      permissive behavior if you find it's rejecting genuine reconnections
+      to real, consistently low-confidence fish.
+  maxGatingCovariance : float, default 300.0
+      Ceiling (px^2) on the position covariance the matching GATE is ever
+      allowed to trust -- independent of, and in addition to,
+      measurementConfidenceFloor above. The Kalman UPDATE step still always
+      uses the track's real, uncapped covariance (so the filter's own
+      internal state is unaffected); only the accept/reject decision is
+      capped. Without this, a track that's been coasting (missing) for a
+      while has a covariance that keeps growing for as long as
+      maxFramesToCoast allows, and growing covariance makes ANY nearby
+      detection look progressively cheaper in Mahalanobis terms -- there is
+      always some "last possible frame" before a track would die where its
+      covariance is maximally inflated, and lowering maxFramesToCoast only
+      moves where that frame is, it doesn't remove it. In one observed real
+      case, a track coasting right up against maxFramesToCoast's limit had
+      its covariance grow enough that a 92px jump to a low-confidence,
+      unrelated cluster passed the gate on the very last frame before it
+      would otherwise have died. Capping the covariance the gate can ever
+      use keeps it meaningful throughout the whole coasting window rather
+      than only near its start -- roughly, no reconnect farther than
+      sqrt(gatingMahalanobisThreshold * (maxGatingCovariance +
+      effective measurement noise)) away is ever accepted, however long the
+      track has been coasting. BE CAUTIOUS LOWERING THIS: it caps how far a
+      genuine reconnection can ever be trusted too, regardless of how
+      slowly or briefly the fish was actually undetected -- if you find
+      real fish failing to reconnect after a legitimate sharp turn or brief
+      occlusion, raise this (or rely on maxReacquisitionDistance/
+      maxPlausibleSpeed's separate, distance-based fallback instead).
   processNoiseScale : float, default 1.0
       Scales how much frame-to-frame velocity change the Kalman filter
       expects from a real fish; higher values track sharper turns at the
@@ -1404,32 +1500,45 @@ def synthesizeTracksFromDetectionCloud(videoName, numWell, nbAnimalsPerWell,
   minHitsToConfirm : int, default 3
       Consecutive matched frames a brand-new track needs before it's
       trusted as a real fish candidate and given the full occlusion
-      patience below.
+      patience below. Also used, doubled, as the bar for Stage 1's PASS 1
+      priority pick (see the STAGE 1 description above): a track needs
+      strongHits >= 2*minHitsToConfirm, not just zero misses last frame, to
+      get PASS 1's exclusive first pick of nearby clusters. Zero misses
+      alone doesn't distinguish a track with months of established evidence
+      from one that reached 'confirmed' status two frames ago and has
+      simply never had the chance to miss yet -- without this extra bar,
+      such a brand-new track can win PASS 1's exclusive pick of a detection
+      that rightfully belongs to an established track that merely missed
+      the previous frame, forcing the established track onto a distant,
+      wrong cluster in PASS 2 instead.
   maxMissesTentative : int, default 1
       An unconfirmed track is abandoned after this many consecutive misses.
-  maxFramesToCoast : int, default 15
+  maxFramesToCoast : int, default 10
       Once confirmed, how many consecutive missed frames a track tolerates,
       coasting on its Kalman-predicted position, before Stage 1 gives up on
       it (not necessarily the end of the story -- see Stage 2). Deliberately
       kept well short of Stage 2's own maxGapFramesForStitching: every
       missed frame the track coasts through grows its Kalman covariance
       further, and growing covariance makes the Mahalanobis gate cheaper
-      for ANY nearby detection, real or not (see maxPlausibleSpeed).
-      Reconnecting a track that's been coasting for a long time is exactly
-      the situation Stage 2 is built to handle carefully -- it looks at
-      BOTH fragments' full, whole-trajectory evidence (confidence, quality,
-      independent realism) rather than a single frame's now-heavily-inflated
-      covariance -- so once a gap has gone on this long, it's deliberately
-      handed off rather than let Stage 1 keep gambling on it. In one
-      observed real case, a track that lost its detection legitimately
-      coasted for the full 25-frame-default patience, by which point its
-      covariance had grown ~100x and a completely unrelated detection 249px
-      away (a different, low-confidence object) became cheap enough to pass
-      the strict motion-model gate at the very last possible frame,
-      silently splicing two unrelated fragments into one fake, linearly-
-      interpolated "trajectory". Lowering this value shrinks how much any
-      single track's covariance is ever allowed to inflate before Stage 1
-      defers the decision, without touching the gate math itself.
+      for ANY nearby detection, real or not (see maxPlausibleSpeed and
+      measurementConfidenceFloor). Reconnecting a track that's been
+      coasting for a long time is exactly the situation Stage 2 is built to
+      handle carefully -- it looks at BOTH fragments' full, whole-trajectory
+      evidence (confidence, quality, independent realism) rather than a
+      single frame's now-heavily-inflated covariance -- so once a gap has
+      gone on this long, it's deliberately handed off rather than let
+      Stage 1 keep gambling on it. In observed real cases, a track that lost
+      its detection legitimately coasted right up to this patience limit,
+      by which point its covariance had grown enough that an unrelated,
+      low-confidence detection tens to low-hundreds of pixels away became
+      cheap enough to pass the strict motion-model gate at the very last
+      possible frame, silently splicing two unrelated fragments into one
+      fake, linearly-interpolated "trajectory" -- this kept happening even
+      at the previous default of 15 (itself already lowered once from an
+      original 25 for the same reason), which is why it's now lower still.
+      Lowering this value shrinks how much any single track's covariance is
+      ever allowed to inflate before Stage 1 defers the decision, without
+      touching the gate math itself.
   maxReacquisitionDistance : float, default 60
       A second, motion-model-independent gate (pixels): a detection within
       this distance of a track's last CONFIRMED position is always an
@@ -1438,7 +1547,29 @@ def synthesizeTracksFromDetectionCloud(videoName, numWell, nbAnimalsPerWell,
       track survive a real fish's sharp turn (e.g. bouncing off a well
       wall) in a single frame, instead of relying on Stage 2 to reconnect
       it later -- a fish can't teleport, even when its velocity estimate
-      is momentarily wrong.
+      is momentarily wrong. See maxGapForReacquisitionFallback: this
+      distance is flat and does NOT scale with how long the track has been
+      missing, so it is only actually offered for the first few missed
+      frames.
+  maxGapForReacquisitionFallback : int, default 2
+      How many consecutive missed frames a track may have before
+      maxReacquisitionDistance's flat-radius fallback stops being offered
+      to it (the ordinary, covariance-based Mahalanobis test -- see
+      maxGatingCovariance -- still applies regardless). maxReacquisitionDistance
+      is a FLAT radius that does not scale with gap length at all, unlike
+      every other test in Stage 1; its own purpose, per its docstring, is
+      recovering from a sharp turn in a SINGLE missed frame, not standing
+      in for the motion model indefinitely. Left available for longer
+      gaps, it becomes a second, gap-blind route to the same failure
+      maxGatingCovariance exists to close: in one observed real case, a
+      track that had genuinely lost its fish 6 frames earlier matched a
+      completely unrelated, low-confidence cluster 58.5px away -- just
+      inside the flat 60px radius -- through this fallback alone (its
+      Mahalanobis-only cost was far over gate). Raise this if real fish
+      making sharp turns after a slightly longer occlusion are losing
+      their track; lower it (down to 0 to disable the fallback entirely,
+      since gapSinceLastMatch is never less than 1) if still-implausible
+      reconnections persist.
   maxPlausibleSpeed : float, default 15
       Hard cap (pixels/frame) on how fast a fish could plausibly be
       moving. No match -- strong or weak -- is ever accepted farther than
@@ -1484,7 +1615,7 @@ def synthesizeTracksFromDetectionCloud(videoName, numWell, nbAnimalsPerWell,
       Straight-line distance (pixels) between a trajectory's first and last
       position, below which it's treated as a static false detection and
       discarded.
-  minMeanConfidenceForReal : float, default 0.1
+  minMeanConfidenceForReal : float, default 0.15
       Minimum average YOLO detection confidence (0-1) a trajectory's
       underlying detections must have, in addition to passing the
       length/displacement test, to be kept -- only enforced when this
@@ -1492,23 +1623,23 @@ def synthesizeTracksFromDetectionCloud(videoName, numWell, nbAnimalsPerWell,
       addGoodDetectionProbability enabled); silently has no effect
       otherwise, since there is nothing to check. Also used, the same way,
       to decide which tracklets Stage 2 is allowed to stitch (see its
-      docstring). BE CAUTIOUS RAISING THIS: real fish are not always
-      detected with high confidence -- in observed real data, genuinely
-      real, long, continuously-tracked fish had mean confidence as low as
-      0.18-0.20 (well above the yolo11MinConf detection floor, e.g. 0.01,
-      but still far from "confident"), while clearly-fake trajectories
-      (immobile, or moving with no real underlying detection support)
-      clustered at 0.01-0.08 -- there was no meaningful population between
-      0.08 and 0.18. The default is set to sit safely below that gap
-      rather than at some fraction of 1.0, since raising it even to 0.2
-      silently discarded real, well-tracked fish. If you suspect this is
-      still filtering out real fish (or letting through fakes) in your own
-      videos, check the diagnosis log's STAGE4 lines (see diagnosisMode)
-      for the actual meanConfidence values of both your accepted and your
-      missing trajectories before changing this -- the right number is
-      whatever sits between your own data's two clusters, which may not be
-      0.1.
-  minAverageSpeed : float, default 0.06
+      docstring). This has been recalibrated twice against real, confirmed
+      data, both times landing on the same picture: genuinely real,
+      continuously-tracked fish had mean confidence as low as 0.18-0.20 in
+      one video, while in another every trajectory the confidence gate
+      needed to reject (confirmed by direct human review) sat at
+      0.10-0.13, and every trajectory that should stay sat at 0.18 or
+      above -- a clean gap with nothing in between. 0.15 sits in the
+      middle of that gap. BE CAUTIOUS RAISING THIS FURTHER: real fish are
+      not always detected with high confidence, and pushing this toward
+      the 0.18-0.20 floor observed for genuine fish risks starting to
+      discard them too. If you suspect this is still filtering out real
+      fish (or letting through fakes) in your own videos, check the
+      diagnosis log's STAGE4 lines (see diagnosisMode) for the actual
+      meanConfidence values of both your accepted and your missing
+      trajectories before changing this -- the right number is whatever
+      sits between your own data's two clusters, which may not be 0.15.
+  minAverageSpeed : float, default 0.11
       Second, duration-SCALED companion to minNetDisplacement (pixels/frame):
       the effective minimum displacement a trajectory must show becomes
       max(minNetDisplacement, minAverageSpeed * length). For short/typical
@@ -1519,14 +1650,22 @@ def synthesizeTracksFromDetectionCloud(videoName, numWell, nbAnimalsPerWell,
       genuinely static false detection (a reflection, a piece of debris)
       accumulates its own frame-to-frame jitter for hundreds of frames, and
       that jitter doesn't average to exactly zero, so it can drift past a
-      flat pixel floor by chance alone over a long enough run. In one
-      observed real case, a static false detection spanning a full 300-frame
-      video accumulated 12.7px of "cumulative real displacement" -- just
-      over the flat minNetDisplacement=10 floor -- while its actual average
-      speed (~0.04 px/frame) was roughly 3x below the slowest confirmed
-      REAL, continuously-tracked fish observed in other videos
-      (~0.12-0.15 px/frame over similarly long trajectories). Set to 0 to
-      disable and fall back to the flat floor alone (the old behavior).
+      flat pixel floor by chance alone over a long enough run. Confirmed
+      real, continuously-tracked fish were observed sustaining roughly
+      0.12-0.15 px/frame over full, ~300-frame trajectories; confirmed
+      static false detections were observed at roughly 0.04-0.10 px/frame
+      over similarly long trajectories -- including one that a still lower
+      former default of this parameter (0.06) was, in hindsight, just
+      barely still letting through. BE CAUTIOUS RAISING THIS FURTHER: the
+      margin between the slowest observed real fish and the fastest
+      observed static false detection is narrow (roughly 0.10-0.15
+      px/frame), so this is inherently a best-effort, evidence-calibrated
+      compromise rather than a clean separation -- if you still see a
+      long-lived, genuinely static false detection surviving, check the
+      diagnosis log's STAGE4 lines for its actual average speed
+      (cumulativeRealDisplacement / length) before raising this further,
+      and if you find real, very slow fish being rejected, lower it toward
+      0.06 or 0. Set to 0 to disable and fall back to the flat floor alone.
   verbose : bool, default True
       Prints a summary of every stage's decisions, plus every individual
       drop, to stdout, so you can sanity-check results before trusting
@@ -1629,7 +1768,8 @@ def synthesizeTracksFromDetectionCloud(videoName, numWell, nbAnimalsPerWell,
                                        gatingMahalanobisThreshold, measurementNoiseBase, processNoiseScale,
                                        minHitsToConfirm, maxMissesTentative, maxFramesToCoast,
                                        maxReacquisitionDistance, maxPlausibleSpeed, maxConsecutiveWeakMatches,
-                                       diag, numWell)
+                                       diag, numWell, measurementConfidenceFloor, maxGatingCovariance,
+                                       maxGapForReacquisitionFallback)
 
     mergedTracks = _stitchTrackletsGlobally(tracklets, nbFrames, maxGapFramesForStitching,
                                              clusterDistanceThreshold, minSegmentLength, minNetDisplacement,
