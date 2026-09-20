@@ -186,7 +186,7 @@ def _clusterPointsAtFrame(points, radius, confidences=None):
     conf = float(confidences[0]) if confidences is not None else 1.0
     ptConfidences = confidences if confidences is not None else np.array([1.0])
     return [{'centroid': points[0], 'weight': 1, 'spread': 0.0, 'points': points,
-             'confidences': ptConfidences, 'meanConfidence': conf}]
+             'confidences': ptConfidences, 'meanConfidence': conf, 'peakConfidence': conf}]
 
   parent = list(range(n))
 
@@ -226,7 +226,8 @@ def _clusterPointsAtFrame(points, radius, confidences=None):
       meanConfidence = 1.0
     spread = float(np.linalg.norm(pts - centroid, axis=1).mean()) if len(idx) > 1 else 0.0
     clusters.append({'centroid': centroid, 'weight': len(idx), 'spread': spread, 'points': pts,
-                      'confidences': memberConfidences, 'meanConfidence': meanConfidence})
+                      'confidences': memberConfidences, 'meanConfidence': meanConfidence,
+                      'peakConfidence': float(memberConfidences.max())})
   return clusters
 
 
@@ -266,7 +267,8 @@ def _splitCluster(cluster, seeds, iterations=5):
     meanConfidence = float(memberConfidences.mean())
     spread = float(np.linalg.norm(members - centroid, axis=1).mean()) if len(members) > 1 else 0.0
     subClusters.append({'centroid': centroid, 'weight': len(members), 'spread': spread, 'points': members,
-                         'confidences': memberConfidences, 'meanConfidence': meanConfidence})
+                         'confidences': memberConfidences, 'meanConfidence': meanConfidence,
+                         'peakConfidence': float(memberConfidences.max())})
   return subClusters
 
 
@@ -309,7 +311,7 @@ def _hermiteInterpolateGap(p0, v0, p1, v1, gap):
 # Stage 4: fake-fish removal
 # ============================================================================
 
-def _realFishStats(track):
+def _realFishStats(track, useSpatialExtent=False):
   """
   Shared computation behind _isRealFish, factored out so diagnostic logging
   (Stage 2 eligibility checks, the final Stage 4 gate) can report the exact
@@ -335,12 +337,59 @@ def _realFishStats(track):
   if run:
     realRuns.append(run)
 
-  cumulativeRealDisplacement = sum(np.linalg.norm(run[-1][1] - run[0][1]) for run in realRuns)
+  if useSpatialExtent:
+    # how far the fish ever got from where each real run began, instead of only how far its LAST
+    # position is from its first: a real fish that wanders around and comes back near its start has
+    # a tiny net displacement but a large extent, whereas a static false detection's jitter has both
+    # tiny. Still measured within each run, so two static detections bridged by interpolation
+    # cannot fake motion.
+    cumulativeRealDisplacement = sum(max(np.linalg.norm(e[1] - run[0][1]) for e in run) for run in realRuns)
+  else:
+    cumulativeRealDisplacement = sum(np.linalg.norm(run[-1][1] - run[0][1]) for run in realRuns)
   return length, cumulativeRealDisplacement, len(realRuns), realRuns
 
 
+def _medianPeakConfidence(track):
+  """Median, over the trajectory's real (non-interpolated) detections, of the highest YOLO
+  confidence found in the matched cluster -- 1.0 when no such information is stored."""
+  peaks = [e[3] for e in track['entries'] if len(e) > 3 and e[2]]
+  return float(np.median(peaks)) if peaks else 1.0
+
+
+def _trimTrajectory(entries, maxInterpolatedGapFrames, minSupportPeakConfidence):
+  """
+  Splits a trajectory into the pieces actually backed by detections: an interpolated stretch longer
+  than maxInterpolatedGapFrames is removed (a fish undetected for that long is more likely gone or
+  hidden than gliding along the interpolation), and real detections at the very start/end of the
+  trajectory whose peak confidence is below minSupportPeakConfidence are trimmed off (a track that
+  lost its fish and is now riding junk).
+  """
+  entries = list(entries)
+  while entries and len(entries[0]) > 3 and entries[0][3] < minSupportPeakConfidence:
+    entries.pop(0)
+  while entries and len(entries[-1]) > 3 and entries[-1][3] < minSupportPeakConfidence:
+    entries.pop()
+  pieces, current, gapRun = [], [], []
+  for e in entries:
+    if e[2]:
+      if gapRun:
+        if len(gapRun) > maxInterpolatedGapFrames:
+          if current:
+            pieces.append(current)
+          current = []
+        else:
+          current.extend(gapRun)
+        gapRun = []
+      current.append(e)
+    else:
+      gapRun.append(e)
+  if current:
+    pieces.append(current)
+  return pieces
+
+
 def _passesRealismTest(length, cumulativeRealDisplacement, minSegmentLength, minNetDisplacement,
-                        minAverageSpeed=0.0):
+                        minAverageSpeed=0.0, minAverageSpeedDurationCap=300):
   """
   Shared pass/fail rule behind _isRealFish, _isStitchEligible (Stage 2) and
   the Stage 4 gate, factored out so all three apply IDENTICAL criteria to
@@ -366,20 +415,36 @@ def _passesRealismTest(length, cumulativeRealDisplacement, minSegmentLength, min
 
   minAverageSpeed adds a second, duration-SCALED requirement on top of the
   flat floor rather than replacing it: the effective minimum displacement
-  becomes max(minNetDisplacement, minAverageSpeed * length). For a short
-  trajectory this makes no difference (minAverageSpeed * length stays below
-  minNetDisplacement), so ordinary short/typical tracks are completely
-  unaffected; it only starts to bind once a trajectory has been alive long
-  enough that "just barely clearing the flat floor" stops being a
-  meaningful signal of real, purposeful motion. Default 0.0 keeps the old,
-  duration-independent behavior for any caller that doesn't pass one.
+  becomes max(minNetDisplacement, minAverageSpeed * min(length,
+  minAverageSpeedDurationCap)). For a short trajectory this makes no
+  difference (minAverageSpeed * length stays below minNetDisplacement), so
+  ordinary short/typical tracks are completely unaffected; it only starts
+  to bind once a trajectory has been alive long enough that "just barely
+  clearing the flat floor" stops being a meaningful signal of real,
+  purposeful motion. Default 0.0 keeps the old, duration-independent
+  behavior for any caller that doesn't pass one.
+
+  minAverageSpeedDurationCap exists because a real fish's NET displacement
+  is bounded by the size of its tank/well, not by how long the video runs:
+  a fish given 1000 frames doesn't need to end up further from its start
+  than a fish given 300 frames just because the recording is longer --
+  0.12-0.15 px/frame was observed on ~300-frame trajectories specifically,
+  and requiring that same per-frame rate to keep compounding, unbounded,
+  over a video several times longer starts rejecting real fish that spent
+  the extra time swimming around locally rather than drifting further away
+  net. Capping the length used in this multiplication at
+  minAverageSpeedDurationCap (default 300, matching the trajectory length
+  minAverageSpeed was actually calibrated against) keeps the requirement
+  from growing past what was ever validated, while leaving every
+  trajectory at or under that length -- which includes every case this was
+  originally tuned and tested against -- completely unaffected.
   """
   if length < minSegmentLength:
     return False
-  return cumulativeRealDisplacement >= max(minNetDisplacement, minAverageSpeed * length)
+  return cumulativeRealDisplacement >= max(minNetDisplacement, minAverageSpeed * min(length, minAverageSpeedDurationCap))
 
 
-def _isRealFish(track, minSegmentLength, minNetDisplacement, minAverageSpeed=0.0):
+def _isRealFish(track, minSegmentLength, minNetDisplacement, minAverageSpeed=0.0, minAverageSpeedDurationCap=300):
   """
   A track that never really got anywhere between its first and its last
   frame (or that is too short to trust either way) is almost certainly a
@@ -419,7 +484,7 @@ def _isRealFish(track, minSegmentLength, minNetDisplacement, minAverageSpeed=0.0
   """
   length, cumulativeRealDisplacement, _, _ = _realFishStats(track)
   return _passesRealismTest(length, cumulativeRealDisplacement, minSegmentLength, minNetDisplacement,
-                             minAverageSpeed)
+                             minAverageSpeed, minAverageSpeedDurationCap)
 
 
 # ============================================================================
@@ -432,7 +497,8 @@ def _buildTrackletsOnline(rawSlots, rawConfidence, nbAnimalsPerWell, nbFrames, c
                            maxMissesTentative, maxFramesToCoast, maxReacquisitionDistance,
                            maxPlausibleSpeed, maxConsecutiveWeakMatches, diag, numWell,
                            measurementConfidenceFloor=0.5, maxGatingCovariance=300.0,
-                           maxGapForReacquisitionFallback=2):
+                           maxGapForReacquisitionFallback=2, highConfidencePeakThreshold=0.0,
+                           minPeakConfidenceToSpawn=0.0, maxConsecutiveLowConfidenceMatches=10 ** 9):
   """
   Frame-by-frame multi-object tracker producing a set of "tracklets"
   (trajectory fragments). Every active track carries its own
@@ -675,14 +741,17 @@ def _buildTrackletsOnline(rawSlots, rawConfidence, nbAnimalsPerWell, nbFrames, c
         v1 = tr['kf'].vel.copy()
         for step, pos in _hermiteInterpolateGap(lastPos, v0, tr['kf'].pos, v1, gap):
           tr['entries'].append((lastFrame + step, pos, False))  # interpolated, not observed
-      tr['entries'].append((t, tr['kf'].pos.copy(), True))  # a real, directly-matched detection
+      tr['entries'].append((t, tr['kf'].pos.copy(), True, cluster['peakConfidence']))  # a real, directly-matched detection
 
       tr['hits'] += 1
       tr['misses'] = 0
       tr['confidenceSum'] += cluster['meanConfidence']
+      isLowConfidence = cluster['peakConfidence'] < highConfidencePeakThreshold
+      tr['consecutiveLowConfidenceMatches'] = tr['consecutiveLowConfidenceMatches'] + 1 if isLowConfidence else 0
       if isStrong:
         tr['consecutiveWeakMatches'] = 0
-        tr['strongHits'] += 1
+        if not isLowConfidence:
+          tr['strongHits'] += 1
       else:
         tr['consecutiveWeakMatches'] += 1
       # confirmation requires minHitsToConfirm STRONG hits specifically, not just any match --
@@ -819,6 +888,12 @@ def _buildTrackletsOnline(rawSlots, rawConfidence, nbAnimalsPerWell, nbFrames, c
       confidentIds = [tid for tid in trackIds
                        if activeTracks[tid]['misses'] == 0 and activeTracks[tid]['strongHits'] >= 2 * minHitsToConfirm]
       remainingClusterIdx = list(range(len(clusters)))
+      # low-confidence clusters (peak YOLO confidence below highConfidencePeakThreshold) are kept out
+      # of PASS 1 and PASS 2 entirely and only offered to still-unmatched tracks in PASS 3 below
+      lowConfidenceClusterIdx = [ci for ci in remainingClusterIdx
+                                 if clusters[ci]['peakConfidence'] < highConfidencePeakThreshold]
+      if lowConfidenceClusterIdx:
+        remainingClusterIdx = [ci for ci in remainingClusterIdx if ci not in lowConfidenceClusterIdx]
       if confidentIds:
         m, c = _matchAndApply(t, clusters, confidentIds, remainingClusterIdx, useReacquisitionFallback=False)
         matchedTrackIds |= m
@@ -833,6 +908,20 @@ def _buildTrackletsOnline(rawSlots, rawConfidence, nbAnimalsPerWell, nbFrames, c
         m, c = _matchAndApply(t, clusters, pass2Ids, remainingClusterIdx, useReacquisitionFallback=True)
         matchedTrackIds |= m
         matchedClusterIdx |= c
+
+      # PASS 3: a confirmed track that found no high-confidence cluster may still be carried through
+      # a brief dip in its fish's detection confidence by a low-confidence cluster -- strict
+      # motion-model gate only (no re-acquisition fallback), and only for up to
+      # maxConsecutiveLowConfidenceMatches frames in a row, so a track that has really lost its fish
+      # can never walk off along a chain of junk detections.
+      if lowConfidenceClusterIdx:
+        pass3Ids = [tid for tid in trackIds if tid not in matchedTrackIds and tid in activeTracks
+                    and activeTracks[tid]['status'] == 'confirmed'
+                    and activeTracks[tid]['consecutiveLowConfidenceMatches'] < maxConsecutiveLowConfidenceMatches]
+        if pass3Ids:
+          m, c = _matchAndApply(t, clusters, pass3Ids, lowConfidenceClusterIdx, useReacquisitionFallback=False)
+          matchedTrackIds |= m
+          matchedClusterIdx |= c
 
     unmatchedTids = [tid for tid in activeTracks if tid not in matchedTrackIds]
     for tid in unmatchedTids:
@@ -856,14 +945,17 @@ def _buildTrackletsOnline(rawSlots, rawConfidence, nbAnimalsPerWell, nbFrames, c
     for c, cluster in enumerate(clusters):
       if c in matchedClusterIdx:
         continue
+      if cluster['peakConfidence'] < minPeakConfidenceToSpawn:
+        continue
       diag.detail(lambda nextTid=nextTid, cluster=cluster:
                   f"F{t:06d} SPAWN track={nextTid} pos={_fmtPos(cluster['centroid'])} "
                   f"weight={cluster['weight']} conf={cluster['meanConfidence']:.2f}")
       kf = _ConstantVelocityKalmanFilter2D(cluster['centroid'], processNoiseScale)
       activeTracks[nextTid] = {'tid': nextTid, 'kf': kf, 'status': 'tentative',
                                 'hits': 1, 'misses': 0, 'strongHits': 1, 'consecutiveWeakMatches': 0,
+                                'consecutiveLowConfidenceMatches': 0,
                                 'confidenceSum': cluster['meanConfidence'],
-                                'entries': [(t, cluster['centroid'].copy(), True)]}
+                                'entries': [(t, cluster['centroid'].copy(), True, cluster['peakConfidence'])]}
       nextTid += 1
 
   finishedTracklets.extend(activeTracks.values())
@@ -889,7 +981,8 @@ def _buildTrackletsOnline(rawSlots, rawConfidence, nbAnimalsPerWell, nbFrames, c
 
 def _stitchTrackletsGlobally(tracklets, nbFrames, maxGapFramesForStitching, clusterDistanceThreshold,
                               minSegmentLength, minNetDisplacement, minMeanConfidenceForReal, diag, numWell,
-                              minAverageSpeed=0.0):
+                              minAverageSpeed=0.0, minAverageSpeedDurationCap=300,
+                              realismUsesSpatialExtent=False, minMedianPeakConfidenceForReal=0.0):
   """
   Stage 1 is necessarily causal: at frame t it can only use what happened at
   frame <= t. This stage runs AFTER the whole video has already been
@@ -957,10 +1050,14 @@ def _stitchTrackletsGlobally(tracklets, nbFrames, maxGapFramesForStitching, clus
   def _isStitchEligible(tr):
     if tr['status'] != 'confirmed':
       return False, 'not_confirmed'
-    length, cumDisp, nRuns, _ = _realFishStats(tr)
-    if not _passesRealismTest(length, cumDisp, minSegmentLength, minNetDisplacement, minAverageSpeed):
+    length, cumDisp, nRuns, _ = _realFishStats(tr, realismUsesSpatialExtent)
+    if not _passesRealismTest(length, cumDisp, minSegmentLength, minNetDisplacement, minAverageSpeed,
+                               minAverageSpeedDurationCap):
       return False, f'fails_realism_test(length={length},cumulativeRealDisplacement={cumDisp:.1f})'
-    if tr['meanConfidence'] < minMeanConfidenceForReal:
+    if minMedianPeakConfidenceForReal > 0:
+      if _medianPeakConfidence(tr) < minMedianPeakConfidenceForReal:
+        return False, f'low_peak_confidence({_medianPeakConfidence(tr):.2f}<{minMedianPeakConfidenceForReal})'
+    elif tr['meanConfidence'] < minMeanConfidenceForReal:
       return False, f'low_confidence({tr["meanConfidence"]:.2f}<{minMeanConfidenceForReal})'
     return True, 'eligible'
 
@@ -1273,6 +1370,14 @@ def synthesizeTracksFromDetectionCloud(videoName, numWell, nbAnimalsPerWell,
                                         minNetDisplacement=10,
                                         minMeanConfidenceForReal=0.15,
                                         minAverageSpeed=0.11,
+                                        minAverageSpeedDurationCap=300,
+                                        highConfidencePeakThreshold=0.0,
+                                        minPeakConfidenceToSpawn=0.0,
+                                        maxConsecutiveLowConfidenceMatches=10 ** 9,
+                                        realismUsesSpatialExtent=False,
+                                        minMedianPeakConfidenceForReal=0.0,
+                                        maxInterpolatedGapFrames=10 ** 9,
+                                        minSupportPeakConfidence=0.0,
                                         verbose=True,
                                         diagnosisMode=True,
                                         diagnosisLogPath=None):
@@ -1666,6 +1771,78 @@ def synthesizeTracksFromDetectionCloud(videoName, numWell, nbAnimalsPerWell,
       (cumulativeRealDisplacement / length) before raising this further,
       and if you find real, very slow fish being rejected, lower it toward
       0.06 or 0. Set to 0 to disable and fall back to the flat floor alone.
+  minAverageSpeedDurationCap : int, default 300
+      Ceiling (frames) on the length used inside minAverageSpeed's formula
+      above -- the effective minimum becomes max(minNetDisplacement,
+      minAverageSpeed * min(length, minAverageSpeedDurationCap)) rather
+      than letting the requirement keep growing, unbounded, for a
+      trajectory longer than this. A real fish's NET displacement is
+      bounded by the size of its tank/well, not by how long the video
+      runs -- the 0.12-0.15 px/frame real-fish floor minAverageSpeed is
+      calibrated against was observed on ~300-frame trajectories
+      specifically, and requiring that same per-frame rate to keep
+      compounding over a much longer video starts rejecting real fish that
+      spent the extra time swimming locally rather than ending up further
+      from their start. In one observed real case, a fish confidently and
+      continuously tracked for all 999 frames of a video was rejected
+      because its 51px of real net displacement fell short of the 110px
+      minAverageSpeed*length demanded -- a bar calibrated for a video a
+      third as long. The default (300) matches the trajectory length
+      minAverageSpeed was actually calibrated against, so every video at
+      or under that length behaves identically to before this parameter
+      existed; only longer videos are affected. Raise it if you have
+      reason to believe real fish in your (long) videos genuinely do keep
+      accumulating net displacement well past 300 frames.
+  highConfidencePeakThreshold : float, default 0.0 (disabled)
+      Every cluster carries the PEAK (highest) YOLO confidence among its member
+      boxes, in addition to their mean. The mean is a poor measure of "is this
+      a fish": a real fish fires one confident box plus several near-zero
+      duplicates, so its mean is often only ~0.2-0.3, barely above a junk
+      singleton's. When > 0, clusters whose peak is below this value are kept
+      out of PASS 1 and PASS 2 altogether and are only offered, in a new PASS 3,
+      to confirmed tracks that found nothing else -- strict motion-model gate
+      only, no re-acquisition fallback, and for at most
+      maxConsecutiveLowConfidenceMatches frames in a row. This stops a track
+      from being pushed off its fish onto a junk cluster by another track's
+      weak-match fallback (a maximum-cardinality assignment happily does this)
+      and then walking along a chain of junk for hundreds of frames -- the
+      cause of ghost positions in empty space. 0.3 was used for a crowded
+      video with ~50 fish per frame, where ~90% of clusters peak at >= 0.4.
+      Low-confidence matches do not count as strong hits.
+  minPeakConfidenceToSpawn : float, default 0.0 (disabled)
+      Unmatched clusters whose peak confidence is below this never spawn a new
+      track, so isolated low-confidence junk cannot even start one.
+  maxConsecutiveLowConfidenceMatches : int, default effectively unlimited
+      See highConfidencePeakThreshold. 5 was used.
+  realismUsesSpatialExtent : bool, default False
+      Stage 2/4's "did it really move" test normally uses net displacement
+      (last real position vs first, summed over real runs). A real fish that
+      wanders around and comes back near its start has a tiny net displacement
+      and was wrongly discarded as "immobile" (one confidently tracked fish
+      over 264 frames: net 9 px, but it visited places 88 px apart). When True
+      the extent (largest distance from the run's start, still measured within
+      each real run so two static detections joined by interpolation cannot
+      fake motion) is used instead. A static false detection's jitter still
+      has a tiny extent.
+  minMedianPeakConfidenceForReal : float, default 0.0 (disabled)
+      When > 0, REPLACES the mean-confidence gate (minMeanConfidenceForReal)
+      in Stage 2 eligibility and Stage 4, using the median over a
+      trajectory's real detections of the cluster PEAK confidence instead. On
+      the video this was built for, faint out-of-focus shadows and blobs on a
+      cable had median peaks of 0.3-0.37 while genuine fish (even dim ones)
+      were >= 0.40; between 0.37 and 0.40 is a thin band where a few junk
+      pieces and a few real fish overlap -- BE CAUTIOUS moving it. The same
+      bar is applied again to each piece left after the trimming below.
+  maxInterpolatedGapFrames : int, default effectively unlimited
+      When smaller, a stretch of a final trajectory that is pure interpolation
+      (no detection) longer than this is removed and the trajectory split
+      there. A fish undetected that long is more likely hidden or gone than
+      gliding along a smooth curve, and bridged gaps were a source of positions
+      in empty space.
+  minSupportPeakConfidence : float, default 0.0 (disabled)
+      Real detections at the very start/end of a final trajectory whose peak
+      confidence is below this are trimmed off (a track that has lost its fish
+      and is riding junk at its ends).
   verbose : bool, default True
       Prints a summary of every stage's decisions, plus every individual
       drop, to stdout, so you can sanity-check results before trusting
@@ -1769,11 +1946,14 @@ def synthesizeTracksFromDetectionCloud(videoName, numWell, nbAnimalsPerWell,
                                        minHitsToConfirm, maxMissesTentative, maxFramesToCoast,
                                        maxReacquisitionDistance, maxPlausibleSpeed, maxConsecutiveWeakMatches,
                                        diag, numWell, measurementConfidenceFloor, maxGatingCovariance,
-                                       maxGapForReacquisitionFallback)
+                                       maxGapForReacquisitionFallback, highConfidencePeakThreshold,
+                                       minPeakConfidenceToSpawn, maxConsecutiveLowConfidenceMatches)
 
     mergedTracks = _stitchTrackletsGlobally(tracklets, nbFrames, maxGapFramesForStitching,
                                              clusterDistanceThreshold, minSegmentLength, minNetDisplacement,
-                                             minMeanConfidenceForReal, diag, numWell, minAverageSpeed)
+                                             minMeanConfidenceForReal, diag, numWell, minAverageSpeed,
+                                             minAverageSpeedDurationCap, realismUsesSpatialExtent,
+                                             minMedianPeakConfidenceForReal)
 
     prunedTracks = _pruneCollidingTracks(mergedTracks, collisionPruneDistance,
                                           collisionPruneMinFrames, diag, numWell)
@@ -1792,9 +1972,10 @@ def synthesizeTracksFromDetectionCloud(videoName, numWell, nbAnimalsPerWell,
                     f"STAGE4 REJECT frames=[{s:06d},{e:06d}] start={_fmtPos(start)} end={_fmtPos(end)} "
                     f"reason=never_confirmed")
         continue
-      length, cumDisp, nRuns, _ = _realFishStats(tr)
-      if not _passesRealismTest(length, cumDisp, minSegmentLength, minNetDisplacement, minAverageSpeed):
-        effectiveMinDisp = max(minNetDisplacement, minAverageSpeed * length)
+      length, cumDisp, nRuns, _ = _realFishStats(tr, realismUsesSpatialExtent)
+      if not _passesRealismTest(length, cumDisp, minSegmentLength, minNetDisplacement, minAverageSpeed,
+                                 minAverageSpeedDurationCap):
+        effectiveMinDisp = max(minNetDisplacement, minAverageSpeed * min(length, minAverageSpeedDurationCap))
         diag.detail(lambda s=s, e=e, start=start, end=end, length=length, cumDisp=cumDisp, nRuns=nRuns,
                     effectiveMinDisp=effectiveMinDisp:
                     f"STAGE4 REJECT frames=[{s:06d},{e:06d}] start={_fmtPos(start)} end={_fmtPos(end)} "
@@ -1805,7 +1986,16 @@ def synthesizeTracksFromDetectionCloud(videoName, numWell, nbAnimalsPerWell,
       # confidence gate: a no-op (meanConfidence defaults to 1.0) when this video has no
       # probabilityGoodDetection data -- see minMeanConfidenceForReal's docstring.
       meanConfidence = tr['confidenceSum'] / tr['hits'] if tr.get('hits') else 1.0
-      if meanConfidence < minMeanConfidenceForReal:
+      if minMedianPeakConfidenceForReal > 0:
+        # replaces the mean-confidence gate: a cluster's MEAN confidence is dragged down by the
+        # many low-confidence duplicate boxes around every real fish, its PEAK is not
+        medianPeak = _medianPeakConfidence(tr)
+        if medianPeak < minMedianPeakConfidenceForReal:
+          diag.detail(lambda s=s, e=e, start=start, end=end, medianPeak=medianPeak:
+                      f"STAGE4 REJECT frames=[{s:06d},{e:06d}] start={_fmtPos(start)} end={_fmtPos(end)} "
+                      f"reason=low_peak_confidence medianPeak={medianPeak:.2f}(min={minMedianPeakConfidenceForReal})")
+          continue
+      elif meanConfidence < minMeanConfidenceForReal:
         diag.detail(lambda s=s, e=e, start=start, end=end, meanConfidence=meanConfidence:
                     f"STAGE4 REJECT frames=[{s:06d},{e:06d}] start={_fmtPos(start)} end={_fmtPos(end)} "
                     f"reason=low_confidence meanConfidence={meanConfidence:.2f}(min={minMeanConfidenceForReal})")
@@ -1813,7 +2003,18 @@ def synthesizeTracksFromDetectionCloud(videoName, numWell, nbAnimalsPerWell,
       diag.detail(lambda s=s, e=e, start=start, end=end, cumDisp=cumDisp:
                   f"STAGE4 ACCEPT frames=[{s:06d},{e:06d}] start={_fmtPos(start)} end={_fmtPos(end)} "
                   f"cumulativeRealDisplacement={cumDisp:.1f}")
-      realTracks.append(tr)
+      if maxInterpolatedGapFrames < 10 ** 9 or minSupportPeakConfidence > 0:
+        for piece in _trimTrajectory(tr['entries'], maxInterpolatedGapFrames, minSupportPeakConfidence):
+          if piece[-1][0] - piece[0][0] + 1 < minSegmentLength:
+            continue
+          # a piece that was only a stretch of junk (e.g. a track that spent a while riding a static
+          # blob before its fish reappeared) must clear the same peak-confidence bar as a whole
+          # trajectory does
+          if minMedianPeakConfidenceForReal > 0 and _medianPeakConfidence({'entries': piece}) < minMedianPeakConfidenceForReal:
+            continue
+          realTracks.append(dict(tr, entries=piece))
+      else:
+        realTracks.append(tr)
 
     assignment = _assignTracksToSlots(realTracks, nbAnimalsPerWell, diag, numWell)
 

@@ -33,6 +33,48 @@ class TrackingDone(Exception):
   pass
 
 
+def _getSynthesizeTracksFromDetectionCloudKwargs(hyperparameters):
+  """
+  synthesizeTracksFromDetectionCloud's default hyperparameters work well
+  across most videos, but a specific video can occasionally need its own,
+  hand-tuned set (e.g. a much denser or closer-swimming school of fish than
+  usual, needing a smaller clusterDistanceThreshold to avoid fusing several
+  fish's detections into one undifferentiable blob). Rather than editing
+  synthesizeTracksFromDetectionCloud's own defaults (which would affect
+  every video), a named set of overrides for one specific video can be
+  stored in synthesizeTracksFromDetectionCloud_hyperparametersSets.json
+  (next to the yolov11 tracking implementation) and selected per-video by
+  setting 'synthesizeTracksFromDetectionCloud_specialConfig' to that set's
+  name in the configuration file used to launch the tracking.
+
+  Returns a kwargs dict to override synthesizeTracksFromDetectionCloud's own
+  defaults with -- empty (falling back to those defaults untouched) if
+  'synthesizeTracksFromDetectionCloud_specialConfig' isn't set in
+  hyperparameters, or if the named set can't be found.
+  """
+  specialConfigName = hyperparameters.get("synthesizeTracksFromDetectionCloud_specialConfig")
+  if not specialConfigName:
+    return {}
+  hyperparametersSetsPath = os.path.join(os.path.dirname(os.path.abspath(__file__)), "code", "tracking",
+                                          "customTrackingImplementations", "yolov11",
+                                          "synthesizeTracksFromDetectionCloud_hyperparametersSets.json")
+  if not os.path.exists(hyperparametersSetsPath):
+    print(f"Warning: synthesizeTracksFromDetectionCloud_specialConfig is set to '{specialConfigName}' but "
+          f"{hyperparametersSetsPath} does not exist; using synthesizeTracksFromDetectionCloud's default "
+          f"hyperparameters instead.")
+    return {}
+  with open(hyperparametersSetsPath) as f:
+    hyperparametersSets = json.load(f)
+  if specialConfigName not in hyperparametersSets:
+    print(f"Warning: synthesizeTracksFromDetectionCloud_specialConfig is set to '{specialConfigName}', which "
+          f"was not found in {hyperparametersSetsPath} (available: {', '.join(hyperparametersSets) or 'none'}); "
+          f"using synthesizeTracksFromDetectionCloud's default hyperparameters instead.")
+    return {}
+  print(f"synthesizeTracksFromDetectionCloud: using the '{specialConfigName}' hyperparameters set from "
+        f"{hyperparametersSetsPath}")
+  return hyperparametersSets[specialConfigName]
+
+
 class ZebraZoomVideoAnalysis:
   def __init__(self, pathToVideo, videoName, videoExt, configFile, argv, useGUI=True):
     self._pathToVideo = pathToVideo
@@ -331,8 +373,9 @@ class ZebraZoomVideoAnalysis:
       # pair below: it rebuilds trajectories from the raw, over-provisioned YOLO/HybridSORT slot output instead of
       # trusting HybridSORT's own slot assignment, so only run one or the other, not both.
       if "synthesizeTracksFromDetectionCloud" in self._hyperparameters and self._hyperparameters["synthesizeTracksFromDetectionCloud"]:
+        synthesizeTracksFromDetectionCloudKwargs = _getSynthesizeTracksFromDetectionCloudKwargs(self._hyperparameters)
         for numWell in range(self._hyperparameters["nbWells"]):
-          dataAPI.synthesizeTracksFromDetectionCloud(self._hyperparameters['H5filename'], numWell, self._hyperparameters["nbAnimalsPerWell"], diagnosisMode=self._hyperparameters.get("synthesizeTracksFromDetectionCloudDiagnosisMode", 0))
+          dataAPI.synthesizeTracksFromDetectionCloud(self._hyperparameters['H5filename'], numWell, self._hyperparameters["nbAnimalsPerWell"], diagnosisMode=self._hyperparameters.get("synthesizeTracksFromDetectionCloudDiagnosisMode", 0), **synthesizeTracksFromDetectionCloudKwargs)
       else:
         if "mergeSameTracks" in self._hyperparameters and self._hyperparameters["mergeSameTracks"]:
           for numWell in range(self._hyperparameters["nbWells"]):

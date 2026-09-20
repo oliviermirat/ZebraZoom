@@ -16,6 +16,7 @@ Almost every parameter in this function sits on a dial between these two failure
 [If real fish are going missing (too many false negatives)](#falseNegatives)<br/>
 [If you're seeing fake/ghost fish (too many false positives)](#falsePositives)<br/>
 [Parameters that are usually safe to leave alone](#safeToLeave)<br/>
+[Per-video hyperparameter sets and the peak-confidence options (crowded / difficult videos)](#perVideo)<br/>
 [A step-by-step tuning workflow](#workflow)<br/>
 [Worked example](#example)<br/>
 
@@ -119,6 +120,25 @@ These affect quality generally rather than sitting directly on the false-positiv
 - `splitAmbiguousClusters` (default True): keep this on unless you have a specific reason not to — it's what keeps identities correctly separated during crossings and close contacts.
 - `measurementNoiseBase` (default 25.0): how much position noise a single raw YOLO point is assumed to have. Only worth touching if you have strong, independent evidence about your detector's actual pixel-level noise.
 - `verbose` / `diagnosisMode` / `diagnosisLogPath`: these control logging, not tracking behavior. Leave `diagnosisMode` on while tuning (see Step 0); you can turn it off later for routine runs to save the file-writing overhead.
+
+<a name="perVideo"/>
+<H2 CLASS="western">Per-video hyperparameter sets and the peak-confidence options (crowded / difficult videos)</H2>
+
+**Per-video sets.** Hyperparameters for one specific video can be stored under a name in `code/tracking/customTrackingImplementations/yolov11/synthesizeTracksFromDetectionCloud_hyperparametersSets.json`. Add `"synthesizeTracksFromDetectionCloud_specialConfig": "<name>"` to the configuration file used for tracking and that set is passed to `synthesizeTracksFromDetectionCloud` (a missing file or unknown name only prints a warning and falls back to the defaults). The defaults of the function are never changed by a set.
+
+**The extra options below all default to "off"**, so a run without them behaves exactly as it did before they existed. They were added for a very crowded video (about 50 fish per frame, a cable crossing the tank, faint out-of-focus shadows) where the default pipeline left fake positions in empty space, on the cable and on shadows, and dropped real fish. Diagnosing it against the actual video showed why: a track pushed off its fish by another track's weak-match fallback rode chains of confidence-0.02 junk for hundreds of frames; a cluster's *mean* confidence (~0.2-0.3 even for a perfectly good fish, because of its duplicate boxes) told fish and junk apart poorly; and a fish that wandered and returned near its start was dropped as "immobile".
+
+| Parameter | Off value | Value used for the crowded video | What it does |
+|---|---|---|---|
+| `highConfidencePeakThreshold` | 0 | 0.3 | clusters whose *peak* confidence is below this are only matched in a last pass, strictly, and for a limited number of frames |
+| `minPeakConfidenceToSpawn` | 0 | 0.3 | low-peak clusters never start a new track |
+| `maxConsecutiveLowConfidenceMatches` | unlimited | 5 | how long a track may be carried by low-peak clusters |
+| `realismUsesSpatialExtent` | False | True | "did it move" is judged by how far the fish ever got from where it started, not only start-vs-end distance |
+| `minMedianPeakConfidenceForReal` | 0 | 0.38 | replaces the mean-confidence gate by a median-of-peaks gate |
+| `maxInterpolatedGapFrames` | unlimited | 6 | interpolated stretches longer than this are dropped from the output |
+| `minSupportPeakConfidence` | 0 | 0.15 | trims low-peak detections off the two ends of a trajectory |
+
+How to tune them: find the fake/missing fish in the diagnosis log (the `STAGE4 REJECT ... reason=low_peak_confidence medianPeak=...` lines give the number a trajectory was judged on). On the video above, junk had a median peak of 0.3-0.37 and real fish 0.40 and above, with a thin overlap band in between: if you see real fish rejected with a value just below your `minMedianPeakConfidenceForReal`, lower it slightly; if fake ones with a value just above it survive, raise it slightly. `minPeakConfidenceToSpawn` and `highConfidencePeakThreshold` should sit at the confidence below which a detection is "probably not a fish" in *your* detector (look at the histogram of cluster peaks: it was strongly bimodal there, about 90% of clusters at 0.4 or above).
 
 <a name="workflow"/>
 <H2 CLASS="western">A step-by-step tuning workflow</H2>

@@ -1,0 +1,12 @@
+{
+  "DSCF0062_sabinos": {
+    "clusterDistanceThreshold": 15,
+    "highConfidencePeakThreshold": 0.3,
+    "minPeakConfidenceToSpawn": 0.3,
+    "maxConsecutiveLowConfidenceMatches": 5,
+    "realismUsesSpatialExtent": true,
+    "minMedianPeakConfidenceForReal": 0.38,
+    "maxInterpolatedGapFrames": 6,
+    "minSupportPeakConfidence": 0.15
+  }
+}
