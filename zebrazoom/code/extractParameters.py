@@ -182,7 +182,7 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
         
       if hyperparameters["calculateAllTailAngles"]:
         for j in range(0, n):
-          allAngles[i][j] = calculateTailAngle(calculateAngle(head[i], np.array([trackingTail[i][j][0], trackingTail[i][j][1]])), heading[i])
+          allAngles[i][j] = calculateTailAngle(calculateAngle(head[i], np.array([trackingTail[i][j][0], trackingTail[i][j][1]])), heading[i][0])
       
       heading[i] = (heading[i] + math.pi) % (2*math.pi)
       
@@ -261,6 +261,10 @@ def extractParameters(trackingData, wellNumber, hyperparameters, videoPath, well
 
     else:
       auDessus = detectMovementWithRawVideo(hyperparameters, videoPath, background, wellNumber, wellPositions, head, headPositionFirstFrame, tailTipFirstFrame)
+    
+    # Depending on the branch above, auDessus is either a list or an (nbFrames, 1) array: flattening it to 1D makes
+    # auDessus[i] a scalar in all cases (NumPy >= 2.4 raises a TypeError on int() of a 1-element array)
+    auDessus = np.ravel(auDessus)
     
     if printExtractParamsTrace and (hyperparameters["freqAlgoPosFollow"] != 0):
       print("Extract Param Middle: wellNumber:",wellNumber," ; frame:",i)
