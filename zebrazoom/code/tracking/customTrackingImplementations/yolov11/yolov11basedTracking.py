@@ -80,6 +80,15 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
       disappeared_counts = [0] * self._hyperparameters["nbAnimalsPerWell"]
       numAlreadyInvertedWithThePast = [0] * int(self._hyperparameters["nbAnimalsPerWell"])
     
+    # OrTools post-processing: every YOLO box, weak ones included, is recorded here and linked into tracks
+    # after the tracking (see zebrazoom/dataAPI/trackWithOrTools.py)
+    orTools = ("OrTools" in self._hyperparameters) and self._hyperparameters["OrTools"]
+    if orTools:
+      from zebrazoom.dataAPI.trackWithOrTools import YOLO_PARAMETERS_DEFAULTS, storeDetectionsForOrTools
+      orToolsYoloConf = float(self._hyperparameters.get("OrTools_yolo_conf", YOLO_PARAMETERS_DEFAULTS["OrTools_yolo_conf"]))
+      orToolsYoloIou = float(self._hyperparameters.get("OrTools_yolo_iou", YOLO_PARAMETERS_DEFAULTS["OrTools_yolo_iou"]))
+      orToolsDetections = []
+    
     wellNum = 0
     
     # Open the video
@@ -111,7 +120,11 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
         if frameNum % self._hyperparameters["freqAlgoPosFollow"] == 0:
           print("YOLO tracking at frame", frameNum)
         
-        if "yolo11MinConf" in self._hyperparameters:
+        if orTools:
+          results = model(frame, verbose=False, conf=orToolsYoloConf, iou=orToolsYoloIou)
+          boxes = results[0].boxes
+          orToolsDetections.append(np.column_stack((np.full(len(boxes), frameNum - self._firstFrame), boxes.xyxy.cpu().numpy(), boxes.conf.cpu().numpy())))
+        elif "yolo11MinConf" in self._hyperparameters:
           results = model(frame, verbose=False, conf=float(self._hyperparameters["yolo11MinConf"]))
         else:
           results = model(frame, verbose=False)
@@ -239,6 +252,13 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
       for animalNum in range(self._hyperparameters["nbAnimalsPerWell"]):
         self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][0] = self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame-1][0][0]
         self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame][0][1] = self._trackingHeadTailAllAnimalsList[wellNum][animalNum, frameNum-self._firstFrame-1][0][1]
+    
+    if orTools:
+      if self._hyperparameters["storeH5"]:
+        frameSize = (int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)), int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)))
+        storeDetectionsForOrTools(self._hyperparameters['H5filename'], wellNum, np.concatenate(orToolsDetections) if orToolsDetections else np.zeros((0, 6)), frameSize, orToolsYoloConf, orToolsYoloIou)
+      else:
+        print("The OrTools post-processing requires storeH5 to be set to 1: it will not be applied")
     
     cap.release()
     

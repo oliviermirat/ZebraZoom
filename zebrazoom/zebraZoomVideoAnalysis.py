@@ -321,6 +321,12 @@ class ZebraZoomVideoAnalysis:
     
     # DataAPI calls
     if self._hyperparameters['storeH5']:
+      # OrTools rebuilds the trajectories (HeadPos) from scratch, from all the YOLO boxes recorded during the tracking,
+      # so it runs first: any other post-processing enabled below then applies to its output (see OrToolsTrackingGuide.md)
+      if "OrTools" in self._hyperparameters and self._hyperparameters["OrTools"]:
+        for numWell in range(self._hyperparameters["nbWells"]):
+          dataAPI.trackWithOrTools(self._hyperparameters['H5filename'], numWell, self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters)
+
       if "smoothTailAngleOverTime" in self._hyperparameters and self._hyperparameters["smoothTailAngleOverTime"]:
         dataAPI.smoothTailAngleOverTime(self._hyperparameters['H5filename'], self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters.get("freqAlgoPosFollow", 100), None, None, int(self._hyperparameters["dontSmoothTail"] if "dontSmoothTail" in self._hyperparameters else 0))
     
