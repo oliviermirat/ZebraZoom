@@ -71,6 +71,14 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
       print("Path to DL model not found")
       raise ValueError("Path to DL model not found")
     
+    # Multi-channel models: the network input for frame n is made of the grayscale frames n + yoloMultiChannelFrameOffsets (and n)
+    multiChannelFrameOffsets = None
+    if self._hyperparameters.get("yoloMultiChannelFrameOffsets"):
+      from zebrazoom.code.tracking.customTrackingImplementations.yolov11 import multiChannelYOLO
+      model, multiChannelFrameOffsets = multiChannelYOLO.setupMultiChannelYOLO(model, self._hyperparameters)
+    elif isinstance(getattr(model, "ckpt", None), dict) and model.ckpt.get("zebrazoomFrameOffsets") is not None:
+      raise ValueError("This model was trained on multi-channel images: add \"yoloMultiChannelFrameOffsets\": " + str([offset for offset in model.ckpt["zebrazoomFrameOffsets"] if offset]) + " to the configuration file")
+
     if self._hyperparameters["trackTail"] or (("onlyRecenterHeadPosition" in self._hyperparameters) and (self._hyperparameters["onlyRecenterHeadPosition"] == 1)):
       self._lastFirstTheta = np.zeros(len(self._wellPositions))
       self._lastFirstTheta[:] = -99999
@@ -84,6 +92,8 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
     
     # Open the video
     cap = cv2.VideoCapture(self._videoPath)
+    if multiChannelFrameOffsets is not None:
+      cap = multiChannelYOLO.MultiChannelFrameReader(cap, multiChannelFrameOffsets)
     frameNum = 0
     while cap.isOpened() and frameNum <= self._lastFrame:
       
@@ -111,10 +121,11 @@ class Yolov11basedTracking(BaseFasterMultiprocessing):
         if frameNum % self._hyperparameters["freqAlgoPosFollow"] == 0:
           print("YOLO tracking at frame", frameNum)
         
+        modelInput = frame if multiChannelFrameOffsets is None else cap.stackedImage
         if "yolo11MinConf" in self._hyperparameters:
-          results = model(frame, verbose=False, conf=float(self._hyperparameters["yolo11MinConf"]))
+          results = model(modelInput, verbose=False, conf=float(self._hyperparameters["yolo11MinConf"]))
         else:
-          results = model(frame, verbose=False)
+          results = model(modelInput, verbose=False)
           
         # Set to True for debugging
         if False:
