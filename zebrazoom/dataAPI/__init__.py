@@ -38,3 +38,4 @@ from .smoothTailAngleOverTime import *
 from .mergeSameTracks import *
 from .smoothMergedTracksAndRemoveImmobileTracks import *
 from .synthesizeTracksFromDetectionCloud import *
+from .growTracksFromConfidentDetections import *

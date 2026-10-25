@@ -327,10 +327,15 @@ class ZebraZoomVideoAnalysis:
       if "reassignMultipleAnimalsId" in self._hyperparameters and self._hyperparameters["reassignMultipleAnimalsId"]:
         dataAPI.reassignMultipleAnimalsId(self._hyperparameters['H5filename'], self._hyperparameters["nbWells"], self._hyperparameters["nbAnimalsPerWell"], self._hyperparameters.get("freqAlgoPosFollow", 100), None, None, self._hyperparameters.get("max_distance_threshold", 100), self._hyperparameters.get("max_dist_disapearedAnimal_step", 0), self._hyperparameters.get("max_NbFramesAllowedToDisapeared", 50), self._hyperparameters.get("minimumTraceLength", 5), self._hyperparameters.get("removeNewDetectionsTooClose", 8), self._hyperparameters.get("minDistTravel", 1), self._hyperparameters.get("minimumProbaDetectionForNewTrajectory", 0), self._hyperparameters.get("removeStationaryPointMinDist", 0), self._hyperparameters.get("removeStationaryPointInterval", 0))
       
+      # growTracksFromConfidentDetections also rebuilds all the trajectories from the YOLO detections, so when it is
+      # enabled it replaces synthesizeTracksFromDetectionCloud / mergeSameTracks / smoothMergedTracksAndRemoveImmobileTracks
+      if "growTracksFromConfidentDetections" in self._hyperparameters and self._hyperparameters["growTracksFromConfidentDetections"]:
+        for numWell in range(self._hyperparameters["nbWells"]):
+          dataAPI.growTracksFromConfidentDetections(self._hyperparameters['H5filename'], numWell, self._hyperparameters["nbAnimalsPerWell"], maxDisplacement=self._hyperparameters.get("growTracksFromConfidentDetectionsMaxDisplacement", 5), exclusionRadius=self._hyperparameters.get("growTracksFromConfidentDetectionsExclusionRadius", 0), bridgeGaps=bool(self._hyperparameters.get("growTracksFromConfidentDetectionsBridgeGaps", 1)), bridgeMaxGapFrames=self._hyperparameters.get("growTracksFromConfidentDetectionsBridgeMaxGapFrames", 150), bridgeMaxDistance=self._hyperparameters.get("growTracksFromConfidentDetectionsBridgeMaxDistance", 300), bridgeMaxStep=self._hyperparameters.get("growTracksFromConfidentDetectionsBridgeMaxStep", 10), minConfidence=float(self._hyperparameters.get("yolo11MinConf", 0)))
       # synthesizeTracksFromDetectionCloud supersedes the mergeSameTracks + smoothMergedTracksAndRemoveImmobileTracks
       # pair below: it rebuilds trajectories from the raw, over-provisioned YOLO/HybridSORT slot output instead of
       # trusting HybridSORT's own slot assignment, so only run one or the other, not both.
-      if "synthesizeTracksFromDetectionCloud" in self._hyperparameters and self._hyperparameters["synthesizeTracksFromDetectionCloud"]:
+      elif "synthesizeTracksFromDetectionCloud" in self._hyperparameters and self._hyperparameters["synthesizeTracksFromDetectionCloud"]:
         for numWell in range(self._hyperparameters["nbWells"]):
           dataAPI.synthesizeTracksFromDetectionCloud(self._hyperparameters['H5filename'], numWell, self._hyperparameters["nbAnimalsPerWell"], diagnosisMode=self._hyperparameters.get("synthesizeTracksFromDetectionCloudDiagnosisMode", 0))
       else:
