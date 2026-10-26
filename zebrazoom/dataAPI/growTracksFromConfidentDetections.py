@@ -4,6 +4,8 @@ import heapq
 
 import numpy as np
 from scipy.optimize import linear_sum_assignment
+from scipy.sparse import coo_matrix
+from scipy.sparse.csgraph import connected_components
 
 from ._openResultsFile import openResultsFile
 
@@ -339,23 +341,44 @@ def _bridgeGaps(tracks, positions, frameBounds, inPool, exclusion, maxGapFrames,
 
   if not pairs:
     return nbCandidates, 0, []
+  # The candidate pairs only join track ends and track beginnings close to each other in time and space, so they form
+  # many small independent groups (track ends and beginnings connected by candidate pairs). The assignment is solved on
+  # each group separately: no link can join two groups, so this gives the optimum of one assignment over all the track
+  # ends and beginnings, without building a matrix of all the ends by all the beginnings (gigabytes on long videos).
   endIds = sorted({endId for endId, _ in pairs})
   beginningIds = sorted({beginningId for _, beginningId in pairs})
   rowOf = {endId: row for row, endId in enumerate(endIds)}
   columnOf = {beginningId: column for column, beginningId in enumerate(beginningIds)}
-  scoreMatrix = np.full((len(endIds), len(beginningIds)), np.inf)
-  gapMatrix = np.zeros(scoreMatrix.shape)
-  for (endId, beginningId), (score, _path) in pairs.items():
-    scoreMatrix[rowOf[endId], columnOf[beginningId]] = score
-    gapMatrix[rowOf[endId], columnOf[beginningId]] = tracks.first[beginningId] - tracks.last[endId]
-  # 1e-9 per frame of gap: even summed over all the links, far too small to outweigh a real difference of scores, so it
-  # only decides between exactly equal scores (frequent with positions in whole pixels).
-  links = _gatedAssignment(scoreMatrix, maxStep, cost=np.where(np.isfinite(scoreMatrix), scoreMatrix + 1e-9 * gapMatrix, np.inf))
+  pairList = list(pairs)
+  pairRows = np.array([rowOf[endId] for endId, _ in pairList])
+  pairColumns = np.array([columnOf[beginningId] for _, beginningId in pairList])
+  nbNodes = len(endIds) + len(beginningIds)  # graph nodes: the track ends, then the track beginnings
+  graph = coo_matrix((np.ones(len(pairList)), (pairRows, len(endIds) + pairColumns)), shape=(nbNodes, nbNodes))
+  _, groupOfNode = connected_components(graph, directed=False)
+  pairsByGroup = collections.defaultdict(list)
+  for pair, row in zip(pairList, pairRows):
+    pairsByGroup[groupOfNode[row]].append(pair)
+
+  links = []  # (end track id, beginning track id, gap)
+  for groupPairs in pairsByGroup.values():
+    groupEndIds = sorted({endId for endId, _ in groupPairs})
+    groupBeginningIds = sorted({beginningId for _, beginningId in groupPairs})
+    groupRowOf = {endId: row for row, endId in enumerate(groupEndIds)}
+    groupColumnOf = {beginningId: column for column, beginningId in enumerate(groupBeginningIds)}
+    scoreMatrix = np.full((len(groupEndIds), len(groupBeginningIds)), np.inf)
+    gapMatrix = np.zeros(scoreMatrix.shape)
+    for endId, beginningId in groupPairs:
+      scoreMatrix[groupRowOf[endId], groupColumnOf[beginningId]] = pairs[(endId, beginningId)][0]
+      gapMatrix[groupRowOf[endId], groupColumnOf[beginningId]] = tracks.first[beginningId] - tracks.last[endId]
+    # 1e-9 per frame of gap: even summed over all the links, far too small to outweigh a real difference of scores, so
+    # it only decides between exactly equal scores (frequent with positions in whole pixels).
+    cost = np.where(np.isfinite(scoreMatrix), scoreMatrix + 1e-9 * gapMatrix, np.inf)
+    for row, column in _gatedAssignment(scoreMatrix, maxStep, cost=cost):
+      links.append((groupEndIds[row], groupBeginningIds[column], gapMatrix[row, column]))
 
   absorbedBy = {}  # id of a track merged into another one -> id of that other track
   linkStats = []
-  for row, column in links:
-    endId, beginningId = endIds[row], beginningIds[column]
+  for endId, beginningId, gap in sorted(links):
     score, path = pairs[(endId, beginningId)]
     trackId = endId
     while trackId in absorbedBy:  # the track whose end it is may already have been merged after another track
@@ -365,7 +388,7 @@ def _bridgeGaps(tracks, positions, frameBounds, inPool, exclusion, maxGapFrames,
       inPool[detection] = False
     tracks.merge(trackId, beginningId)
     absorbedBy[beginningId] = trackId
-    linkStats.append((score, gapMatrix[row, column]))
+    linkStats.append((score, gap))
   return nbCandidates, len(pairs), linkStats
 
 
